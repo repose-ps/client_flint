@@ -3,6 +3,7 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4
@@ -57,22 +58,22 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4
             class26.anInt536 = 0;
             return;
         }
-        Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2(true, abyte0);
-        class50_sub1_sub2.anInt1454 = abyte0.length - 18;
+        Buffer class50_sub1_sub2 = new Buffer(abyte0);
+        class50_sub1_sub2.position = abyte0.length - 18;
         Class26 class26_1 = aClass26Array1682[i] = new Class26();
         class26_1.aByteArray533 = abyte0;
-        class26_1.anInt534 = class50_sub1_sub2.method523();
-        class26_1.anInt535 = class50_sub1_sub2.method523();
-        class26_1.anInt536 = class50_sub1_sub2.method521();
-        int j = class50_sub1_sub2.method521();
-        int k = class50_sub1_sub2.method521();
-        int l = class50_sub1_sub2.method521();
-        int i1 = class50_sub1_sub2.method521();
-        int j1 = class50_sub1_sub2.method521();
-        int k1 = class50_sub1_sub2.method523();
-        int l1 = class50_sub1_sub2.method523();
-        int i2 = class50_sub1_sub2.method523();
-        int j2 = class50_sub1_sub2.method523();
+        class26_1.anInt534 = class50_sub1_sub2.readUnsignedShort();
+        class26_1.anInt535 = class50_sub1_sub2.readUnsignedShort();
+        class26_1.anInt536 = class50_sub1_sub2.readUnsignedByte();
+        int j = class50_sub1_sub2.readUnsignedByte();
+        int k = class50_sub1_sub2.readUnsignedByte();
+        int l = class50_sub1_sub2.readUnsignedByte();
+        int i1 = class50_sub1_sub2.readUnsignedByte();
+        int j1 = class50_sub1_sub2.readUnsignedByte();
+        int k1 = class50_sub1_sub2.readUnsignedShort();
+        int l1 = class50_sub1_sub2.readUnsignedShort();
+        int i2 = class50_sub1_sub2.readUnsignedShort();
+        int j2 = class50_sub1_sub2.readUnsignedShort();
         int k2 = 0;
         class26_1.anInt537 = k2;
         k2 += class26_1.anInt534;
@@ -208,33 +209,33 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4
         if(class26.anInt548 >= 0)
             anIntArray1677 = new int[anInt1652];
         anIntArray1662 = new int[anInt1652];
-        Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2(true, class26.aByteArray533);
-        class50_sub1_sub2.anInt1454 = class26.anInt537;
-        Class50_Sub1_Sub2 class50_sub1_sub2_1 = new Class50_Sub1_Sub2(true, class26.aByteArray533);
-        class50_sub1_sub2_1.anInt1454 = class26.anInt538;
-        Class50_Sub1_Sub2 class50_sub1_sub2_2 = new Class50_Sub1_Sub2(true, class26.aByteArray533);
-        class50_sub1_sub2_2.anInt1454 = class26.anInt539;
+        Buffer class50_sub1_sub2 = new Buffer(class26.aByteArray533);
+        class50_sub1_sub2.position = class26.anInt537;
+        Buffer class50_sub1_sub2_1 = new Buffer(class26.aByteArray533);
+        class50_sub1_sub2_1.position = class26.anInt538;
+        Buffer class50_sub1_sub2_2 = new Buffer(class26.aByteArray533);
+        class50_sub1_sub2_2.position = class26.anInt539;
         if(j >= 0)
             aBoolean1641 = !aBoolean1641;
-        Class50_Sub1_Sub2 class50_sub1_sub2_3 = new Class50_Sub1_Sub2(true, class26.aByteArray533);
-        class50_sub1_sub2_3.anInt1454 = class26.anInt540;
-        Class50_Sub1_Sub2 class50_sub1_sub2_4 = new Class50_Sub1_Sub2(true, class26.aByteArray533);
-        class50_sub1_sub2_4.anInt1454 = class26.anInt541;
+        Buffer class50_sub1_sub2_3 = new Buffer(class26.aByteArray533);
+        class50_sub1_sub2_3.position = class26.anInt540;
+        Buffer class50_sub1_sub2_4 = new Buffer(class26.aByteArray533);
+        class50_sub1_sub2_4.position = class26.anInt541;
         int k = 0;
         int l = 0;
         int i1 = 0;
         for(int j1 = 0; j1 < anInt1648; j1++)
         {
-            int k1 = class50_sub1_sub2.method521();
+            int k1 = class50_sub1_sub2.readUnsignedByte();
             int i2 = 0;
             if((k1 & 1) != 0)
-                i2 = class50_sub1_sub2_1.method534();
+                i2 = class50_sub1_sub2_1.readSignedSmart();
             int k2 = 0;
             if((k1 & 2) != 0)
-                k2 = class50_sub1_sub2_2.method534();
+                k2 = class50_sub1_sub2_2.readSignedSmart();
             int i3 = 0;
             if((k1 & 4) != 0)
-                i3 = class50_sub1_sub2_3.method534();
+                i3 = class50_sub1_sub2_3.readSignedSmart();
             anIntArray1649[j1] = k + i2;
             anIntArray1650[j1] = l + k2;
             anIntArray1651[j1] = i1 + i3;
@@ -242,43 +243,43 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4
             l = anIntArray1650[j1];
             i1 = anIntArray1651[j1];
             if(anIntArray1676 != null)
-                anIntArray1676[j1] = class50_sub1_sub2_4.method521();
+                anIntArray1676[j1] = class50_sub1_sub2_4.readUnsignedByte();
         }
 
-        class50_sub1_sub2.anInt1454 = class26.anInt544;
-        class50_sub1_sub2_1.anInt1454 = class26.anInt545;
-        class50_sub1_sub2_2.anInt1454 = class26.anInt546;
-        class50_sub1_sub2_3.anInt1454 = class26.anInt547;
-        class50_sub1_sub2_4.anInt1454 = class26.anInt548;
+        class50_sub1_sub2.position = class26.anInt544;
+        class50_sub1_sub2_1.position = class26.anInt545;
+        class50_sub1_sub2_2.position = class26.anInt546;
+        class50_sub1_sub2_3.position = class26.anInt547;
+        class50_sub1_sub2_4.position = class26.anInt548;
         for(int l1 = 0; l1 < anInt1652; l1++)
         {
-            anIntArray1662[l1] = class50_sub1_sub2.method523();
+            anIntArray1662[l1] = class50_sub1_sub2.readUnsignedShort();
             if(anIntArray1659 != null)
-                anIntArray1659[l1] = class50_sub1_sub2_1.method521();
+                anIntArray1659[l1] = class50_sub1_sub2_1.readUnsignedByte();
             if(anIntArray1660 != null)
-                anIntArray1660[l1] = class50_sub1_sub2_2.method521();
+                anIntArray1660[l1] = class50_sub1_sub2_2.readUnsignedByte();
             if(anIntArray1661 != null)
-                anIntArray1661[l1] = class50_sub1_sub2_3.method521();
+                anIntArray1661[l1] = class50_sub1_sub2_3.readUnsignedByte();
             if(anIntArray1677 != null)
-                anIntArray1677[l1] = class50_sub1_sub2_4.method521();
+                anIntArray1677[l1] = class50_sub1_sub2_4.readUnsignedByte();
         }
 
-        class50_sub1_sub2.anInt1454 = class26.anInt542;
-        class50_sub1_sub2_1.anInt1454 = class26.anInt543;
+        class50_sub1_sub2.position = class26.anInt542;
+        class50_sub1_sub2_1.position = class26.anInt543;
         int j2 = 0;
         int l2 = 0;
         int j3 = 0;
         int k3 = 0;
         for(int l3 = 0; l3 < anInt1652; l3++)
         {
-            int i4 = class50_sub1_sub2_1.method521();
+            int i4 = class50_sub1_sub2_1.readUnsignedByte();
             if(i4 == 1)
             {
-                j2 = class50_sub1_sub2.method534() + k3;
+                j2 = class50_sub1_sub2.readSignedSmart() + k3;
                 k3 = j2;
-                l2 = class50_sub1_sub2.method534() + k3;
+                l2 = class50_sub1_sub2.readSignedSmart() + k3;
                 k3 = l2;
-                j3 = class50_sub1_sub2.method534() + k3;
+                j3 = class50_sub1_sub2.readSignedSmart() + k3;
                 k3 = j3;
                 anIntArray1653[l3] = j2;
                 anIntArray1654[l3] = l2;
@@ -288,7 +289,7 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4
             {
                 j2 = j2;
                 l2 = j3;
-                j3 = class50_sub1_sub2.method534() + k3;
+                j3 = class50_sub1_sub2.readSignedSmart() + k3;
                 k3 = j3;
                 anIntArray1653[l3] = j2;
                 anIntArray1654[l3] = l2;
@@ -298,7 +299,7 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4
             {
                 j2 = j3;
                 l2 = l2;
-                j3 = class50_sub1_sub2.method534() + k3;
+                j3 = class50_sub1_sub2.readSignedSmart() + k3;
                 k3 = j3;
                 anIntArray1653[l3] = j2;
                 anIntArray1654[l3] = l2;
@@ -309,7 +310,7 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4
                 int k4 = j2;
                 j2 = l2;
                 l2 = k4;
-                j3 = class50_sub1_sub2.method534() + k3;
+                j3 = class50_sub1_sub2.readSignedSmart() + k3;
                 k3 = j3;
                 anIntArray1653[l3] = j2;
                 anIntArray1654[l3] = l2;
@@ -317,12 +318,12 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4
             }
         }
 
-        class50_sub1_sub2.anInt1454 = class26.anInt549;
+        class50_sub1_sub2.position = class26.anInt549;
         for(int j4 = 0; j4 < anInt1664; j4++)
         {
-            anIntArray1665[j4] = class50_sub1_sub2.method523();
-            anIntArray1666[j4] = class50_sub1_sub2.method523();
-            anIntArray1667[j4] = class50_sub1_sub2.method523();
+            anIntArray1665[j4] = class50_sub1_sub2.readUnsignedShort();
+            anIntArray1666[j4] = class50_sub1_sub2.readUnsignedShort();
+            anIntArray1667[j4] = class50_sub1_sub2.readUnsignedShort();
         }
 
     }

@@ -4,6 +4,7 @@
 package rs2;
 
 import rs2.collection.LruCache;
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class13
@@ -35,8 +36,8 @@ public class Class13
     {
         if(aClass13Array216[i] == null)
         {
-            Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2(true, aByteArrayArray282[i]);
-            int j = class50_sub1_sub2.method523();
+            Buffer class50_sub1_sub2 = new Buffer(aByteArrayArray282[i]);
+            int j = class50_sub1_sub2.readUnsignedShort();
             aClass13Array216[i] = method198(j, class50_sub1_sub2, 10896, i);
         }
         return aClass13Array216[i];
@@ -86,22 +87,22 @@ public class Class13
         return class50_sub1_sub4_sub4;
     }
 
-    public static Class13 method198(int i, Class50_Sub1_Sub2 class50_sub1_sub2, int j, int k)
+    public static Class13 method198(int i, Buffer class50_sub1_sub2, int j, int k)
     {
         Class13 class13 = new Class13();
         class13.anInt215 = k;
         class13.anInt248 = i;
-        class13.anInt236 = class50_sub1_sub2.method521();
-        class13.anInt289 = class50_sub1_sub2.method521();
-        class13.anInt242 = class50_sub1_sub2.method523();
-        class13.anInt241 = class50_sub1_sub2.method523();
-        class13.anInt238 = class50_sub1_sub2.method523();
+        class13.anInt236 = class50_sub1_sub2.readUnsignedByte();
+        class13.anInt289 = class50_sub1_sub2.readUnsignedByte();
+        class13.anInt242 = class50_sub1_sub2.readUnsignedShort();
+        class13.anInt241 = class50_sub1_sub2.readUnsignedShort();
+        class13.anInt238 = class50_sub1_sub2.readUnsignedShort();
         if(j != 10896)
             aBoolean278 = !aBoolean278;
-        class13.aByte220 = (byte)class50_sub1_sub2.method521();
-        class13.anInt254 = class50_sub1_sub2.method521();
+        class13.aByte220 = (byte)class50_sub1_sub2.readUnsignedByte();
+        class13.anInt254 = class50_sub1_sub2.readUnsignedByte();
         if(class13.anInt254 != 0)
-            class13.anInt254 = (class13.anInt254 - 1 << 8) + class50_sub1_sub2.method521();
+            class13.anInt254 = (class13.anInt254 - 1 << 8) + class50_sub1_sub2.readUnsignedByte();
         else
             class13.anInt254 = -1;
         if(class13.anInt242 == 600)
@@ -110,74 +111,74 @@ public class Class13
             anInt255 = i;
         if(class13.anInt242 == 655)
             anInt277 = i;
-        int l = class50_sub1_sub2.method521();
+        int l = class50_sub1_sub2.readUnsignedByte();
         if(l > 0)
         {
             class13.anIntArray273 = new int[l];
             class13.anIntArray256 = new int[l];
             for(int i1 = 0; i1 < l; i1++)
             {
-                class13.anIntArray273[i1] = class50_sub1_sub2.method521();
-                class13.anIntArray256[i1] = class50_sub1_sub2.method523();
+                class13.anIntArray273[i1] = class50_sub1_sub2.readUnsignedByte();
+                class13.anIntArray256[i1] = class50_sub1_sub2.readUnsignedShort();
             }
 
         }
-        int j1 = class50_sub1_sub2.method521();
+        int j1 = class50_sub1_sub2.readUnsignedByte();
         if(j1 > 0)
         {
             class13.anIntArrayArray234 = new int[j1][];
             for(int k1 = 0; k1 < j1; k1++)
             {
-                int l2 = class50_sub1_sub2.method523();
+                int l2 = class50_sub1_sub2.readUnsignedShort();
                 class13.anIntArrayArray234[k1] = new int[l2];
                 for(int k4 = 0; k4 < l2; k4++)
-                    class13.anIntArrayArray234[k1][k4] = class50_sub1_sub2.method523();
+                    class13.anIntArrayArray234[k1][k4] = class50_sub1_sub2.readUnsignedShort();
 
             }
 
         }
         if(class13.anInt236 == 0)
         {
-            class13.anInt285 = class50_sub1_sub2.method523();
-            class13.aBoolean219 = class50_sub1_sub2.method521() == 1;
-            int l1 = class50_sub1_sub2.method523();
+            class13.anInt285 = class50_sub1_sub2.readUnsignedShort();
+            class13.aBoolean219 = class50_sub1_sub2.readUnsignedByte() == 1;
+            int l1 = class50_sub1_sub2.readUnsignedShort();
             class13.anIntArray258 = new int[l1];
             class13.anIntArray232 = new int[l1];
             class13.anIntArray276 = new int[l1];
             for(int i3 = 0; i3 < l1; i3++)
             {
-                class13.anIntArray258[i3] = class50_sub1_sub2.method523();
-                class13.anIntArray232[i3] = class50_sub1_sub2.method524();
-                class13.anIntArray276[i3] = class50_sub1_sub2.method524();
+                class13.anIntArray258[i3] = class50_sub1_sub2.readUnsignedShort();
+                class13.anIntArray232[i3] = class50_sub1_sub2.readSignedShort();
+                class13.anIntArray276[i3] = class50_sub1_sub2.readSignedShort();
             }
 
         }
         if(class13.anInt236 == 1)
         {
-            class13.anInt225 = class50_sub1_sub2.method523();
-            class13.aBoolean233 = class50_sub1_sub2.method521() == 1;
+            class13.anInt225 = class50_sub1_sub2.readUnsignedShort();
+            class13.aBoolean233 = class50_sub1_sub2.readUnsignedByte() == 1;
         }
         if(class13.anInt236 == 2)
         {
             class13.anIntArray269 = new int[class13.anInt241 * class13.anInt238];
             class13.anIntArray224 = new int[class13.anInt241 * class13.anInt238];
-            class13.aBoolean274 = class50_sub1_sub2.method521() == 1;
-            class13.aBoolean229 = class50_sub1_sub2.method521() == 1;
-            class13.aBoolean288 = class50_sub1_sub2.method521() == 1;
-            class13.aBoolean217 = class50_sub1_sub2.method521() == 1;
-            class13.anInt263 = class50_sub1_sub2.method521();
-            class13.anInt244 = class50_sub1_sub2.method521();
+            class13.aBoolean274 = class50_sub1_sub2.readUnsignedByte() == 1;
+            class13.aBoolean229 = class50_sub1_sub2.readUnsignedByte() == 1;
+            class13.aBoolean288 = class50_sub1_sub2.readUnsignedByte() == 1;
+            class13.aBoolean217 = class50_sub1_sub2.readUnsignedByte() == 1;
+            class13.anInt263 = class50_sub1_sub2.readUnsignedByte();
+            class13.anInt244 = class50_sub1_sub2.readUnsignedByte();
             class13.anIntArray221 = new int[20];
             class13.anIntArray213 = new int[20];
             class13.aClass50_Sub1_Sub1_Sub1Array265 = new Class50_Sub1_Sub1_Sub1[20];
             for(int i2 = 0; i2 < 20; i2++)
             {
-                int j3 = class50_sub1_sub2.method521();
+                int j3 = class50_sub1_sub2.readUnsignedByte();
                 if(j3 == 1)
                 {
-                    class13.anIntArray221[i2] = class50_sub1_sub2.method524();
-                    class13.anIntArray213[i2] = class50_sub1_sub2.method524();
-                    String s1 = class50_sub1_sub2.method528();
+                    class13.anIntArray221[i2] = class50_sub1_sub2.readSignedShort();
+                    class13.anIntArray213[i2] = class50_sub1_sub2.readSignedShort();
+                    String s1 = class50_sub1_sub2.readString();
                     if(s1.length() > 0)
                     {
                         int l4 = s1.lastIndexOf(",");
@@ -189,44 +190,44 @@ public class Class13
             class13.aStringArray262 = new String[5];
             for(int k3 = 0; k3 < 5; k3++)
             {
-                class13.aStringArray262[k3] = class50_sub1_sub2.method528();
+                class13.aStringArray262[k3] = class50_sub1_sub2.readString();
                 if(class13.aStringArray262[k3].length() == 0)
                     class13.aStringArray262[k3] = null;
             }
 
         }
         if(class13.anInt236 == 3)
-            class13.aBoolean239 = class50_sub1_sub2.method521() == 1;
+            class13.aBoolean239 = class50_sub1_sub2.readUnsignedByte() == 1;
         if(class13.anInt236 == 4 || class13.anInt236 == 1)
         {
-            class13.aBoolean272 = class50_sub1_sub2.method521() == 1;
-            int j2 = class50_sub1_sub2.method521();
+            class13.aBoolean272 = class50_sub1_sub2.readUnsignedByte() == 1;
+            int j2 = class50_sub1_sub2.readUnsignedByte();
             if(aClass50_Sub1_Sub1_Sub2Array223 != null)
                 class13.aClass50_Sub1_Sub1_Sub2_237 = aClass50_Sub1_Sub1_Sub2Array223[j2];
-            class13.aBoolean247 = class50_sub1_sub2.method521() == 1;
+            class13.aBoolean247 = class50_sub1_sub2.readUnsignedByte() == 1;
         }
         if(class13.anInt236 == 4)
         {
-            class13.aString230 = class50_sub1_sub2.method528();
-            class13.aString249 = class50_sub1_sub2.method528();
+            class13.aString230 = class50_sub1_sub2.readString();
+            class13.aString249 = class50_sub1_sub2.readString();
         }
         if(class13.anInt236 == 1 || class13.anInt236 == 3 || class13.anInt236 == 4)
-            class13.anInt240 = class50_sub1_sub2.method526();
+            class13.anInt240 = class50_sub1_sub2.readInt();
         if(class13.anInt236 == 3 || class13.anInt236 == 4)
         {
-            class13.anInt260 = class50_sub1_sub2.method526();
-            class13.anInt261 = class50_sub1_sub2.method526();
-            class13.anInt226 = class50_sub1_sub2.method526();
+            class13.anInt260 = class50_sub1_sub2.readInt();
+            class13.anInt261 = class50_sub1_sub2.readInt();
+            class13.anInt226 = class50_sub1_sub2.readInt();
         }
         if(class13.anInt236 == 5)
         {
-            String s = class50_sub1_sub2.method528();
+            String s = class50_sub1_sub2.readString();
             if(s.length() > 0)
             {
                 int l3 = s.lastIndexOf(",");
                 class13.aClass50_Sub1_Sub1_Sub1_212 = method194(Integer.parseInt(s.substring(l3 + 1)), s.substring(0, l3), 373);
             }
-            s = class50_sub1_sub2.method528();
+            s = class50_sub1_sub2.readString();
             if(s.length() > 0)
             {
                 int i4 = s.lastIndexOf(",");
@@ -235,65 +236,65 @@ public class Class13
         }
         if(class13.anInt236 == 6)
         {
-            k = class50_sub1_sub2.method521();
+            k = class50_sub1_sub2.readUnsignedByte();
             if(k != 0)
             {
                 class13.anInt283 = 1;
-                class13.anInt284 = (k - 1 << 8) + class50_sub1_sub2.method521();
+                class13.anInt284 = (k - 1 << 8) + class50_sub1_sub2.readUnsignedByte();
             }
-            k = class50_sub1_sub2.method521();
+            k = class50_sub1_sub2.readUnsignedByte();
             if(k != 0)
             {
                 class13.anInt266 = 1;
-                class13.anInt267 = (k - 1 << 8) + class50_sub1_sub2.method521();
+                class13.anInt267 = (k - 1 << 8) + class50_sub1_sub2.readUnsignedByte();
             }
-            k = class50_sub1_sub2.method521();
+            k = class50_sub1_sub2.readUnsignedByte();
             if(k != 0)
-                class13.anInt286 = (k - 1 << 8) + class50_sub1_sub2.method521();
+                class13.anInt286 = (k - 1 << 8) + class50_sub1_sub2.readUnsignedByte();
             else
                 class13.anInt286 = -1;
-            k = class50_sub1_sub2.method521();
+            k = class50_sub1_sub2.readUnsignedByte();
             if(k != 0)
-                class13.anInt287 = (k - 1 << 8) + class50_sub1_sub2.method521();
+                class13.anInt287 = (k - 1 << 8) + class50_sub1_sub2.readUnsignedByte();
             else
                 class13.anInt287 = -1;
-            class13.anInt251 = class50_sub1_sub2.method523();
-            class13.anInt252 = class50_sub1_sub2.method523();
-            class13.anInt253 = class50_sub1_sub2.method523();
+            class13.anInt251 = class50_sub1_sub2.readUnsignedShort();
+            class13.anInt252 = class50_sub1_sub2.readUnsignedShort();
+            class13.anInt253 = class50_sub1_sub2.readUnsignedShort();
         }
         if(class13.anInt236 == 7)
         {
             class13.anIntArray269 = new int[class13.anInt241 * class13.anInt238];
             class13.anIntArray224 = new int[class13.anInt241 * class13.anInt238];
-            class13.aBoolean272 = class50_sub1_sub2.method521() == 1;
-            int k2 = class50_sub1_sub2.method521();
+            class13.aBoolean272 = class50_sub1_sub2.readUnsignedByte() == 1;
+            int k2 = class50_sub1_sub2.readUnsignedByte();
             if(aClass50_Sub1_Sub1_Sub2Array223 != null)
                 class13.aClass50_Sub1_Sub1_Sub2_237 = aClass50_Sub1_Sub1_Sub2Array223[k2];
-            class13.aBoolean247 = class50_sub1_sub2.method521() == 1;
-            class13.anInt240 = class50_sub1_sub2.method526();
-            class13.anInt263 = class50_sub1_sub2.method524();
-            class13.anInt244 = class50_sub1_sub2.method524();
-            class13.aBoolean229 = class50_sub1_sub2.method521() == 1;
+            class13.aBoolean247 = class50_sub1_sub2.readUnsignedByte() == 1;
+            class13.anInt240 = class50_sub1_sub2.readInt();
+            class13.anInt263 = class50_sub1_sub2.readSignedShort();
+            class13.anInt244 = class50_sub1_sub2.readSignedShort();
+            class13.aBoolean229 = class50_sub1_sub2.readUnsignedByte() == 1;
             class13.aStringArray262 = new String[5];
             for(int j4 = 0; j4 < 5; j4++)
             {
-                class13.aStringArray262[j4] = class50_sub1_sub2.method528();
+                class13.aStringArray262[j4] = class50_sub1_sub2.readString();
                 if(class13.aStringArray262[j4].length() == 0)
                     class13.aStringArray262[j4] = null;
             }
 
         }
         if(class13.anInt236 == 8)
-            class13.aString230 = class50_sub1_sub2.method528();
+            class13.aString230 = class50_sub1_sub2.readString();
         if(class13.anInt289 == 2 || class13.anInt236 == 2)
         {
-            class13.aString281 = class50_sub1_sub2.method528();
-            class13.aString211 = class50_sub1_sub2.method528();
-            class13.anInt222 = class50_sub1_sub2.method523();
+            class13.aString281 = class50_sub1_sub2.readString();
+            class13.aString211 = class50_sub1_sub2.readString();
+            class13.anInt222 = class50_sub1_sub2.readUnsignedShort();
         }
         if(class13.anInt289 == 1 || class13.anInt289 == 4 || class13.anInt289 == 5 || class13.anInt289 == 6)
         {
-            class13.aString268 = class50_sub1_sub2.method528();
+            class13.aString268 = class50_sub1_sub2.readString();
             if(class13.aString268.length() == 0)
             {
                 if(class13.anInt289 == 1)
@@ -315,23 +316,23 @@ public class Class13
         aClass2_214 = class2_1;
         aClass50_Sub1_Sub1_Sub2Array223 = aclass50_sub1_sub1_sub2;
         int j = -1;
-        Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2(true, class2.method154("data", null));
-        int k = class50_sub1_sub2.method523();
+        Buffer class50_sub1_sub2 = new Buffer(class2.method154("data", null));
+        int k = class50_sub1_sub2.readUnsignedShort();
         aClass13Array216 = new Class13[k];
         aByteArrayArray282 = new byte[k][];
-        while(class50_sub1_sub2.anInt1454 < class50_sub1_sub2.aByteArray1453.length) 
+        while(class50_sub1_sub2.position < class50_sub1_sub2.payload.length) 
         {
-            int l = class50_sub1_sub2.method523();
+            int l = class50_sub1_sub2.readUnsignedShort();
             if(l == 65535)
             {
-                j = class50_sub1_sub2.method523();
-                l = class50_sub1_sub2.method523();
+                j = class50_sub1_sub2.readUnsignedShort();
+                l = class50_sub1_sub2.readUnsignedShort();
             }
-            int i1 = class50_sub1_sub2.anInt1454;
+            int i1 = class50_sub1_sub2.position;
             Class13 class13 = method198(j, class50_sub1_sub2, 10896, l);
-            byte abyte0[] = aByteArrayArray282[class13.anInt215] = new byte[(class50_sub1_sub2.anInt1454 - i1) + 2];
-            for(int j1 = i1; j1 < class50_sub1_sub2.anInt1454; j1++)
-                abyte0[(j1 - i1) + 2] = class50_sub1_sub2.aByteArray1453[j1];
+            byte abyte0[] = aByteArrayArray282[class13.anInt215] = new byte[(class50_sub1_sub2.position - i1) + 2];
+            for(int j1 = i1; j1 < class50_sub1_sub2.position; j1++)
+                abyte0[(j1 - i1) + 2] = class50_sub1_sub2.payload[j1];
 
             abyte0[0] = (byte)(j >> 8);
             abyte0[1] = (byte)j;

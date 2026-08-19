@@ -3,6 +3,7 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class11
@@ -223,38 +224,38 @@ public class Class11
             return 0;
     }
 
-    public void method193(byte byte0, Class50_Sub1_Sub2 class50_sub1_sub2)
+    public void method193(byte byte0, Buffer class50_sub1_sub2)
     {
         aClass29_183 = new Class29();
         aClass29_183.method308(aByte181, class50_sub1_sub2);
         aClass29_184 = new Class29();
         aClass29_184.method308(aByte181, class50_sub1_sub2);
-        int i = class50_sub1_sub2.method521();
+        int i = class50_sub1_sub2.readUnsignedByte();
         if(i != 0)
         {
-            class50_sub1_sub2.anInt1454--;
+            class50_sub1_sub2.position--;
             aClass29_185 = new Class29();
             aClass29_185.method308(aByte181, class50_sub1_sub2);
             aClass29_186 = new Class29();
             aClass29_186.method308(aByte181, class50_sub1_sub2);
         }
-        i = class50_sub1_sub2.method521();
+        i = class50_sub1_sub2.readUnsignedByte();
         if(byte0 != 6)
         {
             for(int j = 1; j > 0; j++);
         }
         if(i != 0)
         {
-            class50_sub1_sub2.anInt1454--;
+            class50_sub1_sub2.position--;
             aClass29_187 = new Class29();
             aClass29_187.method308(aByte181, class50_sub1_sub2);
             aClass29_188 = new Class29();
             aClass29_188.method308(aByte181, class50_sub1_sub2);
         }
-        i = class50_sub1_sub2.method521();
+        i = class50_sub1_sub2.readUnsignedByte();
         if(i != 0)
         {
-            class50_sub1_sub2.anInt1454--;
+            class50_sub1_sub2.position--;
             aClass29_189 = new Class29();
             aClass29_189.method308(aByte181, class50_sub1_sub2);
             aClass29_190 = new Class29();
@@ -262,18 +263,18 @@ public class Class11
         }
         for(int k = 0; k < 10; k++)
         {
-            int l = class50_sub1_sub2.method535();
+            int l = class50_sub1_sub2.readUnsignedSmart();
             if(l == 0)
                 break;
             anIntArray191[k] = l;
-            anIntArray192[k] = class50_sub1_sub2.method534();
-            anIntArray193[k] = class50_sub1_sub2.method535();
+            anIntArray192[k] = class50_sub1_sub2.readSignedSmart();
+            anIntArray193[k] = class50_sub1_sub2.readUnsignedSmart();
         }
 
-        anInt194 = class50_sub1_sub2.method535();
-        anInt195 = class50_sub1_sub2.method535();
-        anInt198 = class50_sub1_sub2.method523();
-        anInt199 = class50_sub1_sub2.method523();
+        anInt194 = class50_sub1_sub2.readUnsignedSmart();
+        anInt195 = class50_sub1_sub2.readUnsignedSmart();
+        anInt198 = class50_sub1_sub2.readUnsignedShort();
+        anInt199 = class50_sub1_sub2.readUnsignedShort();
         aClass36_196 = new Class36();
         aClass29_197 = new Class29();
         aClass36_196.method356(-954, aClass29_197, class50_sub1_sub2);

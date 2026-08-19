@@ -5,6 +5,7 @@ package rs2;
 
 import java.util.Random;
 
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class50_Sub1_Sub1_Sub2 extends Class50_Sub1_Sub1
@@ -24,29 +25,29 @@ public class Class50_Sub1_Sub1_Sub2 extends Class50_Sub1_Sub1
         anIntArray1505 = new int[256];
         aRandom1507 = new Random();
         aBoolean1508 = false;
-        Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2(true, class2.method154(s + ".dat", null));
-        Class50_Sub1_Sub2 class50_sub1_sub2_1 = new Class50_Sub1_Sub2(true, class2.method154("index.dat", null));
+        Buffer class50_sub1_sub2 = new Buffer(class2.method154(s + ".dat", null));
+        Buffer class50_sub1_sub2_1 = new Buffer(class2.method154("index.dat", null));
         byte byte0 = -1;
-        class50_sub1_sub2_1.anInt1454 = class50_sub1_sub2.method523() + 4;
+        class50_sub1_sub2_1.position = class50_sub1_sub2.readUnsignedShort() + 4;
         while(i >= 0) 
             aBoolean1496 = !aBoolean1496;
-        int k = class50_sub1_sub2_1.method521();
+        int k = class50_sub1_sub2_1.readUnsignedByte();
         if(k > 0)
-            class50_sub1_sub2_1.anInt1454 += 3 * (k - 1);
+            class50_sub1_sub2_1.position += 3 * (k - 1);
         for(int l = 0; l < 256; l++)
         {
             int j = l;
-            anIntArray1503[l] = class50_sub1_sub2_1.method521();
-            anIntArray1504[l] = class50_sub1_sub2_1.method521();
-            int i1 = anIntArray1501[l] = class50_sub1_sub2_1.method523();
-            int j1 = anIntArray1502[l] = class50_sub1_sub2_1.method523();
-            int k1 = class50_sub1_sub2_1.method521();
+            anIntArray1503[l] = class50_sub1_sub2_1.readUnsignedByte();
+            anIntArray1504[l] = class50_sub1_sub2_1.readUnsignedByte();
+            int i1 = anIntArray1501[l] = class50_sub1_sub2_1.readUnsignedShort();
+            int j1 = anIntArray1502[l] = class50_sub1_sub2_1.readUnsignedShort();
+            int k1 = class50_sub1_sub2_1.readUnsignedByte();
             int l1 = i1 * j1;
             aByteArrayArray1500[l] = new byte[l1];
             if(k1 == 0)
             {
                 for(int i2 = 0; i2 < l1; i2++)
-                    aByteArrayArray1500[l][i2] = class50_sub1_sub2.method522();
+                    aByteArrayArray1500[l][i2] = class50_sub1_sub2.readSignedByte();
 
             } else
             if(k1 == 1)
@@ -54,7 +55,7 @@ public class Class50_Sub1_Sub1_Sub2 extends Class50_Sub1_Sub1
                 for(int j2 = 0; j2 < i1; j2++)
                 {
                     for(int l2 = 0; l2 < j1; l2++)
-                        aByteArrayArray1500[l][j2 + l2 * i1] = class50_sub1_sub2.method522();
+                        aByteArrayArray1500[l][j2 + l2 * i1] = class50_sub1_sub2.readSignedByte();
 
                 }
 

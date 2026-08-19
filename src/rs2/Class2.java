@@ -3,6 +3,7 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class2
@@ -21,34 +22,34 @@ public class Class2
 
     public void method153(int i, byte abyte0[])
     {
-        Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2(true, abyte0);
-        int j = class50_sub1_sub2.method525();
-        int k = class50_sub1_sub2.method525();
+        Buffer class50_sub1_sub2 = new Buffer(abyte0);
+        int j = class50_sub1_sub2.readMedium();
+        int k = class50_sub1_sub2.readMedium();
         if(k != j)
         {
             byte abyte1[] = new byte[j];
             Class30.method312(abyte1, j, abyte0, k, 6);
             aByteArray88 = abyte1;
-            class50_sub1_sub2 = new Class50_Sub1_Sub2(true, aByteArray88);
+            class50_sub1_sub2 = new Buffer(aByteArray88);
             aBoolean94 = true;
         } else
         {
             aByteArray88 = abyte0;
             aBoolean94 = false;
         }
-        anInt89 = class50_sub1_sub2.method523();
+        anInt89 = class50_sub1_sub2.readUnsignedShort();
         anIntArray90 = new int[anInt89];
         anIntArray91 = new int[anInt89];
         anIntArray92 = new int[anInt89];
         if(i != 0)
             return;
         anIntArray93 = new int[anInt89];
-        int l = class50_sub1_sub2.anInt1454 + anInt89 * 10;
+        int l = class50_sub1_sub2.position + anInt89 * 10;
         for(int i1 = 0; i1 < anInt89; i1++)
         {
-            anIntArray90[i1] = class50_sub1_sub2.method526();
-            anIntArray91[i1] = class50_sub1_sub2.method525();
-            anIntArray92[i1] = class50_sub1_sub2.method525();
+            anIntArray90[i1] = class50_sub1_sub2.readInt();
+            anIntArray91[i1] = class50_sub1_sub2.readMedium();
+            anIntArray92[i1] = class50_sub1_sub2.readMedium();
             anIntArray93[i1] = l;
             l += anIntArray92[i1];
         }

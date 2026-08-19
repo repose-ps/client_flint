@@ -3,6 +3,7 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class21
@@ -19,47 +20,47 @@ public class Class21
 
     public static void method236(byte abyte0[], boolean flag)
     {
-        Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2(true, abyte0);
-        class50_sub1_sub2.anInt1454 = abyte0.length - 8;
-        int i = class50_sub1_sub2.method523();
-        int j = class50_sub1_sub2.method523();
-        int k = class50_sub1_sub2.method523();
+        Buffer class50_sub1_sub2 = new Buffer(abyte0);
+        class50_sub1_sub2.position = abyte0.length - 8;
+        int i = class50_sub1_sub2.readUnsignedShort();
+        int j = class50_sub1_sub2.readUnsignedShort();
+        int k = class50_sub1_sub2.readUnsignedShort();
         if(!flag)
             return;
-        int l = class50_sub1_sub2.method523();
+        int l = class50_sub1_sub2.readUnsignedShort();
         int i1 = 0;
-        Class50_Sub1_Sub2 class50_sub1_sub2_1 = new Class50_Sub1_Sub2(true, abyte0);
-        class50_sub1_sub2_1.anInt1454 = i1;
+        Buffer class50_sub1_sub2_1 = new Buffer(abyte0);
+        class50_sub1_sub2_1.position = i1;
         i1 += i + 2;
-        Class50_Sub1_Sub2 class50_sub1_sub2_2 = new Class50_Sub1_Sub2(true, abyte0);
-        class50_sub1_sub2_2.anInt1454 = i1;
+        Buffer class50_sub1_sub2_2 = new Buffer(abyte0);
+        class50_sub1_sub2_2.position = i1;
         i1 += j;
-        Class50_Sub1_Sub2 class50_sub1_sub2_3 = new Class50_Sub1_Sub2(true, abyte0);
-        class50_sub1_sub2_3.anInt1454 = i1;
+        Buffer class50_sub1_sub2_3 = new Buffer(abyte0);
+        class50_sub1_sub2_3.position = i1;
         i1 += k;
-        Class50_Sub1_Sub2 class50_sub1_sub2_4 = new Class50_Sub1_Sub2(true, abyte0);
-        class50_sub1_sub2_4.anInt1454 = i1;
+        Buffer class50_sub1_sub2_4 = new Buffer(abyte0);
+        class50_sub1_sub2_4.position = i1;
         i1 += l;
-        Class50_Sub1_Sub2 class50_sub1_sub2_5 = new Class50_Sub1_Sub2(true, abyte0);
-        class50_sub1_sub2_5.anInt1454 = i1;
+        Buffer class50_sub1_sub2_5 = new Buffer(abyte0);
+        class50_sub1_sub2_5.position = i1;
         Class41 class41 = new Class41(class50_sub1_sub2_5, 0);
-        int j1 = class50_sub1_sub2_1.method523();
+        int j1 = class50_sub1_sub2_1.readUnsignedShort();
         int ai[] = new int[500];
         int ai1[] = new int[500];
         int ai2[] = new int[500];
         int ai3[] = new int[500];
         for(int k1 = 0; k1 < j1; k1++)
         {
-            int l1 = class50_sub1_sub2_1.method523();
+            int l1 = class50_sub1_sub2_1.readUnsignedShort();
             Class21 class21 = aClass21Array430[l1] = new Class21();
-            class21.anInt431 = class50_sub1_sub2_4.method521();
+            class21.anInt431 = class50_sub1_sub2_4.readUnsignedByte();
             class21.aClass41_432 = class41;
-            int i2 = class50_sub1_sub2_1.method521();
+            int i2 = class50_sub1_sub2_1.readUnsignedByte();
             int j2 = -1;
             int k2 = 0;
             for(int l2 = 0; l2 < i2; l2++)
             {
-                int i3 = class50_sub1_sub2_2.method521();
+                int i3 = class50_sub1_sub2_2.readUnsignedByte();
                 if(i3 > 0)
                 {
                     if(class41.anIntArray698[l2] != 0)
@@ -82,15 +83,15 @@ public class Class21
                     if(class41.anIntArray698[l2] == 3)
                         c = '\200';
                     if((i3 & 1) != 0)
-                        ai1[k2] = class50_sub1_sub2_3.method534();
+                        ai1[k2] = class50_sub1_sub2_3.readSignedSmart();
                     else
                         ai1[k2] = c;
                     if((i3 & 2) != 0)
-                        ai2[k2] = class50_sub1_sub2_3.method534();
+                        ai2[k2] = class50_sub1_sub2_3.readSignedSmart();
                     else
                         ai2[k2] = c;
                     if((i3 & 4) != 0)
-                        ai3[k2] = class50_sub1_sub2_3.method534();
+                        ai3[k2] = class50_sub1_sub2_3.readSignedSmart();
                     else
                         ai3[k2] = c;
                     j2 = l2;

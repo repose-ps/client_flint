@@ -5,6 +5,7 @@ package rs2;
 
 import java.io.PrintStream;
 
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class49
@@ -12,10 +13,10 @@ public class Class49
 
     public static void method440(Class2 class2, int i)
     {
-        Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2(true, class2.method154("varbit.dat", null));
+        Buffer class50_sub1_sub2 = new Buffer(class2.method154("varbit.dat", null));
         if(i != 36135)
             return;
-        anInt823 = class50_sub1_sub2.method523();
+        anInt823 = class50_sub1_sub2.readUnsignedShort();
         if(aClass49Array824 == null)
             aClass49Array824 = new Class49[anInt823];
         for(int j = 0; j < anInt823; j++)
@@ -27,36 +28,36 @@ public class Class49
                 Class43.aClass43Array704[aClass49Array824[j].anInt826].aBoolean716 = true;
         }
 
-        if(class50_sub1_sub2.anInt1454 != class50_sub1_sub2.aByteArray1453.length)
+        if(class50_sub1_sub2.position != class50_sub1_sub2.payload.length)
             System.out.println("varbit load mismatch");
     }
 
-    public void method441(int i, int j, Class50_Sub1_Sub2 class50_sub1_sub2)
+    public void method441(int i, int j, Buffer class50_sub1_sub2)
     {
         if(i >= 0)
             anInt822 = -151;
         do
         {
-            int k = class50_sub1_sub2.method521();
+            int k = class50_sub1_sub2.readUnsignedByte();
             if(k == 0)
                 return;
             if(k == 1)
             {
-                anInt826 = class50_sub1_sub2.method523();
-                anInt827 = class50_sub1_sub2.method521();
-                anInt828 = class50_sub1_sub2.method521();
+                anInt826 = class50_sub1_sub2.readUnsignedShort();
+                anInt827 = class50_sub1_sub2.readUnsignedByte();
+                anInt828 = class50_sub1_sub2.readUnsignedByte();
             } else
             if(k == 10)
-                aString825 = class50_sub1_sub2.method528();
+                aString825 = class50_sub1_sub2.readString();
             else
             if(k == 2)
                 aBoolean829 = true;
             else
             if(k == 3)
-                anInt830 = class50_sub1_sub2.method526();
+                anInt830 = class50_sub1_sub2.readInt();
             else
             if(k == 4)
-                anInt831 = class50_sub1_sub2.method526();
+                anInt831 = class50_sub1_sub2.readInt();
             else
             if(k == 5)
                 aBoolean832 = false;

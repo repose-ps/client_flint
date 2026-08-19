@@ -4,6 +4,7 @@
 package rs2;
 
 import rs2.collection.LruCache;
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3
@@ -269,27 +270,27 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3
         return class50_sub1_sub4_sub4;
     }
 
-    public void method572(Class50_Sub1_Sub2 class50_sub1_sub2, int i)
+    public void method572(Buffer class50_sub1_sub2, int i)
     {
-        class50_sub1_sub2.anInt1454 = 0;
-        anInt1755 = class50_sub1_sub2.method521();
-        anInt1756 = class50_sub1_sub2.method522();
-        anInt1748 = class50_sub1_sub2.method522();
+        class50_sub1_sub2.position = 0;
+        anInt1755 = class50_sub1_sub2.readUnsignedByte();
+        anInt1756 = class50_sub1_sub2.readSignedByte();
+        anInt1748 = class50_sub1_sub2.readSignedByte();
         aClass37_1757 = null;
         anInt1766 = 0;
         for(int j = 0; j < 12; j++)
         {
-            int k = class50_sub1_sub2.method521();
+            int k = class50_sub1_sub2.readUnsignedByte();
             if(k == 0)
             {
                 anIntArray1752[j] = 0;
                 continue;
             }
-            int i1 = class50_sub1_sub2.method521();
+            int i1 = class50_sub1_sub2.readUnsignedByte();
             anIntArray1752[j] = (k << 8) + i1;
             if(j == 0 && anIntArray1752[0] == 65535)
             {
-                aClass37_1757 = Class37.method364(class50_sub1_sub2.method523());
+                aClass37_1757 = Class37.method364(class50_sub1_sub2.readUnsignedShort());
                 break;
             }
             if(anIntArray1752[j] >= 512 && anIntArray1752[j] - 512 < Class16.anInt335)
@@ -302,36 +303,36 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3
 
         for(int l = 0; l < 5; l++)
         {
-            int j1 = class50_sub1_sub2.method521();
+            int j1 = class50_sub1_sub2.readUnsignedByte();
             if(j1 < 0 || j1 >= client.anIntArrayArray1008[l].length)
                 j1 = 0;
             anIntArray1760[l] = j1;
         }
 
-        super.anInt1634 = class50_sub1_sub2.method523();
+        super.anInt1634 = class50_sub1_sub2.readUnsignedShort();
         if(super.anInt1634 == 65535)
             super.anInt1634 = -1;
-        super.anInt1635 = class50_sub1_sub2.method523();
+        super.anInt1635 = class50_sub1_sub2.readUnsignedShort();
         if(super.anInt1635 == 65535)
             super.anInt1635 = -1;
-        super.anInt1619 = class50_sub1_sub2.method523();
+        super.anInt1619 = class50_sub1_sub2.readUnsignedShort();
         if(super.anInt1619 == 65535)
             super.anInt1619 = -1;
-        super.anInt1620 = class50_sub1_sub2.method523();
+        super.anInt1620 = class50_sub1_sub2.readUnsignedShort();
         if(super.anInt1620 == 65535)
             super.anInt1620 = -1;
-        super.anInt1621 = class50_sub1_sub2.method523();
+        super.anInt1621 = class50_sub1_sub2.readUnsignedShort();
         if(super.anInt1621 == 65535)
             super.anInt1621 = -1;
-        super.anInt1622 = class50_sub1_sub2.method523();
+        super.anInt1622 = class50_sub1_sub2.readUnsignedShort();
         if(super.anInt1622 == 65535)
             super.anInt1622 = -1;
-        super.anInt1629 = class50_sub1_sub2.method523();
+        super.anInt1629 = class50_sub1_sub2.readUnsignedShort();
         if(super.anInt1629 == 65535)
             super.anInt1629 = -1;
-        aString1751 = Class25.method303(Class25.method300(class50_sub1_sub2.method527(-149), 0), (byte)7);
-        anInt1753 = class50_sub1_sub2.method521();
-        anInt1759 = class50_sub1_sub2.method523();
+        aString1751 = Class25.method303(Class25.method300(class50_sub1_sub2.readLong(), 0), (byte)7);
+        anInt1753 = class50_sub1_sub2.readUnsignedByte();
+        anInt1759 = class50_sub1_sub2.readUnsignedShort();
         aBoolean1758 = true;
         aLong1754 = 0L;
         int k1 = anIntArray1752[5];

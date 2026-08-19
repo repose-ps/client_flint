@@ -6,6 +6,7 @@ package rs2;
 import java.io.PrintStream;
 
 import rs2.collection.LruCache;
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class27
@@ -13,8 +14,8 @@ public class Class27
 
     public static void method305(Class2 class2, int i)
     {
-        Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2(true, class2.method154("spotanim.dat", null));
-        anInt553 = class50_sub1_sub2.method523();
+        Buffer class50_sub1_sub2 = new Buffer(class2.method154("spotanim.dat", null));
+        anInt553 = class50_sub1_sub2.readUnsignedShort();
         if(i != 36135)
             aBoolean551 = !aBoolean551;
         if(aClass27Array554 == null)
@@ -29,7 +30,7 @@ public class Class27
 
     }
 
-    public void method306(byte byte0, Class50_Sub1_Sub2 class50_sub1_sub2)
+    public void method306(byte byte0, Buffer class50_sub1_sub2)
     {
         if(byte0 == 6)
             byte0 = 0;
@@ -37,38 +38,38 @@ public class Class27
             anInt552 = 458;
         do
         {
-            int i = class50_sub1_sub2.method521();
+            int i = class50_sub1_sub2.readUnsignedByte();
             if(i == 0)
                 return;
             if(i == 1)
-                anInt556 = class50_sub1_sub2.method523();
+                anInt556 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 2)
             {
-                anInt557 = class50_sub1_sub2.method523();
+                anInt557 = class50_sub1_sub2.readUnsignedShort();
                 if(Class14.aClass14Array293 != null)
                     aClass14_558 = Class14.aClass14Array293[anInt557];
             } else
             if(i == 4)
-                anInt561 = class50_sub1_sub2.method523();
+                anInt561 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 5)
-                anInt562 = class50_sub1_sub2.method523();
+                anInt562 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 6)
-                anInt563 = class50_sub1_sub2.method523();
+                anInt563 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 7)
-                anInt564 = class50_sub1_sub2.method521();
+                anInt564 = class50_sub1_sub2.readUnsignedByte();
             else
             if(i == 8)
-                anInt565 = class50_sub1_sub2.method521();
+                anInt565 = class50_sub1_sub2.readUnsignedByte();
             else
             if(i >= 40 && i < 50)
-                anIntArray559[i - 40] = class50_sub1_sub2.method523();
+                anIntArray559[i - 40] = class50_sub1_sub2.readUnsignedShort();
             else
             if(i >= 50 && i < 60)
-                anIntArray560[i - 50] = class50_sub1_sub2.method523();
+                anIntArray560[i - 50] = class50_sub1_sub2.readUnsignedShort();
             else
                 System.out.println("Error unrecognised spotanim config code: " + i);
         } while(true);

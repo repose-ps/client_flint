@@ -3,6 +3,7 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class36
@@ -77,9 +78,9 @@ public class Class36
         return anIntArray613[i] * 2;
     }
 
-    public void method356(int i, Class29 class29, Class50_Sub1_Sub2 class50_sub1_sub2)
+    public void method356(int i, Class29 class29, Buffer class50_sub1_sub2)
     {
-        int j = class50_sub1_sub2.method521();
+        int j = class50_sub1_sub2.readUnsignedByte();
         anIntArray613[0] = j >> 4;
         while(i >= 0) 
         {
@@ -88,15 +89,15 @@ public class Class36
         anIntArray613[1] = j & 0xf;
         if(j != 0)
         {
-            anIntArray616[0] = class50_sub1_sub2.method523();
-            anIntArray616[1] = class50_sub1_sub2.method523();
-            int l = class50_sub1_sub2.method521();
+            anIntArray616[0] = class50_sub1_sub2.readUnsignedShort();
+            anIntArray616[1] = class50_sub1_sub2.readUnsignedShort();
+            int l = class50_sub1_sub2.readUnsignedByte();
             for(int i1 = 0; i1 < 2; i1++)
             {
                 for(int j1 = 0; j1 < anIntArray613[i1]; j1++)
                 {
-                    anIntArrayArrayArray614[i1][0][j1] = class50_sub1_sub2.method523();
-                    anIntArrayArrayArray615[i1][0][j1] = class50_sub1_sub2.method523();
+                    anIntArrayArrayArray614[i1][0][j1] = class50_sub1_sub2.readUnsignedShort();
+                    anIntArrayArrayArray615[i1][0][j1] = class50_sub1_sub2.readUnsignedShort();
                 }
 
             }
@@ -106,8 +107,8 @@ public class Class36
                 for(int l1 = 0; l1 < anIntArray613[k1]; l1++)
                     if((l & 1 << k1 * 4 << l1) != 0)
                     {
-                        anIntArrayArrayArray614[k1][1][l1] = class50_sub1_sub2.method523();
-                        anIntArrayArrayArray615[k1][1][l1] = class50_sub1_sub2.method523();
+                        anIntArrayArrayArray614[k1][1][l1] = class50_sub1_sub2.readUnsignedShort();
+                        anIntArrayArrayArray615[k1][1][l1] = class50_sub1_sub2.readUnsignedShort();
                     } else
                     {
                         anIntArrayArrayArray614[k1][1][l1] = anIntArrayArrayArray614[k1][0][l1];

@@ -5,6 +5,7 @@ package rs2;
 
 import java.io.PrintStream;
 
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class48
@@ -12,8 +13,8 @@ public class Class48
 
     public static void method434(Class2 class2, int i)
     {
-        Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2(true, class2.method154("idk.dat", null));
-        anInt814 = class50_sub1_sub2.method523();
+        Buffer class50_sub1_sub2 = new Buffer(class2.method154("idk.dat", null));
+        anInt814 = class50_sub1_sub2.readUnsignedShort();
         if(aClass48Array815 == null)
             aClass48Array815 = new Class48[anInt814];
         for(int j = 0; j < anInt814; j++)
@@ -26,7 +27,7 @@ public class Class48
         if(i == 36135);
     }
 
-    public void method435(byte byte0, Class50_Sub1_Sub2 class50_sub1_sub2)
+    public void method435(byte byte0, Buffer class50_sub1_sub2)
     {
         if(byte0 == 6)
             byte0 = 0;
@@ -34,31 +35,31 @@ public class Class48
             throw new NullPointerException();
         do
         {
-            int i = class50_sub1_sub2.method521();
+            int i = class50_sub1_sub2.readUnsignedByte();
             if(i == 0)
                 return;
             if(i == 1)
-                anInt816 = class50_sub1_sub2.method521();
+                anInt816 = class50_sub1_sub2.readUnsignedByte();
             else
             if(i == 2)
             {
-                int j = class50_sub1_sub2.method521();
+                int j = class50_sub1_sub2.readUnsignedByte();
                 anIntArray817 = new int[j];
                 for(int k = 0; k < j; k++)
-                    anIntArray817[k] = class50_sub1_sub2.method523();
+                    anIntArray817[k] = class50_sub1_sub2.readUnsignedShort();
 
             } else
             if(i == 3)
                 aBoolean821 = true;
             else
             if(i >= 40 && i < 50)
-                anIntArray818[i - 40] = class50_sub1_sub2.method523();
+                anIntArray818[i - 40] = class50_sub1_sub2.readUnsignedShort();
             else
             if(i >= 50 && i < 60)
-                anIntArray819[i - 50] = class50_sub1_sub2.method523();
+                anIntArray819[i - 50] = class50_sub1_sub2.readUnsignedShort();
             else
             if(i >= 60 && i < 70)
-                anIntArray820[i - 60] = class50_sub1_sub2.method523();
+                anIntArray820[i - 60] = class50_sub1_sub2.readUnsignedShort();
             else
                 System.out.println("Error unrecognised config code: " + i);
         } while(true);

@@ -7,6 +7,7 @@ import java.awt.*;
 import java.awt.image.PixelGrabber;
 import java.io.PrintStream;
 
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class50_Sub1_Sub1_Sub1 extends Class50_Sub1_Sub1
@@ -83,38 +84,38 @@ public class Class50_Sub1_Sub1_Sub1 extends Class50_Sub1_Sub1
         aBoolean1486 = false;
         aBoolean1487 = true;
         anInt1488 = 3600;
-        Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2(true, class2.method154(s + ".dat", null));
-        Class50_Sub1_Sub2 class50_sub1_sub2_1 = new Class50_Sub1_Sub2(true, class2.method154("index.dat", null));
-        class50_sub1_sub2_1.anInt1454 = class50_sub1_sub2.method523();
-        anInt1494 = class50_sub1_sub2_1.method523();
-        anInt1495 = class50_sub1_sub2_1.method523();
-        int j = class50_sub1_sub2_1.method521();
+        Buffer class50_sub1_sub2 = new Buffer(class2.method154(s + ".dat", null));
+        Buffer class50_sub1_sub2_1 = new Buffer(class2.method154("index.dat", null));
+        class50_sub1_sub2_1.position = class50_sub1_sub2.readUnsignedShort();
+        anInt1494 = class50_sub1_sub2_1.readUnsignedShort();
+        anInt1495 = class50_sub1_sub2_1.readUnsignedShort();
+        int j = class50_sub1_sub2_1.readUnsignedByte();
         int ai[] = new int[j];
         for(int k = 0; k < j - 1; k++)
         {
-            ai[k + 1] = class50_sub1_sub2_1.method525();
+            ai[k + 1] = class50_sub1_sub2_1.readMedium();
             if(ai[k + 1] == 0)
                 ai[k + 1] = 1;
         }
 
         for(int l = 0; l < i; l++)
         {
-            class50_sub1_sub2_1.anInt1454 += 2;
-            class50_sub1_sub2.anInt1454 += class50_sub1_sub2_1.method523() * class50_sub1_sub2_1.method523();
-            class50_sub1_sub2_1.anInt1454++;
+            class50_sub1_sub2_1.position += 2;
+            class50_sub1_sub2.position += class50_sub1_sub2_1.readUnsignedShort() * class50_sub1_sub2_1.readUnsignedShort();
+            class50_sub1_sub2_1.position++;
         }
 
-        anInt1492 = class50_sub1_sub2_1.method521();
-        anInt1493 = class50_sub1_sub2_1.method521();
-        anInt1490 = class50_sub1_sub2_1.method523();
-        anInt1491 = class50_sub1_sub2_1.method523();
-        int i1 = class50_sub1_sub2_1.method521();
+        anInt1492 = class50_sub1_sub2_1.readUnsignedByte();
+        anInt1493 = class50_sub1_sub2_1.readUnsignedByte();
+        anInt1490 = class50_sub1_sub2_1.readUnsignedShort();
+        anInt1491 = class50_sub1_sub2_1.readUnsignedShort();
+        int i1 = class50_sub1_sub2_1.readUnsignedByte();
         int j1 = anInt1490 * anInt1491;
         anIntArray1489 = new int[j1];
         if(i1 == 0)
         {
             for(int k1 = 0; k1 < j1; k1++)
-                anIntArray1489[k1] = ai[class50_sub1_sub2.method521()];
+                anIntArray1489[k1] = ai[class50_sub1_sub2.readUnsignedByte()];
 
             return;
         }
@@ -123,7 +124,7 @@ public class Class50_Sub1_Sub1_Sub1 extends Class50_Sub1_Sub1
             for(int l1 = 0; l1 < anInt1490; l1++)
             {
                 for(int i2 = 0; i2 < anInt1491; i2++)
-                    anIntArray1489[l1 + i2 * anInt1490] = ai[class50_sub1_sub2.method521()];
+                    anIntArray1489[l1 + i2 * anInt1490] = ai[class50_sub1_sub2.readUnsignedByte()];
 
             }
 

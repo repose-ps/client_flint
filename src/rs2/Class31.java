@@ -3,18 +3,19 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class31
 {
 
-    public static String method320(int i, Class50_Sub1_Sub2 class50_sub1_sub2, int j)
+    public static String method320(int i, Buffer class50_sub1_sub2, int j)
     {
         int k = 0;
         int l = -1;
         for(int i1 = 0; i1 < j; i1++)
         {
-            int j1 = class50_sub1_sub2.method521();
+            int j1 = class50_sub1_sub2.readUnsignedByte();
             int k1 = j1 >> 4 & 0xf;
             if(l == -1)
             {
@@ -59,7 +60,7 @@ public class Class31
         return new String(aCharArray588, 0, k);
     }
 
-    public static void method321(String s, int i, Class50_Sub1_Sub2 class50_sub1_sub2)
+    public static void method321(String s, int i, Buffer class50_sub1_sub2)
     {
         if(s.length() > 80)
             s = s.substring(0, 80);
@@ -88,40 +89,40 @@ public class Class31
                 if(i1 < 13)
                     k = i1;
                 else
-                    class50_sub1_sub2.method511(i1);
+                    class50_sub1_sub2.writeByte(i1);
             } else
             if(i1 < 13)
             {
-                class50_sub1_sub2.method511((k << 4) + i1);
+                class50_sub1_sub2.writeByte((k << 4) + i1);
                 k = -1;
             } else
             {
-                class50_sub1_sub2.method511((k << 4) + (i1 >> 4));
+                class50_sub1_sub2.writeByte((k << 4) + (i1 >> 4));
                 k = i1 & 0xf;
             }
         }
 
         if(k != -1)
-            class50_sub1_sub2.method511(k << 4);
+            class50_sub1_sub2.writeByte(k << 4);
     }
 
     public static String method322(byte byte0, String s)
     {
-        aClass50_Sub1_Sub2_589.anInt1454 = 0;
+        aClass50_Sub1_Sub2_589.position = 0;
         method321(s, 569, aClass50_Sub1_Sub2_589);
-        int i = aClass50_Sub1_Sub2_589.anInt1454;
+        int i = aClass50_Sub1_Sub2_589.position;
         if(byte0 != 0)
         {
             for(int j = 1; j > 0; j++);
         }
-        aClass50_Sub1_Sub2_589.anInt1454 = 0;
+        aClass50_Sub1_Sub2_589.position = 0;
         String s1 = method320(0, aClass50_Sub1_Sub2_589, i);
         return s1;
     }
 
     public static int anInt587 = 20411;
     public static char aCharArray588[] = new char[100];
-    public static Class50_Sub1_Sub2 aClass50_Sub1_Sub2_589 = new Class50_Sub1_Sub2(true, new byte[100]);
+    public static Buffer aClass50_Sub1_Sub2_589 = new Buffer(new byte[100]);
     public static char aCharArray590[] = {
         ' ', 'e', 't', 'a', 'o', 'i', 'h', 'n', 's', 'r', 
         'd', 'l', 'u', 'm', 'w', 'c', 'y', 'f', 'g', 'p', 

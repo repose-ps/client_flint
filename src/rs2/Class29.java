@@ -3,34 +3,35 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class29
 {
 
-    public void method308(byte byte0, Class50_Sub1_Sub2 class50_sub1_sub2)
+    public void method308(byte byte0, Buffer class50_sub1_sub2)
     {
-        anInt579 = class50_sub1_sub2.method521();
+        anInt579 = class50_sub1_sub2.readUnsignedByte();
         if(byte0 == 6)
             byte0 = 0;
         else
             throw new NullPointerException();
-        anInt577 = class50_sub1_sub2.method526();
-        anInt578 = class50_sub1_sub2.method526();
+        anInt577 = class50_sub1_sub2.readInt();
+        anInt578 = class50_sub1_sub2.readInt();
         method309(class50_sub1_sub2, 0);
     }
 
-    public void method309(Class50_Sub1_Sub2 class50_sub1_sub2, int i)
+    public void method309(Buffer class50_sub1_sub2, int i)
     {
-        anInt574 = class50_sub1_sub2.method521();
+        anInt574 = class50_sub1_sub2.readUnsignedByte();
         anIntArray575 = new int[anInt574];
         anIntArray576 = new int[anInt574];
         if(i != 0)
             return;
         for(int j = 0; j < anInt574; j++)
         {
-            anIntArray575[j] = class50_sub1_sub2.method523();
-            anIntArray576[j] = class50_sub1_sub2.method523();
+            anIntArray575[j] = class50_sub1_sub2.readUnsignedShort();
+            anIntArray576[j] = class50_sub1_sub2.readUnsignedShort();
         }
 
     }

@@ -5,6 +5,7 @@ package rs2;
 
 import java.io.PrintStream;
 
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class43
@@ -12,11 +13,11 @@ public class Class43
 
     public static void method371(Class2 class2, int i)
     {
-        Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2(true, class2.method154("varp.dat", null));
+        Buffer class50_sub1_sub2 = new Buffer(class2.method154("varp.dat", null));
         if(i != 36135)
             return;
         anInt705 = 0;
-        anInt703 = class50_sub1_sub2.method523();
+        anInt703 = class50_sub1_sub2.readUnsignedShort();
         if(aClass43Array704 == null)
             aClass43Array704 = new Class43[anInt703];
         if(anIntArray706 == null)
@@ -28,24 +29,24 @@ public class Class43
             aClass43Array704[j].method372(-954, j, class50_sub1_sub2);
         }
 
-        if(class50_sub1_sub2.anInt1454 != class50_sub1_sub2.aByteArray1453.length)
+        if(class50_sub1_sub2.position != class50_sub1_sub2.payload.length)
             System.out.println("varptype load mismatch");
     }
 
-    public void method372(int i, int j, Class50_Sub1_Sub2 class50_sub1_sub2)
+    public void method372(int i, int j, Buffer class50_sub1_sub2)
     {
         if(i >= 0)
             return;
         do
         {
-            int k = class50_sub1_sub2.method521();
+            int k = class50_sub1_sub2.readUnsignedByte();
             if(k == 0)
                 return;
             if(k == 1)
-                anInt708 = class50_sub1_sub2.method521();
+                anInt708 = class50_sub1_sub2.readUnsignedByte();
             else
             if(k == 2)
-                anInt709 = class50_sub1_sub2.method521();
+                anInt709 = class50_sub1_sub2.readUnsignedByte();
             else
             if(k == 3)
             {
@@ -56,13 +57,13 @@ public class Class43
                 aBoolean711 = false;
             else
             if(k == 5)
-                anInt712 = class50_sub1_sub2.method523();
+                anInt712 = class50_sub1_sub2.readUnsignedShort();
             else
             if(k == 6)
                 aBoolean713 = true;
             else
             if(k == 7)
-                anInt714 = class50_sub1_sub2.method526();
+                anInt714 = class50_sub1_sub2.readInt();
             else
             if(k == 8)
             {
@@ -70,13 +71,13 @@ public class Class43
                 aBoolean716 = true;
             } else
             if(k == 10)
-                aString707 = class50_sub1_sub2.method528();
+                aString707 = class50_sub1_sub2.readString();
             else
             if(k == 11)
                 aBoolean716 = true;
             else
             if(k == 12)
-                anInt717 = class50_sub1_sub2.method526();
+                anInt717 = class50_sub1_sub2.readInt();
             else
             if(k == 13)
             {

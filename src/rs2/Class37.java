@@ -4,12 +4,13 @@
 package rs2;
 
 import rs2.collection.LruCache;
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class37
 {
 
-    public void method357(byte byte0, Class50_Sub1_Sub2 class50_sub1_sub2)
+    public void method357(byte byte0, Buffer class50_sub1_sub2)
     {
         if(byte0 == 6)
             byte0 = 0;
@@ -17,116 +18,116 @@ public class Class37
             throw new NullPointerException();
         do
         {
-            int i = class50_sub1_sub2.method521();
+            int i = class50_sub1_sub2.readUnsignedByte();
             if(i == 0)
                 return;
             if(i == 1)
             {
-                int j = class50_sub1_sub2.method521();
+                int j = class50_sub1_sub2.readUnsignedByte();
                 anIntArray626 = new int[j];
                 for(int j1 = 0; j1 < j; j1++)
-                    anIntArray626[j1] = class50_sub1_sub2.method523();
+                    anIntArray626[j1] = class50_sub1_sub2.readUnsignedShort();
 
             } else
             if(i == 2)
-                aString652 = class50_sub1_sub2.method528();
+                aString652 = class50_sub1_sub2.readString();
             else
             if(i == 3)
-                aByteArray660 = class50_sub1_sub2.method529(621);
+                aByteArray660 = class50_sub1_sub2.readStringBytes();
             else
             if(i == 12)
-                aByte642 = class50_sub1_sub2.method522();
+                aByte642 = class50_sub1_sub2.readSignedByte();
             else
             if(i == 13)
-                anInt621 = class50_sub1_sub2.method523();
+                anInt621 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 14)
-                anInt645 = class50_sub1_sub2.method523();
+                anInt645 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 17)
             {
-                anInt645 = class50_sub1_sub2.method523();
-                anInt643 = class50_sub1_sub2.method523();
-                anInt641 = class50_sub1_sub2.method523();
-                anInt633 = class50_sub1_sub2.method523();
+                anInt645 = class50_sub1_sub2.readUnsignedShort();
+                anInt643 = class50_sub1_sub2.readUnsignedShort();
+                anInt641 = class50_sub1_sub2.readUnsignedShort();
+                anInt633 = class50_sub1_sub2.readUnsignedShort();
             } else
             if(i >= 30 && i < 40)
             {
                 if(aStringArray646 == null)
                     aStringArray646 = new String[5];
-                aStringArray646[i - 30] = class50_sub1_sub2.method528();
+                aStringArray646[i - 30] = class50_sub1_sub2.readString();
                 if(aStringArray646[i - 30].equalsIgnoreCase("hidden"))
                     aStringArray646[i - 30] = null;
             } else
             if(i == 40)
             {
-                int k = class50_sub1_sub2.method521();
+                int k = class50_sub1_sub2.readUnsignedByte();
                 anIntArray634 = new int[k];
                 anIntArray656 = new int[k];
                 for(int k1 = 0; k1 < k; k1++)
                 {
-                    anIntArray634[k1] = class50_sub1_sub2.method523();
-                    anIntArray656[k1] = class50_sub1_sub2.method523();
+                    anIntArray634[k1] = class50_sub1_sub2.readUnsignedShort();
+                    anIntArray656[k1] = class50_sub1_sub2.readUnsignedShort();
                 }
 
             } else
             if(i == 60)
             {
-                int l = class50_sub1_sub2.method521();
+                int l = class50_sub1_sub2.readUnsignedByte();
                 anIntArray625 = new int[l];
                 for(int l1 = 0; l1 < l; l1++)
-                    anIntArray625[l1] = class50_sub1_sub2.method523();
+                    anIntArray625[l1] = class50_sub1_sub2.readUnsignedShort();
 
             } else
             if(i == 90)
-                anInt648 = class50_sub1_sub2.method523();
+                anInt648 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 91)
-                anInt627 = class50_sub1_sub2.method523();
+                anInt627 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 92)
-                anInt637 = class50_sub1_sub2.method523();
+                anInt637 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 93)
                 aBoolean636 = false;
             else
             if(i == 95)
-                anInt639 = class50_sub1_sub2.method523();
+                anInt639 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 97)
-                anInt632 = class50_sub1_sub2.method523();
+                anInt632 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 98)
-                anInt630 = class50_sub1_sub2.method523();
+                anInt630 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 99)
                 aBoolean644 = true;
             else
             if(i == 100)
-                anInt663 = class50_sub1_sub2.method522();
+                anInt663 = class50_sub1_sub2.readSignedByte();
             else
             if(i == 101)
-                anInt658 = class50_sub1_sub2.method522() * 5;
+                anInt658 = class50_sub1_sub2.readSignedByte() * 5;
             else
             if(i == 102)
-                anInt638 = class50_sub1_sub2.method523();
+                anInt638 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 103)
-                anInt651 = class50_sub1_sub2.method523();
+                anInt651 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 106)
             {
-                anInt654 = class50_sub1_sub2.method523();
+                anInt654 = class50_sub1_sub2.readUnsignedShort();
                 if(anInt654 == 65535)
                     anInt654 = -1;
-                anInt659 = class50_sub1_sub2.method523();
+                anInt659 = class50_sub1_sub2.readUnsignedShort();
                 if(anInt659 == 65535)
                     anInt659 = -1;
-                int i1 = class50_sub1_sub2.method521();
+                int i1 = class50_sub1_sub2.readUnsignedByte();
                 anIntArray622 = new int[i1 + 1];
                 for(int i2 = 0; i2 <= i1; i2++)
                 {
-                    anIntArray622[i2] = class50_sub1_sub2.method523();
+                    anIntArray622[i2] = class50_sub1_sub2.readUnsignedShort();
                     if(anIntArray622[i2] == 65535)
                         anIntArray622[i2] = -1;
                 }
@@ -213,15 +214,15 @@ public class Class37
 
     public static void method361(Class2 class2)
     {
-        aClass50_Sub1_Sub2_657 = new Class50_Sub1_Sub2(true, class2.method154("npc.dat", null));
-        Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2(true, class2.method154("npc.idx", null));
-        anInt649 = class50_sub1_sub2.method523();
+        aClass50_Sub1_Sub2_657 = new Buffer(class2.method154("npc.dat", null));
+        Buffer class50_sub1_sub2 = new Buffer(class2.method154("npc.idx", null));
+        anInt649 = class50_sub1_sub2.readUnsignedShort();
         anIntArray650 = new int[anInt649];
         int i = 2;
         for(int j = 0; j < anInt649; j++)
         {
             anIntArray650[j] = i;
-            i += class50_sub1_sub2.method523();
+            i += class50_sub1_sub2.readUnsignedShort();
         }
 
         aClass37Array655 = new Class37[20];
@@ -317,7 +318,7 @@ public class Class37
 
         anInt661 = (anInt661 + 1) % 20;
         Class37 class37 = aClass37Array655[anInt661] = new Class37();
-        aClass50_Sub1_Sub2_657.anInt1454 = anIntArray650[i];
+        aClass50_Sub1_Sub2_657.position = anIntArray650[i];
         class37.aLong628 = i;
         class37.method357(aByte653, aClass50_Sub1_Sub2_657);
         return class37;
@@ -389,7 +390,7 @@ public class Class37
     public int anInt654;
     public static Class37 aClass37Array655[];
     public int anIntArray656[];
-    public static Class50_Sub1_Sub2 aClass50_Sub1_Sub2_657;
+    public static Buffer aClass50_Sub1_Sub2_657;
     public int anInt658;
     public int anInt659;
     public byte aByteArray660[];

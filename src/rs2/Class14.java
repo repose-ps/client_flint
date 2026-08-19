@@ -5,6 +5,7 @@ package rs2;
 
 import java.io.PrintStream;
 
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class14
@@ -12,8 +13,8 @@ public class Class14
 
     public static void method204(Class2 class2, int i)
     {
-        Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2(true, class2.method154("seq.dat", null));
-        anInt292 = class50_sub1_sub2.method523();
+        Buffer class50_sub1_sub2 = new Buffer(class2.method154("seq.dat", null));
+        anInt292 = class50_sub1_sub2.readUnsignedShort();
         if(aClass14Array293 == null)
             aClass14Array293 = new Class14[anInt292];
         for(int j = 0; j < anInt292; j++)
@@ -42,7 +43,7 @@ public class Class14
         return k;
     }
 
-    public void method206(byte byte0, Class50_Sub1_Sub2 class50_sub1_sub2)
+    public void method206(byte byte0, Buffer class50_sub1_sub2)
     {
         if(byte0 == 6)
             byte0 = 0;
@@ -50,34 +51,34 @@ public class Class14
             aBoolean291 = !aBoolean291;
         do
         {
-            int i = class50_sub1_sub2.method521();
+            int i = class50_sub1_sub2.readUnsignedByte();
             if(i == 0)
                 break;
             if(i == 1)
             {
-                anInt294 = class50_sub1_sub2.method521();
+                anInt294 = class50_sub1_sub2.readUnsignedByte();
                 anIntArray295 = new int[anInt294];
                 anIntArray296 = new int[anInt294];
                 anIntArray297 = new int[anInt294];
                 for(int j = 0; j < anInt294; j++)
                 {
-                    anIntArray295[j] = class50_sub1_sub2.method523();
-                    anIntArray296[j] = class50_sub1_sub2.method523();
+                    anIntArray295[j] = class50_sub1_sub2.readUnsignedShort();
+                    anIntArray296[j] = class50_sub1_sub2.readUnsignedShort();
                     if(anIntArray296[j] == 65535)
                         anIntArray296[j] = -1;
-                    anIntArray297[j] = class50_sub1_sub2.method523();
+                    anIntArray297[j] = class50_sub1_sub2.readUnsignedShort();
                 }
 
             } else
             if(i == 2)
-                anInt298 = class50_sub1_sub2.method523();
+                anInt298 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 3)
             {
-                int k = class50_sub1_sub2.method521();
+                int k = class50_sub1_sub2.readUnsignedByte();
                 anIntArray299 = new int[k + 1];
                 for(int l = 0; l < k; l++)
-                    anIntArray299[l] = class50_sub1_sub2.method521();
+                    anIntArray299[l] = class50_sub1_sub2.readUnsignedByte();
 
                 anIntArray299[k] = 0x98967f;
             } else
@@ -85,28 +86,28 @@ public class Class14
                 aBoolean300 = true;
             else
             if(i == 5)
-                anInt301 = class50_sub1_sub2.method521();
+                anInt301 = class50_sub1_sub2.readUnsignedByte();
             else
             if(i == 6)
-                anInt302 = class50_sub1_sub2.method523();
+                anInt302 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 7)
-                anInt303 = class50_sub1_sub2.method523();
+                anInt303 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 8)
-                anInt304 = class50_sub1_sub2.method521();
+                anInt304 = class50_sub1_sub2.readUnsignedByte();
             else
             if(i == 9)
-                anInt305 = class50_sub1_sub2.method521();
+                anInt305 = class50_sub1_sub2.readUnsignedByte();
             else
             if(i == 10)
-                anInt306 = class50_sub1_sub2.method521();
+                anInt306 = class50_sub1_sub2.readUnsignedByte();
             else
             if(i == 11)
-                anInt307 = class50_sub1_sub2.method521();
+                anInt307 = class50_sub1_sub2.readUnsignedByte();
             else
             if(i == 12)
-                anInt308 = class50_sub1_sub2.method526();
+                anInt308 = class50_sub1_sub2.readInt();
             else
                 System.out.println("Error unrecognised seq config code: " + i);
         } while(true);

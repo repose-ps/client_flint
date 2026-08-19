@@ -3,6 +3,8 @@
  */
 package rs2;
 
+import rs2.net.Buffer;
+
 public class Class8
 {
   public byte[][][] aByteArrayArrayArray138;
@@ -945,7 +947,7 @@ public class Class8
 		&= ~0x1000000;
 	  }
       }
-    Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2 (true, is);
+    Buffer class50_sub1_sub2 = new Buffer (is);
     for (int i_156_ = 0; i_156_ < 4; i_156_++)
       {
 	for (int i_157_ = 0; i_157_ < 64; i_157_++)
@@ -971,14 +973,14 @@ public class Class8
   }
   
   public static void method169 (Class32_Sub1 class32_sub1,
-				Class50_Sub1_Sub2 class50_sub1_sub2, byte i)
+				Buffer class50_sub1_sub2, byte i)
   {
     if (i == -3)
       {
 	int i_159_ = -1;
 	for (;;)
 	  {
-	    int i_160_ = class50_sub1_sub2.method535 ();
+	    int i_160_ = class50_sub1_sub2.readUnsignedSmart ();
 	    if (i_160_ == 0)
 	      break;
 	    i_159_ += i_160_;
@@ -986,10 +988,10 @@ public class Class8
 	    class47.method425 (class32_sub1, -747);
 	    for (;;)
 	      {
-		int i_161_ = class50_sub1_sub2.method535 ();
+		int i_161_ = class50_sub1_sub2.readUnsignedSmart ();
 		if (i_161_ == 0)
 		  break;
-		class50_sub1_sub2.method521 ();
+		class50_sub1_sub2.readUnsignedByte ();
 	      }
 	  }
       }
@@ -1028,27 +1030,27 @@ public class Class8
 			 boolean bool, byte[] is, int i_166_, int i_167_,
 			 int i_168_, int i_169_, int i_170_, int i_171_)
   {
-    Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2 (true, is);
+    Buffer class50_sub1_sub2 = new Buffer (is);
     if (! bool)
       {
 	int i_172_ = -1;
 	for (;;)
 	  {
-	    int i_173_ = class50_sub1_sub2.method535 ();
+	    int i_173_ = class50_sub1_sub2.readUnsignedSmart ();
 	    if (i_173_ == 0)
 	      break;
 	    i_172_ += i_173_;
 	    int i_174_ = 0;
 	    for (;;)
 	      {
-		int i_175_ = class50_sub1_sub2.method535 ();
+		int i_175_ = class50_sub1_sub2.readUnsignedSmart ();
 		if (i_175_ == 0)
 		  break;
 		i_174_ += i_175_ - 1;
 		int i_176_ = i_174_ & 0x3f;
 		int i_177_ = i_174_ >> 6 & 0x3f;
 		int i_178_ = i_174_ >> 12;
-		int i_179_ = class50_sub1_sub2.method521 ();
+		int i_179_ = class50_sub1_sub2.readUnsignedByte ();
 		int i_180_ = i_179_ >> 2;
 		int i_181_ = i_179_ & 0x3;
 		if (i_178_ == i_171_ && i_177_ >= i_168_ && i_177_ < i_168_ + 8
@@ -1545,7 +1547,7 @@ public class Class8
 	      }
 	  }
       }
-    Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2 (true, is);
+    Buffer class50_sub1_sub2 = new Buffer (is);
     for (int i_217_ = 0; i_217_ < 4; i_217_++)
       {
 	for (int i_218_ = 0; i_218_ < 64; i_218_++)
@@ -1628,25 +1630,25 @@ public class Class8
   {
     if (i_238_ < 0)
       {
-	Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2 (true, is);
+	Buffer class50_sub1_sub2 = new Buffer (is);
 	int i_239_ = -1;
 	for (;;)
 	  {
-	    int i_240_ = class50_sub1_sub2.method535 ();
+	    int i_240_ = class50_sub1_sub2.readUnsignedSmart ();
 	    if (i_240_ == 0)
 	      break;
 	    i_239_ += i_240_;
 	    int i_241_ = 0;
 	    for (;;)
 	      {
-		int i_242_ = class50_sub1_sub2.method535 ();
+		int i_242_ = class50_sub1_sub2.readUnsignedSmart ();
 		if (i_242_ == 0)
 		  break;
 		i_241_ += i_242_ - 1;
 		int i_243_ = i_241_ & 0x3f;
 		int i_244_ = i_241_ >> 6 & 0x3f;
 		int i_245_ = i_241_ >> 12;
-		int i_246_ = class50_sub1_sub2.method521 ();
+		int i_246_ = class50_sub1_sub2.readUnsignedByte ();
 		int i_247_ = i_246_ >> 2;
 		int i_248_ = i_246_ & 0x3;
 		int i_249_ = i_244_ + i_237_;
@@ -1701,13 +1703,13 @@ public class Class8
   public static boolean method181 (int i, int i_258_, byte[] is, int i_259_)
   {
     boolean bool = true;
-    Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2 (true, is);
+    Buffer class50_sub1_sub2 = new Buffer (is);
     if (i_259_ != 24515)
       throw new NullPointerException ();
     int i_260_ = -1;
     for (;;)
       {
-	int i_261_ = class50_sub1_sub2.method535 ();
+	int i_261_ = class50_sub1_sub2.readUnsignedSmart ();
 	if (i_261_ == 0)
 	  break;
 	i_260_ += i_261_;
@@ -1717,20 +1719,20 @@ public class Class8
 	  {
 	    if (bool_263_)
 	      {
-		int i_264_ = class50_sub1_sub2.method535 ();
+		int i_264_ = class50_sub1_sub2.readUnsignedSmart ();
 		if (i_264_ == 0)
 		  break;
-		class50_sub1_sub2.method521 ();
+		class50_sub1_sub2.readUnsignedByte ();
 	      }
 	    else
 	      {
-		int i_265_ = class50_sub1_sub2.method535 ();
+		int i_265_ = class50_sub1_sub2.readUnsignedSmart ();
 		if (i_265_ == 0)
 		  break;
 		i_262_ += i_265_ - 1;
 		int i_266_ = i_262_ & 0x3f;
 		int i_267_ = i_262_ >> 6 & 0x3f;
-		int i_268_ = class50_sub1_sub2.method521 () >> 2;
+		int i_268_ = class50_sub1_sub2.readUnsignedByte () >> 2;
 		int i_269_ = i_267_ + i;
 		int i_270_ = i_266_ + i_258_;
 		if (i_269_ > 0 && i_270_ > 0 && i_269_ < 103 && i_270_ < 103)
@@ -1771,7 +1773,7 @@ public class Class8
   }
   
   public void method183 (int i, byte i_272_, int i_273_,
-			 Class50_Sub1_Sub2 class50_sub1_sub2, int i_274_,
+			 Buffer class50_sub1_sub2, int i_274_,
 			 int i_275_, int i_276_, int i_277_)
   {
     if (i_272_ != -61)
@@ -1781,7 +1783,7 @@ public class Class8
 	aByteArrayArrayArray138[i_276_][i_275_][i_277_] = (byte) 0;
 	for (;;)
 	  {
-	    int i_278_ = class50_sub1_sub2.method521 ();
+	    int i_278_ = class50_sub1_sub2.readUnsignedByte ();
 	    if (i_278_ == 0)
 	      {
 		if (i_276_ == 0)
@@ -1799,7 +1801,7 @@ public class Class8
 	      }
 	    if (i_278_ == 1)
 	      {
-		int i_279_ = class50_sub1_sub2.method521 ();
+		int i_279_ = class50_sub1_sub2.readUnsignedByte ();
 		if (i_279_ == 1)
 		  i_279_ = 0;
 		if (i_276_ == 0)
@@ -1816,7 +1818,7 @@ public class Class8
 	    if (i_278_ <= 49)
 	      {
 		aByteArrayArrayArray155[i_276_][i_275_][i_277_]
-		  = class50_sub1_sub2.method522 ();
+		  = class50_sub1_sub2.readSignedByte ();
 		aByteArrayArrayArray153[i_276_][i_275_][i_277_]
 		  = (byte) ((i_278_ - 2) / 4);
 		aByteArrayArrayArray142[i_276_][i_275_][i_277_]
@@ -1834,16 +1836,16 @@ public class Class8
       {
 	for (;;)
 	  {
-	    int i_280_ = class50_sub1_sub2.method521 ();
+	    int i_280_ = class50_sub1_sub2.readUnsignedByte ();
 	    if (i_280_ == 0)
 	      break;
 	    if (i_280_ == 1)
 	      {
-		class50_sub1_sub2.method521 ();
+		class50_sub1_sub2.readUnsignedByte ();
 		break;
 	      }
 	    if (i_280_ <= 49)
-	      class50_sub1_sub2.method521 ();
+	      class50_sub1_sub2.readUnsignedByte ();
 	  }
       }
   }

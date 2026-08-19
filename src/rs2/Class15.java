@@ -5,6 +5,7 @@ package rs2;
 
 import java.io.PrintStream;
 
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class15
@@ -14,8 +15,8 @@ public class Class15
     {
         if(i != 36135)
             return;
-        Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2(true, class2.method154("flo.dat", null));
-        anInt313 = class50_sub1_sub2.method523();
+        Buffer class50_sub1_sub2 = new Buffer(class2.method154("flo.dat", null));
+        anInt313 = class50_sub1_sub2.readUnsignedShort();
         if(aClass15Array314 == null)
             aClass15Array314 = new Class15[anInt313];
         for(int j = 0; j < anInt313; j++)
@@ -27,7 +28,7 @@ public class Class15
 
     }
 
-    public void method208(byte byte0, Class50_Sub1_Sub2 class50_sub1_sub2)
+    public void method208(byte byte0, Buffer class50_sub1_sub2)
     {
         if(byte0 == 6)
         {
@@ -38,16 +39,16 @@ public class Class15
         }
         do
         {
-            int j = class50_sub1_sub2.method521();
+            int j = class50_sub1_sub2.readUnsignedByte();
             if(j == 0)
                 return;
             if(j == 1)
             {
-                anInt316 = class50_sub1_sub2.method525();
+                anInt316 = class50_sub1_sub2.readMedium();
                 method209(true, anInt316);
             } else
             if(j == 2)
-                anInt317 = class50_sub1_sub2.method521();
+                anInt317 = class50_sub1_sub2.readUnsignedByte();
             else
             if(j == 3)
                 aBoolean318 = true;
@@ -56,7 +57,7 @@ public class Class15
                 aBoolean319 = false;
             else
             if(j == 6)
-                aString315 = class50_sub1_sub2.method528();
+                aString315 = class50_sub1_sub2.readString();
             else
             if(j == 7)
             {
@@ -64,7 +65,7 @@ public class Class15
                 int l = anInt321;
                 int i1 = anInt322;
                 int j1 = anInt323;
-                int k1 = class50_sub1_sub2.method525();
+                int k1 = class50_sub1_sub2.readMedium();
                 method209(true, k1);
                 anInt320 = k;
                 anInt321 = l;

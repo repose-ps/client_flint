@@ -4,6 +4,7 @@
 package rs2;
 
 import rs2.collection.LruCache;
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class47
@@ -17,7 +18,7 @@ public class Class47
 
         anInt777 = (anInt777 + 1) % 20;
         Class47 class47 = aClass47Array782[anInt777];
-        aClass50_Sub1_Sub2_767.anInt1454 = anIntArray758[i];
+        aClass50_Sub1_Sub2_767.position = anIntArray758[i];
         class47.anInt773 = i;
         class47.method429();
         class47.method430(aByte800, aClass50_Sub1_Sub2_767);
@@ -61,15 +62,15 @@ public class Class47
 
     public static void method426(Class2 class2)
     {
-        aClass50_Sub1_Sub2_767 = new Class50_Sub1_Sub2(true, class2.method154("loc.dat", null));
-        Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2(true, class2.method154("loc.idx", null));
-        anInt808 = class50_sub1_sub2.method523();
+        aClass50_Sub1_Sub2_767 = new Buffer(class2.method154("loc.dat", null));
+        Buffer class50_sub1_sub2 = new Buffer(class2.method154("loc.idx", null));
+        anInt808 = class50_sub1_sub2.readUnsignedShort();
         anIntArray758 = new int[anInt808];
         int i = 2;
         for(int j = 0; j < anInt808; j++)
         {
             anIntArray758[j] = i;
-            i += class50_sub1_sub2.method523();
+            i += class50_sub1_sub2.readUnsignedShort();
         }
 
         aClass47Array782 = new Class47[20];
@@ -239,7 +240,7 @@ public class Class47
         anIntArray805 = null;
     }
 
-    public void method430(byte byte0, Class50_Sub1_Sub2 class50_sub1_sub2)
+    public void method430(byte byte0, Buffer class50_sub1_sub2)
     {
         int i = -1;
         if(byte0 != 6)
@@ -250,12 +251,12 @@ label0:
             int j;
             do
             {
-                j = class50_sub1_sub2.method521();
+                j = class50_sub1_sub2.readUnsignedByte();
                 if(j == 0)
                     break label0;
                 if(j == 1)
                 {
-                    int k = class50_sub1_sub2.method521();
+                    int k = class50_sub1_sub2.readUnsignedByte();
                     if(k > 0)
                         if(anIntArray763 == null || aBoolean772)
                         {
@@ -263,42 +264,42 @@ label0:
                             anIntArray763 = new int[k];
                             for(int k1 = 0; k1 < k; k1++)
                             {
-                                anIntArray763[k1] = class50_sub1_sub2.method523();
-                                anIntArray789[k1] = class50_sub1_sub2.method521();
+                                anIntArray763[k1] = class50_sub1_sub2.readUnsignedShort();
+                                anIntArray789[k1] = class50_sub1_sub2.readUnsignedByte();
                             }
 
                         } else
                         {
-                            class50_sub1_sub2.anInt1454 += k * 3;
+                            class50_sub1_sub2.position += k * 3;
                         }
                 } else
                 if(j == 2)
-                    aString776 = class50_sub1_sub2.method528();
+                    aString776 = class50_sub1_sub2.readString();
                 else
                 if(j == 3)
-                    aByteArray783 = class50_sub1_sub2.method529(621);
+                    aByteArray783 = class50_sub1_sub2.readStringBytes();
                 else
                 if(j == 5)
                 {
-                    int l = class50_sub1_sub2.method521();
+                    int l = class50_sub1_sub2.readUnsignedByte();
                     if(l > 0)
                         if(anIntArray763 == null || aBoolean772)
                         {
                             anIntArray789 = null;
                             anIntArray763 = new int[l];
                             for(int l1 = 0; l1 < l; l1++)
-                                anIntArray763[l1] = class50_sub1_sub2.method523();
+                                anIntArray763[l1] = class50_sub1_sub2.readUnsignedShort();
 
                         } else
                         {
-                            class50_sub1_sub2.anInt1454 += l * 2;
+                            class50_sub1_sub2.position += l * 2;
                         }
                 } else
                 if(j == 14)
-                    anInt801 = class50_sub1_sub2.method521();
+                    anInt801 = class50_sub1_sub2.readUnsignedByte();
                 else
                 if(j == 15)
-                    anInt775 = class50_sub1_sub2.method521();
+                    anInt775 = class50_sub1_sub2.readUnsignedByte();
                 else
                 if(j == 17)
                     aBoolean810 = false;
@@ -308,7 +309,7 @@ label0:
                 else
                 if(j == 19)
                 {
-                    i = class50_sub1_sub2.method521();
+                    i = class50_sub1_sub2.readUnsignedByte();
                     if(i == 1)
                         aBoolean759 = true;
                 } else
@@ -323,41 +324,41 @@ label0:
                 else
                 if(j == 24)
                 {
-                    anInt803 = class50_sub1_sub2.method523();
+                    anInt803 = class50_sub1_sub2.readUnsignedShort();
                     if(anInt803 == 65535)
                         anInt803 = -1;
                 } else
                 if(j == 28)
-                    anInt802 = class50_sub1_sub2.method521();
+                    anInt802 = class50_sub1_sub2.readUnsignedByte();
                 else
                 if(j == 29)
-                    aByte784 = class50_sub1_sub2.method522();
+                    aByte784 = class50_sub1_sub2.readSignedByte();
                 else
                 if(j == 39)
-                    aByte787 = class50_sub1_sub2.method522();
+                    aByte787 = class50_sub1_sub2.readSignedByte();
                 else
                 if(j >= 30 && j < 39)
                 {
                     if(aStringArray790 == null)
                         aStringArray790 = new String[5];
-                    aStringArray790[j - 30] = class50_sub1_sub2.method528();
+                    aStringArray790[j - 30] = class50_sub1_sub2.readString();
                     if(aStringArray790[j - 30].equalsIgnoreCase("hidden"))
                         aStringArray790[j - 30] = null;
                 } else
                 if(j == 40)
                 {
-                    int i1 = class50_sub1_sub2.method521();
+                    int i1 = class50_sub1_sub2.readUnsignedByte();
                     anIntArray799 = new int[i1];
                     anIntArray792 = new int[i1];
                     for(int i2 = 0; i2 < i1; i2++)
                     {
-                        anIntArray799[i2] = class50_sub1_sub2.method523();
-                        anIntArray792[i2] = class50_sub1_sub2.method523();
+                        anIntArray799[i2] = class50_sub1_sub2.readUnsignedShort();
+                        anIntArray792[i2] = class50_sub1_sub2.readUnsignedShort();
                     }
 
                 } else
                 if(j == 60)
-                    anInt806 = class50_sub1_sub2.method523();
+                    anInt806 = class50_sub1_sub2.readUnsignedShort();
                 else
                 if(j == 62)
                     aBoolean798 = true;
@@ -366,28 +367,28 @@ label0:
                     aBoolean807 = false;
                 else
                 if(j == 65)
-                    anInt780 = class50_sub1_sub2.method523();
+                    anInt780 = class50_sub1_sub2.readUnsignedShort();
                 else
                 if(j == 66)
-                    anInt760 = class50_sub1_sub2.method523();
+                    anInt760 = class50_sub1_sub2.readUnsignedShort();
                 else
                 if(j == 67)
-                    anInt796 = class50_sub1_sub2.method523();
+                    anInt796 = class50_sub1_sub2.readUnsignedShort();
                 else
                 if(j == 68)
-                    anInt795 = class50_sub1_sub2.method523();
+                    anInt795 = class50_sub1_sub2.readUnsignedShort();
                 else
                 if(j == 69)
-                    anInt764 = class50_sub1_sub2.method521();
+                    anInt764 = class50_sub1_sub2.readUnsignedByte();
                 else
                 if(j == 70)
-                    anInt761 = class50_sub1_sub2.method524();
+                    anInt761 = class50_sub1_sub2.readSignedShort();
                 else
                 if(j == 71)
-                    anInt785 = class50_sub1_sub2.method524();
+                    anInt785 = class50_sub1_sub2.readSignedShort();
                 else
                 if(j == 72)
-                    anInt766 = class50_sub1_sub2.method524();
+                    anInt766 = class50_sub1_sub2.readSignedShort();
                 else
                 if(j == 73)
                     aBoolean765 = true;
@@ -399,21 +400,21 @@ label0:
                 {
                     if(j != 75)
                         continue;
-                    anInt794 = class50_sub1_sub2.method521();
+                    anInt794 = class50_sub1_sub2.readUnsignedByte();
                 }
                 continue label0;
             } while(j != 77);
-            anInt778 = class50_sub1_sub2.method523();
+            anInt778 = class50_sub1_sub2.readUnsignedShort();
             if(anInt778 == 65535)
                 anInt778 = -1;
-            anInt781 = class50_sub1_sub2.method523();
+            anInt781 = class50_sub1_sub2.readUnsignedShort();
             if(anInt781 == 65535)
                 anInt781 = -1;
-            int j1 = class50_sub1_sub2.method521();
+            int j1 = class50_sub1_sub2.readUnsignedByte();
             anIntArray805 = new int[j1 + 1];
             for(int j2 = 0; j2 <= j1; j2++)
             {
-                anIntArray805[j2] = class50_sub1_sub2.method523();
+                anIntArray805[j2] = class50_sub1_sub2.readUnsignedShort();
                 if(anIntArray805[j2] == 65535)
                     anIntArray805[j2] = -1;
             }
@@ -516,7 +517,7 @@ label0:
     public int anInt764;
     public boolean aBoolean765;
     public int anInt766;
-    public static Class50_Sub1_Sub2 aClass50_Sub1_Sub2_767;
+    public static Buffer aClass50_Sub1_Sub2_767;
     public int anInt768;
     public boolean aBoolean769;
     public static client aClient770;

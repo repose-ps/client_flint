@@ -3,6 +3,7 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class38
@@ -17,16 +18,16 @@ public class Class38
 
     }
 
-    public static void method365(Class50_Sub1_Sub2 class50_sub1_sub2, int i)
+    public static void method365(Buffer class50_sub1_sub2, int i)
     {
         if(i != 36135)
             return;
         aByteArray670 = new byte[0x6baa8];
-        aClass50_Sub1_Sub2_671 = new Class50_Sub1_Sub2(true, aByteArray670);
+        aClass50_Sub1_Sub2_671 = new Buffer(aByteArray670);
         Class11.method190();
         do
         {
-            int j = class50_sub1_sub2.method523();
+            int j = class50_sub1_sub2.readUnsignedShort();
             if(j == 65535)
                 return;
             aClass38Array668[j] = new Class38(-524);
@@ -35,7 +36,7 @@ public class Class38
         } while(true);
     }
 
-    public static Class50_Sub1_Sub2 method366(int i, byte byte0, int j)
+    public static Buffer method366(int i, byte byte0, int j)
     {
         if(byte0 != 6)
             aBoolean667 = !aBoolean667;
@@ -49,21 +50,21 @@ public class Class38
         }
     }
 
-    public void method367(byte byte0, Class50_Sub1_Sub2 class50_sub1_sub2)
+    public void method367(byte byte0, Buffer class50_sub1_sub2)
     {
         for(int i = 0; i < 10; i++)
         {
-            int j = class50_sub1_sub2.method521();
+            int j = class50_sub1_sub2.readUnsignedByte();
             if(j != 0)
             {
-                class50_sub1_sub2.anInt1454--;
+                class50_sub1_sub2.position--;
                 aClass11Array672[i] = new Class11();
                 aClass11Array672[i].method193(aByte664, class50_sub1_sub2);
             }
         }
 
-        anInt673 = class50_sub1_sub2.method523();
-        anInt674 = class50_sub1_sub2.method523();
+        anInt673 = class50_sub1_sub2.readUnsignedShort();
+        anInt674 = class50_sub1_sub2.readUnsignedShort();
         if(byte0 == 6)
         {
             byte0 = 0;
@@ -100,29 +101,29 @@ public class Class38
         return j;
     }
 
-    public Class50_Sub1_Sub2 method369(int i, int j)
+    public Buffer method369(int i, int j)
     {
         int k = method370(j);
-        aClass50_Sub1_Sub2_671.anInt1454 = 0;
-        aClass50_Sub1_Sub2_671.method515(0x52494646);
-        aClass50_Sub1_Sub2_671.method516(36 + k, false);
-        aClass50_Sub1_Sub2_671.method515(0x57415645);
-        aClass50_Sub1_Sub2_671.method515(0x666d7420);
+        aClass50_Sub1_Sub2_671.position = 0;
+        aClass50_Sub1_Sub2_671.writeInt(0x52494646);
+        aClass50_Sub1_Sub2_671.writeIntLE(36 + k);
+        aClass50_Sub1_Sub2_671.writeInt(0x57415645);
+        aClass50_Sub1_Sub2_671.writeInt(0x666d7420);
         if(i >= 0)
         {
             throw new NullPointerException();
         } else
         {
-            aClass50_Sub1_Sub2_671.method516(16, false);
-            aClass50_Sub1_Sub2_671.method513(1, false);
-            aClass50_Sub1_Sub2_671.method513(1, false);
-            aClass50_Sub1_Sub2_671.method516(22050, false);
-            aClass50_Sub1_Sub2_671.method516(22050, false);
-            aClass50_Sub1_Sub2_671.method513(1, false);
-            aClass50_Sub1_Sub2_671.method513(8, false);
-            aClass50_Sub1_Sub2_671.method515(0x64617461);
-            aClass50_Sub1_Sub2_671.method516(k, false);
-            aClass50_Sub1_Sub2_671.anInt1454 += k;
+            aClass50_Sub1_Sub2_671.writeIntLE(16);
+            aClass50_Sub1_Sub2_671.writeShortLE(1);
+            aClass50_Sub1_Sub2_671.writeShortLE(1);
+            aClass50_Sub1_Sub2_671.writeIntLE(22050);
+            aClass50_Sub1_Sub2_671.writeIntLE(22050);
+            aClass50_Sub1_Sub2_671.writeShortLE(1);
+            aClass50_Sub1_Sub2_671.writeShortLE(8);
+            aClass50_Sub1_Sub2_671.writeInt(0x64617461);
+            aClass50_Sub1_Sub2_671.writeIntLE(k);
+            aClass50_Sub1_Sub2_671.position += k;
             return aClass50_Sub1_Sub2_671;
         }
     }
@@ -190,7 +191,7 @@ public class Class38
     public static Class38 aClass38Array668[] = new Class38[5000];
     public static int anIntArray669[] = new int[5000];
     public static byte aByteArray670[];
-    public static Class50_Sub1_Sub2 aClass50_Sub1_Sub2_671;
+    public static Buffer aClass50_Sub1_Sub2_671;
     public Class11 aClass11Array672[];
     public int anInt673;
     public int anInt674;

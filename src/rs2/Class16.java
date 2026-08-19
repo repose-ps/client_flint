@@ -4,6 +4,7 @@
 package rs2;
 
 import rs2.collection.LruCache;
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class16
@@ -38,7 +39,7 @@ public class Class16
 
         anInt352 = (anInt352 + 1) % 10;
         Class16 class16 = aClass16Array336[anInt352];
-        aClass50_Sub1_Sub2_373.anInt1454 = anIntArray342[i];
+        aClass50_Sub1_Sub2_373.position = anIntArray342[i];
         class16.anInt363 = i;
         class16.method223();
         class16.method218(aByte347, aClass50_Sub1_Sub2_373);
@@ -103,15 +104,15 @@ public class Class16
 
     public static void method214(Class2 class2)
     {
-        aClass50_Sub1_Sub2_373 = new Class50_Sub1_Sub2(true, class2.method154("obj.dat", null));
-        Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2(true, class2.method154("obj.idx", null));
-        anInt335 = class50_sub1_sub2.method523();
+        aClass50_Sub1_Sub2_373 = new Buffer(class2.method154("obj.dat", null));
+        Buffer class50_sub1_sub2 = new Buffer(class2.method154("obj.idx", null));
+        anInt335 = class50_sub1_sub2.readUnsignedShort();
         anIntArray342 = new int[anInt335];
         int i = 2;
         for(int j = 0; j < anInt335; j++)
         {
             anIntArray342[j] = i;
-            i += class50_sub1_sub2.method523();
+            i += class50_sub1_sub2.readUnsignedShort();
         }
 
         aClass16Array336 = new Class16[10];
@@ -199,78 +200,78 @@ public class Class16
         return class50_sub1_sub4_sub4;
     }
 
-    public void method218(byte byte0, Class50_Sub1_Sub2 class50_sub1_sub2)
+    public void method218(byte byte0, Buffer class50_sub1_sub2)
     {
         if(byte0 != 6)
             aBoolean349 = !aBoolean349;
         do
         {
-            int i = class50_sub1_sub2.method521();
+            int i = class50_sub1_sub2.readUnsignedByte();
             if(i == 0)
                 return;
             if(i == 1)
-                anInt360 = class50_sub1_sub2.method523();
+                anInt360 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 2)
-                aString329 = class50_sub1_sub2.method528();
+                aString329 = class50_sub1_sub2.readString();
             else
             if(i == 3)
-                aByteArray328 = class50_sub1_sub2.method529(621);
+                aByteArray328 = class50_sub1_sub2.readStringBytes();
             else
             if(i == 4)
-                anInt369 = class50_sub1_sub2.method523();
+                anInt369 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 5)
-                anInt359 = class50_sub1_sub2.method523();
+                anInt359 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 6)
-                anInt356 = class50_sub1_sub2.method523();
+                anInt356 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 7)
             {
-                anInt327 = class50_sub1_sub2.method523();
+                anInt327 = class50_sub1_sub2.readUnsignedShort();
                 if(anInt327 > 32767)
                     anInt327 -= 0x10000;
             } else
             if(i == 8)
             {
-                anInt340 = class50_sub1_sub2.method523();
+                anInt340 = class50_sub1_sub2.readUnsignedShort();
                 if(anInt340 > 32767)
                     anInt340 -= 0x10000;
             } else
             if(i == 10)
-                anInt372 = class50_sub1_sub2.method523();
+                anInt372 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 11)
                 aBoolean371 = true;
             else
             if(i == 12)
-                anInt345 = class50_sub1_sub2.method526();
+                anInt345 = class50_sub1_sub2.readInt();
             else
             if(i == 16)
                 aBoolean377 = true;
             else
             if(i == 23)
             {
-                anInt353 = class50_sub1_sub2.method523();
-                aByte378 = class50_sub1_sub2.method522();
+                anInt353 = class50_sub1_sub2.readUnsignedShort();
+                aByte378 = class50_sub1_sub2.readSignedByte();
             } else
             if(i == 24)
-                anInt331 = class50_sub1_sub2.method523();
+                anInt331 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 25)
             {
-                anInt326 = class50_sub1_sub2.method523();
-                aByte330 = class50_sub1_sub2.method522();
+                anInt326 = class50_sub1_sub2.readUnsignedShort();
+                aByte330 = class50_sub1_sub2.readSignedByte();
             } else
             if(i == 26)
-                anInt355 = class50_sub1_sub2.method523();
+                anInt355 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i >= 30 && i < 35)
             {
                 if(aStringArray338 == null)
                     aStringArray338 = new String[5];
-                aStringArray338[i - 30] = class50_sub1_sub2.method528();
+                aStringArray338[i - 30] = class50_sub1_sub2.readString();
                 if(aStringArray338[i - 30].equalsIgnoreCase("hidden"))
                     aStringArray338[i - 30] = null;
             } else
@@ -278,46 +279,46 @@ public class Class16
             {
                 if(aStringArray348 == null)
                     aStringArray348 = new String[5];
-                aStringArray348[i - 35] = class50_sub1_sub2.method528();
+                aStringArray348[i - 35] = class50_sub1_sub2.readString();
             } else
             if(i == 40)
             {
-                int j = class50_sub1_sub2.method521();
+                int j = class50_sub1_sub2.readUnsignedByte();
                 anIntArray364 = new int[j];
                 anIntArray341 = new int[j];
                 for(int k = 0; k < j; k++)
                 {
-                    anIntArray364[k] = class50_sub1_sub2.method523();
-                    anIntArray341[k] = class50_sub1_sub2.method523();
+                    anIntArray364[k] = class50_sub1_sub2.readUnsignedShort();
+                    anIntArray341[k] = class50_sub1_sub2.readUnsignedShort();
                 }
 
             } else
             if(i == 78)
-                anInt370 = class50_sub1_sub2.method523();
+                anInt370 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 79)
-                anInt367 = class50_sub1_sub2.method523();
+                anInt367 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 90)
-                anInt334 = class50_sub1_sub2.method523();
+                anInt334 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 91)
-                anInt375 = class50_sub1_sub2.method523();
+                anInt375 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 92)
-                anInt361 = class50_sub1_sub2.method523();
+                anInt361 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 93)
-                anInt362 = class50_sub1_sub2.method523();
+                anInt362 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 95)
-                anInt339 = class50_sub1_sub2.method523();
+                anInt339 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 97)
-                anInt333 = class50_sub1_sub2.method523();
+                anInt333 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 98)
-                anInt343 = class50_sub1_sub2.method523();
+                anInt343 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i >= 100 && i < 110)
             {
@@ -326,26 +327,26 @@ public class Class16
                     anIntArray365 = new int[10];
                     anIntArray376 = new int[10];
                 }
-                anIntArray365[i - 100] = class50_sub1_sub2.method523();
-                anIntArray376[i - 100] = class50_sub1_sub2.method523();
+                anIntArray365[i - 100] = class50_sub1_sub2.readUnsignedShort();
+                anIntArray376[i - 100] = class50_sub1_sub2.readUnsignedShort();
             } else
             if(i == 110)
-                anInt366 = class50_sub1_sub2.method523();
+                anInt366 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 111)
-                anInt357 = class50_sub1_sub2.method523();
+                anInt357 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 112)
-                anInt368 = class50_sub1_sub2.method523();
+                anInt368 = class50_sub1_sub2.readUnsignedShort();
             else
             if(i == 113)
-                anInt354 = class50_sub1_sub2.method522();
+                anInt354 = class50_sub1_sub2.readSignedByte();
             else
             if(i == 114)
-                anInt358 = class50_sub1_sub2.method522() * 5;
+                anInt358 = class50_sub1_sub2.readSignedByte() * 5;
             else
             if(i == 115)
-                anInt332 = class50_sub1_sub2.method521();
+                anInt332 = class50_sub1_sub2.readUnsignedByte();
         } while(true);
     }
 
@@ -661,7 +662,7 @@ public class Class16
     public int anInt370;
     public boolean aBoolean371;
     public int anInt372;
-    public static Class50_Sub1_Sub2 aClass50_Sub1_Sub2_373;
+    public static Buffer aClass50_Sub1_Sub2_373;
     public boolean aBoolean374;
     public int anInt375;
     public int anIntArray376[];

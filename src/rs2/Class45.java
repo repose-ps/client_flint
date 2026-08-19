@@ -3,6 +3,7 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class45
@@ -10,14 +11,14 @@ public class Class45
 
     public static void method373(Class2 class2)
     {
-        Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2(true, class2.method154("fragmentsenc.txt", null));
-        Class50_Sub1_Sub2 class50_sub1_sub2_1 = new Class50_Sub1_Sub2(true, class2.method154("badenc.txt", null));
-        Class50_Sub1_Sub2 class50_sub1_sub2_2 = new Class50_Sub1_Sub2(true, class2.method154("domainenc.txt", null));
-        Class50_Sub1_Sub2 class50_sub1_sub2_3 = new Class50_Sub1_Sub2(true, class2.method154("tldlist.txt", null));
+        Buffer class50_sub1_sub2 = new Buffer(class2.method154("fragmentsenc.txt", null));
+        Buffer class50_sub1_sub2_1 = new Buffer(class2.method154("badenc.txt", null));
+        Buffer class50_sub1_sub2_2 = new Buffer(class2.method154("domainenc.txt", null));
+        Buffer class50_sub1_sub2_3 = new Buffer(class2.method154("tldlist.txt", null));
         method374(class50_sub1_sub2, class50_sub1_sub2_1, class50_sub1_sub2_2, class50_sub1_sub2_3);
     }
 
-    public static void method374(Class50_Sub1_Sub2 class50_sub1_sub2, Class50_Sub1_Sub2 class50_sub1_sub2_1, Class50_Sub1_Sub2 class50_sub1_sub2_2, Class50_Sub1_Sub2 class50_sub1_sub2_3)
+    public static void method374(Buffer class50_sub1_sub2, Buffer class50_sub1_sub2_1, Buffer class50_sub1_sub2_2, Buffer class50_sub1_sub2_3)
     {
         method376(true, class50_sub1_sub2_1);
         method377(20529, class50_sub1_sub2_2);
@@ -25,17 +26,17 @@ public class Class45
         method375(class50_sub1_sub2_3, -7305);
     }
 
-    public static void method375(Class50_Sub1_Sub2 class50_sub1_sub2, int i)
+    public static void method375(Buffer class50_sub1_sub2, int i)
     {
-        int j = class50_sub1_sub2.method526();
+        int j = class50_sub1_sub2.readInt();
         aCharArrayArray744 = new char[j][];
         anIntArray745 = new int[j];
         for(int k = 0; k < j; k++)
         {
-            anIntArray745[k] = class50_sub1_sub2.method521();
-            char ac[] = new char[class50_sub1_sub2.method521()];
+            anIntArray745[k] = class50_sub1_sub2.readUnsignedByte();
+            char ac[] = new char[class50_sub1_sub2.readUnsignedByte()];
             for(int l = 0; l < ac.length; l++)
-                ac[l] = (char)class50_sub1_sub2.method521();
+                ac[l] = (char)class50_sub1_sub2.readUnsignedByte();
 
             aCharArrayArray744[k] = ac;
         }
@@ -44,14 +45,14 @@ public class Class45
             aBoolean732 = !aBoolean732;
     }
 
-    public static void method376(boolean flag, Class50_Sub1_Sub2 class50_sub1_sub2)
+    public static void method376(boolean flag, Buffer class50_sub1_sub2)
     {
         if(!flag)
         {
             return;
         } else
         {
-            int i = class50_sub1_sub2.method526();
+            int i = class50_sub1_sub2.readInt();
             aCharArrayArray741 = new char[i][];
             aByteArrayArrayArray742 = new byte[i][][];
             method379(34541, class50_sub1_sub2, aCharArrayArray741, aByteArrayArrayArray742);
@@ -59,39 +60,39 @@ public class Class45
         }
     }
 
-    public static void method377(int i, Class50_Sub1_Sub2 class50_sub1_sub2)
+    public static void method377(int i, Buffer class50_sub1_sub2)
     {
-        int j = class50_sub1_sub2.method526();
+        int j = class50_sub1_sub2.readInt();
         aCharArrayArray743 = new char[j][];
         method380(class50_sub1_sub2, aCharArrayArray743, -37125);
         if(i != 20529)
             anInt729 = 311;
     }
 
-    public static void method378(Class50_Sub1_Sub2 class50_sub1_sub2, int i)
+    public static void method378(Buffer class50_sub1_sub2, int i)
     {
         if(i != 21901)
             return;
-        anIntArray740 = new int[class50_sub1_sub2.method526()];
+        anIntArray740 = new int[class50_sub1_sub2.readInt()];
         for(int j = 0; j < anIntArray740.length; j++)
-            anIntArray740[j] = class50_sub1_sub2.method523();
+            anIntArray740[j] = class50_sub1_sub2.readUnsignedShort();
 
     }
 
-    public static void method379(int i, Class50_Sub1_Sub2 class50_sub1_sub2, char ac[][], byte abyte0[][][])
+    public static void method379(int i, Buffer class50_sub1_sub2, char ac[][], byte abyte0[][][])
     {
         for(int j = 0; j < ac.length; j++)
         {
-            char ac1[] = new char[class50_sub1_sub2.method521()];
+            char ac1[] = new char[class50_sub1_sub2.readUnsignedByte()];
             for(int k = 0; k < ac1.length; k++)
-                ac1[k] = (char)class50_sub1_sub2.method521();
+                ac1[k] = (char)class50_sub1_sub2.readUnsignedByte();
 
             ac[j] = ac1;
-            byte abyte1[][] = new byte[class50_sub1_sub2.method521()][2];
+            byte abyte1[][] = new byte[class50_sub1_sub2.readUnsignedByte()][2];
             for(int l = 0; l < abyte1.length; l++)
             {
-                abyte1[l][0] = (byte)class50_sub1_sub2.method521();
-                abyte1[l][1] = (byte)class50_sub1_sub2.method521();
+                abyte1[l][0] = (byte)class50_sub1_sub2.readUnsignedByte();
+                abyte1[l][1] = (byte)class50_sub1_sub2.readUnsignedByte();
             }
 
             if(abyte1.length > 0)
@@ -101,15 +102,15 @@ public class Class45
         if(i == 34541);
     }
 
-    public static void method380(Class50_Sub1_Sub2 class50_sub1_sub2, char ac[][], int i)
+    public static void method380(Buffer class50_sub1_sub2, char ac[][], int i)
     {
         if(i != -37125)
             anInt728 = 218;
         for(int j = 0; j < ac.length; j++)
         {
-            char ac1[] = new char[class50_sub1_sub2.method521()];
+            char ac1[] = new char[class50_sub1_sub2.readUnsignedByte()];
             for(int k = 0; k < ac1.length; k++)
-                ac1[k] = (char)class50_sub1_sub2.method521();
+                ac1[k] = (char)class50_sub1_sub2.readUnsignedByte();
 
             ac[j] = ac1;
         }

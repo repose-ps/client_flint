@@ -10,6 +10,7 @@ import java.util.zip.GZIPInputStream;
 
 import rs2.collection.DualNodeDeque;
 import rs2.collection.NodeDeque;
+import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class32_Sub1 extends Class32
@@ -452,11 +453,11 @@ public class Class32_Sub1 extends Class32
         {
             byte abyte0[] = class2.method154(as[i], null);
             int j = abyte0.length / 2;
-            Class50_Sub1_Sub2 class50_sub1_sub2 = new Class50_Sub1_Sub2(true, abyte0);
+            Buffer class50_sub1_sub2 = new Buffer(abyte0);
             anIntArrayArray1377[i] = new int[j];
             aByteArrayArray1337[i] = new byte[j];
             for(int l = 0; l < j; l++)
-                anIntArrayArray1377[i][l] = class50_sub1_sub2.method523();
+                anIntArrayArray1377[i][l] = class50_sub1_sub2.readUnsignedShort();
 
         }
 
@@ -467,10 +468,10 @@ public class Class32_Sub1 extends Class32
         {
             byte abyte1[] = class2.method154(as1[k], null);
             int i1 = abyte1.length / 4;
-            Class50_Sub1_Sub2 class50_sub1_sub2_1 = new Class50_Sub1_Sub2(true, abyte1);
+            Buffer class50_sub1_sub2_1 = new Buffer(abyte1);
             anIntArrayArray1344[k] = new int[i1];
             for(int l1 = 0; l1 < i1; l1++)
-                anIntArrayArray1344[k][l1] = class50_sub1_sub2_1.method526();
+                anIntArrayArray1344[k][l1] = class50_sub1_sub2_1.readInt();
 
         }
 
@@ -484,7 +485,7 @@ public class Class32_Sub1 extends Class32
                 aByteArray1335[k1] = 0;
 
         abyte2 = class2.method154("map_index", null);
-        Class50_Sub1_Sub2 class50_sub1_sub2_2 = new Class50_Sub1_Sub2(true, abyte2);
+        Buffer class50_sub1_sub2_2 = new Buffer(abyte2);
         j1 = abyte2.length / 7;
         anIntArray1346 = new int[j1];
         anIntArray1360 = new int[j1];
@@ -492,25 +493,25 @@ public class Class32_Sub1 extends Class32
         anIntArray1336 = new int[j1];
         for(int i2 = 0; i2 < j1; i2++)
         {
-            anIntArray1346[i2] = class50_sub1_sub2_2.method523();
-            anIntArray1360[i2] = class50_sub1_sub2_2.method523();
-            anIntArray1365[i2] = class50_sub1_sub2_2.method523();
-            anIntArray1336[i2] = class50_sub1_sub2_2.method521();
+            anIntArray1346[i2] = class50_sub1_sub2_2.readUnsignedShort();
+            anIntArray1360[i2] = class50_sub1_sub2_2.readUnsignedShort();
+            anIntArray1365[i2] = class50_sub1_sub2_2.readUnsignedShort();
+            anIntArray1336[i2] = class50_sub1_sub2_2.readUnsignedByte();
         }
 
         abyte2 = class2.method154("anim_index", null);
-        class50_sub1_sub2_2 = new Class50_Sub1_Sub2(true, abyte2);
+        class50_sub1_sub2_2 = new Buffer(abyte2);
         j1 = abyte2.length / 2;
         anIntArray1376 = new int[j1];
         for(int j2 = 0; j2 < j1; j2++)
-            anIntArray1376[j2] = class50_sub1_sub2_2.method523();
+            anIntArray1376[j2] = class50_sub1_sub2_2.readUnsignedShort();
 
         abyte2 = class2.method154("midi_index", null);
-        class50_sub1_sub2_2 = new Class50_Sub1_Sub2(true, abyte2);
+        class50_sub1_sub2_2 = new Buffer(abyte2);
         j1 = abyte2.length;
         anIntArray1366 = new int[j1];
         for(int k2 = 0; k2 < j1; k2++)
-            anIntArray1366[k2] = class50_sub1_sub2_2.method521();
+            anIntArray1366[k2] = class50_sub1_sub2_2.readUnsignedByte();
 
         aClient1373 = client1;
         aBoolean1339 = true;
