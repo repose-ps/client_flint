@@ -3,6 +3,7 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.collection.LruCache;
 import rs2.sign.signlink;
 
 public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3
@@ -98,7 +99,7 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3
         } else
         if(super.anInt1588 >= 0)
             j = Class14.aClass14Array293[super.anInt1588].anIntArray295[super.anInt1589];
-        Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = (Class50_Sub1_Sub4_Sub4)aClass33_1761.method345(l);
+        Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = (Class50_Sub1_Sub4_Sub4)aClass33_1761.get(l);
         if(class50_sub1_sub4_sub4_1 == null)
         {
             boolean flag = false;
@@ -118,7 +119,7 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3
             if(flag)
             {
                 if(aLong1749 != -1L)
-                    class50_sub1_sub4_sub4_1 = (Class50_Sub1_Sub4_Sub4)aClass33_1761.method345(aLong1749);
+                    class50_sub1_sub4_sub4_1 = (Class50_Sub1_Sub4_Sub4)aClass33_1761.get(aLong1749);
                 if(class50_sub1_sub4_sub4_1 == null)
                     return null;
             }
@@ -159,7 +160,7 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3
 
             class50_sub1_sub4_sub4_1.method584(7);
             class50_sub1_sub4_sub4_1.method594(64, 850, -30, -50, -30, true);
-            aClass33_1761.method346(class50_sub1_sub4_sub4_1, l, 5);
+            aClass33_1761.put(l, class50_sub1_sub4_sub4_1);
             aLong1749 = l;
         }
         if(aBoolean1763)
@@ -395,7 +396,7 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3
     public boolean aBoolean1758;
     public int anInt1759;
     public int anIntArray1760[];
-    public static Class33 aClass33_1761 = new Class33(260, -572);
+    public static LruCache aClass33_1761 = new LruCache(260);
     public boolean aBoolean1762;
     public boolean aBoolean1763;
     public int anInt1764;

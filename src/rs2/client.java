@@ -13,6 +13,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.zip.CRC32;
 
+import rs2.collection.Node;
+import rs2.collection.NodeDeque;
 import rs2.sign.signlink;
 
 public class client extends Applet_Sub1
@@ -231,14 +233,14 @@ label0:
     {
         if(byte0 != 3)
             return;
-        for(Class50_Sub2 class50_sub2 = (Class50_Sub2)aClass6_1261.method158(); class50_sub2 != null; class50_sub2 = (Class50_Sub2)aClass6_1261.method160(1))
+        for(Class50_Sub2 class50_sub2 = (Class50_Sub2)aClass6_1261.first(); class50_sub2 != null; class50_sub2 = (Class50_Sub2)aClass6_1261.next())
             if(class50_sub2.anInt1390 == -1)
             {
                 class50_sub2.anInt1395 = 0;
                 method140((byte)-61, class50_sub2);
             } else
             {
-                class50_sub2.method442();
+                class50_sub2.unlink();
             }
 
     }
@@ -657,7 +659,7 @@ label0:
 
     public void method26(int i, int j)
     {
-        Class6 class6 = aClass6ArrayArrayArray1323[anInt1091][i][j];
+        NodeDeque class6 = aClass6ArrayArrayArray1323[anInt1091][i][j];
         if(class6 == null)
         {
             aClass22_1164.method262(anInt1091, i, j);
@@ -665,7 +667,7 @@ label0:
         }
         int k = 0xfa0a1f01;
         Object obj = null;
-        for(Class50_Sub1_Sub4_Sub1 class50_sub1_sub4_sub1 = (Class50_Sub1_Sub4_Sub1)class6.method158(); class50_sub1_sub4_sub1 != null; class50_sub1_sub4_sub1 = (Class50_Sub1_Sub4_Sub1)class6.method160(1))
+        for(Class50_Sub1_Sub4_Sub1 class50_sub1_sub4_sub1 = (Class50_Sub1_Sub4_Sub1)class6.first(); class50_sub1_sub4_sub1 != null; class50_sub1_sub4_sub1 = (Class50_Sub1_Sub4_Sub1)class6.next())
         {
             Class16 class16 = Class16.method212(class50_sub1_sub4_sub1.anInt1550);
             int l = class16.anInt345;
@@ -678,10 +680,10 @@ label0:
             }
         }
 
-        class6.method156((byte)-57, ((Class50) (obj)));
+        class6.addFirst(((Node) (obj)));
         Object obj1 = null;
         Object obj2 = null;
-        for(Class50_Sub1_Sub4_Sub1 class50_sub1_sub4_sub1_1 = (Class50_Sub1_Sub4_Sub1)class6.method158(); class50_sub1_sub4_sub1_1 != null; class50_sub1_sub4_sub1_1 = (Class50_Sub1_Sub4_Sub1)class6.method160(1))
+        for(Class50_Sub1_Sub4_Sub1 class50_sub1_sub4_sub1_1 = (Class50_Sub1_Sub4_Sub1)class6.first(); class50_sub1_sub4_sub1_1 != null; class50_sub1_sub4_sub1_1 = (Class50_Sub1_Sub4_Sub1)class6.next())
         {
             if(class50_sub1_sub4_sub1_1.anInt1550 != ((Class50_Sub1_Sub4_Sub1) (obj)).anInt1550 && obj1 == null)
                 obj1 = class50_sub1_sub4_sub1_1;
@@ -2210,7 +2212,7 @@ label0:
 
                 }
 
-                for(Class50_Sub2 class50_sub2 = (Class50_Sub2)aClass6_1261.method158(); class50_sub2 != null; class50_sub2 = (Class50_Sub2)aClass6_1261.method160(1))
+                for(Class50_Sub2 class50_sub2 = (Class50_Sub2)aClass6_1261.first(); class50_sub2 != null; class50_sub2 = (Class50_Sub2)aClass6_1261.next())
                     if(class50_sub2.anInt1393 >= anInt989 && class50_sub2.anInt1393 < anInt989 + 8 && class50_sub2.anInt1394 >= anInt990 && class50_sub2.anInt1394 < anInt990 + 8 && class50_sub2.anInt1391 == anInt1091)
                         class50_sub2.anInt1390 = 0;
 
@@ -2628,12 +2630,12 @@ label0:
 
                 }
 
-                for(Class50_Sub2 class50_sub2_1 = (Class50_Sub2)aClass6_1261.method158(); class50_sub2_1 != null; class50_sub2_1 = (Class50_Sub2)aClass6_1261.method160(1))
+                for(Class50_Sub2 class50_sub2_1 = (Class50_Sub2)aClass6_1261.first(); class50_sub2_1 != null; class50_sub2_1 = (Class50_Sub2)aClass6_1261.next())
                 {
                     class50_sub2_1.anInt1393 -= i21;
                     class50_sub2_1.anInt1394 -= k24;
                     if(class50_sub2_1.anInt1393 < 0 || class50_sub2_1.anInt1394 < 0 || class50_sub2_1.anInt1393 >= 104 || class50_sub2_1.anInt1394 >= 104)
-                        class50_sub2_1.method442();
+                        class50_sub2_1.unlink();
                 }
 
                 if(anInt1120 != 0)
@@ -3173,7 +3175,7 @@ label0:
             anInt1328 = 458;
         if(anInt1071 == 2)
         {
-            for(Class50_Sub2 class50_sub2 = (Class50_Sub2)aClass6_1261.method158(); class50_sub2 != null; class50_sub2 = (Class50_Sub2)aClass6_1261.method160(1))
+            for(Class50_Sub2 class50_sub2 = (Class50_Sub2)aClass6_1261.first(); class50_sub2 != null; class50_sub2 = (Class50_Sub2)aClass6_1261.next())
             {
                 if(class50_sub2.anInt1390 > 0)
                     class50_sub2.anInt1390--;
@@ -3182,7 +3184,7 @@ label0:
                     if(class50_sub2.anInt1387 < 0 || Class8.method170(class50_sub2.anInt1389, aByte1143, class50_sub2.anInt1387))
                     {
                         method45(class50_sub2.anInt1388, class50_sub2.anInt1393, class50_sub2.anInt1387, class50_sub2.anInt1394, class50_sub2.anInt1391, class50_sub2.anInt1389, (byte)1, class50_sub2.anInt1392);
-                        class50_sub2.method442();
+                        class50_sub2.unlink();
                     }
                 } else
                 {
@@ -3193,10 +3195,10 @@ label0:
                         method45(class50_sub2.anInt1385, class50_sub2.anInt1393, class50_sub2.anInt1384, class50_sub2.anInt1394, class50_sub2.anInt1391, class50_sub2.anInt1386, (byte)1, class50_sub2.anInt1392);
                         class50_sub2.anInt1395 = -1;
                         if(class50_sub2.anInt1384 == class50_sub2.anInt1387 && class50_sub2.anInt1387 == -1)
-                            class50_sub2.method442();
+                            class50_sub2.unlink();
                         else
                         if(class50_sub2.anInt1384 == class50_sub2.anInt1387 && class50_sub2.anInt1385 == class50_sub2.anInt1388 && class50_sub2.anInt1386 == class50_sub2.anInt1389)
-                            class50_sub2.method442();
+                            class50_sub2.unlink();
                     }
                 }
             }
@@ -3587,10 +3589,10 @@ label0:
             }
             if(j1 == 3)
             {
-                Class6 class6 = aClass6ArrayArrayArray1323[anInt1091][l][i1];
+                NodeDeque class6 = aClass6ArrayArrayArray1323[anInt1091][l][i1];
                 if(class6 != null)
                 {
-                    for(Class50_Sub1_Sub4_Sub1 class50_sub1_sub4_sub1 = (Class50_Sub1_Sub4_Sub1)class6.method159(false); class50_sub1_sub4_sub1 != null; class50_sub1_sub4_sub1 = (Class50_Sub1_Sub4_Sub1)class6.method161(173))
+                    for(Class50_Sub1_Sub4_Sub1 class50_sub1_sub4_sub1 = (Class50_Sub1_Sub4_Sub1)class6.last(); class50_sub1_sub4_sub1 != null; class50_sub1_sub4_sub1 = (Class50_Sub1_Sub4_Sub1)class6.previous())
                     {
                         Class16 class16 = Class16.method212(class50_sub1_sub4_sub1.anInt1550);
                         if(anInt1146 == 1)
@@ -3856,17 +3858,17 @@ label0:
 
     public void method49(int i)
     {
-        Class47.aClass33_779.method347();
-        Class47.aClass33_762.method347();
+        Class47.aClass33_779.clear();
+        Class47.aClass33_762.clear();
         if(i <= 0)
         {
             for(int j = 1; j > 0; j++);
         }
-        Class37.aClass33_635.method347();
-        Class16.aClass33_337.method347();
-        Class16.aClass33_346.method347();
-        Class50_Sub1_Sub4_Sub3_Sub2.aClass33_1761.method347();
-        Class27.aClass33_566.method347();
+        Class37.aClass33_635.clear();
+        Class16.aClass33_337.clear();
+        Class16.aClass33_346.clear();
+        Class50_Sub1_Sub4_Sub3_Sub2.aClass33_1761.clear();
+        Class27.aClass33_566.clear();
     }
 
     public void method50(boolean flag)
@@ -3880,12 +3882,12 @@ label0:
 
     public void method51(boolean flag)
     {
-        Class50_Sub1_Sub4_Sub2 class50_sub1_sub4_sub2 = (Class50_Sub1_Sub4_Sub2)aClass6_1282.method158();
+        Class50_Sub1_Sub4_Sub2 class50_sub1_sub4_sub2 = (Class50_Sub1_Sub4_Sub2)aClass6_1282.first();
         if(flag)
             anInt1328 = 153;
-        for(; class50_sub1_sub4_sub2 != null; class50_sub1_sub4_sub2 = (Class50_Sub1_Sub4_Sub2)aClass6_1282.method160(1))
+        for(; class50_sub1_sub4_sub2 != null; class50_sub1_sub4_sub2 = (Class50_Sub1_Sub4_Sub2)aClass6_1282.next())
             if(class50_sub1_sub4_sub2.anInt1554 != anInt1091 || anInt1325 > class50_sub1_sub4_sub2.anInt1566)
-                class50_sub1_sub4_sub2.method442();
+                class50_sub1_sub4_sub2.unlink();
             else
             if(anInt1325 >= class50_sub1_sub4_sub2.anInt1565)
             {
@@ -6206,15 +6208,15 @@ label0:
     {
         while(i >= 0) 
             aClass6ArrayArrayArray1323 = null;
-        for(Class50_Sub1_Sub4_Sub6 class50_sub1_sub4_sub6 = (Class50_Sub1_Sub4_Sub6)aClass6_1210.method158(); class50_sub1_sub4_sub6 != null; class50_sub1_sub4_sub6 = (Class50_Sub1_Sub4_Sub6)aClass6_1210.method160(1))
+        for(Class50_Sub1_Sub4_Sub6 class50_sub1_sub4_sub6 = (Class50_Sub1_Sub4_Sub6)aClass6_1210.first(); class50_sub1_sub4_sub6 != null; class50_sub1_sub4_sub6 = (Class50_Sub1_Sub4_Sub6)aClass6_1210.next())
             if(class50_sub1_sub4_sub6.anInt1731 != anInt1091 || class50_sub1_sub4_sub6.aBoolean1736)
-                class50_sub1_sub4_sub6.method442();
+                class50_sub1_sub4_sub6.unlink();
             else
             if(anInt1325 >= class50_sub1_sub4_sub6.anInt1740)
             {
                 class50_sub1_sub4_sub6.method604((byte)1, anInt951);
                 if(class50_sub1_sub4_sub6.aBoolean1736)
-                    class50_sub1_sub4_sub6.method442();
+                    class50_sub1_sub4_sub6.unlink();
                 else
                     aClass22_1164.method252(-1, class50_sub1_sub4_sub6, class50_sub1_sub4_sub6.anInt1732, class50_sub1_sub4_sub6.anInt1734, false, 0, class50_sub1_sub4_sub6.anInt1731, 60, class50_sub1_sub4_sub6.anInt1733, 0);
             }
@@ -6408,8 +6410,8 @@ label0:
                     aClass50_Sub1_Sub4_Sub3_Sub1Array1132[k2] = null;
 
                 aClass50_Sub1_Sub4_Sub3_Sub2_1167 = aClass50_Sub1_Sub4_Sub3_Sub2Array970[anInt969] = new Class50_Sub1_Sub4_Sub3_Sub2();
-                aClass6_1282.method162();
-                aClass6_1210.method162();
+                aClass6_1282.clear();
+                aClass6_1210.clear();
                 for(int l2 = 0; l2 < 4; l2++)
                 {
                     for(int i3 = 0; i3 < 104; i3++)
@@ -6421,7 +6423,7 @@ label0:
 
                 }
 
-                aClass6_1261 = new Class6(true);
+                aClass6_1261 = new NodeDeque();
                 anInt860 = 0;
                 anInt859 = 0;
                 method44(aBoolean1190, anInt1191);
@@ -7250,7 +7252,7 @@ label0:
         {
             for(int i6 = 0; i6 < 104; i6++)
             {
-                Class6 class6 = aClass6ArrayArrayArray1323[anInt1091][l5][i6];
+                NodeDeque class6 = aClass6ArrayArrayArray1323[anInt1091][l5][i6];
                 if(class6 != null)
                 {
                     int i1 = (l5 * 4 + 2) - ((Class50_Sub1_Sub4_Sub3) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).anInt1610 / 32;
@@ -7611,8 +7613,8 @@ label0:
         try
         {
             anInt1276 = -1;
-            aClass6_1210.method162();
-            aClass6_1282.method162();
+            aClass6_1210.clear();
+            aClass6_1282.clear();
             Class50_Sub1_Sub1_Sub4.method495((byte)71);
             method49(383);
             aClass22_1164.method241((byte)7);
@@ -7771,7 +7773,7 @@ label0:
             method18((byte)3);
         }
         catch(Exception exception) { }
-        Class47.aClass33_779.method347();
+        Class47.aClass33_779.clear();
         if(super.aFrame_Sub1_17 != null)
         {
             aClass50_Sub1_Sub2_964.method510((byte)4, 78);
@@ -8489,7 +8491,7 @@ label0:
                 Class50_Sub1_Sub1_Sub4.method501(0.69999999999999996D, (byte)6);
             if(l == 4)
                 Class50_Sub1_Sub1_Sub4.method501(0.59999999999999998D, (byte)6);
-            Class16.aClass33_346.method347();
+            Class16.aClass33_346.clear();
             aBoolean1046 = true;
         }
         if(k == 3)
@@ -10990,8 +10992,8 @@ label0:
                 class50_sub1_sub4_sub1_2.anInt1550 = l11;
                 class50_sub1_sub4_sub1_2.anInt1552 = i9;
                 if(aClass6ArrayArrayArray1323[anInt1091][k3][j6] == null)
-                    aClass6ArrayArrayArray1323[anInt1091][k3][j6] = new Class6(true);
-                aClass6ArrayArrayArray1323[anInt1091][k3][j6].method155(class50_sub1_sub4_sub1_2);
+                    aClass6ArrayArrayArray1323[anInt1091][k3][j6] = new NodeDeque();
+                aClass6ArrayArrayArray1323[anInt1091][k3][j6].addLast(class50_sub1_sub4_sub1_2);
                 method26(k3, j6);
             }
             return;
@@ -11064,8 +11066,8 @@ label0:
                 class50_sub1_sub4_sub1.anInt1550 = j1;
                 class50_sub1_sub4_sub1.anInt1552 = j12;
                 if(aClass6ArrayArrayArray1323[anInt1091][l6][k9] == null)
-                    aClass6ArrayArrayArray1323[anInt1091][l6][k9] = new Class6(true);
-                aClass6ArrayArrayArray1323[anInt1091][l6][k9].method155(class50_sub1_sub4_sub1);
+                    aClass6ArrayArrayArray1323[anInt1091][l6][k9] = new NodeDeque();
+                aClass6ArrayArrayArray1323[anInt1091][l6][k9].addLast(class50_sub1_sub4_sub1);
                 method26(l6, k9);
             }
             return;
@@ -11080,10 +11082,10 @@ label0:
             int k14 = class50_sub1_sub2.method523();
             if(j4 >= 0 && i7 >= 0 && j4 < 104 && i7 < 104)
             {
-                Class6 class6_1 = aClass6ArrayArrayArray1323[anInt1091][j4][i7];
+                NodeDeque class6_1 = aClass6ArrayArrayArray1323[anInt1091][j4][i7];
                 if(class6_1 != null)
                 {
-                    for(Class50_Sub1_Sub4_Sub1 class50_sub1_sub4_sub1_3 = (Class50_Sub1_Sub4_Sub1)class6_1.method158(); class50_sub1_sub4_sub1_3 != null; class50_sub1_sub4_sub1_3 = (Class50_Sub1_Sub4_Sub1)class6_1.method160(1))
+                    for(Class50_Sub1_Sub4_Sub1 class50_sub1_sub4_sub1_3 = (Class50_Sub1_Sub4_Sub1)class6_1.first(); class50_sub1_sub4_sub1_3 != null; class50_sub1_sub4_sub1_3 = (Class50_Sub1_Sub4_Sub1)class6_1.next())
                     {
                         if(class50_sub1_sub4_sub1_3.anInt1550 != (l9 & 0x7fff) || class50_sub1_sub4_sub1_3.anInt1552 != k12)
                             continue;
@@ -11119,7 +11121,7 @@ label0:
                 l12 = l12 * 128 + 64;
                 Class50_Sub1_Sub4_Sub2 class50_sub1_sub4_sub2 = new Class50_Sub1_Sub4_Sub2(anInt1091, i19, j21, j7, k16, j20 + anInt1325, i21, l14, (byte)-41, method110(j7, k4, (byte)9, anInt1091) - i18, k4, k19 + anInt1325);
                 class50_sub1_sub4_sub2.method562(i10, l12, method110(l12, i10, (byte)9, anInt1091) - i19, k19 + anInt1325, 0);
-                aClass6_1282.method155(class50_sub1_sub4_sub2);
+                aClass6_1282.addLast(class50_sub1_sub4_sub2);
             }
             return;
         }
@@ -11153,7 +11155,7 @@ label0:
                 i5 = i5 * 128 + 64;
                 l7 = l7 * 128 + 64;
                 Class50_Sub1_Sub4_Sub6 class50_sub1_sub4_sub6 = new Class50_Sub1_Sub4_Sub6(i5, anInt1091, method110(l7, i5, (byte)9, anInt1091) - j13, j15, k10, anInt1325, l7, 10709);
-                aClass6_1210.method155(class50_sub1_sub4_sub6);
+                aClass6_1210.addLast(class50_sub1_sub4_sub6);
             }
             return;
         }
@@ -11179,18 +11181,18 @@ label0:
             int i11 = anInt990 + (k5 & 7);
             if(j8 >= 0 && i11 >= 0 && j8 < 104 && i11 < 104)
             {
-                Class6 class6 = aClass6ArrayArrayArray1323[anInt1091][j8][i11];
+                NodeDeque class6 = aClass6ArrayArrayArray1323[anInt1091][j8][i11];
                 if(class6 != null)
                 {
-                    for(Class50_Sub1_Sub4_Sub1 class50_sub1_sub4_sub1_1 = (Class50_Sub1_Sub4_Sub1)class6.method158(); class50_sub1_sub4_sub1_1 != null; class50_sub1_sub4_sub1_1 = (Class50_Sub1_Sub4_Sub1)class6.method160(1))
+                    for(Class50_Sub1_Sub4_Sub1 class50_sub1_sub4_sub1_1 = (Class50_Sub1_Sub4_Sub1)class6.first(); class50_sub1_sub4_sub1_1 != null; class50_sub1_sub4_sub1_1 = (Class50_Sub1_Sub4_Sub1)class6.next())
                     {
                         if(class50_sub1_sub4_sub1_1.anInt1550 != (l2 & 0x7fff))
                             continue;
-                        class50_sub1_sub4_sub1_1.method442();
+                        class50_sub1_sub4_sub1_1.unlink();
                         break;
                     }
 
-                    if(class6.method158() == null)
+                    if(class6.first() == null)
                         aClass6ArrayArrayArray1323[anInt1091][j8][i11] = null;
                     method26(j8, i11);
                 }
@@ -11922,7 +11924,7 @@ label0:
             int k1, int l1, int i2)
     {
         Class50_Sub2 class50_sub2 = null;
-        for(Class50_Sub2 class50_sub2_1 = (Class50_Sub2)aClass6_1261.method158(); class50_sub2_1 != null; class50_sub2_1 = (Class50_Sub2)aClass6_1261.method160(1))
+        for(Class50_Sub2 class50_sub2_1 = (Class50_Sub2)aClass6_1261.first(); class50_sub2_1 != null; class50_sub2_1 = (Class50_Sub2)aClass6_1261.next())
         {
             if(class50_sub2_1.anInt1391 != i || class50_sub2_1.anInt1393 != j || class50_sub2_1.anInt1394 != i2 || class50_sub2_1.anInt1392 != l1)
                 continue;
@@ -11938,7 +11940,7 @@ label0:
             class50_sub2.anInt1393 = j;
             class50_sub2.anInt1394 = i2;
             method140((byte)-61, class50_sub2);
-            aClass6_1261.method155(class50_sub2);
+            aClass6_1261.addLast(class50_sub2);
         }
         class50_sub2.anInt1384 = j1;
         class50_sub2.anInt1386 = i1;
@@ -12586,7 +12588,7 @@ label0:
         anIntArrayArray1189 = new int[104][104];
         anInt1191 = -1;
         aBoolean1209 = false;
-        aClass6_1210 = new Class6(true);
+        aClass6_1210 = new NodeDeque();
         aBoolean1211 = false;
         aBoolean1212 = false;
         anInt1213 = -1;
@@ -12604,7 +12606,7 @@ label0:
         anIntArray1258 = new int[100];
         anIntArray1259 = new int[50];
         aClass46Array1260 = new Class46[4];
-        aClass6_1261 = new Class6(true);
+        aClass6_1261 = new NodeDeque();
         aBoolean1265 = false;
         aBoolean1266 = true;
         anIntArray1267 = new int[200];
@@ -12617,7 +12619,7 @@ label0:
         aClass50_Sub1_Sub1_Sub1Array1278 = new Class50_Sub1_Sub1_Sub1[1000];
         anInt1279 = -1;
         anInt1281 = -939;
-        aClass6_1282 = new Class6(true);
+        aClass6_1282 = new NodeDeque();
         aBoolean1283 = false;
         anInt1285 = 3;
         anIntArray1286 = new int[33];
@@ -12633,7 +12635,7 @@ label0:
         anInt1318 = 416;
         aBoolean1320 = false;
         anIntArray1321 = new int[50];
-        aClass6ArrayArrayArray1323 = new Class6[4][104][104];
+        aClass6ArrayArrayArray1323 = new NodeDeque[4][104][104];
         anIntArray1326 = new int[7];
         anInt1327 = -1;
         anInt1328 = 409;
@@ -13036,7 +13038,7 @@ label0:
     public static boolean aBoolean1207;
     public int anInt1208;
     public boolean aBoolean1209;
-    public Class6 aClass6_1210;
+    public NodeDeque aClass6_1210;
     public boolean aBoolean1211;
     public boolean aBoolean1212;
     public int anInt1213;
@@ -13087,7 +13089,7 @@ label0:
     public int anIntArray1258[];
     public int anIntArray1259[];
     public Class46 aClass46Array1260[];
-    public Class6 aClass6_1261;
+    public NodeDeque aClass6_1261;
     public int anInt1262;
     public int anInt1263;
     public int anInt1264;
@@ -13111,7 +13113,7 @@ label0:
     public int anInt1279;
     public int anInt1280;
     public int anInt1281;
-    public Class6 aClass6_1282;
+    public NodeDeque aClass6_1282;
     public boolean aBoolean1283;
     public int anInt1284;
     public int anInt1285;
@@ -13154,7 +13156,7 @@ label0:
     public volatile boolean aBoolean1320;
     public int anIntArray1321[];
     public int anInt1322;
-    public Class6 aClass6ArrayArrayArray1323[][][];
+    public NodeDeque aClass6ArrayArrayArray1323[][][];
     public int anInt1324;
     public static int anInt1325;
     public int anIntArray1326[];

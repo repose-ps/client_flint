@@ -3,7 +3,9 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
-public class Class50_Sub3 extends Class50
+import rs2.collection.Node;
+
+public class Class50_Sub3 extends Node
 {
 
     public Class50_Sub3(int i, int j, int k)

@@ -3,6 +3,7 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.collection.LruCache;
 import rs2.sign.signlink;
 
 public class Class16
@@ -391,7 +392,7 @@ public class Class16
             if(j != -1)
                 return method212(j).method220(1);
         }
-        Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = (Class50_Sub1_Sub4_Sub4)aClass33_337.method345(anInt363);
+        Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = (Class50_Sub1_Sub4_Sub4)aClass33_337.get(anInt363);
         if(class50_sub1_sub4_sub4 != null)
             return class50_sub1_sub4_sub4;
         class50_sub1_sub4_sub4 = Class50_Sub1_Sub4_Sub4.method577(anInt360);
@@ -407,7 +408,7 @@ public class Class16
         }
         class50_sub1_sub4_sub4.method594(64 + anInt354, 768 + anInt358, -50, -10, -50, true);
         class50_sub1_sub4_sub4.aBoolean1680 = true;
-        aClass33_337.method346(class50_sub1_sub4_sub4, anInt363, 5);
+        aClass33_337.put(anInt363, class50_sub1_sub4_sub4);
         return class50_sub1_sub4_sub4;
     }
 
@@ -415,10 +416,10 @@ public class Class16
     {
         if(i == 0)
         {
-            Class50_Sub1_Sub1_Sub1 class50_sub1_sub1_sub1 = (Class50_Sub1_Sub1_Sub1)aClass33_346.method345(k);
+            Class50_Sub1_Sub1_Sub1 class50_sub1_sub1_sub1 = (Class50_Sub1_Sub1_Sub1)aClass33_346.get(k);
             if(class50_sub1_sub1_sub1 != null && class50_sub1_sub1_sub1.anInt1495 != j && class50_sub1_sub1_sub1.anInt1495 != -1)
             {
-                class50_sub1_sub1_sub1.method442();
+                class50_sub1_sub1_sub1.unlink();
                 class50_sub1_sub1_sub1 = null;
             }
             if(class50_sub1_sub1_sub1 != null)
@@ -531,7 +532,7 @@ public class Class16
             class50_sub1_sub1_sub1_2.anInt1495 = l5;
         }
         if(i == 0)
-            aClass33_346.method346(class50_sub1_sub1_sub1_1, k, 5);
+            aClass33_346.put(k, class50_sub1_sub1_sub1_1);
         Class50_Sub1_Sub1.method444(aBoolean350, l1, i2, ai1);
         Class50_Sub1_Sub1.method446(l2, j2, i3, k2, true);
         Class50_Sub1_Sub1_Sub4.anInt1532 = j1;
@@ -624,7 +625,7 @@ public class Class16
     public int anInt334;
     public static int anInt335;
     public static Class16 aClass16Array336[];
-    public static Class33 aClass33_337 = new Class33(50, -572);
+    public static LruCache aClass33_337 = new LruCache(50);
     public String aStringArray338[];
     public int anInt339;
     public int anInt340;
@@ -633,7 +634,7 @@ public class Class16
     public int anInt343;
     public static boolean aBoolean344 = true;
     public int anInt345;
-    public static Class33 aClass33_346 = new Class33(100, -572);
+    public static LruCache aClass33_346 = new LruCache(100);
     public static byte aByte347 = 6;
     public String aStringArray348[];
     public boolean aBoolean349;

@@ -8,6 +8,8 @@ import java.net.Socket;
 import java.util.zip.CRC32;
 import java.util.zip.GZIPInputStream;
 
+import rs2.collection.DualNodeDeque;
+import rs2.collection.NodeDeque;
 import rs2.sign.signlink;
 
 public class Class32_Sub1 extends Class32
@@ -30,7 +32,7 @@ public class Class32_Sub1 extends Class32
                 int k1 = ((aByteArray1364[3] & 0xff) << 8) + (aByteArray1364[4] & 0xff);
                 int l1 = aByteArray1364[5] & 0xff;
                 aClass50_Sub1_Sub3_1372 = null;
-                for(Class50_Sub1_Sub3 class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1374.method158(); class50_sub1_sub3 != null; class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1374.method160(1))
+                for(Class50_Sub1_Sub3 class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1374.first(); class50_sub1_sub3 != null; class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1374.next())
                 {
                     if(class50_sub1_sub3.anInt1467 == k && class50_sub1_sub3.anInt1468 == i1)
                         aClass50_Sub1_Sub3_1372 = class50_sub1_sub3;
@@ -48,10 +50,10 @@ public class Class32_Sub1 extends Class32
                         if(aClass50_Sub1_Sub3_1372.aBoolean1471)
                             synchronized(aClass6_1357)
                             {
-                                aClass6_1357.method155(aClass50_Sub1_Sub3_1372);
+                                aClass6_1357.addLast(aClass50_Sub1_Sub3_1372);
                             }
                         else
-                            aClass50_Sub1_Sub3_1372.method442();
+                            aClass50_Sub1_Sub3_1372.unlink();
                         aClass50_Sub1_Sub3_1372 = null;
                     } else
                     {
@@ -89,10 +91,10 @@ public class Class32_Sub1 extends Class32
                     if(aClass50_Sub1_Sub3_1372.aBoolean1471)
                         synchronized(aClass6_1357)
                         {
-                            aClass6_1357.method155(aClass50_Sub1_Sub3_1372);
+                            aClass6_1357.addLast(aClass50_Sub1_Sub3_1372);
                         }
                     else
-                        aClass50_Sub1_Sub3_1372.method442();
+                        aClass50_Sub1_Sub3_1372.unlink();
                 }
                 anInt1362 = 0;
                 return;
@@ -135,14 +137,14 @@ public class Class32_Sub1 extends Class32
             Class50_Sub1_Sub3 class50_sub1_sub3;
             synchronized(aClass6_1358)
             {
-                class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1358.method157();
+                class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1358.removeFirst();
             }
             while(class50_sub1_sub3 != null) 
             {
                 if(aByteArrayArray1337[class50_sub1_sub3.anInt1467][class50_sub1_sub3.anInt1468] != 0)
                 {
                     aByteArrayArray1337[class50_sub1_sub3.anInt1467][class50_sub1_sub3.anInt1468] = 0;
-                    aClass6_1374.method155(class50_sub1_sub3);
+                    aClass6_1374.addLast(class50_sub1_sub3);
                     method342(anInt1345, class50_sub1_sub3);
                     aBoolean1338 = true;
                     if(anInt1334 < anInt1350)
@@ -154,7 +156,7 @@ public class Class32_Sub1 extends Class32
                 }
                 synchronized(aClass6_1358)
                 {
-                    class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1358.method157();
+                    class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1358.removeFirst();
                 }
             }
             for(int j = 0; j < 4; j++)
@@ -169,7 +171,7 @@ public class Class32_Sub1 extends Class32
                         class50_sub1_sub3_1.anInt1467 = j;
                         class50_sub1_sub3_1.anInt1468 = l;
                         class50_sub1_sub3_1.aBoolean1471 = false;
-                        aClass6_1374.method155(class50_sub1_sub3_1);
+                        aClass6_1374.addLast(class50_sub1_sub3_1);
                         method342(anInt1345, class50_sub1_sub3_1);
                         aBoolean1338 = true;
                         if(anInt1334 < anInt1350)
@@ -218,7 +220,7 @@ public class Class32_Sub1 extends Class32
             return;
         synchronized(aClass9_1369)
         {
-            for(Class50_Sub1_Sub3 class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass9_1369.method187(); class50_sub1_sub3 != null; class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass9_1369.method188(1))
+            for(Class50_Sub1_Sub3 class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass9_1369.first(); class50_sub1_sub3 != null; class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass9_1369.next())
                 if(class50_sub1_sub3.anInt1467 == i && class50_sub1_sub3.anInt1468 == j)
                     return;
 
@@ -228,9 +230,9 @@ public class Class32_Sub1 extends Class32
             class50_sub1_sub3_1.aBoolean1471 = true;
             synchronized(aClass6_1340)
             {
-                aClass6_1340.method155(class50_sub1_sub3_1);
+                aClass6_1340.addLast(class50_sub1_sub3_1);
             }
-            aClass9_1369.method185(class50_sub1_sub3_1);
+            aClass9_1369.addLast(class50_sub1_sub3_1);
         }
     }
 
@@ -239,13 +241,13 @@ public class Class32_Sub1 extends Class32
         Class50_Sub1_Sub3 class50_sub1_sub3;
         synchronized(aClass6_1357)
         {
-            class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1357.method157();
+            class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1357.removeFirst();
         }
         if(class50_sub1_sub3 == null)
             return null;
         synchronized(aClass9_1369)
         {
-            class50_sub1_sub3.method443();
+            class50_sub1_sub3.unlinkDual();
         }
         if(class50_sub1_sub3.aByteArray1470 == null)
             return class50_sub1_sub3;
@@ -305,7 +307,7 @@ public class Class32_Sub1 extends Class32
                 }
 
                 boolean flag = false;
-                for(Class50_Sub1_Sub3 class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1374.method158(); class50_sub1_sub3 != null; class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1374.method160(1))
+                for(Class50_Sub1_Sub3 class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1374.first(); class50_sub1_sub3 != null; class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1374.next())
                     if(class50_sub1_sub3.aBoolean1471)
                     {
                         flag = true;
@@ -319,7 +321,7 @@ public class Class32_Sub1 extends Class32
 
                 if(!flag)
                 {
-                    for(Class50_Sub1_Sub3 class50_sub1_sub3_1 = (Class50_Sub1_Sub3)aClass6_1374.method158(); class50_sub1_sub3_1 != null; class50_sub1_sub3_1 = (Class50_Sub1_Sub3)aClass6_1374.method160(1))
+                    for(Class50_Sub1_Sub3 class50_sub1_sub3_1 = (Class50_Sub1_Sub3)aClass6_1374.first(); class50_sub1_sub3_1 != null; class50_sub1_sub3_1 = (Class50_Sub1_Sub3)aClass6_1374.next())
                     {
                         flag = true;
                         class50_sub1_sub3_1.anInt1469++;
@@ -386,7 +388,7 @@ public class Class32_Sub1 extends Class32
         anInt1343 = 0;
         if(i != 0)
             return;
-        for(Class50_Sub1_Sub3 class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1374.method158(); class50_sub1_sub3 != null; class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1374.method160(1))
+        for(Class50_Sub1_Sub3 class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1374.first(); class50_sub1_sub3 != null; class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1374.next())
             if(class50_sub1_sub3.aBoolean1471)
                 anInt1342++;
             else
@@ -394,13 +396,13 @@ public class Class32_Sub1 extends Class32
 
         while(anInt1342 < 10) 
         {
-            Class50_Sub1_Sub3 class50_sub1_sub3_1 = (Class50_Sub1_Sub3)aClass6_1351.method157();
+            Class50_Sub1_Sub3 class50_sub1_sub3_1 = (Class50_Sub1_Sub3)aClass6_1351.removeFirst();
             if(class50_sub1_sub3_1 == null)
                 break;
             if(aByteArrayArray1337[class50_sub1_sub3_1.anInt1467][class50_sub1_sub3_1.anInt1468] != 0)
                 anInt1334++;
             aByteArrayArray1337[class50_sub1_sub3_1.anInt1467][class50_sub1_sub3_1.anInt1468] = 0;
-            aClass6_1374.method155(class50_sub1_sub3_1);
+            aClass6_1374.addLast(class50_sub1_sub3_1);
             anInt1342++;
             method342(anInt1345, class50_sub1_sub3_1);
             aBoolean1338 = true;
@@ -425,7 +427,7 @@ public class Class32_Sub1 extends Class32
     {
         synchronized(aClass9_1369)
         {
-            int i = aClass9_1369.method189();
+            int i = aClass9_1369.size();
             return i;
         }
     }
@@ -519,7 +521,7 @@ public class Class32_Sub1 extends Class32
     {
         synchronized(aClass6_1358)
         {
-            aClass6_1358.method162();
+            aClass6_1358.clear();
         }
         if(byte0 != -125)
             aBoolean1352 = !aBoolean1352;
@@ -543,7 +545,7 @@ public class Class32_Sub1 extends Class32
         class50_sub1_sub3.aBoolean1471 = false;
         synchronized(aClass6_1358)
         {
-            aClass6_1358.method155(class50_sub1_sub3);
+            aClass6_1358.addLast(class50_sub1_sub3);
         }
     }
 
@@ -552,7 +554,7 @@ public class Class32_Sub1 extends Class32
         Class50_Sub1_Sub3 class50_sub1_sub3;
         synchronized(aClass6_1340)
         {
-            class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1340.method157();
+            class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1340.removeFirst();
         }
         if(!flag)
         {
@@ -570,16 +572,16 @@ public class Class32_Sub1 extends Class32
             {
                 if(abyte0 == null)
                 {
-                    aClass6_1351.method155(class50_sub1_sub3);
+                    aClass6_1351.addLast(class50_sub1_sub3);
                 } else
                 {
                     class50_sub1_sub3.aByteArray1470 = abyte0;
                     synchronized(aClass6_1357)
                     {
-                        aClass6_1357.method155(class50_sub1_sub3);
+                        aClass6_1357.addLast(class50_sub1_sub3);
                     }
                 }
-                class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1340.method157();
+                class50_sub1_sub3 = (Class50_Sub1_Sub3)aClass6_1340.removeFirst();
             }
         }
     }
@@ -686,21 +688,21 @@ public class Class32_Sub1 extends Class32
         aByteArrayArray1337 = new byte[4][];
         aBoolean1338 = false;
         aBoolean1339 = true;
-        aClass6_1340 = new Class6(true);
+        aClass6_1340 = new NodeDeque();
         anIntArrayArray1344 = new int[4][];
         aString1347 = "";
-        aClass6_1351 = new Class6(true);
+        aClass6_1351 = new NodeDeque();
         aBoolean1352 = false;
         aCRC32_1354 = new CRC32();
         aBoolean1356 = false;
-        aClass6_1357 = new Class6(true);
-        aClass6_1358 = new Class6(true);
+        aClass6_1357 = new NodeDeque();
+        aClass6_1358 = new NodeDeque();
         aByteArray1359 = new byte[65000];
         aByteArray1364 = new byte[500];
         anInt1367 = 591;
-        aClass9_1369 = new Class9(true);
+        aClass9_1369 = new DualNodeDeque();
         aByte1371 = 6;
-        aClass6_1374 = new Class6(true);
+        aClass6_1374 = new NodeDeque();
         anIntArrayArray1377 = new int[4][];
         aBoolean1380 = false;
     }
@@ -711,7 +713,7 @@ public class Class32_Sub1 extends Class32
     public byte aByteArrayArray1337[][];
     public boolean aBoolean1338;
     public boolean aBoolean1339;
-    public Class6 aClass6_1340;
+    public NodeDeque aClass6_1340;
     public int anInt1341;
     public int anInt1342;
     public int anInt1343;
@@ -722,14 +724,14 @@ public class Class32_Sub1 extends Class32
     public int anInt1348;
     public OutputStream anOutputStream1349;
     public int anInt1350;
-    public Class6 aClass6_1351;
+    public NodeDeque aClass6_1351;
     public boolean aBoolean1352;
     public int anInt1353;
     public CRC32 aCRC32_1354;
     public Socket aSocket1355;
     public boolean aBoolean1356;
-    public Class6 aClass6_1357;
-    public Class6 aClass6_1358;
+    public NodeDeque aClass6_1357;
+    public NodeDeque aClass6_1358;
     public byte aByteArray1359[];
     public int anIntArray1360[];
     public int anInt1361;
@@ -740,12 +742,12 @@ public class Class32_Sub1 extends Class32
     public int anIntArray1366[];
     public int anInt1367;
     public int anInt1368;
-    public Class9 aClass9_1369;
+    public DualNodeDeque aClass9_1369;
     public InputStream anInputStream1370;
     public byte aByte1371;
     public Class50_Sub1_Sub3 aClass50_Sub1_Sub3_1372;
     public client aClient1373;
-    public Class6 aClass6_1374;
+    public NodeDeque aClass6_1374;
     public int anInt1375;
     public int anIntArray1376[];
     public int anIntArrayArray1377[][];

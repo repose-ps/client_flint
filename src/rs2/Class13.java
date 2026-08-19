@@ -3,6 +3,7 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.collection.LruCache;
 import rs2.sign.signlink;
 
 public class Class13
@@ -13,7 +14,7 @@ public class Class13
         long l = (Class25.method301(183, s) << 8) + (long)i;
         if(j <= 0)
             anInt275 = -317;
-        Class50_Sub1_Sub1_Sub1 class50_sub1_sub1_sub1 = (Class50_Sub1_Sub1_Sub1)aClass33_250.method345(l);
+        Class50_Sub1_Sub1_Sub1 class50_sub1_sub1_sub1 = (Class50_Sub1_Sub1_Sub1)aClass33_250.get(l);
         if(class50_sub1_sub1_sub1 != null)
             return class50_sub1_sub1_sub1;
         if(aClass2_214 == null)
@@ -21,7 +22,7 @@ public class Class13
         try
         {
             class50_sub1_sub1_sub1 = new Class50_Sub1_Sub1_Sub1(aClass2_214, s, i);
-            aClass33_250.method346(class50_sub1_sub1_sub1, l, 5);
+            aClass33_250.put(l, class50_sub1_sub1_sub1);
         }
         catch(Exception _ex)
         {
@@ -67,7 +68,7 @@ public class Class13
             anInt280 += class16.anInt354;
             anInt243 += class16.anInt358;
         }
-        Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = (Class50_Sub1_Sub4_Sub4)aClass33_264.method345((i << 16) + j);
+        Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = (Class50_Sub1_Sub4_Sub4)aClass33_264.get((i << 16) + j);
         if(class50_sub1_sub4_sub4 != null)
             return class50_sub1_sub4_sub4;
         if(i == 1)
@@ -81,7 +82,7 @@ public class Class13
         if(i == 5)
             class50_sub1_sub4_sub4 = null;
         if(class50_sub1_sub4_sub4 != null)
-            aClass33_264.method346(class50_sub1_sub4_sub4, (i << 16) + j, 5);
+            aClass33_264.put((i << 16) + j, class50_sub1_sub4_sub4);
         return class50_sub1_sub4_sub4;
     }
 
@@ -310,7 +311,7 @@ public class Class13
 
     public static void method199(int i, Class50_Sub1_Sub1_Sub2 aclass50_sub1_sub1_sub2[], Class2 class2, Class2 class2_1)
     {
-        aClass33_250 = new Class33(50000, -572);
+        aClass33_250 = new LruCache(50000);
         aClass2_214 = class2_1;
         aClass50_Sub1_Sub1_Sub2Array223 = aclass50_sub1_sub1_sub2;
         int j = -1;
@@ -354,13 +355,13 @@ public class Class13
 
     public static void method201(int i, Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4, int j, int k)
     {
-        aClass33_264.method347();
+        aClass33_264.clear();
         if(k != 6)
         {
             for(int l = 1; l > 0; l++);
         }
         if(class50_sub1_sub4_sub4 != null && i != 4)
-            aClass33_264.method346(class50_sub1_sub4_sub4, (i << 16) + j, 5);
+            aClass33_264.put((i << 16) + j, class50_sub1_sub4_sub4);
     }
 
     public static void method202(boolean flag)
@@ -446,7 +447,7 @@ public class Class13
     public boolean aBoolean247;
     public int anInt248;
     public String aString249;
-    public static Class33 aClass33_250;
+    public static LruCache aClass33_250;
     public int anInt251;
     public int anInt252;
     public int anInt253;
@@ -460,7 +461,7 @@ public class Class13
     public int anInt261;
     public String aStringArray262[];
     public int anInt263;
-    public static Class33 aClass33_264 = new Class33(30, -572);
+    public static LruCache aClass33_264 = new LruCache(30);
     public Class50_Sub1_Sub1_Sub1 aClass50_Sub1_Sub1_Sub1Array265[];
     public int anInt266;
     public int anInt267;

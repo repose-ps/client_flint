@@ -3,9 +3,10 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.collection.DualNode;
 import rs2.sign.signlink;
 
-public class Class50_Sub1_Sub1 extends Class50_Sub1
+public class Class50_Sub1_Sub1 extends DualNode
 {
 
     public static void method444(boolean flag, int i, int j, int ai[])

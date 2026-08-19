@@ -5,9 +5,11 @@ package rs2;
 
 import java.math.BigInteger;
 
+import rs2.collection.DualNode;
+import rs2.collection.NodeDeque;
 import rs2.sign.signlink;
 
-public class Class50_Sub1_Sub2 extends Class50_Sub1
+public class Class50_Sub1_Sub2 extends DualNode
 {
 
     public static Class50_Sub1_Sub2 method509(byte byte0, int i)
@@ -18,17 +20,17 @@ public class Class50_Sub1_Sub2 extends Class50_Sub1
             if(i == 0 && anInt1459 > 0)
             {
                 anInt1459--;
-                class50_sub1_sub2_2 = (Class50_Sub1_Sub2)aClass6_1462.method157();
+                class50_sub1_sub2_2 = (Class50_Sub1_Sub2)aClass6_1462.removeFirst();
             } else
             if(i == 1 && anInt1460 > 0)
             {
                 anInt1460--;
-                class50_sub1_sub2_2 = (Class50_Sub1_Sub2)aClass6_1463.method157();
+                class50_sub1_sub2_2 = (Class50_Sub1_Sub2)aClass6_1463.removeFirst();
             } else
             if(i == 2 && anInt1461 > 0)
             {
                 anInt1461--;
-                class50_sub1_sub2_2 = (Class50_Sub1_Sub2)aClass6_1464.method157();
+                class50_sub1_sub2_2 = (Class50_Sub1_Sub2)aClass6_1464.removeFirst();
             }
             if(class50_sub1_sub2_2 != null)
             {
@@ -590,9 +592,9 @@ public class Class50_Sub1_Sub2 extends Class50_Sub1
     public static int anInt1459;
     public static int anInt1460;
     public static int anInt1461;
-    public static Class6 aClass6_1462 = new Class6(true);
-    public static Class6 aClass6_1463 = new Class6(true);
-    public static Class6 aClass6_1464 = new Class6(true);
+    public static NodeDeque aClass6_1462 = new NodeDeque();
+    public static NodeDeque aClass6_1463 = new NodeDeque();
+    public static NodeDeque aClass6_1464 = new NodeDeque();
     public static char aCharArray1465[] = {
         'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 
         'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 

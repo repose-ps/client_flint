@@ -3,6 +3,7 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.collection.LruCache;
 import rs2.sign.signlink;
 
 public class Class47
@@ -86,7 +87,7 @@ public class Class47
             if(l != 10)
                 return null;
             l1 = (long)((anInt773 << 6) + i) + ((long)(j + 1) << 32);
-            Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = (Class50_Sub1_Sub4_Sub4)aClass33_762.method345(l1);
+            Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = (Class50_Sub1_Sub4_Sub4)aClass33_762.get(l1);
             if(class50_sub1_sub4_sub4_1 != null)
                 return class50_sub1_sub4_sub4_1;
             if(anIntArray763 == null)
@@ -98,7 +99,7 @@ public class Class47
                 int l2 = anIntArray763[i2];
                 if(flag1)
                     l2 += 0x10000;
-                class50_sub1_sub4_sub4 = (Class50_Sub1_Sub4_Sub4)aClass33_779.method345(l2);
+                class50_sub1_sub4_sub4 = (Class50_Sub1_Sub4_Sub4)aClass33_779.get(l2);
                 if(class50_sub1_sub4_sub4 == null)
                 {
                     class50_sub1_sub4_sub4 = Class50_Sub1_Sub4_Sub4.method577(l2 & 0xffff);
@@ -106,7 +107,7 @@ public class Class47
                         return null;
                     if(flag1)
                         class50_sub1_sub4_sub4.method592(0);
-                    aClass33_779.method346(class50_sub1_sub4_sub4, l2, 5);
+                    aClass33_779.put(l2, class50_sub1_sub4_sub4);
                 }
                 if(k1 > 1)
                     aClass50_Sub1_Sub4_Sub4Array771[i2] = class50_sub1_sub4_sub4;
@@ -128,14 +129,14 @@ public class Class47
             if(i1 == -1)
                 return null;
             l1 = (long)((anInt773 << 6) + (i1 << 3) + i) + ((long)(j + 1) << 32);
-            Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_2 = (Class50_Sub1_Sub4_Sub4)aClass33_762.method345(l1);
+            Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_2 = (Class50_Sub1_Sub4_Sub4)aClass33_762.get(l1);
             if(class50_sub1_sub4_sub4_2 != null)
                 return class50_sub1_sub4_sub4_2;
             int j2 = anIntArray763[i1];
             boolean flag3 = aBoolean798 ^ (i > 3);
             if(flag3)
                 j2 += 0x10000;
-            class50_sub1_sub4_sub4 = (Class50_Sub1_Sub4_Sub4)aClass33_779.method345(j2);
+            class50_sub1_sub4_sub4 = (Class50_Sub1_Sub4_Sub4)aClass33_779.get(j2);
             if(class50_sub1_sub4_sub4 == null)
             {
                 class50_sub1_sub4_sub4 = Class50_Sub1_Sub4_Sub4.method577(j2 & 0xffff);
@@ -143,7 +144,7 @@ public class Class47
                     return null;
                 if(flag3)
                     class50_sub1_sub4_sub4.method592(0);
-                aClass33_779.method346(class50_sub1_sub4_sub4, j2, 5);
+                aClass33_779.put(j2, class50_sub1_sub4_sub4);
             }
         }
         boolean flag;
@@ -181,7 +182,7 @@ public class Class47
         class50_sub1_sub4_sub4_3.method594(64 + aByte784, 768 + aByte787 * 5, -50, -10, -50, !aBoolean804);
         if(anInt794 == 1)
             class50_sub1_sub4_sub4_3.anInt1675 = ((Class50_Sub1_Sub4) (class50_sub1_sub4_sub4_3)).anInt1475;
-        aClass33_762.method346(class50_sub1_sub4_sub4_3, l1, 5);
+        aClass33_762.put(l1, class50_sub1_sub4_sub4_3);
         return class50_sub1_sub4_sub4_3;
     }
 
@@ -510,7 +511,7 @@ label0:
     public boolean aBoolean759;
     public int anInt760;
     public int anInt761;
-    public static Class33 aClass33_762 = new Class33(40, -572);
+    public static LruCache aClass33_762 = new LruCache(40);
     public int anIntArray763[];
     public int anInt764;
     public boolean aBoolean765;
@@ -527,7 +528,7 @@ label0:
     public String aString776;
     public static int anInt777;
     public int anInt778;
-    public static Class33 aClass33_779 = new Class33(500, -572);
+    public static LruCache aClass33_779 = new LruCache(500);
     public int anInt780;
     public int anInt781;
     public static Class47 aClass47Array782[];

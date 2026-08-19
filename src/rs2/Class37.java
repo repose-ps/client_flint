@@ -3,6 +3,7 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.collection.LruCache;
 import rs2.sign.signlink;
 
 public class Class37
@@ -239,7 +240,7 @@ public class Class37
             else
                 return class37.method362(i, j, 0, ai);
         }
-        Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = (Class50_Sub1_Sub4_Sub4)aClass33_635.method345(aLong628);
+        Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = (Class50_Sub1_Sub4_Sub4)aClass33_635.get(aLong628);
         if(class50_sub1_sub4_sub4 == null)
         {
             boolean flag = false;
@@ -265,7 +266,7 @@ public class Class37
             }
             class50_sub1_sub4_sub4.method584(7);
             class50_sub1_sub4_sub4.method594(64 + anInt663, 850 + anInt658, -30, -50, -30, true);
-            aClass33_635.method346(class50_sub1_sub4_sub4, aLong628, 5);
+            aClass33_635.put(aLong628, class50_sub1_sub4_sub4);
         }
         Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = Class50_Sub1_Sub4_Sub4.aClass50_Sub1_Sub4_Sub4_1643;
         if(k != 0)
@@ -366,7 +367,7 @@ public class Class37
     public int anInt632;
     public int anInt633;
     public int anIntArray634[];
-    public static Class33 aClass33_635 = new Class33(30, -572);
+    public static LruCache aClass33_635 = new LruCache(30);
     public boolean aBoolean636;
     public int anInt637;
     public int anInt638;

@@ -5,6 +5,7 @@ package rs2;
 
 import java.io.PrintStream;
 
+import rs2.collection.LruCache;
 import rs2.sign.signlink;
 
 public class Class27
@@ -75,7 +76,7 @@ public class Class27
 
     public Class50_Sub1_Sub4_Sub4 method307()
     {
-        Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = (Class50_Sub1_Sub4_Sub4)aClass33_566.method345(anInt555);
+        Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = (Class50_Sub1_Sub4_Sub4)aClass33_566.get(anInt555);
         if(class50_sub1_sub4_sub4 != null)
             return class50_sub1_sub4_sub4;
         class50_sub1_sub4_sub4 = Class50_Sub1_Sub4_Sub4.method577(anInt556);
@@ -85,7 +86,7 @@ public class Class27
             if(anIntArray559[0] != 0)
                 class50_sub1_sub4_sub4.method591(anIntArray559[i], anIntArray560[i]);
 
-        aClass33_566.method346(class50_sub1_sub4_sub4, anInt555, 5);
+        aClass33_566.put(anInt555, class50_sub1_sub4_sub4);
         return class50_sub1_sub4_sub4;
     }
 
@@ -115,6 +116,6 @@ public class Class27
     public int anInt563;
     public int anInt564;
     public int anInt565;
-    public static Class33 aClass33_566 = new Class33(30, -572);
+    public static LruCache aClass33_566 = new LruCache(30);
 
 }
