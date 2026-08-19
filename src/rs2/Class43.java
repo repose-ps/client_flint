@@ -5,15 +5,16 @@ package rs2;
 
 import java.io.PrintStream;
 
+import rs2.cache.Archive;
 import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class43
 {
 
-    public static void method371(Class2 class2, int i)
+    public static void method371(Archive class2, int i)
     {
-        Buffer class50_sub1_sub2 = new Buffer(class2.method154("varp.dat", null));
+        Buffer class50_sub1_sub2 = new Buffer(class2.read("varp.dat"));
         if(i != 36135)
             return;
         anInt705 = 0;

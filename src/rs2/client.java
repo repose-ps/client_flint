@@ -13,6 +13,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.zip.CRC32;
 
+import rs2.cache.Archive;
 import rs2.cache.CacheIndex;
 import rs2.chat.ChatCodec;
 import rs2.collection.Node;
@@ -3882,12 +3883,15 @@ public class client extends Applet_Sub1 {
 		return false;
 	}
 
-	public Class2 method61(int i, int j, String s, int k, int l, String s1) {
+	public Archive method61(int i, int j, String s, int k, int l, String s1) {
 		byte abyte0[] = null;
 		int i1 = 5;
 		try {
-			if (aClass23Array1228[0] != null)
+			if (aClass23Array1228[0] != null) {
 				abyte0 = aClass23Array1228[0].read(l);
+				return new Archive(abyte0); // TODO debug
+			}
+			
 		} catch (Exception _ex) {
 		}
 		if (abyte0 != null) {
@@ -3898,7 +3902,7 @@ public class client extends Applet_Sub1 {
 				abyte0 = null;
 		}
 		if (abyte0 != null) {
-			Class2 class2 = new Class2(abyte0, 3);
+			Archive class2 = new Archive(abyte0);
 			return class2;
 		}
 		int k1 = 0;
@@ -3954,6 +3958,7 @@ public class client extends Applet_Sub1 {
 					}
 				}
 			} catch (IOException ioexception) {
+				ioexception.printStackTrace();
 				if (s2.equals("Unknown error"))
 					s2 = "Connection error";
 				abyte0 = null;
@@ -3993,7 +3998,7 @@ public class client extends Applet_Sub1 {
 				aBoolean900 = !aBoolean900;
 			}
 		}
-		Class2 class2_1 = new Class2(abyte0, 3);
+		Archive class2_1 = new Archive(abyte0);
 		return class2_1;
 	}
 
@@ -4314,7 +4319,7 @@ public class client extends Applet_Sub1 {
 
 		}
 		try {
-			method86(false);
+//			method86(false); TODO debug
 			aClass2_888 = method61(14076, anIntArray837[1], "title", 25, 1, "title screen");
 			aClass50_Sub1_Sub1_Sub2_1059 = new Class50_Sub1_Sub1_Sub2(false, aClass2_888, -914, "p11_full");
 			aClass50_Sub1_Sub1_Sub2_1060 = new Class50_Sub1_Sub1_Sub2(false, aClass2_888, -914, "p12_full");
@@ -4322,12 +4327,12 @@ public class client extends Applet_Sub1 {
 			aClass50_Sub1_Sub1_Sub2_1062 = new Class50_Sub1_Sub1_Sub2(true, aClass2_888, -914, "q8_full");
 			method139(aBoolean1207);
 			method52(false);
-			Class2 class2 = method61(14076, anIntArray837[2], "config", 30, 2, "config");
-			Class2 class2_1 = method61(14076, anIntArray837[3], "interface", 35, 3, "interface");
-			Class2 class2_2 = method61(14076, anIntArray837[4], "media", 40, 4, "2d graphics");
-			Class2 class2_3 = method61(14076, anIntArray837[6], "textures", 45, 6, "textures");
-			Class2 class2_4 = method61(14076, anIntArray837[7], "wordenc", 50, 7, "chat system");
-			Class2 class2_5 = method61(14076, anIntArray837[8], "sounds", 55, 8, "sound effects");
+			Archive class2 = method61(14076, anIntArray837[2], "config", 30, 2, "config");
+			Archive class2_1 = method61(14076, anIntArray837[3], "interface", 35, 3, "interface");
+			Archive class2_2 = method61(14076, anIntArray837[4], "media", 40, 4, "2d graphics");
+			Archive class2_3 = method61(14076, anIntArray837[6], "textures", 45, 6, "textures");
+			Archive class2_4 = method61(14076, anIntArray837[7], "wordenc", 50, 7, "chat system");
+			Archive class2_5 = method61(14076, anIntArray837[8], "sounds", 55, 8, "sound effects");
 			aByteArrayArrayArray1125 = new byte[4][104][104];
 			anIntArrayArrayArray891 = new int[4][105][105];
 			aClass22_1164 = new Class22(anIntArrayArrayArray891, 104, 4, 104, (byte) 5);
@@ -4335,7 +4340,7 @@ public class client extends Applet_Sub1 {
 				aClass46Array1260[j] = new Class46(104, 0, 104);
 
 			aClass50_Sub1_Sub1_Sub1_1122 = new Class50_Sub1_Sub1_Sub1(512, 512);
-			Class2 class2_6 = method61(14076, anIntArray837[5], "versionlist", 60, 5, "update list");
+			Archive class2_6 = method61(14076, anIntArray837[5], "versionlist", 60, 5, "update list");
 			method13(60, true, "Connecting to update server");
 			aClass32_Sub1_1291 = new Class32_Sub1();
 			aClass32_Sub1_1291.method335(class2_6, this);
@@ -4590,7 +4595,7 @@ public class client extends Applet_Sub1 {
 			Class16.aBoolean344 = aBoolean925;
 			if (!aBoolean926) {
 				method13(90, true, "Unpacking sounds");
-				byte abyte0[] = class2_5.method154("sounds.dat", null);
+				byte abyte0[] = class2_5.read("sounds.dat");
 				Buffer class50_sub1_sub2 = new Buffer(abyte0);
 				Class38.method365(class50_sub1_sub2, 36135);
 			}
@@ -10231,7 +10236,7 @@ public class client extends Applet_Sub1 {
 	}
 
 	public void method139(boolean flag) {
-		byte abyte0[] = aClass2_888.method154("title.dat", null);
+		byte abyte0[] = aClass2_888.read("title.dat");
 		Class50_Sub1_Sub1_Sub1 class50_sub1_sub1_sub1 = new Class50_Sub1_Sub1_Sub1(abyte0, this);
 		aClass18_1201.method230(false);
 		class50_sub1_sub1_sub1.method459(0, -192, 0);
@@ -11444,7 +11449,7 @@ public class client extends Applet_Sub1 {
 	public int anIntArrayArray885[][];
 	public int anIntArrayArray886[][];
 	public int anInt887;
-	public Class2 aClass2_888;
+	public Archive aClass2_888;
 	public int anInt889;
 	public int anInt890;
 	public int anIntArrayArrayArray891[][][];

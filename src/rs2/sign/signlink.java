@@ -140,30 +140,31 @@ public class signlink
 
     public static String findcachedir()
     {
-        String as[] = {
-            "c:/windows/", "c:/winnt/", "d:/windows/", "d:/winnt/", "e:/windows/", "e:/winnt/", "f:/windows/", "f:/winnt/", "c:/", "~/", 
-            "/tmp/", "", "c:/rscache", "/rscache"
-        };
-        if(storeid < 32 || storeid > 34)
-            storeid = 32;
-        String s = ".file_store_" + storeid;
-        for(int i = 0; i < as.length; i++)
-            try
-            {
-                String s1 = as[i];
-                if(s1.length() > 0)
-                {
-                    File file = new File(s1);
-                    if(!file.exists())
-                        continue;
-                }
-                File file1 = new File(s1 + s);
-                if(file1.exists() || file1.mkdir())
-                    return s1 + s + "/";
-            }
-            catch(Exception _ex) { }
-
-        return null;
+    	return "./rscache/"; // TODO debug
+//        String as[] = {
+//            "c:/windows/", "c:/winnt/", "d:/windows/", "d:/winnt/", "e:/windows/", "e:/winnt/", "f:/windows/", "f:/winnt/", "c:/", "~/", 
+//            "/tmp/", "", "c:/rscache", "/rscache"
+//        };
+//        if(storeid < 32 || storeid > 34)
+//            storeid = 32;
+//        String s = ".file_store_" + storeid;
+//        for(int i = 0; i < as.length; i++)
+//            try
+//            {
+//                String s1 = as[i];
+//                if(s1.length() > 0)
+//                {
+//                    File file = new File(s1);
+//                    if(!file.exists())
+//                        continue;
+//                }
+//                File file1 = new File(s1 + s);
+//                if(file1.exists() || file1.mkdir())
+//                    return s1 + s + "/";
+//            }
+//            catch(Exception _ex) { }
+//
+//        return null;
     }
 
     public static int getuid(String s)

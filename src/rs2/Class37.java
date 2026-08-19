@@ -3,6 +3,7 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.cache.Archive;
 import rs2.collection.LruCache;
 import rs2.net.Buffer;
 import rs2.sign.signlink;
@@ -212,10 +213,10 @@ public class Class37
         return j >= 0 && j < anIntArray622.length && anIntArray622[j] != -1;
     }
 
-    public static void method361(Class2 class2)
+    public static void method361(Archive class2)
     {
-        aClass50_Sub1_Sub2_657 = new Buffer(class2.method154("npc.dat", null));
-        Buffer class50_sub1_sub2 = new Buffer(class2.method154("npc.idx", null));
+        aClass50_Sub1_Sub2_657 = new Buffer(class2.read("npc.dat"));
+        Buffer class50_sub1_sub2 = new Buffer(class2.read("npc.idx"));
         anInt649 = class50_sub1_sub2.readUnsignedShort();
         anIntArray650 = new int[anInt649];
         int i = 2;

@@ -7,6 +7,7 @@ import java.awt.*;
 import java.awt.image.PixelGrabber;
 import java.io.PrintStream;
 
+import rs2.cache.Archive;
 import rs2.net.Buffer;
 import rs2.sign.signlink;
 
@@ -70,7 +71,7 @@ public class Class50_Sub1_Sub1_Sub1 extends Class50_Sub1_Sub1
         }
     }
 
-    public Class50_Sub1_Sub1_Sub1(Class2 class2, String s, int i)
+    public Class50_Sub1_Sub1_Sub1(Archive class2, String s, int i)
     {
         anInt1477 = -235;
         aBoolean1478 = true;
@@ -84,8 +85,8 @@ public class Class50_Sub1_Sub1_Sub1 extends Class50_Sub1_Sub1
         aBoolean1486 = false;
         aBoolean1487 = true;
         anInt1488 = 3600;
-        Buffer class50_sub1_sub2 = new Buffer(class2.method154(s + ".dat", null));
-        Buffer class50_sub1_sub2_1 = new Buffer(class2.method154("index.dat", null));
+        Buffer class50_sub1_sub2 = new Buffer(class2.read(s + ".dat"));
+        Buffer class50_sub1_sub2_1 = new Buffer(class2.read("index.dat"));
         class50_sub1_sub2_1.position = class50_sub1_sub2.readUnsignedShort();
         anInt1494 = class50_sub1_sub2_1.readUnsignedShort();
         anInt1495 = class50_sub1_sub2_1.readUnsignedShort();

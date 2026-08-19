@@ -3,6 +3,7 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.cache.Archive;
 import rs2.sign.signlink;
 
 public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1
@@ -81,7 +82,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1
         }
     }
 
-    public static void method497(Class2 class2, int i)
+    public static void method497(Archive class2, int i)
     {
         if(i != -17551)
         {

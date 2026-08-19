@@ -3,6 +3,7 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.cache.Archive;
 import rs2.cache.ResourceNameHash;
 import rs2.collection.LruCache;
 import rs2.net.Buffer;
@@ -311,13 +312,13 @@ public class Class13
         return class13;
     }
 
-    public static void method199(int i, Class50_Sub1_Sub1_Sub2 aclass50_sub1_sub1_sub2[], Class2 class2, Class2 class2_1)
+    public static void method199(int i, Class50_Sub1_Sub1_Sub2 aclass50_sub1_sub1_sub2[], Archive class2, Archive class2_1)
     {
         aClass33_250 = new LruCache(50000);
         aClass2_214 = class2_1;
         aClass50_Sub1_Sub1_Sub2Array223 = aclass50_sub1_sub1_sub2;
         int j = -1;
-        Buffer class50_sub1_sub2 = new Buffer(class2.method154("data", null));
+        Buffer class50_sub1_sub2 = new Buffer(class2.read("data"));
         int k = class50_sub1_sub2.readUnsignedShort();
         aClass13Array216 = new Class13[k];
         aByteArrayArray282 = new byte[k][];
@@ -413,7 +414,7 @@ public class Class13
     public String aString211;
     public Class50_Sub1_Sub1_Sub1 aClass50_Sub1_Sub1_Sub1_212;
     public int anIntArray213[];
-    public static Class2 aClass2_214;
+    public static Archive aClass2_214;
     public int anInt215;
     public static Class13 aClass13Array216[];
     public boolean aBoolean217;

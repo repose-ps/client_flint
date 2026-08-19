@@ -5,17 +5,18 @@ package rs2;
 
 import java.io.PrintStream;
 
+import rs2.cache.Archive;
 import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class15
 {
 
-    public static void method207(Class2 class2, int i)
+    public static void method207(Archive class2, int i)
     {
         if(i != 36135)
             return;
-        Buffer class50_sub1_sub2 = new Buffer(class2.method154("flo.dat", null));
+        Buffer class50_sub1_sub2 = new Buffer(class2.read("flo.dat"));
         anInt313 = class50_sub1_sub2.readUnsignedShort();
         if(aClass15Array314 == null)
             aClass15Array314 = new Class15[anInt313];

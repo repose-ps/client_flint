@@ -3,18 +3,19 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.cache.Archive;
 import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class45
 {
 
-    public static void method373(Class2 class2)
+    public static void method373(Archive class2)
     {
-        Buffer class50_sub1_sub2 = new Buffer(class2.method154("fragmentsenc.txt", null));
-        Buffer class50_sub1_sub2_1 = new Buffer(class2.method154("badenc.txt", null));
-        Buffer class50_sub1_sub2_2 = new Buffer(class2.method154("domainenc.txt", null));
-        Buffer class50_sub1_sub2_3 = new Buffer(class2.method154("tldlist.txt", null));
+        Buffer class50_sub1_sub2 = new Buffer(class2.read("fragmentsenc.txt"));
+        Buffer class50_sub1_sub2_1 = new Buffer(class2.read("badenc.txt"));
+        Buffer class50_sub1_sub2_2 = new Buffer(class2.read("domainenc.txt"));
+        Buffer class50_sub1_sub2_3 = new Buffer(class2.read("tldlist.txt"));
         method374(class50_sub1_sub2, class50_sub1_sub2_1, class50_sub1_sub2_2, class50_sub1_sub2_3);
     }
 

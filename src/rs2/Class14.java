@@ -5,15 +5,16 @@ package rs2;
 
 import java.io.PrintStream;
 
+import rs2.cache.Archive;
 import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class14
 {
 
-    public static void method204(Class2 class2, int i)
+    public static void method204(Archive class2, int i)
     {
-        Buffer class50_sub1_sub2 = new Buffer(class2.method154("seq.dat", null));
+        Buffer class50_sub1_sub2 = new Buffer(class2.read("seq.dat"));
         anInt292 = class50_sub1_sub2.readUnsignedShort();
         if(aClass14Array293 == null)
             aClass14Array293 = new Class14[anInt292];

@@ -8,6 +8,7 @@ import java.net.Socket;
 import java.util.zip.CRC32;
 import java.util.zip.GZIPInputStream;
 
+import rs2.cache.Archive;
 import rs2.collection.DualNodeDeque;
 import rs2.collection.NodeDeque;
 import rs2.net.Buffer;
@@ -389,10 +390,10 @@ public class Class32_Sub1 extends Class32 implements Runnable {
 		return false;
 	}
 
-	public void method335(Class2 class2, client client1) {
+	public void method335(Archive class2, client client1) {
 		String as[] = { "model_version", "anim_version", "midi_version", "map_version" };
 		for (int i = 0; i < 4; i++) {
-			byte abyte0[] = class2.method154(as[i], null);
+			byte abyte0[] = class2.read(as[i]);
 			int j = abyte0.length / 2;
 			Buffer class50_sub1_sub2 = new Buffer(abyte0);
 			anIntArrayArray1377[i] = new int[j];
@@ -404,7 +405,7 @@ public class Class32_Sub1 extends Class32 implements Runnable {
 
 		String as1[] = { "model_crc", "anim_crc", "midi_crc", "map_crc" };
 		for (int k = 0; k < 4; k++) {
-			byte abyte1[] = class2.method154(as1[k], null);
+			byte abyte1[] = class2.read(as1[k]);
 			int i1 = abyte1.length / 4;
 			Buffer class50_sub1_sub2_1 = new Buffer(abyte1);
 			anIntArrayArray1344[k] = new int[i1];
@@ -413,7 +414,7 @@ public class Class32_Sub1 extends Class32 implements Runnable {
 
 		}
 
-		byte abyte2[] = class2.method154("model_index", null);
+		byte abyte2[] = class2.read("model_index");
 		int j1 = anIntArrayArray1377[0].length;
 		aByteArray1335 = new byte[j1];
 		for (int k1 = 0; k1 < j1; k1++)
@@ -422,7 +423,7 @@ public class Class32_Sub1 extends Class32 implements Runnable {
 			else
 				aByteArray1335[k1] = 0;
 
-		abyte2 = class2.method154("map_index", null);
+		abyte2 = class2.read("map_index");
 		Buffer class50_sub1_sub2_2 = new Buffer(abyte2);
 		j1 = abyte2.length / 7;
 		anIntArray1346 = new int[j1];
@@ -436,14 +437,14 @@ public class Class32_Sub1 extends Class32 implements Runnable {
 			anIntArray1336[i2] = class50_sub1_sub2_2.readUnsignedByte();
 		}
 
-		abyte2 = class2.method154("anim_index", null);
+		abyte2 = class2.read("anim_index");
 		class50_sub1_sub2_2 = new Buffer(abyte2);
 		j1 = abyte2.length / 2;
 		anIntArray1376 = new int[j1];
 		for (int j2 = 0; j2 < j1; j2++)
 			anIntArray1376[j2] = class50_sub1_sub2_2.readUnsignedShort();
 
-		abyte2 = class2.method154("midi_index", null);
+		abyte2 = class2.read("midi_index");
 		class50_sub1_sub2_2 = new Buffer(abyte2);
 		j1 = abyte2.length;
 		anIntArray1366 = new int[j1];

@@ -5,13 +5,14 @@ package rs2;
 
 import java.util.Random;
 
+import rs2.cache.Archive;
 import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class50_Sub1_Sub1_Sub2 extends Class50_Sub1_Sub1
 {
 
-    public Class50_Sub1_Sub1_Sub2(boolean flag, Class2 class2, int i, String s)
+    public Class50_Sub1_Sub1_Sub2(boolean flag, Archive class2, int i, String s)
     {
         aBoolean1496 = true;
         aBoolean1497 = true;
@@ -25,8 +26,8 @@ public class Class50_Sub1_Sub1_Sub2 extends Class50_Sub1_Sub1
         anIntArray1505 = new int[256];
         aRandom1507 = new Random();
         aBoolean1508 = false;
-        Buffer class50_sub1_sub2 = new Buffer(class2.method154(s + ".dat", null));
-        Buffer class50_sub1_sub2_1 = new Buffer(class2.method154("index.dat", null));
+        Buffer class50_sub1_sub2 = new Buffer(class2.read(s + ".dat"));
+        Buffer class50_sub1_sub2_1 = new Buffer(class2.read("index.dat"));
         byte byte0 = -1;
         class50_sub1_sub2_1.position = class50_sub1_sub2.readUnsignedShort() + 4;
         while(i >= 0) 

@@ -3,13 +3,14 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.cache.Archive;
 import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class50_Sub1_Sub1_Sub3 extends Class50_Sub1_Sub1
 {
 
-    public Class50_Sub1_Sub1_Sub3(Class2 class2, String s, int i)
+    public Class50_Sub1_Sub1_Sub3(Archive class2, String s, int i)
     {
         anInt1509 = 3;
         aBoolean1510 = true;
@@ -17,8 +18,8 @@ public class Class50_Sub1_Sub1_Sub3 extends Class50_Sub1_Sub1
         aByte1513 = 5;
         anInt1514 = -3539;
         aBoolean1515 = true;
-        Buffer class50_sub1_sub2 = new Buffer(class2.method154(s + ".dat", null));
-        Buffer class50_sub1_sub2_1 = new Buffer(class2.method154("index.dat", null));
+        Buffer class50_sub1_sub2 = new Buffer(class2.read(s + ".dat"));
+        Buffer class50_sub1_sub2_1 = new Buffer(class2.read("index.dat"));
         class50_sub1_sub2_1.position = class50_sub1_sub2.readUnsignedShort();
         anInt1522 = class50_sub1_sub2_1.readUnsignedShort();
         anInt1523 = class50_sub1_sub2_1.readUnsignedShort();

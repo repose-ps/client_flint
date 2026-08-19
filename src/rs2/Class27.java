@@ -5,6 +5,7 @@ package rs2;
 
 import java.io.PrintStream;
 
+import rs2.cache.Archive;
 import rs2.collection.LruCache;
 import rs2.net.Buffer;
 import rs2.sign.signlink;
@@ -12,9 +13,9 @@ import rs2.sign.signlink;
 public class Class27
 {
 
-    public static void method305(Class2 class2, int i)
+    public static void method305(Archive class2, int i)
     {
-        Buffer class50_sub1_sub2 = new Buffer(class2.method154("spotanim.dat", null));
+        Buffer class50_sub1_sub2 = new Buffer(class2.read("spotanim.dat"));
         anInt553 = class50_sub1_sub2.readUnsignedShort();
         if(i != 36135)
             aBoolean551 = !aBoolean551;

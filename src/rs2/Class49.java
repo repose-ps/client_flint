@@ -5,15 +5,16 @@ package rs2;
 
 import java.io.PrintStream;
 
+import rs2.cache.Archive;
 import rs2.net.Buffer;
 import rs2.sign.signlink;
 
 public class Class49
 {
 
-    public static void method440(Class2 class2, int i)
+    public static void method440(Archive class2, int i)
     {
-        Buffer class50_sub1_sub2 = new Buffer(class2.method154("varbit.dat", null));
+        Buffer class50_sub1_sub2 = new Buffer(class2.read("varbit.dat"));
         if(i != 36135)
             return;
         anInt823 = class50_sub1_sub2.readUnsignedShort();
