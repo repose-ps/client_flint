@@ -16,6 +16,7 @@ import java.util.zip.CRC32;
 import rs2.collection.Node;
 import rs2.collection.NodeDeque;
 import rs2.net.Buffer;
+import rs2.net.BufferedConnection;
 import rs2.net.IsaacCipher;
 import rs2.sign.signlink;
 
@@ -325,7 +326,7 @@ public class client extends Applet_Sub1 {
 		aClass50_Sub1_Sub1_Sub3_1187 = null;
 		try {
 			if (aClass17_1024 != null)
-				aClass17_1024.method224();
+				aClass17_1024.close();
 		} catch (Exception _ex) {
 		}
 		aClass17_1024 = null;
@@ -948,7 +949,7 @@ public class client extends Applet_Sub1 {
 			aClass50_Sub1_Sub2_964.writeOpcode(40);
 		try {
 			if (aClass17_1024 != null && aClass50_Sub1_Sub2_964.position > 0) {
-				aClass17_1024.method228(0, aClass50_Sub1_Sub2_964.position, 0, aClass50_Sub1_Sub2_964.payload);
+				aClass17_1024.write(aClass50_Sub1_Sub2_964.payload, 0, aClass50_Sub1_Sub2_964.position);
 				aClass50_Sub1_Sub2_964.position = 0;
 				anInt872 = 0;
 				return;
@@ -1331,11 +1332,11 @@ public class client extends Applet_Sub1 {
 		if (aClass17_1024 == null)
 			return false;
 		try {
-			int k = aClass17_1024.method226();
+			int k = aClass17_1024.available();
 			if (k == 0)
 				return false;
 			if (anInt870 == -1) {
-				aClass17_1024.method227(aClass50_Sub1_Sub2_1188.payload, 0, 1);
+				aClass17_1024.readFully(aClass50_Sub1_Sub2_1188.payload, 0, 1);
 				anInt870 = aClass50_Sub1_Sub2_1188.payload[0] & 0xff;
 				if (aClass24_899 != null)
 					anInt870 = anInt870 - aClass24_899.nextInt() & 0xff;
@@ -1344,7 +1345,7 @@ public class client extends Applet_Sub1 {
 			}
 			if (anInt869 == -1)
 				if (k > 0) {
-					aClass17_1024.method227(aClass50_Sub1_Sub2_1188.payload, 0, 1);
+					aClass17_1024.readFully(aClass50_Sub1_Sub2_1188.payload, 0, 1);
 					anInt869 = aClass50_Sub1_Sub2_1188.payload[0] & 0xff;
 					k--;
 				} else {
@@ -1352,7 +1353,7 @@ public class client extends Applet_Sub1 {
 				}
 			if (anInt869 == -2)
 				if (k > 1) {
-					aClass17_1024.method227(aClass50_Sub1_Sub2_1188.payload, 0, 2);
+					aClass17_1024.readFully(aClass50_Sub1_Sub2_1188.payload, 0, 2);
 					aClass50_Sub1_Sub2_1188.position = 0;
 					anInt869 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
 					k -= 2;
@@ -1362,7 +1363,7 @@ public class client extends Applet_Sub1 {
 			if (k < anInt869)
 				return false;
 			aClass50_Sub1_Sub2_1188.position = 0;
-			aClass17_1024.method227(aClass50_Sub1_Sub2_1188.payload, 0, anInt869);
+			aClass17_1024.readFully(aClass50_Sub1_Sub2_1188.payload, 0, anInt869);
 			anInt871 = 0;
 			anInt905 = anInt904;
 			anInt904 = anInt903;
@@ -3760,14 +3761,14 @@ public class client extends Applet_Sub1 {
 		if (i != 1)
 			aBoolean1242 = !aBoolean1242;
 		anInt1120 = 0;
-		Class17 class17 = aClass17_1024;
+		BufferedConnection class17 = aClass17_1024;
 		aBoolean1137 = false;
 		anInt850 = 0;
 		method79(aString1092, aString1093, true);
 		if (!aBoolean1137)
 			method124(true);
 		try {
-			class17.method224();
+			class17.close();
 			return;
 		} catch (Exception _ex) {
 			return;
@@ -5621,20 +5622,20 @@ public class client extends Applet_Sub1 {
 				aString958 = "Connecting to server...";
 				method131((byte) -50, true);
 			}
-			aClass17_1024 = new Class17((byte) 2, method32(43594 + anInt924), this);
+			aClass17_1024 = new BufferedConnection(method32(43594 + anInt924));
 			long l = Class25.method299(s);
 			int i = (int) (l >> 16 & 31L);
 			aClass50_Sub1_Sub2_964.position = 0;
 			aClass50_Sub1_Sub2_964.writeByte(14);
 			aClass50_Sub1_Sub2_964.writeByte(i);
-			aClass17_1024.method228(0, 2, 0, aClass50_Sub1_Sub2_964.payload);
+			aClass17_1024.write(aClass50_Sub1_Sub2_964.payload, 0, 2);
 			for (int j = 0; j < 8; j++)
-				aClass17_1024.method225();
+				aClass17_1024.read();
 
-			int k = aClass17_1024.method225();
+			int k = aClass17_1024.read();
 			int i1 = k;
 			if (k == 0) {
-				aClass17_1024.method227(aClass50_Sub1_Sub2_1188.payload, 0, 8);
+				aClass17_1024.readFully(aClass50_Sub1_Sub2_1188.payload, 0, 8);
 				aClass50_Sub1_Sub2_1188.position = 0;
 				aLong930 = aClass50_Sub1_Sub2_1188.readLong();
 				int ai[] = new int[4];
@@ -5671,8 +5672,8 @@ public class client extends Applet_Sub1 {
 					ai[j2] += 50;
 
 				aClass24_899 = new IsaacCipher(ai);
-				aClass17_1024.method228(0, aClass50_Sub1_Sub2_929.position, 0, aClass50_Sub1_Sub2_929.payload);
-				k = aClass17_1024.method225();
+				aClass17_1024.write(aClass50_Sub1_Sub2_929.payload, 0, aClass50_Sub1_Sub2_929.position);
+				k = aClass17_1024.read();
 			}
 			if (k == 1) {
 				try {
@@ -5683,8 +5684,8 @@ public class client extends Applet_Sub1 {
 				return;
 			}
 			if (k == 2) {
-				anInt867 = aClass17_1024.method225();
-				aBoolean962 = aClass17_1024.method225() == 1;
+				anInt867 = aClass17_1024.read();
+				aBoolean962 = aClass17_1024.read() == 1;
 				aLong902 = 0L;
 				anInt1299 = 0;
 				aClass7_1248.anInt136 = 0;
@@ -5884,7 +5885,7 @@ public class client extends Applet_Sub1 {
 				return;
 			}
 			if (k == 21) {
-				int k1 = aClass17_1024.method225();
+				int k1 = aClass17_1024.read();
 				for (k1 += 3; k1 >= 0; k1--) {
 					aString957 = "You have only just left another world";
 					aString958 = "Your profile will be transferred in: " + k1;
@@ -9411,7 +9412,7 @@ public class client extends Applet_Sub1 {
 	public void method124(boolean flag) {
 		try {
 			if (aClass17_1024 != null)
-				aClass17_1024.method224();
+				aClass17_1024.close();
 		} catch (Exception _ex) {
 		}
 		aClass17_1024 = null;
@@ -10171,7 +10172,7 @@ public class client extends Applet_Sub1 {
 		if (flag)
 			aBoolean1028 = !aBoolean1028;
 		if (aClass17_1024 != null)
-			aClass17_1024.method229(false);
+			aClass17_1024.printDebugInformation();
 		super.aBoolean11 = true;
 	}
 
@@ -11581,7 +11582,7 @@ public class client extends Applet_Sub1 {
 	public int anInt1021;
 	public int anInt1022;
 	public int anInt1023;
-	public Class17 aClass17_1024;
+	public BufferedConnection aClass17_1024;
 	public static int anInt1025 = -352;
 	public String aString1026;
 	public String aString1027;
