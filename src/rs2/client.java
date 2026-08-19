@@ -13,12 +13,16 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.zip.CRC32;
 
+import rs2.chat.ChatCodec;
 import rs2.collection.Node;
 import rs2.collection.NodeDeque;
 import rs2.net.Buffer;
 import rs2.net.BufferedConnection;
+import rs2.net.Ipv4Address;
 import rs2.net.IsaacCipher;
 import rs2.sign.signlink;
+import rs2.text.Base37;
+import rs2.text.TextFormatter;
 
 public class client extends Applet_Sub1 {
 
@@ -1073,11 +1077,11 @@ public class client extends Applet_Sub1 {
 					aBoolean866 = false;
 					aBoolean1240 = true;
 					if (anInt1221 == 1) {
-						long l = Class25.method299(aString1026);
+						long l = Base37.encode(aString1026);
 						method102(l, -45229);
 					}
 					if (anInt1221 == 2 && anInt859 > 0) {
-						long l1 = Class25.method299(aString1026);
+						long l1 = Base37.encode(aString1026);
 						method53(l1, 0);
 					}
 					if (anInt1221 == 3 && aString1026.length() > 0) {
@@ -1085,11 +1089,11 @@ public class client extends Applet_Sub1 {
 						aClass50_Sub1_Sub2_964.writeByte(0);
 						int j = aClass50_Sub1_Sub2_964.position;
 						aClass50_Sub1_Sub2_964.writeLong(aLong1141);
-						Class31.method321(aString1026, 569, aClass50_Sub1_Sub2_964);
+						ChatCodec.encode(aString1026, aClass50_Sub1_Sub2_964);
 						aClass50_Sub1_Sub2_964.writeLength(aClass50_Sub1_Sub2_964.position - j);
-						aString1026 = Class31.method322((byte) 0, aString1026);
+						aString1026 = ChatCodec.normalize(aString1026);
 						aString1026 = Class45.method383((byte) 0, aString1026);
-						method47(Class25.method303(Class25.method300(aLong1141, 0), (byte) 7), (byte) -123, aString1026,
+						method47(TextFormatter.formatDisplayName(Base37.decode(aLong1141)), (byte) -123, aString1026,
 								6);
 						if (anInt887 == 2) {
 							anInt887 = 1;
@@ -1101,11 +1105,11 @@ public class client extends Applet_Sub1 {
 						}
 					}
 					if (anInt1221 == 4 && anInt855 < 100) {
-						long l2 = Class25.method299(aString1026);
+						long l2 = Base37.encode(aString1026);
 						method90(anInt1154, l2);
 					}
 					if (anInt1221 == 5 && anInt855 > 0) {
-						long l3 = Class25.method299(aString1026);
+						long l3 = Base37.encode(aString1026);
 						method97(325, l3);
 					}
 				}
@@ -1143,7 +1147,7 @@ public class client extends Applet_Sub1 {
 				if (i == 13 || i == 10) {
 					if (aString949.length() > 0) {
 						aClass50_Sub1_Sub2_964.writeOpcode(206);
-						aClass50_Sub1_Sub2_964.writeLong(Class25.method299(aString949));
+						aClass50_Sub1_Sub2_964.writeLong(Base37.encode(aString949));
 					}
 					anInt1244 = 0;
 					aBoolean1240 = true;
@@ -1261,11 +1265,11 @@ public class client extends Applet_Sub1 {
 						aClass50_Sub1_Sub2_964.writeByteNeg(i2);
 						aClass50_Sub1_Sub2_964.writeByteAdd(k2);
 						aClass50_Sub1_Sub2_1131.position = 0;
-						Class31.method321(aString1104, 569, aClass50_Sub1_Sub2_1131);
+						ChatCodec.encode(aString1104, aClass50_Sub1_Sub2_1131);
 						aClass50_Sub1_Sub2_964.writeBytes(aClass50_Sub1_Sub2_1131.payload, 0,
 								aClass50_Sub1_Sub2_1131.position);
 						aClass50_Sub1_Sub2_964.writeLength(aClass50_Sub1_Sub2_964.position - i3);
-						aString1104 = Class31.method322((byte) 0, aString1104);
+						aString1104 = ChatCodec.normalize(aString1104);
 						aString1104 = Class45.method383((byte) 0, aString1104);
 						aClass50_Sub1_Sub4_Sub3_Sub2_1167.aString1580 = aString1104;
 						aClass50_Sub1_Sub4_Sub3_Sub2_1167.anInt1583 = i2;
@@ -1686,7 +1690,7 @@ public class client extends Applet_Sub1 {
 				anInt1241 = aClass50_Sub1_Sub2_1188.readIntLE();
 				anInt1034 = aClass50_Sub1_Sub2_1188.readUnsignedShortAddLE();
 				aClass50_Sub1_Sub2_1188.readUnsignedByteAdd();
-				signlink.dnslookup(Class25.method302(anInt1241, -826));
+				signlink.dnslookup(Ipv4Address.format(anInt1241));
 				anInt870 = -1;
 				return true;
 			}
@@ -1694,7 +1698,7 @@ public class client extends Applet_Sub1 {
 				String s = aClass50_Sub1_Sub2_1188.readString();
 				if (s.endsWith(":tradereq:")) {
 					String s3 = s.substring(0, s.indexOf(":"));
-					long l18 = Class25.method299(s3);
+					long l18 = Base37.encode(s3);
 					boolean flag1 = false;
 					for (int l27 = 0; l27 < anInt855; l27++) {
 						if (aLongArray1073[l27] != l18)
@@ -1707,7 +1711,7 @@ public class client extends Applet_Sub1 {
 						method47(s3, (byte) -123, "wishes to trade with you.", 4);
 				} else if (s.endsWith(":duelreq:")) {
 					String s4 = s.substring(0, s.indexOf(":"));
-					long l19 = Class25.method299(s4);
+					long l19 = Base37.encode(s4);
 					boolean flag2 = false;
 					for (int i28 = 0; i28 < anInt855; i28++) {
 						if (aLongArray1073[i28] != l19)
@@ -1720,7 +1724,7 @@ public class client extends Applet_Sub1 {
 						method47(s4, (byte) -123, "wishes to duel with you.", 8);
 				} else if (s.endsWith(":chalreq:")) {
 					String s5 = s.substring(0, s.indexOf(":"));
-					long l20 = Class25.method299(s5);
+					long l20 = Base37.encode(s5);
 					boolean flag3 = false;
 					for (int j28 = 0; j28 < anInt855; j28++) {
 						if (aLongArray1073[j28] != l20)
@@ -1843,7 +1847,7 @@ public class client extends Applet_Sub1 {
 			if (anInt870 == 78) {
 				long l5 = aClass50_Sub1_Sub2_1188.readLong();
 				int k18 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				String s7 = Class25.method303(Class25.method300(l5, 0), (byte) 7);
+				String s7 = TextFormatter.formatDisplayName(Base37.decode(l5));
 				for (int k25 = 0; k25 < anInt859; k25++) {
 					if (l5 != aLongArray1130[k25])
 						continue;
@@ -1967,17 +1971,17 @@ public class client extends Applet_Sub1 {
 					try {
 						anIntArray1258[anInt1152] = i19;
 						anInt1152 = (anInt1152 + 1) % 100;
-						String s9 = Class31.method320(0, aClass50_Sub1_Sub2_1188, anInt869 - 13);
+						String s9 = ChatCodec.decode(aClass50_Sub1_Sub2_1188, anInt869 - 13);
 						if (j23 != 3)
 							s9 = Class45.method383((byte) 0, s9);
 						if (j23 == 2 || j23 == 3)
-							method47("@cr2@" + Class25.method303(Class25.method300(l6, 0), (byte) 7), (byte) -123, s9,
+							method47("@cr2@" + TextFormatter.formatDisplayName(Base37.decode(l6)), (byte) -123, s9,
 									7);
 						else if (j23 == 1)
-							method47("@cr1@" + Class25.method303(Class25.method300(l6, 0), (byte) 7), (byte) -123, s9,
+							method47("@cr1@" + TextFormatter.formatDisplayName(Base37.decode(l6)), (byte) -123, s9,
 									7);
 						else
-							method47(Class25.method303(Class25.method300(l6, 0), (byte) 7), (byte) -123, s9, 3);
+							method47(TextFormatter.formatDisplayName(Base37.decode(l6)), (byte) -123, s9, 3);
 					} catch (Exception exception1) {
 						signlink.reporterror("cde1");
 					}
@@ -3869,7 +3873,7 @@ public class client extends Applet_Sub1 {
 			method15(false);
 			if (aString839.length() > 0) {
 				aClass50_Sub1_Sub2_964.writeOpcode(184);
-				aClass50_Sub1_Sub2_964.writeLong(Class25.method299(aString839));
+				aClass50_Sub1_Sub2_964.writeLong(Base37.encode(aString839));
 				aClass50_Sub1_Sub2_964.writeByte(j - 601);
 				aClass50_Sub1_Sub2_964.writeByte(aBoolean1098 ? 1 : 0);
 			}
@@ -4182,7 +4186,7 @@ public class client extends Applet_Sub1 {
 			int l3 = class50_sub1_sub2.readUnsignedByteAdd();
 			int i4 = class50_sub1_sub2.position;
 			if (class50_sub1_sub4_sub3_sub2.aString1751 != null && class50_sub1_sub4_sub3_sub2.aBoolean1758) {
-				long l4 = Class25.method299(class50_sub1_sub4_sub3_sub2.aString1751);
+				long l4 = Base37.encode(class50_sub1_sub4_sub3_sub2.aString1751);
 				boolean flag = false;
 				if (i3 <= 1) {
 					for (int j4 = 0; j4 < anInt855; j4++) {
@@ -4198,7 +4202,7 @@ public class client extends Applet_Sub1 {
 						aClass50_Sub1_Sub2_1131.position = 0;
 						class50_sub1_sub2.readBytesAdd(aClass50_Sub1_Sub2_1131.payload, 0, l3);
 						aClass50_Sub1_Sub2_1131.position = 0;
-						String s = Class31.method320(0, aClass50_Sub1_Sub2_1131, l3);
+						String s = ChatCodec.decode(aClass50_Sub1_Sub2_1131, l3);
 						s = Class45.method383((byte) 0, s);
 						class50_sub1_sub4_sub3_sub2.aString1580 = s;
 						class50_sub1_sub4_sub3_sub2.anInt1583 = i2 >> 8;
@@ -5623,7 +5627,7 @@ public class client extends Applet_Sub1 {
 				method131((byte) -50, true);
 			}
 			aClass17_1024 = new BufferedConnection(method32(43594 + anInt924));
-			long l = Class25.method299(s);
+			long l = Base37.encode(s);
 			int i = (int) (l >> 16 & 31L);
 			aClass50_Sub1_Sub2_964.position = 0;
 			aClass50_Sub1_Sub2_964.writeByte(14);
@@ -6327,7 +6331,7 @@ public class client extends Applet_Sub1 {
 			if (aClass50_Sub1_Sub4_Sub3_Sub2_1167 != null && aClass50_Sub1_Sub4_Sub3_Sub2_1167.aString1751 != null)
 				s = aClass50_Sub1_Sub4_Sub3_Sub2_1167.aString1751;
 			else
-				s = Class25.method303(aString1092, (byte) 7);
+				s = TextFormatter.formatDisplayName(aString1092);
 			class50_sub1_sub1_sub2_1.method474(2245, 4, 0, 90, s + ":");
 			class50_sub1_sub1_sub2_1.method474(2245, 6 + class50_sub1_sub1_sub2_1.method472((byte) 35, s + ": "), 255,
 					90, aString1104 + "*");
@@ -6505,7 +6509,7 @@ public class client extends Applet_Sub1 {
 				int i4 = ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub2)).anInt1611 / 32
 						- ((Class50_Sub1_Sub4_Sub3) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).anInt1611 / 32;
 				boolean flag = false;
-				long l6 = Class25.method299(class50_sub1_sub4_sub3_sub2.aString1751);
+				long l6 = Base37.encode(class50_sub1_sub4_sub3_sub2.aString1751);
 				for (int i7 = 0; i7 < anInt859; i7++) {
 					if (l6 != aLongArray1130[i7] || anIntArray1267[i7] == 0)
 						continue;
@@ -6642,7 +6646,7 @@ public class client extends Applet_Sub1 {
 				method47("", (byte) -123, "Your ignore list is full. Max of 100 hit", 0);
 				return;
 			}
-			String s = Class25.method303(Class25.method300(l, 0), (byte) 7);
+			String s = TextFormatter.formatDisplayName(Base37.decode(l));
 			for (int j = 0; j < anInt855; j++)
 				if (aLongArray1073[j] == l) {
 					method47("", (byte) -123, s + " is already on your ignore list", 0);
@@ -7223,7 +7227,7 @@ public class client extends Applet_Sub1 {
 				method47("", (byte) -123, "Your friendlist is full. Max of 100 for free users, and 200 for members", 0);
 				return;
 			}
-			String s = Class25.method303(Class25.method300(l, 0), (byte) 7);
+			String s = TextFormatter.formatDisplayName(Base37.decode(l));
 			for (int j = 0; j < anInt859; j++)
 				if (aLongArray1130[j] == l) {
 					method47("", (byte) -123, s + " is already on your friend list", 0);
@@ -7348,7 +7352,7 @@ public class client extends Applet_Sub1 {
 				class13.anInt289 = 0;
 				return;
 			} else {
-				class13.aString230 = Class25.method303(Class25.method300(aLongArray1073[i], 0), (byte) 7);
+				class13.aString230 = TextFormatter.formatDisplayName(Base37.decode(aLongArray1073[i]));
 				class13.anInt289 = 1;
 				return;
 			}
@@ -8425,7 +8429,7 @@ public class client extends Applet_Sub1 {
 			String s = aStringArray1184[i];
 			int l1 = s.indexOf("@whi@");
 			if (l1 != -1) {
-				long l3 = Class25.method299(s.substring(l1 + 5).trim());
+				long l3 = Base37.encode(s.substring(l1 + 5).trim());
 				if (i1 == 762)
 					method102(l3, -45229);
 				if (i1 == 574)
@@ -8671,7 +8675,7 @@ public class client extends Applet_Sub1 {
 			int j2 = s1.indexOf("@whi@");
 			if (j2 != -1) {
 				s1 = s1.substring(j2 + 5).trim();
-				String s7 = Class25.method303(Class25.method300(Class25.method299(s1), 0), (byte) 7);
+				String s7 = TextFormatter.formatDisplayName(Base37.decode(Base37.encode(s1)));
 				boolean flag8 = false;
 				for (int j3 = 0; j3 < anInt971; j3++) {
 					Class50_Sub1_Sub4_Sub3_Sub2 class50_sub1_sub4_sub3_sub2_7 = aClass50_Sub1_Sub4_Sub3_Sub2Array970[anIntArray972[j3]];
@@ -8987,7 +8991,7 @@ public class client extends Applet_Sub1 {
 			String s3 = aStringArray1184[i];
 			int l2 = s3.indexOf("@whi@");
 			if (l2 != -1) {
-				long l4 = Class25.method299(s3.substring(l2 + 5).trim());
+				long l4 = Base37.encode(s3.substring(l2 + 5).trim());
 				int k3 = -1;
 				for (int i4 = 0; i4 < anInt859; i4++) {
 					if (aLongArray1130[i4] != l4)
@@ -9718,7 +9722,7 @@ public class client extends Applet_Sub1 {
 					"Username: " + aString1092 + ((anInt977 == 0) & (anInt1325 % 40 < 20) ? "@yel@|" : ""), -39629);
 			k += 15;
 			aClass50_Sub1_Sub1_Sub2_1061.method478(0xffffff, c / 2 - 88, k, true, "Password: "
-					+ Class25.method304(2934, aString1093) + ((anInt977 == 1) & (anInt1325 % 40 < 20) ? "@yel@|" : ""),
+					+ TextFormatter.mask(aString1093) + ((anInt977 == 1) & (anInt1325 % 40 < 20) ? "@yel@|" : ""),
 					-39629);
 			k += 15;
 			if (!flag) {

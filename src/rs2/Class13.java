@@ -3,6 +3,7 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.cache.ResourceNameHash;
 import rs2.collection.LruCache;
 import rs2.net.Buffer;
 import rs2.sign.signlink;
@@ -12,7 +13,7 @@ public class Class13
 
     public static Class50_Sub1_Sub1_Sub1 method194(int i, String s, int j)
     {
-        long l = (Class25.method301(183, s) << 8) + (long)i;
+        long l = (ResourceNameHash.hash(s) << 8) + (long)i;
         if(j <= 0)
             anInt275 = -317;
         Class50_Sub1_Sub1_Sub1 class50_sub1_sub1_sub1 = (Class50_Sub1_Sub1_Sub1)aClass33_250.get(l);
