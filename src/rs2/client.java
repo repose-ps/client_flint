@@ -27,6 +27,7 @@ import rs2.scene.InteractiveObject;
 import rs2.scene.tile.FloorDecoration;
 import rs2.scene.tile.Wall;
 import rs2.scene.tile.WallDecoration;
+import rs2.scene.util.CollisionMap;
 import rs2.net.IncomingPacketLengths;
 import rs2.sign.signlink;
 import rs2.text.Base37;
@@ -1197,7 +1198,7 @@ public class client extends Applet_Sub1 {
 							for (int j1 = 0; j1 < 4; j1++) {
 								for (int k1 = 1; k1 < 103; k1++) {
 									for (int j2 = 1; j2 < 103; j2++)
-										aClass46Array1260[j1].anIntArrayArray757[k1][j2] = 0;
+										aClass46Array1260[j1].flags[k1][j2] = 0;
 
 								}
 
@@ -2592,7 +2593,7 @@ public class client extends Applet_Sub1 {
 		anIntArray1124[k3++] = j;
 		boolean flag2 = false;
 		int i4 = anIntArray1123.length;
-		int ai[][] = aClass46Array1260[anInt1091].anIntArrayArray757;
+		int ai[][] = aClass46Array1260[anInt1091].flags;
 		while (l3 != k3) {
 			i3 = anIntArray1123[l3];
 			j3 = anIntArray1124[l3];
@@ -2602,16 +2603,16 @@ public class client extends Applet_Sub1 {
 				break;
 			}
 			if (j1 != 0) {
-				if ((j1 < 5 || j1 == 10) && aClass46Array1260[anInt1091].method420(k1, 0, i, j1 - 1, i3, j3, i2)) {
+				if ((j1 < 5 || j1 == 10) && aClass46Array1260[anInt1091].reachedWall(i3, j3, k1, i, j1 - 1, i2)) {
 					flag2 = true;
 					break;
 				}
-				if (j1 < 10 && aClass46Array1260[anInt1091].method421(-37, j3, k1, i3, i2, j1 - 1, i)) {
+				if (j1 < 10 && aClass46Array1260[anInt1091].reachedWallDecoration(i3, j3, k1, i, j1 - 1, i2)) {
 					flag2 = true;
 					break;
 				}
 			}
-			if (k != 0 && l != 0 && aClass46Array1260[anInt1091].method422(k, i3, true, k1, l1, l, i, j3)) {
+			if (k != 0 && l != 0 && aClass46Array1260[anInt1091].reachedObject(i3, j3, k1, i, k, l, l1)) {
 				flag2 = true;
 				break;
 			}
@@ -3268,7 +3269,7 @@ public class client extends Applet_Sub1 {
 					aClass22_1164.method258(l, i1, j, true);
 					Class47 class47 = Class47.method423(i2);
 					if (class47.aBoolean810)
-						aClass46Array1260[i1].method416(k2, j, 0, l, j2, class47.aBoolean809);
+						aClass46Array1260[i1].unmarkWall(j, l, j2, k2, class47.aBoolean809);
 				}
 				if (k1 == 1)
 					aClass22_1164.method259(false, j, l, i1);
@@ -3279,14 +3280,13 @@ public class client extends Applet_Sub1 {
 							|| l + class47_1.anInt775 > 103)
 						return;
 					if (class47_1.aBoolean810)
-						aClass46Array1260[i1].method417(anInt1055, l, j, k2, class47_1.anInt775, class47_1.aBoolean809,
-								class47_1.anInt801);
+						aClass46Array1260[i1].unmarkSolidOccupant(j, l, class47_1.anInt801, class47_1.anInt775, k2, class47_1.aBoolean809);
 				}
 				if (k1 == 3) {
 					aClass22_1164.method261(j, l, true, i1);
 					Class47 class47_2 = Class47.method423(i2);
 					if (class47_2.aBoolean810 && class47_2.aBoolean759)
-						aClass46Array1260[i1].method419(j, (byte) -122, l);
+						aClass46Array1260[i1].unmarkBlocked(j, l);
 				}
 			}
 			if (k >= 0) {
@@ -4343,7 +4343,7 @@ public class client extends Applet_Sub1 {
 			anIntArrayArrayArray891 = new int[4][105][105];
 			aClass22_1164 = new Class22(anIntArrayArrayArray891, 104, 4, 104, (byte) 5);
 			for (int j = 0; j < 4; j++)
-				aClass46Array1260[j] = new Class46(104, 0, 104);
+				aClass46Array1260[j] = new CollisionMap(104, 104);
 
 			aClass50_Sub1_Sub1_Sub1_1122 = new Class50_Sub1_Sub1_Sub1(512, 512);
 			Archive class2_6 = method61(14076, anIntArray837[5], "versionlist", 60, 5, "update list");
@@ -6816,7 +6816,7 @@ public class client extends Applet_Sub1 {
 			aClass22_1164.method241((byte) 7);
 			System.gc();
 			for (int j = 0; j < 4; j++)
-				aClass46Array1260[j].method411();
+				aClass46Array1260[j].reset();
 
 			for (int i1 = 0; i1 < 4; i1++) {
 				for (int l1 = 0; l1 < 104; l1++) {
@@ -8069,7 +8069,7 @@ public class client extends Applet_Sub1 {
 						if (k3 != 22 && k3 != 29 && k3 != 34 && k3 != 36 && k3 != 46 && k3 != 47 && k3 != 48) {
 							byte byte0 = 104;
 							byte byte1 = 104;
-							int ai1[][] = aClass46Array1260[anInt1091].anIntArrayArray757;
+							int ai1[][] = aClass46Array1260[anInt1091].flags;
 							for (int j4 = 0; j4 < 10; j4++) {
 								int k4 = (int) (Math.random() * 4D);
 								if (k4 == 0 && l3 > 0 && l3 > l2 - 3 && (ai1[l3 - 1][i4] & 0x1280108) == 0)
@@ -9438,7 +9438,7 @@ public class client extends Applet_Sub1 {
 		aBoolean1137 &= flag;
 		aClass22_1164.method241((byte) 7);
 		for (int i = 0; i < 4; i++)
-			aClass46Array1260[i].method411();
+			aClass46Array1260[i].reset();
 
 		System.gc();
 		method50(false);
@@ -11295,7 +11295,6 @@ public class client extends Applet_Sub1 {
 		anInt1051 = 69;
 		anInt1053 = -1;
 		anIntArray1054 = new int[Skills.COUNT];
-		anInt1055 = 2;
 		anInt1056 = 3;
 		aBoolean1065 = false;
 		aBoolean1067 = false;
@@ -11367,7 +11366,7 @@ public class client extends Applet_Sub1 {
 		anInt1256 = 1;
 		anIntArray1258 = new int[100];
 		anIntArray1259 = new int[50];
-		aClass46Array1260 = new Class46[4];
+		aClass46Array1260 = new CollisionMap[4];
 		aClass6_1261 = new NodeDeque();
 		aBoolean1265 = false;
 		aBoolean1266 = true;
@@ -11624,7 +11623,6 @@ public class client extends Applet_Sub1 {
 	public static int anInt1052;
 	public int anInt1053;
 	public int anIntArray1054[];
-	public int anInt1055;
 	public int anInt1056;
 	public int anInt1057;
 	public String aString1058;
@@ -11825,7 +11823,7 @@ public class client extends Applet_Sub1 {
 	public final int anInt1257 = 100;
 	public int anIntArray1258[];
 	public int anIntArray1259[];
-	public Class46 aClass46Array1260[];
+	public CollisionMap aClass46Array1260[];
 	public NodeDeque aClass6_1261;
 	public int anInt1262;
 	public int anInt1263;

@@ -4,6 +4,8 @@
 package rs2;
 
 import rs2.net.Buffer;
+import rs2.scene.util.CollisionMap;
+import rs2.scene.util.TiledUtils;
 
 public class Class8
 {
@@ -71,7 +73,7 @@ public class Class8
   }
   
   public static void method165
-    (int i, int i_15_, int i_16_, int i_17_, Class46 class46, int i_18_,
+    (int i, int i_15_, int i_16_, int i_17_, CollisionMap class46, int i_18_,
      int i_19_, int i_20_, int i_21_, Class22 class22, int[][][] is)
   {
     int i_22_ = is[i_15_][i_19_][i_17_];
@@ -100,7 +102,7 @@ public class Class8
 	    class22.method247 (i_19_, i_17_, 669, i_28_, i_27_, i_26_, i_21_,
 			       class50_sub1_sub4);
 	    if (class47.aBoolean810 && class47.aBoolean759)
-	      class46.method414 (8, i_17_, i_19_);
+	      class46.markBlocked (i_19_, i_17_);
 	  }
 	else if (i_16_ == 10 || i_16_ == 11)
 	  {
@@ -135,9 +137,8 @@ public class Class8
 				   i_27_);
 	      }
 	    if (class47.aBoolean810)
-	      class46.method413 (i_17_, i_18_, class47.anInt775,
-				 class47.anInt801, class47.aBoolean809, i_19_,
-				 (byte) 52);
+	      class46.markSolidOccupant (i_19_, i_17_, class47.anInt801,
+				 class47.anInt775, i_18_, class47.aBoolean809);
 	  }
 	else if (i_16_ >= 12)
 	  {
@@ -153,9 +154,8 @@ public class Class8
 	    class22.method251 (i_21_, 1, i_17_, class50_sub1_sub4, i_28_, 0,
 			       i_19_, -896, 1, i_26_, i_27_);
 	    if (class47.aBoolean810)
-	      class46.method413 (i_17_, i_18_, class47.anInt775,
-				 class47.anInt801, class47.aBoolean809, i_19_,
-				 (byte) 52);
+	      class46.markSolidOccupant (i_19_, i_17_, class47.anInt801,
+				 class47.anInt775, i_18_, class47.aBoolean809);
 	  }
 	else if (i_16_ == 0)
 	  {
@@ -172,8 +172,8 @@ public class Class8
 			       i_19_, i_27_, i_28_, i_17_, class50_sub1_sub4,
 			       i_21_);
 	    if (class47.aBoolean810)
-	      class46.method412 (i_18_, 37679, class47.aBoolean809, i_16_,
-				 i_19_, i_17_);
+	      class46.markWall (i_19_, i_17_, i_16_, i_18_,
+				 class47.aBoolean809);
 	  }
 	else if (i_16_ == 1)
 	  {
@@ -190,8 +190,8 @@ public class Class8
 			       i_19_, i_27_, i_28_, i_17_, class50_sub1_sub4,
 			       i_21_);
 	    if (class47.aBoolean810)
-	      class46.method412 (i_18_, 37679, class47.aBoolean809, i_16_,
-				 i_19_, i_17_);
+	      class46.markWall (i_19_, i_17_, i_16_, i_18_,
+				 class47.aBoolean809);
 	  }
 	else if (i_16_ == 2)
 	  {
@@ -223,8 +223,8 @@ public class Class8
 			       i_19_, i_27_, i_28_, i_17_, class50_sub1_sub4,
 			       i_21_);
 	    if (class47.aBoolean810)
-	      class46.method412 (i_18_, 37679, class47.aBoolean809, i_16_,
-				 i_19_, i_17_);
+	      class46.markWall (i_19_, i_17_, i_16_, i_18_,
+				 class47.aBoolean809);
 	  }
 	else if (i_16_ == 3)
 	  {
@@ -241,8 +241,8 @@ public class Class8
 			       i_19_, i_27_, i_28_, i_17_, class50_sub1_sub4,
 			       i_21_);
 	    if (class47.aBoolean810)
-	      class46.method412 (i_18_, 37679, class47.aBoolean809, i_16_,
-				 i_19_, i_17_);
+	      class46.markWall (i_19_, i_17_, i_16_, i_18_,
+				 class47.aBoolean809);
 	  }
 	else if (i_16_ == 9)
 	  {
@@ -258,9 +258,8 @@ public class Class8
 	    class22.method251 (i_21_, 1, i_17_, class50_sub1_sub4, i_28_, 0,
 			       i_19_, -896, 1, i_26_, i_27_);
 	    if (class47.aBoolean810)
-	      class46.method413 (i_17_, i_18_, class47.anInt775,
-				 class47.anInt801, class47.aBoolean809, i_19_,
-				 (byte) 52);
+	      class46.markSolidOccupant (i_19_, i_17_, class47.anInt801,
+				 class47.anInt775, i_18_, class47.aBoolean809);
 	  }
 	else
 	  {
@@ -409,7 +408,7 @@ public class Class8
       }
   }
   
-  public void method167 (Class46[] class46s, int i, Class22 class22)
+  public void method167 (CollisionMap[] class46s, int i, Class22 class22)
   {
     for (int i_46_ = 0; i_46_ < 4; i_46_++)
       {
@@ -423,7 +422,7 @@ public class Class8
 		    if ((aByteArrayArrayArray138[1][i_47_][i_48_] & 0x2) == 2)
 		      i_49_--;
 		    if (i_49_ >= 0)
-		      class46s[i_49_].method414 (8, i_48_, i_47_);
+		      class46s[i_49_].markBlocked (i_47_, i_48_);
 		  }
 	      }
 	  }
@@ -932,7 +931,7 @@ public class Class8
   
   public void method168 (int i, int i_148_, boolean bool, byte[] is,
 			 int i_149_, int i_150_, int i_151_,
-			 Class46[] class46s, int i_152_, int i_153_)
+			 CollisionMap[] class46s, int i_152_, int i_153_)
   {
     if (bool)
       anInt166 = 476;
@@ -942,7 +941,7 @@ public class Class8
 	  {
 	    if (i_151_ + i_154_ > 0 && i_151_ + i_154_ < 103
 		&& i_152_ + i_155_ > 0 && i_152_ + i_155_ < 103)
-	      class46s[i_149_].anIntArrayArray757[i_151_ + i_154_][(i_152_
+	      class46s[i_149_].flags[i_151_ + i_154_][(i_152_
 								    + i_155_)]
 		&= ~0x1000000;
 	  }
@@ -957,13 +956,11 @@ public class Class8
 		if (i_156_ == i_150_ && i_157_ >= i_153_ && i_157_ < i_153_ + 8
 		    && i_158_ >= i_148_ && i_158_ < i_148_ + 8)
 		  method183 (0, (byte) -61, 0, class50_sub1_sub2, i,
-			     i_151_ + Class34.method348 ((byte) 7, i,
-							 i_157_ & 0x7,
-							 i_158_ & 0x7),
+			     i_151_ + TiledUtils.getRotatedMapChunkX (i_157_ & 0x7, i_158_ & 0x7,
+							 i),
 			     i_149_,
-			     i_152_ + Class34.method349 (i_158_ & 0x7,
-							 i_157_ & 0x7, i,
-							 (byte) 5));
+			     i_152_ + TiledUtils.getRotatedMapChunkY (i_157_ & 0x7,
+							 i_158_ & 0x7, i));
 		else
 		  method183 (0, (byte) -61, 0, class50_sub1_sub2, 0, -1, 0,
 			     -1);
@@ -1026,7 +1023,7 @@ public class Class8
     return (i & 0xff80) + i_165_;
   }
   
-  public void method172 (int i, Class46[] class46s, Class22 class22,
+  public void method172 (int i, CollisionMap[] class46s, Class22 class22,
 			 boolean bool, byte[] is, int i_166_, int i_167_,
 			 int i_168_, int i_169_, int i_170_, int i_171_)
   {
@@ -1059,14 +1056,14 @@ public class Class8
 		    Class47 class47 = Class47.method423 (i_172_);
 		    int i_182_
 		      = (i_169_
-			 + Class34.method350 (i_167_, class47.anInt775, i_181_,
-					      i_177_ & 0x7, (byte) -117,
-					      class47.anInt801, i_176_ & 0x7));
+			 + TiledUtils.getRotatedLandscapeChunkX (i_177_ & 0x7, i_176_ & 0x7, class47.anInt801,
+					      class47.anInt775, i_181_,
+					      i_167_));
 		    int i_183_
 		      = (i_166_
-			 + Class34.method351 (class47.anInt801, i_167_, 671,
-					      i_177_ & 0x7, i_176_ & 0x7,
-					      class47.anInt775, i_181_));
+			 + TiledUtils.getRotatedLandscapeChunkY (i_177_ & 0x7, i_176_ & 0x7, class47.anInt801,
+					      class47.anInt775, i_181_,
+					      i_167_));
 		    if (i_182_ > 0 && i_183_ > 0 && i_182_ < 103
 			&& i_183_ < 103)
 		      {
@@ -1074,7 +1071,7 @@ public class Class8
 			if ((aByteArrayArrayArray138[1][i_182_][i_183_] & 0x2)
 			    == 2)
 			  i_184_--;
-			Class46 class46 = null;
+			CollisionMap class46 = null;
 			if (i_184_ >= 0)
 			  class46 = class46s[i_184_];
 			method173 (class22, class46, i_183_, i, i_182_,
@@ -1087,7 +1084,7 @@ public class Class8
       }
   }
   
-  public void method173 (Class22 class22, Class46 class46, int i, int i_185_,
+  public void method173 (Class22 class22, CollisionMap class46, int i, int i_185_,
 			 int i_186_, byte i_187_, int i_188_, int i_189_,
 			 int i_190_)
   {
@@ -1128,7 +1125,7 @@ public class Class8
 				   i_185_, class50_sub1_sub4);
 		if (class47.aBoolean810 && class47.aBoolean759
 		    && class46 != null)
-		  class46.method414 (8, i, i_186_);
+		  class46.markBlocked (i_186_, i);
 	      }
 	  }
 	else if (i_189_ == 10 || i_189_ == 11)
@@ -1194,8 +1191,8 @@ public class Class8
 		  }
 	      }
 	    if (class47.aBoolean810 && class46 != null)
-	      class46.method413 (i, i_188_, class47.anInt775, class47.anInt801,
-				 class47.aBoolean809, i_186_, (byte) 52);
+	      class46.markSolidOccupant (i_186_, i, class47.anInt801, class47.anInt775,
+				 i_188_, class47.aBoolean809);
 	  }
 	else if (i_189_ >= 12)
 	  {
@@ -1214,8 +1211,8 @@ public class Class8
 	    if (i_189_ >= 12 && i_189_ <= 17 && i_189_ != 13 && i_185_ > 0)
 	      anIntArrayArrayArray168[i_185_][i_186_][i] |= 0x924;
 	    if (class47.aBoolean810 && class46 != null)
-	      class46.method413 (i, i_188_, class47.anInt775, class47.anInt801,
-				 class47.aBoolean809, i_186_, (byte) 52);
+	      class46.markSolidOccupant (i_186_, i, class47.anInt801, class47.anInt775,
+				 i_188_, class47.aBoolean809);
 	  }
 	else if (i_189_ == 0)
 	  {
@@ -1274,8 +1271,8 @@ public class Class8
 		  anIntArrayArrayArray168[i_185_][i_186_][i] |= 0x492;
 	      }
 	    if (class47.aBoolean810 && class46 != null)
-	      class46.method412 (i_188_, 37679, class47.aBoolean809, i_189_,
-				 i_186_, i);
+	      class46.markWall (i_186_, i, i_189_, i_188_,
+				 class47.aBoolean809);
 	    if (class47.anInt802 != 16)
 	      class22.method257 (i, class47.anInt802, i_185_, i_186_, 0);
 	  }
@@ -1306,8 +1303,8 @@ public class Class8
 		  aByteArrayArrayArray164[i_185_][i_186_][i] = (byte) 50;
 	      }
 	    if (class47.aBoolean810 && class46 != null)
-	      class46.method412 (i_188_, 37679, class47.aBoolean809, i_189_,
-				 i_186_, i);
+	      class46.markWall (i_186_, i, i_189_, i_188_,
+				 class47.aBoolean809);
 	  }
 	else if (i_189_ == 2)
 	  {
@@ -1363,8 +1360,8 @@ public class Class8
 		  }
 	      }
 	    if (class47.aBoolean810 && class46 != null)
-	      class46.method412 (i_188_, 37679, class47.aBoolean809, i_189_,
-				 i_186_, i);
+	      class46.markWall (i_186_, i, i_189_, i_188_,
+				 class47.aBoolean809);
 	    if (class47.anInt802 != 16)
 	      class22.method257 (i, class47.anInt802, i_185_, i_186_, 0);
 	  }
@@ -1395,8 +1392,8 @@ public class Class8
 		  aByteArrayArrayArray164[i_185_][i_186_][i] = (byte) 50;
 	      }
 	    if (class47.aBoolean810 && class46 != null)
-	      class46.method412 (i_188_, 37679, class47.aBoolean809, i_189_,
-				 i_186_, i);
+	      class46.markWall (i_186_, i, i_189_, i_188_,
+				 class47.aBoolean809);
 	  }
 	else if (i_189_ == 9)
 	  {
@@ -1413,8 +1410,8 @@ public class Class8
 	    class22.method251 (i_185_, 1, i, class50_sub1_sub4, i_197_, 0,
 			       i_186_, -896, 1, i_195_, i_196_);
 	    if (class47.aBoolean810 && class46 != null)
-	      class46.method413 (i, i_188_, class47.anInt775, class47.anInt801,
-				 class47.aBoolean809, i_186_, (byte) 52);
+	      class46.markSolidOccupant (i_186_, i, class47.anInt801, class47.anInt775,
+				 i_188_, class47.aBoolean809);
 	  }
 	else
 	  {
@@ -1529,7 +1526,7 @@ public class Class8
   }
   
   public void method174 (int i, boolean bool, int i_211_, int i_212_,
-			 byte[] is, int i_213_, Class46[] class46s)
+			 byte[] is, int i_213_, CollisionMap[] class46s)
   {
     if (bool)
       anInt166 = -379;
@@ -1541,7 +1538,7 @@ public class Class8
 	      {
 		if (i_212_ + i_215_ > 0 && i_212_ + i_215_ < 103
 		    && i + i_216_ > 0 && i + i_216_ < 103)
-		  class46s[i_214_].anIntArrayArray757[i_212_ + i_215_]
+		  class46s[i_214_].flags[i_212_ + i_215_]
 		    [i + i_216_]
 		    &= ~0x1000000;
 	      }
@@ -1625,7 +1622,7 @@ public class Class8
     return i_234_ / 16 + i_235_ / 8 + i_236_ / 4;
   }
   
-  public void method179 (int i, Class46[] class46s, int i_237_, int i_238_,
+  public void method179 (int i, CollisionMap[] class46s, int i_237_, int i_238_,
 			 Class22 class22, byte[] is)
   {
     if (i_238_ < 0)
@@ -1659,7 +1656,7 @@ public class Class8
 		    if ((aByteArrayArrayArray138[1][i_249_][i_250_] & 0x2)
 			== 2)
 		      i_251_--;
-		    Class46 class46 = null;
+		    CollisionMap class46 = null;
 		    if (i_251_ >= 0)
 		      class46 = class46s[i_251_];
 		    method173 (class22, class46, i_250_, i_245_, i_249_,
