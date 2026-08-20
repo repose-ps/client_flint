@@ -3,6 +3,7 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.cache.media.AnimationSequence;
 import rs2.sign.signlink;
 
 public abstract class Class50_Sub1_Sub4_Sub3 extends Class50_Sub1_Sub4
@@ -58,7 +59,7 @@ public abstract class Class50_Sub1_Sub4_Sub3 extends Class50_Sub1_Sub4
             k++;
             l--;
         }
-        if(anInt1624 != -1 && Class14.aClass14Array293[anInt1624].anInt306 == 1)
+        if(anInt1624 != -1 && AnimationSequence.sequences[anInt1624].priority == 1)
             anInt1624 = -1;
         if(anInt1633 < 9)
             anInt1633++;
@@ -91,7 +92,7 @@ public abstract class Class50_Sub1_Sub4_Sub3 extends Class50_Sub1_Sub4
 
     public void method568(int i, byte byte0, boolean flag, int j)
     {
-        if(anInt1624 != -1 && Class14.aClass14Array293[anInt1624].anInt306 == 1)
+        if(anInt1624 != -1 && AnimationSequence.sequences[anInt1624].priority == 1)
             anInt1624 = -1;
         if(!flag)
         {

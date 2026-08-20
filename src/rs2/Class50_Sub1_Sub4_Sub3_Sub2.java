@@ -3,6 +3,8 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.cache.media.AnimationSequence;
+import rs2.cache.media.SpotAnimation;
 import rs2.collection.LruCache;
 import rs2.net.Buffer;
 import rs2.sign.signlink;
@@ -65,9 +67,9 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 		if (aClass37_1757 != null) {
 			int i = -1;
 			if (super.anInt1624 >= 0 && super.anInt1627 == 0)
-				i = Class14.aClass14Array293[super.anInt1624].anIntArray295[super.anInt1625];
+				i = AnimationSequence.sequences[super.anInt1624].primaryFrameIds[super.anInt1625];
 			else if (super.anInt1588 >= 0)
-				i = Class14.aClass14Array293[super.anInt1588].anIntArray295[super.anInt1589];
+				i = AnimationSequence.sequences[super.anInt1588].primaryFrameIds[super.anInt1589];
 			Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = aClass37_1757.method362(i, -1, 0, null);
 			return class50_sub1_sub4_sub4;
 		}
@@ -79,20 +81,20 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 		if (byte0 != 122)
 			aBoolean1767 = !aBoolean1767;
 		if (super.anInt1624 >= 0 && super.anInt1627 == 0) {
-			Class14 class14 = Class14.aClass14Array293[super.anInt1624];
-			j = class14.anIntArray295[super.anInt1625];
+			AnimationSequence class14 = AnimationSequence.sequences[super.anInt1624];
+			j = class14.primaryFrameIds[super.anInt1625];
 			if (super.anInt1588 >= 0 && super.anInt1588 != super.anInt1634)
-				k = Class14.aClass14Array293[super.anInt1588].anIntArray295[super.anInt1589];
-			if (class14.anInt302 >= 0) {
-				i1 = class14.anInt302;
+				k = AnimationSequence.sequences[super.anInt1588].primaryFrameIds[super.anInt1589];
+			if (class14.shieldOverride >= 0) {
+				i1 = class14.shieldOverride;
 				l += i1 - anIntArray1752[5] << 40;
 			}
-			if (class14.anInt303 >= 0) {
-				j1 = class14.anInt303;
+			if (class14.weaponOverride >= 0) {
+				j1 = class14.weaponOverride;
 				l += j1 - anIntArray1752[3] << 48;
 			}
 		} else if (super.anInt1588 >= 0)
-			j = Class14.aClass14Array293[super.anInt1588].anIntArray295[super.anInt1589];
+			j = AnimationSequence.sequences[super.anInt1588].primaryFrameIds[super.anInt1589];
 		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = (Class50_Sub1_Sub4_Sub4) aClass33_1761.get(l);
 		if (class50_sub1_sub4_sub4_1 == null) {
 			boolean flag = false;
@@ -159,7 +161,7 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 		class50_sub1_sub4_sub4_2.method579(Class21.method239(aBoolean1762, j) & Class21.method239(aBoolean1762, k),
 				class50_sub1_sub4_sub4_1, 1244);
 		if (j != -1 && k != -1)
-			class50_sub1_sub4_sub4_2.method586(k, 0, j, Class14.aClass14Array293[super.anInt1624].anIntArray299);
+			class50_sub1_sub4_sub4_2.method586(k, 0, j, AnimationSequence.sequences[super.anInt1624].interleaveOrder);
 		else if (j != -1)
 			class50_sub1_sub4_sub4_2.method585(j, (byte) 6);
 		class50_sub1_sub4_sub4_2.method581(anInt1772);
@@ -187,19 +189,19 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 		if (aBoolean1763)
 			return class50_sub1_sub4_sub4;
 		if (super.anInt1614 != -1 && super.anInt1615 != -1) {
-			Class27 class27 = Class27.aClass27Array554[super.anInt1614];
-			Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_2 = class27.method307();
+			SpotAnimation class27 = SpotAnimation.definitions[super.anInt1614];
+			Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_2 = class27.getModel();
 			if (class50_sub1_sub4_sub4_2 != null) {
 				Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_3 = new Class50_Sub1_Sub4_Sub4(false, false, true,
 						class50_sub1_sub4_sub4_2, Class21.method239(aBoolean1762, super.anInt1615));
 				class50_sub1_sub4_sub4_3.method590(0, 0, false, -super.anInt1618);
 				class50_sub1_sub4_sub4_3.method584(7);
-				class50_sub1_sub4_sub4_3.method585(class27.aClass14_558.anIntArray295[super.anInt1615], (byte) 6);
+				class50_sub1_sub4_sub4_3.method585(class27.sequence.primaryFrameIds[super.anInt1615], (byte) 6);
 				class50_sub1_sub4_sub4_3.anIntArrayArray1679 = null;
 				class50_sub1_sub4_sub4_3.anIntArrayArray1678 = null;
-				if (class27.anInt561 != 128 || class27.anInt562 != 128)
-					class50_sub1_sub4_sub4_3.method593(class27.anInt562, class27.anInt561, 9, class27.anInt561);
-				class50_sub1_sub4_sub4_3.method594(64 + class27.anInt564, 850 + class27.anInt565, -30, -50, -30, true);
+				if (class27.resizeXY != 128 || class27.resizeZ != 128)
+					class50_sub1_sub4_sub4_3.method593(class27.resizeZ, class27.resizeXY, 9, class27.resizeXY);
+				class50_sub1_sub4_sub4_3.method594(64 + class27.ambient, 850 + class27.contrast, -30, -50, -30, true);
 				Class50_Sub1_Sub4_Sub4 aclass50_sub1_sub4_sub4_1[] = { class50_sub1_sub4_sub4,
 						class50_sub1_sub4_sub4_3 };
 				class50_sub1_sub4_sub4 = new Class50_Sub1_Sub4_Sub4(2, true, 0, aclass50_sub1_sub4_sub4_1);

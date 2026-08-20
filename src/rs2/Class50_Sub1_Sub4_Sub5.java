@@ -4,6 +4,7 @@
 package rs2;
 
 import rs2.cache.cfg.Varbit;
+import rs2.cache.media.AnimationSequence;
 import rs2.sign.signlink;
 
 public class Class50_Sub1_Sub4_Sub5 extends Class50_Sub1_Sub4
@@ -44,13 +45,13 @@ public class Class50_Sub1_Sub4_Sub5 extends Class50_Sub1_Sub4
         anInt1718 = k;
         if(i != -1)
         {
-            aClass14_1724 = Class14.aClass14Array293[i];
+            aClass14_1724 = AnimationSequence.sequences[i];
             anInt1730 = 0;
             anInt1729 = client.anInt1325 - 1;
-            if(flag && aClass14_1724.anInt298 != -1)
+            if(flag && aClass14_1724.frameStep != -1)
             {
-                anInt1730 = (int)(Math.random() * (double)aClass14_1724.anInt294);
-                anInt1729 -= (int)(Math.random() * (double)aClass14_1724.method205(0, anInt1730));
+                anInt1730 = (int)(Math.random() * (double)aClass14_1724.frameCount);
+                anInt1729 -= (int)(Math.random() * (double)aClass14_1724.getFrameLength(anInt1730));
             }
         }
         Class47 class47 = Class47.method423(anInt1720);
@@ -69,23 +70,23 @@ public class Class50_Sub1_Sub4_Sub5 extends Class50_Sub1_Sub4
         if(aClass14_1724 != null)
         {
             int j = client.anInt1325 - anInt1729;
-            if(j > 100 && aClass14_1724.anInt298 > 0)
+            if(j > 100 && aClass14_1724.frameStep > 0)
                 j = 100;
-            while(j > aClass14_1724.method205(0, anInt1730)) 
+            while(j > aClass14_1724.getFrameLength(anInt1730)) 
             {
-                j -= aClass14_1724.method205(0, anInt1730);
+                j -= aClass14_1724.getFrameLength(anInt1730);
                 anInt1730++;
-                if(anInt1730 < aClass14_1724.anInt294)
+                if(anInt1730 < aClass14_1724.frameCount)
                     continue;
-                anInt1730 -= aClass14_1724.anInt298;
-                if(anInt1730 >= 0 && anInt1730 < aClass14_1724.anInt294)
+                anInt1730 -= aClass14_1724.frameStep;
+                if(anInt1730 >= 0 && anInt1730 < aClass14_1724.frameCount)
                     continue;
                 aClass14_1724 = null;
                 break;
             }
             anInt1729 = client.anInt1325 - j;
             if(aClass14_1724 != null)
-                i = aClass14_1724.anIntArray295[anInt1730];
+                i = aClass14_1724.primaryFrameIds[anInt1730];
         }
         Class47 class47;
         if(anIntArray1727 != null)
@@ -112,7 +113,7 @@ public class Class50_Sub1_Sub4_Sub5 extends Class50_Sub1_Sub4
     public int anInt1721;
     public int anInt1722;
     public static client aClient1723;
-    public Class14 aClass14_1724;
+    public AnimationSequence aClass14_1724;
     public int anInt1725;
     public int anInt1726;
     public int anIntArray1727[];

@@ -17,6 +17,8 @@ import rs2.cache.Archive;
 import rs2.cache.CacheIndex;
 import rs2.cache.cfg.Varbit;
 import rs2.cache.cfg.Varp;
+import rs2.cache.media.AnimationSequence;
+import rs2.cache.media.SpotAnimation;
 import rs2.chat.ChatCodec;
 import rs2.collection.Node;
 import rs2.collection.NodeDeque;
@@ -379,9 +381,9 @@ public class client extends Applet_Sub1 {
 		Class15.aClass15Array314 = null;
 		Class48.aClass48Array815 = null;
 		Class4.aClass4Array103 = null;
-		Class14.aClass14Array293 = null;
-		Class27.aClass27Array554 = null;
-		Class27.aClass33_566 = null;
+		AnimationSequence.sequences = null;
+		SpotAnimation.definitions = null;
+		SpotAnimation.modelCache = null;
 		Varp.definitions = null;
 		super.aClass18_15 = null;
 		Class50_Sub1_Sub4_Sub3_Sub2.aClass33_1761 = null;
@@ -3414,7 +3416,7 @@ public class client extends Applet_Sub1 {
 		Class16.aClass33_337.clear();
 		Class16.aClass33_346.clear();
 		Class50_Sub1_Sub4_Sub3_Sub2.aClass33_1761.clear();
-		Class27.aClass33_566.clear();
+		SpotAnimation.modelCache.clear();
 	}
 
 	public void method50(boolean flag) {
@@ -4072,7 +4074,7 @@ public class client extends Applet_Sub1 {
 					l1 = -1;
 				int k2 = class50_sub1_sub2.readUnsignedByteSub();
 				if (l1 == ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub1)).anInt1624 && l1 != -1) {
-					int i3 = Class14.aClass14Array293[l1].anInt307;
+					int i3 = AnimationSequence.sequences[l1].replayMode;
 					if (i3 == 1) {
 						class50_sub1_sub4_sub3_sub1.anInt1625 = 0;
 						class50_sub1_sub4_sub3_sub1.anInt1626 = 0;
@@ -4082,7 +4084,7 @@ public class client extends Applet_Sub1 {
 					if (i3 == 2)
 						class50_sub1_sub4_sub3_sub1.anInt1628 = 0;
 				} else if (l1 == -1 || ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub1)).anInt1624 == -1
-						|| Class14.aClass14Array293[l1].anInt301 >= Class14.aClass14Array293[((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub1)).anInt1624].anInt301) {
+						|| AnimationSequence.sequences[l1].forcedPriority >= AnimationSequence.sequences[((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub1)).anInt1624].forcedPriority) {
 					class50_sub1_sub4_sub3_sub1.anInt1624 = l1;
 					class50_sub1_sub4_sub3_sub1.anInt1625 = 0;
 					class50_sub1_sub4_sub3_sub1.anInt1626 = 0;
@@ -4115,7 +4117,7 @@ public class client extends Applet_Sub1 {
 				i1 = -1;
 			int k2 = class50_sub1_sub2.readUnsignedByteSub();
 			if (i1 == ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub2)).anInt1624 && i1 != -1) {
-				int k3 = Class14.aClass14Array293[i1].anInt307;
+				int k3 = AnimationSequence.sequences[i1].replayMode;
 				if (k3 == 1) {
 					class50_sub1_sub4_sub3_sub2.anInt1625 = 0;
 					class50_sub1_sub4_sub3_sub2.anInt1626 = 0;
@@ -4125,7 +4127,7 @@ public class client extends Applet_Sub1 {
 				if (k3 == 2)
 					class50_sub1_sub4_sub3_sub2.anInt1628 = 0;
 			} else if (i1 == -1 || ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub2)).anInt1624 == -1
-					|| Class14.aClass14Array293[i1].anInt301 >= Class14.aClass14Array293[((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub2)).anInt1624].anInt301) {
+					|| AnimationSequence.sequences[i1].forcedPriority >= AnimationSequence.sequences[((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub2)).anInt1624].forcedPriority) {
 				class50_sub1_sub4_sub3_sub2.anInt1624 = i1;
 				class50_sub1_sub4_sub3_sub2.anInt1625 = 0;
 				class50_sub1_sub4_sub3_sub2.anInt1626 = 0;
@@ -4592,13 +4594,13 @@ public class client extends Applet_Sub1 {
 			Class50_Sub1_Sub1_Sub4.method501(0.80000000000000004D, (byte) 6);
 			Class50_Sub1_Sub1_Sub4.method496((byte) 7, 20);
 			method13(86, true, "Unpacking config");
-			Class14.method204(class2, 36135);
+			AnimationSequence.load(class2);
 			Class47.method426(class2);
 			Class15.method207(class2, 36135);
 			Class16.method214(class2);
 			Class37.method361(class2);
 			Class48.method434(class2, 36135);
-			Class27.method305(class2, 36135);
+			SpotAnimation.load(class2);
 			Varp.load(class2);
 			Varbit.load(class2);
 			Class16.aBoolean344 = aBoolean925;
@@ -4988,8 +4990,8 @@ public class client extends Applet_Sub1 {
 	public void method70(Class50_Sub1_Sub4_Sub3 class50_sub1_sub4_sub3, int i) {
 		if (class50_sub1_sub4_sub3.anInt1607 == anInt1325 || class50_sub1_sub4_sub3.anInt1624 == -1
 				|| class50_sub1_sub4_sub3.anInt1627 != 0
-				|| class50_sub1_sub4_sub3.anInt1626 + 1 > Class14.aClass14Array293[class50_sub1_sub4_sub3.anInt1624]
-						.method205(0, class50_sub1_sub4_sub3.anInt1625)) {
+				|| class50_sub1_sub4_sub3.anInt1626 + 1 > AnimationSequence.sequences[class50_sub1_sub4_sub3.anInt1624]
+						.getFrameLength(class50_sub1_sub4_sub3.anInt1625)) {
 			int j = class50_sub1_sub4_sub3.anInt1607 - class50_sub1_sub4_sub3.anInt1606;
 			int k = anInt1325 - class50_sub1_sub4_sub3.anInt1606;
 			int l = class50_sub1_sub4_sub3.anInt1602 * 128 + class50_sub1_sub4_sub3.anInt1601 * 64;
@@ -5020,12 +5022,12 @@ public class client extends Applet_Sub1 {
 			return;
 		}
 		if (class50_sub1_sub4_sub3.anInt1624 != -1 && class50_sub1_sub4_sub3.anInt1627 == 0) {
-			Class14 class14 = Class14.aClass14Array293[class50_sub1_sub4_sub3.anInt1624];
-			if (class50_sub1_sub4_sub3.anInt1613 > 0 && class14.anInt305 == 0) {
+			AnimationSequence class14 = AnimationSequence.sequences[class50_sub1_sub4_sub3.anInt1624];
+			if (class50_sub1_sub4_sub3.anInt1613 > 0 && class14.precedenceAnimating == 0) {
 				class50_sub1_sub4_sub3.anInt1623++;
 				return;
 			}
-			if (class50_sub1_sub4_sub3.anInt1613 <= 0 && class14.anInt306 == 0) {
+			if (class50_sub1_sub4_sub3.anInt1613 <= 0 && class14.priority == 0) {
 				class50_sub1_sub4_sub3.anInt1623++;
 				return;
 			}
@@ -5180,14 +5182,14 @@ public class client extends Applet_Sub1 {
 			anInt1328 = aClass24_899.nextInt();
 		class50_sub1_sub4_sub3.aBoolean1592 = false;
 		if (class50_sub1_sub4_sub3.anInt1588 != -1) {
-			Class14 class14 = Class14.aClass14Array293[class50_sub1_sub4_sub3.anInt1588];
+			AnimationSequence class14 = AnimationSequence.sequences[class50_sub1_sub4_sub3.anInt1588];
 			class50_sub1_sub4_sub3.anInt1590++;
-			if (class50_sub1_sub4_sub3.anInt1589 < class14.anInt294
-					&& class50_sub1_sub4_sub3.anInt1590 > class14.method205(0, class50_sub1_sub4_sub3.anInt1589)) {
+			if (class50_sub1_sub4_sub3.anInt1589 < class14.frameCount
+					&& class50_sub1_sub4_sub3.anInt1590 > class14.getFrameLength(class50_sub1_sub4_sub3.anInt1589)) {
 				class50_sub1_sub4_sub3.anInt1590 = 1;
 				class50_sub1_sub4_sub3.anInt1589++;
 			}
-			if (class50_sub1_sub4_sub3.anInt1589 >= class14.anInt294) {
+			if (class50_sub1_sub4_sub3.anInt1589 >= class14.frameCount) {
 				class50_sub1_sub4_sub3.anInt1590 = 1;
 				class50_sub1_sub4_sub3.anInt1589 = 0;
 			}
@@ -5195,42 +5197,42 @@ public class client extends Applet_Sub1 {
 		if (class50_sub1_sub4_sub3.anInt1614 != -1 && anInt1325 >= class50_sub1_sub4_sub3.anInt1617) {
 			if (class50_sub1_sub4_sub3.anInt1615 < 0)
 				class50_sub1_sub4_sub3.anInt1615 = 0;
-			Class14 class14_1 = Class27.aClass27Array554[class50_sub1_sub4_sub3.anInt1614].aClass14_558;
+			AnimationSequence class14_1 = SpotAnimation.definitions[class50_sub1_sub4_sub3.anInt1614].sequence;
 			class50_sub1_sub4_sub3.anInt1616++;
-			if (class50_sub1_sub4_sub3.anInt1615 < class14_1.anInt294
-					&& class50_sub1_sub4_sub3.anInt1616 > class14_1.method205(0, class50_sub1_sub4_sub3.anInt1615)) {
+			if (class50_sub1_sub4_sub3.anInt1615 < class14_1.frameCount
+					&& class50_sub1_sub4_sub3.anInt1616 > class14_1.getFrameLength(class50_sub1_sub4_sub3.anInt1615)) {
 				class50_sub1_sub4_sub3.anInt1616 = 1;
 				class50_sub1_sub4_sub3.anInt1615++;
 			}
-			if (class50_sub1_sub4_sub3.anInt1615 >= class14_1.anInt294
-					&& (class50_sub1_sub4_sub3.anInt1615 < 0 || class50_sub1_sub4_sub3.anInt1615 >= class14_1.anInt294))
+			if (class50_sub1_sub4_sub3.anInt1615 >= class14_1.frameCount
+					&& (class50_sub1_sub4_sub3.anInt1615 < 0 || class50_sub1_sub4_sub3.anInt1615 >= class14_1.frameCount))
 				class50_sub1_sub4_sub3.anInt1614 = -1;
 		}
 		if (class50_sub1_sub4_sub3.anInt1624 != -1 && class50_sub1_sub4_sub3.anInt1627 <= 1) {
-			Class14 class14_2 = Class14.aClass14Array293[class50_sub1_sub4_sub3.anInt1624];
-			if (class14_2.anInt305 == 1 && class50_sub1_sub4_sub3.anInt1613 > 0
+			AnimationSequence class14_2 = AnimationSequence.sequences[class50_sub1_sub4_sub3.anInt1624];
+			if (class14_2.precedenceAnimating == 1 && class50_sub1_sub4_sub3.anInt1613 > 0
 					&& class50_sub1_sub4_sub3.anInt1606 <= anInt1325 && class50_sub1_sub4_sub3.anInt1607 < anInt1325) {
 				class50_sub1_sub4_sub3.anInt1627 = 1;
 				return;
 			}
 		}
 		if (class50_sub1_sub4_sub3.anInt1624 != -1 && class50_sub1_sub4_sub3.anInt1627 == 0) {
-			Class14 class14_3 = Class14.aClass14Array293[class50_sub1_sub4_sub3.anInt1624];
+			AnimationSequence class14_3 = AnimationSequence.sequences[class50_sub1_sub4_sub3.anInt1624];
 			class50_sub1_sub4_sub3.anInt1626++;
-			if (class50_sub1_sub4_sub3.anInt1625 < class14_3.anInt294
-					&& class50_sub1_sub4_sub3.anInt1626 > class14_3.method205(0, class50_sub1_sub4_sub3.anInt1625)) {
+			if (class50_sub1_sub4_sub3.anInt1625 < class14_3.frameCount
+					&& class50_sub1_sub4_sub3.anInt1626 > class14_3.getFrameLength(class50_sub1_sub4_sub3.anInt1625)) {
 				class50_sub1_sub4_sub3.anInt1626 = 1;
 				class50_sub1_sub4_sub3.anInt1625++;
 			}
-			if (class50_sub1_sub4_sub3.anInt1625 >= class14_3.anInt294) {
-				class50_sub1_sub4_sub3.anInt1625 -= class14_3.anInt298;
+			if (class50_sub1_sub4_sub3.anInt1625 >= class14_3.frameCount) {
+				class50_sub1_sub4_sub3.anInt1625 -= class14_3.frameStep;
 				class50_sub1_sub4_sub3.anInt1628++;
-				if (class50_sub1_sub4_sub3.anInt1628 >= class14_3.anInt304)
+				if (class50_sub1_sub4_sub3.anInt1628 >= class14_3.maximumLoops)
 					class50_sub1_sub4_sub3.anInt1624 = -1;
-				if (class50_sub1_sub4_sub3.anInt1625 < 0 || class50_sub1_sub4_sub3.anInt1625 >= class14_3.anInt294)
+				if (class50_sub1_sub4_sub3.anInt1625 < 0 || class50_sub1_sub4_sub3.anInt1625 >= class14_3.frameCount)
 					class50_sub1_sub4_sub3.anInt1624 = -1;
 			}
-			class50_sub1_sub4_sub3.aBoolean1592 = class14_3.aBoolean300;
+			class50_sub1_sub4_sub3.aBoolean1592 = class14_3.stretches;
 		}
 		if (class50_sub1_sub4_sub3.anInt1627 > 0)
 			class50_sub1_sub4_sub3.anInt1627--;
@@ -6612,13 +6614,13 @@ public class client extends Applet_Sub1 {
 				else
 					i1 = class13_1.anInt286;
 				if (i1 != -1) {
-					Class14 class14 = Class14.aClass14Array293[i1];
-					for (class13_1.anInt227 += i; class13_1.anInt227 > class14.method205(0, class13_1.anInt235);) {
-						class13_1.anInt227 -= class14.method205(0, class13_1.anInt235);
+					AnimationSequence class14 = AnimationSequence.sequences[i1];
+					for (class13_1.anInt227 += i; class13_1.anInt227 > class14.getFrameLength(class13_1.anInt235);) {
+						class13_1.anInt227 -= class14.getFrameLength(class13_1.anInt235);
 						class13_1.anInt235++;
-						if (class13_1.anInt235 >= class14.anInt294) {
-							class13_1.anInt235 -= class14.anInt298;
-							if (class13_1.anInt235 < 0 || class13_1.anInt235 >= class14.anInt294)
+						if (class13_1.anInt235 >= class14.frameCount) {
+							class13_1.anInt235 -= class14.frameStep;
+							if (class13_1.anInt235 < 0 || class13_1.anInt235 >= class14.frameCount)
 								class13_1.anInt235 = 0;
 						}
 						flag = true;
@@ -7407,7 +7409,7 @@ public class client extends Applet_Sub1 {
 
 				class50_sub1_sub4_sub4.method584(7);
 				class50_sub1_sub4_sub4.method585(
-						Class14.aClass14Array293[((Class50_Sub1_Sub4_Sub3) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).anInt1634].anIntArray295[0],
+						AnimationSequence.sequences[((Class50_Sub1_Sub4_Sub3) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).anInt1634].primaryFrameIds[0],
 						(byte) 6);
 				class50_sub1_sub4_sub4.method594(64, 850, -30, -50, -30, true);
 				class13.anInt283 = 5;
@@ -10601,9 +10603,9 @@ public class client extends Applet_Sub1 {
 					if (k7 == -1) {
 						class50_sub1_sub4_sub4 = class13_1.method203(-1, -1, 0, flag2);
 					} else {
-						Class14 class14 = Class14.aClass14Array293[k7];
-						class50_sub1_sub4_sub4 = class13_1.method203(class14.anIntArray295[class13_1.anInt235],
-								class14.anIntArray296[class13_1.anInt235], 0, flag2);
+						AnimationSequence class14 = AnimationSequence.sequences[k7];
+						class50_sub1_sub4_sub4 = class13_1.method203(class14.primaryFrameIds[class13_1.anInt235],
+								class14.secondaryFrameIds[class13_1.anInt235], 0, flag2);
 					}
 					if (class50_sub1_sub4_sub4 != null)
 						class50_sub1_sub4_sub4.method598(0, class13_1.anInt253, 0, class13_1.anInt252, 0, k5, j6);

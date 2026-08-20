@@ -3,6 +3,7 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.cache.media.SpotAnimation;
 import rs2.sign.signlink;
 
 public class Class50_Sub1_Sub4_Sub2 extends Class50_Sub1_Sub4
@@ -43,12 +44,12 @@ public class Class50_Sub1_Sub4_Sub2 extends Class50_Sub1_Sub4
         aDouble1572 += aDouble1574 * (double)i;
         anInt1562 = (int)(Math.atan2(aDouble1569, aDouble1570) * 325.94900000000001D) + 1024 & 0x7ff;
         anInt1563 = (int)(Math.atan2(aDouble1572, aDouble1571) * 325.94900000000001D) & 0x7ff;
-        if(aClass27_1553.aClass14_558 != null)
-            for(anInt1568 += i; anInt1568 > aClass27_1553.aClass14_558.method205(0, anInt1567);)
+        if(aClass27_1553.sequence != null)
+            for(anInt1568 += i; anInt1568 > aClass27_1553.sequence.getFrameLength(anInt1567);)
             {
-                anInt1568 -= aClass27_1553.aClass14_558.method205(0, anInt1567);
+                anInt1568 -= aClass27_1553.sequence.getFrameLength(anInt1567);
                 anInt1567++;
-                if(anInt1567 >= aClass27_1553.aClass14_558.anInt294)
+                if(anInt1567 >= aClass27_1553.sequence.frameCount)
                     anInt1567 = 0;
             }
 
@@ -56,12 +57,12 @@ public class Class50_Sub1_Sub4_Sub2 extends Class50_Sub1_Sub4
 
     public Class50_Sub1_Sub4_Sub4 method561(byte byte0)
     {
-        Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = aClass27_1553.method307();
+        Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = aClass27_1553.getModel();
         if(class50_sub1_sub4_sub4 == null)
             return null;
         int i = -1;
-        if(aClass27_1553.aClass14_558 != null)
-            i = aClass27_1553.aClass14_558.anIntArray295[anInt1567];
+        if(aClass27_1553.sequence != null)
+            i = aClass27_1553.sequence.primaryFrameIds[anInt1567];
         Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = new Class50_Sub1_Sub4_Sub4(false, false, true, class50_sub1_sub4_sub4, Class21.method239(aBoolean1573, i));
         if(i != -1)
         {
@@ -70,10 +71,10 @@ public class Class50_Sub1_Sub4_Sub2 extends Class50_Sub1_Sub4
             class50_sub1_sub4_sub4_1.anIntArrayArray1679 = null;
             class50_sub1_sub4_sub4_1.anIntArrayArray1678 = null;
         }
-        if(aClass27_1553.anInt561 != 128 || aClass27_1553.anInt562 != 128)
-            class50_sub1_sub4_sub4_1.method593(aClass27_1553.anInt562, aClass27_1553.anInt561, 9, aClass27_1553.anInt561);
+        if(aClass27_1553.resizeXY != 128 || aClass27_1553.resizeZ != 128)
+            class50_sub1_sub4_sub4_1.method593(aClass27_1553.resizeZ, aClass27_1553.resizeXY, 9, aClass27_1553.resizeXY);
         class50_sub1_sub4_sub4_1.method589(anInt1563, 341);
-        class50_sub1_sub4_sub4_1.method594(64 + aClass27_1553.anInt564, 850 + aClass27_1553.anInt565, -30, -50, -30, true);
+        class50_sub1_sub4_sub4_1.method594(64 + aClass27_1553.ambient, 850 + aClass27_1553.contrast, -30, -50, -30, true);
         if(byte0 == 3)
             byte0 = 0;
         else
@@ -88,7 +89,7 @@ public class Class50_Sub1_Sub4_Sub2 extends Class50_Sub1_Sub4
         aByte1564 = -41;
         aBoolean1573 = true;
         aBoolean1575 = false;
-        aClass27_1553 = Class27.aClass27Array554[i1];
+        aClass27_1553 = SpotAnimation.definitions[i1];
         anInt1554 = i;
         anInt1576 = j2;
         anInt1577 = l;
@@ -109,7 +110,7 @@ public class Class50_Sub1_Sub4_Sub2 extends Class50_Sub1_Sub4
         }
     }
 
-    public Class27 aClass27_1553;
+    public SpotAnimation aClass27_1553;
     public int anInt1554;
     public double aDouble1555;
     public double aDouble1556;
