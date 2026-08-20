@@ -3,6 +3,7 @@
  */
 package rs2;
 
+import rs2.cache.def.FloorDefinition;
 import rs2.net.Buffer;
 import rs2.scene.util.CollisionMap;
 import rs2.scene.util.TiledUtils;
@@ -491,11 +492,11 @@ public class Class8
 		      = aByteArrayArrayArray159[i_50_][i_71_][i_70_] & 0xff;
 		    if (i_72_ > 0)
 		      {
-			Class15 class15 = Class15.aClass15Array314[i_72_ - 1];
-			anIntArray144[i_70_] += class15.anInt323;
-			anIntArray145[i_70_] += class15.anInt321;
-			anIntArray146[i_70_] += class15.anInt322;
-			anIntArray147[i_70_] += class15.anInt324;
+			FloorDefinition class15 = FloorDefinition.definitions[i_72_ - 1];
+			anIntArray144[i_70_] += class15.weightedHue;
+			anIntArray145[i_70_] += class15.saturation;
+			anIntArray146[i_70_] += class15.lightness;
+			anIntArray147[i_70_] += class15.hueMultiplier;
 			anIntArray148[i_70_]++;
 		      }
 		  }
@@ -506,11 +507,11 @@ public class Class8
 		      = aByteArrayArrayArray159[i_50_][i_73_][i_70_] & 0xff;
 		    if (i_74_ > 0)
 		      {
-			Class15 class15 = Class15.aClass15Array314[i_74_ - 1];
-			anIntArray144[i_70_] -= class15.anInt323;
-			anIntArray145[i_70_] -= class15.anInt321;
-			anIntArray146[i_70_] -= class15.anInt322;
-			anIntArray147[i_70_] -= class15.anInt324;
+			FloorDefinition class15 = FloorDefinition.definitions[i_74_ - 1];
+			anIntArray144[i_70_] -= class15.weightedHue;
+			anIntArray145[i_70_] -= class15.saturation;
+			anIntArray146[i_70_] -= class15.lightness;
+			anIntArray147[i_70_] -= class15.hueMultiplier;
 			anIntArray148[i_70_]--;
 		      }
 		  }
@@ -596,8 +597,8 @@ public class Class8
 				if (i_83_ == 0 && (aByteArrayArrayArray153
 						   [i_50_][i_69_][i_80_]) != 0)
 				  bool = false;
-				if (i_84_ > 0 && ! (Class15.aClass15Array314
-						    [i_84_ - 1].aBoolean319))
+				if (i_84_ > 0 && ! (FloorDefinition.definitions
+						    [i_84_ - 1].occlude))
 				  bool = false;
 				if (bool && i_85_ == i_86_ && i_85_ == i_87_
 				    && i_85_ == i_88_)
@@ -623,9 +624,9 @@ public class Class8
 					     + 1);
 				byte i_100_ = (aByteArrayArrayArray142[i_50_]
 					       [i_69_][i_80_]);
-				Class15 class15
-				  = Class15.aClass15Array314[i_84_ - 1];
-				int i_101_ = class15.anInt317;
+				FloorDefinition class15
+				  = FloorDefinition.definitions[i_84_ - 1];
+				int i_101_ = class15.textureId;
 				int i_102_;
 				int i_103_;
 				if (i_101_ >= 0)
@@ -634,22 +635,22 @@ public class Class8
 					       .method498 (i_101_, 0);
 				    i_102_ = -1;
 				  }
-				else if (class15.anInt316 == 16711935)
+				else if (class15.rgbColor == 16711935)
 				  {
 				    i_102_ = -2;
 				    i_101_ = -1;
 				    i_103_
 				      = (Class50_Sub1_Sub1_Sub4.anIntArray1548
-					 [method182 (class15.anInt325, 96)]);
+					 [method182 (class15.randomizedPackedHsl, 96)]);
 				  }
 				else
 				  {
-				    i_102_ = method177 (class15.anInt320,
-							class15.anInt321,
-							class15.anInt322);
+				    i_102_ = method177 (class15.hue,
+							class15.saturation,
+							class15.lightness);
 				    i_103_
 				      = (Class50_Sub1_Sub1_Sub4.anIntArray1548
-					 [method182 (class15.anInt325, 96)]);
+					 [method182 (class15.randomizedPackedHsl, 96)]);
 				  }
 				class22.method246 (i_50_, i_69_, i_80_, i_99_,
 						   i_100_, i_101_, i_85_,

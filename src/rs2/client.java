@@ -17,6 +17,7 @@ import rs2.cache.Archive;
 import rs2.cache.CacheIndex;
 import rs2.cache.cfg.Varbit;
 import rs2.cache.cfg.Varp;
+import rs2.cache.def.FloorDefinition;
 import rs2.cache.media.AnimationSequence;
 import rs2.cache.media.SpotAnimation;
 import rs2.chat.ChatCodec;
@@ -378,7 +379,7 @@ public class client extends Applet_Sub1 {
 		Class37.method358(false);
 		Class16.method222(false);
 		Class13.method202(false);
-		Class15.aClass15Array314 = null;
+		FloorDefinition.definitions = null;
 		Class48.aClass48Array815 = null;
 		Class4.aClass4Array103 = null;
 		AnimationSequence.sequences = null;
@@ -4596,7 +4597,7 @@ public class client extends Applet_Sub1 {
 			method13(86, true, "Unpacking config");
 			AnimationSequence.load(class2);
 			Class47.method426(class2);
-			Class15.method207(class2, 36135);
+			FloorDefinition.load(class2);
 			Class16.method214(class2);
 			Class37.method361(class2);
 			Class48.method434(class2, 36135);
