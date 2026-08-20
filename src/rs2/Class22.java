@@ -6,6 +6,9 @@ package rs2;
 import java.io.PrintStream;
 
 import rs2.collection.NodeDeque;
+import rs2.scene.tile.FloorDecoration;
+import rs2.scene.tile.Wall;
+import rs2.scene.tile.WallDecoration;
 import rs2.sign.signlink;
 
 public class Class22
@@ -207,13 +210,13 @@ public class Class22
             return;
         if(class50_sub1_sub4 == null)
             return;
-        Class28 class28 = new Class28();
-        class28.aClass50_Sub1_Sub4_570 = class50_sub1_sub4;
-        class28.anInt568 = i * 128 + 64;
-        class28.anInt569 = j * 128 + 64;
-        class28.anInt567 = i1;
-        class28.anInt571 = l;
-        class28.aByte572 = byte0;
+        FloorDecoration class28 = new FloorDecoration();
+        class28.renderable = class50_sub1_sub4;
+        class28.x = i * 128 + 64;
+        class28.y = j * 128 + 64;
+        class28.z = i1;
+        class28.uid = l;
+        class28.config = byte0;
         if(aClass50_Sub3ArrayArrayArray456[j1][i][j] == null)
             aClass50_Sub3ArrayArrayArray456[j1][i][j] = new Class50_Sub3(j1, i, j);
         aClass50_Sub3ArrayArrayArray456[j1][i][j].aClass28_1405 = class28;
@@ -256,20 +259,20 @@ public class Class22
     {
         if(class50_sub1_sub4_1 == null && class50_sub1_sub4 == null)
             return;
-        Class44 class44 = new Class44();
-        class44.anInt726 = j1;
-        class44.aByte727 = byte0;
-        class44.anInt720 = i1 * 128 + 64;
-        class44.anInt721 = k1 * 128 + 64;
-        class44.anInt719 = i;
+        Wall class44 = new Wall();
+        class44.uid = j1;
+        class44.config = byte0;
+        class44.x = i1 * 128 + 64;
+        class44.y = k1 * 128 + 64;
+        class44.z = i;
         if(j != 49878)
         {
             for(int i2 = 1; i2 > 0; i2++);
         }
-        class44.aClass50_Sub1_Sub4_724 = class50_sub1_sub4_1;
-        class44.aClass50_Sub1_Sub4_725 = class50_sub1_sub4;
-        class44.anInt722 = l;
-        class44.anInt723 = k;
+        class44.primary = class50_sub1_sub4_1;
+        class44.secondary = class50_sub1_sub4;
+        class44.orientation = l;
+        class44.secondaryOrientation = k;
         for(int j2 = l1; j2 >= 0; j2--)
             if(aClass50_Sub3ArrayArrayArray456[j2][i1][k1] == null)
                 aClass50_Sub3ArrayArrayArray456[j2][i1][k1] = new Class50_Sub3(j2, i1, k1);
@@ -282,17 +285,17 @@ public class Class22
     {
         if(class50_sub1_sub4 == null)
             return;
-        Class35 class35 = new Class35();
-        class35.anInt609 = l;
-        class35.aByte610 = byte0;
-        class35.anInt604 = i1 * 128 + 64 + l1;
-        class35.anInt605 = k1 * 128 + 64 + j1;
+        WallDecoration class35 = new WallDecoration();
+        class35.uid = l;
+        class35.config = byte0;
+        class35.x = i1 * 128 + 64 + l1;
+        class35.y = k1 * 128 + 64 + j1;
         if(j2 >= 0)
             anInt446 = 308;
-        class35.anInt603 = i2;
-        class35.aClass50_Sub1_Sub4_608 = class50_sub1_sub4;
-        class35.anInt606 = j;
-        class35.anInt607 = k;
+        class35.z = i2;
+        class35.renderable = class50_sub1_sub4;
+        class35.configBits = j;
+        class35.face = k;
         for(int k2 = i; k2 >= 0; k2--)
             if(aClass50_Sub3ArrayArrayArray456[k2][i1][k1] == null)
                 aClass50_Sub3ArrayArrayArray456[k2][i1][k1] = new Class50_Sub3(k2, i1, k1);
@@ -471,7 +474,7 @@ public class Class22
         Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[k][l][i];
         if(class50_sub3 == null)
             return;
-        Class35 class35 = class50_sub3.aClass35_1404;
+        WallDecoration class35 = class50_sub3.aClass35_1404;
         if(class35 == null)
             return;
         int j1 = l * 128 + 64;
@@ -481,8 +484,8 @@ public class Class22
             return;
         } else
         {
-            class35.anInt604 = j1 + ((class35.anInt604 - j1) * j) / 16;
-            class35.anInt605 = k1 + ((class35.anInt605 - k1) * j) / 16;
+            class35.x = j1 + ((class35.x - j1) * j) / 16;
+            class35.y = k1 + ((class35.y - k1) * j) / 16;
             return;
         }
     }
@@ -556,7 +559,7 @@ public class Class22
         }
     }
 
-    public Class44 method263(int i, int j, int k, int l)
+    public Wall method263(int i, int j, int k, int l)
     {
         Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][k][l];
         if(j != 17734)
@@ -567,7 +570,7 @@ public class Class22
             return class50_sub3.aClass44_1403;
     }
 
-    public Class35 method264(int i, int j, int k, boolean flag)
+    public WallDecoration method264(int i, int j, int k, boolean flag)
     {
         Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][k][j];
         if(flag)
@@ -597,7 +600,7 @@ public class Class22
         return null;
     }
 
-    public Class28 method266(int i, int j, int k, int l)
+    public FloorDecoration method266(int i, int j, int k, int l)
     {
         if(k != 0)
             throw new NullPointerException();
@@ -614,7 +617,7 @@ public class Class22
         if(class50_sub3 == null || class50_sub3.aClass44_1403 == null)
             return 0;
         else
-            return class50_sub3.aClass44_1403.anInt726;
+            return class50_sub3.aClass44_1403.uid;
     }
 
     public int method268(int i, byte byte0, int j, int k)
@@ -625,7 +628,7 @@ public class Class22
         if(class50_sub3 == null || class50_sub3.aClass35_1404 == null)
             return 0;
         else
-            return class50_sub3.aClass35_1404.anInt609;
+            return class50_sub3.aClass35_1404.uid;
     }
 
     public int method269(int i, int j, int k)
@@ -649,7 +652,7 @@ public class Class22
         if(class50_sub3 == null || class50_sub3.aClass28_1405 == null)
             return 0;
         else
-            return class50_sub3.aClass28_1405.anInt571;
+            return class50_sub3.aClass28_1405.uid;
     }
 
     public int method271(int i, int j, int k, int l)
@@ -657,12 +660,12 @@ public class Class22
         Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][j][k];
         if(class50_sub3 == null)
             return -1;
-        if(class50_sub3.aClass44_1403 != null && class50_sub3.aClass44_1403.anInt726 == l)
-            return class50_sub3.aClass44_1403.aByte727 & 0xff;
-        if(class50_sub3.aClass35_1404 != null && class50_sub3.aClass35_1404.anInt609 == l)
-            return class50_sub3.aClass35_1404.aByte610 & 0xff;
-        if(class50_sub3.aClass28_1405 != null && class50_sub3.aClass28_1405.anInt571 == l)
-            return class50_sub3.aClass28_1405.aByte572 & 0xff;
+        if(class50_sub3.aClass44_1403 != null && class50_sub3.aClass44_1403.uid == l)
+            return class50_sub3.aClass44_1403.config & 0xff;
+        if(class50_sub3.aClass35_1404 != null && class50_sub3.aClass35_1404.uid == l)
+            return class50_sub3.aClass35_1404.config & 0xff;
+        if(class50_sub3.aClass28_1405 != null && class50_sub3.aClass28_1405.uid == l)
+            return class50_sub3.aClass28_1405.config & 0xff;
         for(int i1 = 0; i1 < class50_sub3.anInt1407; i1++)
             if(class50_sub3.aClass5Array1408[i1].anInt125 == l)
                 return class50_sub3.aClass5Array1408[i1].aByte126 & 0xff;
@@ -681,17 +684,17 @@ public class Class22
                     Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[l][i1][j1];
                     if(class50_sub3 != null)
                     {
-                        Class44 class44 = class50_sub3.aClass44_1403;
-                        if(class44 != null && class44.aClass50_Sub1_Sub4_724 != null && class44.aClass50_Sub1_Sub4_724.aClass40Array1474 != null)
+                        Wall class44 = class50_sub3.aClass44_1403;
+                        if(class44 != null && class44.primary != null && class44.primary.aClass40Array1474 != null)
                         {
-                            method274(j1, l, 0, 1, (Class50_Sub1_Sub4_Sub4)class44.aClass50_Sub1_Sub4_724, i1, 1);
-                            if(class44.aClass50_Sub1_Sub4_725 != null && class44.aClass50_Sub1_Sub4_725.aClass40Array1474 != null)
+                            method274(j1, l, 0, 1, (Class50_Sub1_Sub4_Sub4)class44.primary, i1, 1);
+                            if(class44.secondary != null && class44.secondary.aClass40Array1474 != null)
                             {
-                                method274(j1, l, 0, 1, (Class50_Sub1_Sub4_Sub4)class44.aClass50_Sub1_Sub4_725, i1, 1);
-                                method275((Class50_Sub1_Sub4_Sub4)class44.aClass50_Sub1_Sub4_724, (Class50_Sub1_Sub4_Sub4)class44.aClass50_Sub1_Sub4_725, 0, 0, 0, false);
-                                ((Class50_Sub1_Sub4_Sub4)class44.aClass50_Sub1_Sub4_725).method595(i, j, 0, k);
+                                method274(j1, l, 0, 1, (Class50_Sub1_Sub4_Sub4)class44.secondary, i1, 1);
+                                method275((Class50_Sub1_Sub4_Sub4)class44.primary, (Class50_Sub1_Sub4_Sub4)class44.secondary, 0, 0, 0, false);
+                                ((Class50_Sub1_Sub4_Sub4)class44.secondary).method595(i, j, 0, k);
                             }
-                            ((Class50_Sub1_Sub4_Sub4)class44.aClass50_Sub1_Sub4_724).method595(i, j, 0, k);
+                            ((Class50_Sub1_Sub4_Sub4)class44.primary).method595(i, j, 0, k);
                         }
                         for(int k1 = 0; k1 < class50_sub3.anInt1407; k1++)
                         {
@@ -703,11 +706,11 @@ public class Class22
                             }
                         }
 
-                        Class28 class28 = class50_sub3.aClass28_1405;
-                        if(class28 != null && class28.aClass50_Sub1_Sub4_570.aClass40Array1474 != null)
+                        FloorDecoration class28 = class50_sub3.aClass28_1405;
+                        if(class28 != null && class28.renderable.aClass40Array1474 != null)
                         {
-                            method273(i1, (Class50_Sub1_Sub4_Sub4)class28.aClass50_Sub1_Sub4_570, j1, l, 0);
-                            ((Class50_Sub1_Sub4_Sub4)class28.aClass50_Sub1_Sub4_570).method595(i, j, 0, k);
+                            method273(i1, (Class50_Sub1_Sub4_Sub4)class28.renderable, j1, l, 0);
+                            ((Class50_Sub1_Sub4_Sub4)class28.renderable).method595(i, j, 0, k);
                         }
                     }
                 }
@@ -727,26 +730,26 @@ public class Class22
         if(i < anInt453)
         {
             Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[k][i + 1][j];
-            if(class50_sub3 != null && class50_sub3.aClass28_1405 != null && class50_sub3.aClass28_1405.aClass50_Sub1_Sub4_570.aClass40Array1474 != null)
-                method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class50_sub3.aClass28_1405.aClass50_Sub1_Sub4_570, 128, 0, 0, true);
+            if(class50_sub3 != null && class50_sub3.aClass28_1405 != null && class50_sub3.aClass28_1405.renderable.aClass40Array1474 != null)
+                method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class50_sub3.aClass28_1405.renderable, 128, 0, 0, true);
         }
         if(j < anInt453)
         {
             Class50_Sub3 class50_sub3_1 = aClass50_Sub3ArrayArrayArray456[k][i][j + 1];
-            if(class50_sub3_1 != null && class50_sub3_1.aClass28_1405 != null && class50_sub3_1.aClass28_1405.aClass50_Sub1_Sub4_570.aClass40Array1474 != null)
-                method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class50_sub3_1.aClass28_1405.aClass50_Sub1_Sub4_570, 0, 0, 128, true);
+            if(class50_sub3_1 != null && class50_sub3_1.aClass28_1405 != null && class50_sub3_1.aClass28_1405.renderable.aClass40Array1474 != null)
+                method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class50_sub3_1.aClass28_1405.renderable, 0, 0, 128, true);
         }
         if(i < anInt453 && j < anInt454)
         {
             Class50_Sub3 class50_sub3_2 = aClass50_Sub3ArrayArrayArray456[k][i + 1][j + 1];
-            if(class50_sub3_2 != null && class50_sub3_2.aClass28_1405 != null && class50_sub3_2.aClass28_1405.aClass50_Sub1_Sub4_570.aClass40Array1474 != null)
-                method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class50_sub3_2.aClass28_1405.aClass50_Sub1_Sub4_570, 128, 0, 128, true);
+            if(class50_sub3_2 != null && class50_sub3_2.aClass28_1405 != null && class50_sub3_2.aClass28_1405.renderable.aClass40Array1474 != null)
+                method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class50_sub3_2.aClass28_1405.renderable, 128, 0, 128, true);
         }
         if(i < anInt453 && j > 0)
         {
             Class50_Sub3 class50_sub3_3 = aClass50_Sub3ArrayArrayArray456[k][i + 1][j - 1];
-            if(class50_sub3_3 != null && class50_sub3_3.aClass28_1405 != null && class50_sub3_3.aClass28_1405.aClass50_Sub1_Sub4_570.aClass40Array1474 != null)
-                method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class50_sub3_3.aClass28_1405.aClass50_Sub1_Sub4_570, 128, 0, -128, true);
+            if(class50_sub3_3 != null && class50_sub3_3.aClass28_1405 != null && class50_sub3_3.aClass28_1405.renderable.aClass40Array1474 != null)
+                method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class50_sub3_3.aClass28_1405.renderable, 128, 0, -128, true);
         }
     }
 
@@ -770,11 +773,11 @@ public class Class22
                                 if(class50_sub3 != null)
                                 {
                                     int j3 = (anIntArrayArrayArray455[k2][l2][i3] + anIntArrayArrayArray455[k2][l2 + 1][i3] + anIntArrayArrayArray455[k2][l2][i3 + 1] + anIntArrayArrayArray455[k2][l2 + 1][i3 + 1]) / 4 - (anIntArrayArrayArray455[j][i1][i] + anIntArrayArrayArray455[j][i1 + 1][i] + anIntArrayArrayArray455[j][i1][i + 1] + anIntArrayArrayArray455[j][i1 + 1][i + 1]) / 4;
-                                    Class44 class44 = class50_sub3.aClass44_1403;
-                                    if(class44 != null && class44.aClass50_Sub1_Sub4_724 != null && class44.aClass50_Sub1_Sub4_724.aClass40Array1474 != null)
-                                        method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class44.aClass50_Sub1_Sub4_724, (l2 - i1) * 128 + (1 - l) * 64, j3, (i3 - i) * 128 + (1 - j1) * 64, flag);
-                                    if(class44 != null && class44.aClass50_Sub1_Sub4_725 != null && class44.aClass50_Sub1_Sub4_725.aClass40Array1474 != null)
-                                        method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class44.aClass50_Sub1_Sub4_725, (l2 - i1) * 128 + (1 - l) * 64, j3, (i3 - i) * 128 + (1 - j1) * 64, flag);
+                                    Wall class44 = class50_sub3.aClass44_1403;
+                                    if(class44 != null && class44.primary != null && class44.primary.aClass40Array1474 != null)
+                                        method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class44.primary, (l2 - i1) * 128 + (1 - l) * 64, j3, (i3 - i) * 128 + (1 - j1) * 64, flag);
+                                    if(class44 != null && class44.secondary != null && class44.secondary.aClass40Array1474 != null)
+                                        method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class44.secondary, (l2 - i1) * 128 + (1 - l) * 64, j3, (i3 - i) * 128 + (1 - j1) * 64, flag);
                                     for(int k3 = 0; k3 < class50_sub3.anInt1407; k3++)
                                     {
                                         Class5 class5 = class50_sub3.aClass5Array1408[k3];
@@ -1290,9 +1293,9 @@ label0:
                     } else
                     if(class50_sub3_7.aClass20_1402 != null && !method287(0, i, j))
                         method283(anInt474, anInt476, class50_sub3_7.aClass20_1402, anInt473, j, i, anInt475, (byte)3);
-                    Class44 class44 = class50_sub3_7.aClass44_1403;
+                    Wall class44 = class50_sub3_7.aClass44_1403;
                     if(class44 != null)
-                        class44.aClass50_Sub1_Sub4_724.method560(0, anInt473, anInt474, anInt475, anInt476, class44.anInt720 - anInt470, class44.anInt719 - anInt471, class44.anInt721 - anInt472, class44.anInt726);
+                        class44.primary.method560(0, anInt473, anInt474, anInt475, anInt476, class44.x - anInt470, class44.z - anInt471, class44.y - anInt472, class44.uid);
                     for(int i2 = 0; i2 < class50_sub3_7.anInt1407; i2++)
                     {
                         Class5 class5 = class50_sub3_7.aClass5Array1408[i2];
@@ -1317,8 +1320,8 @@ label0:
                 }
                 int j1 = 0;
                 int j2 = 0;
-                Class44 class44_3 = class50_sub3_1.aClass44_1403;
-                Class35 class35_1 = class50_sub3_1.aClass35_1404;
+                Wall class44_3 = class50_sub3_1.aClass44_1403;
+                WallDecoration class35_1 = class50_sub3_1.aClass35_1404;
                 if(class44_3 != null || class35_1 != null)
                 {
                     if(anInt468 == i)
@@ -1336,21 +1339,21 @@ label0:
                 }
                 if(class44_3 != null)
                 {
-                    if((class44_3.anInt722 & anIntArray494[j1]) != 0)
+                    if((class44_3.orientation & anIntArray494[j1]) != 0)
                     {
-                        if(class44_3.anInt722 == 16)
+                        if(class44_3.orientation == 16)
                         {
                             class50_sub3_1.anInt1415 = 3;
                             class50_sub3_1.anInt1416 = anIntArray496[j1];
                             class50_sub3_1.anInt1417 = 3 - class50_sub3_1.anInt1416;
                         } else
-                        if(class44_3.anInt722 == 32)
+                        if(class44_3.orientation == 32)
                         {
                             class50_sub3_1.anInt1415 = 6;
                             class50_sub3_1.anInt1416 = anIntArray497[j1];
                             class50_sub3_1.anInt1417 = 6 - class50_sub3_1.anInt1416;
                         } else
-                        if(class44_3.anInt722 == 64)
+                        if(class44_3.orientation == 64)
                         {
                             class50_sub3_1.anInt1415 = 12;
                             class50_sub3_1.anInt1416 = anIntArray498[j1];
@@ -1365,21 +1368,21 @@ label0:
                     {
                         class50_sub3_1.anInt1415 = 0;
                     }
-                    if((class44_3.anInt722 & j2) != 0 && !method288(l, i, j, class44_3.anInt722))
-                        class44_3.aClass50_Sub1_Sub4_724.method560(0, anInt473, anInt474, anInt475, anInt476, class44_3.anInt720 - anInt470, class44_3.anInt719 - anInt471, class44_3.anInt721 - anInt472, class44_3.anInt726);
-                    if((class44_3.anInt723 & j2) != 0 && !method288(l, i, j, class44_3.anInt723))
-                        class44_3.aClass50_Sub1_Sub4_725.method560(0, anInt473, anInt474, anInt475, anInt476, class44_3.anInt720 - anInt470, class44_3.anInt719 - anInt471, class44_3.anInt721 - anInt472, class44_3.anInt726);
+                    if((class44_3.orientation & j2) != 0 && !method288(l, i, j, class44_3.orientation))
+                        class44_3.primary.method560(0, anInt473, anInt474, anInt475, anInt476, class44_3.x - anInt470, class44_3.z - anInt471, class44_3.y - anInt472, class44_3.uid);
+                    if((class44_3.secondaryOrientation & j2) != 0 && !method288(l, i, j, class44_3.secondaryOrientation))
+                        class44_3.secondary.method560(0, anInt473, anInt474, anInt475, anInt476, class44_3.x - anInt470, class44_3.z - anInt471, class44_3.y - anInt472, class44_3.uid);
                 }
-                if(class35_1 != null && !method289(l, i, j, class35_1.aClass50_Sub1_Sub4_608.anInt1475))
-                    if((class35_1.anInt606 & j2) != 0)
-                        class35_1.aClass50_Sub1_Sub4_608.method560(class35_1.anInt607, anInt473, anInt474, anInt475, anInt476, class35_1.anInt604 - anInt470, class35_1.anInt603 - anInt471, class35_1.anInt605 - anInt472, class35_1.anInt609);
+                if(class35_1 != null && !method289(l, i, j, class35_1.renderable.anInt1475))
+                    if((class35_1.configBits & j2) != 0)
+                        class35_1.renderable.method560(class35_1.face, anInt473, anInt474, anInt475, anInt476, class35_1.x - anInt470, class35_1.z - anInt471, class35_1.y - anInt472, class35_1.uid);
                     else
-                    if((class35_1.anInt606 & 0x300) != 0)
+                    if((class35_1.configBits & 0x300) != 0)
                     {
-                        int j4 = class35_1.anInt604 - anInt470;
-                        int l5 = class35_1.anInt603 - anInt471;
-                        int k6 = class35_1.anInt605 - anInt472;
-                        int i8 = class35_1.anInt607;
+                        int j4 = class35_1.x - anInt470;
+                        int l5 = class35_1.z - anInt471;
+                        int k6 = class35_1.y - anInt472;
+                        int i8 = class35_1.face;
                         int k9;
                         if(i8 == 1 || i8 == 2)
                             k9 = -j4;
@@ -1390,24 +1393,24 @@ label0:
                             k10 = -k6;
                         else
                             k10 = k6;
-                        if((class35_1.anInt606 & 0x100) != 0 && k10 < k9)
+                        if((class35_1.configBits & 0x100) != 0 && k10 < k9)
                         {
                             int i11 = j4 + anIntArray478[i8];
                             int k11 = k6 + anIntArray479[i8];
-                            class35_1.aClass50_Sub1_Sub4_608.method560(i8 * 512 + 256, anInt473, anInt474, anInt475, anInt476, i11, l5, k11, class35_1.anInt609);
+                            class35_1.renderable.method560(i8 * 512 + 256, anInt473, anInt474, anInt475, anInt476, i11, l5, k11, class35_1.uid);
                         }
-                        if((class35_1.anInt606 & 0x200) != 0 && k10 > k9)
+                        if((class35_1.configBits & 0x200) != 0 && k10 > k9)
                         {
                             int j11 = j4 + anIntArray480[i8];
                             int l11 = k6 + anIntArray481[i8];
-                            class35_1.aClass50_Sub1_Sub4_608.method560(i8 * 512 + 1280 & 0x7ff, anInt473, anInt474, anInt475, anInt476, j11, l5, l11, class35_1.anInt609);
+                            class35_1.renderable.method560(i8 * 512 + 1280 & 0x7ff, anInt473, anInt474, anInt475, anInt476, j11, l5, l11, class35_1.uid);
                         }
                     }
                 if(flag1)
                 {
-                    Class28 class28 = class50_sub3_1.aClass28_1405;
+                    FloorDecoration class28 = class50_sub3_1.aClass28_1405;
                     if(class28 != null)
-                        class28.aClass50_Sub1_Sub4_570.method560(0, anInt473, anInt474, anInt475, anInt476, class28.anInt568 - anInt470, class28.anInt567 - anInt471, class28.anInt569 - anInt472, class28.anInt571);
+                        class28.renderable.method560(0, anInt473, anInt474, anInt475, anInt476, class28.x - anInt470, class28.z - anInt471, class28.y - anInt472, class28.uid);
                     Class10 class10_1 = class50_sub3_1.aClass10_1406;
                     if(class10_1 != null && class10_1.anInt180 == 0)
                     {
@@ -1461,9 +1464,9 @@ label0:
 
                 if(flag2)
                 {
-                    Class44 class44_1 = class50_sub3_1.aClass44_1403;
-                    if(!method288(l, i, j, class44_1.anInt722))
-                        class44_1.aClass50_Sub1_Sub4_724.method560(0, anInt473, anInt474, anInt475, anInt476, class44_1.anInt720 - anInt470, class44_1.anInt719 - anInt471, class44_1.anInt721 - anInt472, class44_1.anInt726);
+                    Wall class44_1 = class50_sub3_1.aClass44_1403;
+                    if(!method288(l, i, j, class44_1.orientation))
+                        class44_1.primary.method560(0, anInt473, anInt474, anInt475, anInt476, class44_1.x - anInt470, class44_1.z - anInt471, class44_1.y - anInt472, class44_1.uid);
                     class50_sub3_1.anInt1415 = 0;
                 }
             }
@@ -1614,17 +1617,17 @@ label0:
             }
             if(class50_sub3_1.anInt1418 != 0)
             {
-                Class35 class35 = class50_sub3_1.aClass35_1404;
-                if(class35 != null && !method289(l, i, j, class35.aClass50_Sub1_Sub4_608.anInt1475))
-                    if((class35.anInt606 & class50_sub3_1.anInt1418) != 0)
-                        class35.aClass50_Sub1_Sub4_608.method560(class35.anInt607, anInt473, anInt474, anInt475, anInt476, class35.anInt604 - anInt470, class35.anInt603 - anInt471, class35.anInt605 - anInt472, class35.anInt609);
+                WallDecoration class35 = class50_sub3_1.aClass35_1404;
+                if(class35 != null && !method289(l, i, j, class35.renderable.anInt1475))
+                    if((class35.configBits & class50_sub3_1.anInt1418) != 0)
+                        class35.renderable.method560(class35.face, anInt473, anInt474, anInt475, anInt476, class35.x - anInt470, class35.z - anInt471, class35.y - anInt472, class35.uid);
                     else
-                    if((class35.anInt606 & 0x300) != 0)
+                    if((class35.configBits & 0x300) != 0)
                     {
-                        int l2 = class35.anInt604 - anInt470;
-                        int j3 = class35.anInt603 - anInt471;
-                        int i4 = class35.anInt605 - anInt472;
-                        int k5 = class35.anInt607;
+                        int l2 = class35.x - anInt470;
+                        int j3 = class35.z - anInt471;
+                        int i4 = class35.y - anInt472;
+                        int k5 = class35.face;
                         int j6;
                         if(k5 == 1 || k5 == 2)
                             j6 = -l2;
@@ -1635,26 +1638,26 @@ label0:
                             l7 = -i4;
                         else
                             l7 = i4;
-                        if((class35.anInt606 & 0x100) != 0 && l7 >= j6)
+                        if((class35.configBits & 0x100) != 0 && l7 >= j6)
                         {
                             int i9 = l2 + anIntArray478[k5];
                             int i10 = i4 + anIntArray479[k5];
-                            class35.aClass50_Sub1_Sub4_608.method560(k5 * 512 + 256, anInt473, anInt474, anInt475, anInt476, i9, j3, i10, class35.anInt609);
+                            class35.renderable.method560(k5 * 512 + 256, anInt473, anInt474, anInt475, anInt476, i9, j3, i10, class35.uid);
                         }
-                        if((class35.anInt606 & 0x200) != 0 && l7 <= j6)
+                        if((class35.configBits & 0x200) != 0 && l7 <= j6)
                         {
                             int j9 = l2 + anIntArray480[k5];
                             int j10 = i4 + anIntArray481[k5];
-                            class35.aClass50_Sub1_Sub4_608.method560(k5 * 512 + 1280 & 0x7ff, anInt473, anInt474, anInt475, anInt476, j9, j3, j10, class35.anInt609);
+                            class35.renderable.method560(k5 * 512 + 1280 & 0x7ff, anInt473, anInt474, anInt475, anInt476, j9, j3, j10, class35.uid);
                         }
                     }
-                Class44 class44_2 = class50_sub3_1.aClass44_1403;
+                Wall class44_2 = class50_sub3_1.aClass44_1403;
                 if(class44_2 != null)
                 {
-                    if((class44_2.anInt723 & class50_sub3_1.anInt1418) != 0 && !method288(l, i, j, class44_2.anInt723))
-                        class44_2.aClass50_Sub1_Sub4_725.method560(0, anInt473, anInt474, anInt475, anInt476, class44_2.anInt720 - anInt470, class44_2.anInt719 - anInt471, class44_2.anInt721 - anInt472, class44_2.anInt726);
-                    if((class44_2.anInt722 & class50_sub3_1.anInt1418) != 0 && !method288(l, i, j, class44_2.anInt722))
-                        class44_2.aClass50_Sub1_Sub4_724.method560(0, anInt473, anInt474, anInt475, anInt476, class44_2.anInt720 - anInt470, class44_2.anInt719 - anInt471, class44_2.anInt721 - anInt472, class44_2.anInt726);
+                    if((class44_2.secondaryOrientation & class50_sub3_1.anInt1418) != 0 && !method288(l, i, j, class44_2.secondaryOrientation))
+                        class44_2.secondary.method560(0, anInt473, anInt474, anInt475, anInt476, class44_2.x - anInt470, class44_2.z - anInt471, class44_2.y - anInt472, class44_2.uid);
+                    if((class44_2.orientation & class50_sub3_1.anInt1418) != 0 && !method288(l, i, j, class44_2.orientation))
+                        class44_2.primary.method560(0, anInt473, anInt474, anInt475, anInt476, class44_2.x - anInt470, class44_2.z - anInt471, class44_2.y - anInt472, class44_2.uid);
                 }
             }
             if(k < anInt452 - 1)

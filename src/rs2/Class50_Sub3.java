@@ -4,6 +4,9 @@
 package rs2;
 
 import rs2.collection.Node;
+import rs2.scene.tile.FloorDecoration;
+import rs2.scene.tile.Wall;
+import rs2.scene.tile.WallDecoration;
 
 public class Class50_Sub3 extends Node
 {
@@ -25,9 +28,9 @@ public class Class50_Sub3 extends Node
     public int anInt1400;
     public Class3 aClass3_1401;
     public Class20 aClass20_1402;
-    public Class44 aClass44_1403;
-    public Class35 aClass35_1404;
-    public Class28 aClass28_1405;
+    public Wall aClass44_1403;
+    public WallDecoration aClass35_1404;
+    public FloorDecoration aClass28_1405;
     public Class10 aClass10_1406;
     public int anInt1407;
     public Class5 aClass5Array1408[];

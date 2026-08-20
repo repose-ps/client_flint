@@ -23,6 +23,9 @@ import rs2.net.Buffer;
 import rs2.net.BufferedConnection;
 import rs2.net.Ipv4Address;
 import rs2.net.IsaacCipher;
+import rs2.scene.tile.FloorDecoration;
+import rs2.scene.tile.Wall;
+import rs2.scene.tile.WallDecoration;
 import rs2.net.IncomingPacketLengths;
 import rs2.sign.signlink;
 import rs2.text.Base37;
@@ -9907,25 +9910,25 @@ public class client extends Applet_Sub1 {
 				int i20 = anIntArrayArrayArray891[anInt1091][j16 + 1][l17 + 1];
 				int l20 = anIntArrayArrayArray891[anInt1091][j16][l17 + 1];
 				if (i12 == 0) {
-					Class44 class44 = aClass22_1164.method263(anInt1091, 17734, j16, l17);
+					Wall class44 = aClass22_1164.method263(anInt1091, 17734, j16, l17);
 					if (class44 != null) {
-						int k21 = class44.anInt726 >> 14 & 0x7fff;
+						int k21 = class44.uid >> 14 & 0x7fff;
 						if (k6 == 2) {
-							class44.aClass50_Sub1_Sub4_724 = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, 2, (byte) 3,
+							class44.primary = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, 2, (byte) 3,
 									k21, false, l18, 4 + j9);
-							class44.aClass50_Sub1_Sub4_725 = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, 2, (byte) 3,
+							class44.secondary = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, 2, (byte) 3,
 									k21, false, l18, j9 + 1 & 3);
 						} else {
-							class44.aClass50_Sub1_Sub4_724 = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, k6, (byte) 3,
+							class44.primary = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, k6, (byte) 3,
 									k21, false, l18, j9);
 						}
 					}
 				}
 				if (i12 == 1) {
-					Class35 class35 = aClass22_1164.method264(anInt1091, l17, j16, false);
+					WallDecoration class35 = aClass22_1164.method264(anInt1091, l17, j16, false);
 					if (class35 != null)
-						class35.aClass50_Sub1_Sub4_608 = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, 4, (byte) 3,
-								class35.anInt609 >> 14 & 0x7fff, false, l18, 0);
+						class35.renderable = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, 4, (byte) 3,
+								class35.uid >> 14 & 0x7fff, false, l18, 0);
 				}
 				if (i12 == 2) {
 					Class5 class5 = aClass22_1164.method265(j16, (byte) 32, l17, anInt1091);
@@ -9936,10 +9939,10 @@ public class client extends Applet_Sub1 {
 								class5.anInt125 >> 14 & 0x7fff, false, l18, j9);
 				}
 				if (i12 == 3) {
-					Class28 class28 = aClass22_1164.method266(anInt1091, l17, 0, j16);
+					FloorDecoration class28 = aClass22_1164.method266(anInt1091, l17, 0, j16);
 					if (class28 != null)
-						class28.aClass50_Sub1_Sub4_570 = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, 22, (byte) 3,
-								class28.anInt571 >> 14 & 0x7fff, false, l18, j9);
+						class28.renderable = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, 22, (byte) 3,
+								class28.uid >> 14 & 0x7fff, false, l18, j9);
 				}
 			}
 			return;
