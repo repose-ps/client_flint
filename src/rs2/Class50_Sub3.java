@@ -5,6 +5,7 @@ package rs2;
 
 import rs2.collection.Node;
 import rs2.scene.tile.FloorDecoration;
+import rs2.scene.tile.GenericTile;
 import rs2.scene.tile.Wall;
 import rs2.scene.tile.WallDecoration;
 
@@ -26,8 +27,8 @@ public class Class50_Sub3 extends Node
     public int anInt1398;
     public int anInt1399;
     public int anInt1400;
-    public Class3 aClass3_1401;
-    public Class20 aClass20_1402;
+    public GenericTile aClass3_1401;
+    public ComplexTile aClass20_1402;
     public Wall aClass44_1403;
     public WallDecoration aClass35_1404;
     public FloorDecoration aClass28_1405;

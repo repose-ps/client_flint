@@ -3,13 +3,11 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
-import java.io.PrintStream;
-
 import rs2.collection.NodeDeque;
 import rs2.scene.tile.FloorDecoration;
+import rs2.scene.tile.GenericTile;
 import rs2.scene.tile.Wall;
 import rs2.scene.tile.WallDecoration;
-import rs2.sign.signlink;
 
 public class Class22
 {
@@ -177,7 +175,7 @@ public class Class22
     {
         if(l == 0)
         {
-            Class3 class3 = new Class3(k2, l2, i3, j3, -1, k4, false);
+            GenericTile class3 = new GenericTile(k2, l2, i3, j3, -1, k4, false);
             for(int i5 = i; i5 >= 0; i5--)
                 if(aClass50_Sub3ArrayArrayArray456[i5][j][k] == null)
                     aClass50_Sub3ArrayArrayArray456[i5][j][k] = new Class50_Sub3(i5, j, k);
@@ -187,7 +185,7 @@ public class Class22
         }
         if(l == 1)
         {
-            Class3 class3_1 = new Class3(k3, l3, i4, j4, j1, l4, k1 == l1 && k1 == i2 && k1 == j2);
+            GenericTile class3_1 = new GenericTile(k3, l3, i4, j4, j1, l4, k1 == l1 && k1 == i2 && k1 == j2);
             for(int j5 = i; j5 >= 0; j5--)
                 if(aClass50_Sub3ArrayArrayArray456[j5][j][k] == null)
                     aClass50_Sub3ArrayArrayArray456[j5][j][k] = new Class50_Sub3(j5, j, k);
@@ -195,7 +193,7 @@ public class Class22
             aClass50_Sub3ArrayArrayArray456[i][j][k].aClass3_1401 = class3_1;
             return;
         }
-        Class20 class20 = new Class20(j2, k3, i2, k1, j, i3, j3, l4, l2, i4, 0, k2, l, l1, j4, j1, k4, l3, k, i1);
+        ComplexTile class20 = new ComplexTile(j, k1, l1, j2, i2, k, i1, j1, l, k2, k3, l2, l3, j3, j4, i3, i4, l4, k4);
         for(int k5 = i; k5 >= 0; k5--)
             if(aClass50_Sub3ArrayArrayArray456[k5][j][k] == null)
                 aClass50_Sub3ArrayArrayArray456[k5][j][k] = new Class50_Sub3(k5, j, k);
@@ -869,10 +867,10 @@ public class Class22
         Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[k][l][i1];
         if(class50_sub3 == null)
             return;
-        Class3 class3 = class50_sub3.aClass3_1401;
+        GenericTile class3 = class50_sub3.aClass3_1401;
         if(class3 != null)
         {
-            int j1 = class3.anInt101;
+            int j1 = class3.rgbColour;
             if(j1 == 0)
                 return;
             for(int k1 = 0; k1 < 4; k1++)
@@ -886,13 +884,13 @@ public class Class22
 
             return;
         }
-        Class20 class20 = class50_sub3.aClass20_1402;
+        ComplexTile class20 = class50_sub3.aClass20_1402;
         if(class20 == null)
             return;
-        int l1 = class20.anInt414;
-        int i2 = class20.anInt415;
-        int j2 = class20.anInt416;
-        int k2 = class20.anInt417;
+        int l1 = class20.shape;
+        int i2 = class20.rotation;
+        int j2 = class20.underlayRgb;
+        int k2 = class20.overlayRgb;
         int ai1[] = anIntArrayArray504[l1];
         int ai2[] = anIntArrayArray505[i2];
         int l2 = 0;
@@ -1693,7 +1691,7 @@ label0:
         } while(true);
     }
 
-    public void method282(Class3 class3, int i, int j, int k, int l, int i1, int j1, 
+    public void method282(GenericTile class3, int i, int j, int k, int l, int i1, int j1, 
             int k1)
     {
         int l1;
@@ -1759,21 +1757,21 @@ label0:
                 anInt485 = j1;
                 anInt486 = k1;
             }
-            if(class3.anInt99 == -1)
+            if(class3.texture == -1)
             {
-                if(class3.anInt97 != 0xbc614e)
-                    Class50_Sub1_Sub1_Sub4.method503(j6, l6, l5, i6, k6, k5, class3.anInt97, class3.anInt98, class3.anInt96);
+                if(class3.colourC != 0xbc614e)
+                    Class50_Sub1_Sub1_Sub4.method503(j6, l6, l5, i6, k6, k5, class3.colourC, class3.colourD, class3.colourB);
             } else
             if(!aBoolean451)
             {
-                if(class3.aBoolean100)
-                    Class50_Sub1_Sub1_Sub4.method507(j6, l6, l5, i6, k6, k5, class3.anInt97, class3.anInt98, class3.anInt96, i2, i3, l1, l3, i4, k4, k2, j2, j3, class3.anInt99);
+                if(class3.flat)
+                    Class50_Sub1_Sub1_Sub4.method507(j6, l6, l5, i6, k6, k5, class3.colourC, class3.colourD, class3.colourB, i2, i3, l1, l3, i4, k4, k2, j2, j3, class3.texture);
                 else
-                    Class50_Sub1_Sub1_Sub4.method507(j6, l6, l5, i6, k6, k5, class3.anInt97, class3.anInt98, class3.anInt96, l2, l1, i3, j4, k4, i4, k3, j3, j2, class3.anInt99);
+                    Class50_Sub1_Sub1_Sub4.method507(j6, l6, l5, i6, k6, k5, class3.colourC, class3.colourD, class3.colourB, l2, l1, i3, j4, k4, i4, k3, j3, j2, class3.texture);
             } else
             {
-                int i7 = anIntArray500[class3.anInt99];
-                Class50_Sub1_Sub1_Sub4.method503(j6, l6, l5, i6, k6, k5, method284(class3.anInt97, i7, 0), method284(class3.anInt98, i7, 0), method284(class3.anInt96, i7, 0));
+                int i7 = anIntArray500[class3.texture];
+                Class50_Sub1_Sub1_Sub4.method503(j6, l6, l5, i6, k6, k5, method284(class3.colourC, i7, 0), method284(class3.colourD, i7, 0), method284(class3.colourB, i7, 0));
             }
         }
         if((i5 - k5) * (l6 - l5) - (j5 - l5) * (k6 - k5) > 0)
@@ -1786,35 +1784,35 @@ label0:
                 anInt485 = j1;
                 anInt486 = k1;
             }
-            if(class3.anInt99 == -1)
+            if(class3.texture == -1)
             {
-                if(class3.anInt95 != 0xbc614e)
+                if(class3.colourA != 0xbc614e)
                 {
-                    Class50_Sub1_Sub1_Sub4.method503(j5, l5, l6, i5, k5, k6, class3.anInt95, class3.anInt96, class3.anInt98);
+                    Class50_Sub1_Sub1_Sub4.method503(j5, l5, l6, i5, k5, k6, class3.colourA, class3.colourB, class3.colourD);
                     return;
                 }
             } else
             {
                 if(!aBoolean451)
                 {
-                    Class50_Sub1_Sub1_Sub4.method507(j5, l5, l6, i5, k5, k6, class3.anInt95, class3.anInt96, class3.anInt98, i2, i3, l1, l3, i4, k4, k2, j2, j3, class3.anInt99);
+                    Class50_Sub1_Sub1_Sub4.method507(j5, l5, l6, i5, k5, k6, class3.colourA, class3.colourB, class3.colourD, i2, i3, l1, l3, i4, k4, k2, j2, j3, class3.texture);
                     return;
                 }
-                int j7 = anIntArray500[class3.anInt99];
-                Class50_Sub1_Sub1_Sub4.method503(j5, l5, l6, i5, k5, k6, method284(class3.anInt95, j7, 0), method284(class3.anInt96, j7, 0), method284(class3.anInt98, j7, 0));
+                int j7 = anIntArray500[class3.texture];
+                Class50_Sub1_Sub1_Sub4.method503(j5, l5, l6, i5, k5, k6, method284(class3.colourA, j7, 0), method284(class3.colourB, j7, 0), method284(class3.colourD, j7, 0));
             }
         }
     }
 
-    public void method283(int i, int j, Class20 class20, int k, int l, int i1, int j1, 
+    public void method283(int i, int j, ComplexTile class20, int k, int l, int i1, int j1, 
             byte byte0)
     {
-        int k1 = class20.anIntArray403.length;
+        int k1 = class20.vertexX.length;
         for(int l1 = 0; l1 < k1; l1++)
         {
-            int i2 = class20.anIntArray403[l1] - anInt470;
-            int k2 = class20.anIntArray404[l1] - anInt471;
-            int i3 = class20.anIntArray405[l1] - anInt472;
+            int i2 = class20.vertexX[l1] - anInt470;
+            int k2 = class20.vertexY[l1] - anInt471;
+            int i3 = class20.vertexZ[l1] - anInt472;
             int k3 = i3 * j1 + i2 * j >> 16;
             i3 = i3 * j - i2 * j1 >> 16;
             i2 = k3;
@@ -1823,31 +1821,31 @@ label0:
             k2 = k3;
             if(i3 < 50)
                 return;
-            if(class20.anIntArray412 != null)
+            if(class20.triangleTextures != null)
             {
-                Class20.anIntArray420[l1] = i2;
-                Class20.anIntArray421[l1] = k2;
-                Class20.anIntArray422[l1] = i3;
+                ComplexTile.VIEW_X[l1] = i2;
+                ComplexTile.VIEW_Y[l1] = k2;
+                ComplexTile.VIEW_Z[l1] = i3;
             }
-            Class20.anIntArray418[l1] = Class50_Sub1_Sub1_Sub4.anInt1532 + (i2 << 9) / i3;
-            Class20.anIntArray419[l1] = Class50_Sub1_Sub1_Sub4.anInt1533 + (k2 << 9) / i3;
+            ComplexTile.SCREEN_X[l1] = Class50_Sub1_Sub1_Sub4.anInt1532 + (i2 << 9) / i3;
+            ComplexTile.SCREEN_Y[l1] = Class50_Sub1_Sub1_Sub4.anInt1533 + (k2 << 9) / i3;
         }
 
         Class50_Sub1_Sub1_Sub4.anInt1531 = 0;
-        k1 = class20.anIntArray409.length;
+        k1 = class20.triangleVertexA.length;
         if(byte0 != 3)
             return;
         for(int j2 = 0; j2 < k1; j2++)
         {
-            int l2 = class20.anIntArray409[j2];
-            int j3 = class20.anIntArray410[j2];
-            int l3 = class20.anIntArray411[j2];
-            int i4 = Class20.anIntArray418[l2];
-            int j4 = Class20.anIntArray418[j3];
-            int k4 = Class20.anIntArray418[l3];
-            int l4 = Class20.anIntArray419[l2];
-            int i5 = Class20.anIntArray419[j3];
-            int j5 = Class20.anIntArray419[l3];
+            int l2 = class20.triangleVertexA[j2];
+            int j3 = class20.triangleVertexB[j2];
+            int l3 = class20.triangleVertexC[j2];
+            int i4 = ComplexTile.SCREEN_X[l2];
+            int j4 = ComplexTile.SCREEN_X[j3];
+            int k4 = ComplexTile.SCREEN_X[l3];
+            int l4 = ComplexTile.SCREEN_Y[l2];
+            int i5 = ComplexTile.SCREEN_Y[j3];
+            int j5 = ComplexTile.SCREEN_Y[l3];
             if((i4 - j4) * (j5 - i5) - (l4 - i5) * (k4 - j4) > 0)
             {
                 Class50_Sub1_Sub1_Sub4.aBoolean1528 = false;
@@ -1858,21 +1856,21 @@ label0:
                     anInt485 = i1;
                     anInt486 = l;
                 }
-                if(class20.anIntArray412 == null || class20.anIntArray412[j2] == -1)
+                if(class20.triangleTextures == null || class20.triangleTextures[j2] == -1)
                 {
-                    if(class20.anIntArray406[j2] != 0xbc614e)
-                        Class50_Sub1_Sub1_Sub4.method503(l4, i5, j5, i4, j4, k4, class20.anIntArray406[j2], class20.anIntArray407[j2], class20.anIntArray408[j2]);
+                    if(class20.triangleHslA[j2] != 0xbc614e)
+                        Class50_Sub1_Sub1_Sub4.method503(l4, i5, j5, i4, j4, k4, class20.triangleHslA[j2], class20.triangleHslB[j2], class20.triangleHslC[j2]);
                 } else
                 if(!aBoolean451)
                 {
-                    if(class20.aBoolean413)
-                        Class50_Sub1_Sub1_Sub4.method507(l4, i5, j5, i4, j4, k4, class20.anIntArray406[j2], class20.anIntArray407[j2], class20.anIntArray408[j2], Class20.anIntArray420[0], Class20.anIntArray420[1], Class20.anIntArray420[3], Class20.anIntArray421[0], Class20.anIntArray421[1], Class20.anIntArray421[3], Class20.anIntArray422[0], Class20.anIntArray422[1], Class20.anIntArray422[3], class20.anIntArray412[j2]);
+                    if(class20.flat)
+                        Class50_Sub1_Sub1_Sub4.method507(l4, i5, j5, i4, j4, k4, class20.triangleHslA[j2], class20.triangleHslB[j2], class20.triangleHslC[j2], ComplexTile.VIEW_X[0], ComplexTile.VIEW_X[1], ComplexTile.VIEW_X[3], ComplexTile.VIEW_Y[0], ComplexTile.VIEW_Y[1], ComplexTile.VIEW_Y[3], ComplexTile.VIEW_Z[0], ComplexTile.VIEW_Z[1], ComplexTile.VIEW_Z[3], class20.triangleTextures[j2]);
                     else
-                        Class50_Sub1_Sub1_Sub4.method507(l4, i5, j5, i4, j4, k4, class20.anIntArray406[j2], class20.anIntArray407[j2], class20.anIntArray408[j2], Class20.anIntArray420[l2], Class20.anIntArray420[j3], Class20.anIntArray420[l3], Class20.anIntArray421[l2], Class20.anIntArray421[j3], Class20.anIntArray421[l3], Class20.anIntArray422[l2], Class20.anIntArray422[j3], Class20.anIntArray422[l3], class20.anIntArray412[j2]);
+                        Class50_Sub1_Sub1_Sub4.method507(l4, i5, j5, i4, j4, k4, class20.triangleHslA[j2], class20.triangleHslB[j2], class20.triangleHslC[j2], ComplexTile.VIEW_X[l2], ComplexTile.VIEW_X[j3], ComplexTile.VIEW_X[l3], ComplexTile.VIEW_Y[l2], ComplexTile.VIEW_Y[j3], ComplexTile.VIEW_Y[l3], ComplexTile.VIEW_Z[l2], ComplexTile.VIEW_Z[j3], ComplexTile.VIEW_Z[l3], class20.triangleTextures[j2]);
                 } else
                 {
-                    int k5 = anIntArray500[class20.anIntArray412[j2]];
-                    Class50_Sub1_Sub1_Sub4.method503(l4, i5, j5, i4, j4, k4, method284(class20.anIntArray406[j2], k5, 0), method284(class20.anIntArray407[j2], k5, 0), method284(class20.anIntArray408[j2], k5, 0));
+                    int k5 = anIntArray500[class20.triangleTextures[j2]];
+                    Class50_Sub1_Sub1_Sub4.method503(l4, i5, j5, i4, j4, k4, method284(class20.triangleHslA[j2], k5, 0), method284(class20.triangleHslB[j2], k5, 0), method284(class20.triangleHslC[j2], k5, 0));
                 }
             }
         }
