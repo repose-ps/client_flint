@@ -3,6 +3,7 @@ package rs2;
 import rs2.cache.Archive;
 import rs2.cache.ResourceNameHash;
 import rs2.collection.LruCache;
+import rs2.media.AnimationFrame;
 import rs2.net.Buffer;
 
 public class Class13 {
@@ -333,7 +334,7 @@ public class Class13 {
 		aByteArrayArray282 = null;
 	}
 
-	public Class50_Sub1_Sub4_Sub4 method203(int i, int j, int k, boolean flag) {
+	public Class50_Sub1_Sub4_Sub4 method203(int i, int j, boolean flag) {
 		anInt280 = 64;
 		anInt243 = 768;
 		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4;
@@ -346,9 +347,7 @@ public class Class13 {
 		if (i == -1 && j == -1 && class50_sub1_sub4_sub4.anIntArray1662 == null)
 			return class50_sub1_sub4_sub4;
 		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = new Class50_Sub1_Sub4_Sub4(false, false, true,
-				class50_sub1_sub4_sub4, Class21.method239(aBoolean271, i) & Class21.method239(aBoolean271, j));
-		if (k != 0)
-			aBoolean271 = !aBoolean271;
+				class50_sub1_sub4_sub4, AnimationFrame.isNull(i) & AnimationFrame.isNull(j));
 		if (i != -1 || j != -1)
 			class50_sub1_sub4_sub4_1.method584(7);
 		if (i != -1)
@@ -361,7 +360,6 @@ public class Class13 {
 
 	public Class13() {
 		anInt270 = -68;
-		aBoolean271 = true;
 	}
 
 	public static int anInt210;
@@ -425,7 +423,6 @@ public class Class13 {
 	public String aString268;
 	public int anIntArray269[];
 	public int anInt270;
-	public boolean aBoolean271;
 	public boolean aBoolean272;
 	public int anIntArray273[];
 	public boolean aBoolean274;

@@ -3,6 +3,7 @@ package rs2;
 import rs2.cache.Archive;
 import rs2.cache.cfg.Varbit;
 import rs2.collection.LruCache;
+import rs2.media.AnimationFrame;
 import rs2.net.Buffer;
 
 public class Class37 {
@@ -225,7 +226,7 @@ public class Class37 {
 		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = Class50_Sub1_Sub4_Sub4.aClass50_Sub1_Sub4_Sub4_1643;
 		if (k != 0)
 			aBoolean647 = !aBoolean647;
-		class50_sub1_sub4_sub4_1.method579(Class21.method239(aBoolean623, i) & Class21.method239(aBoolean623, j),
+		class50_sub1_sub4_sub4_1.method579(AnimationFrame.isNull(i) & AnimationFrame.isNull(j),
 				class50_sub1_sub4_sub4, 1244);
 		if (i != -1 && j != -1)
 			class50_sub1_sub4_sub4_1.method586(j, 0, i, ai);
@@ -275,7 +276,6 @@ public class Class37 {
 
 	public Class37() {
 		anInt621 = -1;
-		aBoolean623 = true;
 		anInt624 = 932;
 		anInt627 = -1;
 		aLong628 = -1L;
@@ -304,7 +304,6 @@ public class Class37 {
 
 	public int anInt621;
 	public int anIntArray622[];
-	public boolean aBoolean623;
 	public int anInt624;
 	public int anIntArray625[];
 	public int anIntArray626[];

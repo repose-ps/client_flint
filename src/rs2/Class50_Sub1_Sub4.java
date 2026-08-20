@@ -1,6 +1,7 @@
 package rs2;
 
 import rs2.collection.DualNode;
+import rs2.media.VertexNormal;
 
 public class Class50_Sub1_Sub4 extends DualNode {
 
@@ -25,7 +26,7 @@ public class Class50_Sub1_Sub4 extends DualNode {
 
 	public static byte aByte1472 = 3;
 	public boolean aBoolean1473;
-	public Class40 aClass40Array1474[];
+	public VertexNormal aClass40Array1474[];
 	public int anInt1475;
 	public static boolean aBoolean1476;
 

@@ -1,7 +1,7 @@
 package rs2.cache.media;
 
-import rs2.Class21;
 import rs2.cache.Archive;
+import rs2.media.AnimationFrame;
 import rs2.net.Buffer;
 
 /**
@@ -59,9 +59,9 @@ public class AnimationSequence {
 	public int getFrameLength(int frame) {
 		int length = frameLengths[frame];
 		if (length == 0) {
-			Class21 animationFrame = Class21.method238(primaryFrameIds[frame]);
+			AnimationFrame animationFrame = AnimationFrame.get(primaryFrameIds[frame]);
 			if (animationFrame != null) {
-				length = frameLengths[frame] = animationFrame.anInt431;
+				length = frameLengths[frame] = animationFrame.duration;
 			}
 		}
 		return length == 0 ? 1 : length;

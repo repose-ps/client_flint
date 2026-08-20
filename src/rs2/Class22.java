@@ -1,6 +1,7 @@
 package rs2;
 
 import rs2.collection.NodeDeque;
+import rs2.media.VertexNormal;
 import rs2.scene.GroundItemTile;
 import rs2.scene.InteractiveObject;
 import rs2.scene.SceneCluster;
@@ -747,9 +748,9 @@ public class Class22 {
 		int l1 = class50_sub1_sub4_sub4_1.anInt1670 >> 16;
 		int i2 = (class50_sub1_sub4_sub4_1.anInt1670 << 16) >> 16;
 		for (int j2 = 0; j2 < class50_sub1_sub4_sub4.anInt1648; j2++) {
-			Class40 class40 = ((Class50_Sub1_Sub4) (class50_sub1_sub4_sub4)).aClass40Array1474[j2];
-			Class40 class40_1 = class50_sub1_sub4_sub4.aClass40Array1681[j2];
-			if (class40_1.anInt696 != 0) {
+			VertexNormal class40 = ((Class50_Sub1_Sub4) (class50_sub1_sub4_sub4)).aClass40Array1474[j2];
+			VertexNormal class40_1 = class50_sub1_sub4_sub4.aClass40Array1681[j2];
+			if (class40_1.magnitude != 0) {
 				int i3 = class50_sub1_sub4_sub4.anIntArray1650[j2] - j;
 				if (i3 <= class50_sub1_sub4_sub4_1.anInt1672) {
 					int j3 = class50_sub1_sub4_sub4.anIntArray1649[j2] - i;
@@ -757,19 +758,19 @@ public class Class22 {
 						int k3 = class50_sub1_sub4_sub4.anIntArray1651[j2] - k;
 						if (k3 >= i2 && k3 <= l1) {
 							for (int l3 = 0; l3 < i1; l3++) {
-								Class40 class40_2 = ((Class50_Sub1_Sub4) (class50_sub1_sub4_sub4_1)).aClass40Array1474[l3];
-								Class40 class40_3 = class50_sub1_sub4_sub4_1.aClass40Array1681[l3];
+								VertexNormal class40_2 = ((Class50_Sub1_Sub4) (class50_sub1_sub4_sub4_1)).aClass40Array1474[l3];
+								VertexNormal class40_3 = class50_sub1_sub4_sub4_1.aClass40Array1681[l3];
 								if (j3 == ai[l3] && k3 == class50_sub1_sub4_sub4_1.anIntArray1651[l3]
 										&& i3 == class50_sub1_sub4_sub4_1.anIntArray1650[l3]
-										&& class40_3.anInt696 != 0) {
-									class40.anInt693 += class40_3.anInt693;
-									class40.anInt694 += class40_3.anInt694;
-									class40.anInt695 += class40_3.anInt695;
-									class40.anInt696 += class40_3.anInt696;
-									class40_2.anInt693 += class40_1.anInt693;
-									class40_2.anInt694 += class40_1.anInt694;
-									class40_2.anInt695 += class40_1.anInt695;
-									class40_2.anInt696 += class40_1.anInt696;
+										&& class40_3.magnitude != 0) {
+									class40.x += class40_3.x;
+									class40.y += class40_3.y;
+									class40.z += class40_3.z;
+									class40.magnitude += class40_3.magnitude;
+									class40_2.x += class40_1.x;
+									class40_2.y += class40_1.y;
+									class40_2.z += class40_1.z;
+									class40_2.magnitude += class40_1.magnitude;
 									l++;
 									anIntArray501[j2] = anInt503;
 									anIntArray502[l3] = anInt503;

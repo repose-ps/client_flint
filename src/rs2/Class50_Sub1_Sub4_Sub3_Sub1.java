@@ -2,10 +2,11 @@ package rs2;
 
 import rs2.cache.media.AnimationSequence;
 import rs2.cache.media.SpotAnimation;
+import rs2.media.AnimationFrame;
 
 public class Class50_Sub1_Sub4_Sub3_Sub1 extends Class50_Sub1_Sub4_Sub3 {
 
-	public Class50_Sub1_Sub4_Sub4 method569(byte byte0) {
+	public Class50_Sub1_Sub4_Sub4 method569() {
 		if (super.anInt1624 >= 0 && super.anInt1627 == 0) {
 			int i = AnimationSequence.sequences[super.anInt1624].primaryFrameIds[super.anInt1625];
 			int k = -1;
@@ -14,8 +15,6 @@ public class Class50_Sub1_Sub4_Sub3_Sub1 extends Class50_Sub1_Sub4_Sub3 {
 			return aClass37_1742.method362(i, k, 0, AnimationSequence.sequences[super.anInt1624].interleaveOrder);
 		}
 		int j = -1;
-		if (byte0 != 122)
-			aBoolean1741 = !aBoolean1741;
 		if (super.anInt1588 >= 0)
 			j = AnimationSequence.sequences[super.anInt1588].primaryFrameIds[super.anInt1589];
 		return aClass37_1742.method362(j, -1, 0, null);
@@ -28,7 +27,7 @@ public class Class50_Sub1_Sub4_Sub3_Sub1 extends Class50_Sub1_Sub4_Sub3 {
 			throw new NullPointerException();
 		if (aClass37_1742 == null)
 			return null;
-		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = method569((byte) 122);
+		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = method569();
 		if (class50_sub1_sub4_sub4 == null)
 			return null;
 		super.anInt1594 = ((Class50_Sub1_Sub4) (class50_sub1_sub4_sub4)).anInt1475;
@@ -38,7 +37,7 @@ public class Class50_Sub1_Sub4_Sub3_Sub1 extends Class50_Sub1_Sub4_Sub3 {
 			if (class50_sub1_sub4_sub4_1 != null) {
 				int i = class27.sequence.primaryFrameIds[super.anInt1615];
 				Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_2 = new Class50_Sub1_Sub4_Sub4(false, false, true,
-						class50_sub1_sub4_sub4_1, Class21.method239(aBoolean1741, i));
+						class50_sub1_sub4_sub4_1, AnimationFrame.isNull(i));
 				class50_sub1_sub4_sub4_2.method590(0, 0, false, -super.anInt1618);
 				class50_sub1_sub4_sub4_2.method584(7);
 				class50_sub1_sub4_sub4_2.method585(i, (byte) 6);
@@ -62,10 +61,6 @@ public class Class50_Sub1_Sub4_Sub3_Sub1 extends Class50_Sub1_Sub4_Sub3 {
 		return aClass37_1742 != null;
 	}
 
-	public Class50_Sub1_Sub4_Sub3_Sub1() {
-		aBoolean1741 = true;
-	}
 
-	public boolean aBoolean1741;
 	public Class37 aClass37_1742;
 }

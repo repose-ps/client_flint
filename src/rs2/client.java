@@ -29,6 +29,7 @@ import rs2.chat.ChatCodec;
 import rs2.collection.Node;
 import rs2.collection.NodeDeque;
 import rs2.game.Skills;
+import rs2.media.AnimationFrame;
 import rs2.net.Buffer;
 import rs2.net.BufferedConnection;
 import rs2.net.IncomingPacketLengths;
@@ -396,7 +397,7 @@ public class client extends Applet_Sub1 {
 		Class50_Sub1_Sub1_Sub4.method492(false);
 		Class22.method240(false);
 		Class50_Sub1_Sub4_Sub4.method573(false);
-		Class21.method237(false);
+		AnimationFrame.clear();
 		System.gc();
 	}
 
@@ -4362,7 +4363,7 @@ public class client extends Applet_Sub1 {
 			method13(60, true, "Connecting to update server");
 			aClass32_Sub1_1291 = new Class32_Sub1();
 			aClass32_Sub1_1291.method335(class2_6, this);
-			Class21.method235(aClass32_Sub1_1291.method343(553));
+			AnimationFrame.initialize(aClass32_Sub1_1291.method343(553));
 			Class50_Sub1_Sub4_Sub4.method574(aClass32_Sub1_1291.method340(0, -31140), aClass32_Sub1_1291);
 			if (!aBoolean926) {
 				anInt1270 = 0;
@@ -5606,7 +5607,7 @@ public class client extends Applet_Sub1 {
 					}
 				}
 				if (class50_sub1_sub3.anInt1467 == 1 && class50_sub1_sub3.aByteArray1470 != null)
-					Class21.method236(class50_sub1_sub3.aByteArray1470, true);
+					AnimationFrame.load(class50_sub1_sub3.aByteArray1470);
 				if (class50_sub1_sub3.anInt1467 == 2 && class50_sub1_sub3.anInt1468 == anInt1270
 						&& class50_sub1_sub3.aByteArray1470 != null)
 					method24(aBoolean1271, class50_sub1_sub3.aByteArray1470, 659);
@@ -10608,11 +10609,11 @@ public class client extends Applet_Sub1 {
 						k7 = class13_1.anInt286;
 					Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4;
 					if (k7 == -1) {
-						class50_sub1_sub4_sub4 = class13_1.method203(-1, -1, 0, flag2);
+						class50_sub1_sub4_sub4 = class13_1.method203(-1, -1, flag2);
 					} else {
 						AnimationSequence class14 = AnimationSequence.sequences[k7];
 						class50_sub1_sub4_sub4 = class13_1.method203(class14.primaryFrameIds[class13_1.anInt235],
-								class14.secondaryFrameIds[class13_1.anInt235], 0, flag2);
+								class14.secondaryFrameIds[class13_1.anInt235], flag2);
 					}
 					if (class50_sub1_sub4_sub4 != null)
 						class50_sub1_sub4_sub4.method598(0, class13_1.anInt253, 0, class13_1.anInt252, 0, k5, j6);

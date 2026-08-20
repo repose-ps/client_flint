@@ -4,6 +4,7 @@ import rs2.cache.media.AnimationSequence;
 import rs2.cache.media.IdentityKit;
 import rs2.cache.media.SpotAnimation;
 import rs2.collection.LruCache;
+import rs2.media.AnimationFrame;
 import rs2.net.Buffer;
 import rs2.text.Base37;
 import rs2.text.TextFormatter;
@@ -154,7 +155,7 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 		if (aBoolean1763)
 			return class50_sub1_sub4_sub4_1;
 		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_2 = Class50_Sub1_Sub4_Sub4.aClass50_Sub1_Sub4_Sub4_1643;
-		class50_sub1_sub4_sub4_2.method579(Class21.method239(aBoolean1762, j) & Class21.method239(aBoolean1762, k),
+		class50_sub1_sub4_sub4_2.method579(AnimationFrame.isNull(j) & AnimationFrame.isNull(k),
 				class50_sub1_sub4_sub4_1, 1244);
 		if (j != -1 && k != -1)
 			class50_sub1_sub4_sub4_2.method586(k, 0, j, AnimationSequence.sequences[super.anInt1624].interleaveOrder);
@@ -189,7 +190,7 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 			Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_2 = class27.getModel();
 			if (class50_sub1_sub4_sub4_2 != null) {
 				Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_3 = new Class50_Sub1_Sub4_Sub4(false, false, true,
-						class50_sub1_sub4_sub4_2, Class21.method239(aBoolean1762, super.anInt1615));
+						class50_sub1_sub4_sub4_2, AnimationFrame.isNull(super.anInt1615));
 				class50_sub1_sub4_sub4_3.method590(0, 0, false, -super.anInt1618);
 				class50_sub1_sub4_sub4_3.method584(7);
 				class50_sub1_sub4_sub4_3.method585(class27.sequence.primaryFrameIds[super.anInt1615], (byte) 6);
@@ -336,7 +337,6 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 		anInt1756 = -1;
 		aBoolean1758 = false;
 		anIntArray1760 = new int[5];
-		aBoolean1762 = true;
 		aBoolean1763 = false;
 		aBoolean1767 = false;
 		anInt1772 = 932;
@@ -360,7 +360,6 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 	public int anInt1759;
 	public int anIntArray1760[];
 	public static LruCache aClass33_1761 = new LruCache(260);
-	public boolean aBoolean1762;
 	public boolean aBoolean1763;
 	public int anInt1764;
 	public int anInt1765;

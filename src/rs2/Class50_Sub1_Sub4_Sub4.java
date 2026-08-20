@@ -1,5 +1,9 @@
 package rs2;
 
+import rs2.media.AnimationFrame;
+import rs2.media.Skeleton;
+import rs2.media.VertexNormal;
+import rs2.media.renderable.ModelHeader;
 import rs2.net.Buffer;
 
 public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
@@ -33,7 +37,7 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 	}
 
 	public static void method574(int i, Class32 class32) {
-		aClass26Array1682 = new Class26[i];
+		aClass26Array1682 = new ModelHeader[i];
 		aClass32_1683 = class32;
 	}
 
@@ -41,19 +45,19 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 		if (byte0 != 7)
 			return;
 		if (abyte0 == null) {
-			Class26 class26 = aClass26Array1682[i] = new Class26();
-			class26.anInt534 = 0;
-			class26.anInt535 = 0;
-			class26.anInt536 = 0;
+			ModelHeader class26 = aClass26Array1682[i] = new ModelHeader();
+			class26.vertexCount = 0;
+			class26.triangleCount = 0;
+			class26.texturedTriangleCount = 0;
 			return;
 		}
 		Buffer class50_sub1_sub2 = new Buffer(abyte0);
 		class50_sub1_sub2.position = abyte0.length - 18;
-		Class26 class26_1 = aClass26Array1682[i] = new Class26();
-		class26_1.aByteArray533 = abyte0;
-		class26_1.anInt534 = class50_sub1_sub2.readUnsignedShort();
-		class26_1.anInt535 = class50_sub1_sub2.readUnsignedShort();
-		class26_1.anInt536 = class50_sub1_sub2.readUnsignedByte();
+		ModelHeader class26_1 = aClass26Array1682[i] = new ModelHeader();
+		class26_1.modelData = abyte0;
+		class26_1.vertexCount = class50_sub1_sub2.readUnsignedShort();
+		class26_1.triangleCount = class50_sub1_sub2.readUnsignedShort();
+		class26_1.texturedTriangleCount = class50_sub1_sub2.readUnsignedByte();
 		int j = class50_sub1_sub2.readUnsignedByte();
 		int k = class50_sub1_sub2.readUnsignedByte();
 		int l = class50_sub1_sub2.readUnsignedByte();
@@ -64,46 +68,46 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 		int i2 = class50_sub1_sub2.readUnsignedShort();
 		int j2 = class50_sub1_sub2.readUnsignedShort();
 		int k2 = 0;
-		class26_1.anInt537 = k2;
-		k2 += class26_1.anInt534;
-		class26_1.anInt543 = k2;
-		k2 += class26_1.anInt535;
-		class26_1.anInt546 = k2;
+		class26_1.vertexDirectionOffset = k2;
+		k2 += class26_1.vertexCount;
+		class26_1.triangleTypeOffset = k2;
+		k2 += class26_1.triangleCount;
+		class26_1.trianglePriorityOffset = k2;
 		if (k == 255)
-			k2 += class26_1.anInt535;
+			k2 += class26_1.triangleCount;
 		else
-			class26_1.anInt546 = -k - 1;
-		class26_1.anInt548 = k2;
+			class26_1.trianglePriorityOffset = -k - 1;
+		class26_1.triangleSkinOffset = k2;
 		if (i1 == 1)
-			k2 += class26_1.anInt535;
+			k2 += class26_1.triangleCount;
 		else
-			class26_1.anInt548 = -1;
-		class26_1.anInt545 = k2;
+			class26_1.triangleSkinOffset = -1;
+		class26_1.texturePointerOffset = k2;
 		if (j == 1)
-			k2 += class26_1.anInt535;
+			k2 += class26_1.triangleCount;
 		else
-			class26_1.anInt545 = -1;
-		class26_1.anInt541 = k2;
+			class26_1.texturePointerOffset = -1;
+		class26_1.vertexSkinOffset = k2;
 		if (j1 == 1)
-			k2 += class26_1.anInt534;
+			k2 += class26_1.vertexCount;
 		else
-			class26_1.anInt541 = -1;
-		class26_1.anInt547 = k2;
+			class26_1.vertexSkinOffset = -1;
+		class26_1.triangleAlphaOffset = k2;
 		if (l == 1)
-			k2 += class26_1.anInt535;
+			k2 += class26_1.triangleCount;
 		else
-			class26_1.anInt547 = -1;
-		class26_1.anInt542 = k2;
+			class26_1.triangleAlphaOffset = -1;
+		class26_1.triangleDataOffset = k2;
 		k2 += j2;
-		class26_1.anInt544 = k2;
-		k2 += class26_1.anInt535 * 2;
-		class26_1.anInt549 = k2;
-		k2 += class26_1.anInt536 * 6;
-		class26_1.anInt538 = k2;
+		class26_1.colorDataOffset = k2;
+		k2 += class26_1.triangleCount * 2;
+		class26_1.uvMapTriangleOffset = k2;
+		k2 += class26_1.texturedTriangleCount * 6;
+		class26_1.xDataOffset = k2;
 		k2 += k1;
-		class26_1.anInt539 = k2;
+		class26_1.yDataOffset = k2;
 		k2 += l1;
-		class26_1.anInt540 = k2;
+		class26_1.zDataOffset = k2;
 		k2 += i2;
 	}
 
@@ -119,7 +123,7 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 	public static Class50_Sub1_Sub4_Sub4 method577(int i) {
 		if (aClass26Array1682 == null)
 			return null;
-		Class26 class26 = aClass26Array1682[i];
+		ModelHeader class26 = aClass26Array1682[i];
 		if (class26 == null) {
 			aClass32_1683.method323(i);
 			return null;
@@ -131,7 +135,7 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 	public static boolean method578(int i) {
 		if (aClass26Array1682 == null)
 			return false;
-		Class26 class26 = aClass26Array1682[i];
+		ModelHeader class26 = aClass26Array1682[i];
 		if (class26 == null) {
 			aClass32_1683.method323(i);
 			return false;
@@ -161,10 +165,10 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 		aBoolean1641 = false;
 		aBoolean1680 = false;
 		anInt1642++;
-		Class26 class26 = aClass26Array1682[i];
-		anInt1648 = class26.anInt534;
-		anInt1652 = class26.anInt535;
-		anInt1664 = class26.anInt536;
+		ModelHeader class26 = aClass26Array1682[i];
+		anInt1648 = class26.vertexCount;
+		anInt1652 = class26.triangleCount;
+		anInt1664 = class26.texturedTriangleCount;
 		anIntArray1649 = new int[anInt1648];
 		anIntArray1650 = new int[anInt1648];
 		anIntArray1651 = new int[anInt1648];
@@ -174,31 +178,31 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 		anIntArray1665 = new int[anInt1664];
 		anIntArray1666 = new int[anInt1664];
 		anIntArray1667 = new int[anInt1664];
-		if (class26.anInt541 >= 0)
+		if (class26.vertexSkinOffset >= 0)
 			anIntArray1676 = new int[anInt1648];
-		if (class26.anInt545 >= 0)
+		if (class26.texturePointerOffset >= 0)
 			anIntArray1659 = new int[anInt1652];
-		if (class26.anInt546 >= 0)
+		if (class26.trianglePriorityOffset >= 0)
 			anIntArray1660 = new int[anInt1652];
 		else
-			anInt1663 = -class26.anInt546 - 1;
-		if (class26.anInt547 >= 0)
+			anInt1663 = -class26.trianglePriorityOffset - 1;
+		if (class26.triangleAlphaOffset >= 0)
 			anIntArray1661 = new int[anInt1652];
-		if (class26.anInt548 >= 0)
+		if (class26.triangleSkinOffset >= 0)
 			anIntArray1677 = new int[anInt1652];
 		anIntArray1662 = new int[anInt1652];
-		Buffer class50_sub1_sub2 = new Buffer(class26.aByteArray533);
-		class50_sub1_sub2.position = class26.anInt537;
-		Buffer class50_sub1_sub2_1 = new Buffer(class26.aByteArray533);
-		class50_sub1_sub2_1.position = class26.anInt538;
-		Buffer class50_sub1_sub2_2 = new Buffer(class26.aByteArray533);
-		class50_sub1_sub2_2.position = class26.anInt539;
+		Buffer class50_sub1_sub2 = new Buffer(class26.modelData);
+		class50_sub1_sub2.position = class26.vertexDirectionOffset;
+		Buffer class50_sub1_sub2_1 = new Buffer(class26.modelData);
+		class50_sub1_sub2_1.position = class26.xDataOffset;
+		Buffer class50_sub1_sub2_2 = new Buffer(class26.modelData);
+		class50_sub1_sub2_2.position = class26.yDataOffset;
 		if (j >= 0)
 			aBoolean1641 = !aBoolean1641;
-		Buffer class50_sub1_sub2_3 = new Buffer(class26.aByteArray533);
-		class50_sub1_sub2_3.position = class26.anInt540;
-		Buffer class50_sub1_sub2_4 = new Buffer(class26.aByteArray533);
-		class50_sub1_sub2_4.position = class26.anInt541;
+		Buffer class50_sub1_sub2_3 = new Buffer(class26.modelData);
+		class50_sub1_sub2_3.position = class26.zDataOffset;
+		Buffer class50_sub1_sub2_4 = new Buffer(class26.modelData);
+		class50_sub1_sub2_4.position = class26.vertexSkinOffset;
 		int k = 0;
 		int l = 0;
 		int i1 = 0;
@@ -223,11 +227,11 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 				anIntArray1676[j1] = class50_sub1_sub2_4.readUnsignedByte();
 		}
 
-		class50_sub1_sub2.position = class26.anInt544;
-		class50_sub1_sub2_1.position = class26.anInt545;
-		class50_sub1_sub2_2.position = class26.anInt546;
-		class50_sub1_sub2_3.position = class26.anInt547;
-		class50_sub1_sub2_4.position = class26.anInt548;
+		class50_sub1_sub2.position = class26.colorDataOffset;
+		class50_sub1_sub2_1.position = class26.texturePointerOffset;
+		class50_sub1_sub2_2.position = class26.trianglePriorityOffset;
+		class50_sub1_sub2_3.position = class26.triangleAlphaOffset;
+		class50_sub1_sub2_4.position = class26.triangleSkinOffset;
 		for (int l1 = 0; l1 < anInt1652; l1++) {
 			anIntArray1662[l1] = class50_sub1_sub2.readUnsignedShort();
 			if (anIntArray1659 != null)
@@ -240,8 +244,8 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 				anIntArray1677[l1] = class50_sub1_sub2_4.readUnsignedByte();
 		}
 
-		class50_sub1_sub2.position = class26.anInt542;
-		class50_sub1_sub2_1.position = class26.anInt543;
+		class50_sub1_sub2.position = class26.triangleDataOffset;
+		class50_sub1_sub2_1.position = class26.triangleTypeOffset;
 		int j2 = 0;
 		int l2 = 0;
 		int j3 = 0;
@@ -289,7 +293,7 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 			}
 		}
 
-		class50_sub1_sub2.position = class26.anInt549;
+		class50_sub1_sub2.position = class26.uvMapTriangleOffset;
 		for (int j4 = 0; j4 < anInt1664; j4++) {
 			anIntArray1665[j4] = class50_sub1_sub2.readUnsignedShort();
 			anIntArray1666[j4] = class50_sub1_sub2.readUnsignedShort();
@@ -635,14 +639,14 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 					anIntArray1659[i1] = class50_sub1_sub4_sub4.anIntArray1659[i1];
 
 			}
-			super.aClass40Array1474 = new Class40[anInt1648];
+			super.aClass40Array1474 = new VertexNormal[anInt1648];
 			for (int j1 = 0; j1 < anInt1648; j1++) {
-				Class40 class40 = super.aClass40Array1474[j1] = new Class40();
-				Class40 class40_1 = ((Class50_Sub1_Sub4) (class50_sub1_sub4_sub4)).aClass40Array1474[j1];
-				class40.anInt693 = class40_1.anInt693;
-				class40.anInt694 = class40_1.anInt694;
-				class40.anInt695 = class40_1.anInt695;
-				class40.anInt696 = class40_1.anInt696;
+				VertexNormal class40 = super.aClass40Array1474[j1] = new VertexNormal();
+				VertexNormal class40_1 = ((Class50_Sub1_Sub4) (class50_sub1_sub4_sub4)).aClass40Array1474[j1];
+				class40.x = class40_1.x;
+				class40.y = class40_1.y;
+				class40.z = class40_1.z;
+				class40.magnitude = class40_1.magnitude;
 			}
 
 			aClass40Array1681 = class50_sub1_sub4_sub4.aClass40Array1681;
@@ -886,10 +890,10 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 			return;
 		if (i == -1)
 			return;
-		Class21 class21 = Class21.method238(i);
+		AnimationFrame class21 = AnimationFrame.get(i);
 		if (class21 == null)
 			return;
-		Class41 class41 = class21.aClass41_432;
+		Skeleton class41 = class21.skeleton;
 		if (byte0 == 6)
 			byte0 = 0;
 		else
@@ -897,10 +901,10 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 		anInt1702 = 0;
 		anInt1703 = 0;
 		anInt1704 = 0;
-		for (int j = 0; j < class21.anInt433; j++) {
-			int k = class21.anIntArray434[j];
-			method587(class41.anIntArray698[k], class41.anIntArrayArray699[k], class21.anIntArray435[j],
-					class21.anIntArray436[j], class21.anIntArray437[j]);
+		for (int j = 0; j < class21.transformCount; j++) {
+			int k = class21.transformSkeletonLabels[j];
+			method587(class41.transformTypes[k], class41.labels[k], class21.transformXs[j],
+					class21.transformYs[j], class21.transformZs[j]);
 		}
 
 	}
@@ -912,15 +916,15 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 			method585(k, (byte) 6);
 			return;
 		}
-		Class21 class21 = Class21.method238(k);
+		AnimationFrame class21 = AnimationFrame.get(k);
 		if (class21 == null)
 			return;
-		Class21 class21_1 = Class21.method238(i);
+		AnimationFrame class21_1 = AnimationFrame.get(i);
 		if (class21_1 == null) {
 			method585(k, (byte) 6);
 			return;
 		}
-		Class41 class41 = class21.aClass41_432;
+		Skeleton class41 = class21.skeleton;
 		anInt1702 = 0;
 		if (j != 0)
 			aBoolean1641 = !aBoolean1641;
@@ -928,13 +932,13 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 		anInt1704 = 0;
 		int l = 0;
 		int i1 = ai[l++];
-		for (int j1 = 0; j1 < class21.anInt433; j1++) {
+		for (int j1 = 0; j1 < class21.transformCount; j1++) {
 			int k1;
-			for (k1 = class21.anIntArray434[j1]; k1 > i1; i1 = ai[l++])
+			for (k1 = class21.transformSkeletonLabels[j1]; k1 > i1; i1 = ai[l++])
 				;
-			if (k1 != i1 || class41.anIntArray698[k1] == 0)
-				method587(class41.anIntArray698[k1], class41.anIntArrayArray699[k1], class21.anIntArray435[j1],
-						class21.anIntArray436[j1], class21.anIntArray437[j1]);
+			if (k1 != i1 || class41.transformTypes[k1] == 0)
+				method587(class41.transformTypes[k1], class41.labels[k1], class21.transformXs[j1],
+						class21.transformYs[j1], class21.transformZs[j1]);
 		}
 
 		anInt1702 = 0;
@@ -942,13 +946,13 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 		anInt1704 = 0;
 		l = 0;
 		i1 = ai[l++];
-		for (int l1 = 0; l1 < class21_1.anInt433; l1++) {
+		for (int l1 = 0; l1 < class21_1.transformCount; l1++) {
 			int i2;
-			for (i2 = class21_1.anIntArray434[l1]; i2 > i1; i1 = ai[l++])
+			for (i2 = class21_1.transformSkeletonLabels[l1]; i2 > i1; i1 = ai[l++])
 				;
-			if (i2 == i1 || class41.anIntArray698[i2] == 0)
-				method587(class41.anIntArray698[i2], class41.anIntArrayArray699[i2], class21_1.anIntArray435[l1],
-						class21_1.anIntArray436[l1], class21_1.anIntArray437[l1]);
+			if (i2 == i1 || class41.transformTypes[i2] == 0)
+				method587(class41.transformTypes[i2], class41.labels[i2], class21_1.transformXs[l1],
+						class21_1.transformYs[l1], class21_1.transformZs[l1]);
 		}
 
 	}
@@ -1168,9 +1172,9 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 			anIntArray1658 = new int[anInt1652];
 		}
 		if (super.aClass40Array1474 == null) {
-			super.aClass40Array1474 = new Class40[anInt1648];
+			super.aClass40Array1474 = new VertexNormal[anInt1648];
 			for (int l1 = 0; l1 < anInt1648; l1++)
-				super.aClass40Array1474[l1] = new Class40();
+				super.aClass40Array1474[l1] = new VertexNormal();
 
 		}
 		for (int i2 = 0; i2 < anInt1652; i2++) {
@@ -1199,21 +1203,21 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 			i5 = (i5 * 256) / k5;
 			j5 = (j5 * 256) / k5;
 			if (anIntArray1659 == null || (anIntArray1659[i2] & 1) == 0) {
-				Class40 class40_2 = super.aClass40Array1474[j2];
-				class40_2.anInt693 += l4;
-				class40_2.anInt694 += i5;
-				class40_2.anInt695 += j5;
-				class40_2.anInt696++;
+				VertexNormal class40_2 = super.aClass40Array1474[j2];
+				class40_2.x += l4;
+				class40_2.y += i5;
+				class40_2.z += j5;
+				class40_2.magnitude++;
 				class40_2 = super.aClass40Array1474[l2];
-				class40_2.anInt693 += l4;
-				class40_2.anInt694 += i5;
-				class40_2.anInt695 += j5;
-				class40_2.anInt696++;
+				class40_2.x += l4;
+				class40_2.y += i5;
+				class40_2.z += j5;
+				class40_2.magnitude++;
 				class40_2 = super.aClass40Array1474[i3];
-				class40_2.anInt693 += l4;
-				class40_2.anInt694 += i5;
-				class40_2.anInt695 += j5;
-				class40_2.anInt696++;
+				class40_2.x += l4;
+				class40_2.y += i5;
+				class40_2.z += j5;
+				class40_2.magnitude++;
 			} else {
 				int l5 = i + (k * l4 + l * i5 + i1 * j5) / (k1 + k1 / 2);
 				anIntArray1656[i2] = method597(anIntArray1662[i2], l5, anIntArray1659[i2]);
@@ -1223,14 +1227,14 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 		if (flag) {
 			method596(i, k1, k, l, i1);
 		} else {
-			aClass40Array1681 = new Class40[anInt1648];
+			aClass40Array1681 = new VertexNormal[anInt1648];
 			for (int k2 = 0; k2 < anInt1648; k2++) {
-				Class40 class40 = super.aClass40Array1474[k2];
-				Class40 class40_1 = aClass40Array1681[k2] = new Class40();
-				class40_1.anInt693 = class40.anInt693;
-				class40_1.anInt694 = class40.anInt694;
-				class40_1.anInt695 = class40.anInt695;
-				class40_1.anInt696 = class40.anInt696;
+				VertexNormal class40 = super.aClass40Array1474[k2];
+				VertexNormal class40_1 = aClass40Array1681[k2] = new VertexNormal();
+				class40_1.x = class40.x;
+				class40_1.y = class40.y;
+				class40_1.z = class40.z;
+				class40_1.magnitude = class40.magnitude;
 			}
 
 			anInt1668 = (i << 16) + (k1 & 0xffff);
@@ -1261,30 +1265,30 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 			int j2 = anIntArray1655[j1];
 			if (anIntArray1659 == null) {
 				int i3 = anIntArray1662[j1];
-				Class40 class40 = super.aClass40Array1474[k1];
-				int k2 = i + (k * class40.anInt693 + l * class40.anInt694 + i1 * class40.anInt695)
-						/ (j * class40.anInt696);
+				VertexNormal class40 = super.aClass40Array1474[k1];
+				int k2 = i + (k * class40.x + l * class40.y + i1 * class40.z)
+						/ (j * class40.magnitude);
 				anIntArray1656[j1] = method597(i3, k2, 0);
 				class40 = super.aClass40Array1474[i2];
-				k2 = i + (k * class40.anInt693 + l * class40.anInt694 + i1 * class40.anInt695) / (j * class40.anInt696);
+				k2 = i + (k * class40.x + l * class40.y + i1 * class40.z) / (j * class40.magnitude);
 				anIntArray1657[j1] = method597(i3, k2, 0);
 				class40 = super.aClass40Array1474[j2];
-				k2 = i + (k * class40.anInt693 + l * class40.anInt694 + i1 * class40.anInt695) / (j * class40.anInt696);
+				k2 = i + (k * class40.x + l * class40.y + i1 * class40.z) / (j * class40.magnitude);
 				anIntArray1658[j1] = method597(i3, k2, 0);
 			} else if ((anIntArray1659[j1] & 1) == 0) {
 				int j3 = anIntArray1662[j1];
 				int k3 = anIntArray1659[j1];
-				Class40 class40_1 = super.aClass40Array1474[k1];
-				int l2 = i + (k * class40_1.anInt693 + l * class40_1.anInt694 + i1 * class40_1.anInt695)
-						/ (j * class40_1.anInt696);
+				VertexNormal class40_1 = super.aClass40Array1474[k1];
+				int l2 = i + (k * class40_1.x + l * class40_1.y + i1 * class40_1.z)
+						/ (j * class40_1.magnitude);
 				anIntArray1656[j1] = method597(j3, l2, k3);
 				class40_1 = super.aClass40Array1474[i2];
-				l2 = i + (k * class40_1.anInt693 + l * class40_1.anInt694 + i1 * class40_1.anInt695)
-						/ (j * class40_1.anInt696);
+				l2 = i + (k * class40_1.x + l * class40_1.y + i1 * class40_1.z)
+						/ (j * class40_1.magnitude);
 				anIntArray1657[j1] = method597(j3, l2, k3);
 				class40_1 = super.aClass40Array1474[j2];
-				l2 = i + (k * class40_1.anInt693 + l * class40_1.anInt694 + i1 * class40_1.anInt695)
-						/ (j * class40_1.anInt696);
+				l2 = i + (k * class40_1.x + l * class40_1.y + i1 * class40_1.z)
+						/ (j * class40_1.magnitude);
 				anIntArray1658[j1] = method597(j3, l2, k3);
 			}
 		}
@@ -1916,8 +1920,8 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 	public int anIntArrayArray1678[][];
 	public int anIntArrayArray1679[][];
 	public boolean aBoolean1680;
-	public Class40 aClass40Array1681[];
-	public static Class26 aClass26Array1682[];
+	public VertexNormal aClass40Array1681[];
+	public static ModelHeader aClass26Array1682[];
 	public static Class32 aClass32_1683;
 	public static boolean aBooleanArray1684[] = new boolean[4096];
 	public static boolean aBooleanArray1685[] = new boolean[4096];

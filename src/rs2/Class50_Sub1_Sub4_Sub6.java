@@ -1,6 +1,7 @@
 package rs2;
 
 import rs2.cache.media.SpotAnimation;
+import rs2.media.AnimationFrame;
 
 public class Class50_Sub1_Sub4_Sub6 extends Class50_Sub1_Sub4 {
 
@@ -22,7 +23,6 @@ public class Class50_Sub1_Sub4_Sub6 extends Class50_Sub1_Sub4 {
 	}
 
 	public Class50_Sub1_Sub4_Sub6(int i, int j, int k, int l, int i1, int j1, int k1, int l1) {
-		aBoolean1735 = true;
 		aBoolean1736 = false;
 		aClass27_1739 = SpotAnimation.definitions[i1];
 		anInt1731 = j;
@@ -45,7 +45,7 @@ public class Class50_Sub1_Sub4_Sub6 extends Class50_Sub1_Sub4 {
 			return null;
 		int i = aClass27_1739.sequence.primaryFrameIds[anInt1737];
 		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = new Class50_Sub1_Sub4_Sub4(false, false, true,
-				class50_sub1_sub4_sub4, Class21.method239(aBoolean1735, i));
+				class50_sub1_sub4_sub4, AnimationFrame.isNull(i));
 		if (!aBoolean1736) {
 			class50_sub1_sub4_sub4_1.method584(7);
 			class50_sub1_sub4_sub4_1.method585(i, (byte) 6);
@@ -77,7 +77,6 @@ public class Class50_Sub1_Sub4_Sub6 extends Class50_Sub1_Sub4 {
 	public int anInt1732;
 	public int anInt1733;
 	public int anInt1734;
-	public boolean aBoolean1735;
 	public boolean aBoolean1736;
 	public int anInt1737;
 	public int anInt1738;
