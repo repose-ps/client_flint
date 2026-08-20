@@ -18,10 +18,12 @@ import rs2.cache.CacheIndex;
 import rs2.chat.ChatCodec;
 import rs2.collection.Node;
 import rs2.collection.NodeDeque;
+import rs2.game.Skills;
 import rs2.net.Buffer;
 import rs2.net.BufferedConnection;
 import rs2.net.Ipv4Address;
 import rs2.net.IsaacCipher;
+import rs2.net.IncomingPacketLengths;
 import rs2.sign.signlink;
 import rs2.text.Base37;
 import rs2.text.TextFormatter;
@@ -1346,7 +1348,7 @@ public class client extends Applet_Sub1 {
 				anInt870 = aClass50_Sub1_Sub2_1188.payload[0] & 0xff;
 				if (aClass24_899 != null)
 					anInt870 = anInt870 - aClass24_899.nextInt() & 0xff;
-				anInt869 = Class12.anIntArray209[anInt870];
+				anInt869 = IncomingPacketLengths.LENGTHS[anInt870];
 				k--;
 			}
 			if (anInt869 == -1)
@@ -9594,8 +9596,8 @@ public class client extends Applet_Sub1 {
 				if (j1 == 8)
 					k1 = aClass50_Sub1_Sub4_Sub3_Sub2_1167.anInt1753;
 				if (j1 == 9) {
-					for (int l1 = 0; l1 < Class42.anInt700; l1++)
-						if (Class42.aBooleanArray702[l1])
+					for (int l1 = 0; l1 < Skills.COUNT; l1++)
+						if (Skills.ENABLED[l1])
 							k1 += anIntArray1054[l1];
 
 				}
@@ -11207,7 +11209,7 @@ public class client extends Applet_Sub1 {
 	public client() {
 		anIntArray837 = new int[9];
 		aString839 = "";
-		anIntArray843 = new int[Class42.anInt700];
+		anIntArray843 = new int[Skills.COUNT];
 		aStringArray849 = new String[200];
 		anIntArray852 = new int[5];
 		anInt854 = 2;
@@ -11280,7 +11282,7 @@ public class client extends Applet_Sub1 {
 		anIntArray1019 = new int[151];
 		aString1026 = "";
 		aBoolean1028 = false;
-		anIntArray1029 = new int[Class42.anInt700];
+		anIntArray1029 = new int[Skills.COUNT];
 		aClass50_Sub1_Sub1_Sub1Array1031 = new Class50_Sub1_Sub1_Sub1[100];
 		aBoolean1033 = false;
 		aBoolean1038 = true;
@@ -11288,7 +11290,7 @@ public class client extends Applet_Sub1 {
 		aBoolean1046 = false;
 		anInt1051 = 69;
 		anInt1053 = -1;
-		anIntArray1054 = new int[Class42.anInt700];
+		anIntArray1054 = new int[Skills.COUNT];
 		anInt1055 = 2;
 		anInt1056 = 3;
 		aBoolean1065 = false;
