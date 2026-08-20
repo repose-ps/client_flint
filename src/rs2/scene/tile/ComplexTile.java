@@ -1,4 +1,4 @@
-package rs2;
+package rs2.scene.tile;
 
 public class ComplexTile {
 

@@ -6,8 +6,11 @@ package rs2;
 import rs2.collection.NodeDeque;
 import rs2.scene.GroundItemTile;
 import rs2.scene.InteractiveObject;
+import rs2.scene.SceneCluster;
+import rs2.scene.tile.ComplexTile;
 import rs2.scene.tile.FloorDecoration;
 import rs2.scene.tile.GenericTile;
+import rs2.scene.tile.SceneTile;
 import rs2.scene.tile.Wall;
 import rs2.scene.tile.WallDecoration;
 
@@ -31,7 +34,7 @@ public class Class22
         anInt452 = j;
         anInt453 = k;
         anInt454 = i;
-        aClass50_Sub3ArrayArrayArray456 = new Class50_Sub3[j][k][i];
+        aClass50_Sub3ArrayArrayArray456 = new SceneTile[j][k][i];
         anIntArrayArrayArray460 = new int[j][k + 1][i + 1];
         anIntArrayArrayArray455 = ai;
         if(byte0 == 5)
@@ -101,7 +104,7 @@ public class Class22
         {
             for(int k = 0; k < anInt454; k++)
                 if(aClass50_Sub3ArrayArrayArray456[i][j][k] == null)
-                    aClass50_Sub3ArrayArrayArray456[i][j][k] = new Class50_Sub3(i, j, k);
+                    aClass50_Sub3ArrayArrayArray456[i][j][k] = new SceneTile(i, j, k);
 
         }
 
@@ -109,16 +112,16 @@ public class Class22
 
     public void method243(boolean flag, int i, int j)
     {
-        Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[0][i][j];
+        SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[0][i][j];
         for(int k = 0; k < 3; k++)
         {
-            Class50_Sub3 class50_sub3_1 = aClass50_Sub3ArrayArrayArray456[k][i][j] = aClass50_Sub3ArrayArrayArray456[k + 1][i][j];
+            SceneTile class50_sub3_1 = aClass50_Sub3ArrayArrayArray456[k][i][j] = aClass50_Sub3ArrayArrayArray456[k + 1][i][j];
             if(class50_sub3_1 != null)
             {
-                class50_sub3_1.anInt1397--;
-                for(int i1 = 0; i1 < class50_sub3_1.anInt1407; i1++)
+                class50_sub3_1.plane--;
+                for(int i1 = 0; i1 < class50_sub3_1.interactiveObjectCount; i1++)
                 {
-                    InteractiveObject class5 = class50_sub3_1.aClass5Array1408[i1];
+                    InteractiveObject class5 = class50_sub3_1.interactiveObjects[i1];
                     if((class5.uid >> 29 & 3) == 2 && class5.tileLeft == i && class5.tileTop == j)
                         class5.plane--;
                 }
@@ -127,8 +130,8 @@ public class Class22
         }
 
         if(aClass50_Sub3ArrayArrayArray456[0][i][j] == null)
-            aClass50_Sub3ArrayArrayArray456[0][i][j] = new Class50_Sub3(0, i, j);
-        aClass50_Sub3ArrayArrayArray456[0][i][j].aClass50_Sub3_1419 = class50_sub3;
+            aClass50_Sub3ArrayArrayArray456[0][i][j] = new SceneTile(0, i, j);
+        aClass50_Sub3ArrayArrayArray456[0][i][j].tileBelow = class50_sub3;
         if(!flag)
         {
             for(int l = 1; l > 0; l++);
@@ -139,34 +142,34 @@ public class Class22
     public static void method244(int i, int j, int k, int l, int i1, int j1, int k1, int l1, 
             int i2)
     {
-        Class39 class39 = new Class39();
+        SceneCluster class39 = new SceneCluster();
         if(i != -8967)
         {
             for(int j2 = 1; j2 > 0; j2++);
         }
-        class39.anInt675 = j / 128;
-        class39.anInt676 = l / 128;
-        class39.anInt677 = k1 / 128;
-        class39.anInt678 = i1 / 128;
-        class39.anInt679 = i2;
-        class39.anInt680 = j;
-        class39.anInt681 = l;
-        class39.anInt682 = k1;
-        class39.anInt683 = i1;
-        class39.anInt684 = l1;
-        class39.anInt685 = k;
+        class39.minTileX = j / 128;
+        class39.maxTileX = l / 128;
+        class39.minTileY = k1 / 128;
+        class39.maxTileY = i1 / 128;
+        class39.type = i2;
+        class39.minWorldX = j;
+        class39.maxWorldX = l;
+        class39.minWorldY = k1;
+        class39.maxWorldY = i1;
+        class39.minWorldZ = l1;
+        class39.maxWorldZ = k;
         aClass39ArrayArray489[j1][anIntArray488[j1]++] = class39;
     }
 
     public void method245(int i, int j, int k, int l)
     {
-        Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][j][k];
+        SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][j][k];
         if(class50_sub3 == null)
         {
             return;
         } else
         {
-            aClass50_Sub3ArrayArrayArray456[i][j][k].anInt1411 = l;
+            aClass50_Sub3ArrayArrayArray456[i][j][k].logicHeight = l;
             return;
         }
     }
@@ -180,9 +183,9 @@ public class Class22
             GenericTile class3 = new GenericTile(k2, l2, i3, j3, -1, k4, false);
             for(int i5 = i; i5 >= 0; i5--)
                 if(aClass50_Sub3ArrayArrayArray456[i5][j][k] == null)
-                    aClass50_Sub3ArrayArrayArray456[i5][j][k] = new Class50_Sub3(i5, j, k);
+                    aClass50_Sub3ArrayArrayArray456[i5][j][k] = new SceneTile(i5, j, k);
 
-            aClass50_Sub3ArrayArrayArray456[i][j][k].aClass3_1401 = class3;
+            aClass50_Sub3ArrayArrayArray456[i][j][k].plainTile = class3;
             return;
         }
         if(l == 1)
@@ -190,17 +193,17 @@ public class Class22
             GenericTile class3_1 = new GenericTile(k3, l3, i4, j4, j1, l4, k1 == l1 && k1 == i2 && k1 == j2);
             for(int j5 = i; j5 >= 0; j5--)
                 if(aClass50_Sub3ArrayArrayArray456[j5][j][k] == null)
-                    aClass50_Sub3ArrayArrayArray456[j5][j][k] = new Class50_Sub3(j5, j, k);
+                    aClass50_Sub3ArrayArrayArray456[j5][j][k] = new SceneTile(j5, j, k);
 
-            aClass50_Sub3ArrayArrayArray456[i][j][k].aClass3_1401 = class3_1;
+            aClass50_Sub3ArrayArrayArray456[i][j][k].plainTile = class3_1;
             return;
         }
         ComplexTile class20 = new ComplexTile(j, k1, l1, j2, i2, k, i1, j1, l, k2, k3, l2, l3, j3, j4, i3, i4, l4, k4);
         for(int k5 = i; k5 >= 0; k5--)
             if(aClass50_Sub3ArrayArrayArray456[k5][j][k] == null)
-                aClass50_Sub3ArrayArrayArray456[k5][j][k] = new Class50_Sub3(k5, j, k);
+                aClass50_Sub3ArrayArrayArray456[k5][j][k] = new SceneTile(k5, j, k);
 
-        aClass50_Sub3ArrayArrayArray456[i][j][k].aClass20_1402 = class20;
+        aClass50_Sub3ArrayArrayArray456[i][j][k].shapedTile = class20;
     }
 
     public void method247(int i, int j, int k, byte byte0, int l, int i1, int j1, 
@@ -218,8 +221,8 @@ public class Class22
         class28.uid = l;
         class28.config = byte0;
         if(aClass50_Sub3ArrayArrayArray456[j1][i][j] == null)
-            aClass50_Sub3ArrayArrayArray456[j1][i][j] = new Class50_Sub3(j1, i, j);
-        aClass50_Sub3ArrayArrayArray456[j1][i][j].aClass28_1405 = class28;
+            aClass50_Sub3ArrayArrayArray456[j1][i][j] = new SceneTile(j1, i, j);
+        aClass50_Sub3ArrayArrayArray456[j1][i][j].floorDecoration = class28;
     }
 
     public void method248(int i, int j, Class50_Sub1_Sub4 class50_sub1_sub4, Class50_Sub1_Sub4 class50_sub1_sub4_1, int k, Class50_Sub1_Sub4 class50_sub1_sub4_2, int l, 
@@ -236,13 +239,13 @@ public class Class22
         if(l < 2 || l > 2)
             aBoolean447 = !aBoolean447;
         int k1 = 0;
-        Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[j][j1][i1];
+        SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[j][j1][i1];
         if(class50_sub3 != null)
         {
-            for(int l1 = 0; l1 < class50_sub3.anInt1407; l1++)
-                if(class50_sub3.aClass5Array1408[l1].renderable instanceof Class50_Sub1_Sub4_Sub4)
+            for(int l1 = 0; l1 < class50_sub3.interactiveObjectCount; l1++)
+                if(class50_sub3.interactiveObjects[l1].renderable instanceof Class50_Sub1_Sub4_Sub4)
                 {
-                    int i2 = ((Class50_Sub1_Sub4_Sub4)class50_sub3.aClass5Array1408[l1].renderable).anInt1675;
+                    int i2 = ((Class50_Sub1_Sub4_Sub4)class50_sub3.interactiveObjects[l1].renderable).anInt1675;
                     if(i2 > k1)
                         k1 = i2;
                 }
@@ -250,8 +253,8 @@ public class Class22
         }
         class10.heightOffset = k1;
         if(aClass50_Sub3ArrayArrayArray456[j][j1][i1] == null)
-            aClass50_Sub3ArrayArrayArray456[j][j1][i1] = new Class50_Sub3(j, j1, i1);
-        aClass50_Sub3ArrayArrayArray456[j][j1][i1].aClass10_1406 = class10;
+            aClass50_Sub3ArrayArrayArray456[j][j1][i1] = new SceneTile(j, j1, i1);
+        aClass50_Sub3ArrayArrayArray456[j][j1][i1].groundItemTile = class10;
     }
 
     public void method249(int i, int j, int k, int l, Class50_Sub1_Sub4 class50_sub1_sub4, int i1, int j1, 
@@ -275,9 +278,9 @@ public class Class22
         class44.secondaryOrientation = k;
         for(int j2 = l1; j2 >= 0; j2--)
             if(aClass50_Sub3ArrayArrayArray456[j2][i1][k1] == null)
-                aClass50_Sub3ArrayArrayArray456[j2][i1][k1] = new Class50_Sub3(j2, i1, k1);
+                aClass50_Sub3ArrayArrayArray456[j2][i1][k1] = new SceneTile(j2, i1, k1);
 
-        aClass50_Sub3ArrayArrayArray456[l1][i1][k1].aClass44_1403 = class44;
+        aClass50_Sub3ArrayArrayArray456[l1][i1][k1].wall = class44;
     }
 
     public void method250(int i, int j, int k, int l, byte byte0, int i1, int j1, 
@@ -298,9 +301,9 @@ public class Class22
         class35.face = k;
         for(int k2 = i; k2 >= 0; k2--)
             if(aClass50_Sub3ArrayArrayArray456[k2][i1][k1] == null)
-                aClass50_Sub3ArrayArrayArray456[k2][i1][k1] = new Class50_Sub3(k2, i1, k1);
+                aClass50_Sub3ArrayArrayArray456[k2][i1][k1] = new SceneTile(k2, i1, k1);
 
-        aClass50_Sub3ArrayArrayArray456[i][i1][k1].aClass35_1404 = class35;
+        aClass50_Sub3ArrayArrayArray456[i][i1][k1].wallDecoration = class35;
     }
 
     public boolean method251(int i, int j, int k, Class50_Sub1_Sub4 class50_sub1_sub4, byte byte0, int l, int i1, 
@@ -368,8 +371,8 @@ public class Class22
             {
                 if(k2 < 0 || l2 < 0 || k2 >= anInt453 || l2 >= anInt454)
                     return false;
-                Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][k2][l2];
-                if(class50_sub3 != null && class50_sub3.anInt1407 >= 5)
+                SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][k2][l2];
+                if(class50_sub3 != null && class50_sub3.interactiveObjectCount >= 5)
                     return false;
             }
 
@@ -403,13 +406,13 @@ public class Class22
                     k3 += 2;
                 for(int l3 = i; l3 >= 0; l3--)
                     if(aClass50_Sub3ArrayArrayArray456[l3][i3][j3] == null)
-                        aClass50_Sub3ArrayArrayArray456[l3][i3][j3] = new Class50_Sub3(l3, i3, j3);
+                        aClass50_Sub3ArrayArrayArray456[l3][i3][j3] = new SceneTile(l3, i3, j3);
 
-                Class50_Sub3 class50_sub3_1 = aClass50_Sub3ArrayArrayArray456[i][i3][j3];
-                class50_sub3_1.aClass5Array1408[class50_sub3_1.anInt1407] = class5;
-                class50_sub3_1.anIntArray1409[class50_sub3_1.anInt1407] = k3;
-                class50_sub3_1.anInt1410 |= k3;
-                class50_sub3_1.anInt1407++;
+                SceneTile class50_sub3_1 = aClass50_Sub3ArrayArrayArray456[i][i3][j3];
+                class50_sub3_1.interactiveObjects[class50_sub3_1.interactiveObjectCount] = class5;
+                class50_sub3_1.interactiveObjectEdgeMasks[class50_sub3_1.interactiveObjectCount] = k3;
+                class50_sub3_1.combinedInteractiveObjectEdgeMask |= k3;
+                class50_sub3_1.interactiveObjectCount++;
             }
 
         }
@@ -438,27 +441,27 @@ public class Class22
         {
             for(int k = class5.tileTop; k <= class5.tileBottom; k++)
             {
-                Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[class5.plane][j][k];
+                SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[class5.plane][j][k];
                 if(class50_sub3 != null)
                 {
-                    for(int l = 0; l < class50_sub3.anInt1407; l++)
+                    for(int l = 0; l < class50_sub3.interactiveObjectCount; l++)
                     {
-                        if(class50_sub3.aClass5Array1408[l] != class5)
+                        if(class50_sub3.interactiveObjects[l] != class5)
                             continue;
-                        class50_sub3.anInt1407--;
-                        for(int i1 = l; i1 < class50_sub3.anInt1407; i1++)
+                        class50_sub3.interactiveObjectCount--;
+                        for(int i1 = l; i1 < class50_sub3.interactiveObjectCount; i1++)
                         {
-                            class50_sub3.aClass5Array1408[i1] = class50_sub3.aClass5Array1408[i1 + 1];
-                            class50_sub3.anIntArray1409[i1] = class50_sub3.anIntArray1409[i1 + 1];
+                            class50_sub3.interactiveObjects[i1] = class50_sub3.interactiveObjects[i1 + 1];
+                            class50_sub3.interactiveObjectEdgeMasks[i1] = class50_sub3.interactiveObjectEdgeMasks[i1 + 1];
                         }
 
-                        class50_sub3.aClass5Array1408[class50_sub3.anInt1407] = null;
+                        class50_sub3.interactiveObjects[class50_sub3.interactiveObjectCount] = null;
                         break;
                     }
 
-                    class50_sub3.anInt1410 = 0;
-                    for(int j1 = 0; j1 < class50_sub3.anInt1407; j1++)
-                        class50_sub3.anInt1410 |= class50_sub3.anIntArray1409[j1];
+                    class50_sub3.combinedInteractiveObjectEdgeMask = 0;
+                    for(int j1 = 0; j1 < class50_sub3.interactiveObjectCount; j1++)
+                        class50_sub3.combinedInteractiveObjectEdgeMask |= class50_sub3.interactiveObjectEdgeMasks[j1];
 
                 }
             }
@@ -471,10 +474,10 @@ public class Class22
 
     public void method257(int i, int j, int k, int l, int i1)
     {
-        Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[k][l][i];
+        SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[k][l][i];
         if(class50_sub3 == null)
             return;
-        WallDecoration class35 = class50_sub3.aClass35_1404;
+        WallDecoration class35 = class50_sub3.wallDecoration;
         if(class35 == null)
             return;
         int j1 = l * 128 + 64;
@@ -492,17 +495,17 @@ public class Class22
 
     public void method258(int i, int j, int k, boolean flag)
     {
-        Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[j][k][i];
+        SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[j][k][i];
         if(class50_sub3 == null)
             return;
-        class50_sub3.aClass44_1403 = null;
+        class50_sub3.wall = null;
         if(!flag)
             anInt440 = -232;
     }
 
     public void method259(boolean flag, int i, int j, int k)
     {
-        Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[k][i][j];
+        SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[k][i][j];
         if(flag)
             return;
         if(class50_sub3 == null)
@@ -510,7 +513,7 @@ public class Class22
             return;
         } else
         {
-            class50_sub3.aClass35_1404 = null;
+            class50_sub3.wallDecoration = null;
             return;
         }
     }
@@ -519,12 +522,12 @@ public class Class22
     {
         if(k >= 0)
             return;
-        Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[j][l][i];
+        SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[j][l][i];
         if(class50_sub3 == null)
             return;
-        for(int i1 = 0; i1 < class50_sub3.anInt1407; i1++)
+        for(int i1 = 0; i1 < class50_sub3.interactiveObjectCount; i1++)
         {
-            InteractiveObject class5 = class50_sub3.aClass5Array1408[i1];
+            InteractiveObject class5 = class50_sub3.interactiveObjects[i1];
             if((class5.uid >> 29 & 3) == 2 && class5.tileLeft == l && class5.tileTop == i)
             {
                 method256(class5, 0);
@@ -536,10 +539,10 @@ public class Class22
 
     public void method261(int i, int j, boolean flag, int k)
     {
-        Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[k][i][j];
+        SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[k][i][j];
         if(class50_sub3 == null)
             return;
-        class50_sub3.aClass28_1405 = null;
+        class50_sub3.floorDecoration = null;
         if(!flag)
         {
             for(int l = 1; l > 0; l++);
@@ -548,37 +551,37 @@ public class Class22
 
     public void method262(int i, int j, int k)
     {
-        Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][j][k];
+        SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][j][k];
         if(class50_sub3 == null)
         {
             return;
         } else
         {
-            class50_sub3.aClass10_1406 = null;
+            class50_sub3.groundItemTile = null;
             return;
         }
     }
 
     public Wall method263(int i, int j, int k, int l)
     {
-        Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][k][l];
+        SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][k][l];
         if(j != 17734)
             throw new NullPointerException();
         if(class50_sub3 == null)
             return null;
         else
-            return class50_sub3.aClass44_1403;
+            return class50_sub3.wall;
     }
 
     public WallDecoration method264(int i, int j, int k, boolean flag)
     {
-        Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][k][j];
+        SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][k][j];
         if(flag)
             throw new NullPointerException();
         if(class50_sub3 == null)
             return null;
         else
-            return class50_sub3.aClass35_1404;
+            return class50_sub3.wallDecoration;
     }
 
     public InteractiveObject method265(int i, byte byte0, int j, int k)
@@ -587,12 +590,12 @@ public class Class22
         {
             for(int l = 1; l > 0; l++);
         }
-        Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[k][i][j];
+        SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[k][i][j];
         if(class50_sub3 == null)
             return null;
-        for(int i1 = 0; i1 < class50_sub3.anInt1407; i1++)
+        for(int i1 = 0; i1 < class50_sub3.interactiveObjectCount; i1++)
         {
-            InteractiveObject class5 = class50_sub3.aClass5Array1408[i1];
+            InteractiveObject class5 = class50_sub3.interactiveObjects[i1];
             if((class5.uid >> 29 & 3) == 2 && class5.tileLeft == i && class5.tileTop == j)
                 return class5;
         }
@@ -604,41 +607,41 @@ public class Class22
     {
         if(k != 0)
             throw new NullPointerException();
-        Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][l][j];
-        if(class50_sub3 == null || class50_sub3.aClass28_1405 == null)
+        SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][l][j];
+        if(class50_sub3 == null || class50_sub3.floorDecoration == null)
             return null;
         else
-            return class50_sub3.aClass28_1405;
+            return class50_sub3.floorDecoration;
     }
 
     public int method267(int i, int j, int k)
     {
-        Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][j][k];
-        if(class50_sub3 == null || class50_sub3.aClass44_1403 == null)
+        SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][j][k];
+        if(class50_sub3 == null || class50_sub3.wall == null)
             return 0;
         else
-            return class50_sub3.aClass44_1403.uid;
+            return class50_sub3.wall.uid;
     }
 
     public int method268(int i, byte byte0, int j, int k)
     {
         if(byte0 != 4)
             aBoolean449 = !aBoolean449;
-        Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[j][i][k];
-        if(class50_sub3 == null || class50_sub3.aClass35_1404 == null)
+        SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[j][i][k];
+        if(class50_sub3 == null || class50_sub3.wallDecoration == null)
             return 0;
         else
-            return class50_sub3.aClass35_1404.uid;
+            return class50_sub3.wallDecoration.uid;
     }
 
     public int method269(int i, int j, int k)
     {
-        Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][j][k];
+        SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][j][k];
         if(class50_sub3 == null)
             return 0;
-        for(int l = 0; l < class50_sub3.anInt1407; l++)
+        for(int l = 0; l < class50_sub3.interactiveObjectCount; l++)
         {
-            InteractiveObject class5 = class50_sub3.aClass5Array1408[l];
+            InteractiveObject class5 = class50_sub3.interactiveObjects[l];
             if((class5.uid >> 29 & 3) == 2 && class5.tileLeft == j && class5.tileTop == k)
                 return class5.uid;
         }
@@ -648,27 +651,27 @@ public class Class22
 
     public int method270(int i, int j, int k)
     {
-        Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][j][k];
-        if(class50_sub3 == null || class50_sub3.aClass28_1405 == null)
+        SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][j][k];
+        if(class50_sub3 == null || class50_sub3.floorDecoration == null)
             return 0;
         else
-            return class50_sub3.aClass28_1405.uid;
+            return class50_sub3.floorDecoration.uid;
     }
 
     public int method271(int i, int j, int k, int l)
     {
-        Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][j][k];
+        SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[i][j][k];
         if(class50_sub3 == null)
             return -1;
-        if(class50_sub3.aClass44_1403 != null && class50_sub3.aClass44_1403.uid == l)
-            return class50_sub3.aClass44_1403.config & 0xff;
-        if(class50_sub3.aClass35_1404 != null && class50_sub3.aClass35_1404.uid == l)
-            return class50_sub3.aClass35_1404.config & 0xff;
-        if(class50_sub3.aClass28_1405 != null && class50_sub3.aClass28_1405.uid == l)
-            return class50_sub3.aClass28_1405.config & 0xff;
-        for(int i1 = 0; i1 < class50_sub3.anInt1407; i1++)
-            if(class50_sub3.aClass5Array1408[i1].uid == l)
-                return class50_sub3.aClass5Array1408[i1].config & 0xff;
+        if(class50_sub3.wall != null && class50_sub3.wall.uid == l)
+            return class50_sub3.wall.config & 0xff;
+        if(class50_sub3.wallDecoration != null && class50_sub3.wallDecoration.uid == l)
+            return class50_sub3.wallDecoration.config & 0xff;
+        if(class50_sub3.floorDecoration != null && class50_sub3.floorDecoration.uid == l)
+            return class50_sub3.floorDecoration.config & 0xff;
+        for(int i1 = 0; i1 < class50_sub3.interactiveObjectCount; i1++)
+            if(class50_sub3.interactiveObjects[i1].uid == l)
+                return class50_sub3.interactiveObjects[i1].config & 0xff;
 
         return -1;
     }
@@ -681,10 +684,10 @@ public class Class22
             {
                 for(int j1 = 0; j1 < anInt454; j1++)
                 {
-                    Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[l][i1][j1];
+                    SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[l][i1][j1];
                     if(class50_sub3 != null)
                     {
-                        Wall class44 = class50_sub3.aClass44_1403;
+                        Wall class44 = class50_sub3.wall;
                         if(class44 != null && class44.primary != null && class44.primary.aClass40Array1474 != null)
                         {
                             method274(j1, l, 0, 1, (Class50_Sub1_Sub4_Sub4)class44.primary, i1, 1);
@@ -696,9 +699,9 @@ public class Class22
                             }
                             ((Class50_Sub1_Sub4_Sub4)class44.primary).method595(i, j, 0, k);
                         }
-                        for(int k1 = 0; k1 < class50_sub3.anInt1407; k1++)
+                        for(int k1 = 0; k1 < class50_sub3.interactiveObjectCount; k1++)
                         {
-                            InteractiveObject class5 = class50_sub3.aClass5Array1408[k1];
+                            InteractiveObject class5 = class50_sub3.interactiveObjects[k1];
                             if(class5 != null && class5.renderable != null && class5.renderable.aClass40Array1474 != null)
                             {
                                 method274(j1, l, 0, (class5.tileRight - class5.tileLeft) + 1, (Class50_Sub1_Sub4_Sub4)class5.renderable, i1, (class5.tileBottom - class5.tileTop) + 1);
@@ -706,7 +709,7 @@ public class Class22
                             }
                         }
 
-                        FloorDecoration class28 = class50_sub3.aClass28_1405;
+                        FloorDecoration class28 = class50_sub3.floorDecoration;
                         if(class28 != null && class28.renderable.aClass40Array1474 != null)
                         {
                             method273(i1, (Class50_Sub1_Sub4_Sub4)class28.renderable, j1, l, 0);
@@ -729,27 +732,27 @@ public class Class22
             return;
         if(i < anInt453)
         {
-            Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[k][i + 1][j];
-            if(class50_sub3 != null && class50_sub3.aClass28_1405 != null && class50_sub3.aClass28_1405.renderable.aClass40Array1474 != null)
-                method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class50_sub3.aClass28_1405.renderable, 128, 0, 0, true);
+            SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[k][i + 1][j];
+            if(class50_sub3 != null && class50_sub3.floorDecoration != null && class50_sub3.floorDecoration.renderable.aClass40Array1474 != null)
+                method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class50_sub3.floorDecoration.renderable, 128, 0, 0, true);
         }
         if(j < anInt453)
         {
-            Class50_Sub3 class50_sub3_1 = aClass50_Sub3ArrayArrayArray456[k][i][j + 1];
-            if(class50_sub3_1 != null && class50_sub3_1.aClass28_1405 != null && class50_sub3_1.aClass28_1405.renderable.aClass40Array1474 != null)
-                method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class50_sub3_1.aClass28_1405.renderable, 0, 0, 128, true);
+            SceneTile class50_sub3_1 = aClass50_Sub3ArrayArrayArray456[k][i][j + 1];
+            if(class50_sub3_1 != null && class50_sub3_1.floorDecoration != null && class50_sub3_1.floorDecoration.renderable.aClass40Array1474 != null)
+                method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class50_sub3_1.floorDecoration.renderable, 0, 0, 128, true);
         }
         if(i < anInt453 && j < anInt454)
         {
-            Class50_Sub3 class50_sub3_2 = aClass50_Sub3ArrayArrayArray456[k][i + 1][j + 1];
-            if(class50_sub3_2 != null && class50_sub3_2.aClass28_1405 != null && class50_sub3_2.aClass28_1405.renderable.aClass40Array1474 != null)
-                method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class50_sub3_2.aClass28_1405.renderable, 128, 0, 128, true);
+            SceneTile class50_sub3_2 = aClass50_Sub3ArrayArrayArray456[k][i + 1][j + 1];
+            if(class50_sub3_2 != null && class50_sub3_2.floorDecoration != null && class50_sub3_2.floorDecoration.renderable.aClass40Array1474 != null)
+                method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class50_sub3_2.floorDecoration.renderable, 128, 0, 128, true);
         }
         if(i < anInt453 && j > 0)
         {
-            Class50_Sub3 class50_sub3_3 = aClass50_Sub3ArrayArrayArray456[k][i + 1][j - 1];
-            if(class50_sub3_3 != null && class50_sub3_3.aClass28_1405 != null && class50_sub3_3.aClass28_1405.renderable.aClass40Array1474 != null)
-                method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class50_sub3_3.aClass28_1405.renderable, 128, 0, -128, true);
+            SceneTile class50_sub3_3 = aClass50_Sub3ArrayArrayArray456[k][i + 1][j - 1];
+            if(class50_sub3_3 != null && class50_sub3_3.floorDecoration != null && class50_sub3_3.floorDecoration.renderable.aClass40Array1474 != null)
+                method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class50_sub3_3.floorDecoration.renderable, 128, 0, -128, true);
         }
     }
 
@@ -769,18 +772,18 @@ public class Class22
                         for(int i3 = i2; i3 <= j2; i3++)
                             if(i3 >= 0 && i3 < anInt454 && (!flag || l2 >= l1 || i3 >= j2 || i3 < i && l2 != i1))
                             {
-                                Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[k2][l2][i3];
+                                SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[k2][l2][i3];
                                 if(class50_sub3 != null)
                                 {
                                     int j3 = (anIntArrayArrayArray455[k2][l2][i3] + anIntArrayArrayArray455[k2][l2 + 1][i3] + anIntArrayArrayArray455[k2][l2][i3 + 1] + anIntArrayArrayArray455[k2][l2 + 1][i3 + 1]) / 4 - (anIntArrayArrayArray455[j][i1][i] + anIntArrayArrayArray455[j][i1 + 1][i] + anIntArrayArrayArray455[j][i1][i + 1] + anIntArrayArrayArray455[j][i1 + 1][i + 1]) / 4;
-                                    Wall class44 = class50_sub3.aClass44_1403;
+                                    Wall class44 = class50_sub3.wall;
                                     if(class44 != null && class44.primary != null && class44.primary.aClass40Array1474 != null)
                                         method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class44.primary, (l2 - i1) * 128 + (1 - l) * 64, j3, (i3 - i) * 128 + (1 - j1) * 64, flag);
                                     if(class44 != null && class44.secondary != null && class44.secondary.aClass40Array1474 != null)
                                         method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4)class44.secondary, (l2 - i1) * 128 + (1 - l) * 64, j3, (i3 - i) * 128 + (1 - j1) * 64, flag);
-                                    for(int k3 = 0; k3 < class50_sub3.anInt1407; k3++)
+                                    for(int k3 = 0; k3 < class50_sub3.interactiveObjectCount; k3++)
                                     {
-                                        InteractiveObject class5 = class50_sub3.aClass5Array1408[k3];
+                                        InteractiveObject class5 = class50_sub3.interactiveObjects[k3];
                                         if(class5 != null && class5.renderable != null && class5.renderable.aClass40Array1474 != null)
                                         {
                                             int l3 = (class5.tileRight - class5.tileLeft) + 1;
@@ -866,10 +869,10 @@ public class Class22
 
     public void method276(int ai[], int i, int j, int k, int l, int i1)
     {
-        Class50_Sub3 class50_sub3 = aClass50_Sub3ArrayArrayArray456[k][l][i1];
+        SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[k][l][i1];
         if(class50_sub3 == null)
             return;
-        GenericTile class3 = class50_sub3.aClass3_1401;
+        GenericTile class3 = class50_sub3.plainTile;
         if(class3 != null)
         {
             int j1 = class3.rgbColour;
@@ -886,7 +889,7 @@ public class Class22
 
             return;
         }
-        ComplexTile class20 = class50_sub3.aClass20_1402;
+        ComplexTile class20 = class50_sub3.shapedTile;
         if(class20 == null)
             return;
         int l1 = class20.shape;
@@ -1086,26 +1089,26 @@ label0:
         anInt461 = 0;
         for(int l1 = anInt457; l1 < anInt452; l1++)
         {
-            Class50_Sub3 aclass50_sub3[][] = aClass50_Sub3ArrayArrayArray456[l1];
+            SceneTile aclass50_sub3[][] = aClass50_Sub3ArrayArrayArray456[l1];
             for(int j2 = anInt464; j2 < anInt465; j2++)
             {
                 for(int l2 = anInt466; l2 < anInt467; l2++)
                 {
-                    Class50_Sub3 class50_sub3 = aclass50_sub3[j2][l2];
+                    SceneTile class50_sub3 = aclass50_sub3[j2][l2];
                     if(class50_sub3 != null)
-                        if(class50_sub3.anInt1411 > j || !aBooleanArrayArray507[(j2 - anInt468) + 25][(l2 - anInt469) + 25] && anIntArrayArrayArray455[l1][j2][l2] - l < 2000)
+                        if(class50_sub3.logicHeight > j || !aBooleanArrayArray507[(j2 - anInt468) + 25][(l2 - anInt469) + 25] && anIntArrayArrayArray455[l1][j2][l2] - l < 2000)
                         {
-                            class50_sub3.aBoolean1412 = false;
-                            class50_sub3.aBoolean1413 = false;
-                            class50_sub3.anInt1415 = 0;
+                            class50_sub3.draw = false;
+                            class50_sub3.visible = false;
+                            class50_sub3.wallCullDirection = 0;
                         } else
                         {
-                            class50_sub3.aBoolean1412 = true;
-                            class50_sub3.aBoolean1413 = true;
-                            if(class50_sub3.anInt1407 > 0)
-                                class50_sub3.aBoolean1414 = true;
+                            class50_sub3.draw = true;
+                            class50_sub3.visible = true;
+                            if(class50_sub3.interactiveObjectCount > 0)
+                                class50_sub3.drawEntities = true;
                             else
-                                class50_sub3.aBoolean1414 = false;
+                                class50_sub3.drawEntities = false;
                             anInt461++;
                         }
                 }
@@ -1116,7 +1119,7 @@ label0:
 
         for(int i2 = anInt457; i2 < anInt452; i2++)
         {
-            Class50_Sub3 aclass50_sub3_1[][] = aClass50_Sub3ArrayArrayArray456[i2];
+            SceneTile aclass50_sub3_1[][] = aClass50_Sub3ArrayArrayArray456[i2];
             for(int i3 = -25; i3 <= 0; i3++)
             {
                 int j3 = anInt468 + i3;
@@ -1131,14 +1134,14 @@ label0:
                         {
                             if(l4 >= anInt466)
                             {
-                                Class50_Sub3 class50_sub3_1 = aclass50_sub3_1[j3][l4];
-                                if(class50_sub3_1 != null && class50_sub3_1.aBoolean1412)
+                                SceneTile class50_sub3_1 = aclass50_sub3_1[j3][l4];
+                                if(class50_sub3_1 != null && class50_sub3_1.draw)
                                     method281(class50_sub3_1, true);
                             }
                             if(j5 < anInt467)
                             {
-                                Class50_Sub3 class50_sub3_2 = aclass50_sub3_1[j3][j5];
-                                if(class50_sub3_2 != null && class50_sub3_2.aBoolean1412)
+                                SceneTile class50_sub3_2 = aclass50_sub3_1[j3][j5];
+                                if(class50_sub3_2 != null && class50_sub3_2.draw)
                                     method281(class50_sub3_2, true);
                             }
                         }
@@ -1146,14 +1149,14 @@ label0:
                         {
                             if(l4 >= anInt466)
                             {
-                                Class50_Sub3 class50_sub3_3 = aclass50_sub3_1[l3][l4];
-                                if(class50_sub3_3 != null && class50_sub3_3.aBoolean1412)
+                                SceneTile class50_sub3_3 = aclass50_sub3_1[l3][l4];
+                                if(class50_sub3_3 != null && class50_sub3_3.draw)
                                     method281(class50_sub3_3, true);
                             }
                             if(j5 < anInt467)
                             {
-                                Class50_Sub3 class50_sub3_4 = aclass50_sub3_1[l3][j5];
-                                if(class50_sub3_4 != null && class50_sub3_4.aBoolean1412)
+                                SceneTile class50_sub3_4 = aclass50_sub3_1[l3][j5];
+                                if(class50_sub3_4 != null && class50_sub3_4.draw)
                                     method281(class50_sub3_4, true);
                             }
                         }
@@ -1171,7 +1174,7 @@ label0:
 
         for(int k2 = anInt457; k2 < anInt452; k2++)
         {
-            Class50_Sub3 aclass50_sub3_2[][] = aClass50_Sub3ArrayArrayArray456[k2];
+            SceneTile aclass50_sub3_2[][] = aClass50_Sub3ArrayArrayArray456[k2];
             for(int k3 = -25; k3 <= 0; k3++)
             {
                 int i4 = anInt468 + k3;
@@ -1186,14 +1189,14 @@ label0:
                         {
                             if(k5 >= anInt466)
                             {
-                                Class50_Sub3 class50_sub3_5 = aclass50_sub3_2[i4][k5];
-                                if(class50_sub3_5 != null && class50_sub3_5.aBoolean1412)
+                                SceneTile class50_sub3_5 = aclass50_sub3_2[i4][k5];
+                                if(class50_sub3_5 != null && class50_sub3_5.draw)
                                     method281(class50_sub3_5, false);
                             }
                             if(l5 < anInt467)
                             {
-                                Class50_Sub3 class50_sub3_6 = aclass50_sub3_2[i4][l5];
-                                if(class50_sub3_6 != null && class50_sub3_6.aBoolean1412)
+                                SceneTile class50_sub3_6 = aclass50_sub3_2[i4][l5];
+                                if(class50_sub3_6 != null && class50_sub3_6.draw)
                                     method281(class50_sub3_6, false);
                             }
                         }
@@ -1201,14 +1204,14 @@ label0:
                         {
                             if(k5 >= anInt466)
                             {
-                                Class50_Sub3 class50_sub3_7 = aclass50_sub3_2[k4][k5];
-                                if(class50_sub3_7 != null && class50_sub3_7.aBoolean1412)
+                                SceneTile class50_sub3_7 = aclass50_sub3_2[k4][k5];
+                                if(class50_sub3_7 != null && class50_sub3_7.draw)
                                     method281(class50_sub3_7, false);
                             }
                             if(l5 < anInt467)
                             {
-                                Class50_Sub3 class50_sub3_8 = aclass50_sub3_2[k4][l5];
-                                if(class50_sub3_8 != null && class50_sub3_8.aBoolean1412)
+                                SceneTile class50_sub3_8 = aclass50_sub3_2[k4][l5];
+                                if(class50_sub3_8 != null && class50_sub3_8.draw)
                                     method281(class50_sub3_8, false);
                             }
                         }
@@ -1227,101 +1230,101 @@ label0:
         aBoolean482 = false;
     }
 
-    public void method281(Class50_Sub3 class50_sub3, boolean flag)
+    public void method281(SceneTile class50_sub3, boolean flag)
     {
         aClass6_492.addLast(class50_sub3);
         do
         {
-            Class50_Sub3 class50_sub3_1;
+            SceneTile class50_sub3_1;
             do
             {
-                class50_sub3_1 = (Class50_Sub3)aClass6_492.removeFirst();
+                class50_sub3_1 = (SceneTile)aClass6_492.removeFirst();
                 if(class50_sub3_1 == null)
                     return;
-            } while(!class50_sub3_1.aBoolean1413);
-            int i = class50_sub3_1.anInt1398;
-            int j = class50_sub3_1.anInt1399;
-            int k = class50_sub3_1.anInt1397;
-            int l = class50_sub3_1.anInt1400;
-            Class50_Sub3 aclass50_sub3[][] = aClass50_Sub3ArrayArrayArray456[k];
-            if(class50_sub3_1.aBoolean1412)
+            } while(!class50_sub3_1.visible);
+            int i = class50_sub3_1.x;
+            int j = class50_sub3_1.y;
+            int k = class50_sub3_1.plane;
+            int l = class50_sub3_1.renderLevel;
+            SceneTile aclass50_sub3[][] = aClass50_Sub3ArrayArrayArray456[k];
+            if(class50_sub3_1.draw)
             {
                 if(flag)
                 {
                     if(k > 0)
                     {
-                        Class50_Sub3 class50_sub3_2 = aClass50_Sub3ArrayArrayArray456[k - 1][i][j];
-                        if(class50_sub3_2 != null && class50_sub3_2.aBoolean1413)
+                        SceneTile class50_sub3_2 = aClass50_Sub3ArrayArrayArray456[k - 1][i][j];
+                        if(class50_sub3_2 != null && class50_sub3_2.visible)
                             continue;
                     }
                     if(i <= anInt468 && i > anInt464)
                     {
-                        Class50_Sub3 class50_sub3_3 = aclass50_sub3[i - 1][j];
-                        if(class50_sub3_3 != null && class50_sub3_3.aBoolean1413 && (class50_sub3_3.aBoolean1412 || (class50_sub3_1.anInt1410 & 1) == 0))
+                        SceneTile class50_sub3_3 = aclass50_sub3[i - 1][j];
+                        if(class50_sub3_3 != null && class50_sub3_3.visible && (class50_sub3_3.draw || (class50_sub3_1.combinedInteractiveObjectEdgeMask & 1) == 0))
                             continue;
                     }
                     if(i >= anInt468 && i < anInt465 - 1)
                     {
-                        Class50_Sub3 class50_sub3_4 = aclass50_sub3[i + 1][j];
-                        if(class50_sub3_4 != null && class50_sub3_4.aBoolean1413 && (class50_sub3_4.aBoolean1412 || (class50_sub3_1.anInt1410 & 4) == 0))
+                        SceneTile class50_sub3_4 = aclass50_sub3[i + 1][j];
+                        if(class50_sub3_4 != null && class50_sub3_4.visible && (class50_sub3_4.draw || (class50_sub3_1.combinedInteractiveObjectEdgeMask & 4) == 0))
                             continue;
                     }
                     if(j <= anInt469 && j > anInt466)
                     {
-                        Class50_Sub3 class50_sub3_5 = aclass50_sub3[i][j - 1];
-                        if(class50_sub3_5 != null && class50_sub3_5.aBoolean1413 && (class50_sub3_5.aBoolean1412 || (class50_sub3_1.anInt1410 & 8) == 0))
+                        SceneTile class50_sub3_5 = aclass50_sub3[i][j - 1];
+                        if(class50_sub3_5 != null && class50_sub3_5.visible && (class50_sub3_5.draw || (class50_sub3_1.combinedInteractiveObjectEdgeMask & 8) == 0))
                             continue;
                     }
                     if(j >= anInt469 && j < anInt467 - 1)
                     {
-                        Class50_Sub3 class50_sub3_6 = aclass50_sub3[i][j + 1];
-                        if(class50_sub3_6 != null && class50_sub3_6.aBoolean1413 && (class50_sub3_6.aBoolean1412 || (class50_sub3_1.anInt1410 & 2) == 0))
+                        SceneTile class50_sub3_6 = aclass50_sub3[i][j + 1];
+                        if(class50_sub3_6 != null && class50_sub3_6.visible && (class50_sub3_6.draw || (class50_sub3_1.combinedInteractiveObjectEdgeMask & 2) == 0))
                             continue;
                     }
                 } else
                 {
                     flag = true;
                 }
-                class50_sub3_1.aBoolean1412 = false;
-                if(class50_sub3_1.aClass50_Sub3_1419 != null)
+                class50_sub3_1.draw = false;
+                if(class50_sub3_1.tileBelow != null)
                 {
-                    Class50_Sub3 class50_sub3_7 = class50_sub3_1.aClass50_Sub3_1419;
-                    if(class50_sub3_7.aClass3_1401 != null)
+                    SceneTile class50_sub3_7 = class50_sub3_1.tileBelow;
+                    if(class50_sub3_7.plainTile != null)
                     {
                         if(!method287(0, i, j))
-                            method282(class50_sub3_7.aClass3_1401, 0, anInt473, anInt474, anInt475, anInt476, i, j);
+                            method282(class50_sub3_7.plainTile, 0, anInt473, anInt474, anInt475, anInt476, i, j);
                     } else
-                    if(class50_sub3_7.aClass20_1402 != null && !method287(0, i, j))
-                        method283(anInt474, anInt476, class50_sub3_7.aClass20_1402, anInt473, j, i, anInt475, (byte)3);
-                    Wall class44 = class50_sub3_7.aClass44_1403;
+                    if(class50_sub3_7.shapedTile != null && !method287(0, i, j))
+                        method283(anInt474, anInt476, class50_sub3_7.shapedTile, anInt473, j, i, anInt475, (byte)3);
+                    Wall class44 = class50_sub3_7.wall;
                     if(class44 != null)
                         class44.primary.method560(0, anInt473, anInt474, anInt475, anInt476, class44.x - anInt470, class44.z - anInt471, class44.y - anInt472, class44.uid);
-                    for(int i2 = 0; i2 < class50_sub3_7.anInt1407; i2++)
+                    for(int i2 = 0; i2 < class50_sub3_7.interactiveObjectCount; i2++)
                     {
-                        InteractiveObject class5 = class50_sub3_7.aClass5Array1408[i2];
+                        InteractiveObject class5 = class50_sub3_7.interactiveObjects[i2];
                         if(class5 != null)
                             class5.renderable.method560(class5.rotation, anInt473, anInt474, anInt475, anInt476, class5.worldX - anInt470, class5.worldZ - anInt471, class5.worldY - anInt472, class5.uid);
                     }
 
                 }
                 boolean flag1 = false;
-                if(class50_sub3_1.aClass3_1401 != null)
+                if(class50_sub3_1.plainTile != null)
                 {
                     if(!method287(l, i, j))
                     {
                         flag1 = true;
-                        method282(class50_sub3_1.aClass3_1401, l, anInt473, anInt474, anInt475, anInt476, i, j);
+                        method282(class50_sub3_1.plainTile, l, anInt473, anInt474, anInt475, anInt476, i, j);
                     }
                 } else
-                if(class50_sub3_1.aClass20_1402 != null && !method287(l, i, j))
+                if(class50_sub3_1.shapedTile != null && !method287(l, i, j))
                 {
                     flag1 = true;
-                    method283(anInt474, anInt476, class50_sub3_1.aClass20_1402, anInt473, j, i, anInt475, (byte)3);
+                    method283(anInt474, anInt476, class50_sub3_1.shapedTile, anInt473, j, i, anInt475, (byte)3);
                 }
                 int j1 = 0;
                 int j2 = 0;
-                Wall class44_3 = class50_sub3_1.aClass44_1403;
-                WallDecoration class35_1 = class50_sub3_1.aClass35_1404;
+                Wall class44_3 = class50_sub3_1.wall;
+                WallDecoration class35_1 = class50_sub3_1.wallDecoration;
                 if(class44_3 != null || class35_1 != null)
                 {
                     if(anInt468 == i)
@@ -1335,7 +1338,7 @@ label0:
                     if(anInt469 > j)
                         j1 += 6;
                     j2 = anIntArray493[j1];
-                    class50_sub3_1.anInt1418 = anIntArray495[j1];
+                    class50_sub3_1.wallDrawFlags = anIntArray495[j1];
                 }
                 if(class44_3 != null)
                 {
@@ -1343,30 +1346,30 @@ label0:
                     {
                         if(class44_3.orientation == 16)
                         {
-                            class50_sub3_1.anInt1415 = 3;
-                            class50_sub3_1.anInt1416 = anIntArray496[j1];
-                            class50_sub3_1.anInt1417 = 3 - class50_sub3_1.anInt1416;
+                            class50_sub3_1.wallCullDirection = 3;
+                            class50_sub3_1.wallUncullDirection = anIntArray496[j1];
+                            class50_sub3_1.wallCullOppositeDirection = 3 - class50_sub3_1.wallUncullDirection;
                         } else
                         if(class44_3.orientation == 32)
                         {
-                            class50_sub3_1.anInt1415 = 6;
-                            class50_sub3_1.anInt1416 = anIntArray497[j1];
-                            class50_sub3_1.anInt1417 = 6 - class50_sub3_1.anInt1416;
+                            class50_sub3_1.wallCullDirection = 6;
+                            class50_sub3_1.wallUncullDirection = anIntArray497[j1];
+                            class50_sub3_1.wallCullOppositeDirection = 6 - class50_sub3_1.wallUncullDirection;
                         } else
                         if(class44_3.orientation == 64)
                         {
-                            class50_sub3_1.anInt1415 = 12;
-                            class50_sub3_1.anInt1416 = anIntArray498[j1];
-                            class50_sub3_1.anInt1417 = 12 - class50_sub3_1.anInt1416;
+                            class50_sub3_1.wallCullDirection = 12;
+                            class50_sub3_1.wallUncullDirection = anIntArray498[j1];
+                            class50_sub3_1.wallCullOppositeDirection = 12 - class50_sub3_1.wallUncullDirection;
                         } else
                         {
-                            class50_sub3_1.anInt1415 = 9;
-                            class50_sub3_1.anInt1416 = anIntArray499[j1];
-                            class50_sub3_1.anInt1417 = 9 - class50_sub3_1.anInt1416;
+                            class50_sub3_1.wallCullDirection = 9;
+                            class50_sub3_1.wallUncullDirection = anIntArray499[j1];
+                            class50_sub3_1.wallCullOppositeDirection = 9 - class50_sub3_1.wallUncullDirection;
                         }
                     } else
                     {
-                        class50_sub3_1.anInt1415 = 0;
+                        class50_sub3_1.wallCullDirection = 0;
                     }
                     if((class44_3.orientation & j2) != 0 && !method288(l, i, j, class44_3.orientation))
                         class44_3.primary.method560(0, anInt473, anInt474, anInt475, anInt476, class44_3.x - anInt470, class44_3.z - anInt471, class44_3.y - anInt472, class44_3.uid);
@@ -1408,10 +1411,10 @@ label0:
                     }
                 if(flag1)
                 {
-                    FloorDecoration class28 = class50_sub3_1.aClass28_1405;
+                    FloorDecoration class28 = class50_sub3_1.floorDecoration;
                     if(class28 != null)
                         class28.renderable.method560(0, anInt473, anInt474, anInt475, anInt476, class28.x - anInt470, class28.z - anInt471, class28.y - anInt472, class28.uid);
-                    GroundItemTile class10_1 = class50_sub3_1.aClass10_1406;
+                    GroundItemTile class10_1 = class50_sub3_1.groundItemTile;
                     if(class10_1 != null && class10_1.heightOffset == 0)
                     {
                         if(class10_1.secondGroundItem != null)
@@ -1422,41 +1425,41 @@ label0:
                             class10_1.firstGroundItem.method560(0, anInt473, anInt474, anInt475, anInt476, class10_1.x - anInt470, class10_1.z - anInt471, class10_1.y - anInt472, class10_1.uid);
                     }
                 }
-                int k4 = class50_sub3_1.anInt1410;
+                int k4 = class50_sub3_1.combinedInteractiveObjectEdgeMask;
                 if(k4 != 0)
                 {
                     if(i < anInt468 && (k4 & 4) != 0)
                     {
-                        Class50_Sub3 class50_sub3_17 = aclass50_sub3[i + 1][j];
-                        if(class50_sub3_17 != null && class50_sub3_17.aBoolean1413)
+                        SceneTile class50_sub3_17 = aclass50_sub3[i + 1][j];
+                        if(class50_sub3_17 != null && class50_sub3_17.visible)
                             aClass6_492.addLast(class50_sub3_17);
                     }
                     if(j < anInt469 && (k4 & 2) != 0)
                     {
-                        Class50_Sub3 class50_sub3_18 = aclass50_sub3[i][j + 1];
-                        if(class50_sub3_18 != null && class50_sub3_18.aBoolean1413)
+                        SceneTile class50_sub3_18 = aclass50_sub3[i][j + 1];
+                        if(class50_sub3_18 != null && class50_sub3_18.visible)
                             aClass6_492.addLast(class50_sub3_18);
                     }
                     if(i > anInt468 && (k4 & 1) != 0)
                     {
-                        Class50_Sub3 class50_sub3_19 = aclass50_sub3[i - 1][j];
-                        if(class50_sub3_19 != null && class50_sub3_19.aBoolean1413)
+                        SceneTile class50_sub3_19 = aclass50_sub3[i - 1][j];
+                        if(class50_sub3_19 != null && class50_sub3_19.visible)
                             aClass6_492.addLast(class50_sub3_19);
                     }
                     if(j > anInt469 && (k4 & 8) != 0)
                     {
-                        Class50_Sub3 class50_sub3_20 = aclass50_sub3[i][j - 1];
-                        if(class50_sub3_20 != null && class50_sub3_20.aBoolean1413)
+                        SceneTile class50_sub3_20 = aclass50_sub3[i][j - 1];
+                        if(class50_sub3_20 != null && class50_sub3_20.visible)
                             aClass6_492.addLast(class50_sub3_20);
                     }
                 }
             }
-            if(class50_sub3_1.anInt1415 != 0)
+            if(class50_sub3_1.wallCullDirection != 0)
             {
                 boolean flag2 = true;
-                for(int k1 = 0; k1 < class50_sub3_1.anInt1407; k1++)
+                for(int k1 = 0; k1 < class50_sub3_1.interactiveObjectCount; k1++)
                 {
-                    if(class50_sub3_1.aClass5Array1408[k1].lastDrawnCycle == anInt463 || (class50_sub3_1.anIntArray1409[k1] & class50_sub3_1.anInt1415) != class50_sub3_1.anInt1416)
+                    if(class50_sub3_1.interactiveObjects[k1].lastDrawnCycle == anInt463 || (class50_sub3_1.interactiveObjectEdgeMasks[k1] & class50_sub3_1.wallCullDirection) != class50_sub3_1.wallUncullDirection)
                         continue;
                     flag2 = false;
                     break;
@@ -1464,35 +1467,35 @@ label0:
 
                 if(flag2)
                 {
-                    Wall class44_1 = class50_sub3_1.aClass44_1403;
+                    Wall class44_1 = class50_sub3_1.wall;
                     if(!method288(l, i, j, class44_1.orientation))
                         class44_1.primary.method560(0, anInt473, anInt474, anInt475, anInt476, class44_1.x - anInt470, class44_1.z - anInt471, class44_1.y - anInt472, class44_1.uid);
-                    class50_sub3_1.anInt1415 = 0;
+                    class50_sub3_1.wallCullDirection = 0;
                 }
             }
-            if(class50_sub3_1.aBoolean1414)
+            if(class50_sub3_1.drawEntities)
                 try
                 {
-                    int i1 = class50_sub3_1.anInt1407;
-                    class50_sub3_1.aBoolean1414 = false;
+                    int i1 = class50_sub3_1.interactiveObjectCount;
+                    class50_sub3_1.drawEntities = false;
                     int l1 = 0;
 label0:
                     for(int k2 = 0; k2 < i1; k2++)
                     {
-                        InteractiveObject class5_1 = class50_sub3_1.aClass5Array1408[k2];
+                        InteractiveObject class5_1 = class50_sub3_1.interactiveObjects[k2];
                         if(class5_1.lastDrawnCycle == anInt463)
                             continue;
                         for(int k3 = class5_1.tileLeft; k3 <= class5_1.tileRight; k3++)
                         {
                             for(int l4 = class5_1.tileTop; l4 <= class5_1.tileBottom; l4++)
                             {
-                                Class50_Sub3 class50_sub3_21 = aclass50_sub3[k3][l4];
-                                if(class50_sub3_21.aBoolean1412)
+                                SceneTile class50_sub3_21 = aclass50_sub3[k3][l4];
+                                if(class50_sub3_21.draw)
                                 {
-                                    class50_sub3_1.aBoolean1414 = true;
+                                    class50_sub3_1.drawEntities = true;
                                 } else
                                 {
-                                    if(class50_sub3_21.anInt1415 == 0)
+                                    if(class50_sub3_21.wallCullDirection == 0)
                                         continue;
                                     int l6 = 0;
                                     if(k3 > class5_1.tileLeft)
@@ -1503,9 +1506,9 @@ label0:
                                         l6 += 8;
                                     if(l4 < class5_1.tileBottom)
                                         l6 += 2;
-                                    if((l6 & class50_sub3_21.anInt1415) != class50_sub3_1.anInt1417)
+                                    if((l6 & class50_sub3_21.wallCullDirection) != class50_sub3_1.wallCullOppositeDirection)
                                         continue;
-                                    class50_sub3_1.aBoolean1414 = true;
+                                    class50_sub3_1.drawEntities = true;
                                 }
                                 continue label0;
                             }
@@ -1559,53 +1562,53 @@ label0:
                         {
                             for(int l8 = class5_3.tileTop; l8 <= class5_3.tileBottom; l8++)
                             {
-                                Class50_Sub3 class50_sub3_22 = aclass50_sub3[k7][l8];
-                                if(class50_sub3_22.anInt1415 != 0)
+                                SceneTile class50_sub3_22 = aclass50_sub3[k7][l8];
+                                if(class50_sub3_22.wallCullDirection != 0)
                                     aClass6_492.addLast(class50_sub3_22);
                                 else
-                                if((k7 != i || l8 != j) && class50_sub3_22.aBoolean1413)
+                                if((k7 != i || l8 != j) && class50_sub3_22.visible)
                                     aClass6_492.addLast(class50_sub3_22);
                             }
 
                         }
 
                     }
-                    if(class50_sub3_1.aBoolean1414)
+                    if(class50_sub3_1.drawEntities)
                         continue;
                 }
                 catch(Exception _ex)
                 {
-                    class50_sub3_1.aBoolean1414 = false;
+                    class50_sub3_1.drawEntities = false;
                 }
-            if(!class50_sub3_1.aBoolean1413 || class50_sub3_1.anInt1415 != 0)
+            if(!class50_sub3_1.visible || class50_sub3_1.wallCullDirection != 0)
                 continue;
             if(i <= anInt468 && i > anInt464)
             {
-                Class50_Sub3 class50_sub3_8 = aclass50_sub3[i - 1][j];
-                if(class50_sub3_8 != null && class50_sub3_8.aBoolean1413)
+                SceneTile class50_sub3_8 = aclass50_sub3[i - 1][j];
+                if(class50_sub3_8 != null && class50_sub3_8.visible)
                     continue;
             }
             if(i >= anInt468 && i < anInt465 - 1)
             {
-                Class50_Sub3 class50_sub3_9 = aclass50_sub3[i + 1][j];
-                if(class50_sub3_9 != null && class50_sub3_9.aBoolean1413)
+                SceneTile class50_sub3_9 = aclass50_sub3[i + 1][j];
+                if(class50_sub3_9 != null && class50_sub3_9.visible)
                     continue;
             }
             if(j <= anInt469 && j > anInt466)
             {
-                Class50_Sub3 class50_sub3_10 = aclass50_sub3[i][j - 1];
-                if(class50_sub3_10 != null && class50_sub3_10.aBoolean1413)
+                SceneTile class50_sub3_10 = aclass50_sub3[i][j - 1];
+                if(class50_sub3_10 != null && class50_sub3_10.visible)
                     continue;
             }
             if(j >= anInt469 && j < anInt467 - 1)
             {
-                Class50_Sub3 class50_sub3_11 = aclass50_sub3[i][j + 1];
-                if(class50_sub3_11 != null && class50_sub3_11.aBoolean1413)
+                SceneTile class50_sub3_11 = aclass50_sub3[i][j + 1];
+                if(class50_sub3_11 != null && class50_sub3_11.visible)
                     continue;
             }
-            class50_sub3_1.aBoolean1413 = false;
+            class50_sub3_1.visible = false;
             anInt461--;
-            GroundItemTile class10 = class50_sub3_1.aClass10_1406;
+            GroundItemTile class10 = class50_sub3_1.groundItemTile;
             if(class10 != null && class10.heightOffset != 0)
             {
                 if(class10.secondGroundItem != null)
@@ -1615,11 +1618,11 @@ label0:
                 if(class10.firstGroundItem != null)
                     class10.firstGroundItem.method560(0, anInt473, anInt474, anInt475, anInt476, class10.x - anInt470, class10.z - anInt471 - class10.heightOffset, class10.y - anInt472, class10.uid);
             }
-            if(class50_sub3_1.anInt1418 != 0)
+            if(class50_sub3_1.wallDrawFlags != 0)
             {
-                WallDecoration class35 = class50_sub3_1.aClass35_1404;
+                WallDecoration class35 = class50_sub3_1.wallDecoration;
                 if(class35 != null && !method289(l, i, j, class35.renderable.anInt1475))
-                    if((class35.configBits & class50_sub3_1.anInt1418) != 0)
+                    if((class35.configBits & class50_sub3_1.wallDrawFlags) != 0)
                         class35.renderable.method560(class35.face, anInt473, anInt474, anInt475, anInt476, class35.x - anInt470, class35.z - anInt471, class35.y - anInt472, class35.uid);
                     else
                     if((class35.configBits & 0x300) != 0)
@@ -1651,43 +1654,43 @@ label0:
                             class35.renderable.method560(k5 * 512 + 1280 & 0x7ff, anInt473, anInt474, anInt475, anInt476, j9, j3, j10, class35.uid);
                         }
                     }
-                Wall class44_2 = class50_sub3_1.aClass44_1403;
+                Wall class44_2 = class50_sub3_1.wall;
                 if(class44_2 != null)
                 {
-                    if((class44_2.secondaryOrientation & class50_sub3_1.anInt1418) != 0 && !method288(l, i, j, class44_2.secondaryOrientation))
+                    if((class44_2.secondaryOrientation & class50_sub3_1.wallDrawFlags) != 0 && !method288(l, i, j, class44_2.secondaryOrientation))
                         class44_2.secondary.method560(0, anInt473, anInt474, anInt475, anInt476, class44_2.x - anInt470, class44_2.z - anInt471, class44_2.y - anInt472, class44_2.uid);
-                    if((class44_2.orientation & class50_sub3_1.anInt1418) != 0 && !method288(l, i, j, class44_2.orientation))
+                    if((class44_2.orientation & class50_sub3_1.wallDrawFlags) != 0 && !method288(l, i, j, class44_2.orientation))
                         class44_2.primary.method560(0, anInt473, anInt474, anInt475, anInt476, class44_2.x - anInt470, class44_2.z - anInt471, class44_2.y - anInt472, class44_2.uid);
                 }
             }
             if(k < anInt452 - 1)
             {
-                Class50_Sub3 class50_sub3_12 = aClass50_Sub3ArrayArrayArray456[k + 1][i][j];
-                if(class50_sub3_12 != null && class50_sub3_12.aBoolean1413)
+                SceneTile class50_sub3_12 = aClass50_Sub3ArrayArrayArray456[k + 1][i][j];
+                if(class50_sub3_12 != null && class50_sub3_12.visible)
                     aClass6_492.addLast(class50_sub3_12);
             }
             if(i < anInt468)
             {
-                Class50_Sub3 class50_sub3_13 = aclass50_sub3[i + 1][j];
-                if(class50_sub3_13 != null && class50_sub3_13.aBoolean1413)
+                SceneTile class50_sub3_13 = aclass50_sub3[i + 1][j];
+                if(class50_sub3_13 != null && class50_sub3_13.visible)
                     aClass6_492.addLast(class50_sub3_13);
             }
             if(j < anInt469)
             {
-                Class50_Sub3 class50_sub3_14 = aclass50_sub3[i][j + 1];
-                if(class50_sub3_14 != null && class50_sub3_14.aBoolean1413)
+                SceneTile class50_sub3_14 = aclass50_sub3[i][j + 1];
+                if(class50_sub3_14 != null && class50_sub3_14.visible)
                     aClass6_492.addLast(class50_sub3_14);
             }
             if(i > anInt468)
             {
-                Class50_Sub3 class50_sub3_15 = aclass50_sub3[i - 1][j];
-                if(class50_sub3_15 != null && class50_sub3_15.aBoolean1413)
+                SceneTile class50_sub3_15 = aclass50_sub3[i - 1][j];
+                if(class50_sub3_15 != null && class50_sub3_15.visible)
                     aClass6_492.addLast(class50_sub3_15);
             }
             if(j > anInt469)
             {
-                Class50_Sub3 class50_sub3_16 = aclass50_sub3[i][j - 1];
-                if(class50_sub3_16 != null && class50_sub3_16.aBoolean1413)
+                SceneTile class50_sub3_16 = aclass50_sub3[i][j - 1];
+                if(class50_sub3_16 != null && class50_sub3_16.visible)
                     aClass6_492.addLast(class50_sub3_16);
             }
         } while(true);
@@ -1913,22 +1916,22 @@ label0:
     public void method286(int i)
     {
         int j = anIntArray488[anInt462];
-        Class39 aclass39[] = aClass39ArrayArray489[anInt462];
+        SceneCluster aclass39[] = aClass39ArrayArray489[anInt462];
         if(i < 2 || i > 2)
             aBoolean441 = !aBoolean441;
         anInt490 = 0;
         for(int k = 0; k < j; k++)
         {
-            Class39 class39 = aclass39[k];
-            if(class39.anInt679 == 1)
+            SceneCluster class39 = aclass39[k];
+            if(class39.type == 1)
             {
-                int l = (class39.anInt675 - anInt468) + 25;
+                int l = (class39.minTileX - anInt468) + 25;
                 if(l < 0 || l > 50)
                     continue;
-                int k1 = (class39.anInt677 - anInt469) + 25;
+                int k1 = (class39.minTileY - anInt469) + 25;
                 if(k1 < 0)
                     k1 = 0;
-                int j2 = (class39.anInt678 - anInt469) + 25;
+                int j2 = (class39.maxTileY - anInt469) + 25;
                 if(j2 > 50)
                     j2 = 50;
                 boolean flag = false;
@@ -1940,33 +1943,33 @@ label0:
                     }
                 if(!flag)
                     continue;
-                int j3 = anInt470 - class39.anInt680;
+                int j3 = anInt470 - class39.minWorldX;
                 if(j3 > 32)
                 {
-                    class39.anInt686 = 1;
+                    class39.projectionDirection = 1;
                 } else
                 {
                     if(j3 >= -32)
                         continue;
-                    class39.anInt686 = 2;
+                    class39.projectionDirection = 2;
                     j3 = -j3;
                 }
-                class39.anInt689 = (class39.anInt682 - anInt472 << 8) / j3;
-                class39.anInt690 = (class39.anInt683 - anInt472 << 8) / j3;
-                class39.anInt691 = (class39.anInt684 - anInt471 << 8) / j3;
-                class39.anInt692 = (class39.anInt685 - anInt471 << 8) / j3;
+                class39.minYGradient = (class39.minWorldY - anInt472 << 8) / j3;
+                class39.maxYGradient = (class39.maxWorldY - anInt472 << 8) / j3;
+                class39.minZGradient = (class39.minWorldZ - anInt471 << 8) / j3;
+                class39.maxZGradient = (class39.maxWorldZ - anInt471 << 8) / j3;
                 aClass39Array491[anInt490++] = class39;
                 continue;
             }
-            if(class39.anInt679 == 2)
+            if(class39.type == 2)
             {
-                int i1 = (class39.anInt677 - anInt469) + 25;
+                int i1 = (class39.minTileY - anInt469) + 25;
                 if(i1 < 0 || i1 > 50)
                     continue;
-                int l1 = (class39.anInt675 - anInt468) + 25;
+                int l1 = (class39.minTileX - anInt468) + 25;
                 if(l1 < 0)
                     l1 = 0;
-                int k2 = (class39.anInt676 - anInt468) + 25;
+                int k2 = (class39.maxTileX - anInt468) + 25;
                 if(k2 > 50)
                     k2 = 50;
                 boolean flag1 = false;
@@ -1978,40 +1981,40 @@ label0:
                     }
                 if(!flag1)
                     continue;
-                int k3 = anInt472 - class39.anInt682;
+                int k3 = anInt472 - class39.minWorldY;
                 if(k3 > 32)
                 {
-                    class39.anInt686 = 3;
+                    class39.projectionDirection = 3;
                 } else
                 {
                     if(k3 >= -32)
                         continue;
-                    class39.anInt686 = 4;
+                    class39.projectionDirection = 4;
                     k3 = -k3;
                 }
-                class39.anInt687 = (class39.anInt680 - anInt470 << 8) / k3;
-                class39.anInt688 = (class39.anInt681 - anInt470 << 8) / k3;
-                class39.anInt691 = (class39.anInt684 - anInt471 << 8) / k3;
-                class39.anInt692 = (class39.anInt685 - anInt471 << 8) / k3;
+                class39.minXGradient = (class39.minWorldX - anInt470 << 8) / k3;
+                class39.maxXGradient = (class39.maxWorldX - anInt470 << 8) / k3;
+                class39.minZGradient = (class39.minWorldZ - anInt471 << 8) / k3;
+                class39.maxZGradient = (class39.maxWorldZ - anInt471 << 8) / k3;
                 aClass39Array491[anInt490++] = class39;
             } else
-            if(class39.anInt679 == 4)
+            if(class39.type == 4)
             {
-                int j1 = class39.anInt684 - anInt471;
+                int j1 = class39.minWorldZ - anInt471;
                 if(j1 > 128)
                 {
-                    int i2 = (class39.anInt677 - anInt469) + 25;
+                    int i2 = (class39.minTileY - anInt469) + 25;
                     if(i2 < 0)
                         i2 = 0;
-                    int l2 = (class39.anInt678 - anInt469) + 25;
+                    int l2 = (class39.maxTileY - anInt469) + 25;
                     if(l2 > 50)
                         l2 = 50;
                     if(i2 <= l2)
                     {
-                        int i3 = (class39.anInt675 - anInt468) + 25;
+                        int i3 = (class39.minTileX - anInt468) + 25;
                         if(i3 < 0)
                             i3 = 0;
-                        int l3 = (class39.anInt676 - anInt468) + 25;
+                        int l3 = (class39.maxTileX - anInt468) + 25;
                         if(l3 > 50)
                             l3 = 50;
                         boolean flag2 = false;
@@ -2030,11 +2033,11 @@ label0:
 
                         if(flag2)
                         {
-                            class39.anInt686 = 5;
-                            class39.anInt687 = (class39.anInt680 - anInt470 << 8) / j1;
-                            class39.anInt688 = (class39.anInt681 - anInt470 << 8) / j1;
-                            class39.anInt689 = (class39.anInt682 - anInt472 << 8) / j1;
-                            class39.anInt690 = (class39.anInt683 - anInt472 << 8) / j1;
+                            class39.projectionDirection = 5;
+                            class39.minXGradient = (class39.minWorldX - anInt470 << 8) / j1;
+                            class39.maxXGradient = (class39.maxWorldX - anInt470 << 8) / j1;
+                            class39.minYGradient = (class39.minWorldY - anInt472 << 8) / j1;
+                            class39.maxYGradient = (class39.maxWorldY - anInt472 << 8) / j1;
                             aClass39Array491[anInt490++] = class39;
                         }
                     }
@@ -2220,68 +2223,68 @@ label0:
     {
         for(int l = 0; l < anInt490; l++)
         {
-            Class39 class39 = aClass39Array491[l];
-            if(class39.anInt686 == 1)
+            SceneCluster class39 = aClass39Array491[l];
+            if(class39.projectionDirection == 1)
             {
-                int i1 = class39.anInt680 - i;
+                int i1 = class39.minWorldX - i;
                 if(i1 > 0)
                 {
-                    int j2 = class39.anInt682 + (class39.anInt689 * i1 >> 8);
-                    int k3 = class39.anInt683 + (class39.anInt690 * i1 >> 8);
-                    int l4 = class39.anInt684 + (class39.anInt691 * i1 >> 8);
-                    int i6 = class39.anInt685 + (class39.anInt692 * i1 >> 8);
+                    int j2 = class39.minWorldY + (class39.minYGradient * i1 >> 8);
+                    int k3 = class39.maxWorldY + (class39.maxYGradient * i1 >> 8);
+                    int l4 = class39.minWorldZ + (class39.minZGradient * i1 >> 8);
+                    int i6 = class39.maxWorldZ + (class39.maxZGradient * i1 >> 8);
                     if(k >= j2 && k <= k3 && j >= l4 && j <= i6)
                         return true;
                 }
             } else
-            if(class39.anInt686 == 2)
+            if(class39.projectionDirection == 2)
             {
-                int j1 = i - class39.anInt680;
+                int j1 = i - class39.minWorldX;
                 if(j1 > 0)
                 {
-                    int k2 = class39.anInt682 + (class39.anInt689 * j1 >> 8);
-                    int l3 = class39.anInt683 + (class39.anInt690 * j1 >> 8);
-                    int i5 = class39.anInt684 + (class39.anInt691 * j1 >> 8);
-                    int j6 = class39.anInt685 + (class39.anInt692 * j1 >> 8);
+                    int k2 = class39.minWorldY + (class39.minYGradient * j1 >> 8);
+                    int l3 = class39.maxWorldY + (class39.maxYGradient * j1 >> 8);
+                    int i5 = class39.minWorldZ + (class39.minZGradient * j1 >> 8);
+                    int j6 = class39.maxWorldZ + (class39.maxZGradient * j1 >> 8);
                     if(k >= k2 && k <= l3 && j >= i5 && j <= j6)
                         return true;
                 }
             } else
-            if(class39.anInt686 == 3)
+            if(class39.projectionDirection == 3)
             {
-                int k1 = class39.anInt682 - k;
+                int k1 = class39.minWorldY - k;
                 if(k1 > 0)
                 {
-                    int l2 = class39.anInt680 + (class39.anInt687 * k1 >> 8);
-                    int i4 = class39.anInt681 + (class39.anInt688 * k1 >> 8);
-                    int j5 = class39.anInt684 + (class39.anInt691 * k1 >> 8);
-                    int k6 = class39.anInt685 + (class39.anInt692 * k1 >> 8);
+                    int l2 = class39.minWorldX + (class39.minXGradient * k1 >> 8);
+                    int i4 = class39.maxWorldX + (class39.maxXGradient * k1 >> 8);
+                    int j5 = class39.minWorldZ + (class39.minZGradient * k1 >> 8);
+                    int k6 = class39.maxWorldZ + (class39.maxZGradient * k1 >> 8);
                     if(i >= l2 && i <= i4 && j >= j5 && j <= k6)
                         return true;
                 }
             } else
-            if(class39.anInt686 == 4)
+            if(class39.projectionDirection == 4)
             {
-                int l1 = k - class39.anInt682;
+                int l1 = k - class39.minWorldY;
                 if(l1 > 0)
                 {
-                    int i3 = class39.anInt680 + (class39.anInt687 * l1 >> 8);
-                    int j4 = class39.anInt681 + (class39.anInt688 * l1 >> 8);
-                    int k5 = class39.anInt684 + (class39.anInt691 * l1 >> 8);
-                    int l6 = class39.anInt685 + (class39.anInt692 * l1 >> 8);
+                    int i3 = class39.minWorldX + (class39.minXGradient * l1 >> 8);
+                    int j4 = class39.maxWorldX + (class39.maxXGradient * l1 >> 8);
+                    int k5 = class39.minWorldZ + (class39.minZGradient * l1 >> 8);
+                    int l6 = class39.maxWorldZ + (class39.maxZGradient * l1 >> 8);
                     if(i >= i3 && i <= j4 && j >= k5 && j <= l6)
                         return true;
                 }
             } else
-            if(class39.anInt686 == 5)
+            if(class39.projectionDirection == 5)
             {
-                int i2 = j - class39.anInt684;
+                int i2 = j - class39.minWorldZ;
                 if(i2 > 0)
                 {
-                    int j3 = class39.anInt680 + (class39.anInt687 * i2 >> 8);
-                    int k4 = class39.anInt681 + (class39.anInt688 * i2 >> 8);
-                    int l5 = class39.anInt682 + (class39.anInt689 * i2 >> 8);
-                    int i7 = class39.anInt683 + (class39.anInt690 * i2 >> 8);
+                    int j3 = class39.minWorldX + (class39.minXGradient * i2 >> 8);
+                    int k4 = class39.maxWorldX + (class39.maxXGradient * i2 >> 8);
+                    int l5 = class39.minWorldY + (class39.minYGradient * i2 >> 8);
+                    int i7 = class39.maxWorldY + (class39.maxYGradient * i2 >> 8);
                     if(i >= j3 && i <= k4 && k >= l5 && k <= i7)
                         return true;
                 }
@@ -2308,7 +2311,7 @@ label0:
     public int anInt453;
     public int anInt454;
     public int anIntArrayArrayArray455[][][];
-    public Class50_Sub3 aClass50_Sub3ArrayArrayArray456[][][];
+    public SceneTile aClass50_Sub3ArrayArrayArray456[][][];
     public int anInt457;
     public int anInt458;
     public InteractiveObject aClass5Array459[];
@@ -2349,9 +2352,9 @@ label0:
     public static int anInt486 = -1;
     public static int anInt487;
     public static int anIntArray488[];
-    public static Class39 aClass39ArrayArray489[][];
+    public static SceneCluster aClass39ArrayArray489[][];
     public static int anInt490;
-    public static Class39 aClass39Array491[] = new Class39[500];
+    public static SceneCluster aClass39Array491[] = new SceneCluster[500];
     public static NodeDeque aClass6_492 = new NodeDeque();
     public static final int anIntArray493[] = {
         19, 55, 38, 155, 255, 110, 137, 205, 76
@@ -2452,6 +2455,6 @@ label0:
     {
         anInt487 = 4;
         anIntArray488 = new int[anInt487];
-        aClass39ArrayArray489 = new Class39[anInt487][500];
+        aClass39ArrayArray489 = new SceneCluster[anInt487][500];
     }
 }
