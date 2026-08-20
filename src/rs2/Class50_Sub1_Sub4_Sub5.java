@@ -3,6 +3,7 @@
 // Decompiler options: packimports(3) 
 package rs2;
 
+import rs2.cache.cfg.Varbit;
 import rs2.sign.signlink;
 
 public class Class50_Sub1_Sub4_Sub5 extends Class50_Sub1_Sub4
@@ -15,10 +16,10 @@ public class Class50_Sub1_Sub4_Sub5 extends Class50_Sub1_Sub4
             anInt1728 = 109;
         if(anInt1725 != -1)
         {
-            Class49 class49 = Class49.aClass49Array824[anInt1725];
-            int k = class49.anInt826;
-            int l = class49.anInt827;
-            int i1 = class49.anInt828;
+            Varbit class49 = Varbit.definitions[anInt1725];
+            int k = class49.varpId;
+            int l = class49.leastSignificantBit;
+            int i1 = class49.mostSignificantBit;
             int j1 = client.anIntArray1214[i1 - l];
             j = aClient1723.anIntArray1039[k] >> l & j1;
         } else

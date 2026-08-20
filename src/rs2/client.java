@@ -15,6 +15,8 @@ import java.util.zip.CRC32;
 
 import rs2.cache.Archive;
 import rs2.cache.CacheIndex;
+import rs2.cache.cfg.Varbit;
+import rs2.cache.cfg.Varp;
 import rs2.chat.ChatCodec;
 import rs2.collection.Node;
 import rs2.collection.NodeDeque;
@@ -30,6 +32,7 @@ import rs2.scene.tile.WallDecoration;
 import rs2.scene.util.CollisionMap;
 import rs2.net.IncomingPacketLengths;
 import rs2.sign.signlink;
+import rs2.sound.SoundTrack;
 import rs2.text.Base37;
 import rs2.text.TextFormatter;
 
@@ -379,7 +382,7 @@ public class client extends Applet_Sub1 {
 		Class14.aClass14Array293 = null;
 		Class27.aClass27Array554 = null;
 		Class27.aClass33_566 = null;
-		Class43.aClass43Array704 = null;
+		Varp.definitions = null;
 		super.aClass18_15 = null;
 		Class50_Sub1_Sub4_Sub3_Sub2.aClass33_1761 = null;
 		Class50_Sub1_Sub1_Sub4.method492(false);
@@ -4596,8 +4599,8 @@ public class client extends Applet_Sub1 {
 			Class37.method361(class2);
 			Class48.method434(class2, 36135);
 			Class27.method305(class2, 36135);
-			Class43.method371(class2, 36135);
-			Class49.method440(class2, 36135);
+			Varp.load(class2);
+			Varbit.load(class2);
 			Class16.aBoolean344 = aBoolean925;
 			if (!aBoolean926) {
 				method13(90, true, "Unpacking sounds");
@@ -7551,7 +7554,7 @@ public class client extends Applet_Sub1 {
 
 	public void method105(int i, int j) {
 		anInt869 += i;
-		int k = Class43.aClass43Array704[j].anInt712;
+		int k = Varp.definitions[j].clientCode;
 		if (k == 0)
 			return;
 		int l = anIntArray1039[j];
@@ -9629,10 +9632,10 @@ public class client extends Applet_Sub1 {
 				}
 				if (j1 == 14) {
 					int j2 = ai[l++];
-					Class49 class49 = Class49.aClass49Array824[j2];
-					int l3 = class49.anInt826;
-					int i4 = class49.anInt827;
-					int j4 = class49.anInt828;
+					Varbit class49 = Varbit.definitions[j2];
+					int l3 = class49.varpId;
+					int i4 = class49.leastSignificantBit;
+					int j4 = class49.mostSignificantBit;
 					int k4 = anIntArray1214[j4 - i4];
 					k1 = anIntArray1039[l3] >> i4 & k4;
 				}

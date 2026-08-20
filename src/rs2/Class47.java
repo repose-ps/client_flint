@@ -4,6 +4,7 @@
 package rs2;
 
 import rs2.cache.Archive;
+import rs2.cache.cfg.Varbit;
 import rs2.collection.LruCache;
 import rs2.net.Buffer;
 import rs2.sign.signlink;
@@ -33,10 +34,10 @@ public class Class47
         int j = -1;
         if(anInt778 != -1)
         {
-            Class49 class49 = Class49.aClass49Array824[anInt778];
-            int k = class49.anInt826;
-            int l = class49.anInt827;
-            int i1 = class49.anInt828;
+            Varbit class49 = Varbit.definitions[anInt778];
+            int k = class49.varpId;
+            int l = class49.leastSignificantBit;
+            int i1 = class49.mostSignificantBit;
             int j1 = client.anIntArray1214[i1 - l];
             j = aClient770.anIntArray1039[k] >> l & j1;
         } else

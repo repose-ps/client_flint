@@ -1,7 +1,6 @@
-package rs2;
+package rs2.sound;
 
 import rs2.net.Buffer;
-import rs2.sound.SoundTrackInstrument;
 
 /**
  * Cache-backed sound effect composed of up to ten procedural instruments.
