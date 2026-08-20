@@ -23,6 +23,7 @@ import rs2.net.Buffer;
 import rs2.net.BufferedConnection;
 import rs2.net.Ipv4Address;
 import rs2.net.IsaacCipher;
+import rs2.scene.InteractiveObject;
 import rs2.scene.tile.FloorDecoration;
 import rs2.scene.tile.Wall;
 import rs2.scene.tile.WallDecoration;
@@ -9931,12 +9932,12 @@ public class client extends Applet_Sub1 {
 								class35.uid >> 14 & 0x7fff, false, l18, 0);
 				}
 				if (i12 == 2) {
-					Class5 class5 = aClass22_1164.method265(j16, (byte) 32, l17, anInt1091);
+					InteractiveObject class5 = aClass22_1164.method265(j16, (byte) 32, l17, anInt1091);
 					if (k6 == 11)
 						k6 = 10;
 					if (class5 != null)
-						class5.aClass50_Sub1_Sub4_117 = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, k6, (byte) 3,
-								class5.anInt125 >> 14 & 0x7fff, false, l18, j9);
+						class5.renderable = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, k6, (byte) 3,
+								class5.uid >> 14 & 0x7fff, false, l18, j9);
 				}
 				if (i12 == 3) {
 					FloorDecoration class28 = aClass22_1164.method266(anInt1091, l17, 0, j16);

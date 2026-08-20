@@ -4,6 +4,8 @@
 package rs2;
 
 import rs2.collection.Node;
+import rs2.scene.GroundItemTile;
+import rs2.scene.InteractiveObject;
 import rs2.scene.tile.FloorDecoration;
 import rs2.scene.tile.GenericTile;
 import rs2.scene.tile.Wall;
@@ -15,7 +17,7 @@ public class Class50_Sub3 extends Node
     public Class50_Sub3(int i, int j, int k)
     {
         aBoolean1396 = false;
-        aClass5Array1408 = new Class5[5];
+        aClass5Array1408 = new InteractiveObject[5];
         anIntArray1409 = new int[5];
         anInt1400 = anInt1397 = i;
         anInt1398 = j;
@@ -32,9 +34,9 @@ public class Class50_Sub3 extends Node
     public Wall aClass44_1403;
     public WallDecoration aClass35_1404;
     public FloorDecoration aClass28_1405;
-    public Class10 aClass10_1406;
+    public GroundItemTile aClass10_1406;
     public int anInt1407;
-    public Class5 aClass5Array1408[];
+    public InteractiveObject aClass5Array1408[];
     public int anIntArray1409[];
     public int anInt1410;
     public int anInt1411;
