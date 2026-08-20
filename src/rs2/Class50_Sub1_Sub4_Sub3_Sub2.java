@@ -4,6 +4,7 @@
 package rs2;
 
 import rs2.cache.media.AnimationSequence;
+import rs2.cache.media.IdentityKit;
 import rs2.cache.media.SpotAnimation;
 import rs2.collection.LruCache;
 import rs2.net.Buffer;
@@ -21,7 +22,7 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 		boolean flag1 = false;
 		for (int i = 0; i < 12; i++) {
 			int j = anIntArray1752[i];
-			if (j >= 256 && j < 512 && !Class48.aClass48Array815[j - 256].method438(-10584))
+			if (j >= 256 && j < 512 && !IdentityKit.definitions[j - 256].areHeadModelsReady())
 				flag1 = true;
 			if (j >= 512 && !Class16.method212(j - 512).method211(anInt1755, 0))
 				flag1 = true;
@@ -34,8 +35,7 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 		for (int l = 0; l < 12; l++) {
 			int i1 = anIntArray1752[l];
 			if (i1 >= 256 && i1 < 512) {
-				Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = Class48.aClass48Array815[i1 - 256]
-						.method439(aBoolean1747);
+				Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = IdentityKit.definitions[i1 - 256].buildHeadModel();
 				if (class50_sub1_sub4_sub4_1 != null)
 					aclass50_sub1_sub4_sub4[k++] = class50_sub1_sub4_sub4_1;
 			}
@@ -104,7 +104,7 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 					i2 = j1;
 				if (i1 >= 0 && k1 == 5)
 					i2 = i1;
-				if (i2 >= 256 && i2 < 512 && !Class48.aClass48Array815[i2 - 256].method436(256))
+				if (i2 >= 256 && i2 < 512 && !IdentityKit.definitions[i2 - 256].areBodyModelsReady())
 					flag = true;
 				if (i2 >= 512 && !Class16.method212(i2 - 512).method216(-861, anInt1755))
 					flag = true;
@@ -127,8 +127,8 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 				if (i1 >= 0 && j2 == 5)
 					k2 = i1;
 				if (k2 >= 256 && k2 < 512) {
-					Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_3 = Class48.aClass48Array815[k2 - 256]
-							.method437((byte) 2);
+					Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_3 = IdentityKit.definitions[k2 - 256]
+							.buildBodyModel();
 					if (class50_sub1_sub4_sub4_3 != null)
 						aclass50_sub1_sub4_sub4[l1++] = class50_sub1_sub4_sub4_3;
 				}
@@ -334,7 +334,6 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 	}
 
 	public Class50_Sub1_Sub4_Sub3_Sub2() {
-		aBoolean1747 = false;
 		anInt1748 = -1;
 		aLong1749 = -1L;
 		anIntArray1752 = new int[12];
@@ -351,7 +350,6 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 	public int anInt1744;
 	public int anInt1745;
 	public Class50_Sub1_Sub4_Sub4 aClass50_Sub1_Sub4_Sub4_1746;
-	public boolean aBoolean1747;
 	public int anInt1748;
 	public long aLong1749;
 	public int anInt1750;

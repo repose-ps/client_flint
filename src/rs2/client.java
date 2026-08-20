@@ -19,6 +19,7 @@ import rs2.cache.cfg.Varbit;
 import rs2.cache.cfg.Varp;
 import rs2.cache.def.FloorDefinition;
 import rs2.cache.media.AnimationSequence;
+import rs2.cache.media.IdentityKit;
 import rs2.cache.media.SpotAnimation;
 import rs2.chat.ChatCodec;
 import rs2.collection.Node;
@@ -380,7 +381,7 @@ public class client extends Applet_Sub1 {
 		Class16.method222(false);
 		Class13.method202(false);
 		FloorDefinition.definitions = null;
-		Class48.aClass48Array815 = null;
+		IdentityKit.definitions = null;
 		Class4.aClass4Array103 = null;
 		AnimationSequence.sequences = null;
 		SpotAnimation.definitions = null;
@@ -603,9 +604,9 @@ public class client extends Applet_Sub1 {
 		aBoolean1277 = true;
 		for (int j = 0; j < 7; j++) {
 			anIntArray1326[j] = -1;
-			for (int k = 0; k < Class48.anInt814; k++) {
-				if (Class48.aClass48Array815[k].aBoolean821
-						|| Class48.aClass48Array815[k].anInt816 != j + (aBoolean1144 ? 0 : 7))
+			for (int k = 0; k < IdentityKit.count; k++) {
+				if (IdentityKit.definitions[k].nonSelectable
+						|| IdentityKit.definitions[k].bodyPartId != j + (aBoolean1144 ? 0 : 7))
 					continue;
 				anIntArray1326[j] = k;
 				break;
@@ -3842,11 +3843,11 @@ public class client extends Applet_Sub1 {
 			if (i2 != -1) {
 				do {
 					if (j1 == 0 && --i2 < 0)
-						i2 = Class48.anInt814 - 1;
-					if (j1 == 1 && ++i2 >= Class48.anInt814)
+						i2 = IdentityKit.count - 1;
+					if (j1 == 1 && ++i2 >= IdentityKit.count)
 						i2 = 0;
-				} while (Class48.aClass48Array815[i2].aBoolean821
-						|| Class48.aClass48Array815[i2].anInt816 != k + (aBoolean1144 ? 0 : 7));
+				} while (IdentityKit.definitions[i2].nonSelectable
+						|| IdentityKit.definitions[i2].bodyPartId != k + (aBoolean1144 ? 0 : 7));
 				anIntArray1326[k] = i2;
 				aBoolean1277 = true;
 			}
@@ -4600,7 +4601,7 @@ public class client extends Applet_Sub1 {
 			FloorDefinition.load(class2);
 			Class16.method214(class2);
 			Class37.method361(class2);
-			Class48.method434(class2, 36135);
+			IdentityKit.load(class2);
 			SpotAnimation.load(class2);
 			Varp.load(class2);
 			Varbit.load(class2);
@@ -7385,7 +7386,7 @@ public class client extends Applet_Sub1 {
 			if (aBoolean1277) {
 				for (int j1 = 0; j1 < 7; j1++) {
 					int i2 = anIntArray1326[j1];
-					if (i2 >= 0 && !Class48.aClass48Array815[i2].method436(256))
+					if (i2 >= 0 && !IdentityKit.definitions[i2].areBodyModelsReady())
 						return;
 				}
 
@@ -7395,7 +7396,7 @@ public class client extends Applet_Sub1 {
 				for (int k2 = 0; k2 < 7; k2++) {
 					int l2 = anIntArray1326[k2];
 					if (l2 >= 0)
-						aclass50_sub1_sub4_sub4[j2++] = Class48.aClass48Array815[l2].method437((byte) 2);
+						aclass50_sub1_sub4_sub4[j2++] = IdentityKit.definitions[l2].buildBodyModel();
 				}
 
 				Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = new Class50_Sub1_Sub4_Sub4(j2, aclass50_sub1_sub4_sub4,
