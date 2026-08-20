@@ -1,21 +1,16 @@
-// Decompiled by Jad v1.5.8f. Copyright 2001 Pavel Kouznetsov.
-// Jad home page: http://www.kpdus.com/jad.html
-// Decompiler options: packimports(3) 
 package rs2;
 
 import rs2.collection.DualNode;
 
-public class Class50_Sub1_Sub3 extends DualNode
-{
+public class Class50_Sub1_Sub3 extends DualNode {
 
-    public Class50_Sub1_Sub3()
-    {
-        aBoolean1471 = true;
-    }
+	public Class50_Sub1_Sub3() {
+		aBoolean1471 = true;
+	}
 
-    public int anInt1467;
-    public int anInt1468;
-    public int anInt1469;
-    public byte aByteArray1470[];
-    public boolean aBoolean1471;
+	public int anInt1467;
+	public int anInt1468;
+	public int anInt1469;
+	public byte aByteArray1470[];
+	public boolean aBoolean1471;
 }

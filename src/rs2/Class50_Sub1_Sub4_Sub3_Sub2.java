@@ -1,6 +1,3 @@
-// Decompiled by Jad v1.5.8f. Copyright 2001 Pavel Kouznetsov.
-// Jad home page: http://www.kpdus.com/jad.html
-// Decompiler options: packimports(3) 
 package rs2;
 
 import rs2.cache.media.AnimationSequence;
@@ -8,7 +5,6 @@ import rs2.cache.media.IdentityKit;
 import rs2.cache.media.SpotAnimation;
 import rs2.collection.LruCache;
 import rs2.net.Buffer;
-import rs2.sign.signlink;
 import rs2.text.Base37;
 import rs2.text.TextFormatter;
 

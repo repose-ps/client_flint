@@ -28,7 +28,7 @@ package rs2.collection;
  *      OpenJDK HashMap bucket implementation</a>
  */
 public class NodeHashTable {
-	
+
 	/**
 	 * Number of hash buckets.
 	 *

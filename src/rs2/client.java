@@ -1,14 +1,18 @@
-// Decompiled by Jad v1.5.8f. Copyright 2001 Pavel Kouznetsov.
-// Jad home page: http://www.kpdus.com/jad.html
-// Decompiler options: packimports(3) 
 package rs2;
 
-import java.applet.Applet;
 import java.applet.AppletContext;
-import java.awt.*;
-import java.io.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.io.DataInputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigInteger;
-import java.net.*;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.URL;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.zip.CRC32;
@@ -27,6 +31,7 @@ import rs2.collection.NodeDeque;
 import rs2.game.Skills;
 import rs2.net.Buffer;
 import rs2.net.BufferedConnection;
+import rs2.net.IncomingPacketLengths;
 import rs2.net.Ipv4Address;
 import rs2.net.IsaacCipher;
 import rs2.scene.InteractiveObject;
@@ -34,7 +39,6 @@ import rs2.scene.tile.FloorDecoration;
 import rs2.scene.tile.Wall;
 import rs2.scene.tile.WallDecoration;
 import rs2.scene.util.CollisionMap;
-import rs2.net.IncomingPacketLengths;
 import rs2.sign.signlink;
 import rs2.sound.SoundTrack;
 import rs2.text.Base37;
@@ -3287,7 +3291,8 @@ public class client extends Applet_Sub1 {
 							|| l + class47_1.anInt775 > 103)
 						return;
 					if (class47_1.aBoolean810)
-						aClass46Array1260[i1].unmarkSolidOccupant(j, l, class47_1.anInt801, class47_1.anInt775, k2, class47_1.aBoolean809);
+						aClass46Array1260[i1].unmarkSolidOccupant(j, l, class47_1.anInt801, class47_1.anInt775, k2,
+								class47_1.aBoolean809);
 				}
 				if (k1 == 3) {
 					aClass22_1164.method261(j, l, true, i1);
@@ -3904,7 +3909,7 @@ public class client extends Applet_Sub1 {
 				abyte0 = aClass23Array1228[0].read(l);
 				return new Archive(abyte0); // TODO debug
 			}
-			
+
 		} catch (Exception _ex) {
 		}
 		if (abyte0 != null) {
@@ -5206,8 +5211,8 @@ public class client extends Applet_Sub1 {
 				class50_sub1_sub4_sub3.anInt1616 = 1;
 				class50_sub1_sub4_sub3.anInt1615++;
 			}
-			if (class50_sub1_sub4_sub3.anInt1615 >= class14_1.frameCount
-					&& (class50_sub1_sub4_sub3.anInt1615 < 0 || class50_sub1_sub4_sub3.anInt1615 >= class14_1.frameCount))
+			if (class50_sub1_sub4_sub3.anInt1615 >= class14_1.frameCount && (class50_sub1_sub4_sub3.anInt1615 < 0
+					|| class50_sub1_sub4_sub3.anInt1615 >= class14_1.frameCount))
 				class50_sub1_sub4_sub3.anInt1614 = -1;
 		}
 		if (class50_sub1_sub4_sub3.anInt1624 != -1 && class50_sub1_sub4_sub3.anInt1627 <= 1) {
@@ -9922,13 +9927,13 @@ public class client extends Applet_Sub1 {
 					if (class44 != null) {
 						int k21 = class44.uid >> 14 & 0x7fff;
 						if (k6 == 2) {
-							class44.primary = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, 2, (byte) 3,
-									k21, false, l18, 4 + j9);
-							class44.secondary = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, 2, (byte) 3,
-									k21, false, l18, j9 + 1 & 3);
+							class44.primary = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, 2, (byte) 3, k21, false,
+									l18, 4 + j9);
+							class44.secondary = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, 2, (byte) 3, k21, false,
+									l18, j9 + 1 & 3);
 						} else {
-							class44.primary = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, k6, (byte) 3,
-									k21, false, l18, j9);
+							class44.primary = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, k6, (byte) 3, k21, false,
+									l18, j9);
 						}
 					}
 				}
