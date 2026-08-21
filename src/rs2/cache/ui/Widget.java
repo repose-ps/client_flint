@@ -2,13 +2,13 @@ package rs2.cache.ui;
 
 import rs2.Class16;
 import rs2.Class37;
-import rs2.Class50_Sub1_Sub4_Sub4;
 import rs2.cache.Archive;
 import rs2.cache.ResourceNameHash;
 import rs2.cache.media.ImageRGB;
 import rs2.collection.LruCache;
 import rs2.media.AnimationFrame;
 import rs2.media.TypeFace;
+import rs2.media.renderable.Model;
 import rs2.net.Buffer;
 import rs2.client;
 
@@ -240,7 +240,7 @@ public class Widget {
 	 * Replaces the one-entry model source used for client-built widget models. The
 	 * cache is cleared before insertion, preserving revision-377 behavior.
 	 */
-	public static void cacheModel(int mediaType, int mediaId, Class50_Sub1_Sub4_Sub4 model) {
+	public static void cacheModel(int mediaType, int mediaId, Model model) {
 		modelCache.clear();
 		if (model != null && mediaType != 4) {
 			modelCache.put((mediaType << 16) + mediaId, model);
@@ -251,32 +251,31 @@ public class Widget {
 	 * Builds the model displayed by a type-6 widget for its inactive or active
 	 * state and optional animation frames.
 	 */
-	public Class50_Sub1_Sub4_Sub4 getAnimatedModel(int primaryFrameId, int secondaryFrameId, boolean active) {
+	public Model getAnimatedModel(int primaryFrameId, int secondaryFrameId, boolean active) {
 		modelAmbient = 64;
 		modelContrast = 768;
 
-		Class50_Sub1_Sub4_Sub4 baseModel = active ? getMediaModel(activeMediaType, activeMediaId)
+		Model baseModel = active ? getMediaModel(activeMediaType, activeMediaId)
 				: getMediaModel(mediaType, mediaId);
 		if (baseModel == null) {
 			return null;
 		}
 
-		if (primaryFrameId == -1 && secondaryFrameId == -1 && baseModel.anIntArray1662 == null) {
+		if (primaryFrameId == -1 && secondaryFrameId == -1 && baseModel.triangleColors == null) {
 			return baseModel;
 		}
 
-		Class50_Sub1_Sub4_Sub4 model = new Class50_Sub1_Sub4_Sub4(false, false, true, baseModel,
-				AnimationFrame.isNull(primaryFrameId) & AnimationFrame.isNull(secondaryFrameId));
+		Model model = new Model(baseModel, false, true, AnimationFrame.isNull(primaryFrameId) & AnimationFrame.isNull(secondaryFrameId));
 		if (primaryFrameId != -1 || secondaryFrameId != -1) {
-			model.method584(7);
+			model.createBones();
 		}
 		if (primaryFrameId != -1) {
-			model.method585(primaryFrameId, (byte) 6);
+			model.applyTransformation(primaryFrameId);
 		}
 		if (secondaryFrameId != -1) {
-			model.method585(secondaryFrameId, (byte) 6);
+			model.applyTransformation(secondaryFrameId);
 		}
-		model.method594(modelAmbient, modelContrast, -50, -10, -50, true);
+		model.light(modelAmbient, modelContrast, -50, -10, -50, true);
 		return model;
 	}
 
@@ -301,7 +300,7 @@ public class Widget {
 		}
 	}
 
-	private Class50_Sub1_Sub4_Sub4 getMediaModel(int mediaType, int mediaId) {
+	private Model getMediaModel(int mediaType, int mediaId) {
 		Class16 itemDefinition = null;
 		if (mediaType == 4) {
 			itemDefinition = Class16.method212(mediaId);
@@ -310,13 +309,13 @@ public class Widget {
 		}
 
 		long key = (mediaType << 16) + mediaId;
-		Class50_Sub1_Sub4_Sub4 model = (Class50_Sub1_Sub4_Sub4) modelCache.get(key);
+		Model model = (Model) modelCache.get(key);
 		if (model != null) {
 			return model;
 		}
 
 		if (mediaType == 1) {
-			model = Class50_Sub1_Sub4_Sub4.method577(mediaId);
+			model = Model.getModel(mediaId);
 		}
 		if (mediaType == 2) {
 			model = Class37.method364(mediaId).method359(858);

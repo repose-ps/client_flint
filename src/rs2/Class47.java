@@ -5,6 +5,7 @@ import rs2.cache.cfg.Varbit;
 import rs2.cache.ondemand.OnDemandFetcher;
 import rs2.collection.LruCache;
 import rs2.media.AnimationFrame;
+import rs2.media.renderable.Model;
 import rs2.media.renderable.Renderable;
 import rs2.net.Buffer;
 
@@ -72,14 +73,14 @@ public class Class47 {
 
 	}
 
-	public Class50_Sub1_Sub4_Sub4 method427(int i, int j, int k, int l) {
-		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = null;
+	public Model method427(int i, int j, int k, int l) {
+		Model class50_sub1_sub4_sub4 = null;
 		long l1;
 		if (anIntArray789 == null) {
 			if (l != 10)
 				return null;
 			l1 = (long) ((anInt773 << 6) + i) + ((long) (j + 1) << 32);
-			Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = (Class50_Sub1_Sub4_Sub4) aClass33_762.get(l1);
+			Model class50_sub1_sub4_sub4_1 = (Model) aClass33_762.get(l1);
 			if (class50_sub1_sub4_sub4_1 != null)
 				return class50_sub1_sub4_sub4_1;
 			if (anIntArray763 == null)
@@ -90,13 +91,13 @@ public class Class47 {
 				int l2 = anIntArray763[i2];
 				if (flag1)
 					l2 += 0x10000;
-				class50_sub1_sub4_sub4 = (Class50_Sub1_Sub4_Sub4) aClass33_779.get(l2);
+				class50_sub1_sub4_sub4 = (Model) aClass33_779.get(l2);
 				if (class50_sub1_sub4_sub4 == null) {
-					class50_sub1_sub4_sub4 = Class50_Sub1_Sub4_Sub4.method577(l2 & 0xffff);
+					class50_sub1_sub4_sub4 = Model.getModel(l2 & 0xffff);
 					if (class50_sub1_sub4_sub4 == null)
 						return null;
 					if (flag1)
-						class50_sub1_sub4_sub4.method592(0);
+						class50_sub1_sub4_sub4.mirror();
 					aClass33_779.put(l2, class50_sub1_sub4_sub4);
 				}
 				if (k1 > 1)
@@ -104,7 +105,7 @@ public class Class47 {
 			}
 
 			if (k1 > 1)
-				class50_sub1_sub4_sub4 = new Class50_Sub1_Sub4_Sub4(k1, aClass50_Sub1_Sub4_Sub4Array771, (byte) -89);
+				class50_sub1_sub4_sub4 = new Model(k1, aClass50_Sub1_Sub4_Sub4Array771);
 		} else {
 			int i1 = -1;
 			for (int j1 = 0; j1 < anIntArray789.length; j1++) {
@@ -117,20 +118,20 @@ public class Class47 {
 			if (i1 == -1)
 				return null;
 			l1 = (long) ((anInt773 << 6) + (i1 << 3) + i) + ((long) (j + 1) << 32);
-			Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_2 = (Class50_Sub1_Sub4_Sub4) aClass33_762.get(l1);
+			Model class50_sub1_sub4_sub4_2 = (Model) aClass33_762.get(l1);
 			if (class50_sub1_sub4_sub4_2 != null)
 				return class50_sub1_sub4_sub4_2;
 			int j2 = anIntArray763[i1];
 			boolean flag3 = aBoolean798 ^ (i > 3);
 			if (flag3)
 				j2 += 0x10000;
-			class50_sub1_sub4_sub4 = (Class50_Sub1_Sub4_Sub4) aClass33_779.get(j2);
+			class50_sub1_sub4_sub4 = (Model) aClass33_779.get(j2);
 			if (class50_sub1_sub4_sub4 == null) {
-				class50_sub1_sub4_sub4 = Class50_Sub1_Sub4_Sub4.method577(j2 & 0xffff);
+				class50_sub1_sub4_sub4 = Model.getModel(j2 & 0xffff);
 				if (class50_sub1_sub4_sub4 == null)
 					return null;
 				if (flag3)
-					class50_sub1_sub4_sub4.method592(0);
+					class50_sub1_sub4_sub4.mirror();
 				aClass33_779.put(j2, class50_sub1_sub4_sub4);
 			}
 		}
@@ -144,31 +145,30 @@ public class Class47 {
 			flag2 = true;
 		else
 			flag2 = false;
-		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_3 = new Class50_Sub1_Sub4_Sub4(
-				i == 0 && j == -1 && !flag && !flag2, false, anIntArray799 == null, class50_sub1_sub4_sub4,
-				AnimationFrame.isNull(j));
+		Model class50_sub1_sub4_sub4_3 = new Model(
+				class50_sub1_sub4_sub4, i == 0 && j == -1 && !flag && !flag2, anIntArray799 == null, AnimationFrame.isNull(j));
 		if (k != 0)
 			anInt768 = 487;
 		if (j != -1) {
-			class50_sub1_sub4_sub4_3.method584(7);
-			class50_sub1_sub4_sub4_3.method585(j, (byte) 6);
-			class50_sub1_sub4_sub4_3.anIntArrayArray1679 = null;
-			class50_sub1_sub4_sub4_3.anIntArrayArray1678 = null;
+			class50_sub1_sub4_sub4_3.createBones();
+			class50_sub1_sub4_sub4_3.applyTransformation(j);
+			class50_sub1_sub4_sub4_3.triangleGroups = null;
+			class50_sub1_sub4_sub4_3.vertexGroups = null;
 		}
 		while (i-- > 0)
-			class50_sub1_sub4_sub4_3.method588(true);
+			class50_sub1_sub4_sub4_3.rotateY90Ccw();
 		if (anIntArray799 != null) {
 			for (int k2 = 0; k2 < anIntArray799.length; k2++)
-				class50_sub1_sub4_sub4_3.method591(anIntArray799[k2], anIntArray792[k2]);
+				class50_sub1_sub4_sub4_3.recolor(anIntArray799[k2], anIntArray792[k2]);
 
 		}
 		if (flag)
-			class50_sub1_sub4_sub4_3.method593(anInt760, anInt796, 9, anInt780);
+			class50_sub1_sub4_sub4_3.scale(anInt780, anInt760, anInt796);
 		if (flag2)
-			class50_sub1_sub4_sub4_3.method590(anInt761, anInt766, false, anInt785);
-		class50_sub1_sub4_sub4_3.method594(64 + aByte784, 768 + aByte787 * 5, -50, -10, -50, !aBoolean804);
+			class50_sub1_sub4_sub4_3.translate(anInt761, anInt785, anInt766);
+		class50_sub1_sub4_sub4_3.light(64 + aByte784, 768 + aByte787 * 5, -50, -10, -50, !aBoolean804);
 		if (anInt794 == 1)
-			class50_sub1_sub4_sub4_3.anInt1675 = ((Renderable) (class50_sub1_sub4_sub4_3)).modelHeight;
+			class50_sub1_sub4_sub4_3.itemDropHeight = ((Renderable) (class50_sub1_sub4_sub4_3)).modelHeight;
 		aClass33_762.put(l1, class50_sub1_sub4_sub4_3);
 		return class50_sub1_sub4_sub4_3;
 	}
@@ -180,7 +180,7 @@ public class Class47 {
 		while (i >= 0)
 			anInt768 = 347;
 		for (int j = 0; j < anIntArray763.length; j++)
-			flag &= Class50_Sub1_Sub4_Sub4.method578(anIntArray763[j] & 0xffff);
+			flag &= Model.isLoaded(anIntArray763[j] & 0xffff);
 
 		return flag;
 	}
@@ -370,24 +370,24 @@ public class Class47 {
 			anInt794 = aBoolean810 ? 1 : 0;
 	}
 
-	public Class50_Sub1_Sub4_Sub4 method431(int i, int j, int k, int l, int i1, int j1, int k1) {
-		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = method427(j, k1, 0, i);
+	public Model method431(int i, int j, int k, int l, int i1, int j1, int k1) {
+		Model class50_sub1_sub4_sub4 = method427(j, k1, 0, i);
 		if (class50_sub1_sub4_sub4 == null)
 			return null;
 		if (aBoolean769 || aBoolean804)
-			class50_sub1_sub4_sub4 = new Class50_Sub1_Sub4_Sub4(aBoolean769, aBoolean804, 0, class50_sub1_sub4_sub4);
+			class50_sub1_sub4_sub4 = new Model(class50_sub1_sub4_sub4, aBoolean769, aBoolean804);
 		if (aBoolean769) {
 			int l1 = (k + l + i1 + j1) / 4;
-			for (int i2 = 0; i2 < class50_sub1_sub4_sub4.anInt1648; i2++) {
-				int j2 = class50_sub1_sub4_sub4.anIntArray1649[i2];
-				int k2 = class50_sub1_sub4_sub4.anIntArray1651[i2];
+			for (int i2 = 0; i2 < class50_sub1_sub4_sub4.vertexCount; i2++) {
+				int j2 = class50_sub1_sub4_sub4.verticesX[i2];
+				int k2 = class50_sub1_sub4_sub4.verticesZ[i2];
 				int l2 = k + ((l - k) * (j2 + 64)) / 128;
 				int i3 = j1 + ((i1 - j1) * (j2 + 64)) / 128;
 				int j3 = l2 + ((i3 - l2) * (k2 + 64)) / 128;
-				class50_sub1_sub4_sub4.anIntArray1650[i2] += j3 - l1;
+				class50_sub1_sub4_sub4.verticesY[i2] += j3 - l1;
 			}
 
-			class50_sub1_sub4_sub4.method582(6);
+			class50_sub1_sub4_sub4.normalise();
 		}
 		return class50_sub1_sub4_sub4;
 	}
@@ -402,13 +402,13 @@ public class Class47 {
 				return true;
 			boolean flag = true;
 			for (int l = 0; l < anIntArray763.length; l++)
-				flag &= Class50_Sub1_Sub4_Sub4.method578(anIntArray763[l] & 0xffff);
+				flag &= Model.isLoaded(anIntArray763[l] & 0xffff);
 
 			return flag;
 		}
 		for (int k = 0; k < anIntArray789.length; k++)
 			if (anIntArray789[k] == j)
-				return Class50_Sub1_Sub4_Sub4.method578(anIntArray763[k] & 0xffff);
+				return Model.isLoaded(anIntArray763[k] & 0xffff);
 
 		return true;
 	}
@@ -445,7 +445,7 @@ public class Class47 {
 	public int anInt768;
 	public boolean aBoolean769;
 	public static client aClient770;
-	public static Class50_Sub1_Sub4_Sub4 aClass50_Sub1_Sub4_Sub4Array771[] = new Class50_Sub1_Sub4_Sub4[4];
+	public static Model aClass50_Sub1_Sub4_Sub4Array771[] = new Model[4];
 	public static boolean aBoolean772;
 	public int anInt773;
 	public int anInt775;

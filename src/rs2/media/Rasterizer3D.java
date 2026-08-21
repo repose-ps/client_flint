@@ -1,291 +1,320 @@
-package rs2;
+package rs2.media;
 
 import rs2.cache.Archive;
 import rs2.cache.media.IndexedImage;
-import rs2.media.Rasterizer;
 
-public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
+/**
+ * Revision-377 software 3D triangle rasterizer.
+ *
+ * <p>
+ * The implementation intentionally retains the client's fixed-point scan
+ * conversion, palette construction, texture LRU pool, transparency rules, and
+ * low-memory 64x64 texture path. The private scan converters remain close to
+ * the original arithmetic so rounding, edge ownership, and overflow behavior
+ * are not changed by refactoring.
+ * </p>
+ */
+public class Rasterizer3D extends Rasterizer {
 
-	public static void method492(boolean flag) {
-		anIntArray1534 = null;
-		anIntArray1534 = null;
-		anIntArray1536 = null;
-		anIntArray1537 = null;
-		anIntArray1538 = null;
-		aClass50_Sub1_Sub1_Sub3Array1540 = null;
-		aBooleanArray1541 = null;
-		anIntArray1542 = null;
-		anIntArrayArray1544 = null;
-		if (flag) {
-			for (int i = 1; i > 0; i++)
-				;
+	public static boolean lowMemory = true;
+	/**
+	 * Clips horizontal spans to the current 2D raster bounds when set by model
+	 * projection.
+	 */
+	public static boolean restrictEdges;
+	/**
+	 * True for the texture currently being rasterized when texel zero is not
+	 * transparent.
+	 */
+	private static boolean opaqueTexture;
+	/** Enables the original four-pixel Gouraud interpolation fast path. */
+	public static boolean gouraudBlockShading = true;
+	/** 0..255 source alpha used by flat and Gouraud scanlines. */
+	public static int alpha;
+	public static int centerX;
+	public static int centerY;
+
+	public static int[] reciprocal15 = new int[512];
+	public static int[] reciprocal16 = new int[2048];
+	public static int[] SINE = new int[2048];
+	public static int[] COSINE = new int[2048];
+	public static int[] scanlineOffsets;
+
+	private static int loadedTextureCount;
+	public static IndexedImage[] textures = new IndexedImage[50];
+	private static boolean[] textureHasTransparency = new boolean[50];
+	private static int[] averageTextureColors = new int[50];
+	private static int texturePoolAvailable;
+	private static int[][] texturePool;
+	private static int[][] texturePixels = new int[50][];
+	public static int[] textureLastUsed = new int[50];
+	public static int textureCycle;
+	public static int[] HSL_TO_RGB = new int[0x10000];
+	private static int[][] texturePalettes = new int[50][];
+
+	static {
+		for (int i = 1; i < 512; i++)
+			reciprocal15[i] = 32768 / i;
+		for (int i = 1; i < 2048; i++)
+			reciprocal16[i] = 0x10000 / i;
+		for (int angle = 0; angle < 2048; angle++) {
+			SINE[angle] = (int) (65536D * Math.sin(angle * 0.0030679614999999999D));
+			COSINE[angle] = (int) (65536D * Math.cos(angle * 0.0030679614999999999D));
 		}
-		anIntArrayArray1545 = null;
-		anIntArray1546 = null;
-		anIntArray1548 = null;
-		anIntArrayArray1549 = null;
 	}
 
-	public static void method493(int i) {
-		i = 19 / i;
-		anIntArray1538 = new int[Rasterizer.height];
-		for (int j = 0; j < Rasterizer.height; j++)
-			anIntArray1538[j] = Rasterizer.width * j;
-
-		anInt1532 = Rasterizer.width / 2;
-		anInt1533 = Rasterizer.height / 2;
+	private Rasterizer3D() {
 	}
 
-	public static void method494(int i, int j, int k) {
-		if (j != 7)
-			aBoolean1526 = !aBoolean1526;
-		anIntArray1538 = new int[i];
-		for (int l = 0; l < i; l++)
-			anIntArray1538[l] = k * l;
-
-		anInt1532 = k / 2;
-		anInt1533 = i / 2;
+	/**
+	 * Releases static rendering and texture tables, matching the original explicit
+	 * teardown.
+	 */
+	public static void clear() {
+		reciprocal15 = null;
+		// The original decompilation assigned the first reciprocal table twice and
+		// never
+		// nulled reciprocal16 here. Preserve that exact teardown quirk.
+		SINE = null;
+		COSINE = null;
+		scanlineOffsets = null;
+		textures = null;
+		textureHasTransparency = null;
+		averageTextureColors = null;
+		texturePool = null;
+		texturePixels = null;
+		textureLastUsed = null;
+		HSL_TO_RGB = null;
+		texturePalettes = null;
 	}
 
-	public static void method495(byte byte0) {
-		if (byte0 != 71)
+	/** Builds scanline offsets from the current {@link Rasterizer} dimensions. */
+	public static void setDefaultBounds() {
+		scanlineOffsets = new int[Rasterizer.height];
+		for (int y = 0; y < Rasterizer.height; y++)
+			scanlineOffsets[y] = Rasterizer.width * y;
+		centerX = Rasterizer.width / 2;
+		centerY = Rasterizer.height / 2;
+	}
+
+	/** Builds projection scanline offsets for an explicit viewport. */
+	public static void setBounds(int width, int height) {
+		scanlineOffsets = new int[height];
+		for (int y = 0; y < height; y++)
+			scanlineOffsets[y] = width * y;
+		centerX = width / 2;
+		centerY = height / 2;
+	}
+
+	/**
+	 * Drops pooled and resident expanded texture texels without unloading indexed
+	 * images.
+	 */
+	public static void clearTextureCache() {
+		texturePool = null;
+		for (int textureId = 0; textureId < 50; textureId++)
+			texturePixels[textureId] = null;
+	}
+
+	/**
+	 * Allocates the reusable expanded-texel pool if it has not already been
+	 * allocated.
+	 */
+	public static void initializeTexturePool(int capacity) {
+		if (texturePool != null)
 			return;
-		anIntArrayArray1544 = null;
-		for (int i = 0; i < 50; i++)
-			anIntArrayArray1545[i] = null;
-
+		texturePoolAvailable = capacity;
+		texturePool = new int[capacity][lowMemory ? 16384 : 0x10000];
+		for (int textureId = 0; textureId < 50; textureId++)
+			texturePixels[textureId] = null;
 	}
 
-	public static void method496(byte byte0, int i) {
-		if (byte0 != 7) {
-			for (int j = 1; j > 0; j++)
-				;
-		}
-		if (anIntArrayArray1544 == null) {
-			anInt1543 = i;
-			if (aBoolean1527)
-				anIntArrayArray1544 = new int[anInt1543][16384];
-			else
-				anIntArrayArray1544 = new int[anInt1543][0x10000];
-			for (int k = 0; k < 50; k++)
-				anIntArrayArray1545[k] = null;
-
-		}
-	}
-
-	public static void method497(Archive class2, int i) {
-		if (i != -17551) {
-			for (int j = 1; j > 0; j++)
-				;
-		}
-		anInt1539 = 0;
-		for (int k = 0; k < 50; k++)
+	/**
+	 * Loads numbered indexed textures 0..49; absent entries are silently skipped as
+	 * in 377.
+	 */
+	public static void loadTextures(Archive archive) {
+		loadedTextureCount = 0;
+		for (int textureId = 0; textureId < 50; textureId++) {
 			try {
-				aClass50_Sub1_Sub1_Sub3Array1540[k] = new IndexedImage(class2, String.valueOf(k), 0);
-				if (aBoolean1527 && aClass50_Sub1_Sub1_Sub3Array1540[k].maxWidth == 128)
-					aClass50_Sub1_Sub1_Sub3Array1540[k].resizeToHalf();
+				textures[textureId] = new IndexedImage(archive, String.valueOf(textureId), 0);
+				if (lowMemory && textures[textureId].maxWidth == 128)
+					textures[textureId].resizeToHalf();
 				else
-					aClass50_Sub1_Sub1_Sub3Array1540[k].resizeToCanvas();
-				anInt1539++;
-			} catch (Exception _ex) {
+					textures[textureId].resizeToCanvas();
+				loadedTextureCount++;
+			} catch (Exception ignored) {
+				// Missing texture entries are valid in the original numbered archive.
 			}
-
-	}
-
-	public static int method498(int i, int j) {
-		if (anIntArray1542[i] != 0)
-			return anIntArray1542[i];
-		int k = 0;
-		int l = 0;
-		int i1 = 0;
-		int j1 = anIntArrayArray1549[i].length;
-		for (int k1 = 0; k1 < j1; k1++) {
-			k += anIntArrayArray1549[i][k1] >> 16 & 0xff;
-			l += anIntArrayArray1549[i][k1] >> 8 & 0xff;
-			i1 += anIntArrayArray1549[i][k1] & 0xff;
-		}
-
-		if (j != 0)
-			return anInt1525;
-		int l1 = (k / j1 << 16) + (l / j1 << 8) + i1 / j1;
-		l1 = method502(l1, 1.3999999999999999D);
-		if (l1 == 0)
-			l1 = 1;
-		anIntArray1542[i] = l1;
-		return l1;
-	}
-
-	public static void method499(int i, int j) {
-		if (j != 9)
-			anInt1524 = -48;
-		if (anIntArrayArray1545[i] == null) {
-			return;
-		} else {
-			anIntArrayArray1544[anInt1543++] = anIntArrayArray1545[i];
-			anIntArrayArray1545[i] = null;
-			return;
 		}
 	}
 
-	public static int[] method500(int i) {
-		anIntArray1546[i] = anInt1547++;
-		if (anIntArrayArray1545[i] != null)
-			return anIntArrayArray1545[i];
-		int ai[];
-		if (anInt1543 > 0) {
-			ai = anIntArrayArray1544[--anInt1543];
-			anIntArrayArray1544[anInt1543] = null;
+	/** Returns the cached gamma-adjusted average palette colour for a texture. */
+	public static int getAverageTextureColor(int textureId) {
+		if (averageTextureColors[textureId] != 0)
+			return averageTextureColors[textureId];
+		int red = 0, green = 0, blue = 0;
+		int[] palette = texturePalettes[textureId];
+		for (int rgb : palette) {
+			red += rgb >> 16 & 0xff;
+			green += rgb >> 8 & 0xff;
+			blue += rgb & 0xff;
+		}
+		int rgb = (red / palette.length << 16) + (green / palette.length << 8) + blue / palette.length;
+		rgb = adjustBrightness(rgb, 1.3999999999999999D);
+		if (rgb == 0)
+			rgb = 1;
+		return averageTextureColors[textureId] = rgb;
+	}
+
+	/** Returns an expanded texture buffer to the shared pool. */
+	public static void releaseTexture(int textureId) {
+		if (texturePixels[textureId] == null)
+			return;
+		texturePool[texturePoolAvailable++] = texturePixels[textureId];
+		texturePixels[textureId] = null;
+	}
+
+	private static int[] getTexturePixels(int textureId) {
+		textureLastUsed[textureId] = textureCycle++;
+		if (texturePixels[textureId] != null)
+			return texturePixels[textureId];
+		int[] texels;
+		if (texturePoolAvailable > 0) {
+			texels = texturePool[--texturePoolAvailable];
+			texturePool[texturePoolAvailable] = null;
 		} else {
-			int j = 0;
-			int k = -1;
-			for (int l = 0; l < anInt1539; l++)
-				if (anIntArrayArray1545[l] != null && (anIntArray1546[l] < j || k == -1)) {
-					j = anIntArray1546[l];
-					k = l;
+			int oldestCycle = 0;
+			int oldestTexture = -1;
+			for (int candidate = 0; candidate < loadedTextureCount; candidate++) {
+				if (texturePixels[candidate] != null
+						&& (textureLastUsed[candidate] < oldestCycle || oldestTexture == -1)) {
+					oldestCycle = textureLastUsed[candidate];
+					oldestTexture = candidate;
 				}
-
-			ai = anIntArrayArray1545[k];
-			anIntArrayArray1545[k] = null;
-		}
-		anIntArrayArray1545[i] = ai;
-		IndexedImage class50_sub1_sub1_sub3 = aClass50_Sub1_Sub1_Sub3Array1540[i];
-		int ai1[] = anIntArrayArray1549[i];
-		if (aBoolean1527) {
-			aBooleanArray1541[i] = false;
-			for (int i1 = 0; i1 < 4096; i1++) {
-				int i2 = ai[i1] = ai1[class50_sub1_sub1_sub3.pixels[i1]] & 0xf8f8ff;
-				if (i2 == 0)
-					aBooleanArray1541[i] = true;
-				ai[4096 + i1] = i2 - (i2 >>> 3) & 0xf8f8ff;
-				ai[8192 + i1] = i2 - (i2 >>> 2) & 0xf8f8ff;
-				ai[12288 + i1] = i2 - (i2 >>> 2) - (i2 >>> 3) & 0xf8f8ff;
 			}
-
+			texels = texturePixels[oldestTexture];
+			texturePixels[oldestTexture] = null;
+		}
+		texturePixels[textureId] = texels;
+		IndexedImage texture = textures[textureId];
+		int[] palette = texturePalettes[textureId];
+		if (lowMemory) {
+			textureHasTransparency[textureId] = false;
+			for (int pixel = 0; pixel < 4096; pixel++) {
+				int rgb = texels[pixel] = palette[texture.pixels[pixel]] & 0xf8f8ff;
+				if (rgb == 0)
+					textureHasTransparency[textureId] = true;
+				texels[4096 + pixel] = rgb - (rgb >>> 3) & 0xf8f8ff;
+				texels[8192 + pixel] = rgb - (rgb >>> 2) & 0xf8f8ff;
+				texels[12288 + pixel] = rgb - (rgb >>> 2) - (rgb >>> 3) & 0xf8f8ff;
+			}
 		} else {
-			if (class50_sub1_sub1_sub3.width == 64) {
-				for (int j1 = 0; j1 < 128; j1++) {
-					for (int j2 = 0; j2 < 128; j2++)
-						ai[j2 + (j1 << 7)] = ai1[class50_sub1_sub1_sub3.pixels[(j2 >> 1) + ((j1 >> 1) << 6)]];
-
-				}
-
+			if (texture.width == 64) {
+				for (int y = 0; y < 128; y++)
+					for (int x = 0; x < 128; x++)
+						texels[x + (y << 7)] = palette[texture.pixels[(x >> 1) + ((y >> 1) << 6)]];
 			} else {
-				for (int k1 = 0; k1 < 16384; k1++)
-					ai[k1] = ai1[class50_sub1_sub1_sub3.pixels[k1]];
-
+				for (int pixel = 0; pixel < 16384; pixel++)
+					texels[pixel] = palette[texture.pixels[pixel]];
 			}
-			aBooleanArray1541[i] = false;
-			for (int l1 = 0; l1 < 16384; l1++) {
-				ai[l1] &= 0xf8f8ff;
-				int k2 = ai[l1];
-				if (k2 == 0)
-					aBooleanArray1541[i] = true;
-				ai[16384 + l1] = k2 - (k2 >>> 3) & 0xf8f8ff;
-				ai[32768 + l1] = k2 - (k2 >>> 2) & 0xf8f8ff;
-				ai[49152 + l1] = k2 - (k2 >>> 2) - (k2 >>> 3) & 0xf8f8ff;
+			textureHasTransparency[textureId] = false;
+			for (int pixel = 0; pixel < 16384; pixel++) {
+				texels[pixel] &= 0xf8f8ff;
+				int rgb = texels[pixel];
+				if (rgb == 0)
+					textureHasTransparency[textureId] = true;
+				texels[16384 + pixel] = rgb - (rgb >>> 3) & 0xf8f8ff;
+				texels[32768 + pixel] = rgb - (rgb >>> 2) & 0xf8f8ff;
+				texels[49152 + pixel] = rgb - (rgb >>> 2) - (rgb >>> 3) & 0xf8f8ff;
 			}
-
 		}
-		return ai;
+		return texels;
 	}
 
-	public static void method501(double d, byte byte0) {
-		d += Math.random() * 0.029999999999999999D - 0.014999999999999999D;
-		int i = 0;
-		for (int j = 0; j < 512; j++) {
-			double d1 = (double) (j / 8) / 64D + 0.0078125D;
-			double d2 = (double) (j & 7) / 8D + 0.0625D;
-			for (int j1 = 0; j1 < 128; j1++) {
-				double d3 = (double) j1 / 128D;
-				double d4 = d3;
-				double d5 = d3;
-				double d6 = d3;
-				if (d2 != 0.0D) {
-					double d7;
-					if (d3 < 0.5D)
-						d7 = d3 * (1.0D + d2);
-					else
-						d7 = (d3 + d2) - d3 * d2;
-					double d8 = 2D * d3 - d7;
-					double d9 = d1 + 0.33333333333333331D;
-					if (d9 > 1.0D)
-						d9--;
-					double d10 = d1;
-					double d11 = d1 - 0.33333333333333331D;
-					if (d11 < 0.0D)
-						d11++;
-					if (6D * d9 < 1.0D)
-						d4 = d8 + (d7 - d8) * 6D * d9;
-					else if (2D * d9 < 1.0D)
-						d4 = d7;
-					else if (3D * d9 < 2D)
-						d4 = d8 + (d7 - d8) * (0.66666666666666663D - d9) * 6D;
-					else
-						d4 = d8;
-					if (6D * d10 < 1.0D)
-						d5 = d8 + (d7 - d8) * 6D * d10;
-					else if (2D * d10 < 1.0D)
-						d5 = d7;
-					else if (3D * d10 < 2D)
-						d5 = d8 + (d7 - d8) * (0.66666666666666663D - d10) * 6D;
-					else
-						d5 = d8;
-					if (6D * d11 < 1.0D)
-						d6 = d8 + (d7 - d8) * 6D * d11;
-					else if (2D * d11 < 1.0D)
-						d6 = d7;
-					else if (3D * d11 < 2D)
-						d6 = d8 + (d7 - d8) * (0.66666666666666663D - d11) * 6D;
-					else
-						d6 = d8;
+	/**
+	 * Rebuilds the HSL and texture palettes using the client's randomized
+	 * brightness jitter.
+	 */
+	public static void setBrightness(double brightness) {
+		brightness += Math.random() * 0.029999999999999999D - 0.014999999999999999D;
+		int paletteIndex = 0;
+		for (int hueSat = 0; hueSat < 512; hueSat++) {
+			double hue = (double) (hueSat / 8) / 64D + 0.0078125D;
+			double saturation = (double) (hueSat & 7) / 8D + 0.0625D;
+			for (int lightnessIndex = 0; lightnessIndex < 128; lightnessIndex++) {
+				double lightness = (double) lightnessIndex / 128D;
+				double red = lightness, green = lightness, blue = lightness;
+				if (saturation != 0.0D) {
+					double q = lightness < 0.5D ? lightness * (1.0D + saturation)
+							: (lightness + saturation) - lightness * saturation;
+					double p = 2D * lightness - q;
+					red = hueToRgb(p, q, hue + 0.33333333333333331D);
+					green = hueToRgb(p, q, hue);
+					blue = hueToRgb(p, q, hue - 0.33333333333333331D);
 				}
-				int k1 = (int) (d4 * 256D);
-				int l1 = (int) (d5 * 256D);
-				int i2 = (int) (d6 * 256D);
-				int j2 = (k1 << 16) + (l1 << 8) + i2;
-				j2 = method502(j2, d);
-				if (j2 == 0)
-					j2 = 1;
-				anIntArray1548[i++] = j2;
+				int rgb = ((int) (red * 256D) << 16) + ((int) (green * 256D) << 8) + (int) (blue * 256D);
+				rgb = adjustBrightness(rgb, brightness);
+				if (rgb == 0)
+					rgb = 1;
+				HSL_TO_RGB[paletteIndex++] = rgb;
 			}
-
 		}
-
-		for (int k = 0; k < 50; k++)
-			if (aClass50_Sub1_Sub1_Sub3Array1540[k] != null) {
-				int ai[] = aClass50_Sub1_Sub1_Sub3Array1540[k].palette;
-				anIntArrayArray1549[k] = new int[ai.length];
-				for (int i1 = 0; i1 < ai.length; i1++) {
-					anIntArrayArray1549[k][i1] = method502(ai[i1], d);
-					if ((anIntArrayArray1549[k][i1] & 0xf8f8ff) == 0 && i1 != 0)
-						anIntArrayArray1549[k][i1] = 1;
+		for (int textureId = 0; textureId < 50; textureId++) {
+			if (textures[textureId] != null) {
+				int[] source = textures[textureId].palette;
+				texturePalettes[textureId] = new int[source.length];
+				for (int i = 0; i < source.length; i++) {
+					int rgb = adjustBrightness(source[i], brightness);
+					if ((rgb & 0xf8f8ff) == 0 && i != 0)
+						rgb = 1;
+					texturePalettes[textureId][i] = rgb;
 				}
-
 			}
-
-		if (byte0 == 6)
-			byte0 = 0;
-		else
-			return;
-		for (int l = 0; l < 50; l++)
-			method499(l, 9);
-
+		}
+		for (int textureId = 0; textureId < 50; textureId++)
+			releaseTexture(textureId);
 	}
 
-	public static int method502(int i, double d) {
-		double d1 = (double) (i >> 16) / 256D;
-		double d2 = (double) (i >> 8 & 0xff) / 256D;
-		double d3 = (double) (i & 0xff) / 256D;
-		d1 = Math.pow(d1, d);
-		d2 = Math.pow(d2, d);
-		d3 = Math.pow(d3, d);
-		int j = (int) (d1 * 256D);
-		int k = (int) (d2 * 256D);
-		int l = (int) (d3 * 256D);
-		return (j << 16) + (k << 8) + l;
+	private static double hueToRgb(double p, double q, double hue) {
+		if (hue > 1.0D)
+			hue--;
+		if (hue < 0.0D)
+			hue++;
+		if (6D * hue < 1.0D)
+			return p + (q - p) * 6D * hue;
+		if (2D * hue < 1.0D)
+			return q;
+		if (3D * hue < 2D)
+			return p + (q - p) * (0.66666666666666663D - hue) * 6D;
+		return p;
 	}
 
-	public static void method503(int i, int j, int k, int l, int i1, int j1, int k1, int l1, int i2) {
+	public static int adjustBrightness(int rgb, double brightness) {
+		double red = Math.pow((double) (rgb >> 16) / 256D, brightness);
+		double green = Math.pow((double) (rgb >> 8 & 0xff) / 256D, brightness);
+		double blue = Math.pow((double) (rgb & 0xff) / 256D, brightness);
+		return ((int) (red * 256D) << 16) + ((int) (green * 256D) << 8) + (int) (blue * 256D);
+	}
+
+	public static void drawGouraudTriangle(int yA, int yB, int yC, int xA, int xB, int xC, int shadeA, int shadeB,
+			int shadeC) {
+		drawGouraudTriangleInternal(yA, yB, yC, xA, xB, xC, shadeA, shadeB, shadeC);
+	}
+
+	public static void drawFlatTriangle(int yA, int yB, int yC, int xA, int xB, int xC, int rgb) {
+		drawFlatTriangleInternal(yA, yB, yC, xA, xB, xC, rgb);
+	}
+
+	public static void drawTexturedTriangle(int yA, int yB, int yC, int xA, int xB, int xC, int shadeA, int shadeB,
+			int shadeC, int textureXA, int textureXB, int textureXC, int textureYA, int textureYB, int textureYC,
+			int textureZA, int textureZB, int textureZC, int textureId) {
+		drawTexturedTriangleInternal(yA, yB, yC, xA, xB, xC, shadeA, shadeB, shadeC, textureXA, textureXB, textureXC,
+				textureYA, textureYB, textureYC, textureZA, textureZB, textureZC, textureId);
+	}
+
+	private static void drawGouraudTriangleInternal(int i, int j, int k, int l, int i1, int j1, int k1, int l1,
+			int i2) {
 		int j2 = 0;
 		int k2 = 0;
 		if (j != i) {
@@ -331,8 +360,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				if (i != j && j3 < j2 || i == j && j3 > l2) {
 					k -= j;
 					j -= i;
-					for (i = anIntArray1538[i]; --j >= 0; i += Rasterizer.width) {
-						method504(Rasterizer.pixels, i, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
+					for (i = scanlineOffsets[i]; --j >= 0; i += Rasterizer.width) {
+						drawGouraudScanline(Rasterizer.pixels, i, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
 						j1 += j3;
 						l += j2;
 						i2 += k3;
@@ -340,7 +369,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 					}
 
 					while (--k >= 0) {
-						method504(Rasterizer.pixels, i, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
+						drawGouraudScanline(Rasterizer.pixels, i, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
 						j1 += j3;
 						i1 += l2;
 						i2 += k3;
@@ -351,8 +380,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				}
 				k -= j;
 				j -= i;
-				for (i = anIntArray1538[i]; --j >= 0; i += Rasterizer.width) {
-					method504(Rasterizer.pixels, i, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
+				for (i = scanlineOffsets[i]; --j >= 0; i += Rasterizer.width) {
+					drawGouraudScanline(Rasterizer.pixels, i, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
 					j1 += j3;
 					l += j2;
 					i2 += k3;
@@ -360,7 +389,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				}
 
 				while (--k >= 0) {
-					method504(Rasterizer.pixels, i, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
+					drawGouraudScanline(Rasterizer.pixels, i, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
 					j1 += j3;
 					i1 += l2;
 					i2 += k3;
@@ -388,8 +417,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			if (i != k && j3 < j2 || i == k && l2 > j2) {
 				j -= k;
 				k -= i;
-				for (i = anIntArray1538[i]; --k >= 0; i += Rasterizer.width) {
-					method504(Rasterizer.pixels, i, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
+				for (i = scanlineOffsets[i]; --k >= 0; i += Rasterizer.width) {
+					drawGouraudScanline(Rasterizer.pixels, i, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
 					i1 += j3;
 					l += j2;
 					l1 += k3;
@@ -397,7 +426,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				}
 
 				while (--j >= 0) {
-					method504(Rasterizer.pixels, i, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
+					drawGouraudScanline(Rasterizer.pixels, i, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
 					j1 += l2;
 					l += j2;
 					i2 += i3;
@@ -408,8 +437,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			}
 			j -= k;
 			k -= i;
-			for (i = anIntArray1538[i]; --k >= 0; i += Rasterizer.width) {
-				method504(Rasterizer.pixels, i, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
+			for (i = scanlineOffsets[i]; --k >= 0; i += Rasterizer.width) {
+				drawGouraudScanline(Rasterizer.pixels, i, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
 				i1 += j3;
 				l += j2;
 				l1 += k3;
@@ -417,7 +446,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			}
 
 			while (--j >= 0) {
-				method504(Rasterizer.pixels, i, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
+				drawGouraudScanline(Rasterizer.pixels, i, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
 				j1 += l2;
 				l += j2;
 				i2 += i3;
@@ -453,8 +482,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				if (j != k && j2 < l2 || j == k && j2 > j3) {
 					i -= k;
 					k -= j;
-					for (j = anIntArray1538[j]; --k >= 0; j += Rasterizer.width) {
-						method504(Rasterizer.pixels, j, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
+					for (j = scanlineOffsets[j]; --k >= 0; j += Rasterizer.width) {
+						drawGouraudScanline(Rasterizer.pixels, j, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
 						l += j2;
 						i1 += l2;
 						k1 += k2;
@@ -462,7 +491,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 					}
 
 					while (--i >= 0) {
-						method504(Rasterizer.pixels, j, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
+						drawGouraudScanline(Rasterizer.pixels, j, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
 						l += j2;
 						j1 += j3;
 						k1 += k2;
@@ -473,8 +502,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				}
 				i -= k;
 				k -= j;
-				for (j = anIntArray1538[j]; --k >= 0; j += Rasterizer.width) {
-					method504(Rasterizer.pixels, j, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
+				for (j = scanlineOffsets[j]; --k >= 0; j += Rasterizer.width) {
+					drawGouraudScanline(Rasterizer.pixels, j, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
 					l += j2;
 					i1 += l2;
 					k1 += k2;
@@ -482,7 +511,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				}
 
 				while (--i >= 0) {
-					method504(Rasterizer.pixels, j, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
+					drawGouraudScanline(Rasterizer.pixels, j, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
 					l += j2;
 					j1 += j3;
 					k1 += k2;
@@ -510,8 +539,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			if (j2 < l2) {
 				k -= i;
 				i -= j;
-				for (j = anIntArray1538[j]; --i >= 0; j += Rasterizer.width) {
-					method504(Rasterizer.pixels, j, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
+				for (j = scanlineOffsets[j]; --i >= 0; j += Rasterizer.width) {
+					drawGouraudScanline(Rasterizer.pixels, j, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
 					j1 += j2;
 					i1 += l2;
 					i2 += k2;
@@ -519,7 +548,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				}
 
 				while (--k >= 0) {
-					method504(Rasterizer.pixels, j, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
+					drawGouraudScanline(Rasterizer.pixels, j, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
 					l += j3;
 					i1 += l2;
 					k1 += k3;
@@ -530,8 +559,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			}
 			k -= i;
 			i -= j;
-			for (j = anIntArray1538[j]; --i >= 0; j += Rasterizer.width) {
-				method504(Rasterizer.pixels, j, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
+			for (j = scanlineOffsets[j]; --i >= 0; j += Rasterizer.width) {
+				drawGouraudScanline(Rasterizer.pixels, j, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
 				j1 += j2;
 				i1 += l2;
 				i2 += k2;
@@ -539,7 +568,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			}
 
 			while (--k >= 0) {
-				method504(Rasterizer.pixels, j, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
+				drawGouraudScanline(Rasterizer.pixels, j, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
 				l += j3;
 				i1 += l2;
 				k1 += k3;
@@ -574,8 +603,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			if (l2 < j3) {
 				j -= i;
 				i -= k;
-				for (k = anIntArray1538[k]; --i >= 0; k += Rasterizer.width) {
-					method504(Rasterizer.pixels, k, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
+				for (k = scanlineOffsets[k]; --i >= 0; k += Rasterizer.width) {
+					drawGouraudScanline(Rasterizer.pixels, k, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
 					i1 += l2;
 					j1 += j3;
 					l1 += i3;
@@ -583,7 +612,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				}
 
 				while (--j >= 0) {
-					method504(Rasterizer.pixels, k, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
+					drawGouraudScanline(Rasterizer.pixels, k, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
 					i1 += l2;
 					l += j2;
 					l1 += i3;
@@ -594,8 +623,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			}
 			j -= i;
 			i -= k;
-			for (k = anIntArray1538[k]; --i >= 0; k += Rasterizer.width) {
-				method504(Rasterizer.pixels, k, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
+			for (k = scanlineOffsets[k]; --i >= 0; k += Rasterizer.width) {
+				drawGouraudScanline(Rasterizer.pixels, k, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
 				i1 += l2;
 				j1 += j3;
 				l1 += i3;
@@ -603,7 +632,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			}
 
 			while (--j >= 0) {
-				method504(Rasterizer.pixels, k, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
+				drawGouraudScanline(Rasterizer.pixels, k, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
 				i1 += l2;
 				l += j2;
 				l1 += i3;
@@ -631,8 +660,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 		if (l2 < j3) {
 			i -= j;
 			j -= k;
-			for (k = anIntArray1538[k]; --j >= 0; k += Rasterizer.width) {
-				method504(Rasterizer.pixels, k, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
+			for (k = scanlineOffsets[k]; --j >= 0; k += Rasterizer.width) {
+				drawGouraudScanline(Rasterizer.pixels, k, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
 				l += l2;
 				j1 += j3;
 				k1 += i3;
@@ -640,7 +669,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			}
 
 			while (--i >= 0) {
-				method504(Rasterizer.pixels, k, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
+				drawGouraudScanline(Rasterizer.pixels, k, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
 				i1 += j2;
 				j1 += j3;
 				l1 += k2;
@@ -651,8 +680,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 		}
 		i -= j;
 		j -= k;
-		for (k = anIntArray1538[k]; --j >= 0; k += Rasterizer.width) {
-			method504(Rasterizer.pixels, k, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
+		for (k = scanlineOffsets[k]; --j >= 0; k += Rasterizer.width) {
+			drawGouraudScanline(Rasterizer.pixels, k, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
 			l += l2;
 			j1 += j3;
 			k1 += i3;
@@ -660,7 +689,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 		}
 
 		while (--i >= 0) {
-			method504(Rasterizer.pixels, k, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
+			drawGouraudScanline(Rasterizer.pixels, k, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
 			i1 += j2;
 			j1 += j3;
 			l1 += k2;
@@ -669,10 +698,10 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 		}
 	}
 
-	public static void method504(int ai[], int i, int j, int k, int l, int i1, int j1, int k1) {
-		if (aBoolean1530) {
+	private static void drawGouraudScanline(int ai[], int i, int j, int k, int l, int i1, int j1, int k1) {
+		if (gouraudBlockShading) {
 			int l1;
-			if (aBoolean1528) {
+			if (restrictEdges) {
 				if (i1 - l > 3)
 					l1 = (k1 - j1) / (i1 - l);
 				else
@@ -694,13 +723,13 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				i += l;
 				k = i1 - l >> 2;
 				if (k > 0)
-					l1 = (k1 - j1) * anIntArray1534[k] >> 15;
+					l1 = (k1 - j1) * reciprocal15[k] >> 15;
 				else
 					l1 = 0;
 			}
-			if (anInt1531 == 0) {
+			if (alpha == 0) {
 				while (--k >= 0) {
-					j = anIntArray1548[j1 >> 8];
+					j = HSL_TO_RGB[j1 >> 8];
 					j1 += l1;
 					ai[i++] = j;
 					ai[i++] = j;
@@ -709,17 +738,17 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				}
 				k = i1 - l & 3;
 				if (k > 0) {
-					j = anIntArray1548[j1 >> 8];
+					j = HSL_TO_RGB[j1 >> 8];
 					do
 						ai[i++] = j;
 					while (--k > 0);
 					return;
 				}
 			} else {
-				int j2 = anInt1531;
-				int l2 = 256 - anInt1531;
+				int j2 = alpha;
+				int l2 = 256 - alpha;
 				while (--k >= 0) {
-					j = anIntArray1548[j1 >> 8];
+					j = HSL_TO_RGB[j1 >> 8];
 					j1 += l1;
 					j = ((j & 0xff00ff) * l2 >> 8 & 0xff00ff) + ((j & 0xff00) * l2 >> 8 & 0xff00);
 					ai[i++] = j + ((ai[i] & 0xff00ff) * j2 >> 8 & 0xff00ff) + ((ai[i] & 0xff00) * j2 >> 8 & 0xff00);
@@ -729,7 +758,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				}
 				k = i1 - l & 3;
 				if (k > 0) {
-					j = anIntArray1548[j1 >> 8];
+					j = HSL_TO_RGB[j1 >> 8];
 					j = ((j & 0xff00ff) * l2 >> 8 & 0xff00ff) + ((j & 0xff00) * l2 >> 8 & 0xff00);
 					do
 						ai[i++] = j + ((ai[i] & 0xff00ff) * j2 >> 8 & 0xff00ff) + ((ai[i] & 0xff00) * j2 >> 8 & 0xff00);
@@ -741,7 +770,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 		if (l >= i1)
 			return;
 		int i2 = (k1 - j1) / (i1 - l);
-		if (aBoolean1528) {
+		if (restrictEdges) {
 			if (i1 > Rasterizer.viewportRx)
 				i1 = Rasterizer.viewportRx;
 			if (l < 0) {
@@ -753,24 +782,24 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 		}
 		i += l;
 		k = i1 - l;
-		if (anInt1531 == 0) {
+		if (alpha == 0) {
 			do {
-				ai[i++] = anIntArray1548[j1 >> 8];
+				ai[i++] = HSL_TO_RGB[j1 >> 8];
 				j1 += i2;
 			} while (--k > 0);
 			return;
 		}
-		int k2 = anInt1531;
-		int i3 = 256 - anInt1531;
+		int k2 = alpha;
+		int i3 = 256 - alpha;
 		do {
-			j = anIntArray1548[j1 >> 8];
+			j = HSL_TO_RGB[j1 >> 8];
 			j1 += i2;
 			j = ((j & 0xff00ff) * i3 >> 8 & 0xff00ff) + ((j & 0xff00) * i3 >> 8 & 0xff00);
 			ai[i++] = j + ((ai[i] & 0xff00ff) * k2 >> 8 & 0xff00ff) + ((ai[i] & 0xff00) * k2 >> 8 & 0xff00);
 		} while (--k > 0);
 	}
 
-	public static void method505(int i, int j, int k, int l, int i1, int j1, int k1) {
+	private static void drawFlatTriangleInternal(int i, int j, int k, int l, int i1, int j1, int k1) {
 		int l1 = 0;
 		if (j != i)
 			l1 = (i1 - l << 16) / (j - i);
@@ -802,14 +831,14 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				if (i != j && j2 < l1 || i == j && j2 > i2) {
 					k -= j;
 					j -= i;
-					for (i = anIntArray1538[i]; --j >= 0; i += Rasterizer.width) {
-						method506(Rasterizer.pixels, i, k1, 0, j1 >> 16, l >> 16);
+					for (i = scanlineOffsets[i]; --j >= 0; i += Rasterizer.width) {
+						drawFlatScanline(Rasterizer.pixels, i, k1, 0, j1 >> 16, l >> 16);
 						j1 += j2;
 						l += l1;
 					}
 
 					while (--k >= 0) {
-						method506(Rasterizer.pixels, i, k1, 0, j1 >> 16, i1 >> 16);
+						drawFlatScanline(Rasterizer.pixels, i, k1, 0, j1 >> 16, i1 >> 16);
 						j1 += j2;
 						i1 += i2;
 						i += Rasterizer.width;
@@ -818,14 +847,14 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				}
 				k -= j;
 				j -= i;
-				for (i = anIntArray1538[i]; --j >= 0; i += Rasterizer.width) {
-					method506(Rasterizer.pixels, i, k1, 0, l >> 16, j1 >> 16);
+				for (i = scanlineOffsets[i]; --j >= 0; i += Rasterizer.width) {
+					drawFlatScanline(Rasterizer.pixels, i, k1, 0, l >> 16, j1 >> 16);
 					j1 += j2;
 					l += l1;
 				}
 
 				while (--k >= 0) {
-					method506(Rasterizer.pixels, i, k1, 0, i1 >> 16, j1 >> 16);
+					drawFlatScanline(Rasterizer.pixels, i, k1, 0, i1 >> 16, j1 >> 16);
 					j1 += j2;
 					i1 += i2;
 					i += Rasterizer.width;
@@ -846,14 +875,14 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			if (i != k && j2 < l1 || i == k && i2 > l1) {
 				j -= k;
 				k -= i;
-				for (i = anIntArray1538[i]; --k >= 0; i += Rasterizer.width) {
-					method506(Rasterizer.pixels, i, k1, 0, i1 >> 16, l >> 16);
+				for (i = scanlineOffsets[i]; --k >= 0; i += Rasterizer.width) {
+					drawFlatScanline(Rasterizer.pixels, i, k1, 0, i1 >> 16, l >> 16);
 					i1 += j2;
 					l += l1;
 				}
 
 				while (--j >= 0) {
-					method506(Rasterizer.pixels, i, k1, 0, j1 >> 16, l >> 16);
+					drawFlatScanline(Rasterizer.pixels, i, k1, 0, j1 >> 16, l >> 16);
 					j1 += i2;
 					l += l1;
 					i += Rasterizer.width;
@@ -862,14 +891,14 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			}
 			j -= k;
 			k -= i;
-			for (i = anIntArray1538[i]; --k >= 0; i += Rasterizer.width) {
-				method506(Rasterizer.pixels, i, k1, 0, l >> 16, i1 >> 16);
+			for (i = scanlineOffsets[i]; --k >= 0; i += Rasterizer.width) {
+				drawFlatScanline(Rasterizer.pixels, i, k1, 0, l >> 16, i1 >> 16);
 				i1 += j2;
 				l += l1;
 			}
 
 			while (--j >= 0) {
-				method506(Rasterizer.pixels, i, k1, 0, l >> 16, j1 >> 16);
+				drawFlatScanline(Rasterizer.pixels, i, k1, 0, l >> 16, j1 >> 16);
 				j1 += i2;
 				l += l1;
 				i += Rasterizer.width;
@@ -898,14 +927,14 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				if (j != k && l1 < i2 || j == k && l1 > j2) {
 					i -= k;
 					k -= j;
-					for (j = anIntArray1538[j]; --k >= 0; j += Rasterizer.width) {
-						method506(Rasterizer.pixels, j, k1, 0, l >> 16, i1 >> 16);
+					for (j = scanlineOffsets[j]; --k >= 0; j += Rasterizer.width) {
+						drawFlatScanline(Rasterizer.pixels, j, k1, 0, l >> 16, i1 >> 16);
 						l += l1;
 						i1 += i2;
 					}
 
 					while (--i >= 0) {
-						method506(Rasterizer.pixels, j, k1, 0, l >> 16, j1 >> 16);
+						drawFlatScanline(Rasterizer.pixels, j, k1, 0, l >> 16, j1 >> 16);
 						l += l1;
 						j1 += j2;
 						j += Rasterizer.width;
@@ -914,14 +943,14 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				}
 				i -= k;
 				k -= j;
-				for (j = anIntArray1538[j]; --k >= 0; j += Rasterizer.width) {
-					method506(Rasterizer.pixels, j, k1, 0, i1 >> 16, l >> 16);
+				for (j = scanlineOffsets[j]; --k >= 0; j += Rasterizer.width) {
+					drawFlatScanline(Rasterizer.pixels, j, k1, 0, i1 >> 16, l >> 16);
 					l += l1;
 					i1 += i2;
 				}
 
 				while (--i >= 0) {
-					method506(Rasterizer.pixels, j, k1, 0, j1 >> 16, l >> 16);
+					drawFlatScanline(Rasterizer.pixels, j, k1, 0, j1 >> 16, l >> 16);
 					l += l1;
 					j1 += j2;
 					j += Rasterizer.width;
@@ -942,14 +971,14 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			if (l1 < i2) {
 				k -= i;
 				i -= j;
-				for (j = anIntArray1538[j]; --i >= 0; j += Rasterizer.width) {
-					method506(Rasterizer.pixels, j, k1, 0, j1 >> 16, i1 >> 16);
+				for (j = scanlineOffsets[j]; --i >= 0; j += Rasterizer.width) {
+					drawFlatScanline(Rasterizer.pixels, j, k1, 0, j1 >> 16, i1 >> 16);
 					j1 += l1;
 					i1 += i2;
 				}
 
 				while (--k >= 0) {
-					method506(Rasterizer.pixels, j, k1, 0, l >> 16, i1 >> 16);
+					drawFlatScanline(Rasterizer.pixels, j, k1, 0, l >> 16, i1 >> 16);
 					l += j2;
 					i1 += i2;
 					j += Rasterizer.width;
@@ -958,14 +987,14 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			}
 			k -= i;
 			i -= j;
-			for (j = anIntArray1538[j]; --i >= 0; j += Rasterizer.width) {
-				method506(Rasterizer.pixels, j, k1, 0, i1 >> 16, j1 >> 16);
+			for (j = scanlineOffsets[j]; --i >= 0; j += Rasterizer.width) {
+				drawFlatScanline(Rasterizer.pixels, j, k1, 0, i1 >> 16, j1 >> 16);
 				j1 += l1;
 				i1 += i2;
 			}
 
 			while (--k >= 0) {
-				method506(Rasterizer.pixels, j, k1, 0, i1 >> 16, l >> 16);
+				drawFlatScanline(Rasterizer.pixels, j, k1, 0, i1 >> 16, l >> 16);
 				l += j2;
 				i1 += i2;
 				j += Rasterizer.width;
@@ -993,14 +1022,14 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			if (i2 < j2) {
 				j -= i;
 				i -= k;
-				for (k = anIntArray1538[k]; --i >= 0; k += Rasterizer.width) {
-					method506(Rasterizer.pixels, k, k1, 0, i1 >> 16, j1 >> 16);
+				for (k = scanlineOffsets[k]; --i >= 0; k += Rasterizer.width) {
+					drawFlatScanline(Rasterizer.pixels, k, k1, 0, i1 >> 16, j1 >> 16);
 					i1 += i2;
 					j1 += j2;
 				}
 
 				while (--j >= 0) {
-					method506(Rasterizer.pixels, k, k1, 0, i1 >> 16, l >> 16);
+					drawFlatScanline(Rasterizer.pixels, k, k1, 0, i1 >> 16, l >> 16);
 					i1 += i2;
 					l += l1;
 					k += Rasterizer.width;
@@ -1009,14 +1038,14 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			}
 			j -= i;
 			i -= k;
-			for (k = anIntArray1538[k]; --i >= 0; k += Rasterizer.width) {
-				method506(Rasterizer.pixels, k, k1, 0, j1 >> 16, i1 >> 16);
+			for (k = scanlineOffsets[k]; --i >= 0; k += Rasterizer.width) {
+				drawFlatScanline(Rasterizer.pixels, k, k1, 0, j1 >> 16, i1 >> 16);
 				i1 += i2;
 				j1 += j2;
 			}
 
 			while (--j >= 0) {
-				method506(Rasterizer.pixels, k, k1, 0, l >> 16, i1 >> 16);
+				drawFlatScanline(Rasterizer.pixels, k, k1, 0, l >> 16, i1 >> 16);
 				i1 += i2;
 				l += l1;
 				k += Rasterizer.width;
@@ -1037,14 +1066,14 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 		if (i2 < j2) {
 			i -= j;
 			j -= k;
-			for (k = anIntArray1538[k]; --j >= 0; k += Rasterizer.width) {
-				method506(Rasterizer.pixels, k, k1, 0, l >> 16, j1 >> 16);
+			for (k = scanlineOffsets[k]; --j >= 0; k += Rasterizer.width) {
+				drawFlatScanline(Rasterizer.pixels, k, k1, 0, l >> 16, j1 >> 16);
 				l += i2;
 				j1 += j2;
 			}
 
 			while (--i >= 0) {
-				method506(Rasterizer.pixels, k, k1, 0, i1 >> 16, j1 >> 16);
+				drawFlatScanline(Rasterizer.pixels, k, k1, 0, i1 >> 16, j1 >> 16);
 				i1 += l1;
 				j1 += j2;
 				k += Rasterizer.width;
@@ -1053,22 +1082,22 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 		}
 		i -= j;
 		j -= k;
-		for (k = anIntArray1538[k]; --j >= 0; k += Rasterizer.width) {
-			method506(Rasterizer.pixels, k, k1, 0, j1 >> 16, l >> 16);
+		for (k = scanlineOffsets[k]; --j >= 0; k += Rasterizer.width) {
+			drawFlatScanline(Rasterizer.pixels, k, k1, 0, j1 >> 16, l >> 16);
 			l += i2;
 			j1 += j2;
 		}
 
 		while (--i >= 0) {
-			method506(Rasterizer.pixels, k, k1, 0, j1 >> 16, i1 >> 16);
+			drawFlatScanline(Rasterizer.pixels, k, k1, 0, j1 >> 16, i1 >> 16);
 			i1 += l1;
 			j1 += j2;
 			k += Rasterizer.width;
 		}
 	}
 
-	public static void method506(int ai[], int i, int j, int k, int l, int i1) {
-		if (aBoolean1528) {
+	private static void drawFlatScanline(int ai[], int i, int j, int k, int l, int i1) {
+		if (restrictEdges) {
 			if (i1 > Rasterizer.viewportRx)
 				i1 = Rasterizer.viewportRx;
 			if (l < 0)
@@ -1078,7 +1107,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			return;
 		i += l;
 		k = i1 - l >> 2;
-		if (anInt1531 == 0) {
+		if (alpha == 0) {
 			while (--k >= 0) {
 				ai[i++] = j;
 				ai[i++] = j;
@@ -1090,8 +1119,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 
 			return;
 		}
-		int j1 = anInt1531;
-		int k1 = 256 - anInt1531;
+		int j1 = alpha;
+		int k1 = 256 - alpha;
 		j = ((j & 0xff00ff) * k1 >> 8 & 0xff00ff) + ((j & 0xff00) * k1 >> 8 & 0xff00);
 		while (--k >= 0) {
 			ai[i++] = j + ((ai[i] & 0xff00ff) * j1 >> 8 & 0xff00ff) + ((ai[i] & 0xff00) * j1 >> 8 & 0xff00);
@@ -1104,10 +1133,10 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 
 	}
 
-	public static void method507(int i, int j, int k, int l, int i1, int j1, int k1, int l1, int i2, int j2, int k2,
-			int l2, int i3, int j3, int k3, int l3, int i4, int j4, int k4) {
-		int ai[] = method500(k4);
-		aBoolean1529 = !aBooleanArray1541[k4];
+	private static void drawTexturedTriangleInternal(int i, int j, int k, int l, int i1, int j1, int k1, int l1, int i2,
+			int j2, int k2, int l2, int i3, int j3, int k3, int l3, int i4, int j4, int k4) {
+		int ai[] = getTexturePixels(k4);
+		opaqueTexture = !textureHasTransparency[k4];
 		k2 = j2 - k2;
 		j3 = i3 - j3;
 		i4 = l3 - i4;
@@ -1165,17 +1194,17 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 					l1 -= l7 * j;
 					j = 0;
 				}
-				int k8 = i - anInt1533;
+				int k8 = i - centerY;
 				l4 += j5 * k8;
 				k5 += i6 * k8;
 				j6 += l6 * k8;
 				if (i != j && i8 < i7 || i == j && i8 > k7) {
 					k -= j;
 					j -= i;
-					i = anIntArray1538[i];
+					i = scanlineOffsets[i];
 					while (--j >= 0) {
-						method508(Rasterizer.pixels, ai, 0, 0, i, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8,
-								l4, k5, j6, i5, l5, k6);
+						drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, i, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8, l4,
+								k5, j6, i5, l5, k6);
 						j1 += i8;
 						l += i7;
 						i2 += j8;
@@ -1186,8 +1215,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 						j6 += l6;
 					}
 					while (--k >= 0) {
-						method508(Rasterizer.pixels, ai, 0, 0, i, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8,
-								l4, k5, j6, i5, l5, k6);
+						drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, i, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8, l4,
+								k5, j6, i5, l5, k6);
 						j1 += i8;
 						i1 += k7;
 						i2 += j8;
@@ -1201,10 +1230,10 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				}
 				k -= j;
 				j -= i;
-				i = anIntArray1538[i];
+				i = scanlineOffsets[i];
 				while (--j >= 0) {
-					method508(Rasterizer.pixels, ai, 0, 0, i, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8, l4,
-							k5, j6, i5, l5, k6);
+					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, i, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8, l4, k5,
+							j6, i5, l5, k6);
 					j1 += i8;
 					l += i7;
 					i2 += j8;
@@ -1215,8 +1244,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 					j6 += l6;
 				}
 				while (--k >= 0) {
-					method508(Rasterizer.pixels, ai, 0, 0, i, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4,
-							k5, j6, i5, l5, k6);
+					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, i, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4, k5,
+							j6, i5, l5, k6);
 					j1 += i8;
 					i1 += k7;
 					i2 += j8;
@@ -1244,17 +1273,17 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				i2 -= l7 * k;
 				k = 0;
 			}
-			int l8 = i - anInt1533;
+			int l8 = i - centerY;
 			l4 += j5 * l8;
 			k5 += i6 * l8;
 			j6 += l6 * l8;
 			if (i != k && i8 < i7 || i == k && k7 > i7) {
 				j -= k;
 				k -= i;
-				i = anIntArray1538[i];
+				i = scanlineOffsets[i];
 				while (--k >= 0) {
-					method508(Rasterizer.pixels, ai, 0, 0, i, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4,
-							k5, j6, i5, l5, k6);
+					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, i, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4, k5,
+							j6, i5, l5, k6);
 					i1 += i8;
 					l += i7;
 					l1 += j8;
@@ -1265,8 +1294,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 					j6 += l6;
 				}
 				while (--j >= 0) {
-					method508(Rasterizer.pixels, ai, 0, 0, i, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8, l4,
-							k5, j6, i5, l5, k6);
+					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, i, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8, l4, k5,
+							j6, i5, l5, k6);
 					j1 += k7;
 					l += i7;
 					i2 += l7;
@@ -1280,10 +1309,10 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			}
 			j -= k;
 			k -= i;
-			i = anIntArray1538[i];
+			i = scanlineOffsets[i];
 			while (--k >= 0) {
-				method508(Rasterizer.pixels, ai, 0, 0, i, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8, l4, k5,
-						j6, i5, l5, k6);
+				drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, i, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8, l4, k5, j6,
+						i5, l5, k6);
 				i1 += i8;
 				l += i7;
 				l1 += j8;
@@ -1294,8 +1323,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				j6 += l6;
 			}
 			while (--j >= 0) {
-				method508(Rasterizer.pixels, ai, 0, 0, i, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8, l4, k5,
-						j6, i5, l5, k6);
+				drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, i, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8, l4, k5, j6,
+						i5, l5, k6);
 				j1 += k7;
 				l += i7;
 				i2 += l7;
@@ -1331,17 +1360,17 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 					i2 -= j8 * k;
 					k = 0;
 				}
-				int i9 = j - anInt1533;
+				int i9 = j - centerY;
 				l4 += j5 * i9;
 				k5 += i6 * i9;
 				j6 += l6 * i9;
 				if (j != k && i7 < k7 || j == k && i7 > i8) {
 					i -= k;
 					k -= j;
-					j = anIntArray1538[j];
+					j = scanlineOffsets[j];
 					while (--k >= 0) {
-						method508(Rasterizer.pixels, ai, 0, 0, j, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8,
-								l4, k5, j6, i5, l5, k6);
+						drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, j, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8, l4,
+								k5, j6, i5, l5, k6);
 						l += i7;
 						i1 += k7;
 						k1 += j7;
@@ -1352,8 +1381,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 						j6 += l6;
 					}
 					while (--i >= 0) {
-						method508(Rasterizer.pixels, ai, 0, 0, j, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8,
-								l4, k5, j6, i5, l5, k6);
+						drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, j, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8, l4,
+								k5, j6, i5, l5, k6);
 						l += i7;
 						j1 += i8;
 						k1 += j7;
@@ -1367,10 +1396,10 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				}
 				i -= k;
 				k -= j;
-				j = anIntArray1538[j];
+				j = scanlineOffsets[j];
 				while (--k >= 0) {
-					method508(Rasterizer.pixels, ai, 0, 0, j, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4,
-							k5, j6, i5, l5, k6);
+					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, j, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4, k5,
+							j6, i5, l5, k6);
 					l += i7;
 					i1 += k7;
 					k1 += j7;
@@ -1381,8 +1410,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 					j6 += l6;
 				}
 				while (--i >= 0) {
-					method508(Rasterizer.pixels, ai, 0, 0, j, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8, l4,
-							k5, j6, i5, l5, k6);
+					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, j, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8, l4, k5,
+							j6, i5, l5, k6);
 					l += i7;
 					j1 += i8;
 					k1 += j7;
@@ -1410,17 +1439,17 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				k1 -= j8 * i;
 				i = 0;
 			}
-			int j9 = j - anInt1533;
+			int j9 = j - centerY;
 			l4 += j5 * j9;
 			k5 += i6 * j9;
 			j6 += l6 * j9;
 			if (i7 < k7) {
 				k -= i;
 				i -= j;
-				j = anIntArray1538[j];
+				j = scanlineOffsets[j];
 				while (--i >= 0) {
-					method508(Rasterizer.pixels, ai, 0, 0, j, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8, l4,
-							k5, j6, i5, l5, k6);
+					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, j, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8, l4, k5,
+							j6, i5, l5, k6);
 					j1 += i7;
 					i1 += k7;
 					i2 += j7;
@@ -1431,8 +1460,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 					j6 += l6;
 				}
 				while (--k >= 0) {
-					method508(Rasterizer.pixels, ai, 0, 0, j, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8, l4,
-							k5, j6, i5, l5, k6);
+					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, j, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8, l4, k5,
+							j6, i5, l5, k6);
 					l += i8;
 					i1 += k7;
 					k1 += j8;
@@ -1446,10 +1475,10 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			}
 			k -= i;
 			i -= j;
-			j = anIntArray1538[j];
+			j = scanlineOffsets[j];
 			while (--i >= 0) {
-				method508(Rasterizer.pixels, ai, 0, 0, j, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4, k5,
-						j6, i5, l5, k6);
+				drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, j, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4, k5, j6,
+						i5, l5, k6);
 				j1 += i7;
 				i1 += k7;
 				i2 += j7;
@@ -1460,8 +1489,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				j6 += l6;
 			}
 			while (--k >= 0) {
-				method508(Rasterizer.pixels, ai, 0, 0, j, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4, k5,
-						j6, i5, l5, k6);
+				drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, j, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4, k5, j6,
+						i5, l5, k6);
 				l += i8;
 				i1 += k7;
 				k1 += j8;
@@ -1496,17 +1525,17 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				k1 -= j7 * i;
 				i = 0;
 			}
-			int k9 = k - anInt1533;
+			int k9 = k - centerY;
 			l4 += j5 * k9;
 			k5 += i6 * k9;
 			j6 += l6 * k9;
 			if (k7 < i8) {
 				j -= i;
 				i -= k;
-				k = anIntArray1538[k];
+				k = scanlineOffsets[k];
 				while (--i >= 0) {
-					method508(Rasterizer.pixels, ai, 0, 0, k, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4,
-							k5, j6, i5, l5, k6);
+					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, k, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4, k5,
+							j6, i5, l5, k6);
 					i1 += k7;
 					j1 += i8;
 					l1 += l7;
@@ -1517,8 +1546,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 					j6 += l6;
 				}
 				while (--j >= 0) {
-					method508(Rasterizer.pixels, ai, 0, 0, k, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4,
-							k5, j6, i5, l5, k6);
+					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, k, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4, k5,
+							j6, i5, l5, k6);
 					i1 += k7;
 					l += i7;
 					l1 += l7;
@@ -1532,10 +1561,10 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			}
 			j -= i;
 			i -= k;
-			k = anIntArray1538[k];
+			k = scanlineOffsets[k];
 			while (--i >= 0) {
-				method508(Rasterizer.pixels, ai, 0, 0, k, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8, l4, k5,
-						j6, i5, l5, k6);
+				drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, k, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8, l4, k5, j6,
+						i5, l5, k6);
 				i1 += k7;
 				j1 += i8;
 				l1 += l7;
@@ -1546,8 +1575,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				j6 += l6;
 			}
 			while (--j >= 0) {
-				method508(Rasterizer.pixels, ai, 0, 0, k, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8, l4, k5,
-						j6, i5, l5, k6);
+				drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, k, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8, l4, k5, j6,
+						i5, l5, k6);
 				i1 += k7;
 				l += i7;
 				l1 += l7;
@@ -1575,17 +1604,17 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			l1 -= j7 * j;
 			j = 0;
 		}
-		int l9 = k - anInt1533;
+		int l9 = k - centerY;
 		l4 += j5 * l9;
 		k5 += i6 * l9;
 		j6 += l6 * l9;
 		if (k7 < i8) {
 			i -= j;
 			j -= k;
-			k = anIntArray1538[k];
+			k = scanlineOffsets[k];
 			while (--j >= 0) {
-				method508(Rasterizer.pixels, ai, 0, 0, k, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8, l4, k5,
-						j6, i5, l5, k6);
+				drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, k, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8, l4, k5, j6,
+						i5, l5, k6);
 				l += k7;
 				j1 += i8;
 				k1 += l7;
@@ -1596,8 +1625,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 				j6 += l6;
 			}
 			while (--i >= 0) {
-				method508(Rasterizer.pixels, ai, 0, 0, k, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4, k5,
-						j6, i5, l5, k6);
+				drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, k, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4, k5, j6,
+						i5, l5, k6);
 				i1 += i7;
 				j1 += i8;
 				l1 += j7;
@@ -1611,10 +1640,10 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 		}
 		i -= j;
 		j -= k;
-		k = anIntArray1538[k];
+		k = scanlineOffsets[k];
 		while (--j >= 0) {
-			method508(Rasterizer.pixels, ai, 0, 0, k, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8, l4, k5, j6,
-					i5, l5, k6);
+			drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, k, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8, l4, k5, j6, i5,
+					l5, k6);
 			l += k7;
 			j1 += i8;
 			k1 += l7;
@@ -1625,8 +1654,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			j6 += l6;
 		}
 		while (--i >= 0) {
-			method508(Rasterizer.pixels, ai, 0, 0, k, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8, l4, k5, j6,
-					i5, l5, k6);
+			drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, k, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8, l4, k5, j6, i5,
+					l5, k6);
 			i1 += i7;
 			j1 += i8;
 			l1 += j7;
@@ -1638,13 +1667,13 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 		}
 	}
 
-	public static void method508(int ai[], int ai1[], int i, int j, int k, int l, int i1, int j1, int k1, int l1,
-			int i2, int j2, int k2, int l2, int i3) {
+	private static void drawTexturedScanline(int ai[], int ai1[], int i, int j, int k, int l, int i1, int j1, int k1,
+			int l1, int i2, int j2, int k2, int l2, int i3) {
 		if (l >= i1)
 			return;
 		int j3;
 		int k3;
-		if (aBoolean1528) {
+		if (restrictEdges) {
 			j3 = (k1 - j1) / (i1 - l);
 			if (i1 > Rasterizer.viewportRx)
 				i1 = Rasterizer.viewportRx;
@@ -1660,7 +1689,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 		} else {
 			if (i1 - l > 7) {
 				k3 = i1 - l >> 3;
-				j3 = (k1 - j1) * anIntArray1534[k3] >> 6;
+				j3 = (k1 - j1) * reciprocal15[k3] >> 6;
 			} else {
 				k3 = 0;
 				j3 = 0;
@@ -1668,10 +1697,10 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			j1 <<= 9;
 		}
 		k += l;
-		if (aBoolean1527) {
+		if (lowMemory) {
 			int i4 = 0;
 			int k4 = 0;
-			int k6 = l - anInt1532;
+			int k6 = l - centerX;
 			l1 += (k2 >> 3) * k6;
 			i2 += (l2 >> 3) * k6;
 			j2 += (i3 >> 3) * k6;
@@ -1700,7 +1729,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 			int k7 = k4 - j >> 3;
 			i += (j1 & 0x600000) >> 3;
 			int i8 = j1 >> 23;
-			if (aBoolean1529) {
+			if (opaqueTexture) {
 				while (k3-- > 0) {
 					ai[k++] = ai1[(j & 0xfc0) + (i >> 6)] >>> i8;
 					i += i7;
@@ -1825,7 +1854,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 		}
 		int j4 = 0;
 		int l4 = 0;
-		int l6 = l - anInt1532;
+		int l6 = l - centerX;
 		l1 += (k2 >> 3) * l6;
 		i2 += (l2 >> 3) * l6;
 		j2 += (i3 >> 3) * l6;
@@ -1854,7 +1883,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 		int l7 = l4 - j >> 3;
 		i += j1 & 0x600000;
 		int j8 = j1 >> 23;
-		if (aBoolean1529) {
+		if (opaqueTexture) {
 			while (k3-- > 0) {
 				ai[k++] = ai1[(j & 0x3f80) + (i >> 7)] >>> j8;
 				i += j7;
@@ -1977,48 +2006,4 @@ public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 
 	}
 
-	public static int anInt1524 = -20714;
-	public static int anInt1525;
-	public static boolean aBoolean1526;
-	public static boolean aBoolean1527 = true;
-	public static boolean aBoolean1528;
-	public static boolean aBoolean1529;
-	public static boolean aBoolean1530 = true;
-	public static int anInt1531;
-	public static int anInt1532;
-	public static int anInt1533;
-	public static int anIntArray1534[];
-	public static int anIntArray1535[];
-	public static int anIntArray1536[];
-	public static int anIntArray1537[];
-	public static int anIntArray1538[];
-	public static int anInt1539;
-	public static IndexedImage aClass50_Sub1_Sub1_Sub3Array1540[] = new IndexedImage[50];
-	public static boolean aBooleanArray1541[] = new boolean[50];
-	public static int anIntArray1542[] = new int[50];
-	public static int anInt1543;
-	public static int anIntArrayArray1544[][];
-	public static int anIntArrayArray1545[][] = new int[50][];
-	public static int anIntArray1546[] = new int[50];
-	public static int anInt1547;
-	public static int anIntArray1548[] = new int[0x10000];
-	public static int anIntArrayArray1549[][] = new int[50][];
-
-	static {
-		anIntArray1534 = new int[512];
-		anIntArray1535 = new int[2048];
-		anIntArray1536 = new int[2048];
-		anIntArray1537 = new int[2048];
-		for (int i = 1; i < 512; i++)
-			anIntArray1534[i] = 32768 / i;
-
-		for (int j = 1; j < 2048; j++)
-			anIntArray1535[j] = 0x10000 / j;
-
-		for (int k = 0; k < 2048; k++) {
-			anIntArray1536[k] = (int) (65536D * Math.sin((double) k * 0.0030679614999999999D));
-			anIntArray1537[k] = (int) (65536D * Math.cos((double) k * 0.0030679614999999999D));
-		}
-
-	}
 }

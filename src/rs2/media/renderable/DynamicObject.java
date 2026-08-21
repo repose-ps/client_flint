@@ -2,7 +2,6 @@
 package rs2.media.renderable;
 
 import rs2.Class47;
-import rs2.Class50_Sub1_Sub4_Sub4;
 import rs2.client;
 import rs2.cache.cfg.Varbit;
 import rs2.cache.media.AnimationSequence;
@@ -76,7 +75,7 @@ public class DynamicObject extends Renderable {
 	}
 
 	@Override
-	protected Class50_Sub1_Sub4_Sub4 getModel() {
+	protected Model getModel() {
 		int frameId = -1;
 		if (sequence != null) {
 			int elapsed = client.anInt1325 - animationCycleStart;

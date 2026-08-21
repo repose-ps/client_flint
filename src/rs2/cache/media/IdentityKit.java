@@ -1,7 +1,7 @@
 package rs2.cache.media;
 
-import rs2.Class50_Sub1_Sub4_Sub4;
 import rs2.cache.Archive;
+import rs2.media.renderable.Model;
 import rs2.net.Buffer;
 
 /**
@@ -96,7 +96,7 @@ public class IdentityKit {
 
 		boolean ready = true;
 		for (int modelId : bodyModelIds) {
-			if (!Class50_Sub1_Sub4_Sub4.method578(modelId)) {
+			if (!Model.isLoaded(modelId)) {
 				ready = false;
 			}
 		}
@@ -104,18 +104,18 @@ public class IdentityKit {
 	}
 
 	/** Builds and recolours the kit's combined full-body model. */
-	public Class50_Sub1_Sub4_Sub4 buildBodyModel() {
+	public Model buildBodyModel() {
 		if (bodyModelIds == null) {
 			return null;
 		}
 
-		Class50_Sub1_Sub4_Sub4[] models = new Class50_Sub1_Sub4_Sub4[bodyModelIds.length];
+		Model[] models = new Model[bodyModelIds.length];
 		for (int index = 0; index < bodyModelIds.length; index++) {
-			models[index] = Class50_Sub1_Sub4_Sub4.method577(bodyModelIds[index]);
+			models[index] = Model.getModel(bodyModelIds[index]);
 		}
 
-		Class50_Sub1_Sub4_Sub4 model = models.length == 1 ? models[0]
-				: new Class50_Sub1_Sub4_Sub4(models.length, models, (byte) -89);
+		Model model = models.length == 1 ? models[0]
+				: new Model(models.length, models);
 		recolor(model);
 		return model;
 	}
@@ -124,7 +124,7 @@ public class IdentityKit {
 	public boolean areHeadModelsReady() {
 		boolean ready = true;
 		for (int modelId : headModelIds) {
-			if (modelId != -1 && !Class50_Sub1_Sub4_Sub4.method578(modelId)) {
+			if (modelId != -1 && !Model.isLoaded(modelId)) {
 				ready = false;
 			}
 		}
@@ -132,27 +132,27 @@ public class IdentityKit {
 	}
 
 	/** Builds and recolours the kit's combined chat-head model. */
-	public Class50_Sub1_Sub4_Sub4 buildHeadModel() {
-		Class50_Sub1_Sub4_Sub4[] models = new Class50_Sub1_Sub4_Sub4[HEAD_MODEL_COUNT];
+	public Model buildHeadModel() {
+		Model[] models = new Model[HEAD_MODEL_COUNT];
 		int modelCount = 0;
 		for (int modelId : headModelIds) {
 			if (modelId != -1) {
-				models[modelCount++] = Class50_Sub1_Sub4_Sub4.method577(modelId);
+				models[modelCount++] = Model.getModel(modelId);
 			}
 		}
 
-		Class50_Sub1_Sub4_Sub4 model = new Class50_Sub1_Sub4_Sub4(modelCount, models, (byte) -89);
+		Model model = new Model(modelCount, models);
 		recolor(model);
 		return model;
 	}
 
 	/** Applies the cache's consecutive recolouring pairs to a model. */
-	private void recolor(Class50_Sub1_Sub4_Sub4 model) {
+	private void recolor(Model model) {
 		for (int index = 0; index < RECOLOR_COUNT; index++) {
 			if (originalColors[index] == 0) {
 				return;
 			}
-			model.method591(originalColors[index], replacementColors[index]);
+			model.recolor(originalColors[index], replacementColors[index]);
 		}
 	}
 }

@@ -4,6 +4,7 @@ import rs2.cache.Archive;
 import rs2.cache.cfg.Varbit;
 import rs2.collection.LruCache;
 import rs2.media.AnimationFrame;
+import rs2.media.renderable.Model;
 import rs2.net.Buffer;
 
 public class Class37 {
@@ -114,7 +115,7 @@ public class Class37 {
 		}
 	}
 
-	public Class50_Sub1_Sub4_Sub4 method359(int i) {
+	public Model method359(int i) {
 		if (i <= 0) {
 			for (int j = 1; j > 0; j++)
 				;
@@ -130,24 +131,23 @@ public class Class37 {
 			return null;
 		boolean flag = false;
 		for (int k = 0; k < anIntArray625.length; k++)
-			if (!Class50_Sub1_Sub4_Sub4.method578(anIntArray625[k]))
+			if (!Model.isLoaded(anIntArray625[k]))
 				flag = true;
 
 		if (flag)
 			return null;
-		Class50_Sub1_Sub4_Sub4 aclass50_sub1_sub4_sub4[] = new Class50_Sub1_Sub4_Sub4[anIntArray625.length];
+		Model aclass50_sub1_sub4_sub4[] = new Model[anIntArray625.length];
 		for (int l = 0; l < anIntArray625.length; l++)
-			aclass50_sub1_sub4_sub4[l] = Class50_Sub1_Sub4_Sub4.method577(anIntArray625[l]);
+			aclass50_sub1_sub4_sub4[l] = Model.getModel(anIntArray625[l]);
 
-		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4;
+		Model class50_sub1_sub4_sub4;
 		if (aclass50_sub1_sub4_sub4.length == 1)
 			class50_sub1_sub4_sub4 = aclass50_sub1_sub4_sub4[0];
 		else
-			class50_sub1_sub4_sub4 = new Class50_Sub1_Sub4_Sub4(aclass50_sub1_sub4_sub4.length, aclass50_sub1_sub4_sub4,
-					(byte) -89);
+			class50_sub1_sub4_sub4 = new Model(aclass50_sub1_sub4_sub4.length, aclass50_sub1_sub4_sub4);
 		if (anIntArray634 != null) {
 			for (int i1 = 0; i1 < anIntArray634.length; i1++)
-				class50_sub1_sub4_sub4.method591(anIntArray634[i1], anIntArray656[i1]);
+				class50_sub1_sub4_sub4.recolor(anIntArray634[i1], anIntArray656[i1]);
 
 		}
 		return class50_sub1_sub4_sub4;
@@ -188,7 +188,7 @@ public class Class37 {
 
 	}
 
-	public Class50_Sub1_Sub4_Sub4 method362(int i, int j, int k, int ai[]) {
+	public Model method362(int i, int j, int k, int ai[]) {
 		if (anIntArray622 != null) {
 			Class37 class37 = method363(false);
 			if (class37 == null)
@@ -196,49 +196,49 @@ public class Class37 {
 			else
 				return class37.method362(i, j, 0, ai);
 		}
-		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = (Class50_Sub1_Sub4_Sub4) aClass33_635.get(aLong628);
+		Model class50_sub1_sub4_sub4 = (Model) aClass33_635.get(aLong628);
 		if (class50_sub1_sub4_sub4 == null) {
 			boolean flag = false;
 			for (int l = 0; l < anIntArray626.length; l++)
-				if (!Class50_Sub1_Sub4_Sub4.method578(anIntArray626[l]))
+				if (!Model.isLoaded(anIntArray626[l]))
 					flag = true;
 
 			if (flag)
 				return null;
-			Class50_Sub1_Sub4_Sub4 aclass50_sub1_sub4_sub4[] = new Class50_Sub1_Sub4_Sub4[anIntArray626.length];
+			Model aclass50_sub1_sub4_sub4[] = new Model[anIntArray626.length];
 			for (int i1 = 0; i1 < anIntArray626.length; i1++)
-				aclass50_sub1_sub4_sub4[i1] = Class50_Sub1_Sub4_Sub4.method577(anIntArray626[i1]);
+				aclass50_sub1_sub4_sub4[i1] = Model.getModel(anIntArray626[i1]);
 
 			if (aclass50_sub1_sub4_sub4.length == 1)
 				class50_sub1_sub4_sub4 = aclass50_sub1_sub4_sub4[0];
 			else
-				class50_sub1_sub4_sub4 = new Class50_Sub1_Sub4_Sub4(aclass50_sub1_sub4_sub4.length,
-						aclass50_sub1_sub4_sub4, (byte) -89);
+				class50_sub1_sub4_sub4 = new Model(aclass50_sub1_sub4_sub4.length,
+						aclass50_sub1_sub4_sub4);
 			if (anIntArray634 != null) {
 				for (int j1 = 0; j1 < anIntArray634.length; j1++)
-					class50_sub1_sub4_sub4.method591(anIntArray634[j1], anIntArray656[j1]);
+					class50_sub1_sub4_sub4.recolor(anIntArray634[j1], anIntArray656[j1]);
 
 			}
-			class50_sub1_sub4_sub4.method584(7);
-			class50_sub1_sub4_sub4.method594(64 + anInt663, 850 + anInt658, -30, -50, -30, true);
+			class50_sub1_sub4_sub4.createBones();
+			class50_sub1_sub4_sub4.light(64 + anInt663, 850 + anInt658, -30, -50, -30, true);
 			aClass33_635.put(aLong628, class50_sub1_sub4_sub4);
 		}
-		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = Class50_Sub1_Sub4_Sub4.aClass50_Sub1_Sub4_Sub4_1643;
+		Model class50_sub1_sub4_sub4_1 = Model.sharedModel;
 		if (k != 0)
 			aBoolean647 = !aBoolean647;
-		class50_sub1_sub4_sub4_1.method579(AnimationFrame.isNull(i) & AnimationFrame.isNull(j),
-				class50_sub1_sub4_sub4, 1244);
+		class50_sub1_sub4_sub4_1.replaceWithModel(class50_sub1_sub4_sub4,
+				AnimationFrame.isNull(i) & AnimationFrame.isNull(j));
 		if (i != -1 && j != -1)
-			class50_sub1_sub4_sub4_1.method586(j, 0, i, ai);
+			class50_sub1_sub4_sub4_1.mixAnimationFrames(i, j, ai);
 		else if (i != -1)
-			class50_sub1_sub4_sub4_1.method585(i, (byte) 6);
+			class50_sub1_sub4_sub4_1.applyTransformation(i);
 		if (anInt632 != 128 || anInt630 != 128)
-			class50_sub1_sub4_sub4_1.method593(anInt630, anInt632, 9, anInt632);
-		class50_sub1_sub4_sub4_1.method581(anInt624);
-		class50_sub1_sub4_sub4_1.anIntArrayArray1679 = null;
-		class50_sub1_sub4_sub4_1.anIntArrayArray1678 = null;
+			class50_sub1_sub4_sub4_1.scale(anInt632, anInt630, anInt632);
+		class50_sub1_sub4_sub4_1.calculateDiagonals();
+		class50_sub1_sub4_sub4_1.triangleGroups = null;
+		class50_sub1_sub4_sub4_1.vertexGroups = null;
 		if (aByte642 == 1)
-			class50_sub1_sub4_sub4_1.aBoolean1680 = true;
+			class50_sub1_sub4_sub4_1.singleTile = true;
 		return class50_sub1_sub4_sub4_1;
 	}
 

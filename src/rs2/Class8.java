@@ -2,7 +2,9 @@ package rs2;
 
 import rs2.cache.def.FloorDefinition;
 import rs2.cache.ondemand.OnDemandFetcher;
+import rs2.media.Rasterizer3D;
 import rs2.media.renderable.DynamicObject;
+import rs2.media.renderable.Model;
 import rs2.media.renderable.Renderable;
 import rs2.net.Buffer;
 import rs2.scene.util.CollisionMap;
@@ -441,7 +443,7 @@ public class Class8 {
 								}
 								int i_98_ = 0;
 								if (i_93_ != -1)
-									i_98_ = (Class50_Sub1_Sub1_Sub4.anIntArray1548[method171(i_94_, 96)]);
+									i_98_ = (Rasterizer3D.HSL_TO_RGB[method171(i_94_, 96)]);
 								if (i_84_ == 0)
 									class22.method246(i_50_, i_69_, i_80_, 0, 0, -1, i_85_, i_86_, i_87_, i_88_,
 											method171(i_93_, i_89_), method171(i_93_, i_90_), method171(i_93_, i_91_),
@@ -454,16 +456,16 @@ public class Class8 {
 									int i_102_;
 									int i_103_;
 									if (i_101_ >= 0) {
-										i_103_ = Class50_Sub1_Sub1_Sub4.method498(i_101_, 0);
+										i_103_ = Rasterizer3D.getAverageTextureColor(i_101_);
 										i_102_ = -1;
 									} else if (class15.rgbColor == 16711935) {
 										i_102_ = -2;
 										i_101_ = -1;
-										i_103_ = (Class50_Sub1_Sub1_Sub4.anIntArray1548[method182(
+										i_103_ = (Rasterizer3D.HSL_TO_RGB[method182(
 												class15.randomizedPackedHsl, 96)]);
 									} else {
 										i_102_ = method177(class15.hue, class15.saturation, class15.lightness);
-										i_103_ = (Class50_Sub1_Sub1_Sub4.anIntArray1548[method182(
+										i_103_ = (Rasterizer3D.HSL_TO_RGB[method182(
 												class15.randomizedPackedHsl, 96)]);
 									}
 									class22.method246(i_50_, i_69_, i_80_, i_99_, i_100_, i_101_, i_85_, i_86_, i_87_,
@@ -789,15 +791,15 @@ public class Class8 {
 					}
 					if (class22.method251(i_185_, i_199_, i, class50_sub1_sub4, i_197_, i_198_, i_186_, -896, i_200_,
 							i_195_, i_196_) && class47.aBoolean807) {
-						Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4;
-						if (class50_sub1_sub4 instanceof Class50_Sub1_Sub4_Sub4)
-							class50_sub1_sub4_sub4 = (Class50_Sub1_Sub4_Sub4) class50_sub1_sub4;
+						Model class50_sub1_sub4_sub4;
+						if (class50_sub1_sub4 instanceof Model)
+							class50_sub1_sub4_sub4 = (Model) class50_sub1_sub4;
 						else
 							class50_sub1_sub4_sub4 = class47.method431(10, i_188_, i_191_, i_192_, i_193_, i_194_, -1);
 						if (class50_sub1_sub4_sub4 != null) {
 							for (int i_201_ = 0; i_201_ <= i_199_; i_201_++) {
 								for (int i_202_ = 0; i_202_ <= i_200_; i_202_++) {
-									int i_203_ = class50_sub1_sub4_sub4.anInt1671 / 4;
+									int i_203_ = class50_sub1_sub4_sub4.horizontalRadius / 4;
 									if (i_203_ > 30)
 										i_203_ = 30;
 									if (i_203_ > (aByteArrayArrayArray164[i_185_][i_186_ + i_201_][i + i_202_]))
@@ -1080,7 +1082,7 @@ public class Class8 {
 	}
 
 	public static int method176(int i, int i_226_, int i_227_, int i_228_) {
-		int i_229_ = (65536 - Class50_Sub1_Sub1_Sub4.anIntArray1537[i_227_ * 1024 / i_228_] >> 1);
+		int i_229_ = (65536 - Rasterizer3D.COSINE[i_227_ * 1024 / i_228_] >> 1);
 		return (i * (65536 - i_229_) >> 16) + (i_226_ * i_229_ >> 16);
 	}
 

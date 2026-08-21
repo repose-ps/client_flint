@@ -4,6 +4,8 @@ import rs2.cache.Archive;
 import rs2.cache.media.ImageRGB;
 import rs2.collection.LruCache;
 import rs2.media.Rasterizer;
+import rs2.media.Rasterizer3D;
+import rs2.media.renderable.Model;
 import rs2.media.renderable.Renderable;
 import rs2.net.Buffer;
 
@@ -19,9 +21,9 @@ public class Class16 {
 		if (k == -1)
 			return true;
 		boolean flag = true;
-		if (!Class50_Sub1_Sub4_Sub4.method578(k))
+		if (!Model.isLoaded(k))
 			flag = false;
-		if (l != -1 && !Class50_Sub1_Sub4_Sub4.method578(l))
+		if (l != -1 && !Model.isLoaded(l))
 			flag = false;
 		return flag;
 	}
@@ -49,7 +51,7 @@ public class Class16 {
 		return class16;
 	}
 
-	public Class50_Sub1_Sub4_Sub4 method213(byte byte0, int i) {
+	public Model method213(byte byte0, int i) {
 		int j = anInt353;
 		int k = anInt331;
 		int l = anInt370;
@@ -60,28 +62,28 @@ public class Class16 {
 		}
 		if (j == -1)
 			return null;
-		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = Class50_Sub1_Sub4_Sub4.method577(j);
+		Model class50_sub1_sub4_sub4 = Model.getModel(j);
 		if (byte0 != -98)
 			throw new NullPointerException();
 		if (k != -1)
 			if (l != -1) {
-				Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = Class50_Sub1_Sub4_Sub4.method577(k);
-				Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_3 = Class50_Sub1_Sub4_Sub4.method577(l);
-				Class50_Sub1_Sub4_Sub4 aclass50_sub1_sub4_sub4_1[] = { class50_sub1_sub4_sub4, class50_sub1_sub4_sub4_1,
+				Model class50_sub1_sub4_sub4_1 = Model.getModel(k);
+				Model class50_sub1_sub4_sub4_3 = Model.getModel(l);
+				Model aclass50_sub1_sub4_sub4_1[] = { class50_sub1_sub4_sub4, class50_sub1_sub4_sub4_1,
 						class50_sub1_sub4_sub4_3 };
-				class50_sub1_sub4_sub4 = new Class50_Sub1_Sub4_Sub4(3, aclass50_sub1_sub4_sub4_1, (byte) -89);
+				class50_sub1_sub4_sub4 = new Model(3, aclass50_sub1_sub4_sub4_1);
 			} else {
-				Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_2 = Class50_Sub1_Sub4_Sub4.method577(k);
-				Class50_Sub1_Sub4_Sub4 aclass50_sub1_sub4_sub4[] = { class50_sub1_sub4_sub4, class50_sub1_sub4_sub4_2 };
-				class50_sub1_sub4_sub4 = new Class50_Sub1_Sub4_Sub4(2, aclass50_sub1_sub4_sub4, (byte) -89);
+				Model class50_sub1_sub4_sub4_2 = Model.getModel(k);
+				Model aclass50_sub1_sub4_sub4[] = { class50_sub1_sub4_sub4, class50_sub1_sub4_sub4_2 };
+				class50_sub1_sub4_sub4 = new Model(2, aclass50_sub1_sub4_sub4);
 			}
 		if (i == 0 && aByte378 != 0)
-			class50_sub1_sub4_sub4.method590(0, 0, false, aByte378);
+			class50_sub1_sub4_sub4.translate(0, aByte378, 0);
 		if (i == 1 && aByte330 != 0)
-			class50_sub1_sub4_sub4.method590(0, 0, false, aByte330);
+			class50_sub1_sub4_sub4.translate(0, aByte330, 0);
 		if (anIntArray364 != null) {
 			for (int i1 = 0; i1 < anIntArray364.length; i1++)
-				class50_sub1_sub4_sub4.method591(anIntArray364[i1], anIntArray341[i1]);
+				class50_sub1_sub4_sub4.recolor(anIntArray364[i1], anIntArray341[i1]);
 
 		}
 		return class50_sub1_sub4_sub4;
@@ -143,16 +145,16 @@ public class Class16 {
 		if (k == -1)
 			return true;
 		boolean flag = true;
-		if (!Class50_Sub1_Sub4_Sub4.method578(k))
+		if (!Model.isLoaded(k))
 			flag = false;
-		if (l != -1 && !Class50_Sub1_Sub4_Sub4.method578(l))
+		if (l != -1 && !Model.isLoaded(l))
 			flag = false;
-		if (i1 != -1 && !Class50_Sub1_Sub4_Sub4.method578(i1))
+		if (i1 != -1 && !Model.isLoaded(i1))
 			flag = false;
 		return flag;
 	}
 
-	public Class50_Sub1_Sub4_Sub4 method217(int j) {
+	public Model method217(int j) {
 		if (anIntArray365 != null && j > 1) {
 			int k = -1;
 			for (int l = 0; l < 10; l++)
@@ -162,12 +164,12 @@ public class Class16 {
 			if (k != -1)
 				return method212(k).method217(1);
 		}
-		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = Class50_Sub1_Sub4_Sub4.method577(anInt360);
+		Model class50_sub1_sub4_sub4 = Model.getModel(anInt360);
 		if (class50_sub1_sub4_sub4 == null)
 			return null;
 		if (anIntArray364 != null) {
 			for (int i1 = 0; i1 < anIntArray364.length; i1++)
-				class50_sub1_sub4_sub4.method591(anIntArray364[i1], anIntArray341[i1]);
+				class50_sub1_sub4_sub4.recolor(anIntArray364[i1], anIntArray341[i1]);
 
 		}
 		return class50_sub1_sub4_sub4;
@@ -275,7 +277,7 @@ public class Class16 {
 		} while (true);
 	}
 
-	public Class50_Sub1_Sub4_Sub4 method219(boolean flag, int i) {
+	public Model method219(boolean flag, int i) {
 		if (!flag)
 			aBoolean374 = !aBoolean374;
 		int j = anInt334;
@@ -286,21 +288,21 @@ public class Class16 {
 		}
 		if (j == -1)
 			return null;
-		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = Class50_Sub1_Sub4_Sub4.method577(j);
+		Model class50_sub1_sub4_sub4 = Model.getModel(j);
 		if (k != -1) {
-			Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = Class50_Sub1_Sub4_Sub4.method577(k);
-			Class50_Sub1_Sub4_Sub4 aclass50_sub1_sub4_sub4[] = { class50_sub1_sub4_sub4, class50_sub1_sub4_sub4_1 };
-			class50_sub1_sub4_sub4 = new Class50_Sub1_Sub4_Sub4(2, aclass50_sub1_sub4_sub4, (byte) -89);
+			Model class50_sub1_sub4_sub4_1 = Model.getModel(k);
+			Model aclass50_sub1_sub4_sub4[] = { class50_sub1_sub4_sub4, class50_sub1_sub4_sub4_1 };
+			class50_sub1_sub4_sub4 = new Model(2, aclass50_sub1_sub4_sub4);
 		}
 		if (anIntArray364 != null) {
 			for (int l = 0; l < anIntArray364.length; l++)
-				class50_sub1_sub4_sub4.method591(anIntArray364[l], anIntArray341[l]);
+				class50_sub1_sub4_sub4.recolor(anIntArray364[l], anIntArray341[l]);
 
 		}
 		return class50_sub1_sub4_sub4;
 	}
 
-	public Class50_Sub1_Sub4_Sub4 method220(int i) {
+	public Model method220(int i) {
 		if (anIntArray365 != null && i > 1) {
 			int j = -1;
 			for (int k = 0; k < 10; k++)
@@ -310,21 +312,21 @@ public class Class16 {
 			if (j != -1)
 				return method212(j).method220(1);
 		}
-		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = (Class50_Sub1_Sub4_Sub4) aClass33_337.get(anInt363);
+		Model class50_sub1_sub4_sub4 = (Model) aClass33_337.get(anInt363);
 		if (class50_sub1_sub4_sub4 != null)
 			return class50_sub1_sub4_sub4;
-		class50_sub1_sub4_sub4 = Class50_Sub1_Sub4_Sub4.method577(anInt360);
+		class50_sub1_sub4_sub4 = Model.getModel(anInt360);
 		if (class50_sub1_sub4_sub4 == null)
 			return null;
 		if (anInt366 != 128 || anInt357 != 128 || anInt368 != 128)
-			class50_sub1_sub4_sub4.method593(anInt357, anInt368, 9, anInt366);
+			class50_sub1_sub4_sub4.scale(anInt366, anInt357, anInt368);
 		if (anIntArray364 != null) {
 			for (int l = 0; l < anIntArray364.length; l++)
-				class50_sub1_sub4_sub4.method591(anIntArray364[l], anIntArray341[l]);
+				class50_sub1_sub4_sub4.recolor(anIntArray364[l], anIntArray341[l]);
 
 		}
-		class50_sub1_sub4_sub4.method594(64 + anInt354, 768 + anInt358, -50, -10, -50, true);
-		class50_sub1_sub4_sub4.aBoolean1680 = true;
+		class50_sub1_sub4_sub4.light(64 + anInt354, 768 + anInt358, -50, -10, -50, true);
+		class50_sub1_sub4_sub4.singleTile = true;
 		aClass33_337.put(anInt363, class50_sub1_sub4_sub4);
 		return class50_sub1_sub4_sub4;
 	}
@@ -352,7 +354,7 @@ public class Class16 {
 			if (l != -1)
 				class16 = method212(l);
 		}
-		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = class16.method220(1);
+		Model class50_sub1_sub4_sub4 = class16.method220(1);
 		if (class50_sub1_sub4_sub4 == null)
 			return null;
 		ImageRGB class50_sub1_sub1_sub1_2 = null;
@@ -362,9 +364,9 @@ public class Class16 {
 				return null;
 		}
 		ImageRGB class50_sub1_sub1_sub1_1 = new ImageRGB(32, 32);
-		int j1 = Class50_Sub1_Sub1_Sub4.anInt1532;
-		int k1 = Class50_Sub1_Sub1_Sub4.anInt1533;
-		int ai[] = Class50_Sub1_Sub1_Sub4.anIntArray1538;
+		int j1 = Rasterizer3D.centerX;
+		int k1 = Rasterizer3D.centerY;
+		int ai[] = Rasterizer3D.scanlineOffsets;
 		int ai1[] = Rasterizer.pixels;
 		int l1 = Rasterizer.width;
 		int i2 = Rasterizer.height;
@@ -372,18 +374,18 @@ public class Class16 {
 		int k2 = Rasterizer.bottomX;
 		int l2 = Rasterizer.topY;
 		int i3 = Rasterizer.bottomY;
-		Class50_Sub1_Sub1_Sub4.aBoolean1530 = false;
+		Rasterizer3D.gouraudBlockShading = false;
 		Rasterizer.createRasterizer(class50_sub1_sub1_sub1_1.pixels, 32, 32);
 		Rasterizer.drawFilledRectangle(0, 0, 32, 32, 0);
-		Class50_Sub1_Sub1_Sub4.method493(568);
+		Rasterizer3D.setDefaultBounds();
 		int j3 = class16.anInt369;
 		if (i == -1)
 			j3 = (int) ((double) j3 * 1.5D);
 		if (i > 0)
 			j3 = (int) ((double) j3 * 1.04D);
-		int k3 = Class50_Sub1_Sub1_Sub4.anIntArray1536[class16.anInt359] * j3 >> 16;
-		int l3 = Class50_Sub1_Sub1_Sub4.anIntArray1537[class16.anInt359] * j3 >> 16;
-		class50_sub1_sub4_sub4.method598(0, class16.anInt356, class16.anInt339, class16.anInt359, class16.anInt327,
+		int k3 = Rasterizer3D.SINE[class16.anInt359] * j3 >> 16;
+		int l3 = Rasterizer3D.COSINE[class16.anInt359] * j3 >> 16;
+		class50_sub1_sub4_sub4.renderSimple(0, class16.anInt356, class16.anInt339, class16.anInt359, class16.anInt327,
 				k3 + ((Renderable) (class50_sub1_sub4_sub4)).modelHeight / 2 + class16.anInt340,
 				l3 + class16.anInt340);
 		for (int l4 = 31; l4 >= 0; l4--) {
@@ -438,10 +440,10 @@ public class Class16 {
 			aClass33_346.put(k, class50_sub1_sub1_sub1_1);
 		Rasterizer.createRasterizer(ai1, l1, i2);
 		Rasterizer.setCoordinates(j2, l2, k2, i3);
-		Class50_Sub1_Sub1_Sub4.anInt1532 = j1;
-		Class50_Sub1_Sub1_Sub4.anInt1533 = k1;
-		Class50_Sub1_Sub1_Sub4.anIntArray1538 = ai;
-		Class50_Sub1_Sub1_Sub4.aBoolean1530 = true;
+		Rasterizer3D.centerX = j1;
+		Rasterizer3D.centerY = k1;
+		Rasterizer3D.scanlineOffsets = ai;
+		Rasterizer3D.gouraudBlockShading = true;
 		if (class16.aBoolean371)
 			class50_sub1_sub1_sub1_1.maxWidth = 33;
 		else

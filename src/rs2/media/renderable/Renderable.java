@@ -1,6 +1,5 @@
 package rs2.media.renderable;
 
-import rs2.Class50_Sub1_Sub4_Sub4;
 import rs2.collection.DualNode;
 import rs2.media.VertexNormal;
 
@@ -23,7 +22,7 @@ public class Renderable extends DualNode {
 
 	public void draw(int orientation, int pitchSine, int pitchCosine, int yawSine, int yawCosine, int x, int y, int z,
 			int uid) {
-		Class50_Sub1_Sub4_Sub4 model = getModel();
+		Model model = getModel();
 		if (model != null) {
 			modelHeight = model.modelHeight;
 			model.draw(orientation, pitchSine, pitchCosine, yawSine, yawCosine, x, y, z, uid);
@@ -34,7 +33,7 @@ public class Renderable extends DualNode {
 	 * Returns the model currently represented by this renderable, or {@code null}
 	 * when nothing should be drawn.
 	 */
-	protected Class50_Sub1_Sub4_Sub4 getModel() {
+	protected Model getModel() {
 		return null;
 	}
 }

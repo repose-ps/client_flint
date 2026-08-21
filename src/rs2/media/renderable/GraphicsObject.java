@@ -1,6 +1,5 @@
 package rs2.media.renderable;
 
-import rs2.Class50_Sub1_Sub4_Sub4;
 import rs2.cache.media.SpotAnimation;
 import rs2.media.AnimationFrame;
 
@@ -45,39 +44,38 @@ public class GraphicsObject extends Renderable {
 	}
 
 	@Override
-	protected Class50_Sub1_Sub4_Sub4 getModel() {
-		Class50_Sub1_Sub4_Sub4 baseModel = spotAnimation.getModel();
+	protected Model getModel() {
+		Model baseModel = spotAnimation.getModel();
 		if (baseModel == null) {
 			return null;
 		}
 
 		int frameId = spotAnimation.sequence.primaryFrameIds[frame];
-		Class50_Sub1_Sub4_Sub4 model = new Class50_Sub1_Sub4_Sub4(false, false, true, baseModel,
-				AnimationFrame.isNull(frameId));
+		Model model = new Model(baseModel, false, true, AnimationFrame.isNull(frameId));
 		if (!finished) {
-			model.method584(7);
-			model.method585(frameId, (byte) 6);
-			model.anIntArrayArray1679 = null;
-			model.anIntArrayArray1678 = null;
+			model.createBones();
+			model.applyTransformation(frameId);
+			model.triangleGroups = null;
+			model.vertexGroups = null;
 		}
 		if (spotAnimation.resizeXY != 128 || spotAnimation.resizeZ != 128) {
-			model.method593(spotAnimation.resizeZ, spotAnimation.resizeXY, 9, spotAnimation.resizeXY);
+			model.scale(spotAnimation.resizeXY, spotAnimation.resizeZ, spotAnimation.resizeXY);
 		}
 		if (spotAnimation.rotation != 0) {
 			if (spotAnimation.rotation == 90) {
-				model.method588(true);
+				model.rotateY90Ccw();
 			}
 			if (spotAnimation.rotation == 180) {
-				model.method588(true);
-				model.method588(true);
+				model.rotateY90Ccw();
+				model.rotateY90Ccw();
 			}
 			if (spotAnimation.rotation == 270) {
-				model.method588(true);
-				model.method588(true);
-				model.method588(true);
+				model.rotateY90Ccw();
+				model.rotateY90Ccw();
+				model.rotateY90Ccw();
 			}
 		}
-		model.method594(64 + spotAnimation.ambient, 850 + spotAnimation.contrast, -30, -50, -30, true);
+		model.light(64 + spotAnimation.ambient, 850 + spotAnimation.contrast, -30, -50, -30, true);
 		return model;
 	}
 }

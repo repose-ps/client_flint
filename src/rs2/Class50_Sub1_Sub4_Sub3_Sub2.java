@@ -5,6 +5,7 @@ import rs2.cache.media.IdentityKit;
 import rs2.cache.media.SpotAnimation;
 import rs2.collection.LruCache;
 import rs2.media.AnimationFrame;
+import rs2.media.renderable.Model;
 import rs2.media.renderable.Renderable;
 import rs2.net.Buffer;
 import rs2.text.Base37;
@@ -12,7 +13,7 @@ import rs2.text.TextFormatter;
 
 public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 
-	public Class50_Sub1_Sub4_Sub4 method570(boolean flag) {
+	public Model method570(boolean flag) {
 		if (!aBoolean1758)
 			return null;
 		if (aClass37_1757 != null)
@@ -28,47 +29,46 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 
 		if (flag1)
 			return null;
-		Class50_Sub1_Sub4_Sub4 aclass50_sub1_sub4_sub4[] = new Class50_Sub1_Sub4_Sub4[12];
+		Model aclass50_sub1_sub4_sub4[] = new Model[12];
 		int k = 0;
 		for (int l = 0; l < 12; l++) {
 			int i1 = anIntArray1752[l];
 			if (i1 >= 256 && i1 < 512) {
-				Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = IdentityKit.definitions[i1 - 256].buildHeadModel();
+				Model class50_sub1_sub4_sub4_1 = IdentityKit.definitions[i1 - 256].buildHeadModel();
 				if (class50_sub1_sub4_sub4_1 != null)
 					aclass50_sub1_sub4_sub4[k++] = class50_sub1_sub4_sub4_1;
 			}
 			if (i1 >= 512) {
-				Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_2 = Class16.method212(i1 - 512).method219(true,
+				Model class50_sub1_sub4_sub4_2 = Class16.method212(i1 - 512).method219(true,
 						anInt1755);
 				if (class50_sub1_sub4_sub4_2 != null)
 					aclass50_sub1_sub4_sub4[k++] = class50_sub1_sub4_sub4_2;
 			}
 		}
 
-		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = new Class50_Sub1_Sub4_Sub4(k, aclass50_sub1_sub4_sub4,
-				(byte) -89);
+		Model class50_sub1_sub4_sub4 = new Model(k, aclass50_sub1_sub4_sub4);
 		if (!flag)
 			throw new NullPointerException();
 		for (int j1 = 0; j1 < 5; j1++)
 			if (anIntArray1760[j1] != 0) {
-				class50_sub1_sub4_sub4.method591(client.anIntArrayArray1008[j1][0],
+				class50_sub1_sub4_sub4.recolor(client.anIntArrayArray1008[j1][0],
 						client.anIntArrayArray1008[j1][anIntArray1760[j1]]);
 				if (j1 == 1)
-					class50_sub1_sub4_sub4.method591(client.anIntArray1268[0],
+					class50_sub1_sub4_sub4.recolor(client.anIntArray1268[0],
 							client.anIntArray1268[anIntArray1760[j1]]);
 			}
 
 		return class50_sub1_sub4_sub4;
 	}
 
-	public Class50_Sub1_Sub4_Sub4 method571() {
+	public Model method571() {
 		if (aClass37_1757 != null) {
 			int i = -1;
 			if (super.anInt1624 >= 0 && super.anInt1627 == 0)
 				i = AnimationSequence.sequences[super.anInt1624].primaryFrameIds[super.anInt1625];
 			else if (super.anInt1588 >= 0)
 				i = AnimationSequence.sequences[super.anInt1588].primaryFrameIds[super.anInt1589];
-			Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = aClass37_1757.method362(i, -1, 0, null);
+			Model class50_sub1_sub4_sub4 = aClass37_1757.method362(i, -1, 0, null);
 			return class50_sub1_sub4_sub4;
 		}
 		long l = aLong1754;
@@ -91,7 +91,7 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 			}
 		} else if (super.anInt1588 >= 0)
 			j = AnimationSequence.sequences[super.anInt1588].primaryFrameIds[super.anInt1589];
-		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = (Class50_Sub1_Sub4_Sub4) aClass33_1761.get(l);
+		Model class50_sub1_sub4_sub4_1 = (Model) aClass33_1761.get(l);
 		if (class50_sub1_sub4_sub4_1 == null) {
 			boolean flag = false;
 			for (int k1 = 0; k1 < 12; k1++) {
@@ -108,13 +108,13 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 
 			if (flag) {
 				if (aLong1749 != -1L)
-					class50_sub1_sub4_sub4_1 = (Class50_Sub1_Sub4_Sub4) aClass33_1761.get(aLong1749);
+					class50_sub1_sub4_sub4_1 = (Model) aClass33_1761.get(aLong1749);
 				if (class50_sub1_sub4_sub4_1 == null)
 					return null;
 			}
 		}
 		if (class50_sub1_sub4_sub4_1 == null) {
-			Class50_Sub1_Sub4_Sub4 aclass50_sub1_sub4_sub4[] = new Class50_Sub1_Sub4_Sub4[12];
+			Model aclass50_sub1_sub4_sub4[] = new Model[12];
 			int l1 = 0;
 			for (int j2 = 0; j2 < 12; j2++) {
 				int k2 = anIntArray1752[j2];
@@ -123,46 +123,46 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 				if (i1 >= 0 && j2 == 5)
 					k2 = i1;
 				if (k2 >= 256 && k2 < 512) {
-					Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_3 = IdentityKit.definitions[k2 - 256]
+					Model class50_sub1_sub4_sub4_3 = IdentityKit.definitions[k2 - 256]
 							.buildBodyModel();
 					if (class50_sub1_sub4_sub4_3 != null)
 						aclass50_sub1_sub4_sub4[l1++] = class50_sub1_sub4_sub4_3;
 				}
 				if (k2 >= 512) {
-					Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_4 = Class16.method212(k2 - 512).method213((byte) -98,
+					Model class50_sub1_sub4_sub4_4 = Class16.method212(k2 - 512).method213((byte) -98,
 							anInt1755);
 					if (class50_sub1_sub4_sub4_4 != null)
 						aclass50_sub1_sub4_sub4[l1++] = class50_sub1_sub4_sub4_4;
 				}
 			}
 
-			class50_sub1_sub4_sub4_1 = new Class50_Sub1_Sub4_Sub4(l1, aclass50_sub1_sub4_sub4, (byte) -89);
+			class50_sub1_sub4_sub4_1 = new Model(l1, aclass50_sub1_sub4_sub4);
 			for (int l2 = 0; l2 < 5; l2++)
 				if (anIntArray1760[l2] != 0) {
-					class50_sub1_sub4_sub4_1.method591(client.anIntArrayArray1008[l2][0],
+					class50_sub1_sub4_sub4_1.recolor(client.anIntArrayArray1008[l2][0],
 							client.anIntArrayArray1008[l2][anIntArray1760[l2]]);
 					if (l2 == 1)
-						class50_sub1_sub4_sub4_1.method591(client.anIntArray1268[0],
+						class50_sub1_sub4_sub4_1.recolor(client.anIntArray1268[0],
 								client.anIntArray1268[anIntArray1760[l2]]);
 				}
 
-			class50_sub1_sub4_sub4_1.method584(7);
-			class50_sub1_sub4_sub4_1.method594(64, 850, -30, -50, -30, true);
+			class50_sub1_sub4_sub4_1.createBones();
+			class50_sub1_sub4_sub4_1.light(64, 850, -30, -50, -30, true);
 			aClass33_1761.put(l, class50_sub1_sub4_sub4_1);
 			aLong1749 = l;
 		}
 		if (aBoolean1763)
 			return class50_sub1_sub4_sub4_1;
-		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_2 = Class50_Sub1_Sub4_Sub4.aClass50_Sub1_Sub4_Sub4_1643;
-		class50_sub1_sub4_sub4_2.method579(AnimationFrame.isNull(j) & AnimationFrame.isNull(k),
-				class50_sub1_sub4_sub4_1, 1244);
+		Model class50_sub1_sub4_sub4_2 = Model.sharedModel;
+		class50_sub1_sub4_sub4_2.replaceWithModel(class50_sub1_sub4_sub4_1,
+				AnimationFrame.isNull(j) & AnimationFrame.isNull(k));
 		if (j != -1 && k != -1)
-			class50_sub1_sub4_sub4_2.method586(k, 0, j, AnimationSequence.sequences[super.anInt1624].interleaveOrder);
+			class50_sub1_sub4_sub4_2.mixAnimationFrames(j, k, AnimationSequence.sequences[super.anInt1624].interleaveOrder);
 		else if (j != -1)
-			class50_sub1_sub4_sub4_2.method585(j, (byte) 6);
-		class50_sub1_sub4_sub4_2.method581(anInt1772);
-		class50_sub1_sub4_sub4_2.anIntArrayArray1679 = null;
-		class50_sub1_sub4_sub4_2.anIntArrayArray1678 = null;
+			class50_sub1_sub4_sub4_2.applyTransformation(j);
+		class50_sub1_sub4_sub4_2.calculateDiagonals();
+		class50_sub1_sub4_sub4_2.triangleGroups = null;
+		class50_sub1_sub4_sub4_2.vertexGroups = null;
 		return class50_sub1_sub4_sub4_2;
 	}
 
@@ -174,68 +174,66 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 		return aBoolean1758;
 	}
 
-	public Class50_Sub1_Sub4_Sub4 getModel() {
+	public Model getModel() {
 		if (!aBoolean1758)
 			return null;
-		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = method571();
+		Model class50_sub1_sub4_sub4 = method571();
 		if (class50_sub1_sub4_sub4 == null)
 			return null;
 		super.anInt1594 = ((Renderable) (class50_sub1_sub4_sub4)).modelHeight;
-		class50_sub1_sub4_sub4.aBoolean1680 = true;
+		class50_sub1_sub4_sub4.singleTile = true;
 		if (aBoolean1763)
 			return class50_sub1_sub4_sub4;
 		if (super.anInt1614 != -1 && super.anInt1615 != -1) {
 			SpotAnimation class27 = SpotAnimation.definitions[super.anInt1614];
-			Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_2 = class27.getModel();
+			Model class50_sub1_sub4_sub4_2 = class27.getModel();
 			if (class50_sub1_sub4_sub4_2 != null) {
-				Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_3 = new Class50_Sub1_Sub4_Sub4(false, false, true,
-						class50_sub1_sub4_sub4_2, AnimationFrame.isNull(super.anInt1615));
-				class50_sub1_sub4_sub4_3.method590(0, 0, false, -super.anInt1618);
-				class50_sub1_sub4_sub4_3.method584(7);
-				class50_sub1_sub4_sub4_3.method585(class27.sequence.primaryFrameIds[super.anInt1615], (byte) 6);
-				class50_sub1_sub4_sub4_3.anIntArrayArray1679 = null;
-				class50_sub1_sub4_sub4_3.anIntArrayArray1678 = null;
+				Model class50_sub1_sub4_sub4_3 = new Model(class50_sub1_sub4_sub4_2, false, true,
+						AnimationFrame.isNull(super.anInt1615));
+				class50_sub1_sub4_sub4_3.translate(0, -super.anInt1618, 0);
+				class50_sub1_sub4_sub4_3.createBones();
+				class50_sub1_sub4_sub4_3.applyTransformation(class27.sequence.primaryFrameIds[super.anInt1615]);
+				class50_sub1_sub4_sub4_3.triangleGroups = null;
+				class50_sub1_sub4_sub4_3.vertexGroups = null;
 				if (class27.resizeXY != 128 || class27.resizeZ != 128)
-					class50_sub1_sub4_sub4_3.method593(class27.resizeZ, class27.resizeXY, 9, class27.resizeXY);
-				class50_sub1_sub4_sub4_3.method594(64 + class27.ambient, 850 + class27.contrast, -30, -50, -30, true);
-				Class50_Sub1_Sub4_Sub4 aclass50_sub1_sub4_sub4_1[] = { class50_sub1_sub4_sub4,
+					class50_sub1_sub4_sub4_3.scale(class27.resizeXY, class27.resizeZ, class27.resizeXY);
+				class50_sub1_sub4_sub4_3.light(64 + class27.ambient, 850 + class27.contrast, -30, -50, -30, true);
+				Model aclass50_sub1_sub4_sub4_1[] = { class50_sub1_sub4_sub4,
 						class50_sub1_sub4_sub4_3 };
-				class50_sub1_sub4_sub4 = new Class50_Sub1_Sub4_Sub4(2, true, 0, aclass50_sub1_sub4_sub4_1);
+				class50_sub1_sub4_sub4 = new Model(aclass50_sub1_sub4_sub4_1, 2);
 			}
 		}
 		if (aClass50_Sub1_Sub4_Sub4_1746 != null) {
 			if (client.anInt1325 >= anInt1765)
 				aClass50_Sub1_Sub4_Sub4_1746 = null;
 			if (client.anInt1325 >= anInt1764 && client.anInt1325 < anInt1765) {
-				Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = aClass50_Sub1_Sub4_Sub4_1746;
-				class50_sub1_sub4_sub4_1.method590(anInt1743 - super.anInt1610, anInt1745 - super.anInt1611, false,
-						anInt1744 - anInt1750);
+				Model class50_sub1_sub4_sub4_1 = aClass50_Sub1_Sub4_Sub4_1746;
+				class50_sub1_sub4_sub4_1.translate(anInt1743 - super.anInt1610, anInt1744 - anInt1750, anInt1745 - super.anInt1611);
 				if (super.anInt1584 == 512) {
-					class50_sub1_sub4_sub4_1.method588(true);
-					class50_sub1_sub4_sub4_1.method588(true);
-					class50_sub1_sub4_sub4_1.method588(true);
+					class50_sub1_sub4_sub4_1.rotateY90Ccw();
+					class50_sub1_sub4_sub4_1.rotateY90Ccw();
+					class50_sub1_sub4_sub4_1.rotateY90Ccw();
 				} else if (super.anInt1584 == 1024) {
-					class50_sub1_sub4_sub4_1.method588(true);
-					class50_sub1_sub4_sub4_1.method588(true);
+					class50_sub1_sub4_sub4_1.rotateY90Ccw();
+					class50_sub1_sub4_sub4_1.rotateY90Ccw();
 				} else if (super.anInt1584 == 1536)
-					class50_sub1_sub4_sub4_1.method588(true);
-				Class50_Sub1_Sub4_Sub4 aclass50_sub1_sub4_sub4[] = { class50_sub1_sub4_sub4, class50_sub1_sub4_sub4_1 };
-				class50_sub1_sub4_sub4 = new Class50_Sub1_Sub4_Sub4(2, true, 0, aclass50_sub1_sub4_sub4);
+					class50_sub1_sub4_sub4_1.rotateY90Ccw();
+				Model aclass50_sub1_sub4_sub4[] = { class50_sub1_sub4_sub4, class50_sub1_sub4_sub4_1 };
+				class50_sub1_sub4_sub4 = new Model(aclass50_sub1_sub4_sub4, 2);
 				if (super.anInt1584 == 512)
-					class50_sub1_sub4_sub4_1.method588(true);
+					class50_sub1_sub4_sub4_1.rotateY90Ccw();
 				else if (super.anInt1584 == 1024) {
-					class50_sub1_sub4_sub4_1.method588(true);
-					class50_sub1_sub4_sub4_1.method588(true);
+					class50_sub1_sub4_sub4_1.rotateY90Ccw();
+					class50_sub1_sub4_sub4_1.rotateY90Ccw();
 				} else if (super.anInt1584 == 1536) {
-					class50_sub1_sub4_sub4_1.method588(true);
-					class50_sub1_sub4_sub4_1.method588(true);
-					class50_sub1_sub4_sub4_1.method588(true);
+					class50_sub1_sub4_sub4_1.rotateY90Ccw();
+					class50_sub1_sub4_sub4_1.rotateY90Ccw();
+					class50_sub1_sub4_sub4_1.rotateY90Ccw();
 				}
-				class50_sub1_sub4_sub4_1.method590(super.anInt1610 - anInt1743, super.anInt1611 - anInt1745, false,
-						anInt1750 - anInt1744);
+				class50_sub1_sub4_sub4_1.translate(super.anInt1610 - anInt1743, anInt1750 - anInt1744, super.anInt1611 - anInt1745);
 			}
 		}
-		class50_sub1_sub4_sub4.aBoolean1680 = true;
+		class50_sub1_sub4_sub4.singleTile = true;
 		return class50_sub1_sub4_sub4;
 	}
 
@@ -339,7 +337,7 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 	public int anInt1743;
 	public int anInt1744;
 	public int anInt1745;
-	public Class50_Sub1_Sub4_Sub4 aClass50_Sub1_Sub4_Sub4_1746;
+	public Model aClass50_Sub1_Sub4_Sub4_1746;
 	public int anInt1748;
 	public long aLong1749;
 	public int anInt1750;

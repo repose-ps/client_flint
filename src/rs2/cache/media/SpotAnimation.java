@@ -1,8 +1,8 @@
 package rs2.cache.media;
 
-import rs2.Class50_Sub1_Sub4_Sub4;
 import rs2.cache.Archive;
 import rs2.collection.LruCache;
+import rs2.media.renderable.Model;
 import rs2.net.Buffer;
 
 /**
@@ -89,13 +89,13 @@ public class SpotAnimation {
 	/**
 	 * Returns the cached base model, loading and recolouring it when necessary.
 	 */
-	public Class50_Sub1_Sub4_Sub4 getModel() {
-		Class50_Sub1_Sub4_Sub4 model = (Class50_Sub1_Sub4_Sub4) modelCache.get(id);
+	public Model getModel() {
+		Model model = (Model) modelCache.get(id);
 		if (model != null) {
 			return model;
 		}
 
-		model = Class50_Sub1_Sub4_Sub4.method577(modelId);
+		model = Model.getModel(modelId);
 		if (model == null) {
 			return null;
 		}
@@ -103,7 +103,7 @@ public class SpotAnimation {
 		// Revision 377 treats a zero first source colour as an empty recolour table.
 		if (originalColors[0] != 0) {
 			for (int index = 0; index < RECOLOR_COUNT; index++) {
-				model.method591(originalColors[index], replacementColors[index]);
+				model.recolor(originalColors[index], replacementColors[index]);
 			}
 		}
 

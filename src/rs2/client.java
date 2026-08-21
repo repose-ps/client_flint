@@ -36,10 +36,12 @@ import rs2.collection.NodeDeque;
 import rs2.game.Skills;
 import rs2.media.AnimationFrame;
 import rs2.media.Rasterizer;
+import rs2.media.Rasterizer3D;
 import rs2.media.TypeFace;
 import rs2.media.renderable.DynamicObject;
 import rs2.media.renderable.GraphicsObject;
 import rs2.media.renderable.GroundItem;
+import rs2.media.renderable.Model;
 import rs2.media.renderable.Projectile;
 import rs2.media.renderable.Renderable;
 import rs2.net.Buffer;
@@ -406,9 +408,9 @@ public class client extends Applet_Sub1 {
 		Varp.definitions = null;
 		super.aClass18_15 = null;
 		Class50_Sub1_Sub4_Sub3_Sub2.aClass33_1761 = null;
-		Class50_Sub1_Sub1_Sub4.method492(false);
+		Rasterizer3D.clear();
 		Class22.method240(false);
-		Class50_Sub1_Sub4_Sub4.method573(false);
+		Model.clearModelLoader();
 		AnimationFrame.clear();
 		System.gc();
 	}
@@ -675,7 +677,7 @@ public class client extends Applet_Sub1 {
 
 	public static void method27(boolean flag) {
 		Class22.aBoolean451 = false;
-		Class50_Sub1_Sub1_Sub4.aBoolean1527 = false;
+		Rasterizer3D.lowMemory = false;
 		aBoolean926 = false;
 		Class8.aBoolean169 = false;
 		if (!flag)
@@ -3076,8 +3078,8 @@ public class client extends Applet_Sub1 {
 		int i = -1;
 		if (byte0 != 7)
 			anInt870 = -1;
-		for (int j = 0; j < Class50_Sub1_Sub4_Sub4.anInt1708; j++) {
-			int k = Class50_Sub1_Sub4_Sub4.anIntArray1709[j];
+		for (int j = 0; j < Model.pickedCount; j++) {
+			int k = Model.pickedUids[j];
 			int l = k & 0x7f;
 			int i1 = k >> 7 & 0x7f;
 			int j1 = k >> 29 & 3;
@@ -3701,8 +3703,8 @@ public class client extends Applet_Sub1 {
 			anInt870 = -1;
 		if (l > 4225 && l < 0x15f90) {
 			int i1 = anInt1252 + anInt916 & 0x7ff;
-			int j1 = Class50_Sub1_Sub4_Sub4.anIntArray1710[i1];
-			int k1 = Class50_Sub1_Sub4_Sub4.anIntArray1711[i1];
+			int j1 = Model.SINE[i1];
+			int k1 = Model.COSINE[i1];
 			j1 = (j1 * 256) / (anInt1233 + 256);
 			k1 = (k1 * 256) / (anInt1233 + 256);
 			int l1 = i * j1 + k * k1 >> 16;
@@ -4367,7 +4369,7 @@ public class client extends Applet_Sub1 {
 			aClass32_Sub1_1291 = new OnDemandFetcher();
 			aClass32_Sub1_1291.start(class2_6, this);
 			AnimationFrame.initialize(aClass32_Sub1_1291.getAnimationCount());
-			Class50_Sub1_Sub4_Sub4.method574(aClass32_Sub1_1291.getFileCount(0), aClass32_Sub1_1291);
+			Model.initializeModelHeaders(aClass32_Sub1_1291.getFileCount(0), aClass32_Sub1_1291);
 			if (!aBoolean926) {
 				anInt1270 = 0;
 				aBoolean1271 = true;
@@ -4601,9 +4603,9 @@ public class client extends Applet_Sub1 {
 			}
 
 			method13(83, true, "Unpacking textures");
-			Class50_Sub1_Sub1_Sub4.method497(class2_3, -17551);
-			Class50_Sub1_Sub1_Sub4.method501(0.80000000000000004D, (byte) 6);
-			Class50_Sub1_Sub1_Sub4.method496((byte) 7, 20);
+			Rasterizer3D.loadTextures(class2_3);
+			Rasterizer3D.setBrightness(0.80000000000000004D);
+			Rasterizer3D.initializeTexturePool(20);
 			method13(86, true, "Unpacking config");
 			AnimationSequence.load(class2);
 			Class47.method426(class2);
@@ -4665,19 +4667,19 @@ public class client extends Applet_Sub1 {
 				anIntArray920[k7 - 5] = k8 - i8;
 			}
 
-			Class50_Sub1_Sub1_Sub4.method494(503, 7, 765);
-			anIntArray1003 = Class50_Sub1_Sub1_Sub4.anIntArray1538;
-			Class50_Sub1_Sub1_Sub4.method494(96, 7, 479);
-			anIntArray1000 = Class50_Sub1_Sub1_Sub4.anIntArray1538;
-			Class50_Sub1_Sub1_Sub4.method494(261, 7, 190);
-			anIntArray1001 = Class50_Sub1_Sub1_Sub4.anIntArray1538;
-			Class50_Sub1_Sub1_Sub4.method494(334, 7, 512);
-			anIntArray1002 = Class50_Sub1_Sub1_Sub4.anIntArray1538;
+			Rasterizer3D.setBounds(765, 503);
+			anIntArray1003 = Rasterizer3D.scanlineOffsets;
+			Rasterizer3D.setBounds(479, 96);
+			anIntArray1000 = Rasterizer3D.scanlineOffsets;
+			Rasterizer3D.setBounds(190, 261);
+			anIntArray1001 = Rasterizer3D.scanlineOffsets;
+			Rasterizer3D.setBounds(512, 334);
+			anIntArray1002 = Rasterizer3D.scanlineOffsets;
 			int ai[] = new int[9];
 			for (int l8 = 0; l8 < 9; l8++) {
 				int j9 = 128 + l8 * 32 + 15;
 				int k9 = 600 + j9 * 3;
-				int l9 = Class50_Sub1_Sub1_Sub4.anIntArray1536[j9];
+				int l9 = Rasterizer3D.SINE[j9];
 				ai[l8] = k9 * l9 >> 16;
 			}
 
@@ -4701,8 +4703,8 @@ public class client extends Applet_Sub1 {
 		if (!aBoolean926) {
 			for (int k = 0; k < anIntArray1290.length; k++) {
 				int l = anIntArray1290[k];
-				if (Class50_Sub1_Sub1_Sub4.anIntArray1546[l] >= i) {
-					IndexedImage class50_sub1_sub1_sub3 = Class50_Sub1_Sub1_Sub4.aClass50_Sub1_Sub1_Sub3Array1540[l];
+				if (Rasterizer3D.textureLastUsed[l] >= i) {
+					IndexedImage class50_sub1_sub1_sub3 = Rasterizer3D.textures[l];
 					int i1 = class50_sub1_sub1_sub3.width * class50_sub1_sub1_sub3.height - 1;
 					int j1 = class50_sub1_sub1_sub3.width * anInt951 * 2;
 					byte abyte0[] = class50_sub1_sub1_sub3.pixels;
@@ -4712,7 +4714,7 @@ public class client extends Applet_Sub1 {
 
 					class50_sub1_sub1_sub3.pixels = abyte1;
 					aByteArray1245 = abyte0;
-					Class50_Sub1_Sub1_Sub4.method499(l, 9);
+					Rasterizer3D.releaseTexture(l);
 				}
 			}
 
@@ -5254,7 +5256,7 @@ public class client extends Applet_Sub1 {
 				anInt951 = 0;
 				method147(anInt1140);
 				super.aClass18_15.method230(false);
-				Class50_Sub1_Sub1_Sub4.anIntArray1538 = anIntArray1003;
+				Rasterizer3D.scanlineOffsets = anIntArray1003;
 				Rasterizer.resetPixels();
 				aBoolean1046 = true;
 				Widget class13 = Widget.get(anInt1053);
@@ -5452,7 +5454,7 @@ public class client extends Applet_Sub1 {
 			}
 			aClass18_1109.method231(466, 496, super.aGraphics14, aBoolean1074);
 			aClass18_1158.method230(false);
-			Class50_Sub1_Sub1_Sub4.anIntArray1538 = anIntArray1002;
+			Rasterizer3D.scanlineOffsets = anIntArray1002;
 		}
 		if (aBoolean1212) {
 			aBoolean1212 = false;
@@ -5484,7 +5486,7 @@ public class client extends Applet_Sub1 {
 			aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Report abuse", 458, 33, 0xffffff, true);
 			aClass18_1108.method231(453, 0, super.aGraphics14, aBoolean1074);
 			aClass18_1158.method230(false);
-			Class50_Sub1_Sub1_Sub4.anIntArray1538 = anIntArray1002;
+			Rasterizer3D.scanlineOffsets = anIntArray1002;
 		}
 		anInt951 = 0;
 		if (i != 7) {
@@ -5597,8 +5599,7 @@ public class client extends Applet_Sub1 {
 				if (class50_sub1_sub3 == null)
 					return;
 				if (class50_sub1_sub3.type == 0) {
-					Class50_Sub1_Sub4_Sub4.method575(class50_sub1_sub3.buffer, class50_sub1_sub3.id,
-							(byte) 7);
+					Model.loadModelHeader(class50_sub1_sub3.buffer, class50_sub1_sub3.id);
 					if ((aClass32_Sub1_1291.getModelIndex(class50_sub1_sub3.id) & 0x62) != 0) {
 						aBoolean1181 = true;
 						if (anInt988 != -1 || anInt1191 != -1)
@@ -6217,7 +6218,7 @@ public class client extends Applet_Sub1 {
 
 	public void method84(int i) {
 		aClass18_1159.method230(false);
-		Class50_Sub1_Sub1_Sub4.anIntArray1538 = anIntArray1000;
+		Rasterizer3D.scanlineOffsets = anIntArray1000;
 		aClass50_Sub1_Sub1_Sub3_1187.draw(0, 0);
 		if (aBoolean866) {
 			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(aString937, 239, 40, 0);
@@ -6362,7 +6363,7 @@ public class client extends Applet_Sub1 {
 			method128(false);
 		aClass18_1159.method231(357, 17, super.aGraphics14, aBoolean1074);
 		aClass18_1158.method230(false);
-		Class50_Sub1_Sub1_Sub4.anIntArray1538 = anIntArray1002;
+		Rasterizer3D.scanlineOffsets = anIntArray1002;
 		if (i != 0)
 			aClass6ArrayArrayArray1323 = null;
 	}
@@ -6473,7 +6474,7 @@ public class client extends Applet_Sub1 {
 			aClass50_Sub1_Sub1_Sub1_1116.shapeImageToPixels(0, 0, 33, 33, 256, 25, anIntArray1286, anInt1252,
 					anIntArray1180, 25);
 			aClass18_1158.method230(false);
-			Class50_Sub1_Sub1_Sub4.anIntArray1538 = anIntArray1002;
+			Rasterizer3D.scanlineOffsets = anIntArray1002;
 			return;
 		}
 		int j = anInt1252 + anInt916 & 0x7ff;
@@ -6589,7 +6590,7 @@ public class client extends Applet_Sub1 {
 		}
 		Rasterizer.drawFilledRectangle(97, 78, 3, 3, 0xffffff);
 		aClass18_1158.method230(false);
-		Class50_Sub1_Sub1_Sub4.anIntArray1538 = anIntArray1002;
+		Rasterizer3D.scanlineOffsets = anIntArray1002;
 	}
 
 	public URL getCodeBase() {
@@ -6822,7 +6823,7 @@ public class client extends Applet_Sub1 {
 			anInt1276 = -1;
 			aClass6_1210.clear();
 			aClass6_1282.clear();
-			Class50_Sub1_Sub1_Sub4.method495((byte) 71);
+			Rasterizer3D.clearTextureCache();
 			method49(383);
 			aClass22_1164.method241((byte) 7);
 			System.gc();
@@ -6941,7 +6942,7 @@ public class client extends Applet_Sub1 {
 			class8.method167(aClass46Array1260, anInt1318, aClass22_1164);
 			if (aClass18_1158 != null) {
 				aClass18_1158.method230(false);
-				Class50_Sub1_Sub1_Sub4.anIntArray1538 = anIntArray1002;
+				Rasterizer3D.scanlineOffsets = anIntArray1002;
 			}
 			aClass50_Sub1_Sub2_964.writeOpcode(40);
 			int l3 = Class8.anInt150;
@@ -6972,12 +6973,12 @@ public class client extends Applet_Sub1 {
 			for (int j1 = 0; j1 < k; j1++) {
 				int i2 = aClass32_Sub1_1291.getModelIndex(j1);
 				if ((i2 & 0x79) == 0)
-					Class50_Sub1_Sub4_Sub4.method576(j1, 1);
+					Model.clearModelHeader(j1);
 			}
 
 		}
 		System.gc();
-		Class50_Sub1_Sub1_Sub4.method496((byte) 7, 20);
+		Rasterizer3D.initializeTexturePool(20);
 		aClass32_Sub1_1291.clearExtraRequests();
 		int l = (anInt889 - 6) / 8 - 1;
 		int k1 = (anInt889 + 6) / 8 + 1;
@@ -7014,15 +7015,15 @@ public class client extends Applet_Sub1 {
 		int j2 = 0;
 		int k2 = l;
 		if (k1 != 0) {
-			int l2 = Class50_Sub1_Sub4_Sub4.anIntArray1710[k1];
-			int j3 = Class50_Sub1_Sub4_Sub4.anIntArray1711[k1];
+			int l2 = Model.SINE[k1];
+			int j3 = Model.COSINE[k1];
 			int l3 = j2 * j3 - k2 * l2 >> 16;
 			k2 = j2 * l2 + k2 * j3 >> 16;
 			j2 = l3;
 		}
 		if (l1 != 0) {
-			int i3 = Class50_Sub1_Sub4_Sub4.anIntArray1710[l1];
-			int k3 = Class50_Sub1_Sub4_Sub4.anIntArray1711[l1];
+			int i3 = Model.SINE[l1];
+			int k3 = Model.COSINE[l1];
 			int i4 = k2 * i3 + i2 * k3 >> 16;
 			k2 = k2 * k3 - i2 * i3 >> 16;
 			i2 = i4;
@@ -7230,7 +7231,7 @@ public class client extends Applet_Sub1 {
 		Class22.aBoolean451 = true;
 		if (!flag)
 			aBoolean1242 = !aBoolean1242;
-		Class50_Sub1_Sub1_Sub4.aBoolean1527 = true;
+		Rasterizer3D.lowMemory = true;
 		aBoolean926 = true;
 		Class8.aBoolean169 = true;
 		Class47.aBoolean772 = true;
@@ -7395,7 +7396,7 @@ public class client extends Applet_Sub1 {
 				}
 
 				aBoolean1277 = false;
-				Class50_Sub1_Sub4_Sub4 aclass50_sub1_sub4_sub4[] = new Class50_Sub1_Sub4_Sub4[7];
+				Model aclass50_sub1_sub4_sub4[] = new Model[7];
 				int j2 = 0;
 				for (int k2 = 0; k2 < 7; k2++) {
 					int l2 = anIntArray1326[k2];
@@ -7403,21 +7404,19 @@ public class client extends Applet_Sub1 {
 						aclass50_sub1_sub4_sub4[j2++] = IdentityKit.definitions[l2].buildBodyModel();
 				}
 
-				Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = new Class50_Sub1_Sub4_Sub4(j2, aclass50_sub1_sub4_sub4,
-						(byte) -89);
+				Model class50_sub1_sub4_sub4 = new Model(j2, aclass50_sub1_sub4_sub4);
 				for (int i3 = 0; i3 < 5; i3++)
 					if (anIntArray1099[i3] != 0) {
-						class50_sub1_sub4_sub4.method591(anIntArrayArray1008[i3][0],
+						class50_sub1_sub4_sub4.recolor(anIntArrayArray1008[i3][0],
 								anIntArrayArray1008[i3][anIntArray1099[i3]]);
 						if (i3 == 1)
-							class50_sub1_sub4_sub4.method591(anIntArray1268[0], anIntArray1268[anIntArray1099[i3]]);
+							class50_sub1_sub4_sub4.recolor(anIntArray1268[0], anIntArray1268[anIntArray1099[i3]]);
 					}
 
-				class50_sub1_sub4_sub4.method584(7);
-				class50_sub1_sub4_sub4.method585(
-						AnimationSequence.sequences[((Class50_Sub1_Sub4_Sub3) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).anInt1634].primaryFrameIds[0],
-						(byte) 6);
-				class50_sub1_sub4_sub4.method594(64, 850, -30, -50, -30, true);
+				class50_sub1_sub4_sub4.createBones();
+				class50_sub1_sub4_sub4.applyTransformation(
+						AnimationSequence.sequences[((Class50_Sub1_Sub4_Sub3) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).anInt1634].primaryFrameIds[0]);
+				class50_sub1_sub4_sub4.light(64, 850, -30, -50, -30, true);
 				class13.mediaType = 5;
 				class13.mediaId = 0;
 				Widget.cacheModel(5, 0, class50_sub1_sub4_sub4);
@@ -7568,13 +7567,13 @@ public class client extends Applet_Sub1 {
 		int l = anIntArray1039[j];
 		if (k == 1) {
 			if (l == 1)
-				Class50_Sub1_Sub1_Sub4.method501(0.90000000000000002D, (byte) 6);
+				Rasterizer3D.setBrightness(0.90000000000000002D);
 			if (l == 2)
-				Class50_Sub1_Sub1_Sub4.method501(0.80000000000000004D, (byte) 6);
+				Rasterizer3D.setBrightness(0.80000000000000004D);
 			if (l == 3)
-				Class50_Sub1_Sub1_Sub4.method501(0.69999999999999996D, (byte) 6);
+				Rasterizer3D.setBrightness(0.69999999999999996D);
 			if (l == 4)
-				Class50_Sub1_Sub1_Sub4.method501(0.59999999999999998D, (byte) 6);
+				Rasterizer3D.setBrightness(0.59999999999999998D);
 			Class16.aClass33_346.clear();
 			aBoolean1046 = true;
 		}
@@ -8055,7 +8054,7 @@ public class client extends Applet_Sub1 {
 
 		if (aClass18_1158 != null) {
 			aClass18_1158.method230(false);
-			Class50_Sub1_Sub1_Sub4.anIntArray1538 = anIntArray1002;
+			Rasterizer3D.scanlineOffsets = anIntArray1002;
 		}
 		anInt1082++;
 		if (anInt1082 > 177) {
@@ -9372,7 +9371,7 @@ public class client extends Applet_Sub1 {
 			aClass18_1110 = new Class18(45, (byte) -12, method11(-756), 249);
 			aBoolean1046 = true;
 			aClass18_1158.method230(false);
-			Class50_Sub1_Sub1_Sub4.anIntArray1538 = anIntArray1002;
+			Rasterizer3D.scanlineOffsets = anIntArray1002;
 			return;
 		}
 	}
@@ -9460,7 +9459,7 @@ public class client extends Applet_Sub1 {
 			return;
 		if (aClass18_1158 != null) {
 			aClass18_1158.method230(false);
-			Class50_Sub1_Sub1_Sub4.anIntArray1538 = anIntArray1002;
+			Rasterizer3D.scanlineOffsets = anIntArray1002;
 			int j = 151;
 			if (s != null)
 				j -= 7;
@@ -9476,7 +9475,7 @@ public class client extends Applet_Sub1 {
 		}
 		if (super.aClass18_15 != null) {
 			super.aClass18_15.method230(false);
-			Class50_Sub1_Sub1_Sub4.anIntArray1538 = anIntArray1003;
+			Rasterizer3D.scanlineOffsets = anIntArray1003;
 			int k = 251;
 			char c = '\u012C';
 			byte byte0 = 50;
@@ -9680,8 +9679,8 @@ public class client extends Applet_Sub1 {
 		int l = j * j + i * i;
 		if (l > 6400)
 			return;
-		int i1 = Class50_Sub1_Sub4_Sub4.anIntArray1710[k];
-		int j1 = Class50_Sub1_Sub4_Sub4.anIntArray1711[k];
+		int i1 = Model.SINE[k];
+		int j1 = Model.COSINE[k];
 		i1 = (i1 * 256) / (anInt1233 + 256);
 		j1 = (j1 * 256) / (anInt1233 + 256);
 		if (!flag)
@@ -9852,7 +9851,7 @@ public class client extends Applet_Sub1 {
 				int j22 = anIntArrayArrayArray891[anInt1091][k17 + 1][k18];
 				int k22 = anIntArrayArrayArray891[anInt1091][k17 + 1][k18 + 1];
 				int l22 = anIntArrayArrayArray891[anInt1091][k17][k18 + 1];
-				Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = class47.method431(i6, l8, i22, j22, k22, l22, -1);
+				Model class50_sub1_sub4_sub4 = class47.method431(i6, l8, i22, j22, k22, l22, -1);
 				if (class50_sub1_sub4_sub4 != null) {
 					method145(true, anInt1091, k17, 0, l19 + 1, 0, -1, l21 + 1, k11, k18);
 					class50_sub1_sub4_sub3_sub2.anInt1764 = l21 + anInt1325;
@@ -10112,7 +10111,7 @@ public class client extends Applet_Sub1 {
 
 	public void method134(byte byte0) {
 		aClass18_1156.method230(false);
-		Class50_Sub1_Sub1_Sub4.anIntArray1538 = anIntArray1001;
+		Rasterizer3D.scanlineOffsets = anIntArray1001;
 		aClass50_Sub1_Sub1_Sub3_1185.draw(0, 0);
 		if (anInt1089 != -1)
 			method142(0, 0, Widget.get(anInt1089), 0, 8);
@@ -10122,7 +10121,7 @@ public class client extends Applet_Sub1 {
 			method128(false);
 		aClass18_1156.method231(205, 553, super.aGraphics14, aBoolean1074);
 		aClass18_1158.method230(false);
-		Class50_Sub1_Sub1_Sub4.anIntArray1538 = anIntArray1002;
+		Rasterizer3D.scanlineOffsets = anIntArray1002;
 		if (byte0 == 7)
 			;
 	}
@@ -10157,10 +10156,10 @@ public class client extends Applet_Sub1 {
 		i -= anInt1216;
 		i1 -= anInt1217;
 		k -= anInt1218;
-		int j1 = Class50_Sub1_Sub4_Sub4.anIntArray1710[anInt1219];
-		int k1 = Class50_Sub1_Sub4_Sub4.anIntArray1711[anInt1219];
-		int l1 = Class50_Sub1_Sub4_Sub4.anIntArray1710[anInt1220];
-		int i2 = Class50_Sub1_Sub4_Sub4.anIntArray1711[anInt1220];
+		int j1 = Model.SINE[anInt1219];
+		int k1 = Model.COSINE[anInt1219];
+		int l1 = Model.SINE[anInt1220];
+		int i2 = Model.COSINE[anInt1220];
 		int j2 = k * l1 + i * i2 >> 16;
 		k = k * i2 - i * l1 >> 16;
 		i = j2;
@@ -10170,8 +10169,8 @@ public class client extends Applet_Sub1 {
 			anInt870 = -1;
 		i1 = j2;
 		if (k >= 50) {
-			anInt932 = Class50_Sub1_Sub1_Sub4.anInt1532 + (i << 9) / k;
-			anInt933 = Class50_Sub1_Sub1_Sub4.anInt1533 + (i1 << 9) / k;
+			anInt932 = Rasterizer3D.centerX + (i << 9) / k;
+			anInt933 = Rasterizer3D.centerY + (i1 << 9) / k;
 			return;
 		} else {
 			anInt932 = -1;
@@ -10582,19 +10581,19 @@ public class client extends Applet_Sub1 {
 					if (class50_sub1_sub1_sub1 != null)
 						class50_sub1_sub1_sub1.drawImage(k2, l2);
 				} else if (class13_1.type == 6) {
-					int k3 = Class50_Sub1_Sub1_Sub4.anInt1532;
-					int k4 = Class50_Sub1_Sub1_Sub4.anInt1533;
-					Class50_Sub1_Sub1_Sub4.anInt1532 = k2 + class13_1.width / 2;
-					Class50_Sub1_Sub1_Sub4.anInt1533 = l2 + class13_1.height / 2;
-					int k5 = Class50_Sub1_Sub1_Sub4.anIntArray1536[class13_1.modelPitch] * class13_1.modelZoom >> 16;
-					int j6 = Class50_Sub1_Sub1_Sub4.anIntArray1537[class13_1.modelPitch] * class13_1.modelZoom >> 16;
+					int k3 = Rasterizer3D.centerX;
+					int k4 = Rasterizer3D.centerY;
+					Rasterizer3D.centerX = k2 + class13_1.width / 2;
+					Rasterizer3D.centerY = l2 + class13_1.height / 2;
+					int k5 = Rasterizer3D.SINE[class13_1.modelPitch] * class13_1.modelZoom >> 16;
+					int j6 = Rasterizer3D.COSINE[class13_1.modelPitch] * class13_1.modelZoom >> 16;
 					boolean flag2 = method95(class13_1);
 					int k7;
 					if (flag2)
 						k7 = class13_1.activeAnimationId;
 					else
 						k7 = class13_1.animationId;
-					Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4;
+					Model class50_sub1_sub4_sub4;
 					if (k7 == -1) {
 						class50_sub1_sub4_sub4 = class13_1.getAnimatedModel(-1, -1, flag2);
 					} else {
@@ -10604,9 +10603,9 @@ public class client extends Applet_Sub1 {
 								class14.secondaryFrameIds[class13_1.animationFrame], flag2);
 					}
 					if (class50_sub1_sub4_sub4 != null)
-						class50_sub1_sub4_sub4.method598(0, class13_1.modelYaw, 0, class13_1.modelPitch, 0, k5, j6);
-					Class50_Sub1_Sub1_Sub4.anInt1532 = k3;
-					Class50_Sub1_Sub1_Sub4.anInt1533 = k4;
+						class50_sub1_sub4_sub4.renderSimple(0, class13_1.modelYaw, 0, class13_1.modelPitch, 0, k5, j6);
+					Rasterizer3D.centerX = k3;
+					Rasterizer3D.centerY = k4;
 				} else {
 					if (class13_1.type == 7) {
 						TypeFace class50_sub1_sub1_sub2_1 = class13_1.font;
@@ -10789,8 +10788,8 @@ public class client extends Applet_Sub1 {
 				i -= 73;
 				j -= 75;
 				int k = anInt1252 + anInt916 & 0x7ff;
-				int l = Class50_Sub1_Sub1_Sub4.anIntArray1536[k];
-				int i1 = Class50_Sub1_Sub1_Sub4.anIntArray1537[k];
+				int l = Rasterizer3D.SINE[k];
+				int i1 = Rasterizer3D.COSINE[k];
 				l = l * (anInt1233 + 256) >> 8;
 				i1 = i1 * (anInt1233 + 256) >> 8;
 				int j1 = j * l + i * i1 >> 11;
@@ -11129,11 +11128,11 @@ public class client extends Applet_Sub1 {
 				}
 			}
 
-		int l2 = Class50_Sub1_Sub1_Sub4.anInt1547;
-		Class50_Sub1_Sub4_Sub4.aBoolean1705 = true;
-		Class50_Sub1_Sub4_Sub4.anInt1708 = 0;
-		Class50_Sub1_Sub4_Sub4.anInt1706 = super.anInt22 - 4;
-		Class50_Sub1_Sub4_Sub4.anInt1707 = super.anInt23 - 4;
+		int l2 = Rasterizer3D.textureCycle;
+		Model.pickingEnabled = true;
+		Model.pickedCount = 0;
+		Model.mouseX = super.anInt22 - 4;
+		Model.mouseY = super.anInt23 - 4;
 		Rasterizer.resetPixels();
 		aClass22_1164.method280(anInt1216, k, 0, anInt1217, anInt1218, anInt1220, anInt1219);
 		aClass22_1164.method255(anInt897);

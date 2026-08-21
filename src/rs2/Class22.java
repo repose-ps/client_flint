@@ -2,7 +2,9 @@ package rs2;
 
 import rs2.collection.NodeDeque;
 import rs2.media.Rasterizer;
+import rs2.media.Rasterizer3D;
 import rs2.media.VertexNormal;
+import rs2.media.renderable.Model;
 import rs2.media.renderable.Renderable;
 import rs2.scene.GroundItemTile;
 import rs2.scene.InteractiveObject;
@@ -216,8 +218,8 @@ public class Class22 {
 		SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[j][j1][i1];
 		if (class50_sub3 != null) {
 			for (int l1 = 0; l1 < class50_sub3.interactiveObjectCount; l1++)
-				if (class50_sub3.interactiveObjects[l1].renderable instanceof Class50_Sub1_Sub4_Sub4) {
-					int i2 = ((Class50_Sub1_Sub4_Sub4) class50_sub3.interactiveObjects[l1].renderable).anInt1675;
+				if (class50_sub3.interactiveObjects[l1].renderable instanceof Model) {
+					int i2 = ((Model) class50_sub3.interactiveObjects[l1].renderable).itemDropHeight;
 					if (i2 > k1)
 						k1 = i2;
 				}
@@ -612,30 +614,30 @@ public class Class22 {
 					if (class50_sub3 != null) {
 						Wall class44 = class50_sub3.wall;
 						if (class44 != null && class44.primary != null && class44.primary.vertexNormals != null) {
-							method274(j1, l, 0, 1, (Class50_Sub1_Sub4_Sub4) class44.primary, i1, 1);
+							method274(j1, l, 0, 1, (Model) class44.primary, i1, 1);
 							if (class44.secondary != null && class44.secondary.vertexNormals != null) {
-								method274(j1, l, 0, 1, (Class50_Sub1_Sub4_Sub4) class44.secondary, i1, 1);
-								method275((Class50_Sub1_Sub4_Sub4) class44.primary,
-										(Class50_Sub1_Sub4_Sub4) class44.secondary, 0, 0, 0, false);
-								((Class50_Sub1_Sub4_Sub4) class44.secondary).method595(i, j, 0, k);
+								method274(j1, l, 0, 1, (Model) class44.secondary, i1, 1);
+								method275((Model) class44.primary,
+										(Model) class44.secondary, 0, 0, 0, false);
+								((Model) class44.secondary).applyDeferredLighting(k, i, j);
 							}
-							((Class50_Sub1_Sub4_Sub4) class44.primary).method595(i, j, 0, k);
+							((Model) class44.primary).applyDeferredLighting(k, i, j);
 						}
 						for (int k1 = 0; k1 < class50_sub3.interactiveObjectCount; k1++) {
 							InteractiveObject class5 = class50_sub3.interactiveObjects[k1];
 							if (class5 != null && class5.renderable != null
 									&& class5.renderable.vertexNormals != null) {
 								method274(j1, l, 0, (class5.tileRight - class5.tileLeft) + 1,
-										(Class50_Sub1_Sub4_Sub4) class5.renderable, i1,
+										(Model) class5.renderable, i1,
 										(class5.tileBottom - class5.tileTop) + 1);
-								((Class50_Sub1_Sub4_Sub4) class5.renderable).method595(i, j, 0, k);
+								((Model) class5.renderable).applyDeferredLighting(k, i, j);
 							}
 						}
 
 						FloorDecoration class28 = class50_sub3.floorDecoration;
 						if (class28 != null && class28.renderable.vertexNormals != null) {
-							method273(i1, (Class50_Sub1_Sub4_Sub4) class28.renderable, j1, l, 0);
-							((Class50_Sub1_Sub4_Sub4) class28.renderable).method595(i, j, 0, k);
+							method273(i1, (Model) class28.renderable, j1, l, 0);
+							((Model) class28.renderable).applyDeferredLighting(k, i, j);
 						}
 					}
 				}
@@ -648,40 +650,40 @@ public class Class22 {
 			byte0 = 0;
 	}
 
-	public void method273(int i, Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4, int j, int k, int l) {
+	public void method273(int i, Model class50_sub1_sub4_sub4, int j, int k, int l) {
 		if (l != 0)
 			return;
 		if (i < anInt453) {
 			SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[k][i + 1][j];
 			if (class50_sub3 != null && class50_sub3.floorDecoration != null
 					&& class50_sub3.floorDecoration.renderable.vertexNormals != null)
-				method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4) class50_sub3.floorDecoration.renderable, 128,
+				method275(class50_sub1_sub4_sub4, (Model) class50_sub3.floorDecoration.renderable, 128,
 						0, 0, true);
 		}
 		if (j < anInt453) {
 			SceneTile class50_sub3_1 = aClass50_Sub3ArrayArrayArray456[k][i][j + 1];
 			if (class50_sub3_1 != null && class50_sub3_1.floorDecoration != null
 					&& class50_sub3_1.floorDecoration.renderable.vertexNormals != null)
-				method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4) class50_sub3_1.floorDecoration.renderable, 0,
+				method275(class50_sub1_sub4_sub4, (Model) class50_sub3_1.floorDecoration.renderable, 0,
 						0, 128, true);
 		}
 		if (i < anInt453 && j < anInt454) {
 			SceneTile class50_sub3_2 = aClass50_Sub3ArrayArrayArray456[k][i + 1][j + 1];
 			if (class50_sub3_2 != null && class50_sub3_2.floorDecoration != null
 					&& class50_sub3_2.floorDecoration.renderable.vertexNormals != null)
-				method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4) class50_sub3_2.floorDecoration.renderable,
+				method275(class50_sub1_sub4_sub4, (Model) class50_sub3_2.floorDecoration.renderable,
 						128, 0, 128, true);
 		}
 		if (i < anInt453 && j > 0) {
 			SceneTile class50_sub3_3 = aClass50_Sub3ArrayArrayArray456[k][i + 1][j - 1];
 			if (class50_sub3_3 != null && class50_sub3_3.floorDecoration != null
 					&& class50_sub3_3.floorDecoration.renderable.vertexNormals != null)
-				method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4) class50_sub3_3.floorDecoration.renderable,
+				method275(class50_sub1_sub4_sub4, (Model) class50_sub3_3.floorDecoration.renderable,
 						128, 0, -128, true);
 		}
 	}
 
-	public void method274(int i, int j, int k, int l, Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4, int i1, int j1) {
+	public void method274(int i, int j, int k, int l, Model class50_sub1_sub4_sub4, int i1, int j1) {
 		boolean flag = true;
 		int k1 = i1;
 		int l1 = i1 + l;
@@ -705,12 +707,12 @@ public class Class22 {
 									Wall class44 = class50_sub3.wall;
 									if (class44 != null && class44.primary != null
 											&& class44.primary.vertexNormals != null)
-										method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4) class44.primary,
+										method275(class50_sub1_sub4_sub4, (Model) class44.primary,
 												(l2 - i1) * 128 + (1 - l) * 64, j3, (i3 - i) * 128 + (1 - j1) * 64,
 												flag);
 									if (class44 != null && class44.secondary != null
 											&& class44.secondary.vertexNormals != null)
-										method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4) class44.secondary,
+										method275(class50_sub1_sub4_sub4, (Model) class44.secondary,
 												(l2 - i1) * 128 + (1 - l) * 64, j3, (i3 - i) * 128 + (1 - j1) * 64,
 												flag);
 									for (int k3 = 0; k3 < class50_sub3.interactiveObjectCount; k3++) {
@@ -720,7 +722,7 @@ public class Class22 {
 											int l3 = (class5.tileRight - class5.tileLeft) + 1;
 											int i4 = (class5.tileBottom - class5.tileTop) + 1;
 											method275(class50_sub1_sub4_sub4,
-													(Class50_Sub1_Sub4_Sub4) class5.renderable,
+													(Model) class5.renderable,
 													(class5.tileLeft - i1) * 128 + (l3 - l) * 64, j3,
 													(class5.tileTop - i) * 128 + (i4 - j1) * 64, flag);
 										}
@@ -739,31 +741,31 @@ public class Class22 {
 			;
 	}
 
-	public void method275(Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4,
-			Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1, int i, int j, int k, boolean flag) {
+	public void method275(Model class50_sub1_sub4_sub4,
+			Model class50_sub1_sub4_sub4_1, int i, int j, int k, boolean flag) {
 		anInt503++;
 		int l = 0;
-		int ai[] = class50_sub1_sub4_sub4_1.anIntArray1649;
-		int i1 = class50_sub1_sub4_sub4_1.anInt1648;
-		int j1 = class50_sub1_sub4_sub4_1.anInt1669 >> 16;
-		int k1 = (class50_sub1_sub4_sub4_1.anInt1669 << 16) >> 16;
-		int l1 = class50_sub1_sub4_sub4_1.anInt1670 >> 16;
-		int i2 = (class50_sub1_sub4_sub4_1.anInt1670 << 16) >> 16;
-		for (int j2 = 0; j2 < class50_sub1_sub4_sub4.anInt1648; j2++) {
+		int ai[] = class50_sub1_sub4_sub4_1.verticesX;
+		int i1 = class50_sub1_sub4_sub4_1.vertexCount;
+		int j1 = class50_sub1_sub4_sub4_1.packedXBounds >> 16;
+		int k1 = (class50_sub1_sub4_sub4_1.packedXBounds << 16) >> 16;
+		int l1 = class50_sub1_sub4_sub4_1.packedZBounds >> 16;
+		int i2 = (class50_sub1_sub4_sub4_1.packedZBounds << 16) >> 16;
+		for (int j2 = 0; j2 < class50_sub1_sub4_sub4.vertexCount; j2++) {
 			VertexNormal class40 = ((Renderable) (class50_sub1_sub4_sub4)).vertexNormals[j2];
-			VertexNormal class40_1 = class50_sub1_sub4_sub4.aClass40Array1681[j2];
+			VertexNormal class40_1 = class50_sub1_sub4_sub4.vertexNormalOffsets[j2];
 			if (class40_1.magnitude != 0) {
-				int i3 = class50_sub1_sub4_sub4.anIntArray1650[j2] - j;
-				if (i3 <= class50_sub1_sub4_sub4_1.anInt1672) {
-					int j3 = class50_sub1_sub4_sub4.anIntArray1649[j2] - i;
+				int i3 = class50_sub1_sub4_sub4.verticesY[j2] - j;
+				if (i3 <= class50_sub1_sub4_sub4_1.maxY) {
+					int j3 = class50_sub1_sub4_sub4.verticesX[j2] - i;
 					if (j3 >= j1 && j3 <= k1) {
-						int k3 = class50_sub1_sub4_sub4.anIntArray1651[j2] - k;
+						int k3 = class50_sub1_sub4_sub4.verticesZ[j2] - k;
 						if (k3 >= i2 && k3 <= l1) {
 							for (int l3 = 0; l3 < i1; l3++) {
 								VertexNormal class40_2 = ((Renderable) (class50_sub1_sub4_sub4_1)).vertexNormals[l3];
-								VertexNormal class40_3 = class50_sub1_sub4_sub4_1.aClass40Array1681[l3];
-								if (j3 == ai[l3] && k3 == class50_sub1_sub4_sub4_1.anIntArray1651[l3]
-										&& i3 == class50_sub1_sub4_sub4_1.anIntArray1650[l3]
+								VertexNormal class40_3 = class50_sub1_sub4_sub4_1.vertexNormalOffsets[l3];
+								if (j3 == ai[l3] && k3 == class50_sub1_sub4_sub4_1.verticesZ[l3]
+										&& i3 == class50_sub1_sub4_sub4_1.verticesY[l3]
 										&& class40_3.magnitude != 0) {
 									class40.x += class40_3.x;
 									class40.y += class40_3.y;
@@ -787,17 +789,17 @@ public class Class22 {
 
 		if (l < 3 || !flag)
 			return;
-		for (int k2 = 0; k2 < class50_sub1_sub4_sub4.anInt1652; k2++)
-			if (anIntArray501[class50_sub1_sub4_sub4.anIntArray1653[k2]] == anInt503
-					&& anIntArray501[class50_sub1_sub4_sub4.anIntArray1654[k2]] == anInt503
-					&& anIntArray501[class50_sub1_sub4_sub4.anIntArray1655[k2]] == anInt503)
-				class50_sub1_sub4_sub4.anIntArray1659[k2] = -1;
+		for (int k2 = 0; k2 < class50_sub1_sub4_sub4.triangleCount; k2++)
+			if (anIntArray501[class50_sub1_sub4_sub4.triangleVertexA[k2]] == anInt503
+					&& anIntArray501[class50_sub1_sub4_sub4.triangleVertexB[k2]] == anInt503
+					&& anIntArray501[class50_sub1_sub4_sub4.triangleVertexC[k2]] == anInt503)
+				class50_sub1_sub4_sub4.triangleDrawType[k2] = -1;
 
-		for (int l2 = 0; l2 < class50_sub1_sub4_sub4_1.anInt1652; l2++)
-			if (anIntArray502[class50_sub1_sub4_sub4_1.anIntArray1653[l2]] == anInt503
-					&& anIntArray502[class50_sub1_sub4_sub4_1.anIntArray1654[l2]] == anInt503
-					&& anIntArray502[class50_sub1_sub4_sub4_1.anIntArray1655[l2]] == anInt503)
-				class50_sub1_sub4_sub4_1.anIntArray1659[l2] = -1;
+		for (int l2 = 0; l2 < class50_sub1_sub4_sub4_1.triangleCount; l2++)
+			if (anIntArray502[class50_sub1_sub4_sub4_1.triangleVertexA[l2]] == anInt503
+					&& anIntArray502[class50_sub1_sub4_sub4_1.triangleVertexB[l2]] == anInt503
+					&& anIntArray502[class50_sub1_sub4_sub4_1.triangleVertexC[l2]] == anInt503)
+				class50_sub1_sub4_sub4_1.triangleDrawType[l2] = -1;
 
 	}
 
@@ -865,10 +867,10 @@ public class Class22 {
 		boolean aflag[][][][] = new boolean[9][32][53][53];
 		for (int j1 = 128; j1 <= 384; j1 += 32) {
 			for (int k1 = 0; k1 < 2048; k1 += 64) {
-				anInt473 = Class50_Sub1_Sub4_Sub4.anIntArray1710[j1];
-				anInt474 = Class50_Sub1_Sub4_Sub4.anIntArray1711[j1];
-				anInt475 = Class50_Sub1_Sub4_Sub4.anIntArray1710[k1];
-				anInt476 = Class50_Sub1_Sub4_Sub4.anIntArray1711[k1];
+				anInt473 = Model.SINE[j1];
+				anInt474 = Model.COSINE[j1];
+				anInt475 = Model.SINE[k1];
+				anInt476 = Model.COSINE[k1];
 				int i2 = (j1 - 128) / 32;
 				int k2 = k1 / 64;
 				for (int i3 = -26; i3 <= 26; i3++) {
@@ -965,10 +967,10 @@ public class Class22 {
 		else if (i1 >= anInt454 * 128)
 			i1 = anInt454 * 128 - 1;
 		anInt463++;
-		anInt473 = Class50_Sub1_Sub4_Sub4.anIntArray1710[k1];
-		anInt474 = Class50_Sub1_Sub4_Sub4.anIntArray1711[k1];
-		anInt475 = Class50_Sub1_Sub4_Sub4.anIntArray1710[j1];
-		anInt476 = Class50_Sub1_Sub4_Sub4.anIntArray1711[j1];
+		anInt473 = Model.SINE[k1];
+		anInt474 = Model.COSINE[k1];
+		anInt475 = Model.SINE[j1];
+		anInt476 = Model.COSINE[j1];
 		aBooleanArrayArray507 = aBooleanArrayArrayArrayArray506[(k1 - 128) / 32][j1 / 64];
 		anInt470 = i;
 		anInt471 = l;
@@ -1579,64 +1581,64 @@ public class Class22 {
 		k4 = l4;
 		if (j3 < 50)
 			return;
-		int i5 = Class50_Sub1_Sub1_Sub4.anInt1532 + (i2 << 9) / k2;
-		int j5 = Class50_Sub1_Sub1_Sub4.anInt1533 + (l3 << 9) / k2;
-		int k5 = Class50_Sub1_Sub1_Sub4.anInt1532 + (i3 << 9) / j2;
-		int l5 = Class50_Sub1_Sub1_Sub4.anInt1533 + (i4 << 9) / j2;
-		int i6 = Class50_Sub1_Sub1_Sub4.anInt1532 + (l2 << 9) / k3;
-		int j6 = Class50_Sub1_Sub1_Sub4.anInt1533 + (j4 << 9) / k3;
-		int k6 = Class50_Sub1_Sub1_Sub4.anInt1532 + (l1 << 9) / j3;
-		int l6 = Class50_Sub1_Sub1_Sub4.anInt1533 + (k4 << 9) / j3;
-		Class50_Sub1_Sub1_Sub4.anInt1531 = 0;
+		int i5 = Rasterizer3D.centerX + (i2 << 9) / k2;
+		int j5 = Rasterizer3D.centerY + (l3 << 9) / k2;
+		int k5 = Rasterizer3D.centerX + (i3 << 9) / j2;
+		int l5 = Rasterizer3D.centerY + (i4 << 9) / j2;
+		int i6 = Rasterizer3D.centerX + (l2 << 9) / k3;
+		int j6 = Rasterizer3D.centerY + (j4 << 9) / k3;
+		int k6 = Rasterizer3D.centerX + (l1 << 9) / j3;
+		int l6 = Rasterizer3D.centerY + (k4 << 9) / j3;
+		Rasterizer3D.alpha = 0;
 		if ((i6 - k6) * (l5 - l6) - (j6 - l6) * (k5 - k6) > 0) {
-			Class50_Sub1_Sub1_Sub4.aBoolean1528 = false;
+			Rasterizer3D.restrictEdges = false;
 			if (i6 < 0 || k6 < 0 || k5 < 0 || i6 > Rasterizer.viewportRx || k6 > Rasterizer.viewportRx
 					|| k5 > Rasterizer.viewportRx)
-				Class50_Sub1_Sub1_Sub4.aBoolean1528 = true;
+				Rasterizer3D.restrictEdges = true;
 			if (aBoolean482 && method285(anInt483, anInt484, j6, l6, l5, i6, k6, k5)) {
 				anInt485 = j1;
 				anInt486 = k1;
 			}
 			if (class3.texture == -1) {
 				if (class3.colourC != 0xbc614e)
-					Class50_Sub1_Sub1_Sub4.method503(j6, l6, l5, i6, k6, k5, class3.colourC, class3.colourD,
+					Rasterizer3D.drawGouraudTriangle(j6, l6, l5, i6, k6, k5, class3.colourC, class3.colourD,
 							class3.colourB);
 			} else if (!aBoolean451) {
 				if (class3.flat)
-					Class50_Sub1_Sub1_Sub4.method507(j6, l6, l5, i6, k6, k5, class3.colourC, class3.colourD,
+					Rasterizer3D.drawTexturedTriangle(j6, l6, l5, i6, k6, k5, class3.colourC, class3.colourD,
 							class3.colourB, i2, i3, l1, l3, i4, k4, k2, j2, j3, class3.texture);
 				else
-					Class50_Sub1_Sub1_Sub4.method507(j6, l6, l5, i6, k6, k5, class3.colourC, class3.colourD,
+					Rasterizer3D.drawTexturedTriangle(j6, l6, l5, i6, k6, k5, class3.colourC, class3.colourD,
 							class3.colourB, l2, l1, i3, j4, k4, i4, k3, j3, j2, class3.texture);
 			} else {
 				int i7 = anIntArray500[class3.texture];
-				Class50_Sub1_Sub1_Sub4.method503(j6, l6, l5, i6, k6, k5, method284(class3.colourC, i7, 0),
+				Rasterizer3D.drawGouraudTriangle(j6, l6, l5, i6, k6, k5, method284(class3.colourC, i7, 0),
 						method284(class3.colourD, i7, 0), method284(class3.colourB, i7, 0));
 			}
 		}
 		if ((i5 - k5) * (l6 - l5) - (j5 - l5) * (k6 - k5) > 0) {
-			Class50_Sub1_Sub1_Sub4.aBoolean1528 = false;
+			Rasterizer3D.restrictEdges = false;
 			if (i5 < 0 || k5 < 0 || k6 < 0 || i5 > Rasterizer.viewportRx || k5 > Rasterizer.viewportRx
 					|| k6 > Rasterizer.viewportRx)
-				Class50_Sub1_Sub1_Sub4.aBoolean1528 = true;
+				Rasterizer3D.restrictEdges = true;
 			if (aBoolean482 && method285(anInt483, anInt484, j5, l5, l6, i5, k5, k6)) {
 				anInt485 = j1;
 				anInt486 = k1;
 			}
 			if (class3.texture == -1) {
 				if (class3.colourA != 0xbc614e) {
-					Class50_Sub1_Sub1_Sub4.method503(j5, l5, l6, i5, k5, k6, class3.colourA, class3.colourB,
+					Rasterizer3D.drawGouraudTriangle(j5, l5, l6, i5, k5, k6, class3.colourA, class3.colourB,
 							class3.colourD);
 					return;
 				}
 			} else {
 				if (!aBoolean451) {
-					Class50_Sub1_Sub1_Sub4.method507(j5, l5, l6, i5, k5, k6, class3.colourA, class3.colourB,
+					Rasterizer3D.drawTexturedTriangle(j5, l5, l6, i5, k5, k6, class3.colourA, class3.colourB,
 							class3.colourD, i2, i3, l1, l3, i4, k4, k2, j2, j3, class3.texture);
 					return;
 				}
 				int j7 = anIntArray500[class3.texture];
-				Class50_Sub1_Sub1_Sub4.method503(j5, l5, l6, i5, k5, k6, method284(class3.colourA, j7, 0),
+				Rasterizer3D.drawGouraudTriangle(j5, l5, l6, i5, k5, k6, method284(class3.colourA, j7, 0),
 						method284(class3.colourB, j7, 0), method284(class3.colourD, j7, 0));
 			}
 		}
@@ -1661,11 +1663,11 @@ public class Class22 {
 				ComplexTile.VIEW_Y[l1] = k2;
 				ComplexTile.VIEW_Z[l1] = i3;
 			}
-			ComplexTile.SCREEN_X[l1] = Class50_Sub1_Sub1_Sub4.anInt1532 + (i2 << 9) / i3;
-			ComplexTile.SCREEN_Y[l1] = Class50_Sub1_Sub1_Sub4.anInt1533 + (k2 << 9) / i3;
+			ComplexTile.SCREEN_X[l1] = Rasterizer3D.centerX + (i2 << 9) / i3;
+			ComplexTile.SCREEN_Y[l1] = Rasterizer3D.centerY + (k2 << 9) / i3;
 		}
 
-		Class50_Sub1_Sub1_Sub4.anInt1531 = 0;
+		Rasterizer3D.alpha = 0;
 		k1 = class20.triangleVertexA.length;
 		if (byte0 != 3)
 			return;
@@ -1680,34 +1682,34 @@ public class Class22 {
 			int i5 = ComplexTile.SCREEN_Y[j3];
 			int j5 = ComplexTile.SCREEN_Y[l3];
 			if ((i4 - j4) * (j5 - i5) - (l4 - i5) * (k4 - j4) > 0) {
-				Class50_Sub1_Sub1_Sub4.aBoolean1528 = false;
+				Rasterizer3D.restrictEdges = false;
 				if (i4 < 0 || j4 < 0 || k4 < 0 || i4 > Rasterizer.viewportRx || j4 > Rasterizer.viewportRx
 						|| k4 > Rasterizer.viewportRx)
-					Class50_Sub1_Sub1_Sub4.aBoolean1528 = true;
+					Rasterizer3D.restrictEdges = true;
 				if (aBoolean482 && method285(anInt483, anInt484, l4, i5, j5, i4, j4, k4)) {
 					anInt485 = i1;
 					anInt486 = l;
 				}
 				if (class20.triangleTextures == null || class20.triangleTextures[j2] == -1) {
 					if (class20.triangleHslA[j2] != 0xbc614e)
-						Class50_Sub1_Sub1_Sub4.method503(l4, i5, j5, i4, j4, k4, class20.triangleHslA[j2],
+						Rasterizer3D.drawGouraudTriangle(l4, i5, j5, i4, j4, k4, class20.triangleHslA[j2],
 								class20.triangleHslB[j2], class20.triangleHslC[j2]);
 				} else if (!aBoolean451) {
 					if (class20.flat)
-						Class50_Sub1_Sub1_Sub4.method507(l4, i5, j5, i4, j4, k4, class20.triangleHslA[j2],
+						Rasterizer3D.drawTexturedTriangle(l4, i5, j5, i4, j4, k4, class20.triangleHslA[j2],
 								class20.triangleHslB[j2], class20.triangleHslC[j2], ComplexTile.VIEW_X[0],
 								ComplexTile.VIEW_X[1], ComplexTile.VIEW_X[3], ComplexTile.VIEW_Y[0],
 								ComplexTile.VIEW_Y[1], ComplexTile.VIEW_Y[3], ComplexTile.VIEW_Z[0],
 								ComplexTile.VIEW_Z[1], ComplexTile.VIEW_Z[3], class20.triangleTextures[j2]);
 					else
-						Class50_Sub1_Sub1_Sub4.method507(l4, i5, j5, i4, j4, k4, class20.triangleHslA[j2],
+						Rasterizer3D.drawTexturedTriangle(l4, i5, j5, i4, j4, k4, class20.triangleHslA[j2],
 								class20.triangleHslB[j2], class20.triangleHslC[j2], ComplexTile.VIEW_X[l2],
 								ComplexTile.VIEW_X[j3], ComplexTile.VIEW_X[l3], ComplexTile.VIEW_Y[l2],
 								ComplexTile.VIEW_Y[j3], ComplexTile.VIEW_Y[l3], ComplexTile.VIEW_Z[l2],
 								ComplexTile.VIEW_Z[j3], ComplexTile.VIEW_Z[l3], class20.triangleTextures[j2]);
 				} else {
 					int k5 = anIntArray500[class20.triangleTextures[j2]];
-					Class50_Sub1_Sub1_Sub4.method503(l4, i5, j5, i4, j4, k4, method284(class20.triangleHslA[j2], k5, 0),
+					Rasterizer3D.drawGouraudTriangle(l4, i5, j5, i4, j4, k4, method284(class20.triangleHslA[j2], k5, 0),
 							method284(class20.triangleHslB[j2], k5, 0), method284(class20.triangleHslC[j2], k5, 0));
 				}
 			}
