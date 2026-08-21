@@ -21,7 +21,7 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 			int j = anIntArray1752[i];
 			if (j >= 256 && j < 512 && !IdentityKit.definitions[j - 256].areHeadModelsReady())
 				flag1 = true;
-			if (j >= 512 && !Class16.method212(j - 512).method211(anInt1755, 0))
+			if (j >= 512 && !Class16.method212(j - 512).method211(anInt1755))
 				flag1 = true;
 		}
 

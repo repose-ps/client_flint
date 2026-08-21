@@ -8,11 +8,9 @@ import rs2.net.Buffer;
 
 public class Class16 {
 
-	public boolean method211(int i, int j) {
+	public boolean method211(int i) {
 		int k = anInt334;
 		int l = anInt361;
-		if (j != 0)
-			aBoolean349 = !aBoolean349;
 		if (i == 1) {
 			k = anInt375;
 			l = anInt362;
@@ -37,7 +35,7 @@ public class Class16 {
 		aClass50_Sub1_Sub2_373.position = anIntArray342[i];
 		class16.anInt363 = i;
 		class16.method223();
-		class16.method218(aByte347, aClass50_Sub1_Sub2_373);
+		class16.method218(aClass50_Sub1_Sub2_373);
 		if (class16.anInt343 != -1)
 			class16.method215(0);
 		if (!aBoolean344 && class16.aBoolean377) {
@@ -153,7 +151,7 @@ public class Class16 {
 		return flag;
 	}
 
-	public Class50_Sub1_Sub4_Sub4 method217(int i, int j) {
+	public Class50_Sub1_Sub4_Sub4 method217(int j) {
 		if (anIntArray365 != null && j > 1) {
 			int k = -1;
 			for (int l = 0; l < 10; l++)
@@ -161,11 +159,9 @@ public class Class16 {
 					k = anIntArray365[l];
 
 			if (k != -1)
-				return method212(k).method217(anInt351, 1);
+				return method212(k).method217(1);
 		}
 		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = Class50_Sub1_Sub4_Sub4.method577(anInt360);
-		while (i >= 0)
-			aBoolean349 = !aBoolean349;
 		if (class50_sub1_sub4_sub4 == null)
 			return null;
 		if (anIntArray364 != null) {
@@ -176,9 +172,7 @@ public class Class16 {
 		return class50_sub1_sub4_sub4;
 	}
 
-	public void method218(byte byte0, Buffer class50_sub1_sub2) {
-		if (byte0 != 6)
-			aBoolean349 = !aBoolean349;
+	public void method218(Buffer class50_sub1_sub2) {
 		do {
 			int i = class50_sub1_sub2.readUnsignedByte();
 			if (i == 0)
@@ -513,7 +507,6 @@ public class Class16 {
 	}
 
 	public Class16() {
-		aBoolean349 = true;
 		anInt351 = -68;
 		anInt363 = -1;
 		aBoolean374 = true;
@@ -540,9 +533,7 @@ public class Class16 {
 	public static boolean aBoolean344 = true;
 	public int anInt345;
 	public static LruCache aClass33_346 = new LruCache(100);
-	public static byte aByte347 = 6;
 	public String aStringArray348[];
-	public boolean aBoolean349;
 	public int anInt351;
 	public static int anInt352;
 	public int anInt353;
