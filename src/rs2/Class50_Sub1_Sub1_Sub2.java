@@ -3,9 +3,10 @@ package rs2;
 import java.util.Random;
 
 import rs2.cache.Archive;
+import rs2.media.Rasterizer;
 import rs2.net.Buffer;
 
-public class Class50_Sub1_Sub1_Sub2 extends Class50_Sub1_Sub1 {
+public class Class50_Sub1_Sub1_Sub2 extends Rasterizer {
 
 	public Class50_Sub1_Sub1_Sub2(boolean flag, Archive class2, int i, String s) {
 		aBoolean1496 = true;
@@ -239,8 +240,7 @@ public class Class50_Sub1_Sub1_Sub2 extends Class50_Sub1_Sub1 {
 			}
 
 		if (aBoolean1508)
-			Class50_Sub1_Sub1.method452(i1, 0x800000, k + (int) ((double) anInt1506 * 0.69999999999999996D), j - i1,
-					true);
+			Rasterizer.drawHorizontalLine(i1, k + (int) ((double) anInt1506 * 0.69999999999999996D), j - i1, 0x800000);
 	}
 
 	public void method479(boolean flag, int i, int j, int k, int l, String s, int i1) {
@@ -320,30 +320,30 @@ public class Class50_Sub1_Sub1_Sub2 extends Class50_Sub1_Sub1 {
 	}
 
 	public void method481(byte abyte0[], int i, int j, int k, int l, int i1) {
-		int j1 = i + j * Class50_Sub1_Sub1.anInt1425;
-		int k1 = Class50_Sub1_Sub1.anInt1425 - k;
+		int j1 = i + j * Rasterizer.width;
+		int k1 = Rasterizer.width - k;
 		int l1 = 0;
 		int i2 = 0;
-		if (j < Class50_Sub1_Sub1.anInt1427) {
-			int j2 = Class50_Sub1_Sub1.anInt1427 - j;
+		if (j < Rasterizer.topY) {
+			int j2 = Rasterizer.topY - j;
 			l -= j2;
-			j = Class50_Sub1_Sub1.anInt1427;
+			j = Rasterizer.topY;
 			i2 += j2 * k;
-			j1 += j2 * Class50_Sub1_Sub1.anInt1425;
+			j1 += j2 * Rasterizer.width;
 		}
-		if (j + l >= Class50_Sub1_Sub1.anInt1428)
-			l -= ((j + l) - Class50_Sub1_Sub1.anInt1428) + 1;
-		if (i < Class50_Sub1_Sub1.anInt1429) {
-			int k2 = Class50_Sub1_Sub1.anInt1429 - i;
+		if (j + l >= Rasterizer.bottomY)
+			l -= ((j + l) - Rasterizer.bottomY) + 1;
+		if (i < Rasterizer.topX) {
+			int k2 = Rasterizer.topX - i;
 			k -= k2;
-			i = Class50_Sub1_Sub1.anInt1429;
+			i = Rasterizer.topX;
 			i2 += k2;
 			j1 += k2;
 			l1 += k2;
 			k1 += k2;
 		}
-		if (i + k >= Class50_Sub1_Sub1.anInt1430) {
-			int l2 = ((i + k) - Class50_Sub1_Sub1.anInt1430) + 1;
+		if (i + k >= Rasterizer.bottomX) {
+			int l2 = ((i + k) - Rasterizer.bottomX) + 1;
 			k -= l2;
 			l1 += l2;
 			k1 += l2;
@@ -351,7 +351,7 @@ public class Class50_Sub1_Sub1_Sub2 extends Class50_Sub1_Sub1 {
 		if (k <= 0 || l <= 0) {
 			return;
 		} else {
-			method482(Class50_Sub1_Sub1.anIntArray1424, abyte0, i1, i2, j1, k, l, k1, l1);
+			method482(Rasterizer.pixels, abyte0, i1, i2, j1, k, l, k1, l1);
 			return;
 		}
 	}
@@ -392,32 +392,32 @@ public class Class50_Sub1_Sub1_Sub2 extends Class50_Sub1_Sub1 {
 	}
 
 	public void method483(int i, boolean flag, int j, byte abyte0[], int k, int l, int i1, int j1) {
-		int k1 = i + k * Class50_Sub1_Sub1.anInt1425;
-		int l1 = Class50_Sub1_Sub1.anInt1425 - i1;
+		int k1 = i + k * Rasterizer.width;
+		int l1 = Rasterizer.width - i1;
 		int i2 = 0;
 		int j2 = 0;
 		if (!flag)
 			return;
-		if (k < Class50_Sub1_Sub1.anInt1427) {
-			int k2 = Class50_Sub1_Sub1.anInt1427 - k;
+		if (k < Rasterizer.topY) {
+			int k2 = Rasterizer.topY - k;
 			l -= k2;
-			k = Class50_Sub1_Sub1.anInt1427;
+			k = Rasterizer.topY;
 			j2 += k2 * i1;
-			k1 += k2 * Class50_Sub1_Sub1.anInt1425;
+			k1 += k2 * Rasterizer.width;
 		}
-		if (k + l >= Class50_Sub1_Sub1.anInt1428)
-			l -= ((k + l) - Class50_Sub1_Sub1.anInt1428) + 1;
-		if (i < Class50_Sub1_Sub1.anInt1429) {
-			int l2 = Class50_Sub1_Sub1.anInt1429 - i;
+		if (k + l >= Rasterizer.bottomY)
+			l -= ((k + l) - Rasterizer.bottomY) + 1;
+		if (i < Rasterizer.topX) {
+			int l2 = Rasterizer.topX - i;
 			i1 -= l2;
-			i = Class50_Sub1_Sub1.anInt1429;
+			i = Rasterizer.topX;
 			j2 += l2;
 			k1 += l2;
 			i2 += l2;
 			l1 += l2;
 		}
-		if (i + i1 >= Class50_Sub1_Sub1.anInt1430) {
-			int i3 = ((i + i1) - Class50_Sub1_Sub1.anInt1430) + 1;
+		if (i + i1 >= Rasterizer.bottomX) {
+			int i3 = ((i + i1) - Rasterizer.bottomX) + 1;
 			i1 -= i3;
 			i2 += i3;
 			l1 += i3;
@@ -425,7 +425,7 @@ public class Class50_Sub1_Sub1_Sub2 extends Class50_Sub1_Sub1 {
 		if (i1 <= 0 || l <= 0) {
 			return;
 		} else {
-			method484(j2, l1, i2, k1, j1, Class50_Sub1_Sub1.anIntArray1424, j, 2, l, i1, abyte0);
+			method484(j2, l1, i2, k1, j1, Rasterizer.pixels, j, 2, l, i1, abyte0);
 			return;
 		}
 	}

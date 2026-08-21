@@ -9,10 +9,11 @@ import java.awt.image.ImageConsumer;
 import java.awt.image.ImageObserver;
 import java.awt.image.ImageProducer;
 
+import rs2.media.Rasterizer;
+
 public class Class18 implements ImageProducer, ImageObserver {
 
 	public Class18(int i, byte byte0, Component component, int j) {
-		aBoolean391 = true;
 		anInt393 = j;
 		anInt394 = i;
 		anIntArray392 = new int[j * i];
@@ -37,7 +38,7 @@ public class Class18 implements ImageProducer, ImageObserver {
 			for (int i = 1; i > 0; i++)
 				;
 		}
-		Class50_Sub1_Sub1.method444(aBoolean391, anInt393, anInt394, anIntArray392);
+		Rasterizer.createRasterizer(anIntArray392, anInt393, anInt394);
 	}
 
 	public void method231(int i, int j, Graphics g, boolean flag) {
@@ -89,7 +90,6 @@ public class Class18 implements ImageProducer, ImageObserver {
 		return true;
 	}
 
-	public boolean aBoolean391;
 	public int anIntArray392[];
 	public int anInt393;
 	public int anInt394;

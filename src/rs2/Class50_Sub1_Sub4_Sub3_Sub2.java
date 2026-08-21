@@ -103,7 +103,7 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 					i2 = i1;
 				if (i2 >= 256 && i2 < 512 && !IdentityKit.definitions[i2 - 256].areBodyModelsReady())
 					flag = true;
-				if (i2 >= 512 && !Class16.method212(i2 - 512).method216(-861, anInt1755))
+				if (i2 >= 512 && !Class16.method212(i2 - 512).method216(anInt1755))
 					flag = true;
 			}
 

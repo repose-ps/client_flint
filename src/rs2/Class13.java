@@ -2,23 +2,24 @@ package rs2;
 
 import rs2.cache.Archive;
 import rs2.cache.ResourceNameHash;
+import rs2.cache.media.ImageRGB;
 import rs2.collection.LruCache;
 import rs2.media.AnimationFrame;
 import rs2.net.Buffer;
 
 public class Class13 {
 
-	public static Class50_Sub1_Sub1_Sub1 method194(int i, String s, int j) {
+	public static ImageRGB method194(int i, String s, int j) {
 		long l = (ResourceNameHash.hash(s) << 8) + (long) i;
 		if (j <= 0)
 			anInt275 = -317;
-		Class50_Sub1_Sub1_Sub1 class50_sub1_sub1_sub1 = (Class50_Sub1_Sub1_Sub1) aClass33_250.get(l);
+		ImageRGB class50_sub1_sub1_sub1 = (ImageRGB) aClass33_250.get(l);
 		if (class50_sub1_sub1_sub1 != null)
 			return class50_sub1_sub1_sub1;
 		if (aClass2_214 == null)
 			return null;
 		try {
-			class50_sub1_sub1_sub1 = new Class50_Sub1_Sub1_Sub1(aClass2_214, s, i);
+			class50_sub1_sub1_sub1 = new ImageRGB(aClass2_214, s, i);
 			aClass33_250.put(l, class50_sub1_sub1_sub1);
 		} catch (Exception _ex) {
 			return null;
@@ -148,7 +149,7 @@ public class Class13 {
 			class13.anInt244 = class50_sub1_sub2.readUnsignedByte();
 			class13.anIntArray221 = new int[20];
 			class13.anIntArray213 = new int[20];
-			class13.aClass50_Sub1_Sub1_Sub1Array265 = new Class50_Sub1_Sub1_Sub1[20];
+			class13.aClass50_Sub1_Sub1_Sub1Array265 = new ImageRGB[20];
 			for (int i2 = 0; i2 < 20; i2++) {
 				int j3 = class50_sub1_sub2.readUnsignedByte();
 				if (j3 == 1) {
@@ -364,7 +365,7 @@ public class Class13 {
 
 	public static int anInt210;
 	public String aString211;
-	public Class50_Sub1_Sub1_Sub1 aClass50_Sub1_Sub1_Sub1_212;
+	public ImageRGB aClass50_Sub1_Sub1_Sub1_212;
 	public int anIntArray213[];
 	public static Archive aClass2_214;
 	public int anInt215;
@@ -397,7 +398,7 @@ public class Class13 {
 	public int anInt242;
 	public static int anInt243;
 	public int anInt244;
-	public Class50_Sub1_Sub1_Sub1 aClass50_Sub1_Sub1_Sub1_245;
+	public ImageRGB aClass50_Sub1_Sub1_Sub1_245;
 	public static int anInt246 = -1;
 	public boolean aBoolean247;
 	public int anInt248;
@@ -417,7 +418,7 @@ public class Class13 {
 	public String aStringArray262[];
 	public int anInt263;
 	public static LruCache aClass33_264 = new LruCache(30);
-	public Class50_Sub1_Sub1_Sub1 aClass50_Sub1_Sub1_Sub1Array265[];
+	public ImageRGB aClass50_Sub1_Sub1_Sub1Array265[];
 	public int anInt266;
 	public int anInt267;
 	public String aString268;

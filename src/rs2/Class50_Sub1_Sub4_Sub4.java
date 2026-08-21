@@ -1,6 +1,7 @@
 package rs2;
 
 import rs2.media.AnimationFrame;
+import rs2.media.Rasterizer;
 import rs2.media.Skeleton;
 import rs2.media.VertexNormal;
 import rs2.media.renderable.ModelHeader;
@@ -1387,19 +1388,19 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 			return;
 		int j3 = l1 * l + j1 * i1 >> 16;
 		int k3 = j3 - anInt1671 << 9;
-		if (k3 / i3 >= Class50_Sub1_Sub1.anInt1432)
+		if (k3 / i3 >= Rasterizer.centerX)
 			return;
 		int l3 = j3 + anInt1671 << 9;
-		if (l3 / i3 <= -Class50_Sub1_Sub1.anInt1432)
+		if (l3 / i3 <= -Rasterizer.centerX)
 			return;
 		int i4 = k1 * k - j2 * j >> 16;
 		int j4 = anInt1671 * j >> 16;
 		int k4 = i4 + j4 << 9;
-		if (k4 / i3 <= -Class50_Sub1_Sub1.anInt1433)
+		if (k4 / i3 <= -Rasterizer.centerY)
 			return;
 		int l4 = j4 + (super.anInt1475 * k >> 16);
 		int i5 = i4 - l4 << 9;
-		if (i5 / i3 >= Class50_Sub1_Sub1.anInt1433)
+		if (i5 / i3 >= Rasterizer.centerY)
 			return;
 		int j5 = l2 + (super.anInt1475 * j >> 16);
 		boolean flag = false;
@@ -1506,8 +1507,8 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 					if ((i3 - l3) * (anIntArray1687[j2] - anIntArray1687[k1])
 							- (anIntArray1687[l] - anIntArray1687[k1]) * (k4 - l3) > 0) {
 						aBooleanArray1685[k] = false;
-						if (i3 < 0 || l3 < 0 || k4 < 0 || i3 > Class50_Sub1_Sub1.anInt1431
-								|| l3 > Class50_Sub1_Sub1.anInt1431 || k4 > Class50_Sub1_Sub1.anInt1431)
+						if (i3 < 0 || l3 < 0 || k4 < 0 || i3 > Rasterizer.viewportRx
+								|| l3 > Rasterizer.viewportRx || k4 > Rasterizer.viewportRx)
 							aBooleanArray1684[k] = true;
 						else
 							aBooleanArray1684[k] = false;
@@ -1774,8 +1775,8 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 		if ((j3 - j4) * (k7 - j7) - (i7 - j7) * (j5 - j4) > 0) {
 			Class50_Sub1_Sub1_Sub4.aBoolean1528 = false;
 			if (l == 3) {
-				if (j3 < 0 || j4 < 0 || j5 < 0 || j3 > Class50_Sub1_Sub1.anInt1431 || j4 > Class50_Sub1_Sub1.anInt1431
-						|| j5 > Class50_Sub1_Sub1.anInt1431)
+				if (j3 < 0 || j4 < 0 || j5 < 0 || j3 > Rasterizer.viewportRx || j4 > Rasterizer.viewportRx
+						|| j5 > Rasterizer.viewportRx)
 					Class50_Sub1_Sub1_Sub4.aBoolean1528 = true;
 				int l7;
 				if (anIntArray1659 == null)
@@ -1808,9 +1809,9 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 				}
 			}
 			if (l == 4) {
-				if (j3 < 0 || j4 < 0 || j5 < 0 || j3 > Class50_Sub1_Sub1.anInt1431 || j4 > Class50_Sub1_Sub1.anInt1431
-						|| j5 > Class50_Sub1_Sub1.anInt1431 || anIntArray1699[3] < 0
-						|| anIntArray1699[3] > Class50_Sub1_Sub1.anInt1431)
+				if (j3 < 0 || j4 < 0 || j5 < 0 || j3 > Rasterizer.viewportRx || j4 > Rasterizer.viewportRx
+						|| j5 > Rasterizer.viewportRx || anIntArray1699[3] < 0
+						|| anIntArray1699[3] > Rasterizer.viewportRx)
 					Class50_Sub1_Sub1_Sub4.aBoolean1528 = true;
 				int i8;
 				if (anIntArray1659 == null)

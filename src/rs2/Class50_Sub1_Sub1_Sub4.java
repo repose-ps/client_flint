@@ -1,8 +1,10 @@
 package rs2;
 
 import rs2.cache.Archive;
+import rs2.cache.media.IndexedImage;
+import rs2.media.Rasterizer;
 
-public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
+public class Class50_Sub1_Sub1_Sub4 extends Rasterizer {
 
 	public static void method492(boolean flag) {
 		anIntArray1534 = null;
@@ -26,12 +28,12 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 
 	public static void method493(int i) {
 		i = 19 / i;
-		anIntArray1538 = new int[Class50_Sub1_Sub1.anInt1426];
-		for (int j = 0; j < Class50_Sub1_Sub1.anInt1426; j++)
-			anIntArray1538[j] = Class50_Sub1_Sub1.anInt1425 * j;
+		anIntArray1538 = new int[Rasterizer.height];
+		for (int j = 0; j < Rasterizer.height; j++)
+			anIntArray1538[j] = Rasterizer.width * j;
 
-		anInt1532 = Class50_Sub1_Sub1.anInt1425 / 2;
-		anInt1533 = Class50_Sub1_Sub1.anInt1426 / 2;
+		anInt1532 = Rasterizer.width / 2;
+		anInt1533 = Rasterizer.height / 2;
 	}
 
 	public static void method494(int i, int j, int k) {
@@ -79,11 +81,11 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 		anInt1539 = 0;
 		for (int k = 0; k < 50; k++)
 			try {
-				aClass50_Sub1_Sub1_Sub3Array1540[k] = new Class50_Sub1_Sub1_Sub3(class2, String.valueOf(k), 0);
-				if (aBoolean1527 && aClass50_Sub1_Sub1_Sub3Array1540[k].anInt1522 == 128)
-					aClass50_Sub1_Sub1_Sub3Array1540[k].method485(0);
+				aClass50_Sub1_Sub1_Sub3Array1540[k] = new IndexedImage(class2, String.valueOf(k), 0);
+				if (aBoolean1527 && aClass50_Sub1_Sub1_Sub3Array1540[k].maxWidth == 128)
+					aClass50_Sub1_Sub1_Sub3Array1540[k].resizeToHalf();
 				else
-					aClass50_Sub1_Sub1_Sub3Array1540[k].method486(true);
+					aClass50_Sub1_Sub1_Sub3Array1540[k].resizeToCanvas();
 				anInt1539++;
 			} catch (Exception _ex) {
 			}
@@ -146,12 +148,12 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			anIntArrayArray1545[k] = null;
 		}
 		anIntArrayArray1545[i] = ai;
-		Class50_Sub1_Sub1_Sub3 class50_sub1_sub1_sub3 = aClass50_Sub1_Sub1_Sub3Array1540[i];
+		IndexedImage class50_sub1_sub1_sub3 = aClass50_Sub1_Sub1_Sub3Array1540[i];
 		int ai1[] = anIntArrayArray1549[i];
 		if (aBoolean1527) {
 			aBooleanArray1541[i] = false;
 			for (int i1 = 0; i1 < 4096; i1++) {
-				int i2 = ai[i1] = ai1[class50_sub1_sub1_sub3.aByteArray1516[i1]] & 0xf8f8ff;
+				int i2 = ai[i1] = ai1[class50_sub1_sub1_sub3.pixels[i1]] & 0xf8f8ff;
 				if (i2 == 0)
 					aBooleanArray1541[i] = true;
 				ai[4096 + i1] = i2 - (i2 >>> 3) & 0xf8f8ff;
@@ -160,16 +162,16 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			}
 
 		} else {
-			if (class50_sub1_sub1_sub3.anInt1518 == 64) {
+			if (class50_sub1_sub1_sub3.width == 64) {
 				for (int j1 = 0; j1 < 128; j1++) {
 					for (int j2 = 0; j2 < 128; j2++)
-						ai[j2 + (j1 << 7)] = ai1[class50_sub1_sub1_sub3.aByteArray1516[(j2 >> 1) + ((j1 >> 1) << 6)]];
+						ai[j2 + (j1 << 7)] = ai1[class50_sub1_sub1_sub3.pixels[(j2 >> 1) + ((j1 >> 1) << 6)]];
 
 				}
 
 			} else {
 				for (int k1 = 0; k1 < 16384; k1++)
-					ai[k1] = ai1[class50_sub1_sub1_sub3.aByteArray1516[k1]];
+					ai[k1] = ai1[class50_sub1_sub1_sub3.pixels[k1]];
 
 			}
 			aBooleanArray1541[i] = false;
@@ -251,7 +253,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 
 		for (int k = 0; k < 50; k++)
 			if (aClass50_Sub1_Sub1_Sub3Array1540[k] != null) {
-				int ai[] = aClass50_Sub1_Sub1_Sub3Array1540[k].anIntArray1517;
+				int ai[] = aClass50_Sub1_Sub1_Sub3Array1540[k].palette;
 				anIntArrayArray1549[k] = new int[ai.length];
 				for (int i1 = 0; i1 < ai.length; i1++) {
 					anIntArrayArray1549[k][i1] = method502(ai[i1], d);
@@ -303,12 +305,12 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			k3 = (k1 - i2 << 15) / (i - k);
 		}
 		if (i <= j && i <= k) {
-			if (i >= Class50_Sub1_Sub1.anInt1428)
+			if (i >= Rasterizer.bottomY)
 				return;
-			if (j > Class50_Sub1_Sub1.anInt1428)
-				j = Class50_Sub1_Sub1.anInt1428;
-			if (k > Class50_Sub1_Sub1.anInt1428)
-				k = Class50_Sub1_Sub1.anInt1428;
+			if (j > Rasterizer.bottomY)
+				j = Rasterizer.bottomY;
+			if (k > Rasterizer.bottomY)
+				k = Rasterizer.bottomY;
 			if (j < k) {
 				j1 = l <<= 16;
 				i2 = k1 <<= 15;
@@ -329,8 +331,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 				if (i != j && j3 < j2 || i == j && j3 > l2) {
 					k -= j;
 					j -= i;
-					for (i = anIntArray1538[i]; --j >= 0; i += Class50_Sub1_Sub1.anInt1425) {
-						method504(Class50_Sub1_Sub1.anIntArray1424, i, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
+					for (i = anIntArray1538[i]; --j >= 0; i += Rasterizer.width) {
+						method504(Rasterizer.pixels, i, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
 						j1 += j3;
 						l += j2;
 						i2 += k3;
@@ -338,19 +340,19 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 					}
 
 					while (--k >= 0) {
-						method504(Class50_Sub1_Sub1.anIntArray1424, i, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
+						method504(Rasterizer.pixels, i, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
 						j1 += j3;
 						i1 += l2;
 						i2 += k3;
 						l1 += i3;
-						i += Class50_Sub1_Sub1.anInt1425;
+						i += Rasterizer.width;
 					}
 					return;
 				}
 				k -= j;
 				j -= i;
-				for (i = anIntArray1538[i]; --j >= 0; i += Class50_Sub1_Sub1.anInt1425) {
-					method504(Class50_Sub1_Sub1.anIntArray1424, i, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
+				for (i = anIntArray1538[i]; --j >= 0; i += Rasterizer.width) {
+					method504(Rasterizer.pixels, i, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
 					j1 += j3;
 					l += j2;
 					i2 += k3;
@@ -358,12 +360,12 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 				}
 
 				while (--k >= 0) {
-					method504(Class50_Sub1_Sub1.anIntArray1424, i, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
+					method504(Rasterizer.pixels, i, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
 					j1 += j3;
 					i1 += l2;
 					i2 += k3;
 					l1 += i3;
-					i += Class50_Sub1_Sub1.anInt1425;
+					i += Rasterizer.width;
 				}
 				return;
 			}
@@ -386,8 +388,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			if (i != k && j3 < j2 || i == k && l2 > j2) {
 				j -= k;
 				k -= i;
-				for (i = anIntArray1538[i]; --k >= 0; i += Class50_Sub1_Sub1.anInt1425) {
-					method504(Class50_Sub1_Sub1.anIntArray1424, i, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
+				for (i = anIntArray1538[i]; --k >= 0; i += Rasterizer.width) {
+					method504(Rasterizer.pixels, i, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
 					i1 += j3;
 					l += j2;
 					l1 += k3;
@@ -395,19 +397,19 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 				}
 
 				while (--j >= 0) {
-					method504(Class50_Sub1_Sub1.anIntArray1424, i, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
+					method504(Rasterizer.pixels, i, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
 					j1 += l2;
 					l += j2;
 					i2 += i3;
 					k1 += k2;
-					i += Class50_Sub1_Sub1.anInt1425;
+					i += Rasterizer.width;
 				}
 				return;
 			}
 			j -= k;
 			k -= i;
-			for (i = anIntArray1538[i]; --k >= 0; i += Class50_Sub1_Sub1.anInt1425) {
-				method504(Class50_Sub1_Sub1.anIntArray1424, i, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
+			for (i = anIntArray1538[i]; --k >= 0; i += Rasterizer.width) {
+				method504(Rasterizer.pixels, i, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
 				i1 += j3;
 				l += j2;
 				l1 += k3;
@@ -415,22 +417,22 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			}
 
 			while (--j >= 0) {
-				method504(Class50_Sub1_Sub1.anIntArray1424, i, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
+				method504(Rasterizer.pixels, i, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
 				j1 += l2;
 				l += j2;
 				i2 += i3;
 				k1 += k2;
-				i += Class50_Sub1_Sub1.anInt1425;
+				i += Rasterizer.width;
 			}
 			return;
 		}
 		if (j <= k) {
-			if (j >= Class50_Sub1_Sub1.anInt1428)
+			if (j >= Rasterizer.bottomY)
 				return;
-			if (k > Class50_Sub1_Sub1.anInt1428)
-				k = Class50_Sub1_Sub1.anInt1428;
-			if (i > Class50_Sub1_Sub1.anInt1428)
-				i = Class50_Sub1_Sub1.anInt1428;
+			if (k > Rasterizer.bottomY)
+				k = Rasterizer.bottomY;
+			if (i > Rasterizer.bottomY)
+				i = Rasterizer.bottomY;
 			if (k < i) {
 				l = i1 <<= 16;
 				k1 = l1 <<= 15;
@@ -451,8 +453,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 				if (j != k && j2 < l2 || j == k && j2 > j3) {
 					i -= k;
 					k -= j;
-					for (j = anIntArray1538[j]; --k >= 0; j += Class50_Sub1_Sub1.anInt1425) {
-						method504(Class50_Sub1_Sub1.anIntArray1424, j, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
+					for (j = anIntArray1538[j]; --k >= 0; j += Rasterizer.width) {
+						method504(Rasterizer.pixels, j, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
 						l += j2;
 						i1 += l2;
 						k1 += k2;
@@ -460,19 +462,19 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 					}
 
 					while (--i >= 0) {
-						method504(Class50_Sub1_Sub1.anIntArray1424, j, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
+						method504(Rasterizer.pixels, j, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
 						l += j2;
 						j1 += j3;
 						k1 += k2;
 						i2 += k3;
-						j += Class50_Sub1_Sub1.anInt1425;
+						j += Rasterizer.width;
 					}
 					return;
 				}
 				i -= k;
 				k -= j;
-				for (j = anIntArray1538[j]; --k >= 0; j += Class50_Sub1_Sub1.anInt1425) {
-					method504(Class50_Sub1_Sub1.anIntArray1424, j, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
+				for (j = anIntArray1538[j]; --k >= 0; j += Rasterizer.width) {
+					method504(Rasterizer.pixels, j, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
 					l += j2;
 					i1 += l2;
 					k1 += k2;
@@ -480,12 +482,12 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 				}
 
 				while (--i >= 0) {
-					method504(Class50_Sub1_Sub1.anIntArray1424, j, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
+					method504(Rasterizer.pixels, j, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
 					l += j2;
 					j1 += j3;
 					k1 += k2;
 					i2 += k3;
-					j += Class50_Sub1_Sub1.anInt1425;
+					j += Rasterizer.width;
 				}
 				return;
 			}
@@ -508,8 +510,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			if (j2 < l2) {
 				k -= i;
 				i -= j;
-				for (j = anIntArray1538[j]; --i >= 0; j += Class50_Sub1_Sub1.anInt1425) {
-					method504(Class50_Sub1_Sub1.anIntArray1424, j, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
+				for (j = anIntArray1538[j]; --i >= 0; j += Rasterizer.width) {
+					method504(Rasterizer.pixels, j, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
 					j1 += j2;
 					i1 += l2;
 					i2 += k2;
@@ -517,19 +519,19 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 				}
 
 				while (--k >= 0) {
-					method504(Class50_Sub1_Sub1.anIntArray1424, j, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
+					method504(Rasterizer.pixels, j, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
 					l += j3;
 					i1 += l2;
 					k1 += k3;
 					l1 += i3;
-					j += Class50_Sub1_Sub1.anInt1425;
+					j += Rasterizer.width;
 				}
 				return;
 			}
 			k -= i;
 			i -= j;
-			for (j = anIntArray1538[j]; --i >= 0; j += Class50_Sub1_Sub1.anInt1425) {
-				method504(Class50_Sub1_Sub1.anIntArray1424, j, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
+			for (j = anIntArray1538[j]; --i >= 0; j += Rasterizer.width) {
+				method504(Rasterizer.pixels, j, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
 				j1 += j2;
 				i1 += l2;
 				i2 += k2;
@@ -537,21 +539,21 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			}
 
 			while (--k >= 0) {
-				method504(Class50_Sub1_Sub1.anIntArray1424, j, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
+				method504(Rasterizer.pixels, j, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
 				l += j3;
 				i1 += l2;
 				k1 += k3;
 				l1 += i3;
-				j += Class50_Sub1_Sub1.anInt1425;
+				j += Rasterizer.width;
 			}
 			return;
 		}
-		if (k >= Class50_Sub1_Sub1.anInt1428)
+		if (k >= Rasterizer.bottomY)
 			return;
-		if (i > Class50_Sub1_Sub1.anInt1428)
-			i = Class50_Sub1_Sub1.anInt1428;
-		if (j > Class50_Sub1_Sub1.anInt1428)
-			j = Class50_Sub1_Sub1.anInt1428;
+		if (i > Rasterizer.bottomY)
+			i = Rasterizer.bottomY;
+		if (j > Rasterizer.bottomY)
+			j = Rasterizer.bottomY;
 		if (i < j) {
 			i1 = j1 <<= 16;
 			l1 = i2 <<= 15;
@@ -572,8 +574,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			if (l2 < j3) {
 				j -= i;
 				i -= k;
-				for (k = anIntArray1538[k]; --i >= 0; k += Class50_Sub1_Sub1.anInt1425) {
-					method504(Class50_Sub1_Sub1.anIntArray1424, k, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
+				for (k = anIntArray1538[k]; --i >= 0; k += Rasterizer.width) {
+					method504(Rasterizer.pixels, k, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
 					i1 += l2;
 					j1 += j3;
 					l1 += i3;
@@ -581,19 +583,19 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 				}
 
 				while (--j >= 0) {
-					method504(Class50_Sub1_Sub1.anIntArray1424, k, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
+					method504(Rasterizer.pixels, k, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
 					i1 += l2;
 					l += j2;
 					l1 += i3;
 					k1 += k2;
-					k += Class50_Sub1_Sub1.anInt1425;
+					k += Rasterizer.width;
 				}
 				return;
 			}
 			j -= i;
 			i -= k;
-			for (k = anIntArray1538[k]; --i >= 0; k += Class50_Sub1_Sub1.anInt1425) {
-				method504(Class50_Sub1_Sub1.anIntArray1424, k, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
+			for (k = anIntArray1538[k]; --i >= 0; k += Rasterizer.width) {
+				method504(Rasterizer.pixels, k, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
 				i1 += l2;
 				j1 += j3;
 				l1 += i3;
@@ -601,12 +603,12 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			}
 
 			while (--j >= 0) {
-				method504(Class50_Sub1_Sub1.anIntArray1424, k, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
+				method504(Rasterizer.pixels, k, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
 				i1 += l2;
 				l += j2;
 				l1 += i3;
 				k1 += k2;
-				k += Class50_Sub1_Sub1.anInt1425;
+				k += Rasterizer.width;
 			}
 			return;
 		}
@@ -629,8 +631,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 		if (l2 < j3) {
 			i -= j;
 			j -= k;
-			for (k = anIntArray1538[k]; --j >= 0; k += Class50_Sub1_Sub1.anInt1425) {
-				method504(Class50_Sub1_Sub1.anIntArray1424, k, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
+			for (k = anIntArray1538[k]; --j >= 0; k += Rasterizer.width) {
+				method504(Rasterizer.pixels, k, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
 				l += l2;
 				j1 += j3;
 				k1 += i3;
@@ -638,19 +640,19 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			}
 
 			while (--i >= 0) {
-				method504(Class50_Sub1_Sub1.anIntArray1424, k, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
+				method504(Rasterizer.pixels, k, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
 				i1 += j2;
 				j1 += j3;
 				l1 += k2;
 				i2 += k3;
-				k += Class50_Sub1_Sub1.anInt1425;
+				k += Rasterizer.width;
 			}
 			return;
 		}
 		i -= j;
 		j -= k;
-		for (k = anIntArray1538[k]; --j >= 0; k += Class50_Sub1_Sub1.anInt1425) {
-			method504(Class50_Sub1_Sub1.anIntArray1424, k, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
+		for (k = anIntArray1538[k]; --j >= 0; k += Rasterizer.width) {
+			method504(Rasterizer.pixels, k, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
 			l += l2;
 			j1 += j3;
 			k1 += i3;
@@ -658,12 +660,12 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 		}
 
 		while (--i >= 0) {
-			method504(Class50_Sub1_Sub1.anIntArray1424, k, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
+			method504(Rasterizer.pixels, k, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
 			i1 += j2;
 			j1 += j3;
 			l1 += k2;
 			i2 += k3;
-			k += Class50_Sub1_Sub1.anInt1425;
+			k += Rasterizer.width;
 		}
 	}
 
@@ -675,8 +677,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 					l1 = (k1 - j1) / (i1 - l);
 				else
 					l1 = 0;
-				if (i1 > Class50_Sub1_Sub1.anInt1431)
-					i1 = Class50_Sub1_Sub1.anInt1431;
+				if (i1 > Rasterizer.viewportRx)
+					i1 = Rasterizer.viewportRx;
 				if (l < 0) {
 					j1 -= l * l1;
 					l = 0;
@@ -740,8 +742,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			return;
 		int i2 = (k1 - j1) / (i1 - l);
 		if (aBoolean1528) {
-			if (i1 > Class50_Sub1_Sub1.anInt1431)
-				i1 = Class50_Sub1_Sub1.anInt1431;
+			if (i1 > Rasterizer.viewportRx)
+				i1 = Rasterizer.viewportRx;
 			if (l < 0) {
 				j1 -= l * i2;
 				l = 0;
@@ -779,12 +781,12 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 		if (k != i)
 			j2 = (l - j1 << 16) / (i - k);
 		if (i <= j && i <= k) {
-			if (i >= Class50_Sub1_Sub1.anInt1428)
+			if (i >= Rasterizer.bottomY)
 				return;
-			if (j > Class50_Sub1_Sub1.anInt1428)
-				j = Class50_Sub1_Sub1.anInt1428;
-			if (k > Class50_Sub1_Sub1.anInt1428)
-				k = Class50_Sub1_Sub1.anInt1428;
+			if (j > Rasterizer.bottomY)
+				j = Rasterizer.bottomY;
+			if (k > Rasterizer.bottomY)
+				k = Rasterizer.bottomY;
 			if (j < k) {
 				j1 = l <<= 16;
 				if (i < 0) {
@@ -800,33 +802,33 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 				if (i != j && j2 < l1 || i == j && j2 > i2) {
 					k -= j;
 					j -= i;
-					for (i = anIntArray1538[i]; --j >= 0; i += Class50_Sub1_Sub1.anInt1425) {
-						method506(Class50_Sub1_Sub1.anIntArray1424, i, k1, 0, j1 >> 16, l >> 16);
+					for (i = anIntArray1538[i]; --j >= 0; i += Rasterizer.width) {
+						method506(Rasterizer.pixels, i, k1, 0, j1 >> 16, l >> 16);
 						j1 += j2;
 						l += l1;
 					}
 
 					while (--k >= 0) {
-						method506(Class50_Sub1_Sub1.anIntArray1424, i, k1, 0, j1 >> 16, i1 >> 16);
+						method506(Rasterizer.pixels, i, k1, 0, j1 >> 16, i1 >> 16);
 						j1 += j2;
 						i1 += i2;
-						i += Class50_Sub1_Sub1.anInt1425;
+						i += Rasterizer.width;
 					}
 					return;
 				}
 				k -= j;
 				j -= i;
-				for (i = anIntArray1538[i]; --j >= 0; i += Class50_Sub1_Sub1.anInt1425) {
-					method506(Class50_Sub1_Sub1.anIntArray1424, i, k1, 0, l >> 16, j1 >> 16);
+				for (i = anIntArray1538[i]; --j >= 0; i += Rasterizer.width) {
+					method506(Rasterizer.pixels, i, k1, 0, l >> 16, j1 >> 16);
 					j1 += j2;
 					l += l1;
 				}
 
 				while (--k >= 0) {
-					method506(Class50_Sub1_Sub1.anIntArray1424, i, k1, 0, i1 >> 16, j1 >> 16);
+					method506(Rasterizer.pixels, i, k1, 0, i1 >> 16, j1 >> 16);
 					j1 += j2;
 					i1 += i2;
-					i += Class50_Sub1_Sub1.anInt1425;
+					i += Rasterizer.width;
 				}
 				return;
 			}
@@ -844,43 +846,43 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			if (i != k && j2 < l1 || i == k && i2 > l1) {
 				j -= k;
 				k -= i;
-				for (i = anIntArray1538[i]; --k >= 0; i += Class50_Sub1_Sub1.anInt1425) {
-					method506(Class50_Sub1_Sub1.anIntArray1424, i, k1, 0, i1 >> 16, l >> 16);
+				for (i = anIntArray1538[i]; --k >= 0; i += Rasterizer.width) {
+					method506(Rasterizer.pixels, i, k1, 0, i1 >> 16, l >> 16);
 					i1 += j2;
 					l += l1;
 				}
 
 				while (--j >= 0) {
-					method506(Class50_Sub1_Sub1.anIntArray1424, i, k1, 0, j1 >> 16, l >> 16);
+					method506(Rasterizer.pixels, i, k1, 0, j1 >> 16, l >> 16);
 					j1 += i2;
 					l += l1;
-					i += Class50_Sub1_Sub1.anInt1425;
+					i += Rasterizer.width;
 				}
 				return;
 			}
 			j -= k;
 			k -= i;
-			for (i = anIntArray1538[i]; --k >= 0; i += Class50_Sub1_Sub1.anInt1425) {
-				method506(Class50_Sub1_Sub1.anIntArray1424, i, k1, 0, l >> 16, i1 >> 16);
+			for (i = anIntArray1538[i]; --k >= 0; i += Rasterizer.width) {
+				method506(Rasterizer.pixels, i, k1, 0, l >> 16, i1 >> 16);
 				i1 += j2;
 				l += l1;
 			}
 
 			while (--j >= 0) {
-				method506(Class50_Sub1_Sub1.anIntArray1424, i, k1, 0, l >> 16, j1 >> 16);
+				method506(Rasterizer.pixels, i, k1, 0, l >> 16, j1 >> 16);
 				j1 += i2;
 				l += l1;
-				i += Class50_Sub1_Sub1.anInt1425;
+				i += Rasterizer.width;
 			}
 			return;
 		}
 		if (j <= k) {
-			if (j >= Class50_Sub1_Sub1.anInt1428)
+			if (j >= Rasterizer.bottomY)
 				return;
-			if (k > Class50_Sub1_Sub1.anInt1428)
-				k = Class50_Sub1_Sub1.anInt1428;
-			if (i > Class50_Sub1_Sub1.anInt1428)
-				i = Class50_Sub1_Sub1.anInt1428;
+			if (k > Rasterizer.bottomY)
+				k = Rasterizer.bottomY;
+			if (i > Rasterizer.bottomY)
+				i = Rasterizer.bottomY;
 			if (k < i) {
 				l = i1 <<= 16;
 				if (j < 0) {
@@ -896,33 +898,33 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 				if (j != k && l1 < i2 || j == k && l1 > j2) {
 					i -= k;
 					k -= j;
-					for (j = anIntArray1538[j]; --k >= 0; j += Class50_Sub1_Sub1.anInt1425) {
-						method506(Class50_Sub1_Sub1.anIntArray1424, j, k1, 0, l >> 16, i1 >> 16);
+					for (j = anIntArray1538[j]; --k >= 0; j += Rasterizer.width) {
+						method506(Rasterizer.pixels, j, k1, 0, l >> 16, i1 >> 16);
 						l += l1;
 						i1 += i2;
 					}
 
 					while (--i >= 0) {
-						method506(Class50_Sub1_Sub1.anIntArray1424, j, k1, 0, l >> 16, j1 >> 16);
+						method506(Rasterizer.pixels, j, k1, 0, l >> 16, j1 >> 16);
 						l += l1;
 						j1 += j2;
-						j += Class50_Sub1_Sub1.anInt1425;
+						j += Rasterizer.width;
 					}
 					return;
 				}
 				i -= k;
 				k -= j;
-				for (j = anIntArray1538[j]; --k >= 0; j += Class50_Sub1_Sub1.anInt1425) {
-					method506(Class50_Sub1_Sub1.anIntArray1424, j, k1, 0, i1 >> 16, l >> 16);
+				for (j = anIntArray1538[j]; --k >= 0; j += Rasterizer.width) {
+					method506(Rasterizer.pixels, j, k1, 0, i1 >> 16, l >> 16);
 					l += l1;
 					i1 += i2;
 				}
 
 				while (--i >= 0) {
-					method506(Class50_Sub1_Sub1.anIntArray1424, j, k1, 0, j1 >> 16, l >> 16);
+					method506(Rasterizer.pixels, j, k1, 0, j1 >> 16, l >> 16);
 					l += l1;
 					j1 += j2;
-					j += Class50_Sub1_Sub1.anInt1425;
+					j += Rasterizer.width;
 				}
 				return;
 			}
@@ -940,42 +942,42 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			if (l1 < i2) {
 				k -= i;
 				i -= j;
-				for (j = anIntArray1538[j]; --i >= 0; j += Class50_Sub1_Sub1.anInt1425) {
-					method506(Class50_Sub1_Sub1.anIntArray1424, j, k1, 0, j1 >> 16, i1 >> 16);
+				for (j = anIntArray1538[j]; --i >= 0; j += Rasterizer.width) {
+					method506(Rasterizer.pixels, j, k1, 0, j1 >> 16, i1 >> 16);
 					j1 += l1;
 					i1 += i2;
 				}
 
 				while (--k >= 0) {
-					method506(Class50_Sub1_Sub1.anIntArray1424, j, k1, 0, l >> 16, i1 >> 16);
+					method506(Rasterizer.pixels, j, k1, 0, l >> 16, i1 >> 16);
 					l += j2;
 					i1 += i2;
-					j += Class50_Sub1_Sub1.anInt1425;
+					j += Rasterizer.width;
 				}
 				return;
 			}
 			k -= i;
 			i -= j;
-			for (j = anIntArray1538[j]; --i >= 0; j += Class50_Sub1_Sub1.anInt1425) {
-				method506(Class50_Sub1_Sub1.anIntArray1424, j, k1, 0, i1 >> 16, j1 >> 16);
+			for (j = anIntArray1538[j]; --i >= 0; j += Rasterizer.width) {
+				method506(Rasterizer.pixels, j, k1, 0, i1 >> 16, j1 >> 16);
 				j1 += l1;
 				i1 += i2;
 			}
 
 			while (--k >= 0) {
-				method506(Class50_Sub1_Sub1.anIntArray1424, j, k1, 0, i1 >> 16, l >> 16);
+				method506(Rasterizer.pixels, j, k1, 0, i1 >> 16, l >> 16);
 				l += j2;
 				i1 += i2;
-				j += Class50_Sub1_Sub1.anInt1425;
+				j += Rasterizer.width;
 			}
 			return;
 		}
-		if (k >= Class50_Sub1_Sub1.anInt1428)
+		if (k >= Rasterizer.bottomY)
 			return;
-		if (i > Class50_Sub1_Sub1.anInt1428)
-			i = Class50_Sub1_Sub1.anInt1428;
-		if (j > Class50_Sub1_Sub1.anInt1428)
-			j = Class50_Sub1_Sub1.anInt1428;
+		if (i > Rasterizer.bottomY)
+			i = Rasterizer.bottomY;
+		if (j > Rasterizer.bottomY)
+			j = Rasterizer.bottomY;
 		if (i < j) {
 			i1 = j1 <<= 16;
 			if (k < 0) {
@@ -991,33 +993,33 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			if (i2 < j2) {
 				j -= i;
 				i -= k;
-				for (k = anIntArray1538[k]; --i >= 0; k += Class50_Sub1_Sub1.anInt1425) {
-					method506(Class50_Sub1_Sub1.anIntArray1424, k, k1, 0, i1 >> 16, j1 >> 16);
+				for (k = anIntArray1538[k]; --i >= 0; k += Rasterizer.width) {
+					method506(Rasterizer.pixels, k, k1, 0, i1 >> 16, j1 >> 16);
 					i1 += i2;
 					j1 += j2;
 				}
 
 				while (--j >= 0) {
-					method506(Class50_Sub1_Sub1.anIntArray1424, k, k1, 0, i1 >> 16, l >> 16);
+					method506(Rasterizer.pixels, k, k1, 0, i1 >> 16, l >> 16);
 					i1 += i2;
 					l += l1;
-					k += Class50_Sub1_Sub1.anInt1425;
+					k += Rasterizer.width;
 				}
 				return;
 			}
 			j -= i;
 			i -= k;
-			for (k = anIntArray1538[k]; --i >= 0; k += Class50_Sub1_Sub1.anInt1425) {
-				method506(Class50_Sub1_Sub1.anIntArray1424, k, k1, 0, j1 >> 16, i1 >> 16);
+			for (k = anIntArray1538[k]; --i >= 0; k += Rasterizer.width) {
+				method506(Rasterizer.pixels, k, k1, 0, j1 >> 16, i1 >> 16);
 				i1 += i2;
 				j1 += j2;
 			}
 
 			while (--j >= 0) {
-				method506(Class50_Sub1_Sub1.anIntArray1424, k, k1, 0, l >> 16, i1 >> 16);
+				method506(Rasterizer.pixels, k, k1, 0, l >> 16, i1 >> 16);
 				i1 += i2;
 				l += l1;
-				k += Class50_Sub1_Sub1.anInt1425;
+				k += Rasterizer.width;
 			}
 			return;
 		}
@@ -1035,40 +1037,40 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 		if (i2 < j2) {
 			i -= j;
 			j -= k;
-			for (k = anIntArray1538[k]; --j >= 0; k += Class50_Sub1_Sub1.anInt1425) {
-				method506(Class50_Sub1_Sub1.anIntArray1424, k, k1, 0, l >> 16, j1 >> 16);
+			for (k = anIntArray1538[k]; --j >= 0; k += Rasterizer.width) {
+				method506(Rasterizer.pixels, k, k1, 0, l >> 16, j1 >> 16);
 				l += i2;
 				j1 += j2;
 			}
 
 			while (--i >= 0) {
-				method506(Class50_Sub1_Sub1.anIntArray1424, k, k1, 0, i1 >> 16, j1 >> 16);
+				method506(Rasterizer.pixels, k, k1, 0, i1 >> 16, j1 >> 16);
 				i1 += l1;
 				j1 += j2;
-				k += Class50_Sub1_Sub1.anInt1425;
+				k += Rasterizer.width;
 			}
 			return;
 		}
 		i -= j;
 		j -= k;
-		for (k = anIntArray1538[k]; --j >= 0; k += Class50_Sub1_Sub1.anInt1425) {
-			method506(Class50_Sub1_Sub1.anIntArray1424, k, k1, 0, j1 >> 16, l >> 16);
+		for (k = anIntArray1538[k]; --j >= 0; k += Rasterizer.width) {
+			method506(Rasterizer.pixels, k, k1, 0, j1 >> 16, l >> 16);
 			l += i2;
 			j1 += j2;
 		}
 
 		while (--i >= 0) {
-			method506(Class50_Sub1_Sub1.anIntArray1424, k, k1, 0, j1 >> 16, i1 >> 16);
+			method506(Rasterizer.pixels, k, k1, 0, j1 >> 16, i1 >> 16);
 			i1 += l1;
 			j1 += j2;
-			k += Class50_Sub1_Sub1.anInt1425;
+			k += Rasterizer.width;
 		}
 	}
 
 	public static void method506(int ai[], int i, int j, int k, int l, int i1) {
 		if (aBoolean1528) {
-			if (i1 > Class50_Sub1_Sub1.anInt1431)
-				i1 = Class50_Sub1_Sub1.anInt1431;
+			if (i1 > Rasterizer.viewportRx)
+				i1 = Rasterizer.viewportRx;
 			if (l < 0)
 				l = 0;
 		}
@@ -1140,12 +1142,12 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			j8 = (k1 - i2 << 16) / (i - k);
 		}
 		if (i <= j && i <= k) {
-			if (i >= Class50_Sub1_Sub1.anInt1428)
+			if (i >= Rasterizer.bottomY)
 				return;
-			if (j > Class50_Sub1_Sub1.anInt1428)
-				j = Class50_Sub1_Sub1.anInt1428;
-			if (k > Class50_Sub1_Sub1.anInt1428)
-				k = Class50_Sub1_Sub1.anInt1428;
+			if (j > Rasterizer.bottomY)
+				j = Rasterizer.bottomY;
+			if (k > Rasterizer.bottomY)
+				k = Rasterizer.bottomY;
 			if (j < k) {
 				j1 = l <<= 16;
 				i2 = k1 <<= 16;
@@ -1172,25 +1174,25 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 					j -= i;
 					i = anIntArray1538[i];
 					while (--j >= 0) {
-						method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, i, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8,
+						method508(Rasterizer.pixels, ai, 0, 0, i, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8,
 								l4, k5, j6, i5, l5, k6);
 						j1 += i8;
 						l += i7;
 						i2 += j8;
 						k1 += j7;
-						i += Class50_Sub1_Sub1.anInt1425;
+						i += Rasterizer.width;
 						l4 += j5;
 						k5 += i6;
 						j6 += l6;
 					}
 					while (--k >= 0) {
-						method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, i, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8,
+						method508(Rasterizer.pixels, ai, 0, 0, i, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8,
 								l4, k5, j6, i5, l5, k6);
 						j1 += i8;
 						i1 += k7;
 						i2 += j8;
 						l1 += l7;
-						i += Class50_Sub1_Sub1.anInt1425;
+						i += Rasterizer.width;
 						l4 += j5;
 						k5 += i6;
 						j6 += l6;
@@ -1201,25 +1203,25 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 				j -= i;
 				i = anIntArray1538[i];
 				while (--j >= 0) {
-					method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, i, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8, l4,
+					method508(Rasterizer.pixels, ai, 0, 0, i, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8, l4,
 							k5, j6, i5, l5, k6);
 					j1 += i8;
 					l += i7;
 					i2 += j8;
 					k1 += j7;
-					i += Class50_Sub1_Sub1.anInt1425;
+					i += Rasterizer.width;
 					l4 += j5;
 					k5 += i6;
 					j6 += l6;
 				}
 				while (--k >= 0) {
-					method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, i, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4,
+					method508(Rasterizer.pixels, ai, 0, 0, i, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4,
 							k5, j6, i5, l5, k6);
 					j1 += i8;
 					i1 += k7;
 					i2 += j8;
 					l1 += l7;
-					i += Class50_Sub1_Sub1.anInt1425;
+					i += Rasterizer.width;
 					l4 += j5;
 					k5 += i6;
 					j6 += l6;
@@ -1251,25 +1253,25 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 				k -= i;
 				i = anIntArray1538[i];
 				while (--k >= 0) {
-					method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, i, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4,
+					method508(Rasterizer.pixels, ai, 0, 0, i, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4,
 							k5, j6, i5, l5, k6);
 					i1 += i8;
 					l += i7;
 					l1 += j8;
 					k1 += j7;
-					i += Class50_Sub1_Sub1.anInt1425;
+					i += Rasterizer.width;
 					l4 += j5;
 					k5 += i6;
 					j6 += l6;
 				}
 				while (--j >= 0) {
-					method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, i, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8, l4,
+					method508(Rasterizer.pixels, ai, 0, 0, i, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8, l4,
 							k5, j6, i5, l5, k6);
 					j1 += k7;
 					l += i7;
 					i2 += l7;
 					k1 += j7;
-					i += Class50_Sub1_Sub1.anInt1425;
+					i += Rasterizer.width;
 					l4 += j5;
 					k5 += i6;
 					j6 += l6;
@@ -1280,25 +1282,25 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			k -= i;
 			i = anIntArray1538[i];
 			while (--k >= 0) {
-				method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, i, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8, l4, k5,
+				method508(Rasterizer.pixels, ai, 0, 0, i, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8, l4, k5,
 						j6, i5, l5, k6);
 				i1 += i8;
 				l += i7;
 				l1 += j8;
 				k1 += j7;
-				i += Class50_Sub1_Sub1.anInt1425;
+				i += Rasterizer.width;
 				l4 += j5;
 				k5 += i6;
 				j6 += l6;
 			}
 			while (--j >= 0) {
-				method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, i, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8, l4, k5,
+				method508(Rasterizer.pixels, ai, 0, 0, i, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8, l4, k5,
 						j6, i5, l5, k6);
 				j1 += k7;
 				l += i7;
 				i2 += l7;
 				k1 += j7;
-				i += Class50_Sub1_Sub1.anInt1425;
+				i += Rasterizer.width;
 				l4 += j5;
 				k5 += i6;
 				j6 += l6;
@@ -1306,12 +1308,12 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			return;
 		}
 		if (j <= k) {
-			if (j >= Class50_Sub1_Sub1.anInt1428)
+			if (j >= Rasterizer.bottomY)
 				return;
-			if (k > Class50_Sub1_Sub1.anInt1428)
-				k = Class50_Sub1_Sub1.anInt1428;
-			if (i > Class50_Sub1_Sub1.anInt1428)
-				i = Class50_Sub1_Sub1.anInt1428;
+			if (k > Rasterizer.bottomY)
+				k = Rasterizer.bottomY;
+			if (i > Rasterizer.bottomY)
+				i = Rasterizer.bottomY;
 			if (k < i) {
 				l = i1 <<= 16;
 				k1 = l1 <<= 16;
@@ -1338,25 +1340,25 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 					k -= j;
 					j = anIntArray1538[j];
 					while (--k >= 0) {
-						method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, j, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8,
+						method508(Rasterizer.pixels, ai, 0, 0, j, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8,
 								l4, k5, j6, i5, l5, k6);
 						l += i7;
 						i1 += k7;
 						k1 += j7;
 						l1 += l7;
-						j += Class50_Sub1_Sub1.anInt1425;
+						j += Rasterizer.width;
 						l4 += j5;
 						k5 += i6;
 						j6 += l6;
 					}
 					while (--i >= 0) {
-						method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, j, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8,
+						method508(Rasterizer.pixels, ai, 0, 0, j, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8,
 								l4, k5, j6, i5, l5, k6);
 						l += i7;
 						j1 += i8;
 						k1 += j7;
 						i2 += j8;
-						j += Class50_Sub1_Sub1.anInt1425;
+						j += Rasterizer.width;
 						l4 += j5;
 						k5 += i6;
 						j6 += l6;
@@ -1367,25 +1369,25 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 				k -= j;
 				j = anIntArray1538[j];
 				while (--k >= 0) {
-					method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, j, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4,
+					method508(Rasterizer.pixels, ai, 0, 0, j, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4,
 							k5, j6, i5, l5, k6);
 					l += i7;
 					i1 += k7;
 					k1 += j7;
 					l1 += l7;
-					j += Class50_Sub1_Sub1.anInt1425;
+					j += Rasterizer.width;
 					l4 += j5;
 					k5 += i6;
 					j6 += l6;
 				}
 				while (--i >= 0) {
-					method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, j, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8, l4,
+					method508(Rasterizer.pixels, ai, 0, 0, j, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8, l4,
 							k5, j6, i5, l5, k6);
 					l += i7;
 					j1 += i8;
 					k1 += j7;
 					i2 += j8;
-					j += Class50_Sub1_Sub1.anInt1425;
+					j += Rasterizer.width;
 					l4 += j5;
 					k5 += i6;
 					j6 += l6;
@@ -1417,25 +1419,25 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 				i -= j;
 				j = anIntArray1538[j];
 				while (--i >= 0) {
-					method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, j, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8, l4,
+					method508(Rasterizer.pixels, ai, 0, 0, j, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8, l4,
 							k5, j6, i5, l5, k6);
 					j1 += i7;
 					i1 += k7;
 					i2 += j7;
 					l1 += l7;
-					j += Class50_Sub1_Sub1.anInt1425;
+					j += Rasterizer.width;
 					l4 += j5;
 					k5 += i6;
 					j6 += l6;
 				}
 				while (--k >= 0) {
-					method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, j, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8, l4,
+					method508(Rasterizer.pixels, ai, 0, 0, j, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8, l4,
 							k5, j6, i5, l5, k6);
 					l += i8;
 					i1 += k7;
 					k1 += j8;
 					l1 += l7;
-					j += Class50_Sub1_Sub1.anInt1425;
+					j += Rasterizer.width;
 					l4 += j5;
 					k5 += i6;
 					j6 += l6;
@@ -1446,37 +1448,37 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			i -= j;
 			j = anIntArray1538[j];
 			while (--i >= 0) {
-				method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, j, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4, k5,
+				method508(Rasterizer.pixels, ai, 0, 0, j, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4, k5,
 						j6, i5, l5, k6);
 				j1 += i7;
 				i1 += k7;
 				i2 += j7;
 				l1 += l7;
-				j += Class50_Sub1_Sub1.anInt1425;
+				j += Rasterizer.width;
 				l4 += j5;
 				k5 += i6;
 				j6 += l6;
 			}
 			while (--k >= 0) {
-				method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, j, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4, k5,
+				method508(Rasterizer.pixels, ai, 0, 0, j, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4, k5,
 						j6, i5, l5, k6);
 				l += i8;
 				i1 += k7;
 				k1 += j8;
 				l1 += l7;
-				j += Class50_Sub1_Sub1.anInt1425;
+				j += Rasterizer.width;
 				l4 += j5;
 				k5 += i6;
 				j6 += l6;
 			}
 			return;
 		}
-		if (k >= Class50_Sub1_Sub1.anInt1428)
+		if (k >= Rasterizer.bottomY)
 			return;
-		if (i > Class50_Sub1_Sub1.anInt1428)
-			i = Class50_Sub1_Sub1.anInt1428;
-		if (j > Class50_Sub1_Sub1.anInt1428)
-			j = Class50_Sub1_Sub1.anInt1428;
+		if (i > Rasterizer.bottomY)
+			i = Rasterizer.bottomY;
+		if (j > Rasterizer.bottomY)
+			j = Rasterizer.bottomY;
 		if (i < j) {
 			i1 = j1 <<= 16;
 			l1 = i2 <<= 16;
@@ -1503,25 +1505,25 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 				i -= k;
 				k = anIntArray1538[k];
 				while (--i >= 0) {
-					method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, k, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4,
+					method508(Rasterizer.pixels, ai, 0, 0, k, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4,
 							k5, j6, i5, l5, k6);
 					i1 += k7;
 					j1 += i8;
 					l1 += l7;
 					i2 += j8;
-					k += Class50_Sub1_Sub1.anInt1425;
+					k += Rasterizer.width;
 					l4 += j5;
 					k5 += i6;
 					j6 += l6;
 				}
 				while (--j >= 0) {
-					method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, k, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4,
+					method508(Rasterizer.pixels, ai, 0, 0, k, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4,
 							k5, j6, i5, l5, k6);
 					i1 += k7;
 					l += i7;
 					l1 += l7;
 					k1 += j7;
-					k += Class50_Sub1_Sub1.anInt1425;
+					k += Rasterizer.width;
 					l4 += j5;
 					k5 += i6;
 					j6 += l6;
@@ -1532,25 +1534,25 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			i -= k;
 			k = anIntArray1538[k];
 			while (--i >= 0) {
-				method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, k, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8, l4, k5,
+				method508(Rasterizer.pixels, ai, 0, 0, k, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8, l4, k5,
 						j6, i5, l5, k6);
 				i1 += k7;
 				j1 += i8;
 				l1 += l7;
 				i2 += j8;
-				k += Class50_Sub1_Sub1.anInt1425;
+				k += Rasterizer.width;
 				l4 += j5;
 				k5 += i6;
 				j6 += l6;
 			}
 			while (--j >= 0) {
-				method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, k, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8, l4, k5,
+				method508(Rasterizer.pixels, ai, 0, 0, k, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8, l4, k5,
 						j6, i5, l5, k6);
 				i1 += k7;
 				l += i7;
 				l1 += l7;
 				k1 += j7;
-				k += Class50_Sub1_Sub1.anInt1425;
+				k += Rasterizer.width;
 				l4 += j5;
 				k5 += i6;
 				j6 += l6;
@@ -1582,25 +1584,25 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 			j -= k;
 			k = anIntArray1538[k];
 			while (--j >= 0) {
-				method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, k, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8, l4, k5,
+				method508(Rasterizer.pixels, ai, 0, 0, k, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8, l4, k5,
 						j6, i5, l5, k6);
 				l += k7;
 				j1 += i8;
 				k1 += l7;
 				i2 += j8;
-				k += Class50_Sub1_Sub1.anInt1425;
+				k += Rasterizer.width;
 				l4 += j5;
 				k5 += i6;
 				j6 += l6;
 			}
 			while (--i >= 0) {
-				method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, k, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4, k5,
+				method508(Rasterizer.pixels, ai, 0, 0, k, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4, k5,
 						j6, i5, l5, k6);
 				i1 += i7;
 				j1 += i8;
 				l1 += j7;
 				i2 += j8;
-				k += Class50_Sub1_Sub1.anInt1425;
+				k += Rasterizer.width;
 				l4 += j5;
 				k5 += i6;
 				j6 += l6;
@@ -1611,25 +1613,25 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 		j -= k;
 		k = anIntArray1538[k];
 		while (--j >= 0) {
-			method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, k, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8, l4, k5, j6,
+			method508(Rasterizer.pixels, ai, 0, 0, k, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8, l4, k5, j6,
 					i5, l5, k6);
 			l += k7;
 			j1 += i8;
 			k1 += l7;
 			i2 += j8;
-			k += Class50_Sub1_Sub1.anInt1425;
+			k += Rasterizer.width;
 			l4 += j5;
 			k5 += i6;
 			j6 += l6;
 		}
 		while (--i >= 0) {
-			method508(Class50_Sub1_Sub1.anIntArray1424, ai, 0, 0, k, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8, l4, k5, j6,
+			method508(Rasterizer.pixels, ai, 0, 0, k, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8, l4, k5, j6,
 					i5, l5, k6);
 			i1 += i7;
 			j1 += i8;
 			l1 += j7;
 			i2 += j8;
-			k += Class50_Sub1_Sub1.anInt1425;
+			k += Rasterizer.width;
 			l4 += j5;
 			k5 += i6;
 			j6 += l6;
@@ -1644,8 +1646,8 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 		int k3;
 		if (aBoolean1528) {
 			j3 = (k1 - j1) / (i1 - l);
-			if (i1 > Class50_Sub1_Sub1.anInt1431)
-				i1 = Class50_Sub1_Sub1.anInt1431;
+			if (i1 > Rasterizer.viewportRx)
+				i1 = Rasterizer.viewportRx;
 			if (l < 0) {
 				j1 -= l * j3;
 				l = 0;
@@ -1991,7 +1993,7 @@ public class Class50_Sub1_Sub1_Sub4 extends Class50_Sub1_Sub1 {
 	public static int anIntArray1537[];
 	public static int anIntArray1538[];
 	public static int anInt1539;
-	public static Class50_Sub1_Sub1_Sub3 aClass50_Sub1_Sub1_Sub3Array1540[] = new Class50_Sub1_Sub1_Sub3[50];
+	public static IndexedImage aClass50_Sub1_Sub1_Sub3Array1540[] = new IndexedImage[50];
 	public static boolean aBooleanArray1541[] = new boolean[50];
 	public static int anIntArray1542[] = new int[50];
 	public static int anInt1543;

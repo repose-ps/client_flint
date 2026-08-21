@@ -16,6 +16,8 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
+import rs2.cache.media.ImageRGB;
+
 public class Applet_Sub1 extends Applet
 		implements Runnable, MouseListener, MouseMotionListener, KeyListener, FocusListener, WindowListener {
 
@@ -455,7 +457,7 @@ public class Applet_Sub1 extends Applet
 		anInt8 = 1;
 		aLongArray9 = new long[10];
 		aBoolean11 = false;
-		aClass50_Sub1_Sub1_Sub1Array16 = new Class50_Sub1_Sub1_Sub1[6];
+		aClass50_Sub1_Sub1_Sub1Array16 = new ImageRGB[6];
 		aBoolean18 = true;
 		aBoolean19 = true;
 		anIntArray32 = new int[128];
@@ -477,7 +479,7 @@ public class Applet_Sub1 extends Applet
 	public int anInt13;
 	public Graphics aGraphics14;
 	public Class18 aClass18_15;
-	public Class50_Sub1_Sub1_Sub1 aClass50_Sub1_Sub1_Sub1Array16[];
+	public ImageRGB aClass50_Sub1_Sub1_Sub1Array16[];
 	public Frame_Sub1 aFrame_Sub1_17;
 	public boolean aBoolean18;
 	public boolean aBoolean19;
