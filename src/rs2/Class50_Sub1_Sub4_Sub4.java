@@ -1,5 +1,6 @@
 package rs2;
 
+import rs2.cache.ondemand.OnDemandProvider;
 import rs2.media.AnimationFrame;
 import rs2.media.Rasterizer;
 import rs2.media.Skeleton;
@@ -38,7 +39,7 @@ public class Class50_Sub1_Sub4_Sub4 extends Renderable {
 		}
 	}
 
-	public static void method574(int i, Class32 class32) {
+	public static void method574(int i, OnDemandProvider class32) {
 		aClass26Array1682 = new ModelHeader[i];
 		aClass32_1683 = class32;
 	}
@@ -127,7 +128,7 @@ public class Class50_Sub1_Sub4_Sub4 extends Renderable {
 			return null;
 		ModelHeader class26 = aClass26Array1682[i];
 		if (class26 == null) {
-			aClass32_1683.method323(i);
+			aClass32_1683.requestModel(i);
 			return null;
 		} else {
 			return new Class50_Sub1_Sub4_Sub4(i, -478);
@@ -139,7 +140,7 @@ public class Class50_Sub1_Sub4_Sub4 extends Renderable {
 			return false;
 		ModelHeader class26 = aClass26Array1682[i];
 		if (class26 == null) {
-			aClass32_1683.method323(i);
+			aClass32_1683.requestModel(i);
 			return false;
 		} else {
 			return true;
@@ -1924,7 +1925,7 @@ public class Class50_Sub1_Sub4_Sub4 extends Renderable {
 	public boolean aBoolean1680;
 	public VertexNormal aClass40Array1681[];
 	public static ModelHeader aClass26Array1682[];
-	public static Class32 aClass32_1683;
+	public static OnDemandProvider aClass32_1683;
 	public static boolean aBooleanArray1684[] = new boolean[4096];
 	public static boolean aBooleanArray1685[] = new boolean[4096];
 	public static int anIntArray1686[] = new int[4096];

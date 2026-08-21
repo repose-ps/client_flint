@@ -27,6 +27,8 @@ import rs2.cache.media.IdentityKit;
 import rs2.cache.media.ImageRGB;
 import rs2.cache.media.IndexedImage;
 import rs2.cache.media.SpotAnimation;
+import rs2.cache.ondemand.OnDemandFetcher;
+import rs2.cache.ondemand.OnDemandRequest;
 import rs2.cache.ui.Widget;
 import rs2.chat.ChatCodec;
 import rs2.collection.Node;
@@ -380,7 +382,7 @@ public class client extends Applet_Sub1 {
 		aClass6_1210 = null;
 		aClass50_Sub1_Sub1_Sub1_1086 = null;
 		if (aClass32_Sub1_1291 != null)
-			aClass32_Sub1_1291.method339();
+			aClass32_Sub1_1291.stop();
 		aClass32_Sub1_1291 = null;
 		anIntArray979 = null;
 		anIntArray980 = null;
@@ -1208,8 +1210,8 @@ public class client extends Applet_Sub1 {
 						if (aString1104.equals("::lag"))
 							method138(false);
 						if (aString1104.equals("::prefetchmusic")) {
-							for (int i1 = 0; i1 < aClass32_Sub1_1291.method340(2, -31140); i1++)
-								aClass32_Sub1_1291.method327(-44, 2, (byte) 1, i1);
+							for (int i1 = 0; i1 < aClass32_Sub1_1291.getFileCount(2); i1++)
+								aClass32_Sub1_1291.setExtraPriority(2, i1, (byte) 1);
 
 						}
 						if (aString1104.equals("::fpson"))
@@ -1529,7 +1531,7 @@ public class client extends Applet_Sub1 {
 				if (l2 != anInt1327 && aBoolean1266 && !aBoolean926 && anInt1128 == 0) {
 					anInt1270 = l2;
 					aBoolean1271 = true;
-					aClass32_Sub1_1291.method329(2, anInt1270);
+					aClass32_Sub1_1291.request(2, anInt1270);
 				}
 				anInt1327 = l2;
 				anInt870 = -1;
@@ -1541,7 +1543,7 @@ public class client extends Applet_Sub1 {
 				if (aBoolean1266 && !aBoolean926) {
 					anInt1270 = i3;
 					aBoolean1271 = false;
-					aClass32_Sub1_1291.method329(2, anInt1270);
+					aClass32_Sub1_1291.request(2, anInt1270);
 					anInt1128 = j12;
 				}
 				anInt870 = -1;
@@ -2201,12 +2203,12 @@ public class client extends Applet_Sub1 {
 								anIntArray858[j20] = -1;
 								j20++;
 							} else {
-								int l30 = anIntArray857[j20] = aClass32_Sub1_1291.method344(0, l26, i29, 0);
+								int l30 = anIntArray857[j20] = aClass32_Sub1_1291.getMapFileId(l26, i29, 0);
 								if (l30 != -1)
-									aClass32_Sub1_1291.method329(3, l30);
-								int i32 = anIntArray858[j20] = aClass32_Sub1_1291.method344(0, l26, i29, 1);
+									aClass32_Sub1_1291.request(3, l30);
+								int i32 = anIntArray858[j20] = aClass32_Sub1_1291.getMapFileId(l26, i29, 1);
 								if (i32 != -1)
-									aClass32_Sub1_1291.method329(3, i32);
+									aClass32_Sub1_1291.request(3, i32);
 								j20++;
 							}
 						}
@@ -2250,12 +2252,12 @@ public class client extends Applet_Sub1 {
 						int j31 = anIntArray856[k29] = ai[k29];
 						int k32 = j31 >> 8 & 0xff;
 						int j33 = j31 & 0xff;
-						int i34 = anIntArray857[k29] = aClass32_Sub1_1291.method344(0, k32, j33, 0);
+						int i34 = anIntArray857[k29] = aClass32_Sub1_1291.getMapFileId(k32, j33, 0);
 						if (i34 != -1)
-							aClass32_Sub1_1291.method329(3, i34);
-						int k34 = anIntArray858[k29] = aClass32_Sub1_1291.method344(0, k32, j33, 1);
+							aClass32_Sub1_1291.request(3, i34);
+						int k34 = anIntArray858[k29] = aClass32_Sub1_1291.getMapFileId(k32, j33, 1);
 						if (k34 != -1)
-							aClass32_Sub1_1291.method329(3, k34);
+							aClass32_Sub1_1291.request(3, k34);
 					}
 
 				}
@@ -2849,13 +2851,11 @@ public class client extends Applet_Sub1 {
 			return super.getDocumentBase().getHost().toLowerCase();
 	}
 
-	public void method38(int i, int j, int k, Class50_Sub1_Sub4_Sub3_Sub2 class50_sub1_sub4_sub3_sub2, int l) {
+	public void method38(int i, int j, int k, Class50_Sub1_Sub4_Sub3_Sub2 class50_sub1_sub4_sub3_sub2) {
 		if (class50_sub1_sub4_sub3_sub2 == aClass50_Sub1_Sub4_Sub3_Sub2_1167)
 			return;
 		if (anInt1183 >= 400)
 			return;
-		if (l != 0)
-			aBoolean963 = !aBoolean963;
 		String s;
 		if (class50_sub1_sub4_sub3_sub2.anInt1759 == 0)
 			s = class50_sub1_sub4_sub3_sub2.aString1751
@@ -3159,7 +3159,7 @@ public class client extends Applet_Sub1 {
 						if (class50_sub1_sub4_sub3_sub2_1 != null
 								&& ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub2_1)).anInt1610 == ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub1)).anInt1610
 								&& ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub2_1)).anInt1611 == ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub1)).anInt1611)
-							method38(anIntArray972[k2], i1, l, class50_sub1_sub4_sub3_sub2_1, 0);
+							method38(anIntArray972[k2], i1, l, class50_sub1_sub4_sub3_sub2_1);
 					}
 
 				}
@@ -3185,11 +3185,11 @@ public class client extends Applet_Sub1 {
 								&& class50_sub1_sub4_sub3_sub2_2 != class50_sub1_sub4_sub3_sub2
 								&& ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub2_2)).anInt1610 == ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub2)).anInt1610
 								&& ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub2_2)).anInt1611 == ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub2)).anInt1611)
-							method38(anIntArray972[l2], i1, l, class50_sub1_sub4_sub3_sub2_2, 0);
+							method38(anIntArray972[l2], i1, l, class50_sub1_sub4_sub3_sub2_2);
 					}
 
 				}
-				method38(k1, i1, l, class50_sub1_sub4_sub3_sub2, 0);
+				method38(k1, i1, l, class50_sub1_sub4_sub3_sub2);
 			}
 			if (j1 == 3) {
 				NodeDeque class6 = aClass6ArrayArrayArray1323[anInt1091][l][i1];
@@ -4364,33 +4364,33 @@ public class client extends Applet_Sub1 {
 			aClass50_Sub1_Sub1_Sub1_1122 = new ImageRGB(512, 512);
 			Archive class2_6 = method61(14076, anIntArray837[5], "versionlist", 60, 5, "update list");
 			method13(60, true, "Connecting to update server");
-			aClass32_Sub1_1291 = new Class32_Sub1();
-			aClass32_Sub1_1291.method335(class2_6, this);
-			AnimationFrame.initialize(aClass32_Sub1_1291.method343(553));
-			Class50_Sub1_Sub4_Sub4.method574(aClass32_Sub1_1291.method340(0, -31140), aClass32_Sub1_1291);
+			aClass32_Sub1_1291 = new OnDemandFetcher();
+			aClass32_Sub1_1291.start(class2_6, this);
+			AnimationFrame.initialize(aClass32_Sub1_1291.getAnimationCount());
+			Class50_Sub1_Sub4_Sub4.method574(aClass32_Sub1_1291.getFileCount(0), aClass32_Sub1_1291);
 			if (!aBoolean926) {
 				anInt1270 = 0;
 				aBoolean1271 = true;
-				aClass32_Sub1_1291.method329(2, anInt1270);
-				while (aClass32_Sub1_1291.method333() > 0) {
+				aClass32_Sub1_1291.request(2, anInt1270);
+				while (aClass32_Sub1_1291.getOutstandingRequestCount() > 0) {
 					method77(false);
 					try {
 						Thread.sleep(100L);
 					} catch (Exception _ex) {
 					}
-					if (aClass32_Sub1_1291.anInt1379 > 3) {
+					if (aClass32_Sub1_1291.requestFailures > 3) {
 						method19("ondemand");
 						return;
 					}
 				}
 			}
 			method13(65, true, "Requesting animations");
-			int k = aClass32_Sub1_1291.method340(1, -31140);
+			int k = aClass32_Sub1_1291.getFileCount(1);
 			for (int l = 0; l < k; l++)
-				aClass32_Sub1_1291.method329(1, l);
+				aClass32_Sub1_1291.request(1, l);
 
-			while (aClass32_Sub1_1291.method333() > 0) {
-				int i1 = k - aClass32_Sub1_1291.method333();
+			while (aClass32_Sub1_1291.getOutstandingRequestCount() > 0) {
+				int i1 = k - aClass32_Sub1_1291.getOutstandingRequestCount();
 				if (i1 > 0)
 					method13(65, true, "Loading animations - " + (i1 * 100) / k + "%");
 				method77(false);
@@ -4398,22 +4398,22 @@ public class client extends Applet_Sub1 {
 					Thread.sleep(100L);
 				} catch (Exception _ex) {
 				}
-				if (aClass32_Sub1_1291.anInt1379 > 3) {
+				if (aClass32_Sub1_1291.requestFailures > 3) {
 					method19("ondemand");
 					return;
 				}
 			}
 			method13(70, true, "Requesting models");
-			k = aClass32_Sub1_1291.method340(0, -31140);
+			k = aClass32_Sub1_1291.getFileCount(0);
 			for (int j1 = 0; j1 < k; j1++) {
-				int k1 = aClass32_Sub1_1291.method325(j1, -493);
+				int k1 = aClass32_Sub1_1291.getModelIndex(j1);
 				if ((k1 & 1) != 0)
-					aClass32_Sub1_1291.method329(0, j1);
+					aClass32_Sub1_1291.request(0, j1);
 			}
 
-			k = aClass32_Sub1_1291.method333();
-			while (aClass32_Sub1_1291.method333() > 0) {
-				int l1 = k - aClass32_Sub1_1291.method333();
+			k = aClass32_Sub1_1291.getOutstandingRequestCount();
+			while (aClass32_Sub1_1291.getOutstandingRequestCount() > 0) {
+				int l1 = k - aClass32_Sub1_1291.getOutstandingRequestCount();
 				if (l1 > 0)
 					method13(70, true, "Loading models - " + (l1 * 100) / k + "%");
 				method77(false);
@@ -4424,21 +4424,21 @@ public class client extends Applet_Sub1 {
 			}
 			if (aClass23Array1228[0] != null) {
 				method13(75, true, "Requesting maps");
-				aClass32_Sub1_1291.method329(3, aClass32_Sub1_1291.method344(0, 47, 48, 0));
-				aClass32_Sub1_1291.method329(3, aClass32_Sub1_1291.method344(0, 47, 48, 1));
-				aClass32_Sub1_1291.method329(3, aClass32_Sub1_1291.method344(0, 48, 48, 0));
-				aClass32_Sub1_1291.method329(3, aClass32_Sub1_1291.method344(0, 48, 48, 1));
-				aClass32_Sub1_1291.method329(3, aClass32_Sub1_1291.method344(0, 49, 48, 0));
-				aClass32_Sub1_1291.method329(3, aClass32_Sub1_1291.method344(0, 49, 48, 1));
-				aClass32_Sub1_1291.method329(3, aClass32_Sub1_1291.method344(0, 47, 47, 0));
-				aClass32_Sub1_1291.method329(3, aClass32_Sub1_1291.method344(0, 47, 47, 1));
-				aClass32_Sub1_1291.method329(3, aClass32_Sub1_1291.method344(0, 48, 47, 0));
-				aClass32_Sub1_1291.method329(3, aClass32_Sub1_1291.method344(0, 48, 47, 1));
-				aClass32_Sub1_1291.method329(3, aClass32_Sub1_1291.method344(0, 48, 148, 0));
-				aClass32_Sub1_1291.method329(3, aClass32_Sub1_1291.method344(0, 48, 148, 1));
-				k = aClass32_Sub1_1291.method333();
-				while (aClass32_Sub1_1291.method333() > 0) {
-					int i2 = k - aClass32_Sub1_1291.method333();
+				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(47, 48, 0));
+				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(47, 48, 1));
+				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(48, 48, 0));
+				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(48, 48, 1));
+				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(49, 48, 0));
+				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(49, 48, 1));
+				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(47, 47, 0));
+				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(47, 47, 1));
+				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(48, 47, 0));
+				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(48, 47, 1));
+				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(48, 148, 0));
+				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(48, 148, 1));
+				k = aClass32_Sub1_1291.getOutstandingRequestCount();
+				while (aClass32_Sub1_1291.getOutstandingRequestCount() > 0) {
+					int i2 = k - aClass32_Sub1_1291.getOutstandingRequestCount();
 					if (i2 > 0)
 						method13(75, true, "Loading maps - " + (i2 * 100) / k + "%");
 					method77(false);
@@ -4448,9 +4448,9 @@ public class client extends Applet_Sub1 {
 					}
 				}
 			}
-			k = aClass32_Sub1_1291.method340(0, -31140);
+			k = aClass32_Sub1_1291.getFileCount(0);
 			for (int j2 = 0; j2 < k; j2++) {
-				int k2 = aClass32_Sub1_1291.method325(j2, -493);
+				int k2 = aClass32_Sub1_1291.getModelIndex(j2);
 				byte byte0 = 0;
 				if ((k2 & 8) != 0)
 					byte0 = 10;
@@ -4469,22 +4469,22 @@ public class client extends Applet_Sub1 {
 				if ((k2 & 1) != 0)
 					byte0 = 3;
 				if (byte0 != 0)
-					aClass32_Sub1_1291.method327(-44, 0, byte0, j2);
+					aClass32_Sub1_1291.setExtraPriority(0, j2, byte0);
 			}
 
-			aClass32_Sub1_1291.method332(aBoolean925, (byte) 109);
+			aClass32_Sub1_1291.preloadMaps(aBoolean925);
 			if (!aBoolean926) {
-				k = aClass32_Sub1_1291.method340(2, -31140);
+				k = aClass32_Sub1_1291.getFileCount(2);
 				for (int l2 = 1; l2 < k; l2++)
-					if (aClass32_Sub1_1291.method328(l2, aBoolean963))
-						aClass32_Sub1_1291.method327(-44, 2, (byte) 1, l2);
+					if (aClass32_Sub1_1291.isMidiPreload(l2))
+						aClass32_Sub1_1291.setExtraPriority(2, l2, (byte) 1);
 
 			}
-			k = aClass32_Sub1_1291.method340(0, -31140);
+			k = aClass32_Sub1_1291.getFileCount(0);
 			for (int i3 = 0; i3 < k; i3++) {
-				int j3 = aClass32_Sub1_1291.method325(i3, -493);
-				if (j3 == 0 && aClass32_Sub1_1291.anInt1350 < 200)
-					aClass32_Sub1_1291.method327(-44, 0, (byte) 1, i3);
+				int j3 = aClass32_Sub1_1291.getModelIndex(i3);
+				if (j3 == 0 && aClass32_Sub1_1291.totalFiles < 200)
+					aClass32_Sub1_1291.setExtraPriority(0, i3, (byte) 1);
 			}
 
 			method13(80, true, "Unpacking media");
@@ -4966,7 +4966,7 @@ public class client extends Applet_Sub1 {
 			class50_sub1_sub4_sub3.method564(-56);
 		}
 		if (class50_sub1_sub4_sub3.anInt1606 > anInt1325)
-			method69(class50_sub1_sub4_sub3, true);
+			method69(class50_sub1_sub4_sub3);
 		else if (class50_sub1_sub4_sub3.anInt1607 >= anInt1325)
 			method70(class50_sub1_sub4_sub3, -31135);
 		else
@@ -4977,9 +4977,7 @@ public class client extends Applet_Sub1 {
 			;
 	}
 
-	public void method69(Class50_Sub1_Sub4_Sub3 class50_sub1_sub4_sub3, boolean flag) {
-		if (!flag)
-			aBoolean963 = !aBoolean963;
+	public void method69(Class50_Sub1_Sub4_Sub3 class50_sub1_sub4_sub3) {
 		int i = class50_sub1_sub4_sub3.anInt1606 - anInt1325;
 		int j = class50_sub1_sub4_sub3.anInt1602 * 128 + class50_sub1_sub4_sub3.anInt1601 * 64;
 		int k = class50_sub1_sub4_sub3.anInt1604 * 128 + class50_sub1_sub4_sub3.anInt1601 * 64;
@@ -5593,45 +5591,45 @@ public class client extends Applet_Sub1 {
 		if (flag)
 			anInt870 = -1;
 		do {
-			Class50_Sub1_Sub3 class50_sub1_sub3;
+			OnDemandRequest class50_sub1_sub3;
 			do {
-				class50_sub1_sub3 = aClass32_Sub1_1291.method330();
+				class50_sub1_sub3 = aClass32_Sub1_1291.poll();
 				if (class50_sub1_sub3 == null)
 					return;
-				if (class50_sub1_sub3.anInt1467 == 0) {
-					Class50_Sub1_Sub4_Sub4.method575(class50_sub1_sub3.aByteArray1470, class50_sub1_sub3.anInt1468,
+				if (class50_sub1_sub3.type == 0) {
+					Class50_Sub1_Sub4_Sub4.method575(class50_sub1_sub3.buffer, class50_sub1_sub3.id,
 							(byte) 7);
-					if ((aClass32_Sub1_1291.method325(class50_sub1_sub3.anInt1468, -493) & 0x62) != 0) {
+					if ((aClass32_Sub1_1291.getModelIndex(class50_sub1_sub3.id) & 0x62) != 0) {
 						aBoolean1181 = true;
 						if (anInt988 != -1 || anInt1191 != -1)
 							aBoolean1240 = true;
 					}
 				}
-				if (class50_sub1_sub3.anInt1467 == 1 && class50_sub1_sub3.aByteArray1470 != null)
-					AnimationFrame.load(class50_sub1_sub3.aByteArray1470);
-				if (class50_sub1_sub3.anInt1467 == 2 && class50_sub1_sub3.anInt1468 == anInt1270
-						&& class50_sub1_sub3.aByteArray1470 != null)
-					method24(aBoolean1271, class50_sub1_sub3.aByteArray1470, 659);
-				if (class50_sub1_sub3.anInt1467 == 3 && anInt1071 == 1) {
+				if (class50_sub1_sub3.type == 1 && class50_sub1_sub3.buffer != null)
+					AnimationFrame.load(class50_sub1_sub3.buffer);
+				if (class50_sub1_sub3.type == 2 && class50_sub1_sub3.id == anInt1270
+						&& class50_sub1_sub3.buffer != null)
+					method24(aBoolean1271, class50_sub1_sub3.buffer, 659);
+				if (class50_sub1_sub3.type == 3 && anInt1071 == 1) {
 					for (int i = 0; i < aByteArrayArray838.length; i++) {
-						if (anIntArray857[i] == class50_sub1_sub3.anInt1468) {
-							aByteArrayArray838[i] = class50_sub1_sub3.aByteArray1470;
-							if (class50_sub1_sub3.aByteArray1470 == null)
+						if (anIntArray857[i] == class50_sub1_sub3.id) {
+							aByteArrayArray838[i] = class50_sub1_sub3.buffer;
+							if (class50_sub1_sub3.buffer == null)
 								anIntArray857[i] = -1;
 							break;
 						}
-						if (anIntArray858[i] != class50_sub1_sub3.anInt1468)
+						if (anIntArray858[i] != class50_sub1_sub3.id)
 							continue;
-						aByteArrayArray1232[i] = class50_sub1_sub3.aByteArray1470;
-						if (class50_sub1_sub3.aByteArray1470 == null)
+						aByteArrayArray1232[i] = class50_sub1_sub3.buffer;
+						if (class50_sub1_sub3.buffer == null)
 							anIntArray858[i] = -1;
 						break;
 					}
 
 				}
-			} while (class50_sub1_sub3.anInt1467 != 93
-					|| !aClass32_Sub1_1291.method334(class50_sub1_sub3.anInt1468, false));
-			Class8.method169(aClass32_Sub1_1291, new Buffer(class50_sub1_sub3.aByteArray1470), (byte) -3);
+			} while (class50_sub1_sub3.type != 93
+					|| !aClass32_Sub1_1291.isLandscapeFile(class50_sub1_sub3.id));
+			Class8.method169(aClass32_Sub1_1291, new Buffer(class50_sub1_sub3.buffer), (byte) -3);
 		} while (true);
 	}
 
@@ -6970,9 +6968,9 @@ public class client extends Applet_Sub1 {
 			aClass50_Sub1_Sub2_964.writeInt(0x3f008edd);
 		}
 		if (aBoolean926 && signlink.cache_dat != null) {
-			int k = aClass32_Sub1_1291.method340(0, -31140);
+			int k = aClass32_Sub1_1291.getFileCount(0);
 			for (int j1 = 0; j1 < k; j1++) {
-				int i2 = aClass32_Sub1_1291.method325(j1, -493);
+				int i2 = aClass32_Sub1_1291.getModelIndex(j1);
 				if ((i2 & 0x79) == 0)
 					Class50_Sub1_Sub4_Sub4.method576(j1, 1);
 			}
@@ -6980,7 +6978,7 @@ public class client extends Applet_Sub1 {
 		}
 		System.gc();
 		Class50_Sub1_Sub1_Sub4.method496((byte) 7, 20);
-		aClass32_Sub1_1291.method336((byte) -125);
+		aClass32_Sub1_1291.clearExtraRequests();
 		int l = (anInt889 - 6) / 8 - 1;
 		int k1 = (anInt889 + 6) / 8 + 1;
 		int j2 = (anInt890 - 6) / 8 - 1;
@@ -6995,12 +6993,12 @@ public class client extends Applet_Sub1 {
 		for (int i4 = l; i4 <= k1; i4++) {
 			for (int k5 = j2; k5 <= i3; k5++)
 				if (i4 == l || i4 == k1 || k5 == j2 || k5 == i3) {
-					int k7 = aClass32_Sub1_1291.method344(0, i4, k5, 0);
+					int k7 = aClass32_Sub1_1291.getMapFileId(i4, k5, 0);
 					if (k7 != -1)
-						aClass32_Sub1_1291.method337(k7, 3, aByte936);
-					int k8 = aClass32_Sub1_1291.method344(0, i4, k5, 1);
+						aClass32_Sub1_1291.queueExtraRequest(3, k7);
+					int k8 = aClass32_Sub1_1291.getMapFileId(i4, k5, 1);
 					if (k8 != -1)
-						aClass32_Sub1_1291.method337(k8, 3, aByte936);
+						aClass32_Sub1_1291.queueExtraRequest(3, k8);
 				}
 
 		}
@@ -7604,7 +7602,7 @@ public class client extends Applet_Sub1 {
 				if (aBoolean1266) {
 					anInt1270 = anInt1327;
 					aBoolean1271 = true;
-					aClass32_Sub1_1291.method329(2, anInt1270);
+					aClass32_Sub1_1291.request(2, anInt1270);
 				} else {
 					method50();
 				}
@@ -9714,7 +9712,7 @@ public class client extends Applet_Sub1 {
 		}
 		if (anInt1225 == 0) {
 			int j = c1 / 2 + 80;
-			aClass50_Sub1_Sub1_Sub2_1059.drawCenteredTextWithTags(aClass32_Sub1_1291.aString1347, c / 2, j, 0x75a9a9,
+			aClass50_Sub1_Sub1_Sub2_1059.drawCenteredTextWithTags(aClass32_Sub1_1291.statusString, c / 2, j, 0x75a9a9,
 					true);
 			j = c1 / 2 - 20;
 			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags("Welcome to RuneScape", c / 2, j, 0xffff00, true);
@@ -10186,7 +10184,7 @@ public class client extends Applet_Sub1 {
 		System.out.println("============");
 		System.out.println("flame-cycle:" + anInt1101);
 		if (aClass32_Sub1_1291 != null)
-			System.out.println("Od-cycle:" + aClass32_Sub1_1291.anInt1348);
+			System.out.println("Od-cycle:" + aClass32_Sub1_1291.onDemandCycle);
 		System.out.println("loop-cycle:" + anInt1325);
 		System.out.println("draw-cycle:" + anInt1309);
 		System.out.println("ptype:" + anInt870);
@@ -10703,7 +10701,7 @@ public class client extends Applet_Sub1 {
 			int i = method144(5);
 			if (i != 0 && System.currentTimeMillis() - aLong1229 > 0x57e40L) {
 				signlink.reporterror(aString1092 + " glcfb " + aLong930 + "," + i + "," + aBoolean926 + ","
-						+ aClass23Array1228[0] + "," + aClass32_Sub1_1291.method333() + "," + anInt1091 + "," + anInt889
+						+ aClass23Array1228[0] + "," + aClass32_Sub1_1291.getOutstandingRequestCount() + "," + anInt1091 + "," + anInt889
 						+ "," + anInt890);
 				aLong1229 = System.currentTimeMillis();
 			}
@@ -11207,7 +11205,7 @@ public class client extends Applet_Sub1 {
 			if (anInt1128 == 0 && aBoolean1266 && !aBoolean926) {
 				anInt1270 = anInt1327;
 				aBoolean1271 = true;
-				aClass32_Sub1_1291.method329(2, anInt1270);
+				aClass32_Sub1_1291.request(2, anInt1270);
 			}
 		}
 	}
@@ -11245,7 +11243,6 @@ public class client extends Applet_Sub1 {
 		anInt933 = -1;
 		aBoolean934 = true;
 		anInt935 = -1;
-		aByte936 = -113;
 		aString937 = "";
 		anInt938 = -214;
 		anInt940 = 50;
@@ -11500,7 +11497,6 @@ public class client extends Applet_Sub1 {
 	public int anInt933;
 	public boolean aBoolean934;
 	public int anInt935;
-	public byte aByte936;
 	public String aString937;
 	public int anInt938;
 	public int anInt939;
@@ -11527,7 +11523,6 @@ public class client extends Applet_Sub1 {
 	public int anInt960;
 	public int anInt961;
 	public static boolean aBoolean962;
-	public static boolean aBoolean963 = true;
 	public Buffer aClass50_Sub1_Sub2_964;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_965;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_966;
@@ -11852,7 +11847,7 @@ public class client extends Applet_Sub1 {
 	public ImageRGB aClass50_Sub1_Sub1_Sub1Array1288[];
 	public int anInt1289;
 	public int anIntArray1290[] = { 17, 24, 34, 40 };
-	public Class32_Sub1 aClass32_Sub1_1291;
+	public OnDemandFetcher aClass32_Sub1_1291;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_1292;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_1293;
 	public int anInt1294;

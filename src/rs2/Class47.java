@@ -2,6 +2,7 @@ package rs2;
 
 import rs2.cache.Archive;
 import rs2.cache.cfg.Varbit;
+import rs2.cache.ondemand.OnDemandFetcher;
 import rs2.collection.LruCache;
 import rs2.media.AnimationFrame;
 import rs2.media.renderable.Renderable;
@@ -42,11 +43,11 @@ public class Class47 {
 			return method423(anIntArray805[j]);
 	}
 
-	public void method425(Class32_Sub1 class32_sub1, int i) {
+	public void method425(OnDemandFetcher class32_sub1, int i) {
 		if (anIntArray763 == null)
 			return;
 		for (int j = 0; j < anIntArray763.length; j++)
-			class32_sub1.method337(anIntArray763[j] & 0xffff, 0, aByte793);
+			class32_sub1.queueExtraRequest(0, anIntArray763[j] & 0xffff);
 
 		if (i >= 0) {
 			for (int k = 1; k > 0; k++)
@@ -429,7 +430,6 @@ public class Class47 {
 		anInt773 = -1;
 		aString776 = "null";
 		aBoolean786 = true;
-		aByte793 = -113;
 	}
 
 	public static int anIntArray758[];
@@ -466,7 +466,6 @@ public class Class47 {
 	public String aStringArray790[];
 	public boolean aBoolean791;
 	public int anIntArray792[];
-	public byte aByte793;
 	public int anInt794;
 	public int anInt795;
 	public int anInt796;

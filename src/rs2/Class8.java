@@ -1,6 +1,7 @@
 package rs2;
 
 import rs2.cache.def.FloorDefinition;
+import rs2.cache.ondemand.OnDemandFetcher;
 import rs2.media.renderable.DynamicObject;
 import rs2.media.renderable.Renderable;
 import rs2.net.Buffer;
@@ -645,7 +646,7 @@ public class Class8 {
 		}
 	}
 
-	public static void method169(Class32_Sub1 class32_sub1, Buffer class50_sub1_sub2, byte i) {
+	public static void method169(OnDemandFetcher class32_sub1, Buffer class50_sub1_sub2, byte i) {
 		if (i == -3) {
 			int i_159_ = -1;
 			for (;;) {
