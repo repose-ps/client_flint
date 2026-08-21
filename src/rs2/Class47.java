@@ -4,6 +4,7 @@ import rs2.cache.Archive;
 import rs2.cache.cfg.Varbit;
 import rs2.collection.LruCache;
 import rs2.media.AnimationFrame;
+import rs2.media.renderable.Renderable;
 import rs2.net.Buffer;
 
 public class Class47 {
@@ -166,7 +167,7 @@ public class Class47 {
 			class50_sub1_sub4_sub4_3.method590(anInt761, anInt766, false, anInt785);
 		class50_sub1_sub4_sub4_3.method594(64 + aByte784, 768 + aByte787 * 5, -50, -10, -50, !aBoolean804);
 		if (anInt794 == 1)
-			class50_sub1_sub4_sub4_3.anInt1675 = ((Class50_Sub1_Sub4) (class50_sub1_sub4_sub4_3)).anInt1475;
+			class50_sub1_sub4_sub4_3.anInt1675 = ((Renderable) (class50_sub1_sub4_sub4_3)).modelHeight;
 		aClass33_762.put(l1, class50_sub1_sub4_sub4_3);
 		return class50_sub1_sub4_sub4_3;
 	}

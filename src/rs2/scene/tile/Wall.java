@@ -1,6 +1,6 @@
 package rs2.scene.tile;
 
-import rs2.Class50_Sub1_Sub4;
+import rs2.media.renderable.Renderable;
 
 /**
  * A wall attached to a scene tile.
@@ -29,10 +29,10 @@ public class Wall {
 	public int secondaryOrientation;
 
 	/** Model drawn for the primary wall face. */
-	public Class50_Sub1_Sub4 primary;
+	public Renderable primary;
 
 	/** Optional model drawn for the adjoining wall face. */
-	public Class50_Sub1_Sub4 secondary;
+	public Renderable secondary;
 
 	/** Packed identifier used by scene queries and menu actions. */
 	public int uid;

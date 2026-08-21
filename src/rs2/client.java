@@ -35,6 +35,11 @@ import rs2.game.Skills;
 import rs2.media.AnimationFrame;
 import rs2.media.Rasterizer;
 import rs2.media.TypeFace;
+import rs2.media.renderable.DynamicObject;
+import rs2.media.renderable.GraphicsObject;
+import rs2.media.renderable.GroundItem;
+import rs2.media.renderable.Projectile;
+import rs2.media.renderable.Renderable;
 import rs2.net.Buffer;
 import rs2.net.BufferedConnection;
 import rs2.net.IncomingPacketLengths;
@@ -634,13 +639,13 @@ public class client extends Applet_Sub1 {
 		}
 		int k = 0xfa0a1f01;
 		Object obj = null;
-		for (Class50_Sub1_Sub4_Sub1 class50_sub1_sub4_sub1 = (Class50_Sub1_Sub4_Sub1) class6
-				.first(); class50_sub1_sub4_sub1 != null; class50_sub1_sub4_sub1 = (Class50_Sub1_Sub4_Sub1) class6
+		for (GroundItem class50_sub1_sub4_sub1 = (GroundItem) class6
+				.first(); class50_sub1_sub4_sub1 != null; class50_sub1_sub4_sub1 = (GroundItem) class6
 						.next()) {
-			Class16 class16 = Class16.method212(class50_sub1_sub4_sub1.anInt1550);
+			Class16 class16 = Class16.method212(class50_sub1_sub4_sub1.id);
 			int l = class16.anInt345;
 			if (class16.aBoolean371)
-				l *= class50_sub1_sub4_sub1.anInt1552 + 1;
+				l *= class50_sub1_sub4_sub1.amount + 1;
 			if (l > k) {
 				k = l;
 				obj = class50_sub1_sub4_sub1;
@@ -650,20 +655,20 @@ public class client extends Applet_Sub1 {
 		class6.addFirst(((Node) (obj)));
 		Object obj1 = null;
 		Object obj2 = null;
-		for (Class50_Sub1_Sub4_Sub1 class50_sub1_sub4_sub1_1 = (Class50_Sub1_Sub4_Sub1) class6
-				.first(); class50_sub1_sub4_sub1_1 != null; class50_sub1_sub4_sub1_1 = (Class50_Sub1_Sub4_Sub1) class6
+		for (GroundItem class50_sub1_sub4_sub1_1 = (GroundItem) class6
+				.first(); class50_sub1_sub4_sub1_1 != null; class50_sub1_sub4_sub1_1 = (GroundItem) class6
 						.next()) {
-			if (class50_sub1_sub4_sub1_1.anInt1550 != ((Class50_Sub1_Sub4_Sub1) (obj)).anInt1550 && obj1 == null)
+			if (class50_sub1_sub4_sub1_1.id != ((GroundItem) (obj)).id && obj1 == null)
 				obj1 = class50_sub1_sub4_sub1_1;
-			if (class50_sub1_sub4_sub1_1.anInt1550 != ((Class50_Sub1_Sub4_Sub1) (obj)).anInt1550
-					&& class50_sub1_sub4_sub1_1.anInt1550 != ((Class50_Sub1_Sub4_Sub1) (obj1)).anInt1550
+			if (class50_sub1_sub4_sub1_1.id != ((GroundItem) (obj)).id
+					&& class50_sub1_sub4_sub1_1.id != ((GroundItem) (obj1)).id
 					&& obj2 == null)
 				obj2 = class50_sub1_sub4_sub1_1;
 		}
 
 		int i1 = i + (j << 7) + 0x60000000;
 		aClass22_1164.method248(method110(j * 128 + 64, i * 128 + 64, (byte) 9, anInt1091), anInt1091,
-				((Class50_Sub1_Sub4) (obj)), ((Class50_Sub1_Sub4) (obj1)), i1, ((Class50_Sub1_Sub4) (obj2)), 2, j, i);
+				((Renderable) (obj)), ((Renderable) (obj1)), i1, ((Renderable) (obj2)), 2, j, i);
 	}
 
 	public static void method27(boolean flag) {
@@ -3189,14 +3194,14 @@ public class client extends Applet_Sub1 {
 			if (j1 == 3) {
 				NodeDeque class6 = aClass6ArrayArrayArray1323[anInt1091][l][i1];
 				if (class6 != null) {
-					for (Class50_Sub1_Sub4_Sub1 class50_sub1_sub4_sub1 = (Class50_Sub1_Sub4_Sub1) class6
-							.last(); class50_sub1_sub4_sub1 != null; class50_sub1_sub4_sub1 = (Class50_Sub1_Sub4_Sub1) class6
+					for (GroundItem class50_sub1_sub4_sub1 = (GroundItem) class6
+							.last(); class50_sub1_sub4_sub1 != null; class50_sub1_sub4_sub1 = (GroundItem) class6
 									.previous()) {
-						Class16 class16 = Class16.method212(class50_sub1_sub4_sub1.anInt1550);
+						Class16 class16 = Class16.method212(class50_sub1_sub4_sub1.id);
 						if (anInt1146 == 1) {
 							aStringArray1184[anInt1183] = "Use " + aString1150 + " with @lre@" + class16.aString329;
 							anIntArray981[anInt1183] = 100;
-							anIntArray982[anInt1183] = class50_sub1_sub4_sub1.anInt1550;
+							anIntArray982[anInt1183] = class50_sub1_sub4_sub1.id;
 							anIntArray979[anInt1183] = l;
 							anIntArray980[anInt1183] = i1;
 							anInt1183++;
@@ -3204,7 +3209,7 @@ public class client extends Applet_Sub1 {
 							if ((anInt1173 & 1) == 1) {
 								aStringArray1184[anInt1183] = aString1174 + " @lre@" + class16.aString329;
 								anIntArray981[anInt1183] = 199;
-								anIntArray982[anInt1183] = class50_sub1_sub4_sub1.anInt1550;
+								anIntArray982[anInt1183] = class50_sub1_sub4_sub1.id;
 								anIntArray979[anInt1183] = l;
 								anIntArray980[anInt1183] = i1;
 								anInt1183++;
@@ -3224,14 +3229,14 @@ public class client extends Applet_Sub1 {
 										anIntArray981[anInt1183] = 930;
 									if (i3 == 4)
 										anIntArray981[anInt1183] = 270;
-									anIntArray982[anInt1183] = class50_sub1_sub4_sub1.anInt1550;
+									anIntArray982[anInt1183] = class50_sub1_sub4_sub1.id;
 									anIntArray979[anInt1183] = l;
 									anIntArray980[anInt1183] = i1;
 									anInt1183++;
 								} else if (i3 == 2) {
 									aStringArray1184[anInt1183] = "Take @lre@" + class16.aString329;
 									anIntArray981[anInt1183] = 684;
-									anIntArray982[anInt1183] = class50_sub1_sub4_sub1.anInt1550;
+									anIntArray982[anInt1183] = class50_sub1_sub4_sub1.id;
 									anIntArray979[anInt1183] = l;
 									anIntArray980[anInt1183] = i1;
 									anInt1183++;
@@ -3239,7 +3244,7 @@ public class client extends Applet_Sub1 {
 
 							aStringArray1184[anInt1183] = "Examine @lre@" + class16.aString329;
 							anIntArray981[anInt1183] = 1564;
-							anIntArray982[anInt1183] = class50_sub1_sub4_sub1.anInt1550;
+							anIntArray982[anInt1183] = class50_sub1_sub4_sub1.id;
 							anIntArray979[anInt1183] = l;
 							anIntArray980[anInt1183] = i1;
 							anInt1183++;
@@ -3434,31 +3439,31 @@ public class client extends Applet_Sub1 {
 	}
 
 	public void method51(boolean flag) {
-		Class50_Sub1_Sub4_Sub2 class50_sub1_sub4_sub2 = (Class50_Sub1_Sub4_Sub2) aClass6_1282.first();
+		Projectile class50_sub1_sub4_sub2 = (Projectile) aClass6_1282.first();
 		if (flag)
 			anInt1328 = 153;
-		for (; class50_sub1_sub4_sub2 != null; class50_sub1_sub4_sub2 = (Class50_Sub1_Sub4_Sub2) aClass6_1282.next())
-			if (class50_sub1_sub4_sub2.anInt1554 != anInt1091 || anInt1325 > class50_sub1_sub4_sub2.anInt1566)
+		for (; class50_sub1_sub4_sub2 != null; class50_sub1_sub4_sub2 = (Projectile) aClass6_1282.next())
+			if (class50_sub1_sub4_sub2.plane != anInt1091 || anInt1325 > class50_sub1_sub4_sub2.cycleEnd)
 				class50_sub1_sub4_sub2.unlink();
-			else if (anInt1325 >= class50_sub1_sub4_sub2.anInt1565) {
-				if (class50_sub1_sub4_sub2.anInt1560 > 0) {
-					Class50_Sub1_Sub4_Sub3_Sub1 class50_sub1_sub4_sub3_sub1 = aClass50_Sub1_Sub4_Sub3_Sub1Array1132[class50_sub1_sub4_sub2.anInt1560
+			else if (anInt1325 >= class50_sub1_sub4_sub2.cycleStart) {
+				if (class50_sub1_sub4_sub2.targetIndex > 0) {
+					Class50_Sub1_Sub4_Sub3_Sub1 class50_sub1_sub4_sub3_sub1 = aClass50_Sub1_Sub4_Sub3_Sub1Array1132[class50_sub1_sub4_sub2.targetIndex
 							- 1];
 					if (class50_sub1_sub4_sub3_sub1 != null
 							&& ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub1)).anInt1610 >= 0
 							&& ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub1)).anInt1610 < 13312
 							&& ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub1)).anInt1611 >= 0
 							&& ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub1)).anInt1611 < 13312)
-						class50_sub1_sub4_sub2.method562(
+						class50_sub1_sub4_sub2.setDestination(
 								((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub1)).anInt1610,
 								((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub1)).anInt1611,
 								method110(((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub1)).anInt1611,
 										((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub1)).anInt1610, (byte) 9,
-										class50_sub1_sub4_sub2.anInt1554) - class50_sub1_sub4_sub2.anInt1579,
-								anInt1325, 0);
+										class50_sub1_sub4_sub2.plane) - class50_sub1_sub4_sub2.endHeight,
+								anInt1325);
 				}
-				if (class50_sub1_sub4_sub2.anInt1560 < 0) {
-					int i = -class50_sub1_sub4_sub2.anInt1560 - 1;
+				if (class50_sub1_sub4_sub2.targetIndex < 0) {
+					int i = -class50_sub1_sub4_sub2.targetIndex - 1;
 					Class50_Sub1_Sub4_Sub3_Sub2 class50_sub1_sub4_sub3_sub2;
 					if (i == anInt961)
 						class50_sub1_sub4_sub3_sub2 = aClass50_Sub1_Sub4_Sub3_Sub2_1167;
@@ -3469,18 +3474,18 @@ public class client extends Applet_Sub1 {
 							&& ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub2)).anInt1610 < 13312
 							&& ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub2)).anInt1611 >= 0
 							&& ((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub2)).anInt1611 < 13312)
-						class50_sub1_sub4_sub2.method562(
+						class50_sub1_sub4_sub2.setDestination(
 								((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub2)).anInt1610,
 								((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub2)).anInt1611,
 								method110(((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub2)).anInt1611,
 										((Class50_Sub1_Sub4_Sub3) (class50_sub1_sub4_sub3_sub2)).anInt1610, (byte) 9,
-										class50_sub1_sub4_sub2.anInt1554) - class50_sub1_sub4_sub2.anInt1579,
-								anInt1325, 0);
+										class50_sub1_sub4_sub2.plane) - class50_sub1_sub4_sub2.endHeight,
+								anInt1325);
 				}
-				class50_sub1_sub4_sub2.method563(anInt951, false);
-				aClass22_1164.method252(-1, class50_sub1_sub4_sub2, (int) class50_sub1_sub4_sub2.aDouble1555,
-						(int) class50_sub1_sub4_sub2.aDouble1557, false, 0, anInt1091, 60,
-						(int) class50_sub1_sub4_sub2.aDouble1556, class50_sub1_sub4_sub2.anInt1562);
+				class50_sub1_sub4_sub2.advance(anInt951);
+				aClass22_1164.method252(-1, class50_sub1_sub4_sub2, (int) class50_sub1_sub4_sub2.x,
+						(int) class50_sub1_sub4_sub2.z, false, 0, anInt1091, 60,
+						(int) class50_sub1_sub4_sub2.y, class50_sub1_sub4_sub2.yaw);
 			}
 
 		anInt1168++;
@@ -4680,7 +4685,7 @@ public class client extends Applet_Sub1 {
 			Class45.method373(class2_4);
 			aClass7_1248 = new Class7(this, (byte) -116);
 			method12(aClass7_1248, 10);
-			Class50_Sub1_Sub4_Sub5.aClient1723 = this;
+			DynamicObject.clientInstance = this;
 			Class47.aClient770 = this;
 			Class37.aClient629 = this;
 			return;
@@ -5567,19 +5572,19 @@ public class client extends Applet_Sub1 {
 	public void method76(int i) {
 		while (i >= 0)
 			aClass6ArrayArrayArray1323 = null;
-		for (Class50_Sub1_Sub4_Sub6 class50_sub1_sub4_sub6 = (Class50_Sub1_Sub4_Sub6) aClass6_1210
-				.first(); class50_sub1_sub4_sub6 != null; class50_sub1_sub4_sub6 = (Class50_Sub1_Sub4_Sub6) aClass6_1210
+		for (GraphicsObject class50_sub1_sub4_sub6 = (GraphicsObject) aClass6_1210
+				.first(); class50_sub1_sub4_sub6 != null; class50_sub1_sub4_sub6 = (GraphicsObject) aClass6_1210
 						.next())
-			if (class50_sub1_sub4_sub6.anInt1731 != anInt1091 || class50_sub1_sub4_sub6.aBoolean1736)
+			if (class50_sub1_sub4_sub6.plane != anInt1091 || class50_sub1_sub4_sub6.finished)
 				class50_sub1_sub4_sub6.unlink();
-			else if (anInt1325 >= class50_sub1_sub4_sub6.anInt1740) {
-				class50_sub1_sub4_sub6.method604((byte) 1, anInt951);
-				if (class50_sub1_sub4_sub6.aBoolean1736)
+			else if (anInt1325 >= class50_sub1_sub4_sub6.cycleStart) {
+				class50_sub1_sub4_sub6.advance(anInt951);
+				if (class50_sub1_sub4_sub6.finished)
 					class50_sub1_sub4_sub6.unlink();
 				else
-					aClass22_1164.method252(-1, class50_sub1_sub4_sub6, class50_sub1_sub4_sub6.anInt1732,
-							class50_sub1_sub4_sub6.anInt1734, false, 0, class50_sub1_sub4_sub6.anInt1731, 60,
-							class50_sub1_sub4_sub6.anInt1733, 0);
+					aClass22_1164.method252(-1, class50_sub1_sub4_sub6, class50_sub1_sub4_sub6.x,
+							class50_sub1_sub4_sub6.z, false, 0, class50_sub1_sub4_sub6.plane, 60,
+							class50_sub1_sub4_sub6.y, 0);
 			}
 
 	}
@@ -9890,9 +9895,9 @@ public class client extends Applet_Sub1 {
 			int l11 = class50_sub1_sub2.readUnsignedShortAdd();
 			int i14 = class50_sub1_sub2.readUnsignedShortAdd();
 			if (k3 >= 0 && j6 >= 0 && k3 < 104 && j6 < 104 && i14 != anInt961) {
-				Class50_Sub1_Sub4_Sub1 class50_sub1_sub4_sub1_2 = new Class50_Sub1_Sub4_Sub1();
-				class50_sub1_sub4_sub1_2.anInt1550 = l11;
-				class50_sub1_sub4_sub1_2.anInt1552 = i9;
+				GroundItem class50_sub1_sub4_sub1_2 = new GroundItem();
+				class50_sub1_sub4_sub1_2.id = l11;
+				class50_sub1_sub4_sub1_2.amount = i9;
 				if (aClass6ArrayArrayArray1323[anInt1091][k3][j6] == null)
 					aClass6ArrayArrayArray1323[anInt1091][k3][j6] = new NodeDeque();
 				aClass6ArrayArrayArray1323[anInt1091][k3][j6].addLast(class50_sub1_sub4_sub1_2);
@@ -9919,35 +9924,35 @@ public class client extends Applet_Sub1 {
 					if (class44 != null) {
 						int k21 = class44.uid >> 14 & 0x7fff;
 						if (k6 == 2) {
-							class44.primary = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, 2, (byte) 3, k21, false,
-									l18, 4 + j9);
-							class44.secondary = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, 2, (byte) 3, k21, false,
-									l18, j9 + 1 & 3);
+							class44.primary = new DynamicObject(k21, 2, 4 + j9, l18, j19, i20, l20, i1,
+									false);
+							class44.secondary = new DynamicObject(k21, 2, j9 + 1 & 3, l18, j19, i20, l20, i1,
+									false);
 						} else {
-							class44.primary = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, k6, (byte) 3, k21, false,
-									l18, j9);
+							class44.primary = new DynamicObject(k21, k6, j9, l18, j19, i20, l20, i1,
+									false);
 						}
 					}
 				}
 				if (i12 == 1) {
 					WallDecoration class35 = aClass22_1164.method264(anInt1091, l17, j16, false);
 					if (class35 != null)
-						class35.renderable = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, 4, (byte) 3,
-								class35.uid >> 14 & 0x7fff, false, l18, 0);
+						class35.renderable = new DynamicObject(class35.uid >> 14 & 0x7fff, 4, 0, l18, j19, i20,
+								l20, i1, false);
 				}
 				if (i12 == 2) {
 					InteractiveObject class5 = aClass22_1164.method265(j16, (byte) 32, l17, anInt1091);
 					if (k6 == 11)
 						k6 = 10;
 					if (class5 != null)
-						class5.renderable = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, k6, (byte) 3,
-								class5.uid >> 14 & 0x7fff, false, l18, j9);
+						class5.renderable = new DynamicObject(class5.uid >> 14 & 0x7fff, k6, j9, l18, j19, i20,
+								l20, i1, false);
 				}
 				if (i12 == 3) {
 					FloorDecoration class28 = aClass22_1164.method266(anInt1091, l17, 0, j16);
 					if (class28 != null)
-						class28.renderable = new Class50_Sub1_Sub4_Sub5(i1, i20, l20, j19, 22, (byte) 3,
-								class28.uid >> 14 & 0x7fff, false, l18, j9);
+						class28.renderable = new DynamicObject(class28.uid >> 14 & 0x7fff, 22, j9, l18, j19, i20,
+								l20, i1, false);
 				}
 			}
 			return;
@@ -9959,9 +9964,9 @@ public class client extends Applet_Sub1 {
 			int k9 = anInt990 + (i4 & 7);
 			int j12 = class50_sub1_sub2.readUnsignedShortAdd();
 			if (l6 >= 0 && k9 >= 0 && l6 < 104 && k9 < 104) {
-				Class50_Sub1_Sub4_Sub1 class50_sub1_sub4_sub1 = new Class50_Sub1_Sub4_Sub1();
-				class50_sub1_sub4_sub1.anInt1550 = j1;
-				class50_sub1_sub4_sub1.anInt1552 = j12;
+				GroundItem class50_sub1_sub4_sub1 = new GroundItem();
+				class50_sub1_sub4_sub1.id = j1;
+				class50_sub1_sub4_sub1.amount = j12;
 				if (aClass6ArrayArrayArray1323[anInt1091][l6][k9] == null)
 					aClass6ArrayArrayArray1323[anInt1091][l6][k9] = new NodeDeque();
 				aClass6ArrayArrayArray1323[anInt1091][l6][k9].addLast(class50_sub1_sub4_sub1);
@@ -9979,13 +9984,13 @@ public class client extends Applet_Sub1 {
 			if (j4 >= 0 && i7 >= 0 && j4 < 104 && i7 < 104) {
 				NodeDeque class6_1 = aClass6ArrayArrayArray1323[anInt1091][j4][i7];
 				if (class6_1 != null) {
-					for (Class50_Sub1_Sub4_Sub1 class50_sub1_sub4_sub1_3 = (Class50_Sub1_Sub4_Sub1) class6_1
-							.first(); class50_sub1_sub4_sub1_3 != null; class50_sub1_sub4_sub1_3 = (Class50_Sub1_Sub4_Sub1) class6_1
+					for (GroundItem class50_sub1_sub4_sub1_3 = (GroundItem) class6_1
+							.first(); class50_sub1_sub4_sub1_3 != null; class50_sub1_sub4_sub1_3 = (GroundItem) class6_1
 									.next()) {
-						if (class50_sub1_sub4_sub1_3.anInt1550 != (l9 & 0x7fff)
-								|| class50_sub1_sub4_sub1_3.anInt1552 != k12)
+						if (class50_sub1_sub4_sub1_3.id != (l9 & 0x7fff)
+								|| class50_sub1_sub4_sub1_3.amount != k12)
 							continue;
-						class50_sub1_sub4_sub1_3.anInt1552 = k14;
+						class50_sub1_sub4_sub1_3.amount = k14;
 						break;
 					}
 
@@ -10014,11 +10019,10 @@ public class client extends Applet_Sub1 {
 				j7 = j7 * 128 + 64;
 				i10 = i10 * 128 + 64;
 				l12 = l12 * 128 + 64;
-				Class50_Sub1_Sub4_Sub2 class50_sub1_sub4_sub2 = new Class50_Sub1_Sub4_Sub2(anInt1091, i19, j21, j7, k16,
-						j20 + anInt1325, i21, l14, (byte) -41, method110(j7, k4, (byte) 9, anInt1091) - i18, k4,
+				Projectile class50_sub1_sub4_sub2 = new Projectile(k16, anInt1091, k4, j7, method110(j7, k4, (byte) 9, anInt1091) - i18,
+						k19 + anInt1325, j20 + anInt1325, i21, j21, l14, i19);
+				class50_sub1_sub4_sub2.setDestination(i10, l12, method110(l12, i10, (byte) 9, anInt1091) - i19,
 						k19 + anInt1325);
-				class50_sub1_sub4_sub2.method562(i10, l12, method110(l12, i10, (byte) 9, anInt1091) - i19,
-						k19 + anInt1325, 0);
 				aClass6_1282.addLast(class50_sub1_sub4_sub2);
 			}
 			return;
@@ -10052,8 +10056,8 @@ public class client extends Applet_Sub1 {
 			if (i5 >= 0 && l7 >= 0 && i5 < 104 && l7 < 104) {
 				i5 = i5 * 128 + 64;
 				l7 = l7 * 128 + 64;
-				Class50_Sub1_Sub4_Sub6 class50_sub1_sub4_sub6 = new Class50_Sub1_Sub4_Sub6(i5, anInt1091,
-						method110(l7, i5, (byte) 9, anInt1091) - j13, j15, k10, anInt1325, l7, 10709);
+				GraphicsObject class50_sub1_sub4_sub6 = new GraphicsObject(k10, anInt1091,
+						i5, l7, method110(l7, i5, (byte) 9, anInt1091) - j13, j15, anInt1325);
 				aClass6_1210.addLast(class50_sub1_sub4_sub6);
 			}
 			return;
@@ -10079,10 +10083,10 @@ public class client extends Applet_Sub1 {
 			if (j8 >= 0 && i11 >= 0 && j8 < 104 && i11 < 104) {
 				NodeDeque class6 = aClass6ArrayArrayArray1323[anInt1091][j8][i11];
 				if (class6 != null) {
-					for (Class50_Sub1_Sub4_Sub1 class50_sub1_sub4_sub1_1 = (Class50_Sub1_Sub4_Sub1) class6
-							.first(); class50_sub1_sub4_sub1_1 != null; class50_sub1_sub4_sub1_1 = (Class50_Sub1_Sub4_Sub1) class6
+					for (GroundItem class50_sub1_sub4_sub1_1 = (GroundItem) class6
+							.first(); class50_sub1_sub4_sub1_1 != null; class50_sub1_sub4_sub1_1 = (GroundItem) class6
 									.next()) {
-						if (class50_sub1_sub4_sub1_1.anInt1550 != (l2 & 0x7fff))
+						if (class50_sub1_sub4_sub1_1.id != (l2 & 0x7fff))
 							continue;
 						class50_sub1_sub4_sub1_1.unlink();
 						break;

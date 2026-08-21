@@ -1,6 +1,6 @@
 package rs2.scene;
 
-import rs2.Class50_Sub1_Sub4;
+import rs2.media.renderable.Renderable;
 
 /**
  * Describes the renderable item pile attached to a single scene tile.
@@ -23,13 +23,13 @@ public class GroundItemTile {
 	public int y;
 
 	/** Primary item renderable selected for the pile. */
-	public Class50_Sub1_Sub4 firstGroundItem;
+	public Renderable firstGroundItem;
 
 	/** Secondary item renderable selected for the pile, if present. */
-	public Class50_Sub1_Sub4 secondGroundItem;
+	public Renderable secondGroundItem;
 
 	/** Tertiary item renderable selected for the pile, if present. */
-	public Class50_Sub1_Sub4 thirdGroundItem;
+	public Renderable thirdGroundItem;
 
 	/** Packed scene identifier supplied when the pile is inserted. */
 	public int uid;

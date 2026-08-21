@@ -1,6 +1,8 @@
 package rs2;
 
 import rs2.cache.def.FloorDefinition;
+import rs2.media.renderable.DynamicObject;
+import rs2.media.renderable.Renderable;
 import rs2.net.Buffer;
 import rs2.scene.util.CollisionMap;
 import rs2.scene.util.TiledUtils;
@@ -79,22 +81,22 @@ public class Class8 {
 				i_27_ += -2147483648;
 			byte i_28_ = (byte) ((i_18_ << 6) + i_16_);
 			if (i_16_ == 22) {
-				Class50_Sub1_Sub4 class50_sub1_sub4;
+				Renderable class50_sub1_sub4;
 				if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 					class50_sub1_sub4 = class47.method431(22, i_18_, i_22_, i_23_, i_24_, i_25_, -1);
 				else
-					class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_24_, i_25_, i_23_, 22, (byte) 3,
-							i, true, i_22_, i_18_);
+					class50_sub1_sub4 = new DynamicObject(i, 22, i_18_, i_22_, i_23_, i_24_,
+							i_25_, class47.anInt803, true);
 				class22.method247(i_19_, i_17_, 669, i_28_, i_27_, i_26_, i_21_, class50_sub1_sub4);
 				if (class47.aBoolean810 && class47.aBoolean759)
 					class46.markBlocked(i_19_, i_17_);
 			} else if (i_16_ == 10 || i_16_ == 11) {
-				Class50_Sub1_Sub4 class50_sub1_sub4;
+				Renderable class50_sub1_sub4;
 				if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 					class50_sub1_sub4 = class47.method431(10, i_18_, i_22_, i_23_, i_24_, i_25_, -1);
 				else
-					class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_24_, i_25_, i_23_, 10, (byte) 3,
-							i, true, i_22_, i_18_);
+					class50_sub1_sub4 = new DynamicObject(i, 10, i_18_, i_22_, i_23_, i_24_,
+							i_25_, class47.anInt803, true);
 				if (class50_sub1_sub4 != null) {
 					int i_29_ = 0;
 					if (i_16_ == 11)
@@ -115,73 +117,73 @@ public class Class8 {
 					class46.markSolidOccupant(i_19_, i_17_, class47.anInt801, class47.anInt775, i_18_,
 							class47.aBoolean809);
 			} else if (i_16_ >= 12) {
-				Class50_Sub1_Sub4 class50_sub1_sub4;
+				Renderable class50_sub1_sub4;
 				if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 					class50_sub1_sub4 = class47.method431(i_16_, i_18_, i_22_, i_23_, i_24_, i_25_, -1);
 				else
-					class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_24_, i_25_, i_23_, i_16_,
-							(byte) 3, i, true, i_22_, i_18_);
+					class50_sub1_sub4 = new DynamicObject(i, i_16_, i_18_, i_22_, i_23_,
+							i_24_, i_25_, class47.anInt803, true);
 				class22.method251(i_21_, 1, i_17_, class50_sub1_sub4, i_28_, 0, i_19_, -896, 1, i_26_, i_27_);
 				if (class47.aBoolean810)
 					class46.markSolidOccupant(i_19_, i_17_, class47.anInt801, class47.anInt775, i_18_,
 							class47.aBoolean809);
 			} else if (i_16_ == 0) {
-				Class50_Sub1_Sub4 class50_sub1_sub4;
+				Renderable class50_sub1_sub4;
 				if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 					class50_sub1_sub4 = class47.method431(0, i_18_, i_22_, i_23_, i_24_, i_25_, -1);
 				else
-					class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_24_, i_25_, i_23_, 0, (byte) 3,
-							i, true, i_22_, i_18_);
+					class50_sub1_sub4 = new DynamicObject(i, 0, i_18_, i_22_, i_23_, i_24_,
+							i_25_, class47.anInt803, true);
 				class22.method249(i_26_, 49878, 0, anIntArray158[i_18_], null, i_19_, i_27_, i_28_, i_17_,
 						class50_sub1_sub4, i_21_);
 				if (class47.aBoolean810)
 					class46.markWall(i_19_, i_17_, i_16_, i_18_, class47.aBoolean809);
 			} else if (i_16_ == 1) {
-				Class50_Sub1_Sub4 class50_sub1_sub4;
+				Renderable class50_sub1_sub4;
 				if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 					class50_sub1_sub4 = class47.method431(1, i_18_, i_22_, i_23_, i_24_, i_25_, -1);
 				else
-					class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_24_, i_25_, i_23_, 1, (byte) 3,
-							i, true, i_22_, i_18_);
+					class50_sub1_sub4 = new DynamicObject(i, 1, i_18_, i_22_, i_23_, i_24_,
+							i_25_, class47.anInt803, true);
 				class22.method249(i_26_, 49878, 0, anIntArray167[i_18_], null, i_19_, i_27_, i_28_, i_17_,
 						class50_sub1_sub4, i_21_);
 				if (class47.aBoolean810)
 					class46.markWall(i_19_, i_17_, i_16_, i_18_, class47.aBoolean809);
 			} else if (i_16_ == 2) {
 				int i_32_ = i_18_ + 1 & 0x3;
-				Class50_Sub1_Sub4 class50_sub1_sub4;
-				Class50_Sub1_Sub4 class50_sub1_sub4_33_;
+				Renderable class50_sub1_sub4;
+				Renderable class50_sub1_sub4_33_;
 				if (class47.anInt803 == -1 && class47.anIntArray805 == null) {
 					class50_sub1_sub4 = class47.method431(2, 4 + i_18_, i_22_, i_23_, i_24_, i_25_, -1);
 					class50_sub1_sub4_33_ = class47.method431(2, i_32_, i_22_, i_23_, i_24_, i_25_, -1);
 				} else {
-					class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_24_, i_25_, i_23_, 2, (byte) 3,
-							i, true, i_22_, 4 + i_18_);
-					class50_sub1_sub4_33_ = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_24_, i_25_, i_23_, 2,
-							(byte) 3, i, true, i_22_, i_32_);
+					class50_sub1_sub4 = new DynamicObject(i, 2, 4 + i_18_, i_22_, i_23_, i_24_,
+							i_25_, class47.anInt803, true);
+					class50_sub1_sub4_33_ = new DynamicObject(i, 2, i_32_, i_22_, i_23_,
+							i_24_, i_25_, class47.anInt803, true);
 				}
 				class22.method249(i_26_, 49878, anIntArray158[i_32_], anIntArray158[i_18_], class50_sub1_sub4_33_,
 						i_19_, i_27_, i_28_, i_17_, class50_sub1_sub4, i_21_);
 				if (class47.aBoolean810)
 					class46.markWall(i_19_, i_17_, i_16_, i_18_, class47.aBoolean809);
 			} else if (i_16_ == 3) {
-				Class50_Sub1_Sub4 class50_sub1_sub4;
+				Renderable class50_sub1_sub4;
 				if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 					class50_sub1_sub4 = class47.method431(3, i_18_, i_22_, i_23_, i_24_, i_25_, -1);
 				else
-					class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_24_, i_25_, i_23_, 3, (byte) 3,
-							i, true, i_22_, i_18_);
+					class50_sub1_sub4 = new DynamicObject(i, 3, i_18_, i_22_, i_23_, i_24_,
+							i_25_, class47.anInt803, true);
 				class22.method249(i_26_, 49878, 0, anIntArray167[i_18_], null, i_19_, i_27_, i_28_, i_17_,
 						class50_sub1_sub4, i_21_);
 				if (class47.aBoolean810)
 					class46.markWall(i_19_, i_17_, i_16_, i_18_, class47.aBoolean809);
 			} else if (i_16_ == 9) {
-				Class50_Sub1_Sub4 class50_sub1_sub4;
+				Renderable class50_sub1_sub4;
 				if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 					class50_sub1_sub4 = class47.method431(i_16_, i_18_, i_22_, i_23_, i_24_, i_25_, -1);
 				else
-					class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_24_, i_25_, i_23_, i_16_,
-							(byte) 3, i, true, i_22_, i_18_);
+					class50_sub1_sub4 = new DynamicObject(i, i_16_, i_18_, i_22_, i_23_,
+							i_24_, i_25_, class47.anInt803, true);
 				class22.method251(i_21_, 1, i_17_, class50_sub1_sub4, i_28_, 0, i_19_, -896, 1, i_26_, i_27_);
 				if (class47.aBoolean810)
 					class46.markSolidOccupant(i_19_, i_17_, class47.anInt801, class47.anInt775, i_18_,
@@ -210,12 +212,12 @@ public class Class8 {
 					}
 				}
 				if (i_16_ == 4) {
-					Class50_Sub1_Sub4 class50_sub1_sub4;
+					Renderable class50_sub1_sub4;
 					if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 						class50_sub1_sub4 = class47.method431(4, 0, i_22_, i_23_, i_24_, i_25_, -1);
 					else
-						class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_24_, i_25_, i_23_, 4,
-								(byte) 3, i, true, i_22_, 0);
+						class50_sub1_sub4 = new DynamicObject(i, 4, 0, i_22_, i_23_,
+								i_24_, i_25_, class47.anInt803, true);
 					class22.method250(i_21_, anIntArray158[i_18_], i_18_ * 512, i_27_, i_28_, i_19_, 0, i_17_, 0, i_26_,
 							class50_sub1_sub4, -930);
 				} else if (i_16_ == 5) {
@@ -223,40 +225,40 @@ public class Class8 {
 					int i_38_ = class22.method267(i_21_, i_19_, i_17_);
 					if (i_38_ > 0)
 						i_37_ = Class47.method423(i_38_ >> 14 & 0x7fff).anInt802;
-					Class50_Sub1_Sub4 class50_sub1_sub4;
+					Renderable class50_sub1_sub4;
 					if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 						class50_sub1_sub4 = class47.method431(4, 0, i_22_, i_23_, i_24_, i_25_, -1);
 					else
-						class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_24_, i_25_, i_23_, 4,
-								(byte) 3, i, true, i_22_, 0);
+						class50_sub1_sub4 = new DynamicObject(i, 4, 0, i_22_, i_23_,
+								i_24_, i_25_, class47.anInt803, true);
 					class22.method250(i_21_, anIntArray158[i_18_], i_18_ * 512, i_27_, i_28_, i_19_,
 							anIntArray143[i_18_] * i_37_, i_17_, anIntArray161[i_18_] * i_37_, i_26_, class50_sub1_sub4,
 							-930);
 				} else if (i_16_ == 6) {
-					Class50_Sub1_Sub4 class50_sub1_sub4;
+					Renderable class50_sub1_sub4;
 					if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 						class50_sub1_sub4 = class47.method431(4, 0, i_22_, i_23_, i_24_, i_25_, -1);
 					else
-						class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_24_, i_25_, i_23_, 4,
-								(byte) 3, i, true, i_22_, 0);
+						class50_sub1_sub4 = new DynamicObject(i, 4, 0, i_22_, i_23_,
+								i_24_, i_25_, class47.anInt803, true);
 					class22.method250(i_21_, 256, i_18_, i_27_, i_28_, i_19_, 0, i_17_, 0, i_26_, class50_sub1_sub4,
 							-930);
 				} else if (i_16_ == 7) {
-					Class50_Sub1_Sub4 class50_sub1_sub4;
+					Renderable class50_sub1_sub4;
 					if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 						class50_sub1_sub4 = class47.method431(4, 0, i_22_, i_23_, i_24_, i_25_, -1);
 					else
-						class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_24_, i_25_, i_23_, 4,
-								(byte) 3, i, true, i_22_, 0);
+						class50_sub1_sub4 = new DynamicObject(i, 4, 0, i_22_, i_23_,
+								i_24_, i_25_, class47.anInt803, true);
 					class22.method250(i_21_, 512, i_18_, i_27_, i_28_, i_19_, 0, i_17_, 0, i_26_, class50_sub1_sub4,
 							-930);
 				} else if (i_16_ == 8) {
-					Class50_Sub1_Sub4 class50_sub1_sub4;
+					Renderable class50_sub1_sub4;
 					if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 						class50_sub1_sub4 = class47.method431(4, 0, i_22_, i_23_, i_24_, i_25_, -1);
 					else
-						class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_24_, i_25_, i_23_, 4,
-								(byte) 3, i, true, i_22_, 0);
+						class50_sub1_sub4 = new DynamicObject(i, 4, 0, i_22_, i_23_,
+								i_24_, i_25_, class47.anInt803, true);
 					class22.method250(i_21_, 768, i_18_, i_27_, i_28_, i_19_, 0, i_17_, 0, i_26_, class50_sub1_sub4,
 							-930);
 				}
@@ -754,23 +756,23 @@ public class Class8 {
 			byte i_197_ = (byte) ((i_188_ << 6) + i_189_);
 			if (i_189_ == 22) {
 				if (!aBoolean169 || class47.aBoolean759 || class47.aBoolean765) {
-					Class50_Sub1_Sub4 class50_sub1_sub4;
+					Renderable class50_sub1_sub4;
 					if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 						class50_sub1_sub4 = class47.method431(22, i_188_, i_191_, i_192_, i_193_, i_194_, -1);
 					else
-						class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_193_, i_194_, i_192_, 22,
-								(byte) 3, i_190_, true, i_191_, i_188_);
+						class50_sub1_sub4 = new DynamicObject(i_190_, 22, i_188_, i_191_, i_192_,
+								i_193_, i_194_, class47.anInt803, true);
 					class22.method247(i_186_, i, 669, i_197_, i_196_, i_195_, i_185_, class50_sub1_sub4);
 					if (class47.aBoolean810 && class47.aBoolean759 && class46 != null)
 						class46.markBlocked(i_186_, i);
 				}
 			} else if (i_189_ == 10 || i_189_ == 11) {
-				Class50_Sub1_Sub4 class50_sub1_sub4;
+				Renderable class50_sub1_sub4;
 				if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 					class50_sub1_sub4 = class47.method431(10, i_188_, i_191_, i_192_, i_193_, i_194_, -1);
 				else
-					class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_193_, i_194_, i_192_, 10,
-							(byte) 3, i_190_, true, i_191_, i_188_);
+					class50_sub1_sub4 = new DynamicObject(i_190_, 10, i_188_, i_191_, i_192_,
+							i_193_, i_194_, class47.anInt803, true);
 				if (class50_sub1_sub4 != null) {
 					int i_198_ = 0;
 					if (i_189_ == 11)
@@ -808,12 +810,12 @@ public class Class8 {
 					class46.markSolidOccupant(i_186_, i, class47.anInt801, class47.anInt775, i_188_,
 							class47.aBoolean809);
 			} else if (i_189_ >= 12) {
-				Class50_Sub1_Sub4 class50_sub1_sub4;
+				Renderable class50_sub1_sub4;
 				if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 					class50_sub1_sub4 = class47.method431(i_189_, i_188_, i_191_, i_192_, i_193_, i_194_, -1);
 				else
-					class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_193_, i_194_, i_192_, i_189_,
-							(byte) 3, i_190_, true, i_191_, i_188_);
+					class50_sub1_sub4 = new DynamicObject(i_190_, i_189_, i_188_, i_191_, i_192_,
+							i_193_, i_194_, class47.anInt803, true);
 				class22.method251(i_185_, 1, i, class50_sub1_sub4, i_197_, 0, i_186_, -896, 1, i_195_, i_196_);
 				if (i_189_ >= 12 && i_189_ <= 17 && i_189_ != 13 && i_185_ > 0)
 					anIntArrayArrayArray168[i_185_][i_186_][i] |= 0x924;
@@ -821,12 +823,12 @@ public class Class8 {
 					class46.markSolidOccupant(i_186_, i, class47.anInt801, class47.anInt775, i_188_,
 							class47.aBoolean809);
 			} else if (i_189_ == 0) {
-				Class50_Sub1_Sub4 class50_sub1_sub4;
+				Renderable class50_sub1_sub4;
 				if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 					class50_sub1_sub4 = class47.method431(0, i_188_, i_191_, i_192_, i_193_, i_194_, -1);
 				else
-					class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_193_, i_194_, i_192_, 0,
-							(byte) 3, i_190_, true, i_191_, i_188_);
+					class50_sub1_sub4 = new DynamicObject(i_190_, 0, i_188_, i_191_, i_192_,
+							i_193_, i_194_, class47.anInt803, true);
 				class22.method249(i_195_, 49878, 0, anIntArray158[i_188_], null, i_186_, i_196_, i_197_, i,
 						class50_sub1_sub4, i_185_);
 				if (i_188_ == 0) {
@@ -863,12 +865,12 @@ public class Class8 {
 				if (class47.anInt802 != 16)
 					class22.method257(i, class47.anInt802, i_185_, i_186_, 0);
 			} else if (i_189_ == 1) {
-				Class50_Sub1_Sub4 class50_sub1_sub4;
+				Renderable class50_sub1_sub4;
 				if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 					class50_sub1_sub4 = class47.method431(1, i_188_, i_191_, i_192_, i_193_, i_194_, -1);
 				else
-					class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_193_, i_194_, i_192_, 1,
-							(byte) 3, i_190_, true, i_191_, i_188_);
+					class50_sub1_sub4 = new DynamicObject(i_190_, 1, i_188_, i_191_, i_192_,
+							i_193_, i_194_, class47.anInt803, true);
 				class22.method249(i_195_, 49878, 0, anIntArray167[i_188_], null, i_186_, i_196_, i_197_, i,
 						class50_sub1_sub4, i_185_);
 				if (class47.aBoolean807) {
@@ -885,16 +887,16 @@ public class Class8 {
 					class46.markWall(i_186_, i, i_189_, i_188_, class47.aBoolean809);
 			} else if (i_189_ == 2) {
 				int i_204_ = i_188_ + 1 & 0x3;
-				Class50_Sub1_Sub4 class50_sub1_sub4;
-				Class50_Sub1_Sub4 class50_sub1_sub4_205_;
+				Renderable class50_sub1_sub4;
+				Renderable class50_sub1_sub4_205_;
 				if (class47.anInt803 == -1 && class47.anIntArray805 == null) {
 					class50_sub1_sub4 = class47.method431(2, 4 + i_188_, i_191_, i_192_, i_193_, i_194_, -1);
 					class50_sub1_sub4_205_ = class47.method431(2, i_204_, i_191_, i_192_, i_193_, i_194_, -1);
 				} else {
-					class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_193_, i_194_, i_192_, 2,
-							(byte) 3, i_190_, true, i_191_, 4 + i_188_);
-					class50_sub1_sub4_205_ = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_193_, i_194_, i_192_, 2,
-							(byte) 3, i_190_, true, i_191_, i_204_);
+					class50_sub1_sub4 = new DynamicObject(i_190_, 2, 4 + i_188_, i_191_, i_192_,
+							i_193_, i_194_, class47.anInt803, true);
+					class50_sub1_sub4_205_ = new DynamicObject(i_190_, 2, i_204_, i_191_, i_192_,
+							i_193_, i_194_, class47.anInt803, true);
 				}
 				class22.method249(i_195_, 49878, anIntArray158[i_204_], anIntArray158[i_188_], class50_sub1_sub4_205_,
 						i_186_, i_196_, i_197_, i, class50_sub1_sub4, i_185_);
@@ -918,12 +920,12 @@ public class Class8 {
 				if (class47.anInt802 != 16)
 					class22.method257(i, class47.anInt802, i_185_, i_186_, 0);
 			} else if (i_189_ == 3) {
-				Class50_Sub1_Sub4 class50_sub1_sub4;
+				Renderable class50_sub1_sub4;
 				if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 					class50_sub1_sub4 = class47.method431(3, i_188_, i_191_, i_192_, i_193_, i_194_, -1);
 				else
-					class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_193_, i_194_, i_192_, 3,
-							(byte) 3, i_190_, true, i_191_, i_188_);
+					class50_sub1_sub4 = new DynamicObject(i_190_, 3, i_188_, i_191_, i_192_,
+							i_193_, i_194_, class47.anInt803, true);
 				class22.method249(i_195_, 49878, 0, anIntArray167[i_188_], null, i_186_, i_196_, i_197_, i,
 						class50_sub1_sub4, i_185_);
 				if (class47.aBoolean807) {
@@ -939,12 +941,12 @@ public class Class8 {
 				if (class47.aBoolean810 && class46 != null)
 					class46.markWall(i_186_, i, i_189_, i_188_, class47.aBoolean809);
 			} else if (i_189_ == 9) {
-				Class50_Sub1_Sub4 class50_sub1_sub4;
+				Renderable class50_sub1_sub4;
 				if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 					class50_sub1_sub4 = class47.method431(i_189_, i_188_, i_191_, i_192_, i_193_, i_194_, -1);
 				else
-					class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_193_, i_194_, i_192_, i_189_,
-							(byte) 3, i_190_, true, i_191_, i_188_);
+					class50_sub1_sub4 = new DynamicObject(i_190_, i_189_, i_188_, i_191_, i_192_,
+							i_193_, i_194_, class47.anInt803, true);
 				class22.method251(i_185_, 1, i, class50_sub1_sub4, i_197_, 0, i_186_, -896, 1, i_195_, i_196_);
 				if (class47.aBoolean810 && class46 != null)
 					class46.markSolidOccupant(i_186_, i, class47.anInt801, class47.anInt775, i_188_,
@@ -973,12 +975,12 @@ public class Class8 {
 					}
 				}
 				if (i_189_ == 4) {
-					Class50_Sub1_Sub4 class50_sub1_sub4;
+					Renderable class50_sub1_sub4;
 					if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 						class50_sub1_sub4 = class47.method431(4, 0, i_191_, i_192_, i_193_, i_194_, -1);
 					else
-						class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_193_, i_194_, i_192_, 4,
-								(byte) 3, i_190_, true, i_191_, 0);
+						class50_sub1_sub4 = new DynamicObject(i_190_, 4, 0, i_191_, i_192_,
+								i_193_, i_194_, class47.anInt803, true);
 					class22.method250(i_185_, anIntArray158[i_188_], i_188_ * 512, i_196_, i_197_, i_186_, 0, i, 0,
 							i_195_, class50_sub1_sub4, -930);
 				} else if (i_189_ == 5) {
@@ -986,40 +988,40 @@ public class Class8 {
 					int i_210_ = class22.method267(i_185_, i_186_, i);
 					if (i_210_ > 0)
 						i_209_ = Class47.method423(i_210_ >> 14 & 0x7fff).anInt802;
-					Class50_Sub1_Sub4 class50_sub1_sub4;
+					Renderable class50_sub1_sub4;
 					if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 						class50_sub1_sub4 = class47.method431(4, 0, i_191_, i_192_, i_193_, i_194_, -1);
 					else
-						class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_193_, i_194_, i_192_, 4,
-								(byte) 3, i_190_, true, i_191_, 0);
+						class50_sub1_sub4 = new DynamicObject(i_190_, 4, 0, i_191_, i_192_,
+								i_193_, i_194_, class47.anInt803, true);
 					class22.method250(i_185_, anIntArray158[i_188_], i_188_ * 512, i_196_, i_197_, i_186_,
 							anIntArray143[i_188_] * i_209_, i, anIntArray161[i_188_] * i_209_, i_195_,
 							class50_sub1_sub4, -930);
 				} else if (i_189_ == 6) {
-					Class50_Sub1_Sub4 class50_sub1_sub4;
+					Renderable class50_sub1_sub4;
 					if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 						class50_sub1_sub4 = class47.method431(4, 0, i_191_, i_192_, i_193_, i_194_, -1);
 					else
-						class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_193_, i_194_, i_192_, 4,
-								(byte) 3, i_190_, true, i_191_, 0);
+						class50_sub1_sub4 = new DynamicObject(i_190_, 4, 0, i_191_, i_192_,
+								i_193_, i_194_, class47.anInt803, true);
 					class22.method250(i_185_, 256, i_188_, i_196_, i_197_, i_186_, 0, i, 0, i_195_, class50_sub1_sub4,
 							-930);
 				} else if (i_189_ == 7) {
-					Class50_Sub1_Sub4 class50_sub1_sub4;
+					Renderable class50_sub1_sub4;
 					if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 						class50_sub1_sub4 = class47.method431(4, 0, i_191_, i_192_, i_193_, i_194_, -1);
 					else
-						class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_193_, i_194_, i_192_, 4,
-								(byte) 3, i_190_, true, i_191_, 0);
+						class50_sub1_sub4 = new DynamicObject(i_190_, 4, 0, i_191_, i_192_,
+								i_193_, i_194_, class47.anInt803, true);
 					class22.method250(i_185_, 512, i_188_, i_196_, i_197_, i_186_, 0, i, 0, i_195_, class50_sub1_sub4,
 							-930);
 				} else if (i_189_ == 8) {
-					Class50_Sub1_Sub4 class50_sub1_sub4;
+					Renderable class50_sub1_sub4;
 					if (class47.anInt803 == -1 && class47.anIntArray805 == null)
 						class50_sub1_sub4 = class47.method431(4, 0, i_191_, i_192_, i_193_, i_194_, -1);
 					else
-						class50_sub1_sub4 = new Class50_Sub1_Sub4_Sub5(class47.anInt803, i_193_, i_194_, i_192_, 4,
-								(byte) 3, i_190_, true, i_191_, 0);
+						class50_sub1_sub4 = new DynamicObject(i_190_, 4, 0, i_191_, i_192_,
+								i_193_, i_194_, class47.anInt803, true);
 					class22.method250(i_185_, 768, i_188_, i_196_, i_197_, i_186_, 0, i, 0, i_195_, class50_sub1_sub4,
 							-930);
 				}

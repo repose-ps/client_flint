@@ -5,9 +5,10 @@ import rs2.media.Rasterizer;
 import rs2.media.Skeleton;
 import rs2.media.VertexNormal;
 import rs2.media.renderable.ModelHeader;
+import rs2.media.renderable.Renderable;
 import rs2.net.Buffer;
 
-public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
+public class Class50_Sub1_Sub4_Sub4 extends Renderable {
 
 	public static void method573(boolean flag) {
 		aClass26Array1682 = null;
@@ -640,10 +641,10 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 					anIntArray1659[i1] = class50_sub1_sub4_sub4.anIntArray1659[i1];
 
 			}
-			super.aClass40Array1474 = new VertexNormal[anInt1648];
+			super.vertexNormals = new VertexNormal[anInt1648];
 			for (int j1 = 0; j1 < anInt1648; j1++) {
-				VertexNormal class40 = super.aClass40Array1474[j1] = new VertexNormal();
-				VertexNormal class40_1 = ((Class50_Sub1_Sub4) (class50_sub1_sub4_sub4)).aClass40Array1474[j1];
+				VertexNormal class40 = super.vertexNormals[j1] = new VertexNormal();
+				VertexNormal class40_1 = ((Renderable) (class50_sub1_sub4_sub4)).vertexNormals[j1];
 				class40.x = class40_1.x;
 				class40.y = class40_1.y;
 				class40.z = class40_1.z;
@@ -671,7 +672,7 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 		anIntArray1665 = class50_sub1_sub4_sub4.anIntArray1665;
 		anIntArray1666 = class50_sub1_sub4_sub4.anIntArray1666;
 		anIntArray1667 = class50_sub1_sub4_sub4.anIntArray1667;
-		super.anInt1475 = ((Class50_Sub1_Sub4) (class50_sub1_sub4_sub4)).anInt1475;
+		super.modelHeight = ((Renderable) (class50_sub1_sub4_sub4)).modelHeight;
 		anInt1672 = class50_sub1_sub4_sub4.anInt1672;
 		anInt1671 = class50_sub1_sub4_sub4.anInt1671;
 		anInt1674 = class50_sub1_sub4_sub4.anInt1674;
@@ -758,15 +759,15 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 	}
 
 	public void method581(int i) {
-		super.anInt1475 = 0;
+		super.modelHeight = 0;
 		anInt1671 = 0;
 		anInt1672 = 0;
 		for (int j = 0; j < anInt1648; j++) {
 			int k = anIntArray1649[j];
 			int l = anIntArray1650[j];
 			int i1 = anIntArray1651[j];
-			if (-l > super.anInt1475)
-				super.anInt1475 = -l;
+			if (-l > super.modelHeight)
+				super.modelHeight = -l;
 			if (l > anInt1672)
 				anInt1672 = l;
 			int j1 = k * k + i1 * i1;
@@ -775,30 +776,30 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 		}
 
 		anInt1671 = (int) (Math.sqrt(anInt1671) + 0.98999999999999999D);
-		anInt1674 = (int) (Math.sqrt(anInt1671 * anInt1671 + super.anInt1475 * super.anInt1475) + 0.98999999999999999D);
+		anInt1674 = (int) (Math.sqrt(anInt1671 * anInt1671 + super.modelHeight * super.modelHeight) + 0.98999999999999999D);
 		i = 64 / i;
 		anInt1673 = anInt1674 + (int) (Math.sqrt(anInt1671 * anInt1671 + anInt1672 * anInt1672) + 0.98999999999999999D);
 	}
 
 	public void method582(int i) {
-		super.anInt1475 = 0;
+		super.modelHeight = 0;
 		if (i != 6)
 			return;
 		anInt1672 = 0;
 		for (int j = 0; j < anInt1648; j++) {
 			int k = anIntArray1650[j];
-			if (-k > super.anInt1475)
-				super.anInt1475 = -k;
+			if (-k > super.modelHeight)
+				super.modelHeight = -k;
 			if (k > anInt1672)
 				anInt1672 = k;
 		}
 
-		anInt1674 = (int) (Math.sqrt(anInt1671 * anInt1671 + super.anInt1475 * super.anInt1475) + 0.98999999999999999D);
+		anInt1674 = (int) (Math.sqrt(anInt1671 * anInt1671 + super.modelHeight * super.modelHeight) + 0.98999999999999999D);
 		anInt1673 = anInt1674 + (int) (Math.sqrt(anInt1671 * anInt1671 + anInt1672 * anInt1672) + 0.98999999999999999D);
 	}
 
 	public void method583(int i) {
-		super.anInt1475 = 0;
+		super.modelHeight = 0;
 		anInt1671 = 0;
 		anInt1672 = 0;
 		int j = 32767;
@@ -817,8 +818,8 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 				i1 = i2;
 			if (i2 > l)
 				l = i2;
-			if (-l1 > super.anInt1475)
-				super.anInt1475 = -l1;
+			if (-l1 > super.modelHeight)
+				super.modelHeight = -l1;
 			if (l1 > anInt1672)
 				anInt1672 = l1;
 			int j2 = k1 * k1 + i2 * i2;
@@ -827,7 +828,7 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 		}
 
 		anInt1671 = (int) Math.sqrt(anInt1671);
-		anInt1674 = (int) Math.sqrt(anInt1671 * anInt1671 + super.anInt1475 * super.anInt1475);
+		anInt1674 = (int) Math.sqrt(anInt1671 * anInt1671 + super.modelHeight * super.modelHeight);
 		anInt1673 = anInt1674 + (int) Math.sqrt(anInt1671 * anInt1671 + anInt1672 * anInt1672);
 		anInt1669 = (j << 16) + (k & 0xffff);
 		if (i <= 0)
@@ -1172,10 +1173,10 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 			anIntArray1657 = new int[anInt1652];
 			anIntArray1658 = new int[anInt1652];
 		}
-		if (super.aClass40Array1474 == null) {
-			super.aClass40Array1474 = new VertexNormal[anInt1648];
+		if (super.vertexNormals == null) {
+			super.vertexNormals = new VertexNormal[anInt1648];
 			for (int l1 = 0; l1 < anInt1648; l1++)
-				super.aClass40Array1474[l1] = new VertexNormal();
+				super.vertexNormals[l1] = new VertexNormal();
 
 		}
 		for (int i2 = 0; i2 < anInt1652; i2++) {
@@ -1204,17 +1205,17 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 			i5 = (i5 * 256) / k5;
 			j5 = (j5 * 256) / k5;
 			if (anIntArray1659 == null || (anIntArray1659[i2] & 1) == 0) {
-				VertexNormal class40_2 = super.aClass40Array1474[j2];
+				VertexNormal class40_2 = super.vertexNormals[j2];
 				class40_2.x += l4;
 				class40_2.y += i5;
 				class40_2.z += j5;
 				class40_2.magnitude++;
-				class40_2 = super.aClass40Array1474[l2];
+				class40_2 = super.vertexNormals[l2];
 				class40_2.x += l4;
 				class40_2.y += i5;
 				class40_2.z += j5;
 				class40_2.magnitude++;
-				class40_2 = super.aClass40Array1474[i3];
+				class40_2 = super.vertexNormals[i3];
 				class40_2.x += l4;
 				class40_2.y += i5;
 				class40_2.z += j5;
@@ -1230,7 +1231,7 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 		} else {
 			aClass40Array1681 = new VertexNormal[anInt1648];
 			for (int k2 = 0; k2 < anInt1648; k2++) {
-				VertexNormal class40 = super.aClass40Array1474[k2];
+				VertexNormal class40 = super.vertexNormals[k2];
 				VertexNormal class40_1 = aClass40Array1681[k2] = new VertexNormal();
 				class40_1.x = class40.x;
 				class40_1.y = class40.y;
@@ -1266,35 +1267,35 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 			int j2 = anIntArray1655[j1];
 			if (anIntArray1659 == null) {
 				int i3 = anIntArray1662[j1];
-				VertexNormal class40 = super.aClass40Array1474[k1];
+				VertexNormal class40 = super.vertexNormals[k1];
 				int k2 = i + (k * class40.x + l * class40.y + i1 * class40.z)
 						/ (j * class40.magnitude);
 				anIntArray1656[j1] = method597(i3, k2, 0);
-				class40 = super.aClass40Array1474[i2];
+				class40 = super.vertexNormals[i2];
 				k2 = i + (k * class40.x + l * class40.y + i1 * class40.z) / (j * class40.magnitude);
 				anIntArray1657[j1] = method597(i3, k2, 0);
-				class40 = super.aClass40Array1474[j2];
+				class40 = super.vertexNormals[j2];
 				k2 = i + (k * class40.x + l * class40.y + i1 * class40.z) / (j * class40.magnitude);
 				anIntArray1658[j1] = method597(i3, k2, 0);
 			} else if ((anIntArray1659[j1] & 1) == 0) {
 				int j3 = anIntArray1662[j1];
 				int k3 = anIntArray1659[j1];
-				VertexNormal class40_1 = super.aClass40Array1474[k1];
+				VertexNormal class40_1 = super.vertexNormals[k1];
 				int l2 = i + (k * class40_1.x + l * class40_1.y + i1 * class40_1.z)
 						/ (j * class40_1.magnitude);
 				anIntArray1656[j1] = method597(j3, l2, k3);
-				class40_1 = super.aClass40Array1474[i2];
+				class40_1 = super.vertexNormals[i2];
 				l2 = i + (k * class40_1.x + l * class40_1.y + i1 * class40_1.z)
 						/ (j * class40_1.magnitude);
 				anIntArray1657[j1] = method597(j3, l2, k3);
-				class40_1 = super.aClass40Array1474[j2];
+				class40_1 = super.vertexNormals[j2];
 				l2 = i + (k * class40_1.x + l * class40_1.y + i1 * class40_1.z)
 						/ (j * class40_1.magnitude);
 				anIntArray1658[j1] = method597(j3, l2, k3);
 			}
 		}
 
-		super.aClass40Array1474 = null;
+		super.vertexNormals = null;
 		aClass40Array1681 = null;
 		anIntArray1676 = null;
 		anIntArray1677 = null;
@@ -1379,7 +1380,7 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 		}
 	}
 
-	public void method560(int i, int j, int k, int l, int i1, int j1, int k1, int l1, int i2) {
+	public void draw(int i, int j, int k, int l, int i1, int j1, int k1, int l1, int i2) {
 		int j2 = l1 * i1 - j1 * l >> 16;
 		int k2 = k1 * j + j2 * k >> 16;
 		int l2 = anInt1671 * k >> 16;
@@ -1398,11 +1399,11 @@ public class Class50_Sub1_Sub4_Sub4 extends Class50_Sub1_Sub4 {
 		int k4 = i4 + j4 << 9;
 		if (k4 / i3 <= -Rasterizer.centerY)
 			return;
-		int l4 = j4 + (super.anInt1475 * k >> 16);
+		int l4 = j4 + (super.modelHeight * k >> 16);
 		int i5 = i4 - l4 << 9;
 		if (i5 / i3 >= Rasterizer.centerY)
 			return;
-		int j5 = l2 + (super.anInt1475 * j >> 16);
+		int j5 = l2 + (super.modelHeight * j >> 16);
 		boolean flag = false;
 		if (k2 - j5 <= 50)
 			flag = true;

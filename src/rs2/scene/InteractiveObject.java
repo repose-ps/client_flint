@@ -1,6 +1,6 @@
 package rs2.scene;
 
-import rs2.Class50_Sub1_Sub4;
+import rs2.media.renderable.Renderable;
 
 /**
  * A renderable scene object that may occupy one or more adjacent tiles.
@@ -26,7 +26,7 @@ public class InteractiveObject {
 	public int worldY;
 
 	/** Object geometry submitted to the scene renderer. */
-	public Class50_Sub1_Sub4 renderable;
+	public Renderable renderable;
 
 	/** Model rotation in the client's 0-2047 angular coordinate system. */
 	public int rotation;

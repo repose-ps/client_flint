@@ -4,6 +4,7 @@ import rs2.cache.Archive;
 import rs2.cache.media.ImageRGB;
 import rs2.collection.LruCache;
 import rs2.media.Rasterizer;
+import rs2.media.renderable.Renderable;
 import rs2.net.Buffer;
 
 public class Class16 {
@@ -383,7 +384,7 @@ public class Class16 {
 		int k3 = Class50_Sub1_Sub1_Sub4.anIntArray1536[class16.anInt359] * j3 >> 16;
 		int l3 = Class50_Sub1_Sub1_Sub4.anIntArray1537[class16.anInt359] * j3 >> 16;
 		class50_sub1_sub4_sub4.method598(0, class16.anInt356, class16.anInt339, class16.anInt359, class16.anInt327,
-				k3 + ((Class50_Sub1_Sub4) (class50_sub1_sub4_sub4)).anInt1475 / 2 + class16.anInt340,
+				k3 + ((Renderable) (class50_sub1_sub4_sub4)).modelHeight / 2 + class16.anInt340,
 				l3 + class16.anInt340);
 		for (int l4 = 31; l4 >= 0; l4--) {
 			for (int i4 = 31; i4 >= 0; i4--)

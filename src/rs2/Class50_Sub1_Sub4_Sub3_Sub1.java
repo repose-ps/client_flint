@@ -3,6 +3,7 @@ package rs2;
 import rs2.cache.media.AnimationSequence;
 import rs2.cache.media.SpotAnimation;
 import rs2.media.AnimationFrame;
+import rs2.media.renderable.Renderable;
 
 public class Class50_Sub1_Sub4_Sub3_Sub1 extends Class50_Sub1_Sub4_Sub3 {
 
@@ -20,17 +21,13 @@ public class Class50_Sub1_Sub4_Sub3_Sub1 extends Class50_Sub1_Sub4_Sub3 {
 		return aClass37_1742.method362(j, -1, 0, null);
 	}
 
-	public Class50_Sub1_Sub4_Sub4 method561(byte byte0) {
-		if (byte0 == 3)
-			byte0 = 0;
-		else
-			throw new NullPointerException();
+	public Class50_Sub1_Sub4_Sub4 getModel() {
 		if (aClass37_1742 == null)
 			return null;
 		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = method569();
 		if (class50_sub1_sub4_sub4 == null)
 			return null;
-		super.anInt1594 = ((Class50_Sub1_Sub4) (class50_sub1_sub4_sub4)).anInt1475;
+		super.anInt1594 = ((Renderable) (class50_sub1_sub4_sub4)).modelHeight;
 		if (super.anInt1614 != -1 && super.anInt1615 != -1) {
 			SpotAnimation class27 = SpotAnimation.definitions[super.anInt1614];
 			Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4_1 = class27.getModel();

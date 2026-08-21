@@ -1,6 +1,6 @@
 package rs2.scene.tile;
 
-import rs2.Class50_Sub1_Sub4;
+import rs2.media.renderable.Renderable;
 
 /**
  * A decoration rendered against a wall, such as a painting or mounted object.
@@ -28,7 +28,7 @@ public class WallDecoration {
 	public int face;
 
 	/** Model rendered for the decoration. */
-	public Class50_Sub1_Sub4 renderable;
+	public Renderable renderable;
 
 	/** Packed identifier used by scene queries and menu actions. */
 	public int uid;

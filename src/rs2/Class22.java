@@ -3,6 +3,7 @@ package rs2;
 import rs2.collection.NodeDeque;
 import rs2.media.Rasterizer;
 import rs2.media.VertexNormal;
+import rs2.media.renderable.Renderable;
 import rs2.scene.GroundItemTile;
 import rs2.scene.InteractiveObject;
 import rs2.scene.SceneCluster;
@@ -182,7 +183,7 @@ public class Class22 {
 		aClass50_Sub3ArrayArrayArray456[i][j][k].shapedTile = class20;
 	}
 
-	public void method247(int i, int j, int k, byte byte0, int l, int i1, int j1, Class50_Sub1_Sub4 class50_sub1_sub4) {
+	public void method247(int i, int j, int k, byte byte0, int l, int i1, int j1, Renderable class50_sub1_sub4) {
 		if (k <= 0)
 			return;
 		if (class50_sub1_sub4 == null)
@@ -199,8 +200,8 @@ public class Class22 {
 		aClass50_Sub3ArrayArrayArray456[j1][i][j].floorDecoration = class28;
 	}
 
-	public void method248(int i, int j, Class50_Sub1_Sub4 class50_sub1_sub4, Class50_Sub1_Sub4 class50_sub1_sub4_1,
-			int k, Class50_Sub1_Sub4 class50_sub1_sub4_2, int l, int i1, int j1) {
+	public void method248(int i, int j, Renderable class50_sub1_sub4, Renderable class50_sub1_sub4_1,
+			int k, Renderable class50_sub1_sub4_2, int l, int i1, int j1) {
 		GroundItemTile class10 = new GroundItemTile();
 		class10.firstGroundItem = class50_sub1_sub4;
 		class10.x = j1 * 128 + 64;
@@ -228,8 +229,8 @@ public class Class22 {
 		aClass50_Sub3ArrayArrayArray456[j][j1][i1].groundItemTile = class10;
 	}
 
-	public void method249(int i, int j, int k, int l, Class50_Sub1_Sub4 class50_sub1_sub4, int i1, int j1, byte byte0,
-			int k1, Class50_Sub1_Sub4 class50_sub1_sub4_1, int l1) {
+	public void method249(int i, int j, int k, int l, Renderable class50_sub1_sub4, int i1, int j1, byte byte0,
+			int k1, Renderable class50_sub1_sub4_1, int l1) {
 		if (class50_sub1_sub4_1 == null && class50_sub1_sub4 == null)
 			return;
 		Wall class44 = new Wall();
@@ -254,7 +255,7 @@ public class Class22 {
 	}
 
 	public void method250(int i, int j, int k, int l, byte byte0, int i1, int j1, int k1, int l1, int i2,
-			Class50_Sub1_Sub4 class50_sub1_sub4, int j2) {
+			Renderable class50_sub1_sub4, int j2) {
 		if (class50_sub1_sub4 == null)
 			return;
 		WallDecoration class35 = new WallDecoration();
@@ -275,7 +276,7 @@ public class Class22 {
 		aClass50_Sub3ArrayArrayArray456[i][i1][k1].wallDecoration = class35;
 	}
 
-	public boolean method251(int i, int j, int k, Class50_Sub1_Sub4 class50_sub1_sub4, byte byte0, int l, int i1,
+	public boolean method251(int i, int j, int k, Renderable class50_sub1_sub4, byte byte0, int l, int i1,
 			int j1, int k1, int l1, int i2) {
 		while (j1 >= 0)
 			throw new NullPointerException();
@@ -288,7 +289,7 @@ public class Class22 {
 		}
 	}
 
-	public boolean method252(int i, Class50_Sub1_Sub4 class50_sub1_sub4, int j, int k, boolean flag, int l, int i1,
+	public boolean method252(int i, Renderable class50_sub1_sub4, int j, int k, boolean flag, int l, int i1,
 			int j1, int k1, int l1) {
 		if (class50_sub1_sub4 == null)
 			return true;
@@ -315,7 +316,7 @@ public class Class22 {
 		return method254(i1, i2, j2, (k2 - i2) + 1, (l2 - j2) + 1, j, k1, k, class50_sub1_sub4, l1, true, i, (byte) 0);
 	}
 
-	public boolean method253(int i, int j, int k, int l, Class50_Sub1_Sub4 class50_sub1_sub4, int i1, int j1, int k1,
+	public boolean method253(int i, int j, int k, int l, Renderable class50_sub1_sub4, int i1, int j1, int k1,
 			int l1, int i2, int j2, int k2, int l2) {
 		if (l < 7 || l > 7)
 			aBoolean449 = !aBoolean449;
@@ -327,7 +328,7 @@ public class Class22 {
 	}
 
 	public boolean method254(int i, int j, int k, int l, int i1, int j1, int k1, int l1,
-			Class50_Sub1_Sub4 class50_sub1_sub4, int i2, boolean flag, int j2, byte byte0) {
+			Renderable class50_sub1_sub4, int i2, boolean flag, int j2, byte byte0) {
 		for (int k2 = j; k2 < j + l; k2++) {
 			for (int l2 = k; l2 < k + i1; l2++) {
 				if (k2 < 0 || l2 < 0 || k2 >= anInt453 || l2 >= anInt454)
@@ -610,9 +611,9 @@ public class Class22 {
 					SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[l][i1][j1];
 					if (class50_sub3 != null) {
 						Wall class44 = class50_sub3.wall;
-						if (class44 != null && class44.primary != null && class44.primary.aClass40Array1474 != null) {
+						if (class44 != null && class44.primary != null && class44.primary.vertexNormals != null) {
 							method274(j1, l, 0, 1, (Class50_Sub1_Sub4_Sub4) class44.primary, i1, 1);
-							if (class44.secondary != null && class44.secondary.aClass40Array1474 != null) {
+							if (class44.secondary != null && class44.secondary.vertexNormals != null) {
 								method274(j1, l, 0, 1, (Class50_Sub1_Sub4_Sub4) class44.secondary, i1, 1);
 								method275((Class50_Sub1_Sub4_Sub4) class44.primary,
 										(Class50_Sub1_Sub4_Sub4) class44.secondary, 0, 0, 0, false);
@@ -623,7 +624,7 @@ public class Class22 {
 						for (int k1 = 0; k1 < class50_sub3.interactiveObjectCount; k1++) {
 							InteractiveObject class5 = class50_sub3.interactiveObjects[k1];
 							if (class5 != null && class5.renderable != null
-									&& class5.renderable.aClass40Array1474 != null) {
+									&& class5.renderable.vertexNormals != null) {
 								method274(j1, l, 0, (class5.tileRight - class5.tileLeft) + 1,
 										(Class50_Sub1_Sub4_Sub4) class5.renderable, i1,
 										(class5.tileBottom - class5.tileTop) + 1);
@@ -632,7 +633,7 @@ public class Class22 {
 						}
 
 						FloorDecoration class28 = class50_sub3.floorDecoration;
-						if (class28 != null && class28.renderable.aClass40Array1474 != null) {
+						if (class28 != null && class28.renderable.vertexNormals != null) {
 							method273(i1, (Class50_Sub1_Sub4_Sub4) class28.renderable, j1, l, 0);
 							((Class50_Sub1_Sub4_Sub4) class28.renderable).method595(i, j, 0, k);
 						}
@@ -653,28 +654,28 @@ public class Class22 {
 		if (i < anInt453) {
 			SceneTile class50_sub3 = aClass50_Sub3ArrayArrayArray456[k][i + 1][j];
 			if (class50_sub3 != null && class50_sub3.floorDecoration != null
-					&& class50_sub3.floorDecoration.renderable.aClass40Array1474 != null)
+					&& class50_sub3.floorDecoration.renderable.vertexNormals != null)
 				method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4) class50_sub3.floorDecoration.renderable, 128,
 						0, 0, true);
 		}
 		if (j < anInt453) {
 			SceneTile class50_sub3_1 = aClass50_Sub3ArrayArrayArray456[k][i][j + 1];
 			if (class50_sub3_1 != null && class50_sub3_1.floorDecoration != null
-					&& class50_sub3_1.floorDecoration.renderable.aClass40Array1474 != null)
+					&& class50_sub3_1.floorDecoration.renderable.vertexNormals != null)
 				method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4) class50_sub3_1.floorDecoration.renderable, 0,
 						0, 128, true);
 		}
 		if (i < anInt453 && j < anInt454) {
 			SceneTile class50_sub3_2 = aClass50_Sub3ArrayArrayArray456[k][i + 1][j + 1];
 			if (class50_sub3_2 != null && class50_sub3_2.floorDecoration != null
-					&& class50_sub3_2.floorDecoration.renderable.aClass40Array1474 != null)
+					&& class50_sub3_2.floorDecoration.renderable.vertexNormals != null)
 				method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4) class50_sub3_2.floorDecoration.renderable,
 						128, 0, 128, true);
 		}
 		if (i < anInt453 && j > 0) {
 			SceneTile class50_sub3_3 = aClass50_Sub3ArrayArrayArray456[k][i + 1][j - 1];
 			if (class50_sub3_3 != null && class50_sub3_3.floorDecoration != null
-					&& class50_sub3_3.floorDecoration.renderable.aClass40Array1474 != null)
+					&& class50_sub3_3.floorDecoration.renderable.vertexNormals != null)
 				method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4) class50_sub3_3.floorDecoration.renderable,
 						128, 0, -128, true);
 		}
@@ -703,19 +704,19 @@ public class Class22 {
 													+ anIntArrayArrayArray455[j][i1 + 1][i + 1]) / 4;
 									Wall class44 = class50_sub3.wall;
 									if (class44 != null && class44.primary != null
-											&& class44.primary.aClass40Array1474 != null)
+											&& class44.primary.vertexNormals != null)
 										method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4) class44.primary,
 												(l2 - i1) * 128 + (1 - l) * 64, j3, (i3 - i) * 128 + (1 - j1) * 64,
 												flag);
 									if (class44 != null && class44.secondary != null
-											&& class44.secondary.aClass40Array1474 != null)
+											&& class44.secondary.vertexNormals != null)
 										method275(class50_sub1_sub4_sub4, (Class50_Sub1_Sub4_Sub4) class44.secondary,
 												(l2 - i1) * 128 + (1 - l) * 64, j3, (i3 - i) * 128 + (1 - j1) * 64,
 												flag);
 									for (int k3 = 0; k3 < class50_sub3.interactiveObjectCount; k3++) {
 										InteractiveObject class5 = class50_sub3.interactiveObjects[k3];
 										if (class5 != null && class5.renderable != null
-												&& class5.renderable.aClass40Array1474 != null) {
+												&& class5.renderable.vertexNormals != null) {
 											int l3 = (class5.tileRight - class5.tileLeft) + 1;
 											int i4 = (class5.tileBottom - class5.tileTop) + 1;
 											method275(class50_sub1_sub4_sub4,
@@ -749,7 +750,7 @@ public class Class22 {
 		int l1 = class50_sub1_sub4_sub4_1.anInt1670 >> 16;
 		int i2 = (class50_sub1_sub4_sub4_1.anInt1670 << 16) >> 16;
 		for (int j2 = 0; j2 < class50_sub1_sub4_sub4.anInt1648; j2++) {
-			VertexNormal class40 = ((Class50_Sub1_Sub4) (class50_sub1_sub4_sub4)).aClass40Array1474[j2];
+			VertexNormal class40 = ((Renderable) (class50_sub1_sub4_sub4)).vertexNormals[j2];
 			VertexNormal class40_1 = class50_sub1_sub4_sub4.aClass40Array1681[j2];
 			if (class40_1.magnitude != 0) {
 				int i3 = class50_sub1_sub4_sub4.anIntArray1650[j2] - j;
@@ -759,7 +760,7 @@ public class Class22 {
 						int k3 = class50_sub1_sub4_sub4.anIntArray1651[j2] - k;
 						if (k3 >= i2 && k3 <= l1) {
 							for (int l3 = 0; l3 < i1; l3++) {
-								VertexNormal class40_2 = ((Class50_Sub1_Sub4) (class50_sub1_sub4_sub4_1)).aClass40Array1474[l3];
+								VertexNormal class40_2 = ((Renderable) (class50_sub1_sub4_sub4_1)).vertexNormals[l3];
 								VertexNormal class40_3 = class50_sub1_sub4_sub4_1.aClass40Array1681[l3];
 								if (j3 == ai[l3] && k3 == class50_sub1_sub4_sub4_1.anIntArray1651[l3]
 										&& i3 == class50_sub1_sub4_sub4_1.anIntArray1650[l3]
@@ -1167,12 +1168,12 @@ public class Class22 {
 						method283(anInt474, anInt476, class50_sub3_7.shapedTile, anInt473, j, i, anInt475, (byte) 3);
 					Wall class44 = class50_sub3_7.wall;
 					if (class44 != null)
-						class44.primary.method560(0, anInt473, anInt474, anInt475, anInt476, class44.x - anInt470,
+						class44.primary.draw(0, anInt473, anInt474, anInt475, anInt476, class44.x - anInt470,
 								class44.z - anInt471, class44.y - anInt472, class44.uid);
 					for (int i2 = 0; i2 < class50_sub3_7.interactiveObjectCount; i2++) {
 						InteractiveObject class5 = class50_sub3_7.interactiveObjects[i2];
 						if (class5 != null)
-							class5.renderable.method560(class5.rotation, anInt473, anInt474, anInt475, anInt476,
+							class5.renderable.draw(class5.rotation, anInt473, anInt474, anInt475, anInt476,
 									class5.worldX - anInt470, class5.worldZ - anInt471, class5.worldY - anInt472,
 									class5.uid);
 					}
@@ -1227,16 +1228,16 @@ public class Class22 {
 						class50_sub3_1.wallCullDirection = 0;
 					}
 					if ((class44_3.orientation & j2) != 0 && !method288(l, i, j, class44_3.orientation))
-						class44_3.primary.method560(0, anInt473, anInt474, anInt475, anInt476, class44_3.x - anInt470,
+						class44_3.primary.draw(0, anInt473, anInt474, anInt475, anInt476, class44_3.x - anInt470,
 								class44_3.z - anInt471, class44_3.y - anInt472, class44_3.uid);
 					if ((class44_3.secondaryOrientation & j2) != 0
 							&& !method288(l, i, j, class44_3.secondaryOrientation))
-						class44_3.secondary.method560(0, anInt473, anInt474, anInt475, anInt476, class44_3.x - anInt470,
+						class44_3.secondary.draw(0, anInt473, anInt474, anInt475, anInt476, class44_3.x - anInt470,
 								class44_3.z - anInt471, class44_3.y - anInt472, class44_3.uid);
 				}
-				if (class35_1 != null && !method289(l, i, j, class35_1.renderable.anInt1475))
+				if (class35_1 != null && !method289(l, i, j, class35_1.renderable.modelHeight))
 					if ((class35_1.configBits & j2) != 0)
-						class35_1.renderable.method560(class35_1.face, anInt473, anInt474, anInt475, anInt476,
+						class35_1.renderable.draw(class35_1.face, anInt473, anInt474, anInt475, anInt476,
 								class35_1.x - anInt470, class35_1.z - anInt471, class35_1.y - anInt472, class35_1.uid);
 					else if ((class35_1.configBits & 0x300) != 0) {
 						int j4 = class35_1.x - anInt470;
@@ -1256,33 +1257,33 @@ public class Class22 {
 						if ((class35_1.configBits & 0x100) != 0 && k10 < k9) {
 							int i11 = j4 + anIntArray478[i8];
 							int k11 = k6 + anIntArray479[i8];
-							class35_1.renderable.method560(i8 * 512 + 256, anInt473, anInt474, anInt475, anInt476, i11,
+							class35_1.renderable.draw(i8 * 512 + 256, anInt473, anInt474, anInt475, anInt476, i11,
 									l5, k11, class35_1.uid);
 						}
 						if ((class35_1.configBits & 0x200) != 0 && k10 > k9) {
 							int j11 = j4 + anIntArray480[i8];
 							int l11 = k6 + anIntArray481[i8];
-							class35_1.renderable.method560(i8 * 512 + 1280 & 0x7ff, anInt473, anInt474, anInt475,
+							class35_1.renderable.draw(i8 * 512 + 1280 & 0x7ff, anInt473, anInt474, anInt475,
 									anInt476, j11, l5, l11, class35_1.uid);
 						}
 					}
 				if (flag1) {
 					FloorDecoration class28 = class50_sub3_1.floorDecoration;
 					if (class28 != null)
-						class28.renderable.method560(0, anInt473, anInt474, anInt475, anInt476, class28.x - anInt470,
+						class28.renderable.draw(0, anInt473, anInt474, anInt475, anInt476, class28.x - anInt470,
 								class28.z - anInt471, class28.y - anInt472, class28.uid);
 					GroundItemTile class10_1 = class50_sub3_1.groundItemTile;
 					if (class10_1 != null && class10_1.heightOffset == 0) {
 						if (class10_1.secondGroundItem != null)
-							class10_1.secondGroundItem.method560(0, anInt473, anInt474, anInt475, anInt476,
+							class10_1.secondGroundItem.draw(0, anInt473, anInt474, anInt475, anInt476,
 									class10_1.x - anInt470, class10_1.z - anInt471, class10_1.y - anInt472,
 									class10_1.uid);
 						if (class10_1.thirdGroundItem != null)
-							class10_1.thirdGroundItem.method560(0, anInt473, anInt474, anInt475, anInt476,
+							class10_1.thirdGroundItem.draw(0, anInt473, anInt474, anInt475, anInt476,
 									class10_1.x - anInt470, class10_1.z - anInt471, class10_1.y - anInt472,
 									class10_1.uid);
 						if (class10_1.firstGroundItem != null)
-							class10_1.firstGroundItem.method560(0, anInt473, anInt474, anInt475, anInt476,
+							class10_1.firstGroundItem.draw(0, anInt473, anInt474, anInt475, anInt476,
 									class10_1.x - anInt470, class10_1.z - anInt471, class10_1.y - anInt472,
 									class10_1.uid);
 					}
@@ -1325,7 +1326,7 @@ public class Class22 {
 				if (flag2) {
 					Wall class44_1 = class50_sub3_1.wall;
 					if (!method288(l, i, j, class44_1.orientation))
-						class44_1.primary.method560(0, anInt473, anInt474, anInt475, anInt476, class44_1.x - anInt470,
+						class44_1.primary.draw(0, anInt473, anInt474, anInt475, anInt476, class44_1.x - anInt470,
 								class44_1.z - anInt471, class44_1.y - anInt472, class44_1.uid);
 					class50_sub3_1.wallCullDirection = 0;
 				}
@@ -1402,8 +1403,8 @@ public class Class22 {
 						InteractiveObject class5_3 = aClass5Array477[l3];
 						class5_3.lastDrawnCycle = anInt463;
 						if (!method290(l, class5_3.tileLeft, class5_3.tileRight, class5_3.tileTop, class5_3.tileBottom,
-								class5_3.renderable.anInt1475))
-							class5_3.renderable.method560(class5_3.rotation, anInt473, anInt474, anInt475, anInt476,
+								class5_3.renderable.modelHeight))
+							class5_3.renderable.draw(class5_3.rotation, anInt473, anInt474, anInt475, anInt476,
 									class5_3.worldX - anInt470, class5_3.worldZ - anInt471, class5_3.worldY - anInt472,
 									class5_3.uid);
 						for (int k7 = class5_3.tileLeft; k7 <= class5_3.tileRight; k7++) {
@@ -1450,20 +1451,20 @@ public class Class22 {
 			GroundItemTile class10 = class50_sub3_1.groundItemTile;
 			if (class10 != null && class10.heightOffset != 0) {
 				if (class10.secondGroundItem != null)
-					class10.secondGroundItem.method560(0, anInt473, anInt474, anInt475, anInt476, class10.x - anInt470,
+					class10.secondGroundItem.draw(0, anInt473, anInt474, anInt475, anInt476, class10.x - anInt470,
 							class10.z - anInt471 - class10.heightOffset, class10.y - anInt472, class10.uid);
 				if (class10.thirdGroundItem != null)
-					class10.thirdGroundItem.method560(0, anInt473, anInt474, anInt475, anInt476, class10.x - anInt470,
+					class10.thirdGroundItem.draw(0, anInt473, anInt474, anInt475, anInt476, class10.x - anInt470,
 							class10.z - anInt471 - class10.heightOffset, class10.y - anInt472, class10.uid);
 				if (class10.firstGroundItem != null)
-					class10.firstGroundItem.method560(0, anInt473, anInt474, anInt475, anInt476, class10.x - anInt470,
+					class10.firstGroundItem.draw(0, anInt473, anInt474, anInt475, anInt476, class10.x - anInt470,
 							class10.z - anInt471 - class10.heightOffset, class10.y - anInt472, class10.uid);
 			}
 			if (class50_sub3_1.wallDrawFlags != 0) {
 				WallDecoration class35 = class50_sub3_1.wallDecoration;
-				if (class35 != null && !method289(l, i, j, class35.renderable.anInt1475))
+				if (class35 != null && !method289(l, i, j, class35.renderable.modelHeight))
 					if ((class35.configBits & class50_sub3_1.wallDrawFlags) != 0)
-						class35.renderable.method560(class35.face, anInt473, anInt474, anInt475, anInt476,
+						class35.renderable.draw(class35.face, anInt473, anInt474, anInt475, anInt476,
 								class35.x - anInt470, class35.z - anInt471, class35.y - anInt472, class35.uid);
 					else if ((class35.configBits & 0x300) != 0) {
 						int l2 = class35.x - anInt470;
@@ -1483,13 +1484,13 @@ public class Class22 {
 						if ((class35.configBits & 0x100) != 0 && l7 >= j6) {
 							int i9 = l2 + anIntArray478[k5];
 							int i10 = i4 + anIntArray479[k5];
-							class35.renderable.method560(k5 * 512 + 256, anInt473, anInt474, anInt475, anInt476, i9, j3,
+							class35.renderable.draw(k5 * 512 + 256, anInt473, anInt474, anInt475, anInt476, i9, j3,
 									i10, class35.uid);
 						}
 						if ((class35.configBits & 0x200) != 0 && l7 <= j6) {
 							int j9 = l2 + anIntArray480[k5];
 							int j10 = i4 + anIntArray481[k5];
-							class35.renderable.method560(k5 * 512 + 1280 & 0x7ff, anInt473, anInt474, anInt475,
+							class35.renderable.draw(k5 * 512 + 1280 & 0x7ff, anInt473, anInt474, anInt475,
 									anInt476, j9, j3, j10, class35.uid);
 						}
 					}
@@ -1497,11 +1498,11 @@ public class Class22 {
 				if (class44_2 != null) {
 					if ((class44_2.secondaryOrientation & class50_sub3_1.wallDrawFlags) != 0
 							&& !method288(l, i, j, class44_2.secondaryOrientation))
-						class44_2.secondary.method560(0, anInt473, anInt474, anInt475, anInt476, class44_2.x - anInt470,
+						class44_2.secondary.draw(0, anInt473, anInt474, anInt475, anInt476, class44_2.x - anInt470,
 								class44_2.z - anInt471, class44_2.y - anInt472, class44_2.uid);
 					if ((class44_2.orientation & class50_sub3_1.wallDrawFlags) != 0
 							&& !method288(l, i, j, class44_2.orientation))
-						class44_2.primary.method560(0, anInt473, anInt474, anInt475, anInt476, class44_2.x - anInt470,
+						class44_2.primary.draw(0, anInt473, anInt474, anInt475, anInt476, class44_2.x - anInt470,
 								class44_2.z - anInt471, class44_2.y - anInt472, class44_2.uid);
 				}
 			}

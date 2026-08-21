@@ -5,6 +5,7 @@ import rs2.cache.media.IdentityKit;
 import rs2.cache.media.SpotAnimation;
 import rs2.collection.LruCache;
 import rs2.media.AnimationFrame;
+import rs2.media.renderable.Renderable;
 import rs2.net.Buffer;
 import rs2.text.Base37;
 import rs2.text.TextFormatter;
@@ -60,7 +61,7 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 		return class50_sub1_sub4_sub4;
 	}
 
-	public Class50_Sub1_Sub4_Sub4 method571(byte byte0) {
+	public Class50_Sub1_Sub4_Sub4 method571() {
 		if (aClass37_1757 != null) {
 			int i = -1;
 			if (super.anInt1624 >= 0 && super.anInt1627 == 0)
@@ -75,8 +76,6 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 		int k = -1;
 		int i1 = -1;
 		int j1 = -1;
-		if (byte0 != 122)
-			aBoolean1767 = !aBoolean1767;
 		if (super.anInt1624 >= 0 && super.anInt1627 == 0) {
 			AnimationSequence class14 = AnimationSequence.sequences[super.anInt1624];
 			j = class14.primaryFrameIds[super.anInt1625];
@@ -175,13 +174,13 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 		return aBoolean1758;
 	}
 
-	public Class50_Sub1_Sub4_Sub4 method561(byte byte0) {
+	public Class50_Sub1_Sub4_Sub4 getModel() {
 		if (!aBoolean1758)
 			return null;
-		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = method571((byte) 122);
+		Class50_Sub1_Sub4_Sub4 class50_sub1_sub4_sub4 = method571();
 		if (class50_sub1_sub4_sub4 == null)
 			return null;
-		super.anInt1594 = ((Class50_Sub1_Sub4) (class50_sub1_sub4_sub4)).anInt1475;
+		super.anInt1594 = ((Renderable) (class50_sub1_sub4_sub4)).modelHeight;
 		class50_sub1_sub4_sub4.aBoolean1680 = true;
 		if (aBoolean1763)
 			return class50_sub1_sub4_sub4;
@@ -237,10 +236,6 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 			}
 		}
 		class50_sub1_sub4_sub4.aBoolean1680 = true;
-		if (byte0 == 3)
-			byte0 = 0;
-		else
-			aBoolean1767 = !aBoolean1767;
 		return class50_sub1_sub4_sub4;
 	}
 
@@ -338,7 +333,6 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 		aBoolean1758 = false;
 		anIntArray1760 = new int[5];
 		aBoolean1763 = false;
-		aBoolean1767 = false;
 		anInt1772 = 932;
 	}
 
@@ -364,7 +358,6 @@ public class Class50_Sub1_Sub4_Sub3_Sub2 extends Class50_Sub1_Sub4_Sub3 {
 	public int anInt1764;
 	public int anInt1765;
 	public int anInt1766;
-	public boolean aBoolean1767;
 	public int anInt1768;
 	public int anInt1769;
 	public int anInt1770;

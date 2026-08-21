@@ -1,8 +1,9 @@
 package rs2;
 
 import rs2.cache.media.AnimationSequence;
+import rs2.media.renderable.Renderable;
 
-public abstract class Class50_Sub1_Sub4_Sub3 extends Class50_Sub1_Sub4 {
+public abstract class Class50_Sub1_Sub4_Sub3 extends Renderable {
 
 	public void method564(int i) {
 		anInt1633 = 0;
