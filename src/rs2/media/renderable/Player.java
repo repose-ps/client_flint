@@ -1,7 +1,7 @@
 package rs2.media.renderable;
 
-import rs2.Class16;
 import rs2.client;
+import rs2.cache.def.ItemDefinition;
 import rs2.cache.def.NpcDefinition;
 import rs2.cache.media.AnimationSequence;
 import rs2.cache.media.IdentityKit;
@@ -70,7 +70,7 @@ public class Player extends Actor {
 					&& !IdentityKit.definitions[appearance - 256].areHeadModelsReady()) {
 				return null;
 			}
-			if (appearance >= 512 && !Class16.method212(appearance - 512).method211(gender)) {
+			if (appearance >= 512 && !ItemDefinition.lookup(appearance - 512).areHeadModelsReady(gender)) {
 				return null;
 			}
 		}
@@ -86,7 +86,7 @@ public class Player extends Actor {
 				}
 			}
 			if (appearance >= 512) {
-				Model part = Class16.method212(appearance - 512).method219(true, gender);
+				Model part = ItemDefinition.lookup(appearance - 512).getHeadModel(gender);
 				if (part != null) {
 					parts[partCount++] = part;
 				}
@@ -151,7 +151,7 @@ public class Player extends Actor {
 						&& !IdentityKit.definitions[appearance - 256].areBodyModelsReady()) {
 					missingModel = true;
 				}
-				if (appearance >= 512 && !Class16.method212(appearance - 512).method216(gender)) {
+				if (appearance >= 512 && !ItemDefinition.lookup(appearance - 512).areWearableModelsReady(gender)) {
 					missingModel = true;
 				}
 			}
@@ -184,7 +184,7 @@ public class Player extends Actor {
 					}
 				}
 				if (appearance >= 512) {
-					Model part = Class16.method212(appearance - 512).method213((byte) -98, gender);
+					Model part = ItemDefinition.lookup(appearance - 512).getWearableModel(gender);
 					if (part != null) {
 						parts[partCount++] = part;
 					}
@@ -319,8 +319,8 @@ public class Player extends Actor {
 				npcDefinition = NpcDefinition.lookup(buffer.readUnsignedShort());
 				break;
 			}
-			if (equipment[slot] >= 512 && equipment[slot] - 512 < Class16.anInt335) {
-				int itemTeam = Class16.method212(equipment[slot] - 512).anInt332;
+			if (equipment[slot] >= 512 && equipment[slot] - 512 < ItemDefinition.count) {
+				int itemTeam = ItemDefinition.lookup(equipment[slot] - 512).team;
 				if (itemTeam != 0) {
 					team = itemTeam;
 				}

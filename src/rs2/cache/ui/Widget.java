@@ -1,8 +1,8 @@
 package rs2.cache.ui;
 
-import rs2.Class16;
 import rs2.cache.Archive;
 import rs2.cache.ResourceNameHash;
+import rs2.cache.def.ItemDefinition;
 import rs2.cache.def.NpcDefinition;
 import rs2.cache.media.ImageRGB;
 import rs2.collection.LruCache;
@@ -301,11 +301,11 @@ public class Widget {
 	}
 
 	private Model getMediaModel(int mediaType, int mediaId) {
-		Class16 itemDefinition = null;
+		ItemDefinition itemDefinition = null;
 		if (mediaType == 4) {
-			itemDefinition = Class16.method212(mediaId);
-			modelAmbient += itemDefinition.anInt354;
-			modelContrast += itemDefinition.anInt358;
+			itemDefinition = ItemDefinition.lookup(mediaId);
+			modelAmbient += itemDefinition.ambient;
+			modelContrast += itemDefinition.contrast;
 		}
 
 		long key = (mediaType << 16) + mediaId;
@@ -324,7 +324,7 @@ public class Widget {
 			model = client.aClass50_Sub1_Sub4_Sub3_Sub2_1167.getHeadModel();
 		}
 		if (mediaType == 4) {
-			model = itemDefinition.method217(50);
+			model = itemDefinition.getUnlitModel(50);
 		}
 		if (mediaType == 5) {
 			model = null;
