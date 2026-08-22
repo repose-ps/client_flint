@@ -17,6 +17,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
 import rs2.cache.media.ImageRGB;
+import rs2.media.GraphicsBuffer;
 
 public class Applet_Sub1 extends Applet
 		implements Runnable, MouseListener, MouseMotionListener, KeyListener, FocusListener, WindowListener {
@@ -28,7 +29,7 @@ public class Applet_Sub1 extends Applet
 			return;
 
 		aGraphics14 = method11(-756).getGraphics();
-		aClass18_15 = new Class18(anInt13, (byte) -12, method11(-756), anInt12);
+		aClass18_15 = new GraphicsBuffer(method11(-756), anInt12, anInt13);
 		method12(this, 1);
 	}
 
@@ -39,7 +40,7 @@ public class Applet_Sub1 extends Applet
 		} else {
 			anInt13 = j;
 			aGraphics14 = method11(-756).getGraphics();
-			aClass18_15 = new Class18(anInt13, (byte) -12, method11(-756), anInt12);
+			aClass18_15 = new GraphicsBuffer(method11(-756), anInt12, anInt13);
 			method12(this, 1);
 			return;
 		}
@@ -478,7 +479,7 @@ public class Applet_Sub1 extends Applet
 	public int anInt12;
 	public int anInt13;
 	public Graphics aGraphics14;
-	public Class18 aClass18_15;
+	public GraphicsBuffer aClass18_15;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1Array16[];
 	public Frame_Sub1 aFrame_Sub1_17;
 	public boolean aBoolean18;

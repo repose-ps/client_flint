@@ -37,7 +37,9 @@ import rs2.chat.ChatCodec;
 import rs2.collection.Node;
 import rs2.collection.NodeDeque;
 import rs2.game.Skills;
+import rs2.input.MouseRecorder;
 import rs2.media.AnimationFrame;
+import rs2.media.GraphicsBuffer;
 import rs2.media.ItemSpriteFactory;
 import rs2.media.Rasterizer;
 import rs2.media.Rasterizer3D;
@@ -57,6 +59,7 @@ import rs2.net.IncomingPacketLengths;
 import rs2.net.Ipv4Address;
 import rs2.net.IsaacCipher;
 import rs2.scene.InteractiveObject;
+import rs2.scene.PendingSpawn;
 import rs2.scene.Region;
 import rs2.scene.tile.FloorDecoration;
 import rs2.scene.tile.Wall;
@@ -250,10 +253,10 @@ public class client extends Applet_Sub1 {
 	public void method18(byte byte0) {
 		if (byte0 != 3)
 			return;
-		for (Class50_Sub2 class50_sub2 = (Class50_Sub2) aClass6_1261
-				.first(); class50_sub2 != null; class50_sub2 = (Class50_Sub2) aClass6_1261.next())
-			if (class50_sub2.anInt1390 == -1) {
-				class50_sub2.anInt1395 = 0;
+		for (PendingSpawn class50_sub2 = (PendingSpawn) aClass6_1261
+				.first(); class50_sub2 != null; class50_sub2 = (PendingSpawn) aClass6_1261.next())
+			if (class50_sub2.restoreDelay == -1) {
+				class50_sub2.spawnDelay = 0;
 				method140((byte) -61, class50_sub2);
 			} else {
 				class50_sub2.unlink();
@@ -333,7 +336,7 @@ public class client extends Applet_Sub1 {
 		aClass50_Sub1_Sub1_Sub1_1195 = null;
 		aClass50_Sub1_Sub1_Sub1_1196 = null;
 		if (aClass7_1248 != null)
-			aClass7_1248.aBoolean131 = false;
+			aClass7_1248.running = false;
 		aClass7_1248 = null;
 		aClass50_Sub1_Sub1_Sub3_965 = null;
 		aClass50_Sub1_Sub1_Sub3_966 = null;
@@ -408,7 +411,6 @@ public class client extends Applet_Sub1 {
 		Widget.clear();
 		FloorDefinition.definitions = null;
 		IdentityKit.definitions = null;
-		Class4.aClass4Array103 = null;
 		AnimationSequence.sequences = null;
 		SpotAnimation.definitions = null;
 		SpotAnimation.modelCache = null;
@@ -700,29 +702,29 @@ public class client extends Applet_Sub1 {
 
 		if (!aBoolean1137)
 			return;
-		synchronized (aClass7_1248.anObject133) {
+		synchronized (aClass7_1248.lock) {
 			if (aBoolean962) {
-				if (super.anInt28 != 0 || aClass7_1248.anInt136 >= 40) {
+				if (super.anInt28 != 0 || aClass7_1248.sampleCount >= 40) {
 					aClass50_Sub1_Sub2_964.writeOpcode(171);
 					aClass50_Sub1_Sub2_964.writeByte(0);
 					int i2 = aClass50_Sub1_Sub2_964.position;
 					int i3 = 0;
-					for (int i4 = 0; i4 < aClass7_1248.anInt136; i4++) {
+					for (int i4 = 0; i4 < aClass7_1248.sampleCount; i4++) {
 						if (i2 - aClass50_Sub1_Sub2_964.position >= 240)
 							break;
 						i3++;
-						int k4 = aClass7_1248.anIntArray132[i4];
+						int k4 = aClass7_1248.yCoordinates[i4];
 						if (k4 < 0)
 							k4 = 0;
 						else if (k4 > 502)
 							k4 = 502;
-						int j5 = aClass7_1248.anIntArray137[i4];
+						int j5 = aClass7_1248.xCoordinates[i4];
 						if (j5 < 0)
 							j5 = 0;
 						else if (j5 > 764)
 							j5 = 764;
 						int l5 = k4 * 765 + j5;
-						if (aClass7_1248.anIntArray132[i4] == -1 && aClass7_1248.anIntArray137[i4] == -1) {
+						if (aClass7_1248.yCoordinates[i4] == -1 && aClass7_1248.xCoordinates[i4] == -1) {
 							j5 = -1;
 							k4 = -1;
 							l5 = 0x7ffff;
@@ -751,19 +753,19 @@ public class client extends Applet_Sub1 {
 					}
 
 					aClass50_Sub1_Sub2_964.writeLength(aClass50_Sub1_Sub2_964.position - i2);
-					if (i3 >= aClass7_1248.anInt136) {
-						aClass7_1248.anInt136 = 0;
+					if (i3 >= aClass7_1248.sampleCount) {
+						aClass7_1248.sampleCount = 0;
 					} else {
-						aClass7_1248.anInt136 -= i3;
-						for (int l4 = 0; l4 < aClass7_1248.anInt136; l4++) {
-							aClass7_1248.anIntArray137[l4] = aClass7_1248.anIntArray137[l4 + i3];
-							aClass7_1248.anIntArray132[l4] = aClass7_1248.anIntArray132[l4 + i3];
+						aClass7_1248.sampleCount -= i3;
+						for (int l4 = 0; l4 < aClass7_1248.sampleCount; l4++) {
+							aClass7_1248.xCoordinates[l4] = aClass7_1248.xCoordinates[l4 + i3];
+							aClass7_1248.yCoordinates[l4] = aClass7_1248.yCoordinates[l4 + i3];
 						}
 
 					}
 				}
 			} else {
-				aClass7_1248.anInt136 = 0;
+				aClass7_1248.sampleCount = 0;
 			}
 		}
 		if (super.anInt28 != 0) {
@@ -1958,12 +1960,12 @@ public class client extends Applet_Sub1 {
 
 				}
 
-				for (Class50_Sub2 class50_sub2 = (Class50_Sub2) aClass6_1261
-						.first(); class50_sub2 != null; class50_sub2 = (Class50_Sub2) aClass6_1261.next())
-					if (class50_sub2.anInt1393 >= anInt989 && class50_sub2.anInt1393 < anInt989 + 8
-							&& class50_sub2.anInt1394 >= anInt990 && class50_sub2.anInt1394 < anInt990 + 8
-							&& class50_sub2.anInt1391 == anInt1091)
-						class50_sub2.anInt1390 = 0;
+				for (PendingSpawn class50_sub2 = (PendingSpawn) aClass6_1261
+						.first(); class50_sub2 != null; class50_sub2 = (PendingSpawn) aClass6_1261.next())
+					if (class50_sub2.x >= anInt989 && class50_sub2.x < anInt989 + 8
+							&& class50_sub2.y >= anInt990 && class50_sub2.y < anInt990 + 8
+							&& class50_sub2.plane == anInt1091)
+						class50_sub2.restoreDelay = 0;
 
 				anInt870 = -1;
 				return true;
@@ -2326,12 +2328,12 @@ public class client extends Applet_Sub1 {
 
 				}
 
-				for (Class50_Sub2 class50_sub2_1 = (Class50_Sub2) aClass6_1261
-						.first(); class50_sub2_1 != null; class50_sub2_1 = (Class50_Sub2) aClass6_1261.next()) {
-					class50_sub2_1.anInt1393 -= i21;
-					class50_sub2_1.anInt1394 -= k24;
-					if (class50_sub2_1.anInt1393 < 0 || class50_sub2_1.anInt1394 < 0 || class50_sub2_1.anInt1393 >= 104
-							|| class50_sub2_1.anInt1394 >= 104)
+				for (PendingSpawn class50_sub2_1 = (PendingSpawn) aClass6_1261
+						.first(); class50_sub2_1 != null; class50_sub2_1 = (PendingSpawn) aClass6_1261.next()) {
+					class50_sub2_1.x -= i21;
+					class50_sub2_1.y -= k24;
+					if (class50_sub2_1.x < 0 || class50_sub2_1.y < 0 || class50_sub2_1.x >= 104
+							|| class50_sub2_1.y >= 104)
 						class50_sub2_1.unlink();
 				}
 
@@ -2806,34 +2808,34 @@ public class client extends Applet_Sub1 {
 		if (i != 16220)
 			anInt1328 = 458;
 		if (anInt1071 == 2) {
-			for (Class50_Sub2 class50_sub2 = (Class50_Sub2) aClass6_1261
-					.first(); class50_sub2 != null; class50_sub2 = (Class50_Sub2) aClass6_1261.next()) {
-				if (class50_sub2.anInt1390 > 0)
-					class50_sub2.anInt1390--;
-				if (class50_sub2.anInt1390 == 0) {
-					if (class50_sub2.anInt1387 < 0
-							|| Region.isGameObjectModelReady(class50_sub2.anInt1387, class50_sub2.anInt1389)) {
-						method45(class50_sub2.anInt1388, class50_sub2.anInt1393, class50_sub2.anInt1387,
-								class50_sub2.anInt1394, class50_sub2.anInt1391, class50_sub2.anInt1389,
-								class50_sub2.anInt1392);
+			for (PendingSpawn class50_sub2 = (PendingSpawn) aClass6_1261
+					.first(); class50_sub2 != null; class50_sub2 = (PendingSpawn) aClass6_1261.next()) {
+				if (class50_sub2.restoreDelay > 0)
+					class50_sub2.restoreDelay--;
+				if (class50_sub2.restoreDelay == 0) {
+					if (class50_sub2.previousId < 0
+							|| Region.isGameObjectModelReady(class50_sub2.previousId, class50_sub2.previousType)) {
+						method45(class50_sub2.previousOrientation, class50_sub2.x, class50_sub2.previousId,
+								class50_sub2.y, class50_sub2.plane, class50_sub2.previousType,
+								class50_sub2.sceneLayer);
 						class50_sub2.unlink();
 					}
 				} else {
-					if (class50_sub2.anInt1395 > 0)
-						class50_sub2.anInt1395--;
-					if (class50_sub2.anInt1395 == 0 && class50_sub2.anInt1393 >= 1 && class50_sub2.anInt1394 >= 1
-							&& class50_sub2.anInt1393 <= 102 && class50_sub2.anInt1394 <= 102
-							&& (class50_sub2.anInt1384 < 0
-									|| Region.isGameObjectModelReady(class50_sub2.anInt1384, class50_sub2.anInt1386))) {
-						method45(class50_sub2.anInt1385, class50_sub2.anInt1393, class50_sub2.anInt1384,
-								class50_sub2.anInt1394, class50_sub2.anInt1391, class50_sub2.anInt1386,
-								class50_sub2.anInt1392);
-						class50_sub2.anInt1395 = -1;
-						if (class50_sub2.anInt1384 == class50_sub2.anInt1387 && class50_sub2.anInt1387 == -1)
+					if (class50_sub2.spawnDelay > 0)
+						class50_sub2.spawnDelay--;
+					if (class50_sub2.spawnDelay == 0 && class50_sub2.x >= 1 && class50_sub2.y >= 1
+							&& class50_sub2.x <= 102 && class50_sub2.y <= 102
+							&& (class50_sub2.spawnId < 0
+									|| Region.isGameObjectModelReady(class50_sub2.spawnId, class50_sub2.spawnType))) {
+						method45(class50_sub2.spawnOrientation, class50_sub2.x, class50_sub2.spawnId,
+								class50_sub2.y, class50_sub2.plane, class50_sub2.spawnType,
+								class50_sub2.sceneLayer);
+						class50_sub2.spawnDelay = -1;
+						if (class50_sub2.spawnId == class50_sub2.previousId && class50_sub2.previousId == -1)
 							class50_sub2.unlink();
-						else if (class50_sub2.anInt1384 == class50_sub2.anInt1387
-								&& class50_sub2.anInt1385 == class50_sub2.anInt1388
-								&& class50_sub2.anInt1386 == class50_sub2.anInt1389)
+						else if (class50_sub2.spawnId == class50_sub2.previousId
+								&& class50_sub2.spawnOrientation == class50_sub2.previousOrientation
+								&& class50_sub2.spawnType == class50_sub2.previousType)
 							class50_sub2.unlink();
 					}
 				}
@@ -3498,10 +3500,10 @@ public class client extends Applet_Sub1 {
 		aClass50_Sub1_Sub1_Sub1_1017 = new ImageRGB(128, 265);
 		aClass50_Sub1_Sub1_Sub1_1018 = new ImageRGB(128, 265);
 		for (int j = 0; j < 33920; j++)
-			aClass50_Sub1_Sub1_Sub1_1017.pixels[j] = aClass18_1201.anIntArray392[j];
+			aClass50_Sub1_Sub1_Sub1_1017.pixels[j] = aClass18_1201.pixels[j];
 
 		for (int k = 0; k < 33920; k++)
-			aClass50_Sub1_Sub1_Sub1_1018.pixels[k] = aClass18_1202.anIntArray392[k];
+			aClass50_Sub1_Sub1_Sub1_1018.pixels[k] = aClass18_1202.pixels[k];
 
 		anIntArray1311 = new int[256];
 		for (int l = 0; l < 64; l++)
@@ -4259,23 +4261,23 @@ public class client extends Applet_Sub1 {
 		for (aClass18_1110 = null; i >= 0;)
 			return;
 
-		aClass18_1201 = new Class18(265, (byte) -12, method11(-756), 128);
+		aClass18_1201 = new GraphicsBuffer(method11(-756), 128, 265);
 		Rasterizer.resetPixels();
-		aClass18_1202 = new Class18(265, (byte) -12, method11(-756), 128);
+		aClass18_1202 = new GraphicsBuffer(method11(-756), 128, 265);
 		Rasterizer.resetPixels();
-		aClass18_1198 = new Class18(171, (byte) -12, method11(-756), 509);
+		aClass18_1198 = new GraphicsBuffer(method11(-756), 509, 171);
 		Rasterizer.resetPixels();
-		aClass18_1199 = new Class18(132, (byte) -12, method11(-756), 360);
+		aClass18_1199 = new GraphicsBuffer(method11(-756), 360, 132);
 		Rasterizer.resetPixels();
-		aClass18_1200 = new Class18(200, (byte) -12, method11(-756), 360);
+		aClass18_1200 = new GraphicsBuffer(method11(-756), 360, 200);
 		Rasterizer.resetPixels();
-		aClass18_1203 = new Class18(238, (byte) -12, method11(-756), 202);
+		aClass18_1203 = new GraphicsBuffer(method11(-756), 202, 238);
 		Rasterizer.resetPixels();
-		aClass18_1204 = new Class18(238, (byte) -12, method11(-756), 203);
+		aClass18_1204 = new GraphicsBuffer(method11(-756), 203, 238);
 		Rasterizer.resetPixels();
-		aClass18_1205 = new Class18(94, (byte) -12, method11(-756), 74);
+		aClass18_1205 = new GraphicsBuffer(method11(-756), 74, 94);
 		Rasterizer.resetPixels();
-		aClass18_1206 = new Class18(94, (byte) -12, method11(-756), 75);
+		aClass18_1206 = new GraphicsBuffer(method11(-756), 75, 94);
 		Rasterizer.resetPixels();
 		if (aClass2_888 != null) {
 			method139(aBoolean1207);
@@ -4542,40 +4544,31 @@ public class client extends Applet_Sub1 {
 				aClass50_Sub1_Sub1_Sub3Array1142[k5] = new IndexedImage(class2_2, "mod_icons", k5);
 
 			ImageRGB class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backleft1", 0);
-			aClass18_906 = new Class18(class50_sub1_sub1_sub1.height, (byte) -12, method11(-756),
-					class50_sub1_sub1_sub1.width);
+			aClass18_906 = new GraphicsBuffer(method11(-756), class50_sub1_sub1_sub1.width, class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
 			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backleft2", 0);
-			aClass18_907 = new Class18(class50_sub1_sub1_sub1.height, (byte) -12, method11(-756),
-					class50_sub1_sub1_sub1.width);
+			aClass18_907 = new GraphicsBuffer(method11(-756), class50_sub1_sub1_sub1.width, class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
 			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backright1", 0);
-			aClass18_908 = new Class18(class50_sub1_sub1_sub1.height, (byte) -12, method11(-756),
-					class50_sub1_sub1_sub1.width);
+			aClass18_908 = new GraphicsBuffer(method11(-756), class50_sub1_sub1_sub1.width, class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
 			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backright2", 0);
-			aClass18_909 = new Class18(class50_sub1_sub1_sub1.height, (byte) -12, method11(-756),
-					class50_sub1_sub1_sub1.width);
+			aClass18_909 = new GraphicsBuffer(method11(-756), class50_sub1_sub1_sub1.width, class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
 			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backtop1", 0);
-			aClass18_910 = new Class18(class50_sub1_sub1_sub1.height, (byte) -12, method11(-756),
-					class50_sub1_sub1_sub1.width);
+			aClass18_910 = new GraphicsBuffer(method11(-756), class50_sub1_sub1_sub1.width, class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
 			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backvmid1", 0);
-			aClass18_911 = new Class18(class50_sub1_sub1_sub1.height, (byte) -12, method11(-756),
-					class50_sub1_sub1_sub1.width);
+			aClass18_911 = new GraphicsBuffer(method11(-756), class50_sub1_sub1_sub1.width, class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
 			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backvmid2", 0);
-			aClass18_912 = new Class18(class50_sub1_sub1_sub1.height, (byte) -12, method11(-756),
-					class50_sub1_sub1_sub1.width);
+			aClass18_912 = new GraphicsBuffer(method11(-756), class50_sub1_sub1_sub1.width, class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
 			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backvmid3", 0);
-			aClass18_913 = new Class18(class50_sub1_sub1_sub1.height, (byte) -12, method11(-756),
-					class50_sub1_sub1_sub1.width);
+			aClass18_913 = new GraphicsBuffer(method11(-756), class50_sub1_sub1_sub1.width, class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
 			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backhmid2", 0);
-			aClass18_914 = new Class18(class50_sub1_sub1_sub1.height, (byte) -12, method11(-756),
-					class50_sub1_sub1_sub1.width);
+			aClass18_914 = new GraphicsBuffer(method11(-756), class50_sub1_sub1_sub1.width, class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
 			int l5 = (int) (Math.random() * 21D) - 10;
 			int i6 = (int) (Math.random() * 21D) - 10;
@@ -4671,7 +4664,7 @@ public class client extends Applet_Sub1 {
 
 			Class22.method277(334, 22845, ai, 800, 500, 512);
 			Class45.method373(class2_4);
-			aClass7_1248 = new Class7(this, (byte) -116);
+			aClass7_1248 = new MouseRecorder(this);
 			method12(aClass7_1248, 10);
 			DynamicObject.clientInstance = this;
 			GameObjectDefinition.clientInstance = this;
@@ -5240,7 +5233,7 @@ public class client extends Applet_Sub1 {
 					method88(anInt951, anInt960);
 				anInt951 = 0;
 				method147(anInt1140);
-				super.aClass18_15.method230(false);
+				super.aClass18_15.bindRaster();
 				Rasterizer3D.scanlineOffsets = anIntArray1003;
 				Rasterizer.resetPixels();
 				aBoolean1046 = true;
@@ -5265,28 +5258,28 @@ public class client extends Applet_Sub1 {
 					method128(false);
 				}
 			}
-			super.aClass18_15.method231(0, 0, super.aGraphics14, aBoolean1074);
+			super.aClass18_15.draw(super.aGraphics14, 0, 0);
 			return;
 		}
 		if (aBoolean1046) {
 			method122(-906);
 			aBoolean1046 = false;
-			aClass18_906.method231(4, 0, super.aGraphics14, aBoolean1074);
-			aClass18_907.method231(357, 0, super.aGraphics14, aBoolean1074);
-			aClass18_908.method231(4, 722, super.aGraphics14, aBoolean1074);
-			aClass18_909.method231(205, 743, super.aGraphics14, aBoolean1074);
-			aClass18_910.method231(0, 0, super.aGraphics14, aBoolean1074);
-			aClass18_911.method231(4, 516, super.aGraphics14, aBoolean1074);
-			aClass18_912.method231(205, 516, super.aGraphics14, aBoolean1074);
-			aClass18_913.method231(357, 496, super.aGraphics14, aBoolean1074);
-			aClass18_914.method231(338, 0, super.aGraphics14, aBoolean1074);
+			aClass18_906.draw(super.aGraphics14, 0, 4);
+			aClass18_907.draw(super.aGraphics14, 0, 357);
+			aClass18_908.draw(super.aGraphics14, 722, 4);
+			aClass18_909.draw(super.aGraphics14, 743, 205);
+			aClass18_910.draw(super.aGraphics14, 0, 0);
+			aClass18_911.draw(super.aGraphics14, 516, 4);
+			aClass18_912.draw(super.aGraphics14, 516, 205);
+			aClass18_913.draw(super.aGraphics14, 496, 357);
+			aClass18_914.draw(super.aGraphics14, 0, 338);
 			aBoolean1181 = true;
 			aBoolean1240 = true;
 			aBoolean950 = true;
 			aBoolean1212 = true;
 			if (anInt1071 != 2) {
-				aClass18_1158.method231(4, 4, super.aGraphics14, aBoolean1074);
-				aClass18_1157.method231(4, 550, super.aGraphics14, aBoolean1074);
+				aClass18_1158.draw(super.aGraphics14, 4, 4);
+				aClass18_1157.draw(super.aGraphics14, 550, 4);
 			}
 			anInt1237++;
 			if (anInt1237 > 85) {
@@ -5359,7 +5352,7 @@ public class client extends Applet_Sub1 {
 		}
 		if (anInt1071 == 2) {
 			method87(503);
-			aClass18_1157.method231(4, 550, super.aGraphics14, aBoolean1074);
+			aClass18_1157.draw(super.aGraphics14, 550, 4);
 		}
 		if (anInt1213 != -1)
 			aBoolean950 = true;
@@ -5370,7 +5363,7 @@ public class client extends Applet_Sub1 {
 				aClass50_Sub1_Sub2_964.writeByte(anInt1285);
 			}
 			aBoolean950 = false;
-			aClass18_1110.method230(false);
+			aClass18_1110.bindRaster();
 			aClass50_Sub1_Sub1_Sub3_967.draw(0, 0);
 			if (anInt1089 == -1) {
 				if (anIntArray1081[anInt1285] != -1) {
@@ -5404,8 +5397,8 @@ public class client extends Applet_Sub1 {
 				if (anIntArray1081[6] != -1 && (anInt1213 != 6 || anInt1325 % 20 < 10))
 					aClass50_Sub1_Sub1_Sub3Array976[6].draw(208, 13);
 			}
-			aClass18_1110.method231(160, 516, super.aGraphics14, aBoolean1074);
-			aClass18_1109.method230(false);
+			aClass18_1110.draw(super.aGraphics14, 516, 160);
+			aClass18_1109.bindRaster();
 			aClass50_Sub1_Sub1_Sub3_966.draw(0, 0);
 			if (anInt1089 == -1) {
 				if (anIntArray1081[anInt1285] != -1) {
@@ -5437,13 +5430,13 @@ public class client extends Applet_Sub1 {
 				if (anIntArray1081[13] != -1 && (anInt1213 != 13 || anInt1325 % 20 < 10))
 					aClass50_Sub1_Sub1_Sub3Array976[12].draw(226, 2);
 			}
-			aClass18_1109.method231(466, 496, super.aGraphics14, aBoolean1074);
-			aClass18_1158.method230(false);
+			aClass18_1109.draw(super.aGraphics14, 496, 466);
+			aClass18_1158.bindRaster();
 			Rasterizer3D.scanlineOffsets = anIntArray1002;
 		}
 		if (aBoolean1212) {
 			aBoolean1212 = false;
-			aClass18_1108.method230(false);
+			aClass18_1108.bindRaster();
 			aClass50_Sub1_Sub1_Sub3_965.draw(0, 0);
 			aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Public chat", 55, 28, 0xffffff, true);
 			if (anInt1006 == 0)
@@ -5469,8 +5462,8 @@ public class client extends Applet_Sub1 {
 			if (anInt1227 == 2)
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Off", 324, 41, 0xff0000, true);
 			aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Report abuse", 458, 33, 0xffffff, true);
-			aClass18_1108.method231(453, 0, super.aGraphics14, aBoolean1074);
-			aClass18_1158.method230(false);
+			aClass18_1108.draw(super.aGraphics14, 0, 453);
+			aClass18_1158.bindRaster();
 			Rasterizer3D.scanlineOffsets = anIntArray1002;
 		}
 		anInt951 = 0;
@@ -5698,7 +5691,7 @@ public class client extends Applet_Sub1 {
 				aBoolean962 = aClass17_1024.read() == 1;
 				aLong902 = 0L;
 				anInt1299 = 0;
-				aClass7_1248.anInt136 = 0;
+				aClass7_1248.sampleCount = 0;
 				super.aBoolean19 = true;
 				aBoolean1275 = true;
 				aBoolean1137 = true;
@@ -6198,7 +6191,7 @@ public class client extends Applet_Sub1 {
 	}
 
 	public void method84(int i) {
-		aClass18_1159.method230(false);
+		aClass18_1159.bindRaster();
 		Rasterizer3D.scanlineOffsets = anIntArray1000;
 		aClass50_Sub1_Sub1_Sub3_1187.draw(0, 0);
 		if (aBoolean866) {
@@ -6342,8 +6335,8 @@ public class client extends Applet_Sub1 {
 		}
 		if (aBoolean1065 && anInt1304 == 2)
 			method128(false);
-		aClass18_1159.method231(357, 17, super.aGraphics14, aBoolean1074);
-		aClass18_1158.method230(false);
+		aClass18_1159.draw(super.aGraphics14, 17, 357);
+		aClass18_1158.bindRaster();
 		Rasterizer3D.scanlineOffsets = anIntArray1002;
 		if (i != 0)
 			aClass6ArrayArrayArray1323 = null;
@@ -6443,7 +6436,7 @@ public class client extends Applet_Sub1 {
 	}
 
 	public void method87(int i) {
-		aClass18_1157.method230(false);
+		aClass18_1157.bindRaster();
 		if (anInt1050 == 2) {
 			byte abyte0[] = aClass50_Sub1_Sub1_Sub3_1186.pixels;
 			int ai[] = Rasterizer.pixels;
@@ -6454,7 +6447,7 @@ public class client extends Applet_Sub1 {
 
 			aClass50_Sub1_Sub1_Sub1_1116.shapeImageToPixels(0, 0, 33, 33, 256, 25, anIntArray1286, anInt1252,
 					anIntArray1180, 25);
-			aClass18_1158.method230(false);
+			aClass18_1158.bindRaster();
 			Rasterizer3D.scanlineOffsets = anIntArray1002;
 			return;
 		}
@@ -6562,7 +6555,7 @@ public class client extends Applet_Sub1 {
 			method130(i5, true, aClass50_Sub1_Sub1_Sub1_1036, k2);
 		}
 		Rasterizer.drawFilledRectangle(97, 78, 3, 3, 0xffffff);
-		aClass18_1158.method230(false);
+		aClass18_1158.bindRaster();
 		Rasterizer3D.scanlineOffsets = anIntArray1002;
 	}
 
@@ -6912,7 +6905,7 @@ public class client extends Applet_Sub1 {
 			aClass50_Sub1_Sub2_964.writeOpcode(40);
 			class8.buildScene(aClass46Array1260, aClass22_1164);
 			if (aClass18_1158 != null) {
-				aClass18_1158.method230(false);
+				aClass18_1158.bindRaster();
 				Rasterizer3D.scanlineOffsets = anIntArray1002;
 			}
 			aClass50_Sub1_Sub2_964.writeOpcode(40);
@@ -7113,7 +7106,7 @@ public class client extends Applet_Sub1 {
 
 		}
 		for (int i1 = 0; i1 < 33920; i1++)
-			aClass18_1201.anIntArray392[i1] = aClass50_Sub1_Sub1_Sub1_1017.pixels[i1];
+			aClass18_1201.pixels[i1] = aClass50_Sub1_Sub1_Sub1_1017.pixels[i1];
 
 		int j1 = 0;
 		int k1 = 1152;
@@ -7129,8 +7122,8 @@ public class client extends Applet_Sub1 {
 					int i4 = k3;
 					int k4 = 256 - k3;
 					k3 = anIntArray1310[k3];
-					int i5 = aClass18_1201.anIntArray392[k1];
-					aClass18_1201.anIntArray392[k1++] = ((k3 & 0xff00ff) * i4 + (i5 & 0xff00ff) * k4 & 0xff00ff00)
+					int i5 = aClass18_1201.pixels[k1];
+					aClass18_1201.pixels[k1++] = ((k3 & 0xff00ff) * i4 + (i5 & 0xff00ff) * k4 & 0xff00ff00)
 							+ ((k3 & 0xff00) * i4 + (i5 & 0xff00) * k4 & 0xff0000) >> 8;
 				} else {
 					k1++;
@@ -7140,10 +7133,10 @@ public class client extends Applet_Sub1 {
 			k1 += k2;
 		}
 
-		aClass18_1201.method231(0, 0, super.aGraphics14, aBoolean1074);
+		aClass18_1201.draw(super.aGraphics14, 0, 0);
 		i = 66 / i;
 		for (int j2 = 0; j2 < 33920; j2++)
-			aClass18_1202.anIntArray392[j2] = aClass50_Sub1_Sub1_Sub1_1018.pixels[j2];
+			aClass18_1202.pixels[j2] = aClass50_Sub1_Sub1_Sub1_1018.pixels[j2];
 
 		j1 = 0;
 		k1 = 1176;
@@ -7157,8 +7150,8 @@ public class client extends Applet_Sub1 {
 					int j5 = l4;
 					int k5 = 256 - l4;
 					l4 = anIntArray1310[l4];
-					int l5 = aClass18_1202.anIntArray392[k1];
-					aClass18_1202.anIntArray392[k1++] = ((l4 & 0xff00ff) * j5 + (l5 & 0xff00ff) * k5 & 0xff00ff00)
+					int l5 = aClass18_1202.pixels[k1];
+					aClass18_1202.pixels[k1++] = ((l4 & 0xff00ff) * j5 + (l5 & 0xff00ff) * k5 & 0xff00ff00)
 							+ ((l4 & 0xff00) * j5 + (l5 & 0xff00) * k5 & 0xff0000) >> 8;
 				} else {
 					k1++;
@@ -7169,7 +7162,7 @@ public class client extends Applet_Sub1 {
 			k1 += 128 - l3 - j3;
 		}
 
-		aClass18_1202.method231(0, 637, super.aGraphics14, aBoolean1074);
+		aClass18_1202.draw(super.aGraphics14, 637, 0);
 	}
 
 	public void method99(boolean flag, byte byte0, int i) {
@@ -8024,7 +8017,7 @@ public class client extends Applet_Sub1 {
 		}
 
 		if (aClass18_1158 != null) {
-			aClass18_1158.method230(false);
+			aClass18_1158.bindRaster();
 			Rasterizer3D.scanlineOffsets = anIntArray1002;
 		}
 		anInt1082++;
@@ -9307,18 +9300,18 @@ public class client extends Applet_Sub1 {
 			aClass18_1204 = null;
 			aClass18_1205 = null;
 			aClass18_1206 = null;
-			aClass18_1159 = new Class18(96, (byte) -12, method11(-756), 479);
-			aClass18_1157 = new Class18(156, (byte) -12, method11(-756), 172);
+			aClass18_1159 = new GraphicsBuffer(method11(-756), 479, 96);
+			aClass18_1157 = new GraphicsBuffer(method11(-756), 172, 156);
 			Rasterizer.resetPixels();
 			aClass50_Sub1_Sub1_Sub3_1186.draw(0, 0);
-			aClass18_1156 = new Class18(261, (byte) -12, method11(-756), 190);
-			aClass18_1158 = new Class18(334, (byte) -12, method11(-756), 512);
+			aClass18_1156 = new GraphicsBuffer(method11(-756), 190, 261);
+			aClass18_1158 = new GraphicsBuffer(method11(-756), 512, 334);
 			Rasterizer.resetPixels();
-			aClass18_1108 = new Class18(50, (byte) -12, method11(-756), 496);
-			aClass18_1109 = new Class18(37, (byte) -12, method11(-756), 269);
-			aClass18_1110 = new Class18(45, (byte) -12, method11(-756), 249);
+			aClass18_1108 = new GraphicsBuffer(method11(-756), 496, 50);
+			aClass18_1109 = new GraphicsBuffer(method11(-756), 269, 37);
+			aClass18_1110 = new GraphicsBuffer(method11(-756), 249, 45);
 			aBoolean1046 = true;
-			aClass18_1158.method230(false);
+			aClass18_1158.bindRaster();
 			Rasterizer3D.scanlineOffsets = anIntArray1002;
 			return;
 		}
@@ -9406,7 +9399,7 @@ public class client extends Applet_Sub1 {
 		while (i >= 0)
 			return;
 		if (aClass18_1158 != null) {
-			aClass18_1158.method230(false);
+			aClass18_1158.bindRaster();
 			Rasterizer3D.scanlineOffsets = anIntArray1002;
 			int j = 151;
 			if (s != null)
@@ -9418,11 +9411,11 @@ public class client extends Applet_Sub1 {
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredText(s, 257, j, 0);
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredText(s, 256, j - 1, 0xffffff);
 			}
-			aClass18_1158.method231(4, 4, super.aGraphics14, aBoolean1074);
+			aClass18_1158.draw(super.aGraphics14, 4, 4);
 			return;
 		}
 		if (super.aClass18_15 != null) {
-			super.aClass18_15.method230(false);
+			super.aClass18_15.bindRaster();
 			Rasterizer3D.scanlineOffsets = anIntArray1003;
 			int k = 251;
 			char c = '\u012C';
@@ -9438,7 +9431,7 @@ public class client extends Applet_Sub1 {
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredText(s, 383, k, 0);
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredText(s, 382, k - 1, 0xffffff);
 			}
-			super.aClass18_15.method231(0, 0, super.aGraphics14, aBoolean1074);
+			super.aClass18_15.draw(super.aGraphics14, 0, 0);
 		}
 	}
 
@@ -9651,7 +9644,7 @@ public class client extends Applet_Sub1 {
 
 	public void method131(byte byte0, boolean flag) {
 		method64(-188);
-		aClass18_1200.method230(false);
+		aClass18_1200.bindRaster();
 		aClass50_Sub1_Sub1_Sub3_1292.draw(0, 0);
 		char c = '\u0168';
 		char c1 = '\310';
@@ -9722,15 +9715,15 @@ public class client extends Applet_Sub1 {
 			aClass50_Sub1_Sub1_Sub3_1293.draw(k1 - 73, j2 - 20);
 			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags("Cancel", k1, j2 + 5, 0xffffff, true);
 		}
-		aClass18_1200.method231(171, 202, super.aGraphics14, aBoolean1074);
+		aClass18_1200.draw(super.aGraphics14, 202, 171);
 		if (aBoolean1046) {
 			aBoolean1046 = false;
-			aClass18_1198.method231(0, 128, super.aGraphics14, aBoolean1074);
-			aClass18_1199.method231(371, 202, super.aGraphics14, aBoolean1074);
-			aClass18_1203.method231(265, 0, super.aGraphics14, aBoolean1074);
-			aClass18_1204.method231(265, 562, super.aGraphics14, aBoolean1074);
-			aClass18_1205.method231(171, 128, super.aGraphics14, aBoolean1074);
-			aClass18_1206.method231(171, 562, super.aGraphics14, aBoolean1074);
+			aClass18_1198.draw(super.aGraphics14, 128, 0);
+			aClass18_1199.draw(super.aGraphics14, 202, 371);
+			aClass18_1203.draw(super.aGraphics14, 0, 265);
+			aClass18_1204.draw(super.aGraphics14, 562, 265);
+			aClass18_1205.draw(super.aGraphics14, 128, 171);
+			aClass18_1206.draw(super.aGraphics14, 562, 171);
 		}
 	}
 
@@ -10057,7 +10050,7 @@ public class client extends Applet_Sub1 {
 	}
 
 	public void method134(byte byte0) {
-		aClass18_1156.method230(false);
+		aClass18_1156.bindRaster();
 		Rasterizer3D.scanlineOffsets = anIntArray1001;
 		aClass50_Sub1_Sub1_Sub3_1185.draw(0, 0);
 		if (anInt1089 != -1)
@@ -10066,8 +10059,8 @@ public class client extends Applet_Sub1 {
 			method142(0, 0, Widget.get(anIntArray1081[anInt1285]), 0, 8);
 		if (aBoolean1065 && anInt1304 == 1)
 			method128(false);
-		aClass18_1156.method231(205, 553, super.aGraphics14, aBoolean1074);
-		aClass18_1158.method230(false);
+		aClass18_1156.draw(super.aGraphics14, 553, 205);
+		aClass18_1158.bindRaster();
 		Rasterizer3D.scanlineOffsets = anIntArray1002;
 		if (byte0 == 7)
 			;
@@ -10165,7 +10158,7 @@ public class client extends Applet_Sub1 {
 			super.method13(i, true, s);
 			return;
 		}
-		aClass18_1200.method230(false);
+		aClass18_1200.bindRaster();
 		char c = '\u0168';
 		char c1 = '\310';
 		byte byte0 = 20;
@@ -10177,42 +10170,42 @@ public class client extends Applet_Sub1 {
 		Rasterizer.drawFilledRectangle(c / 2 - 150, j + 2, i * 3, 30, 0x8c1111);
 		Rasterizer.drawFilledRectangle((c / 2 - 150) + i * 3, j + 2, 300 - i * 3, 30, 0);
 		aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(s, c / 2, (c1 / 2 + 5) - byte0, 0xffffff);
-		aClass18_1200.method231(171, 202, super.aGraphics14, aBoolean1074);
+		aClass18_1200.draw(super.aGraphics14, 202, 171);
 		if (aBoolean1046) {
 			aBoolean1046 = false;
 			if (!aBoolean1243) {
-				aClass18_1201.method231(0, 0, super.aGraphics14, aBoolean1074);
-				aClass18_1202.method231(0, 637, super.aGraphics14, aBoolean1074);
+				aClass18_1201.draw(super.aGraphics14, 0, 0);
+				aClass18_1202.draw(super.aGraphics14, 637, 0);
 			}
-			aClass18_1198.method231(0, 128, super.aGraphics14, aBoolean1074);
-			aClass18_1199.method231(371, 202, super.aGraphics14, aBoolean1074);
-			aClass18_1203.method231(265, 0, super.aGraphics14, aBoolean1074);
-			aClass18_1204.method231(265, 562, super.aGraphics14, aBoolean1074);
-			aClass18_1205.method231(171, 128, super.aGraphics14, aBoolean1074);
-			aClass18_1206.method231(171, 562, super.aGraphics14, aBoolean1074);
+			aClass18_1198.draw(super.aGraphics14, 128, 0);
+			aClass18_1199.draw(super.aGraphics14, 202, 371);
+			aClass18_1203.draw(super.aGraphics14, 0, 265);
+			aClass18_1204.draw(super.aGraphics14, 562, 265);
+			aClass18_1205.draw(super.aGraphics14, 128, 171);
+			aClass18_1206.draw(super.aGraphics14, 562, 171);
 		}
 	}
 
 	public void method139(boolean flag) {
 		byte abyte0[] = aClass2_888.read("title.dat");
 		ImageRGB class50_sub1_sub1_sub1 = new ImageRGB(abyte0, this);
-		aClass18_1201.method230(false);
+		aClass18_1201.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(0, 0);
-		aClass18_1202.method230(false);
+		aClass18_1202.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-637, 0);
-		aClass18_1198.method230(false);
+		aClass18_1198.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-128, 0);
-		aClass18_1199.method230(false);
+		aClass18_1199.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-202, -371);
-		aClass18_1200.method230(false);
+		aClass18_1200.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-202, -171);
-		aClass18_1203.method230(false);
+		aClass18_1203.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(0, -265);
-		aClass18_1204.method230(false);
+		aClass18_1204.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-562, -265);
-		aClass18_1205.method230(false);
+		aClass18_1205.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-128, -171);
-		aClass18_1206.method230(false);
+		aClass18_1206.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-562, -171);
 		int ai[] = new int[class50_sub1_sub1_sub1.width];
 		for (int i = 0; i < class50_sub1_sub1_sub1.height; i++) {
@@ -10225,30 +10218,30 @@ public class client extends Applet_Sub1 {
 
 		}
 
-		aClass18_1201.method230(false);
+		aClass18_1201.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(382, 0);
-		aClass18_1202.method230(false);
+		aClass18_1202.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-255, 0);
-		aClass18_1198.method230(false);
+		aClass18_1198.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(254, 0);
-		aClass18_1199.method230(false);
+		aClass18_1199.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(180, -371);
-		aClass18_1200.method230(false);
+		aClass18_1200.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(180, -171);
-		aClass18_1203.method230(false);
+		aClass18_1203.bindRaster();
 		if (flag) {
 			for (int k = 1; k > 0; k++)
 				;
 		}
 		class50_sub1_sub1_sub1.drawInverse(382, -265);
-		aClass18_1204.method230(false);
+		aClass18_1204.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-180, -265);
-		aClass18_1205.method230(false);
+		aClass18_1205.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(254, -171);
-		aClass18_1206.method230(false);
+		aClass18_1206.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-180, -171);
 		class50_sub1_sub1_sub1 = new ImageRGB(aClass2_888, "logo", 0);
-		aClass18_1198.method230(false);
+		aClass18_1198.bindRaster();
 		class50_sub1_sub1_sub1.drawImage(382 - class50_sub1_sub1_sub1.width / 2 - 128, 18);
 		class50_sub1_sub1_sub1 = null;
 		abyte0 = null;
@@ -10256,31 +10249,31 @@ public class client extends Applet_Sub1 {
 		System.gc();
 	}
 
-	public void method140(byte byte0, Class50_Sub2 class50_sub2) {
+	public void method140(byte byte0, PendingSpawn class50_sub2) {
 		int i = 0;
 		int j = -1;
 		int k = 0;
 		int l = 0;
 		if (byte0 != -61)
 			aClass50_Sub1_Sub2_964.writeByte(175);
-		if (class50_sub2.anInt1392 == 0)
-			i = aClass22_1164.method267(class50_sub2.anInt1391, class50_sub2.anInt1393, class50_sub2.anInt1394);
-		if (class50_sub2.anInt1392 == 1)
-			i = aClass22_1164.method268(class50_sub2.anInt1393, (byte) 4, class50_sub2.anInt1391,
-					class50_sub2.anInt1394);
-		if (class50_sub2.anInt1392 == 2)
-			i = aClass22_1164.method269(class50_sub2.anInt1391, class50_sub2.anInt1393, class50_sub2.anInt1394);
-		if (class50_sub2.anInt1392 == 3)
-			i = aClass22_1164.method270(class50_sub2.anInt1391, class50_sub2.anInt1393, class50_sub2.anInt1394);
+		if (class50_sub2.sceneLayer == 0)
+			i = aClass22_1164.method267(class50_sub2.plane, class50_sub2.x, class50_sub2.y);
+		if (class50_sub2.sceneLayer == 1)
+			i = aClass22_1164.method268(class50_sub2.x, (byte) 4, class50_sub2.plane,
+					class50_sub2.y);
+		if (class50_sub2.sceneLayer == 2)
+			i = aClass22_1164.method269(class50_sub2.plane, class50_sub2.x, class50_sub2.y);
+		if (class50_sub2.sceneLayer == 3)
+			i = aClass22_1164.method270(class50_sub2.plane, class50_sub2.x, class50_sub2.y);
 		if (i != 0) {
-			int i1 = aClass22_1164.method271(class50_sub2.anInt1391, class50_sub2.anInt1393, class50_sub2.anInt1394, i);
+			int i1 = aClass22_1164.method271(class50_sub2.plane, class50_sub2.x, class50_sub2.y, i);
 			j = i >> 14 & 0x7fff;
 			k = i1 & 0x1f;
 			l = i1 >> 6;
 		}
-		class50_sub2.anInt1387 = j;
-		class50_sub2.anInt1389 = k;
-		class50_sub2.anInt1388 = l;
+		class50_sub2.previousId = j;
+		class50_sub2.previousType = k;
+		class50_sub2.previousOrientation = l;
 	}
 
 	public void method141(int i) {
@@ -10696,30 +10689,30 @@ public class client extends Applet_Sub1 {
 	}
 
 	public void method145(boolean flag, int i, int j, int k, int l, int i1, int j1, int k1, int l1, int i2) {
-		Class50_Sub2 class50_sub2 = null;
-		for (Class50_Sub2 class50_sub2_1 = (Class50_Sub2) aClass6_1261
-				.first(); class50_sub2_1 != null; class50_sub2_1 = (Class50_Sub2) aClass6_1261.next()) {
-			if (class50_sub2_1.anInt1391 != i || class50_sub2_1.anInt1393 != j || class50_sub2_1.anInt1394 != i2
-					|| class50_sub2_1.anInt1392 != l1)
+		PendingSpawn class50_sub2 = null;
+		for (PendingSpawn class50_sub2_1 = (PendingSpawn) aClass6_1261
+				.first(); class50_sub2_1 != null; class50_sub2_1 = (PendingSpawn) aClass6_1261.next()) {
+			if (class50_sub2_1.plane != i || class50_sub2_1.x != j || class50_sub2_1.y != i2
+					|| class50_sub2_1.sceneLayer != l1)
 				continue;
 			class50_sub2 = class50_sub2_1;
 			break;
 		}
 
 		if (class50_sub2 == null) {
-			class50_sub2 = new Class50_Sub2();
-			class50_sub2.anInt1391 = i;
-			class50_sub2.anInt1392 = l1;
-			class50_sub2.anInt1393 = j;
-			class50_sub2.anInt1394 = i2;
+			class50_sub2 = new PendingSpawn();
+			class50_sub2.plane = i;
+			class50_sub2.sceneLayer = l1;
+			class50_sub2.x = j;
+			class50_sub2.y = i2;
 			method140((byte) -61, class50_sub2);
 			aClass6_1261.addLast(class50_sub2);
 		}
-		class50_sub2.anInt1384 = j1;
-		class50_sub2.anInt1386 = i1;
-		class50_sub2.anInt1385 = k;
-		class50_sub2.anInt1395 = k1;
-		class50_sub2.anInt1390 = l;
+		class50_sub2.spawnId = j1;
+		class50_sub2.spawnType = i1;
+		class50_sub2.spawnOrientation = k;
+		class50_sub2.spawnDelay = k1;
+		class50_sub2.restoreDelay = l;
 		aBoolean1137 &= flag;
 	}
 
@@ -10784,7 +10777,7 @@ public class client extends Applet_Sub1 {
 		aClass18_1108 = null;
 		aClass18_1109 = null;
 		aClass18_1110 = null;
-		super.aClass18_15 = new Class18(503, (byte) -12, method11(-756), 765);
+		super.aClass18_15 = new GraphicsBuffer(method11(-756), 765, 503);
 		aBoolean1046 = true;
 	}
 
@@ -11085,7 +11078,7 @@ public class client extends Applet_Sub1 {
 		method127();
 		method65(l2, -927);
 		method109();
-		aClass18_1158.method231(4, 4, super.aGraphics14, aBoolean1074);
+		aClass18_1158.draw(super.aGraphics14, 4, 4);
 		anInt1216 = i1;
 		anInt1217 = j1;
 		anInt1218 = k1;
@@ -11412,15 +11405,15 @@ public class client extends Applet_Sub1 {
 	public int anInt903;
 	public int anInt904;
 	public int anInt905;
-	public Class18 aClass18_906;
-	public Class18 aClass18_907;
-	public Class18 aClass18_908;
-	public Class18 aClass18_909;
-	public Class18 aClass18_910;
-	public Class18 aClass18_911;
-	public Class18 aClass18_912;
-	public Class18 aClass18_913;
-	public Class18 aClass18_914;
+	public GraphicsBuffer aClass18_906;
+	public GraphicsBuffer aClass18_907;
+	public GraphicsBuffer aClass18_908;
+	public GraphicsBuffer aClass18_909;
+	public GraphicsBuffer aClass18_910;
+	public GraphicsBuffer aClass18_911;
+	public GraphicsBuffer aClass18_912;
+	public GraphicsBuffer aClass18_913;
+	public GraphicsBuffer aClass18_914;
 	public int anInt915;
 	public int anInt916;
 	public int anInt917;
@@ -11611,9 +11604,9 @@ public class client extends Applet_Sub1 {
 	public int anIntArray1105[];
 	public int anInt1106;
 	public int anInt1107;
-	public Class18 aClass18_1108;
-	public Class18 aClass18_1109;
-	public Class18 aClass18_1110;
+	public GraphicsBuffer aClass18_1108;
+	public GraphicsBuffer aClass18_1109;
+	public GraphicsBuffer aClass18_1110;
 	public int anInt1111;
 	public int anInt1112;
 	public int anInt1113;
@@ -11658,10 +11651,10 @@ public class client extends Applet_Sub1 {
 	public IndexedImage aClass50_Sub1_Sub1_Sub3Array1153[];
 	public int anInt1154;
 	public boolean aBoolean1155;
-	public Class18 aClass18_1156;
-	public Class18 aClass18_1157;
-	public Class18 aClass18_1158;
-	public Class18 aClass18_1159;
+	public GraphicsBuffer aClass18_1156;
+	public GraphicsBuffer aClass18_1157;
+	public GraphicsBuffer aClass18_1158;
+	public GraphicsBuffer aClass18_1159;
 	public static int anInt1160;
 	public byte aByte1161;
 	public static int anInt1162;
@@ -11698,15 +11691,15 @@ public class client extends Applet_Sub1 {
 	public ImageRGB aClass50_Sub1_Sub1_Sub1_1195;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1_1196;
 	public int anInt1197;
-	public Class18 aClass18_1198;
-	public Class18 aClass18_1199;
-	public Class18 aClass18_1200;
-	public Class18 aClass18_1201;
-	public Class18 aClass18_1202;
-	public Class18 aClass18_1203;
-	public Class18 aClass18_1204;
-	public Class18 aClass18_1205;
-	public Class18 aClass18_1206;
+	public GraphicsBuffer aClass18_1198;
+	public GraphicsBuffer aClass18_1199;
+	public GraphicsBuffer aClass18_1200;
+	public GraphicsBuffer aClass18_1201;
+	public GraphicsBuffer aClass18_1202;
+	public GraphicsBuffer aClass18_1203;
+	public GraphicsBuffer aClass18_1204;
+	public GraphicsBuffer aClass18_1205;
+	public GraphicsBuffer aClass18_1206;
 	public static boolean aBoolean1207;
 	public int anInt1208;
 	public boolean aBoolean1209;
@@ -11747,7 +11740,7 @@ public class client extends Applet_Sub1 {
 	public byte aByteArray1245[];
 	public int anInt1246;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1_1247;
-	public Class7 aClass7_1248;
+	public MouseRecorder aClass7_1248;
 	public Widget aClass13_1249;
 	public long aLong1250;
 	public int anInt1251;
