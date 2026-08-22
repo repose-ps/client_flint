@@ -890,129 +890,129 @@ public class Rasterizer3D extends Rasterizer {
 	/**
 	 * Draws gouraud scanline.
 	 * 
-	 * @param values      the values
-	 * @param inputValue  the input value
-	 * @param inputValue2 the input value2
-	 * @param inputValue3 the input value3
-	 * @param inputValue4 the input value4
-	 * @param inputValue5 the input value5
-	 * @param inputValue6 the input value6
-	 * @param inputValue7 the input value7
+	 * @param pixels          destination pixel buffer
+	 * @param offset          scanline base offset
+	 * @param rgb             scratch RGB value retained by the original scanline loop
+	 * @param pixelGroupCount scratch group/pixel counter retained by the original loop
+	 * @param xStart          inclusive span start
+	 * @param xEnd            exclusive span end
+	 * @param shadeStart      starting fixed-point shade
+	 * @param shadeEnd        ending fixed-point shade
 	 */
-	private static void drawGouraudScanline(int values[], int inputValue, int inputValue2, int inputValue3,
-			int inputValue4, int inputValue5, int inputValue6, int inputValue7) {
+	private static void drawGouraudScanline(int pixels[], int offset, int rgb, int pixelGroupCount,
+			int xStart, int xEnd, int shadeStart, int shadeEnd) {
 		if (gouraudBlockShading) {
-			int intermediateValue;
+			int shadeStep;
 			if (restrictEdges) {
-				if (inputValue5 - inputValue4 > 3)
-					intermediateValue = (inputValue7 - inputValue6) / (inputValue5 - inputValue4);
+				if (xEnd - xStart > 3)
+					shadeStep = (shadeEnd - shadeStart) / (xEnd - xStart);
 				else
-					intermediateValue = 0;
-				if (inputValue5 > Rasterizer.viewportRx)
-					inputValue5 = Rasterizer.viewportRx;
-				if (inputValue4 < 0) {
-					inputValue6 -= inputValue4 * intermediateValue;
-					inputValue4 = 0;
+					shadeStep = 0;
+				if (xEnd > Rasterizer.viewportRx)
+					xEnd = Rasterizer.viewportRx;
+				if (xStart < 0) {
+					shadeStart -= xStart * shadeStep;
+					xStart = 0;
 				}
-				if (inputValue4 >= inputValue5)
+				if (xStart >= xEnd)
 					return;
-				inputValue += inputValue4;
-				inputValue3 = inputValue5 - inputValue4 >> 2;
-				intermediateValue <<= 2;
+				offset += xStart;
+				pixelGroupCount = xEnd - xStart >> 2;
+				shadeStep <<= 2;
 			} else {
-				if (inputValue4 >= inputValue5)
+				if (xStart >= xEnd)
 					return;
-				inputValue += inputValue4;
-				inputValue3 = inputValue5 - inputValue4 >> 2;
-				if (inputValue3 > 0)
-					intermediateValue = (inputValue7 - inputValue6) * reciprocal15[inputValue3] >> 15;
+				offset += xStart;
+				pixelGroupCount = xEnd - xStart >> 2;
+				if (pixelGroupCount > 0)
+					shadeStep = (shadeEnd - shadeStart) * reciprocal15[pixelGroupCount] >> 15;
 				else
-					intermediateValue = 0;
+					shadeStep = 0;
 			}
 			if (alpha == 0) {
-				while (--inputValue3 >= 0) {
-					inputValue2 = HSL_TO_RGB[inputValue6 >> 8];
-					inputValue6 += intermediateValue;
-					values[inputValue++] = inputValue2;
-					values[inputValue++] = inputValue2;
-					values[inputValue++] = inputValue2;
-					values[inputValue++] = inputValue2;
+				while (--pixelGroupCount >= 0) {
+					rgb = HSL_TO_RGB[shadeStart >> 8];
+					shadeStart += shadeStep;
+					pixels[offset++] = rgb;
+					pixels[offset++] = rgb;
+					pixels[offset++] = rgb;
+					pixels[offset++] = rgb;
 				}
-				inputValue3 = inputValue5 - inputValue4 & 3;
-				if (inputValue3 > 0) {
-					inputValue2 = HSL_TO_RGB[inputValue6 >> 8];
+				pixelGroupCount = xEnd - xStart & 3;
+				if (pixelGroupCount > 0) {
+					rgb = HSL_TO_RGB[shadeStart >> 8];
 					do
-						values[inputValue++] = inputValue2;
-					while (--inputValue3 > 0);
+						pixels[offset++] = rgb;
+					while (--pixelGroupCount > 0);
 					return;
 				}
 			} else {
-				int intermediateValue2 = alpha;
-				int intermediateValue3 = 256 - alpha;
-				while (--inputValue3 >= 0) {
-					inputValue2 = HSL_TO_RGB[inputValue6 >> 8];
-					inputValue6 += intermediateValue;
-					inputValue2 = ((inputValue2 & 0xff00ff) * intermediateValue3 >> 8 & 0xff00ff)
-							+ ((inputValue2 & 0xff00) * intermediateValue3 >> 8 & 0xff00);
-					values[inputValue++] = inputValue2
-							+ ((values[inputValue] & 0xff00ff) * intermediateValue2 >> 8 & 0xff00ff)
-							+ ((values[inputValue] & 0xff00) * intermediateValue2 >> 8 & 0xff00);
-					values[inputValue++] = inputValue2
-							+ ((values[inputValue] & 0xff00ff) * intermediateValue2 >> 8 & 0xff00ff)
-							+ ((values[inputValue] & 0xff00) * intermediateValue2 >> 8 & 0xff00);
-					values[inputValue++] = inputValue2
-							+ ((values[inputValue] & 0xff00ff) * intermediateValue2 >> 8 & 0xff00ff)
-							+ ((values[inputValue] & 0xff00) * intermediateValue2 >> 8 & 0xff00);
-					values[inputValue++] = inputValue2
-							+ ((values[inputValue] & 0xff00ff) * intermediateValue2 >> 8 & 0xff00ff)
-							+ ((values[inputValue] & 0xff00) * intermediateValue2 >> 8 & 0xff00);
+				int destinationAlpha = alpha;
+				int sourceAlpha = 256 - alpha;
+				while (--pixelGroupCount >= 0) {
+					rgb = HSL_TO_RGB[shadeStart >> 8];
+					shadeStart += shadeStep;
+					rgb = ((rgb & 0xff00ff) * sourceAlpha >> 8 & 0xff00ff)
+							+ ((rgb & 0xff00) * sourceAlpha >> 8 & 0xff00);
+					pixels[offset++] = rgb
+							+ ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
+							+ ((pixels[offset] & 0xff00) * destinationAlpha >> 8 & 0xff00);
+					pixels[offset++] = rgb
+							+ ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
+							+ ((pixels[offset] & 0xff00) * destinationAlpha >> 8 & 0xff00);
+					pixels[offset++] = rgb
+							+ ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
+							+ ((pixels[offset] & 0xff00) * destinationAlpha >> 8 & 0xff00);
+					pixels[offset++] = rgb
+							+ ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
+							+ ((pixels[offset] & 0xff00) * destinationAlpha >> 8 & 0xff00);
 				}
-				inputValue3 = inputValue5 - inputValue4 & 3;
-				if (inputValue3 > 0) {
-					inputValue2 = HSL_TO_RGB[inputValue6 >> 8];
-					inputValue2 = ((inputValue2 & 0xff00ff) * intermediateValue3 >> 8 & 0xff00ff)
-							+ ((inputValue2 & 0xff00) * intermediateValue3 >> 8 & 0xff00);
+				pixelGroupCount = xEnd - xStart & 3;
+				if (pixelGroupCount > 0) {
+					rgb = HSL_TO_RGB[shadeStart >> 8];
+					rgb = ((rgb & 0xff00ff) * sourceAlpha >> 8 & 0xff00ff)
+							+ ((rgb & 0xff00) * sourceAlpha >> 8 & 0xff00);
 					do
-						values[inputValue++] = inputValue2
-								+ ((values[inputValue] & 0xff00ff) * intermediateValue2 >> 8 & 0xff00ff)
-								+ ((values[inputValue] & 0xff00) * intermediateValue2 >> 8 & 0xff00);
-					while (--inputValue3 > 0);
+						pixels[offset++] = rgb
+								+ ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
+								+ ((pixels[offset] & 0xff00) * destinationAlpha >> 8 & 0xff00);
+					while (--pixelGroupCount > 0);
 				}
 			}
 			return;
 		}
-		if (inputValue4 >= inputValue5)
+		if (xStart >= xEnd)
 			return;
-		int intermediateValue4 = (inputValue7 - inputValue6) / (inputValue5 - inputValue4);
+		int shadeStepScalar = (shadeEnd - shadeStart) / (xEnd - xStart);
 		if (restrictEdges) {
-			if (inputValue5 > Rasterizer.viewportRx)
-				inputValue5 = Rasterizer.viewportRx;
-			if (inputValue4 < 0) {
-				inputValue6 -= inputValue4 * intermediateValue4;
-				inputValue4 = 0;
+			if (xEnd > Rasterizer.viewportRx)
+				xEnd = Rasterizer.viewportRx;
+			if (xStart < 0) {
+				shadeStart -= xStart * shadeStepScalar;
+				xStart = 0;
 			}
-			if (inputValue4 >= inputValue5)
+			if (xStart >= xEnd)
 				return;
 		}
-		inputValue += inputValue4;
-		inputValue3 = inputValue5 - inputValue4;
+		offset += xStart;
+		pixelGroupCount = xEnd - xStart;
 		if (alpha == 0) {
 			do {
-				values[inputValue++] = HSL_TO_RGB[inputValue6 >> 8];
-				inputValue6 += intermediateValue4;
-			} while (--inputValue3 > 0);
+				pixels[offset++] = HSL_TO_RGB[shadeStart >> 8];
+				shadeStart += shadeStepScalar;
+			} while (--pixelGroupCount > 0);
 			return;
 		}
-		int intermediateValue5 = alpha;
-		int intermediateValue6 = 256 - alpha;
+		int destinationAlphaScalar = alpha;
+		int sourceAlphaScalar = 256 - alpha;
 		do {
-			inputValue2 = HSL_TO_RGB[inputValue6 >> 8];
-			inputValue6 += intermediateValue4;
-			inputValue2 = ((inputValue2 & 0xff00ff) * intermediateValue6 >> 8 & 0xff00ff)
-					+ ((inputValue2 & 0xff00) * intermediateValue6 >> 8 & 0xff00);
-			values[inputValue++] = inputValue2 + ((values[inputValue] & 0xff00ff) * intermediateValue5 >> 8 & 0xff00ff)
-					+ ((values[inputValue] & 0xff00) * intermediateValue5 >> 8 & 0xff00);
-		} while (--inputValue3 > 0);
+			rgb = HSL_TO_RGB[shadeStart >> 8];
+			shadeStart += shadeStepScalar;
+			rgb = ((rgb & 0xff00ff) * sourceAlphaScalar >> 8 & 0xff00ff)
+					+ ((rgb & 0xff00) * sourceAlphaScalar >> 8 & 0xff00);
+			pixels[offset++] = rgb + ((pixels[offset] & 0xff00ff) * destinationAlphaScalar >> 8 & 0xff00ff)
+					+ ((pixels[offset] & 0xff00) * destinationAlphaScalar >> 8 & 0xff00);
+		} while (--pixelGroupCount > 0);
 	}
 
 	/**
@@ -1344,54 +1344,54 @@ public class Rasterizer3D extends Rasterizer {
 	/**
 	 * Draws flat scanline.
 	 * 
-	 * @param values      the values
-	 * @param inputValue  the input value
-	 * @param inputValue2 the input value2
-	 * @param inputValue3 the input value3
-	 * @param inputValue4 the input value4
-	 * @param inputValue5 the input value5
+	 * @param pixels          destination pixel buffer
+	 * @param offset          scanline base offset
+	 * @param rgb             flat RGB value
+	 * @param pixelGroupCount scratch group counter retained by the original loop
+	 * @param xStart          inclusive span start
+	 * @param xEnd            exclusive span end
 	 */
-	private static void drawFlatScanline(int values[], int inputValue, int inputValue2, int inputValue3,
-			int inputValue4, int inputValue5) {
+	private static void drawFlatScanline(int pixels[], int offset, int rgb, int pixelGroupCount,
+			int xStart, int xEnd) {
 		if (restrictEdges) {
-			if (inputValue5 > Rasterizer.viewportRx)
-				inputValue5 = Rasterizer.viewportRx;
-			if (inputValue4 < 0)
-				inputValue4 = 0;
+			if (xEnd > Rasterizer.viewportRx)
+				xEnd = Rasterizer.viewportRx;
+			if (xStart < 0)
+				xStart = 0;
 		}
-		if (inputValue4 >= inputValue5)
+		if (xStart >= xEnd)
 			return;
-		inputValue += inputValue4;
-		inputValue3 = inputValue5 - inputValue4 >> 2;
+		offset += xStart;
+		pixelGroupCount = xEnd - xStart >> 2;
 		if (alpha == 0) {
-			while (--inputValue3 >= 0) {
-				values[inputValue++] = inputValue2;
-				values[inputValue++] = inputValue2;
-				values[inputValue++] = inputValue2;
-				values[inputValue++] = inputValue2;
+			while (--pixelGroupCount >= 0) {
+				pixels[offset++] = rgb;
+				pixels[offset++] = rgb;
+				pixels[offset++] = rgb;
+				pixels[offset++] = rgb;
 			}
-			for (inputValue3 = inputValue5 - inputValue4 & 3; --inputValue3 >= 0;)
-				values[inputValue++] = inputValue2;
+			for (pixelGroupCount = xEnd - xStart & 3; --pixelGroupCount >= 0;)
+				pixels[offset++] = rgb;
 
 			return;
 		}
-		int intermediateValue = alpha;
-		int intermediateValue2 = 256 - alpha;
-		inputValue2 = ((inputValue2 & 0xff00ff) * intermediateValue2 >> 8 & 0xff00ff)
-				+ ((inputValue2 & 0xff00) * intermediateValue2 >> 8 & 0xff00);
-		while (--inputValue3 >= 0) {
-			values[inputValue++] = inputValue2 + ((values[inputValue] & 0xff00ff) * intermediateValue >> 8 & 0xff00ff)
-					+ ((values[inputValue] & 0xff00) * intermediateValue >> 8 & 0xff00);
-			values[inputValue++] = inputValue2 + ((values[inputValue] & 0xff00ff) * intermediateValue >> 8 & 0xff00ff)
-					+ ((values[inputValue] & 0xff00) * intermediateValue >> 8 & 0xff00);
-			values[inputValue++] = inputValue2 + ((values[inputValue] & 0xff00ff) * intermediateValue >> 8 & 0xff00ff)
-					+ ((values[inputValue] & 0xff00) * intermediateValue >> 8 & 0xff00);
-			values[inputValue++] = inputValue2 + ((values[inputValue] & 0xff00ff) * intermediateValue >> 8 & 0xff00ff)
-					+ ((values[inputValue] & 0xff00) * intermediateValue >> 8 & 0xff00);
+		int destinationAlpha = alpha;
+		int sourceAlpha = 256 - alpha;
+		rgb = ((rgb & 0xff00ff) * sourceAlpha >> 8 & 0xff00ff)
+				+ ((rgb & 0xff00) * sourceAlpha >> 8 & 0xff00);
+		while (--pixelGroupCount >= 0) {
+			pixels[offset++] = rgb + ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
+					+ ((pixels[offset] & 0xff00) * destinationAlpha >> 8 & 0xff00);
+			pixels[offset++] = rgb + ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
+					+ ((pixels[offset] & 0xff00) * destinationAlpha >> 8 & 0xff00);
+			pixels[offset++] = rgb + ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
+					+ ((pixels[offset] & 0xff00) * destinationAlpha >> 8 & 0xff00);
+			pixels[offset++] = rgb + ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
+					+ ((pixels[offset] & 0xff00) * destinationAlpha >> 8 & 0xff00);
 		}
-		for (inputValue3 = inputValue5 - inputValue4 & 3; --inputValue3 >= 0;)
-			values[inputValue++] = inputValue2 + ((values[inputValue] & 0xff00ff) * intermediateValue >> 8 & 0xff00ff)
-					+ ((values[inputValue] & 0xff00) * intermediateValue >> 8 & 0xff00);
+		for (pixelGroupCount = xEnd - xStart & 3; --pixelGroupCount >= 0;)
+			pixels[offset++] = rgb + ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
+					+ ((pixels[offset] & 0xff00) * destinationAlpha >> 8 & 0xff00);
 
 	}
 

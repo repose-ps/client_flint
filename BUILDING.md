@@ -1,6 +1,6 @@
 # Reproducible build and regression verification
 
-Refinement Step 6 adds a pinned Maven build without changing production Java behavior.
+The project uses the pinned Maven build introduced in Refinement Step 6. Refinement Step 7 adds renderer pixel-golden coverage to the same regression gate.
 
 ## Requirements
 
@@ -44,11 +44,12 @@ The `verify` phase runs `rs2.RegressionSuite`, which launches every retained sui
 
 1. `rs2.concurrent.ThreadLifecycleSafetyTest`
 2. `rs2.net.NetworkResourceRobustnessTest`
-3. `rs2.cache.Revision377CacheSmokeTest`
-4. `rs2.cache.BootstrapArchiveRecoveryTest`
-5. `rs2.cache.Revision377OnDemandDecompressionTest`
+3. `rs2.media.RendererGoldenTest`
+4. `rs2.cache.Revision377CacheSmokeTest`
+5. `rs2.cache.BootstrapArchiveRecoveryTest`
+6. `rs2.cache.Revision377OnDemandDecompressionTest`
 
-The runner validates the cache fixture before starting and fails the build immediately if any suite exits unsuccessfully.
+The runner validates the cache fixture before starting and fails the build immediately if any suite exits unsuccessfully. `RendererGoldenTest` hashes deterministic software-renderer pixel buffers and also loads the authentic texture archive from the revision-377 cache for textured-triangle coverage.
 
 ## Historical parity suites
 

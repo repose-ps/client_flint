@@ -1898,132 +1898,132 @@ public class Scene {
 	 */
 	public void renderPlainTile(GenericTile tile, int plane, int tileX, int tileY, int pitchSine, int pitchCosine,
 			int yawSine, int yawCosine) {
-		int intermediateValue;
-		int intermediateValue2 = intermediateValue = (tileX << 7) - cameraX;
-		int intermediateValue3;
-		int intermediateValue4 = intermediateValue3 = (tileY << 7) - cameraY;
-		int intermediateValue5;
-		int intermediateValue6 = intermediateValue5 = intermediateValue2 + 128;
-		int intermediateValue7;
-		int intermediateValue8 = intermediateValue7 = intermediateValue4 + 128;
-		int intermediateValue9 = tileHeights[plane][tileX][tileY] - cameraZ;
-		int intermediateValue10 = tileHeights[plane][tileX + 1][tileY] - cameraZ;
-		int intermediateValue11 = tileHeights[plane][tileX + 1][tileY + 1] - cameraZ;
-		int intermediateValue12 = tileHeights[plane][tileX][tileY + 1] - cameraZ;
-		int intermediateValue13 = intermediateValue4 * yawSine + intermediateValue2 * yawCosine >> 16;
-		intermediateValue4 = intermediateValue4 * yawCosine - intermediateValue2 * yawSine >> 16;
-		intermediateValue2 = intermediateValue13;
-		intermediateValue13 = intermediateValue9 * pitchCosine - intermediateValue4 * pitchSine >> 16;
-		intermediateValue4 = intermediateValue9 * pitchSine + intermediateValue4 * pitchCosine >> 16;
-		intermediateValue9 = intermediateValue13;
-		if (intermediateValue4 < 50)
+		int northWestViewX;
+		int southWestViewX = northWestViewX = (tileX << 7) - cameraX;
+		int southEastDepth;
+		int southWestDepth = southEastDepth = (tileY << 7) - cameraY;
+		int northEastViewX;
+		int southEastViewX = northEastViewX = southWestViewX + 128;
+		int northWestDepth;
+		int northEastDepth = northWestDepth = southWestDepth + 128;
+		int southWestViewY = tileHeights[plane][tileX][tileY] - cameraZ;
+		int southEastViewY = tileHeights[plane][tileX + 1][tileY] - cameraZ;
+		int northEastViewY = tileHeights[plane][tileX + 1][tileY + 1] - cameraZ;
+		int northWestViewY = tileHeights[plane][tileX][tileY + 1] - cameraZ;
+		int rotated = southWestDepth * yawSine + southWestViewX * yawCosine >> 16;
+		southWestDepth = southWestDepth * yawCosine - southWestViewX * yawSine >> 16;
+		southWestViewX = rotated;
+		rotated = southWestViewY * pitchCosine - southWestDepth * pitchSine >> 16;
+		southWestDepth = southWestViewY * pitchSine + southWestDepth * pitchCosine >> 16;
+		southWestViewY = rotated;
+		if (southWestDepth < 50)
 			return;
-		intermediateValue13 = intermediateValue3 * yawSine + intermediateValue6 * yawCosine >> 16;
-		intermediateValue3 = intermediateValue3 * yawCosine - intermediateValue6 * yawSine >> 16;
-		intermediateValue6 = intermediateValue13;
-		intermediateValue13 = intermediateValue10 * pitchCosine - intermediateValue3 * pitchSine >> 16;
-		intermediateValue3 = intermediateValue10 * pitchSine + intermediateValue3 * pitchCosine >> 16;
-		intermediateValue10 = intermediateValue13;
-		if (intermediateValue3 < 50)
+		rotated = southEastDepth * yawSine + southEastViewX * yawCosine >> 16;
+		southEastDepth = southEastDepth * yawCosine - southEastViewX * yawSine >> 16;
+		southEastViewX = rotated;
+		rotated = southEastViewY * pitchCosine - southEastDepth * pitchSine >> 16;
+		southEastDepth = southEastViewY * pitchSine + southEastDepth * pitchCosine >> 16;
+		southEastViewY = rotated;
+		if (southEastDepth < 50)
 			return;
-		intermediateValue13 = intermediateValue8 * yawSine + intermediateValue5 * yawCosine >> 16;
-		intermediateValue8 = intermediateValue8 * yawCosine - intermediateValue5 * yawSine >> 16;
-		intermediateValue5 = intermediateValue13;
-		intermediateValue13 = intermediateValue11 * pitchCosine - intermediateValue8 * pitchSine >> 16;
-		intermediateValue8 = intermediateValue11 * pitchSine + intermediateValue8 * pitchCosine >> 16;
-		intermediateValue11 = intermediateValue13;
-		if (intermediateValue8 < 50)
+		rotated = northEastDepth * yawSine + northEastViewX * yawCosine >> 16;
+		northEastDepth = northEastDepth * yawCosine - northEastViewX * yawSine >> 16;
+		northEastViewX = rotated;
+		rotated = northEastViewY * pitchCosine - northEastDepth * pitchSine >> 16;
+		northEastDepth = northEastViewY * pitchSine + northEastDepth * pitchCosine >> 16;
+		northEastViewY = rotated;
+		if (northEastDepth < 50)
 			return;
-		intermediateValue13 = intermediateValue7 * yawSine + intermediateValue * yawCosine >> 16;
-		intermediateValue7 = intermediateValue7 * yawCosine - intermediateValue * yawSine >> 16;
-		intermediateValue = intermediateValue13;
-		intermediateValue13 = intermediateValue12 * pitchCosine - intermediateValue7 * pitchSine >> 16;
-		intermediateValue7 = intermediateValue12 * pitchSine + intermediateValue7 * pitchCosine >> 16;
-		intermediateValue12 = intermediateValue13;
-		if (intermediateValue7 < 50)
+		rotated = northWestDepth * yawSine + northWestViewX * yawCosine >> 16;
+		northWestDepth = northWestDepth * yawCosine - northWestViewX * yawSine >> 16;
+		northWestViewX = rotated;
+		rotated = northWestViewY * pitchCosine - northWestDepth * pitchSine >> 16;
+		northWestDepth = northWestViewY * pitchSine + northWestDepth * pitchCosine >> 16;
+		northWestViewY = rotated;
+		if (northWestDepth < 50)
 			return;
-		int intermediateValue14 = Rasterizer3D.centerX + (intermediateValue2 << 9) / intermediateValue4;
-		int intermediateValue15 = Rasterizer3D.centerY + (intermediateValue9 << 9) / intermediateValue4;
-		int intermediateValue16 = Rasterizer3D.centerX + (intermediateValue6 << 9) / intermediateValue3;
-		int intermediateValue17 = Rasterizer3D.centerY + (intermediateValue10 << 9) / intermediateValue3;
-		int intermediateValue18 = Rasterizer3D.centerX + (intermediateValue5 << 9) / intermediateValue8;
-		int intermediateValue19 = Rasterizer3D.centerY + (intermediateValue11 << 9) / intermediateValue8;
-		int intermediateValue20 = Rasterizer3D.centerX + (intermediateValue << 9) / intermediateValue7;
-		int intermediateValue21 = Rasterizer3D.centerY + (intermediateValue12 << 9) / intermediateValue7;
+		int southWestScreenX = Rasterizer3D.centerX + (southWestViewX << 9) / southWestDepth;
+		int southWestScreenY = Rasterizer3D.centerY + (southWestViewY << 9) / southWestDepth;
+		int southEastScreenX = Rasterizer3D.centerX + (southEastViewX << 9) / southEastDepth;
+		int southEastScreenY = Rasterizer3D.centerY + (southEastViewY << 9) / southEastDepth;
+		int northEastScreenX = Rasterizer3D.centerX + (northEastViewX << 9) / northEastDepth;
+		int northEastScreenY = Rasterizer3D.centerY + (northEastViewY << 9) / northEastDepth;
+		int northWestScreenX = Rasterizer3D.centerX + (northWestViewX << 9) / northWestDepth;
+		int northWestScreenY = Rasterizer3D.centerY + (northWestViewY << 9) / northWestDepth;
 		Rasterizer3D.alpha = 0;
-		if ((intermediateValue18 - intermediateValue20) * (intermediateValue17 - intermediateValue21)
-				- (intermediateValue19 - intermediateValue21) * (intermediateValue16 - intermediateValue20) > 0) {
+		if ((northEastScreenX - northWestScreenX) * (southEastScreenY - northWestScreenY)
+				- (northEastScreenY - northWestScreenY) * (southEastScreenX - northWestScreenX) > 0) {
 			Rasterizer3D.restrictEdges = false;
-			if (intermediateValue18 < 0 || intermediateValue20 < 0 || intermediateValue16 < 0
-					|| intermediateValue18 > Rasterizer.viewportRx || intermediateValue20 > Rasterizer.viewportRx
-					|| intermediateValue16 > Rasterizer.viewportRx)
+			if (northEastScreenX < 0 || northWestScreenX < 0 || southEastScreenX < 0
+					|| northEastScreenX > Rasterizer.viewportRx || northWestScreenX > Rasterizer.viewportRx
+					|| southEastScreenX > Rasterizer.viewportRx)
 				Rasterizer3D.restrictEdges = true;
-			if (picking && containsScreenPoint(mouseX, mouseY, intermediateValue19, intermediateValue21,
-					intermediateValue17, intermediateValue18, intermediateValue20, intermediateValue16)) {
+			if (picking && containsScreenPoint(mouseX, mouseY, northEastScreenY, northWestScreenY,
+					southEastScreenY, northEastScreenX, northWestScreenX, southEastScreenX)) {
 				pickedTileX = tileX;
 				pickedTileY = tileY;
 			}
 			if (tile.texture == -1) {
 				if (tile.colourC != 0xbc614e)
-					Rasterizer3D.drawGouraudTriangle(intermediateValue19, intermediateValue21, intermediateValue17,
-							intermediateValue18, intermediateValue20, intermediateValue16, tile.colourC, tile.colourD,
+					Rasterizer3D.drawGouraudTriangle(northEastScreenY, northWestScreenY, southEastScreenY,
+							northEastScreenX, northWestScreenX, southEastScreenX, tile.colourC, tile.colourD,
 							tile.colourB);
 			} else if (!lowMemory) {
 				if (tile.flat)
-					Rasterizer3D.drawTexturedTriangle(intermediateValue19, intermediateValue21, intermediateValue17,
-							intermediateValue18, intermediateValue20, intermediateValue16, tile.colourC, tile.colourD,
-							tile.colourB, intermediateValue2, intermediateValue6, intermediateValue, intermediateValue9,
-							intermediateValue10, intermediateValue12, intermediateValue4, intermediateValue3,
-							intermediateValue7, tile.texture);
+					Rasterizer3D.drawTexturedTriangle(northEastScreenY, northWestScreenY, southEastScreenY,
+							northEastScreenX, northWestScreenX, southEastScreenX, tile.colourC, tile.colourD,
+							tile.colourB, southWestViewX, southEastViewX, northWestViewX, southWestViewY,
+							southEastViewY, northWestViewY, southWestDepth, southEastDepth,
+							northWestDepth, tile.texture);
 				else
-					Rasterizer3D.drawTexturedTriangle(intermediateValue19, intermediateValue21, intermediateValue17,
-							intermediateValue18, intermediateValue20, intermediateValue16, tile.colourC, tile.colourD,
-							tile.colourB, intermediateValue5, intermediateValue, intermediateValue6,
-							intermediateValue11, intermediateValue12, intermediateValue10, intermediateValue8,
-							intermediateValue7, intermediateValue3, tile.texture);
+					Rasterizer3D.drawTexturedTriangle(northEastScreenY, northWestScreenY, southEastScreenY,
+							northEastScreenX, northWestScreenX, southEastScreenX, tile.colourC, tile.colourD,
+							tile.colourB, northEastViewX, northWestViewX, southEastViewX,
+							northEastViewY, northWestViewY, southEastViewY, northEastDepth,
+							northWestDepth, southEastDepth, tile.texture);
 			} else {
-				int intermediateValue22 = TEXTURE_COLORS[tile.texture];
-				Rasterizer3D.drawGouraudTriangle(intermediateValue19, intermediateValue21, intermediateValue17,
-						intermediateValue18, intermediateValue20, intermediateValue16,
-						mixTextureColor(tile.colourC, intermediateValue22),
-						mixTextureColor(tile.colourD, intermediateValue22),
-						mixTextureColor(tile.colourB, intermediateValue22));
+				int textureColor = TEXTURE_COLORS[tile.texture];
+				Rasterizer3D.drawGouraudTriangle(northEastScreenY, northWestScreenY, southEastScreenY,
+						northEastScreenX, northWestScreenX, southEastScreenX,
+						mixTextureColor(tile.colourC, textureColor),
+						mixTextureColor(tile.colourD, textureColor),
+						mixTextureColor(tile.colourB, textureColor));
 			}
 		}
-		if ((intermediateValue14 - intermediateValue16) * (intermediateValue21 - intermediateValue17)
-				- (intermediateValue15 - intermediateValue17) * (intermediateValue20 - intermediateValue16) > 0) {
+		if ((southWestScreenX - southEastScreenX) * (northWestScreenY - southEastScreenY)
+				- (southWestScreenY - southEastScreenY) * (northWestScreenX - southEastScreenX) > 0) {
 			Rasterizer3D.restrictEdges = false;
-			if (intermediateValue14 < 0 || intermediateValue16 < 0 || intermediateValue20 < 0
-					|| intermediateValue14 > Rasterizer.viewportRx || intermediateValue16 > Rasterizer.viewportRx
-					|| intermediateValue20 > Rasterizer.viewportRx)
+			if (southWestScreenX < 0 || southEastScreenX < 0 || northWestScreenX < 0
+					|| southWestScreenX > Rasterizer.viewportRx || southEastScreenX > Rasterizer.viewportRx
+					|| northWestScreenX > Rasterizer.viewportRx)
 				Rasterizer3D.restrictEdges = true;
-			if (picking && containsScreenPoint(mouseX, mouseY, intermediateValue15, intermediateValue17,
-					intermediateValue21, intermediateValue14, intermediateValue16, intermediateValue20)) {
+			if (picking && containsScreenPoint(mouseX, mouseY, southWestScreenY, southEastScreenY,
+					northWestScreenY, southWestScreenX, southEastScreenX, northWestScreenX)) {
 				pickedTileX = tileX;
 				pickedTileY = tileY;
 			}
 			if (tile.texture == -1) {
 				if (tile.colourA != 0xbc614e) {
-					Rasterizer3D.drawGouraudTriangle(intermediateValue15, intermediateValue17, intermediateValue21,
-							intermediateValue14, intermediateValue16, intermediateValue20, tile.colourA, tile.colourB,
+					Rasterizer3D.drawGouraudTriangle(southWestScreenY, southEastScreenY, northWestScreenY,
+							southWestScreenX, southEastScreenX, northWestScreenX, tile.colourA, tile.colourB,
 							tile.colourD);
 					return;
 				}
 			} else {
 				if (!lowMemory) {
-					Rasterizer3D.drawTexturedTriangle(intermediateValue15, intermediateValue17, intermediateValue21,
-							intermediateValue14, intermediateValue16, intermediateValue20, tile.colourA, tile.colourB,
-							tile.colourD, intermediateValue2, intermediateValue6, intermediateValue, intermediateValue9,
-							intermediateValue10, intermediateValue12, intermediateValue4, intermediateValue3,
-							intermediateValue7, tile.texture);
+					Rasterizer3D.drawTexturedTriangle(southWestScreenY, southEastScreenY, northWestScreenY,
+							southWestScreenX, southEastScreenX, northWestScreenX, tile.colourA, tile.colourB,
+							tile.colourD, southWestViewX, southEastViewX, northWestViewX, southWestViewY,
+							southEastViewY, northWestViewY, southWestDepth, southEastDepth,
+							northWestDepth, tile.texture);
 					return;
 				}
-				int intermediateValue23 = TEXTURE_COLORS[tile.texture];
-				Rasterizer3D.drawGouraudTriangle(intermediateValue15, intermediateValue17, intermediateValue21,
-						intermediateValue14, intermediateValue16, intermediateValue20,
-						mixTextureColor(tile.colourA, intermediateValue23),
-						mixTextureColor(tile.colourB, intermediateValue23),
-						mixTextureColor(tile.colourD, intermediateValue23));
+				int textureColor = TEXTURE_COLORS[tile.texture];
+				Rasterizer3D.drawGouraudTriangle(southWestScreenY, southEastScreenY, northWestScreenY,
+						southWestScreenX, southEastScreenX, northWestScreenX,
+						mixTextureColor(tile.colourA, textureColor),
+						mixTextureColor(tile.colourB, textureColor),
+						mixTextureColor(tile.colourD, textureColor));
 			}
 		}
 	}
@@ -2041,84 +2041,84 @@ public class Scene {
 	 */
 	public void renderShapedTile(ComplexTile tile, int tileX, int tileY, int pitchSine, int pitchCosine, int yawSine,
 			int yawCosine) {
-		int intermediateValue = tile.vertexX.length;
-		for (int loopIndex = 0; loopIndex < intermediateValue; loopIndex++) {
-			int intermediateValue2 = tile.vertexX[loopIndex] - cameraX;
-			int intermediateValue3 = tile.vertexY[loopIndex] - cameraZ;
-			int intermediateValue4 = tile.vertexZ[loopIndex] - cameraY;
-			int intermediateValue5 = intermediateValue4 * yawSine + intermediateValue2 * yawCosine >> 16;
-			intermediateValue4 = intermediateValue4 * yawCosine - intermediateValue2 * yawSine >> 16;
-			intermediateValue2 = intermediateValue5;
-			intermediateValue5 = intermediateValue3 * pitchCosine - intermediateValue4 * pitchSine >> 16;
-			intermediateValue4 = intermediateValue3 * pitchSine + intermediateValue4 * pitchCosine >> 16;
-			intermediateValue3 = intermediateValue5;
-			if (intermediateValue4 < 50)
+		int elementCount = tile.vertexX.length;
+		for (int vertex = 0; vertex < elementCount; vertex++) {
+			int viewX = tile.vertexX[vertex] - cameraX;
+			int viewY = tile.vertexY[vertex] - cameraZ;
+			int viewDepth = tile.vertexZ[vertex] - cameraY;
+			int rotated = viewDepth * yawSine + viewX * yawCosine >> 16;
+			viewDepth = viewDepth * yawCosine - viewX * yawSine >> 16;
+			viewX = rotated;
+			rotated = viewY * pitchCosine - viewDepth * pitchSine >> 16;
+			viewDepth = viewY * pitchSine + viewDepth * pitchCosine >> 16;
+			viewY = rotated;
+			if (viewDepth < 50)
 				return;
 			if (tile.triangleTextures != null) {
-				ComplexTile.VIEW_X[loopIndex] = intermediateValue2;
-				ComplexTile.VIEW_Y[loopIndex] = intermediateValue3;
-				ComplexTile.VIEW_Z[loopIndex] = intermediateValue4;
+				ComplexTile.VIEW_X[vertex] = viewX;
+				ComplexTile.VIEW_Y[vertex] = viewY;
+				ComplexTile.VIEW_Z[vertex] = viewDepth;
 			}
-			ComplexTile.SCREEN_X[loopIndex] = Rasterizer3D.centerX + (intermediateValue2 << 9) / intermediateValue4;
-			ComplexTile.SCREEN_Y[loopIndex] = Rasterizer3D.centerY + (intermediateValue3 << 9) / intermediateValue4;
+			ComplexTile.SCREEN_X[vertex] = Rasterizer3D.centerX + (viewX << 9) / viewDepth;
+			ComplexTile.SCREEN_Y[vertex] = Rasterizer3D.centerY + (viewY << 9) / viewDepth;
 		}
 
 		Rasterizer3D.alpha = 0;
-		intermediateValue = tile.triangleVertexA.length;
-		for (int loopIndex2 = 0; loopIndex2 < intermediateValue; loopIndex2++) {
-			int intermediateValue6 = tile.triangleVertexA[loopIndex2];
-			int intermediateValue7 = tile.triangleVertexB[loopIndex2];
-			int intermediateValue8 = tile.triangleVertexC[loopIndex2];
-			int intermediateValue9 = ComplexTile.SCREEN_X[intermediateValue6];
-			int intermediateValue10 = ComplexTile.SCREEN_X[intermediateValue7];
-			int intermediateValue11 = ComplexTile.SCREEN_X[intermediateValue8];
-			int intermediateValue12 = ComplexTile.SCREEN_Y[intermediateValue6];
-			int intermediateValue13 = ComplexTile.SCREEN_Y[intermediateValue7];
-			int intermediateValue14 = ComplexTile.SCREEN_Y[intermediateValue8];
-			if ((intermediateValue9 - intermediateValue10) * (intermediateValue14 - intermediateValue13)
-					- (intermediateValue12 - intermediateValue13) * (intermediateValue11 - intermediateValue10) > 0) {
+		elementCount = tile.triangleVertexA.length;
+		for (int triangle = 0; triangle < elementCount; triangle++) {
+			int vertexA = tile.triangleVertexA[triangle];
+			int vertexB = tile.triangleVertexB[triangle];
+			int vertexC = tile.triangleVertexC[triangle];
+			int screenXA = ComplexTile.SCREEN_X[vertexA];
+			int screenXB = ComplexTile.SCREEN_X[vertexB];
+			int screenXC = ComplexTile.SCREEN_X[vertexC];
+			int screenYA = ComplexTile.SCREEN_Y[vertexA];
+			int screenYB = ComplexTile.SCREEN_Y[vertexB];
+			int screenYC = ComplexTile.SCREEN_Y[vertexC];
+			if ((screenXA - screenXB) * (screenYC - screenYB)
+					- (screenYA - screenYB) * (screenXC - screenXB) > 0) {
 				Rasterizer3D.restrictEdges = false;
-				if (intermediateValue9 < 0 || intermediateValue10 < 0 || intermediateValue11 < 0
-						|| intermediateValue9 > Rasterizer.viewportRx || intermediateValue10 > Rasterizer.viewportRx
-						|| intermediateValue11 > Rasterizer.viewportRx)
+				if (screenXA < 0 || screenXB < 0 || screenXC < 0
+						|| screenXA > Rasterizer.viewportRx || screenXB > Rasterizer.viewportRx
+						|| screenXC > Rasterizer.viewportRx)
 					Rasterizer3D.restrictEdges = true;
-				if (picking && containsScreenPoint(mouseX, mouseY, intermediateValue12, intermediateValue13,
-						intermediateValue14, intermediateValue9, intermediateValue10, intermediateValue11)) {
+				if (picking && containsScreenPoint(mouseX, mouseY, screenYA, screenYB,
+						screenYC, screenXA, screenXB, screenXC)) {
 					pickedTileX = tileX;
 					pickedTileY = tileY;
 				}
-				if (tile.triangleTextures == null || tile.triangleTextures[loopIndex2] == -1) {
-					if (tile.triangleHslA[loopIndex2] != 0xbc614e)
-						Rasterizer3D.drawGouraudTriangle(intermediateValue12, intermediateValue13, intermediateValue14,
-								intermediateValue9, intermediateValue10, intermediateValue11,
-								tile.triangleHslA[loopIndex2], tile.triangleHslB[loopIndex2],
-								tile.triangleHslC[loopIndex2]);
+				if (tile.triangleTextures == null || tile.triangleTextures[triangle] == -1) {
+					if (tile.triangleHslA[triangle] != 0xbc614e)
+						Rasterizer3D.drawGouraudTriangle(screenYA, screenYB, screenYC,
+								screenXA, screenXB, screenXC,
+								tile.triangleHslA[triangle], tile.triangleHslB[triangle],
+								tile.triangleHslC[triangle]);
 				} else if (!lowMemory) {
 					if (tile.flat)
-						Rasterizer3D.drawTexturedTriangle(intermediateValue12, intermediateValue13, intermediateValue14,
-								intermediateValue9, intermediateValue10, intermediateValue11,
-								tile.triangleHslA[loopIndex2], tile.triangleHslB[loopIndex2],
-								tile.triangleHslC[loopIndex2], ComplexTile.VIEW_X[0], ComplexTile.VIEW_X[1],
+						Rasterizer3D.drawTexturedTriangle(screenYA, screenYB, screenYC,
+								screenXA, screenXB, screenXC,
+								tile.triangleHslA[triangle], tile.triangleHslB[triangle],
+								tile.triangleHslC[triangle], ComplexTile.VIEW_X[0], ComplexTile.VIEW_X[1],
 								ComplexTile.VIEW_X[3], ComplexTile.VIEW_Y[0], ComplexTile.VIEW_Y[1],
 								ComplexTile.VIEW_Y[3], ComplexTile.VIEW_Z[0], ComplexTile.VIEW_Z[1],
-								ComplexTile.VIEW_Z[3], tile.triangleTextures[loopIndex2]);
+								ComplexTile.VIEW_Z[3], tile.triangleTextures[triangle]);
 					else
-						Rasterizer3D.drawTexturedTriangle(intermediateValue12, intermediateValue13, intermediateValue14,
-								intermediateValue9, intermediateValue10, intermediateValue11,
-								tile.triangleHslA[loopIndex2], tile.triangleHslB[loopIndex2],
-								tile.triangleHslC[loopIndex2], ComplexTile.VIEW_X[intermediateValue6],
-								ComplexTile.VIEW_X[intermediateValue7], ComplexTile.VIEW_X[intermediateValue8],
-								ComplexTile.VIEW_Y[intermediateValue6], ComplexTile.VIEW_Y[intermediateValue7],
-								ComplexTile.VIEW_Y[intermediateValue8], ComplexTile.VIEW_Z[intermediateValue6],
-								ComplexTile.VIEW_Z[intermediateValue7], ComplexTile.VIEW_Z[intermediateValue8],
-								tile.triangleTextures[loopIndex2]);
+						Rasterizer3D.drawTexturedTriangle(screenYA, screenYB, screenYC,
+								screenXA, screenXB, screenXC,
+								tile.triangleHslA[triangle], tile.triangleHslB[triangle],
+								tile.triangleHslC[triangle], ComplexTile.VIEW_X[vertexA],
+								ComplexTile.VIEW_X[vertexB], ComplexTile.VIEW_X[vertexC],
+								ComplexTile.VIEW_Y[vertexA], ComplexTile.VIEW_Y[vertexB],
+								ComplexTile.VIEW_Y[vertexC], ComplexTile.VIEW_Z[vertexA],
+								ComplexTile.VIEW_Z[vertexB], ComplexTile.VIEW_Z[vertexC],
+								tile.triangleTextures[triangle]);
 				} else {
-					int intermediateValue15 = TEXTURE_COLORS[tile.triangleTextures[loopIndex2]];
-					Rasterizer3D.drawGouraudTriangle(intermediateValue12, intermediateValue13, intermediateValue14,
-							intermediateValue9, intermediateValue10, intermediateValue11,
-							mixTextureColor(tile.triangleHslA[loopIndex2], intermediateValue15),
-							mixTextureColor(tile.triangleHslB[loopIndex2], intermediateValue15),
-							mixTextureColor(tile.triangleHslC[loopIndex2], intermediateValue15));
+					int textureColor = TEXTURE_COLORS[tile.triangleTextures[triangle]];
+					Rasterizer3D.drawGouraudTriangle(screenYA, screenYB, screenYC,
+							screenXA, screenXB, screenXC,
+							mixTextureColor(tile.triangleHslA[triangle], textureColor),
+							mixTextureColor(tile.triangleHslB[triangle], textureColor),
+							mixTextureColor(tile.triangleHslC[triangle], textureColor));
 				}
 			}
 		}

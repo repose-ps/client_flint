@@ -1423,64 +1423,64 @@ public class Model extends Renderable {
 	 */
 	public void renderSimple(int rotationX, int rotationY, int rotationZ, int cameraPitch, int translationX,
 			int translationY, int translationZ) {
-		int intermediateValue = Rasterizer3D.centerX;
-		int intermediateValue2 = Rasterizer3D.centerY;
-		int intermediateValue3 = SINE[rotationX];
-		int intermediateValue4 = COSINE[rotationX];
-		int intermediateValue5 = SINE[rotationY];
-		int intermediateValue6 = COSINE[rotationY];
-		int intermediateValue7 = SINE[rotationZ];
-		int intermediateValue8 = COSINE[rotationZ];
-		int intermediateValue9 = SINE[cameraPitch];
-		int intermediateValue10 = COSINE[cameraPitch];
-		int intermediateValue11 = translationY * intermediateValue9 + translationZ * intermediateValue10 >> 16;
-		for (int loopIndex = 0; loopIndex < vertexCount; loopIndex++) {
-			int intermediateValue12 = verticesX[loopIndex];
-			int intermediateValue13 = verticesY[loopIndex];
-			int intermediateValue14 = verticesZ[loopIndex];
+		int screenCenterX = Rasterizer3D.centerX;
+		int screenCenterY = Rasterizer3D.centerY;
+		int sineX = SINE[rotationX];
+		int cosineX = COSINE[rotationX];
+		int sineY = SINE[rotationY];
+		int cosineY = COSINE[rotationY];
+		int sineZ = SINE[rotationZ];
+		int cosineZ = COSINE[rotationZ];
+		int pitchSine = SINE[cameraPitch];
+		int pitchCosine = COSINE[cameraPitch];
+		int depthOrigin = translationY * pitchSine + translationZ * pitchCosine >> 16;
+		for (int vertex = 0; vertex < vertexCount; vertex++) {
+			int x = verticesX[vertex];
+			int y = verticesY[vertex];
+			int z = verticesZ[vertex];
 			if (rotationZ != 0) {
-				int intermediateValue15 = intermediateValue13 * intermediateValue7
-						+ intermediateValue12 * intermediateValue8 >> 16;
-				intermediateValue13 = intermediateValue13 * intermediateValue8
-						- intermediateValue12 * intermediateValue7 >> 16;
-				intermediateValue12 = intermediateValue15;
+				int rotatedX = y * sineZ
+						+ x * cosineZ >> 16;
+				y = y * cosineZ
+						- x * sineZ >> 16;
+				x = rotatedX;
 			}
 			if (rotationX != 0) {
-				int intermediateValue16 = intermediateValue13 * intermediateValue4
-						- intermediateValue14 * intermediateValue3 >> 16;
-				intermediateValue14 = intermediateValue13 * intermediateValue3
-						+ intermediateValue14 * intermediateValue4 >> 16;
-				intermediateValue13 = intermediateValue16;
+				int rotatedY = y * cosineX
+						- z * sineX >> 16;
+				z = y * sineX
+						+ z * cosineX >> 16;
+				y = rotatedY;
 			}
 			if (rotationY != 0) {
-				int intermediateValue17 = intermediateValue14 * intermediateValue5
-						+ intermediateValue12 * intermediateValue6 >> 16;
-				intermediateValue14 = intermediateValue14 * intermediateValue6
-						- intermediateValue12 * intermediateValue5 >> 16;
-				intermediateValue12 = intermediateValue17;
+				int rotatedX = z * sineY
+						+ x * cosineY >> 16;
+				z = z * cosineY
+						- x * sineY >> 16;
+				x = rotatedX;
 			}
-			intermediateValue12 += translationX;
-			intermediateValue13 += translationY;
-			intermediateValue14 += translationZ;
-			int intermediateValue18 = intermediateValue13 * intermediateValue10
-					- intermediateValue14 * intermediateValue9 >> 16;
-			intermediateValue14 = intermediateValue13 * intermediateValue9
-					+ intermediateValue14 * intermediateValue10 >> 16;
-			intermediateValue13 = intermediateValue18;
-			projectedDepth[loopIndex] = intermediateValue14 - intermediateValue11;
-			projectedX[loopIndex] = intermediateValue + (intermediateValue12 << 9) / intermediateValue14;
-			projectedY[loopIndex] = intermediateValue2 + (intermediateValue13 << 9) / intermediateValue14;
+			x += translationX;
+			y += translationY;
+			z += translationZ;
+			int viewY = y * pitchCosine
+					- z * pitchSine >> 16;
+			z = y * pitchSine
+					+ z * pitchCosine >> 16;
+			y = viewY;
+			projectedDepth[vertex] = z - depthOrigin;
+			projectedX[vertex] = screenCenterX + (x << 9) / z;
+			projectedY[vertex] = screenCenterY + (y << 9) / z;
 			if (texturedTriangleCount > 0) {
-				cameraX[loopIndex] = intermediateValue12;
-				cameraY[loopIndex] = intermediateValue13;
-				cameraZ[loopIndex] = intermediateValue14;
+				cameraX[vertex] = x;
+				cameraY[vertex] = y;
+				cameraZ[vertex] = z;
 			}
 		}
 
 		try {
 			drawFaces(false, false, 0);
 			return;
-		} catch (Exception _ex) {
+		} catch (Exception ignored) {
 			return;
 		}
 	}
@@ -1807,63 +1807,63 @@ public class Model extends Renderable {
 	 * 
 	 * @param inputValue the input value
 	 */
-	private void drawFace(int inputValue) {
-		if (faceNearClipped[inputValue]) {
-			drawNearClippedFace(inputValue);
+	private void drawFace(int triangle) {
+		if (faceNearClipped[triangle]) {
+			drawNearClippedFace(triangle);
 			return;
 		}
-		int intermediateValue = triangleVertexA[inputValue];
-		int intermediateValue2 = triangleVertexB[inputValue];
-		int intermediateValue3 = triangleVertexC[inputValue];
-		Rasterizer3D.restrictEdges = faceOutOfBounds[inputValue];
+		int vertexA = triangleVertexA[triangle];
+		int vertexB = triangleVertexB[triangle];
+		int vertexC = triangleVertexC[triangle];
+		Rasterizer3D.restrictEdges = faceOutOfBounds[triangle];
 		if (triangleAlpha == null)
 			Rasterizer3D.alpha = 0;
 		else
-			Rasterizer3D.alpha = triangleAlpha[inputValue];
-		int intermediateValue4;
+			Rasterizer3D.alpha = triangleAlpha[triangle];
+		int drawType;
 		if (triangleDrawType == null)
-			intermediateValue4 = 0;
+			drawType = 0;
 		else
-			intermediateValue4 = triangleDrawType[inputValue] & 3;
-		if (intermediateValue4 == 0) {
-			Rasterizer3D.drawGouraudTriangle(projectedY[intermediateValue], projectedY[intermediateValue2],
-					projectedY[intermediateValue3], projectedX[intermediateValue], projectedX[intermediateValue2],
-					projectedX[intermediateValue3], triangleShadeA[inputValue], triangleShadeB[inputValue],
-					triangleShadeC[inputValue]);
+			drawType = triangleDrawType[triangle] & 3;
+		if (drawType == 0) {
+			Rasterizer3D.drawGouraudTriangle(projectedY[vertexA], projectedY[vertexB],
+					projectedY[vertexC], projectedX[vertexA], projectedX[vertexB],
+					projectedX[vertexC], triangleShadeA[triangle], triangleShadeB[triangle],
+					triangleShadeC[triangle]);
 			return;
 		}
-		if (intermediateValue4 == 1) {
-			Rasterizer3D.drawFlatTriangle(projectedY[intermediateValue], projectedY[intermediateValue2],
-					projectedY[intermediateValue3], projectedX[intermediateValue], projectedX[intermediateValue2],
-					projectedX[intermediateValue3], HSL_TO_RGB[triangleShadeA[inputValue]]);
+		if (drawType == 1) {
+			Rasterizer3D.drawFlatTriangle(projectedY[vertexA], projectedY[vertexB],
+					projectedY[vertexC], projectedX[vertexA], projectedX[vertexB],
+					projectedX[vertexC], HSL_TO_RGB[triangleShadeA[triangle]]);
 			return;
 		}
-		if (intermediateValue4 == 2) {
-			int intermediateValue5 = triangleDrawType[inputValue] >> 2;
-			int intermediateValue6 = texturedTriangleA[intermediateValue5];
-			int intermediateValue7 = texturedTriangleB[intermediateValue5];
-			int intermediateValue8 = texturedTriangleC[intermediateValue5];
-			Rasterizer3D.drawTexturedTriangle(projectedY[intermediateValue], projectedY[intermediateValue2],
-					projectedY[intermediateValue3], projectedX[intermediateValue], projectedX[intermediateValue2],
-					projectedX[intermediateValue3], triangleShadeA[inputValue], triangleShadeB[inputValue],
-					triangleShadeC[inputValue], cameraX[intermediateValue6], cameraX[intermediateValue7],
-					cameraX[intermediateValue8], cameraY[intermediateValue6], cameraY[intermediateValue7],
-					cameraY[intermediateValue8], cameraZ[intermediateValue6], cameraZ[intermediateValue7],
-					cameraZ[intermediateValue8], triangleColors[inputValue]);
+		if (drawType == 2) {
+			int textureTriangle = triangleDrawType[triangle] >> 2;
+			int textureVertexA = texturedTriangleA[textureTriangle];
+			int textureVertexB = texturedTriangleB[textureTriangle];
+			int textureVertexC = texturedTriangleC[textureTriangle];
+			Rasterizer3D.drawTexturedTriangle(projectedY[vertexA], projectedY[vertexB],
+					projectedY[vertexC], projectedX[vertexA], projectedX[vertexB],
+					projectedX[vertexC], triangleShadeA[triangle], triangleShadeB[triangle],
+					triangleShadeC[triangle], cameraX[textureVertexA], cameraX[textureVertexB],
+					cameraX[textureVertexC], cameraY[textureVertexA], cameraY[textureVertexB],
+					cameraY[textureVertexC], cameraZ[textureVertexA], cameraZ[textureVertexB],
+					cameraZ[textureVertexC], triangleColors[triangle]);
 			return;
 		}
-		if (intermediateValue4 == 3) {
-			int intermediateValue9 = triangleDrawType[inputValue] >> 2;
-			int intermediateValue10 = texturedTriangleA[intermediateValue9];
-			int intermediateValue11 = texturedTriangleB[intermediateValue9];
-			int intermediateValue12 = texturedTriangleC[intermediateValue9];
-			Rasterizer3D.drawTexturedTriangle(projectedY[intermediateValue], projectedY[intermediateValue2],
-					projectedY[intermediateValue3], projectedX[intermediateValue], projectedX[intermediateValue2],
-					projectedX[intermediateValue3], triangleShadeA[inputValue], triangleShadeA[inputValue],
-					triangleShadeA[inputValue], cameraX[intermediateValue10], cameraX[intermediateValue11],
-					cameraX[intermediateValue12], cameraY[intermediateValue10], cameraY[intermediateValue11],
-					cameraY[intermediateValue12], cameraZ[intermediateValue10], cameraZ[intermediateValue11],
-					cameraZ[intermediateValue12], triangleColors[inputValue]);
+		if (drawType == 3) {
+			int textureTriangle = triangleDrawType[triangle] >> 2;
+			int textureVertexA = texturedTriangleA[textureTriangle];
+			int textureVertexB = texturedTriangleB[textureTriangle];
+			int textureVertexC = texturedTriangleC[textureTriangle];
+			Rasterizer3D.drawTexturedTriangle(projectedY[vertexA], projectedY[vertexB],
+					projectedY[vertexC], projectedX[vertexA], projectedX[vertexB],
+					projectedX[vertexC], triangleShadeA[triangle], triangleShadeA[triangle],
+					triangleShadeA[triangle], cameraX[textureVertexA], cameraX[textureVertexB],
+					cameraX[textureVertexC], cameraY[textureVertexA], cameraY[textureVertexB],
+					cameraY[textureVertexC], cameraZ[textureVertexA], cameraZ[textureVertexB],
+					cameraZ[textureVertexC], triangleColors[triangle]);
 		}
 	}
 

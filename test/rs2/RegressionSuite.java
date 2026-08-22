@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Runs every regression suite retained in the Step-6 source tree in an isolated JVM. */
+/** Runs every regression suite retained in the current source tree in an isolated JVM. */
 public final class RegressionSuite {
 
     private static final String[] CACHE_FILES = {
@@ -32,6 +32,7 @@ public final class RegressionSuite {
         List<Suite> suites = List.of(
                 new Suite("rs2.concurrent.ThreadLifecycleSafetyTest"),
                 new Suite("rs2.net.NetworkResourceRobustnessTest"),
+                new Suite("rs2.media.RendererGoldenTest", cache.toString()),
                 new Suite("rs2.cache.Revision377CacheSmokeTest", cache.toString()),
                 new Suite("rs2.cache.BootstrapArchiveRecoveryTest", cache.toString()),
                 new Suite("rs2.cache.Revision377OnDemandDecompressionTest", cache.toString()));
