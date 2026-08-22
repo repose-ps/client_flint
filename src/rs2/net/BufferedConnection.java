@@ -115,20 +115,49 @@ public class BufferedConnection implements Runnable, Closeable {
 	 */
 	@Override
 	public void close() throws IOException {
+		Thread thread;
+		boolean newlyClosed;
 		synchronized (this) {
-			if (closed) {
-				return;
-			}
-
+			newlyClosed = !closed;
 			closed = true;
+			thread = writerThread;
 			notifyAll();
 		}
 
-		/*
-		 * Closing a Socket also closes its associated input and output streams. It also
-		 * unblocks a writer currently stuck in socket I/O.
-		 */
-		socket.close();
+		IOException closeFailure = null;
+		if (newlyClosed) {
+			try {
+				/*
+				 * Closing a Socket also closes its associated input and output streams and
+				 * releases a writer blocked in socket I/O.
+				 */
+				socket.close();
+			} catch (IOException exception) {
+				closeFailure = exception;
+			}
+		}
+
+		boolean interrupted = false;
+		if (thread != null && thread != Thread.currentThread()) {
+			for (;;) {
+				try {
+					thread.join();
+					break;
+				} catch (InterruptedException exception) {
+					interrupted = true;
+				}
+			}
+		}
+		if (interrupted) {
+			Thread.currentThread().interrupt();
+			if (closeFailure == null) {
+				closeFailure = new IOException("Interrupted while waiting for socket writer shutdown");
+			}
+		}
+
+		if (closeFailure != null) {
+			throw closeFailure;
+		}
 	}
 
 	/**
@@ -255,67 +284,74 @@ public class BufferedConnection implements Runnable, Closeable {
 	 */
 	@Override
 	public void run() {
-		while (true) {
-			int offset;
-			int length;
+		try {
+			while (true) {
+				int offset;
+				int length;
 
-			synchronized (this) {
-				while (!closed && readPosition == writePosition) {
-					try {
-						wait();
-					} catch (InterruptedException exception) {
-						Thread.currentThread().interrupt();
+				synchronized (this) {
+					while (!closed && readPosition == writePosition) {
+						try {
+							wait();
+						} catch (InterruptedException exception) {
+							Thread.currentThread().interrupt();
+							recordWriterFailure(new IOException("Writer thread interrupted", exception));
+							return;
+						}
+					}
 
-						recordWriterFailure(new IOException("Writer thread interrupted", exception));
-
+					if (closed) {
 						return;
+					}
+
+					offset = readPosition;
+
+					/*
+					 * Write only one contiguous region. If queued bytes wrap around, the following
+					 * loop iteration writes the region at the beginning of the array.
+					 */
+					if (writePosition >= readPosition) {
+						length = writePosition - readPosition;
+					} else {
+						length = WRITE_BUFFER_CAPACITY - readPosition;
 					}
 				}
 
-				if (closed) {
-					return;
-				}
-
-				offset = readPosition;
-
-				/*
-				 * Write only one contiguous region. If queued bytes wrap around, the following
-				 * loop iteration writes the region at the beginning of the array.
-				 */
-				if (writePosition >= readPosition) {
-					length = writePosition - readPosition;
-				} else {
-					length = WRITE_BUFFER_CAPACITY - readPosition;
-				}
-			}
-
-			try {
-				output.write(writeBuffer, offset, length);
-			} catch (IOException exception) {
-				recordWriterFailure(exception);
-				return;
-			}
-
-			boolean queueEmpty;
-
-			synchronized (this) {
-				readPosition = (readPosition + length) % WRITE_BUFFER_CAPACITY;
-
-				queueEmpty = readPosition == writePosition;
-			}
-
-			/*
-			 * Flush only after all currently queued data has been written. Socket streams
-			 * generally do not buffer independently, but this preserves the behavior of the
-			 * original connection.
-			 */
-			if (queueEmpty) {
 				try {
-					output.flush();
+					output.write(writeBuffer, offset, length);
 				} catch (IOException exception) {
 					recordWriterFailure(exception);
 					return;
 				}
+
+				boolean queueEmpty;
+
+				synchronized (this) {
+					readPosition = (readPosition + length) % WRITE_BUFFER_CAPACITY;
+					queueEmpty = readPosition == writePosition;
+				}
+
+				/*
+				 * Flush only after all currently queued data has been written. Socket streams
+				 * generally do not buffer independently, but this preserves the behavior of the
+				 * original connection.
+				 */
+				if (queueEmpty) {
+					try {
+						output.flush();
+					} catch (IOException exception) {
+						recordWriterFailure(exception);
+						return;
+					}
+				}
+			}
+		} finally {
+			synchronized (this) {
+				writeThreadStarted = false;
+				if (writerThread == Thread.currentThread()) {
+					writerThread = null;
+				}
+				notifyAll();
 			}
 		}
 	}
@@ -361,6 +397,7 @@ public class BufferedConnection implements Runnable, Closeable {
 		}
 
 		writerThread = new Thread(this, "rs2-network-writer");
+		writeThreadStarted = true;
 
 		/*
 		 * A daemon thread cannot keep the JVM alive after the client has otherwise

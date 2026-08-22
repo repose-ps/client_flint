@@ -30,80 +30,92 @@ public final class Signlink implements Runnable {
 	private static final int MAX_SAVE_LENGTH = 0x1e8480;
 	private static final int AUDIO_FILE_SLOTS = 5;
 	private static final long POLL_INTERVAL_MILLIS = 50L;
-	private static final JavaSoundAudioPlayer AUDIO_PLAYER = new JavaSoundAudioPlayer();
+	private static final Object LIFECYCLE_LOCK = new Object();
+	private static volatile JavaSoundAudioPlayer audioPlayer = new JavaSoundAudioPlayer();
 
 	public static int uid;
 	public static int storeId = 32;
-	public static RandomAccessFile cacheData;
+	public static volatile RandomAccessFile cacheData;
 	public static RandomAccessFile[] cacheIndexes = new RandomAccessFile[CACHE_INDEX_COUNT];
 
-	private static boolean active;
-	private static int workerGeneration;
+	private static volatile boolean active;
+	private static volatile boolean initialized;
+	private static volatile int workerGeneration;
+	private static volatile Thread workerThread;
 
-	private static InetAddress socketAddress;
-	private static int socketRequestPort;
-	private static Socket requestedSocket;
+	private static volatile InetAddress socketAddress;
+	private static volatile int socketRequestPort;
+	private static volatile Socket requestedSocket;
 
 	private static int threadRequestPriority = 1;
-	private static Runnable threadRequest;
+	private static volatile Runnable threadRequest;
 
-	private static String dnsRequest;
-	public static String dns;
+	private static volatile String dnsRequest;
+	public static volatile String dns;
 
 	private static int saveLength;
-	private static String saveRequest;
+	private static volatile String saveRequest;
 	private static byte[] saveBuffer;
 
-	public static boolean midiPlayPending;
+	public static volatile boolean midiPlayPending;
 	private static int midiPosition;
-	public static String midi;
+	public static volatile String midi;
 	public static int midiVolume;
 	public static int midiFade;
 
-	private static boolean wavePlayPending;
+	private static volatile boolean wavePlayPending;
 	private static int wavePosition;
-	public static String wave;
+	public static volatile String wave;
 	public static int waveVolume;
 
 	public static boolean reportErrors = true;
 
-	private Signlink() {
+	private final int generation;
+
+	private Signlink(int generation) {
+		this.generation = generation;
 	}
 
 	/**
 	 * Starts a fresh signlink worker and waits until it has initialized.
 	 */
 	public static void start(InetAddress address) {
-		workerGeneration = (int) (Math.random() * 99999999D);
-		if (active) {
-			try {
-				Thread.sleep(500L);
-			} catch (Exception ignored) {
-			}
+		stopWorker(false);
+
+		Thread thread;
+		int generation = (int) (Math.random() * 99999999D);
+		synchronized (LIFECYCLE_LOCK) {
+			workerGeneration = generation;
+			initialized = false;
 			active = false;
+			socketRequestPort = 0;
+			requestedSocket = null;
+			threadRequest = null;
+			dnsRequest = null;
+			saveRequest = null;
+			socketAddress = address;
+			if (audioPlayer == null) {
+				audioPlayer = new JavaSoundAudioPlayer();
+			}
+
+			thread = new Thread(new Signlink(generation), "rs2-signlink");
+			thread.setDaemon(true);
+			workerThread = thread;
+			thread.start();
 		}
 
-		socketRequestPort = 0;
-		threadRequest = null;
-		dnsRequest = null;
-		saveRequest = null;
-		socketAddress = address;
-
-		Thread thread = new Thread(new Signlink());
-		thread.setDaemon(true);
-		thread.start();
-
-		while (!active) {
+		while (!initialized && thread.isAlive()) {
 			try {
 				Thread.sleep(POLL_INTERVAL_MILLIS);
-			} catch (Exception ignored) {
+			} catch (InterruptedException exception) {
+				Thread.currentThread().interrupt();
+				break;
 			}
 		}
 	}
 
 	@Override
 	public void run() {
-		active = true;
 		String cacheDirectory = findCacheDirectory();
 		uid = getUid(cacheDirectory);
 
@@ -118,54 +130,81 @@ public final class Signlink implements Runnable {
 			}
 		} catch (Exception exception) {
 			exception.printStackTrace();
+		} finally {
+			active = true;
+			initialized = true;
 		}
 
-		for (int generation = workerGeneration; workerGeneration == generation;) {
-			if (socketRequestPort != 0) {
-				try {
-					requestedSocket = new Socket(socketAddress, socketRequestPort);
-				} catch (Exception ignored) {
-					requestedSocket = null;
-				}
-				socketRequestPort = 0;
-			} else if (threadRequest != null) {
-				Thread thread = new Thread(threadRequest);
-				thread.setDaemon(true);
-				thread.start();
-				thread.setPriority(threadRequestPriority);
-				threadRequest = null;
-			} else if (dnsRequest != null) {
-				try {
-					dns = InetAddress.getByName(dnsRequest).getHostName();
-				} catch (Exception ignored) {
-					dns = "unknown";
-				}
-				dnsRequest = null;
-			} else if (saveRequest != null) {
-				File audioFile = new File(cacheDirectory + saveRequest);
-				if (saveBuffer != null) {
-					try (FileOutputStream output = new FileOutputStream(audioFile)) {
-						output.write(saveBuffer, 0, saveLength);
+		try {
+			while (workerGeneration == generation && !Thread.currentThread().isInterrupted()) {
+				if (socketRequestPort != 0) {
+					Socket socket = null;
+					try {
+						socket = new Socket(socketAddress, socketRequestPort);
 					} catch (Exception ignored) {
 					}
+					if (workerGeneration == generation && !Thread.currentThread().isInterrupted()) {
+						requestedSocket = socket;
+					} else if (socket != null) {
+						try {
+							socket.close();
+						} catch (IOException ignored) {
+						}
+					}
+					socketRequestPort = 0;
+				} else if (threadRequest != null) {
+					Thread thread = new Thread(threadRequest);
+					thread.setDaemon(true);
+					thread.start();
+					thread.setPriority(threadRequestPriority);
+					threadRequest = null;
+				} else if (dnsRequest != null) {
+					try {
+						dns = InetAddress.getByName(dnsRequest).getHostName();
+					} catch (Exception ignored) {
+						dns = "unknown";
+					}
+					dnsRequest = null;
+				} else if (saveRequest != null) {
+					File audioFile = new File(cacheDirectory + saveRequest);
+					if (saveBuffer != null) {
+						try (FileOutputStream output = new FileOutputStream(audioFile)) {
+							output.write(saveBuffer, 0, saveLength);
+						} catch (Exception ignored) {
+						}
+					}
+
+					JavaSoundAudioPlayer player = audioPlayer;
+					if (wavePlayPending) {
+						wave = audioFile.getPath();
+						wavePlayPending = false;
+						if (player != null) {
+							player.playWave(audioFile, waveVolume);
+						}
+					}
+					if (midiPlayPending) {
+						midi = audioFile.getPath();
+						midiPlayPending = false;
+						if (player != null) {
+							player.playMidi(audioFile, midiVolume, midiFade != 0);
+						}
+					}
+					saveRequest = null;
 				}
 
-				if (wavePlayPending) {
-					wave = audioFile.getPath();
-					wavePlayPending = false;
-					AUDIO_PLAYER.playWave(audioFile, waveVolume);
+				try {
+					Thread.sleep(POLL_INTERVAL_MILLIS);
+				} catch (InterruptedException exception) {
+					Thread.currentThread().interrupt();
+					break;
 				}
-				if (midiPlayPending) {
-					midi = audioFile.getPath();
-					midiPlayPending = false;
-					AUDIO_PLAYER.playMidi(audioFile, midiVolume, midiFade != 0);
-				}
-				saveRequest = null;
 			}
-
-			try {
-				Thread.sleep(POLL_INTERVAL_MILLIS);
-			} catch (Exception ignored) {
+		} finally {
+			active = false;
+			synchronized (LIFECYCLE_LOCK) {
+				if (workerThread == Thread.currentThread()) {
+					workerThread = null;
+				}
 			}
 		}
 	}
@@ -206,17 +245,23 @@ public final class Signlink implements Runnable {
 
 	/** Opens a socket on the signlink worker thread and blocks for its result. */
 	public static synchronized Socket openSocket(int port) throws IOException {
-		for (socketRequestPort = port; socketRequestPort != 0;) {
+		requestedSocket = null;
+		socketRequestPort = port;
+		while (socketRequestPort != 0 && active) {
 			try {
 				Thread.sleep(POLL_INTERVAL_MILLIS);
-			} catch (Exception ignored) {
+			} catch (InterruptedException exception) {
+				Thread.currentThread().interrupt();
+				throw new IOException("interrupted while opening socket", exception);
 			}
 		}
 
-		if (requestedSocket == null) {
+		Socket socket = requestedSocket;
+		requestedSocket = null;
+		if (socket == null) {
 			throw new IOException("could not open socket");
 		}
-		return requestedSocket;
+		return socket;
 	}
 
 	/** Queues a reverse/host-name lookup and immediately exposes the query text. */
@@ -234,7 +279,10 @@ public final class Signlink implements Runnable {
 	/** Applies the legacy WAV attenuation to the standalone Java Sound player. */
 	public static synchronized void setWaveVolume(int volume) {
 		waveVolume = volume;
-		AUDIO_PLAYER.setWaveVolume(volume);
+		JavaSoundAudioPlayer player = audioPlayer;
+		if (player != null) {
+			player.setWaveVolume(volume);
+		}
 	}
 
 	/** Applies the legacy MIDI attenuation, optionally updating the live track. */
@@ -242,7 +290,10 @@ public final class Signlink implements Runnable {
 		midiVolume = volume;
 		if (adjustPlayingTrack) {
 			midi = "voladjust";
-			AUDIO_PLAYER.setMidiVolume(volume);
+			JavaSoundAudioPlayer player = audioPlayer;
+			if (player != null) {
+				player.setMidiVolume(volume);
+			}
 		}
 	}
 
@@ -251,7 +302,10 @@ public final class Signlink implements Runnable {
 		midiPlayPending = false;
 		midiFade = 0;
 		midi = "stop";
-		AUDIO_PLAYER.stopMidi();
+		JavaSoundAudioPlayer player = audioPlayer;
+		if (player != null) {
+			player.stopMidi();
+		}
 	}
 
 	/** Queues a WAV file save using the original five-slot filename ring. */
@@ -302,6 +356,93 @@ public final class Signlink implements Runnable {
 	/** Compatibility overload retaining the currently selected fade mode. */
 	public static synchronized void saveMidi(byte[] data, int length) {
 		saveMidi(data, length, midiFade != 0);
+	}
+
+	/** Stops the platform worker, closes cache files, and releases Java Sound. */
+	public static void shutdown() {
+		stopWorker(true);
+	}
+
+	private static void stopWorker(boolean closeAudio) {
+		Thread thread;
+		Socket staleSocket;
+		synchronized (LIFECYCLE_LOCK) {
+			workerGeneration++;
+			active = false;
+			initialized = false;
+			socketRequestPort = 0;
+			threadRequest = null;
+			dnsRequest = null;
+			saveRequest = null;
+			wavePlayPending = false;
+			midiPlayPending = false;
+			staleSocket = requestedSocket;
+			requestedSocket = null;
+			thread = workerThread;
+		}
+
+		if (staleSocket != null) {
+			try {
+				staleSocket.close();
+			} catch (IOException ignored) {
+			}
+		}
+		if (thread != null && thread != Thread.currentThread()) {
+			thread.interrupt();
+			boolean interrupted = false;
+			for (;;) {
+				try {
+					thread.join();
+					break;
+				} catch (InterruptedException exception) {
+					interrupted = true;
+				}
+			}
+			if (interrupted) {
+				Thread.currentThread().interrupt();
+			}
+		}
+
+		Socket lateSocket = requestedSocket;
+		requestedSocket = null;
+		if (lateSocket != null) {
+			try {
+				lateSocket.close();
+			} catch (IOException ignored) {
+			}
+		}
+		closeCacheFiles();
+		if (closeAudio) {
+			JavaSoundAudioPlayer player;
+			synchronized (LIFECYCLE_LOCK) {
+				player = audioPlayer;
+				audioPlayer = null;
+			}
+			if (player != null) {
+				player.close();
+			}
+		}
+	}
+
+	private static void closeCacheFiles() {
+		RandomAccessFile data = cacheData;
+		cacheData = null;
+		if (data != null) {
+			try {
+				data.close();
+			} catch (IOException ignored) {
+			}
+		}
+		for (int index = 0; index < cacheIndexes.length; index++) {
+			RandomAccessFile file = cacheIndexes[index];
+			cacheIndexes[index] = null;
+			if (file != null) {
+				try {
+					file.close();
+				} catch (IOException ignored) {
+				}
+			}
+		}
 	}
 
 	/**

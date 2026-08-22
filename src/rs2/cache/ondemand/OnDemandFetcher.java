@@ -358,6 +358,8 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	 * Runs this component's main processing loop.
 	 */
 	public void run() {
+		Thread current = Thread.currentThread();
+		workerThread = current;
 		try {
 			while (running) {
 				onDemandCycle++;
@@ -443,6 +445,10 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 			return;
 		} catch (Exception exception) {
 			Signlink.reportError("od_ex " + exception.getMessage());
+		} finally {
+			if (workerThread == current) {
+				workerThread = null;
+			}
 		}
 	}
 
@@ -590,7 +596,11 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		this.clientInstance = clientInstance;
 		this.resourceLoader = resourceLoader;
 		running = true;
-		this.clientInstance.startThread(this, 2);
+		Thread thread = new Thread(this, "rs2-on-demand");
+		thread.setDaemon(true);
+		workerThread = thread;
+		thread.start();
+		thread.setPriority(2);
 	}
 
 	/**
@@ -663,6 +673,55 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	 */
 	public void stop() {
 		running = false;
+		closeUpdateConnection();
+		Thread thread = workerThread;
+		if (thread != null && thread != Thread.currentThread()) {
+			thread.interrupt();
+			boolean interrupted = false;
+			for (;;) {
+				try {
+					thread.join();
+					break;
+				} catch (InterruptedException exception) {
+					interrupted = true;
+				}
+			}
+			if (interrupted) {
+				Thread.currentThread().interrupt();
+			}
+		}
+		if (workerThread == thread) {
+			workerThread = null;
+		}
+		closeUpdateConnection();
+	}
+
+	private void closeUpdateConnection() {
+		Socket currentSocket = socket;
+		socket = null;
+		InputStream currentInput = inputStream;
+		inputStream = null;
+		OutputStream currentOutput = outputStream;
+		outputStream = null;
+		currentChunkLength = 0;
+		if (currentSocket != null) {
+			try {
+				currentSocket.close();
+			} catch (IOException ignored) {
+			}
+		}
+		if (currentInput != null) {
+			try {
+				currentInput.close();
+			} catch (IOException ignored) {
+			}
+		}
+		if (currentOutput != null) {
+			try {
+				currentOutput.close();
+			} catch (IOException ignored) {
+			}
+		}
 	}
 
 	/**
@@ -808,11 +867,13 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	/** Tracks whether waiting. */
 	private boolean waiting;
 	/** Tracks whether running. */
-	private boolean running;
+	private volatile boolean running;
+	/** Worker thread owned by this fetcher. */
+	private volatile Thread workerThread;
 	/** Stores the cache request queue. */
 	private NodeDeque cacheRequestQueue;
 	/** Stores the highest priority. */
-	private int highestPriority;
+	private volatile int highestPriority;
 	/** Stores the mandatory request count. */
 	private int mandatoryRequestCount;
 	/** Stores the extra request count. */
@@ -822,13 +883,13 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	/** Stores the region ids values. */
 	private int[] regionIds;
 	/** Stores the status string. */
-	public String statusString;
+	public volatile String statusString;
 	/** Stores the on demand cycle. */
-	public int onDemandCycle;
+	public volatile int onDemandCycle;
 	/** Stores the output stream. */
-	private OutputStream outputStream;
+	private volatile OutputStream outputStream;
 	/** Stores the total files. */
-	public int totalFiles;
+	public volatile int totalFiles;
 	/** Stores the missing request queue. */
 	private NodeDeque missingRequestQueue;
 	/** Stores the idle cycles. */
@@ -836,7 +897,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	/** Stores the crc32. */
 	private CRC32 crc32;
 	/** Stores the socket. */
-	private Socket socket;
+	private volatile Socket socket;
 	/** Stores the completed queue. */
 	private NodeDeque completedQueue;
 	/** Stores the extra request queue. */
@@ -858,7 +919,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	/** Stores the outstanding requests. */
 	private DualNodeDeque outstandingRequests;
 	/** Stores the input stream. */
-	private InputStream inputStream;
+	private volatile InputStream inputStream;
 	/** Stores the current request. */
 	private OnDemandRequest currentRequest;
 	/** Stores the client instance. */
@@ -876,6 +937,6 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	/** Stores the last socket open time. */
 	private long lastSocketOpenTime;
 	/** Stores the request failures. */
-	public int requestFailures;
+	public volatile int requestFailures;
 
 }

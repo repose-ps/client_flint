@@ -209,6 +209,8 @@ public class Client extends GameShell {
 	 * Runs the title-screen flame animation timing loop.
 	 */
 	public void runTitleFlameLoop() {
+		Thread current = Thread.currentThread();
+		titleFlameThread = current;
 		titleFlameThreadActive = true;
 		try {
 			long timingWindowStart = System.currentTimeMillis();
@@ -236,6 +238,9 @@ public class Client extends GameShell {
 		} catch (Exception ignored2) {
 		}
 		titleFlameThreadActive = false;
+		if (titleFlameThread == current) {
+			titleFlameThread = null;
+		}
 	}
 
 	/* Legacy Client.method19(String s): fatal startup/on-demand load halt. */
@@ -274,6 +279,20 @@ public class Client extends GameShell {
 	 * during shutdown.
 	 */
 	public void cleanUpForQuit() {
+		if (mouseRecorder != null) {
+			mouseRecorder.stop();
+			mouseRecorder = null;
+		}
+		if (onDemandFetcher != null) {
+			onDemandFetcher.stop();
+			onDemandFetcher = null;
+		}
+		disposeTitleScreen();
+		if (networkSession != null) {
+			networkSession.closeConnection();
+			networkSession = null;
+		}
+
 		backLeft1Buffer = null;
 		backLeft2Buffer = null;
 		backRight1Buffer = null;
@@ -303,9 +322,6 @@ public class Client extends GameShell {
 		playerMapDot = null;
 		friendMapDot = null;
 		teamMapDot = null;
-		if (mouseRecorder != null)
-			mouseRecorder.running = false;
-		mouseRecorder = null;
 		chatModesBackground = null;
 		bottomTabBackground = null;
 		topTabBackground = null;
@@ -337,21 +353,13 @@ public class Client extends GameShell {
 		sidebarBackground = null;
 		minimapBackground = null;
 		chatboxBackground = null;
-		if (networkSession != null) {
-			networkSession.closeConnection();
-			networkSession = null;
-		}
 		textureScrollScratch = null;
 		chatBuffer = null;
 		mapSceneSprites = null;
 		mapFunctionSprites = null;
 		sidebarIcons = null;
 		multiCombatOverlay = null;
-		if (onDemandFetcher != null)
-			onDemandFetcher.stop();
-		onDemandFetcher = null;
 		menuState.clearReferencesForQuit();
-		disposeTitleScreen();
 		GameObjectDefinition.clear();
 		NpcDefinition.clear();
 		ItemDefinition.clear();
@@ -368,6 +376,7 @@ public class Client extends GameShell {
 		Scene.clearStatic();
 		Model.clearModelLoader();
 		AnimationFrame.clear();
+		Signlink.shutdown();
 		System.gc();
 	}
 
@@ -2493,7 +2502,11 @@ public class Client extends GameShell {
 		if (!titleFlamesRunning) {
 			titleFlameThreadMode = true;
 			titleFlamesRunning = true;
-			startThread(this, 2);
+			Thread thread = new Thread(this, "rs2-title-flame");
+			thread.setDaemon(true);
+			titleFlameThread = thread;
+			thread.start();
+			thread.setPriority(2);
 		}
 	}
 
@@ -3215,7 +3228,7 @@ public class Client extends GameShell {
 			Scene.buildVisibilityMaps(500, 800, 512, 334, visibilityPitchHeights);
 			Censor.load(wordEncodingArchive);
 			mouseRecorder = new MouseRecorder(this);
-			startThread(mouseRecorder, 10);
+			mouseRecorder.start(10);
 			DynamicObject.clientInstance = this;
 			GameObjectDefinition.clientInstance = this;
 			NpcDefinition.clientInstance = this;
@@ -7237,13 +7250,26 @@ public class Client extends GameShell {
 	 */
 	public void disposeTitleScreen() {
 		titleFlamesRunning = false;
-		while (titleFlameThreadActive) {
-			titleFlamesRunning = false;
-			try {
-				Thread.sleep(50L);
-			} catch (Exception ignored) {
+		Thread thread = titleFlameThread;
+		if (thread != null && thread != Thread.currentThread()) {
+			thread.interrupt();
+			boolean interrupted = false;
+			for (;;) {
+				try {
+					thread.join();
+					break;
+				} catch (InterruptedException exception) {
+					interrupted = true;
+				}
+			}
+			if (interrupted) {
+				Thread.currentThread().interrupt();
 			}
 		}
+		if (titleFlameThread == thread) {
+			titleFlameThread = null;
+		}
+		titleFlameThreadActive = false;
 		titleBoxImage = null;
 		titleButtonImage = null;
 		titleRunes = null;
@@ -8513,7 +8539,7 @@ public class Client extends GameShell {
 	/** The client state for scrollbar highlight color. */
 	public int scrollbarHighlightColor;
 	/** Whether logged in is currently active or requested. */
-	public boolean loggedIn;
+	public volatile boolean loggedIn;
 	/**
 	 * Counts inventory action961 events for the original client timing/protocol
 	 * behavior.
@@ -8629,6 +8655,8 @@ public class Client extends GameShell {
 	public int lastLoginIp;
 	/** Whether title flames running is currently active or requested. */
 	public volatile boolean titleFlamesRunning;
+	/** Dedicated title-flame worker, owned by this client. */
+	private volatile Thread titleFlameThread;
 	/** The client state for input dialog state. */
 	public int inputDialogState;
 	/** Stores the texture scroll scratch values used by the client. */

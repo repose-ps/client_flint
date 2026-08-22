@@ -47,7 +47,16 @@ public class GameShell extends Canvas
 	private static final int STOPPED = -2;
 
 	/** Stores the shutdown countdown. */
-	private int shutdownCountdown;
+	private volatile int shutdownCountdown;
+	/** Serializes AWT input mutation with one game tick's consumption. */
+	private final Object inputLock = new Object();
+	/** Protects game-thread ownership and one-time cleanup state. */
+	private final Object lifecycleLock = new Object();
+	private volatile Thread gameThread;
+	private boolean cleanupStarted;
+	private boolean cleanupComplete;
+	/** True while a non-game thread owns the normal join-before-cleanup path. */
+	private volatile boolean shutdownJoinPending;
 	/** Stores the cycle duration millis. */
 	protected int cycleDurationMillis = 20;
 	/** Stores the minimum sleep millis. */
@@ -72,18 +81,18 @@ public class GameShell extends Canvas
 	protected GameFrame gameFrame;
 
 	/** Tracks whether clear screen. */
-	private boolean clearScreen = true;
+	private volatile boolean clearScreen = true;
 	/** Tracks whether has focus. */
-	protected boolean hasFocus = true;
+	protected volatile boolean hasFocus = true;
 	/** Stores the idle cycles. */
-	protected int idleCycles;
+	protected volatile int idleCycles;
 
 	/** Current mouse button state: 0 none, 1 primary, 2 meta/secondary. */
-	protected int mouseButton;
+	protected volatile int mouseButton;
 	/** Stores the mouse x. */
-	protected int mouseX;
+	protected volatile int mouseX;
 	/** Stores the mouse y. */
-	protected int mouseY;
+	protected volatile int mouseY;
 
 	/** Stores the pending click button. */
 	private int pendingClickButton;
@@ -140,117 +149,132 @@ public class GameShell extends Canvas
 	 */
 	@Override
 	public void run() {
-		Component component = getGameComponent();
-		component.addMouseListener(this);
-		component.addMouseMotionListener(this);
-		component.addKeyListener(this);
-		component.addFocusListener(this);
-		if (gameFrame != null) {
-			gameFrame.addWindowListener(this);
+		Thread currentThread = Thread.currentThread();
+		synchronized (lifecycleLock) {
+			gameThread = currentThread;
 		}
-
-		drawLoadingText(0, "Loading...");
-		startUp();
-
-		int timingIndex = 0;
-		int ratio = 256;
-		int sleepMillis = 1;
-		int accumulator = 0;
-		int interruptedSleeps = 0;
-
-		for (int sampleIndex = 0; sampleIndex < TIMING_SAMPLE_COUNT; sampleIndex++) {
-			timingSamples[sampleIndex] = System.currentTimeMillis();
-		}
-
-		while (shutdownCountdown >= 0) {
-			if (shutdownCountdown > 0) {
-				shutdownCountdown--;
-				if (shutdownCountdown == 0) {
-					exit();
-					return;
-				}
+		try {
+			Component component = getGameComponent();
+			component.addMouseListener(this);
+			component.addMouseMotionListener(this);
+			component.addKeyListener(this);
+			component.addFocusListener(this);
+			if (gameFrame != null) {
+				gameFrame.addWindowListener(this);
 			}
 
-			int previousRatio = ratio;
-			int previousSleepMillis = sleepMillis;
-			ratio = 300;
-			sleepMillis = 1;
+			drawLoadingText(0, "Loading...");
+			startUp();
 
-			long currentTime = System.currentTimeMillis();
-			if (timingSamples[timingIndex] == 0L) {
-				ratio = previousRatio;
-				sleepMillis = previousSleepMillis;
-			} else if (currentTime > timingSamples[timingIndex]) {
-				ratio = (int) ((long) (2560 * cycleDurationMillis) / (currentTime - timingSamples[timingIndex]));
+			int timingIndex = 0;
+			int ratio = 256;
+			int sleepMillis = 1;
+			int accumulator = 0;
+			int interruptedSleeps = 0;
+
+			for (int sampleIndex = 0; sampleIndex < TIMING_SAMPLE_COUNT; sampleIndex++) {
+				timingSamples[sampleIndex] = System.currentTimeMillis();
 			}
 
-			if (ratio < 25) {
-				ratio = 25;
-			}
-			if (ratio > 256) {
-				ratio = 256;
-				sleepMillis = (int) ((long) cycleDurationMillis - (currentTime - timingSamples[timingIndex]) / 10L);
-			}
-			if (sleepMillis > cycleDurationMillis) {
-				sleepMillis = cycleDurationMillis;
-			}
-
-			timingSamples[timingIndex] = currentTime;
-			timingIndex = (timingIndex + 1) % TIMING_SAMPLE_COUNT;
-
-			if (sleepMillis > 1) {
-				for (int sampleIndex = 0; sampleIndex < TIMING_SAMPLE_COUNT; sampleIndex++) {
-					if (timingSamples[sampleIndex] != 0L) {
-						timingSamples[sampleIndex] += sleepMillis;
+			while (shutdownCountdown >= 0) {
+				if (shutdownCountdown > 0) {
+					shutdownCountdown--;
+					if (shutdownCountdown == 0) {
+						exit();
+						return;
 					}
 				}
-			}
 
-			if (sleepMillis < minimumSleepMillis) {
-				sleepMillis = minimumSleepMillis;
-			}
+				int previousRatio = ratio;
+				int previousSleepMillis = sleepMillis;
+				ratio = 300;
+				sleepMillis = 1;
 
-			try {
-				Thread.sleep(sleepMillis);
-			} catch (InterruptedException ignored) {
-				interruptedSleeps++;
-			}
-
-			for (; accumulator < 256; accumulator += ratio) {
-				clickButton = pendingClickButton;
-				clickX = pendingClickX;
-				clickY = pendingClickY;
-				clickTime = pendingClickTime;
-				pendingClickButton = 0;
-
-				processGameLoop();
-				keyQueueReadIndex = keyQueueWriteIndex;
-			}
-
-			accumulator &= 0xff;
-			if (cycleDurationMillis > 0) {
-				fps = (1000 * ratio) / (cycleDurationMillis * 256);
-			}
-
-			processDrawing();
-
-			if (debugTiming) {
-				System.out.println("ntime:" + currentTime);
-				for (int sampleIndex = 0; sampleIndex < TIMING_SAMPLE_COUNT; sampleIndex++) {
-					int index = ((timingIndex - sampleIndex - 1) + 20) % TIMING_SAMPLE_COUNT;
-					System.out.println("otim" + index + ":" + timingSamples[index]);
+				long currentTime = System.currentTimeMillis();
+				if (timingSamples[timingIndex] == 0L) {
+					ratio = previousRatio;
+					sleepMillis = previousSleepMillis;
+				} else if (currentTime > timingSamples[timingIndex]) {
+					ratio = (int) ((long) (2560 * cycleDurationMillis) / (currentTime - timingSamples[timingIndex]));
 				}
-				System.out.println("fps:" + fps + " ratio:" + ratio + " count:" + accumulator);
-				System.out.println(
-						"del:" + sleepMillis + " deltime:" + cycleDurationMillis + " mindel:" + minimumSleepMillis);
-				System.out.println("intex:" + interruptedSleeps + " opos:" + timingIndex);
-				debugTiming = false;
-				interruptedSleeps = 0;
-			}
-		}
 
-		if (shutdownCountdown == SHUTDOWN_REQUESTED) {
-			exit();
+				if (ratio < 25) {
+					ratio = 25;
+				}
+				if (ratio > 256) {
+					ratio = 256;
+					sleepMillis = (int) ((long) cycleDurationMillis - (currentTime - timingSamples[timingIndex]) / 10L);
+				}
+				if (sleepMillis > cycleDurationMillis) {
+					sleepMillis = cycleDurationMillis;
+				}
+
+				timingSamples[timingIndex] = currentTime;
+				timingIndex = (timingIndex + 1) % TIMING_SAMPLE_COUNT;
+
+				if (sleepMillis > 1) {
+					for (int sampleIndex = 0; sampleIndex < TIMING_SAMPLE_COUNT; sampleIndex++) {
+						if (timingSamples[sampleIndex] != 0L) {
+							timingSamples[sampleIndex] += sleepMillis;
+						}
+					}
+				}
+
+				if (sleepMillis < minimumSleepMillis) {
+					sleepMillis = minimumSleepMillis;
+				}
+
+				try {
+					Thread.sleep(sleepMillis);
+				} catch (InterruptedException ignored) {
+					interruptedSleeps++;
+				}
+
+				for (; accumulator < 256; accumulator += ratio) {
+					synchronized (inputLock) {
+						clickButton = pendingClickButton;
+						clickX = pendingClickX;
+						clickY = pendingClickY;
+						clickTime = pendingClickTime;
+						pendingClickButton = 0;
+
+						processGameLoop();
+						keyQueueReadIndex = keyQueueWriteIndex;
+					}
+				}
+
+				accumulator &= 0xff;
+				if (cycleDurationMillis > 0) {
+					fps = (1000 * ratio) / (cycleDurationMillis * 256);
+				}
+
+				processDrawing();
+
+				if (debugTiming) {
+					System.out.println("ntime:" + currentTime);
+					for (int sampleIndex = 0; sampleIndex < TIMING_SAMPLE_COUNT; sampleIndex++) {
+						int index = ((timingIndex - sampleIndex - 1) + 20) % TIMING_SAMPLE_COUNT;
+						System.out.println("otim" + index + ":" + timingSamples[index]);
+					}
+					System.out.println("fps:" + fps + " ratio:" + ratio + " count:" + accumulator);
+					System.out.println(
+							"del:" + sleepMillis + " deltime:" + cycleDurationMillis + " mindel:" + minimumSleepMillis);
+					System.out.println("intex:" + interruptedSleeps + " opos:" + timingIndex);
+					debugTiming = false;
+					interruptedSleeps = 0;
+				}
+			}
+
+			if (shutdownCountdown == SHUTDOWN_REQUESTED && !shutdownJoinPending) {
+				exit();
+			}
+		} finally {
+			synchronized (lifecycleLock) {
+				if (gameThread == currentThread) {
+					gameThread = null;
+				}
+				lifecycleLock.notifyAll();
+			}
 		}
 	}
 
@@ -259,12 +283,42 @@ public class GameShell extends Canvas
 	 */
 	public void exit() {
 		shutdownCountdown = STOPPED;
-		cleanUpForQuit();
+		boolean performCleanup = false;
+		synchronized (lifecycleLock) {
+			if (!cleanupStarted) {
+				cleanupStarted = true;
+				performCleanup = true;
+			} else {
+				boolean interrupted = false;
+				while (!cleanupComplete) {
+					try {
+						lifecycleLock.wait();
+					} catch (InterruptedException exception) {
+						interrupted = true;
+					}
+				}
+				if (interrupted) {
+					Thread.currentThread().interrupt();
+				}
+			}
+		}
+
+		if (!performCleanup) {
+			return;
+		}
+		try {
+			cleanUpForQuit();
+		} finally {
+			synchronized (lifecycleLock) {
+				cleanupComplete = true;
+				lifecycleLock.notifyAll();
+			}
+		}
 		if (gameFrame != null) {
 			try {
 				Thread.sleep(1000L);
-			} catch (Exception ignored) {
-				// Preserved client shutdown behavior.
+			} catch (InterruptedException exception) {
+				Thread.currentThread().interrupt();
 			}
 			try {
 				System.exit(0);
@@ -288,15 +342,46 @@ public class GameShell extends Canvas
 	 * thread fails to observe the request.
 	 */
 	public final void shutdown() {
-		shutdownCountdown = SHUTDOWN_REQUESTED;
-		try {
-			Thread.sleep(10000L);
-		} catch (Exception ignored) {
-			// Preserved shutdown fallback behavior.
+		Thread thread;
+		synchronized (lifecycleLock) {
+			thread = gameThread;
+			shutdownJoinPending = thread != null && thread != Thread.currentThread();
+			shutdownCountdown = SHUTDOWN_REQUESTED;
 		}
-		if (shutdownCountdown == SHUTDOWN_REQUESTED) {
+
+		if (thread == null) {
+			shutdownJoinPending = false;
 			exit();
+			return;
 		}
+		if (thread == Thread.currentThread()) {
+			return;
+		}
+
+		thread.interrupt();
+		long deadline = System.currentTimeMillis() + 10000L;
+		boolean interrupted = false;
+		while (thread.isAlive()) {
+			long remaining = deadline - System.currentTimeMillis();
+			if (remaining <= 0L) {
+				break;
+			}
+			try {
+				thread.join(remaining);
+			} catch (InterruptedException exception) {
+				interrupted = true;
+			}
+		}
+		if (interrupted) {
+			Thread.currentThread().interrupt();
+		}
+
+		shutdownJoinPending = false;
+		/*
+		 * Normal shutdown reaches here only after the owned game thread has ended.
+		 * If it is still alive, this is the preserved hard-stop fallback path.
+		 */
+		exit();
 	}
 
 	/**
@@ -339,16 +424,18 @@ public class GameShell extends Canvas
 			y -= FRAME_MOUSE_Y_OFFSET;
 		}
 
-		idleCycles = 0;
-		pendingClickX = x;
-		pendingClickY = y;
-		pendingClickTime = System.currentTimeMillis();
-		if (event.isMetaDown()) {
-			pendingClickButton = 2;
-			mouseButton = 2;
-		} else {
-			pendingClickButton = 1;
-			mouseButton = 1;
+		synchronized (inputLock) {
+			idleCycles = 0;
+			pendingClickX = x;
+			pendingClickY = y;
+			pendingClickTime = System.currentTimeMillis();
+			if (event.isMetaDown()) {
+				pendingClickButton = 2;
+				mouseButton = 2;
+			} else {
+				pendingClickButton = 1;
+				mouseButton = 1;
+			}
 		}
 	}
 
@@ -359,8 +446,10 @@ public class GameShell extends Canvas
 	 */
 	@Override
 	public final void mouseReleased(MouseEvent event) {
-		idleCycles = 0;
-		mouseButton = 0;
+		synchronized (inputLock) {
+			idleCycles = 0;
+			mouseButton = 0;
+		}
 	}
 
 	/**
@@ -388,9 +477,11 @@ public class GameShell extends Canvas
 	 */
 	@Override
 	public final void mouseExited(MouseEvent event) {
-		idleCycles = 0;
-		mouseX = -1;
-		mouseY = -1;
+		synchronized (inputLock) {
+			idleCycles = 0;
+			mouseX = -1;
+			mouseY = -1;
+		}
 	}
 
 	/**
@@ -425,9 +516,11 @@ public class GameShell extends Canvas
 			x -= FRAME_MOUSE_X_OFFSET;
 			y -= FRAME_MOUSE_Y_OFFSET;
 		}
-		idleCycles = 0;
-		mouseX = x;
-		mouseY = y;
+		synchronized (inputLock) {
+			idleCycles = 0;
+			mouseX = x;
+			mouseY = y;
+		}
 	}
 
 	/**
@@ -437,58 +530,60 @@ public class GameShell extends Canvas
 	 */
 	@Override
 	public final void keyPressed(KeyEvent event) {
-		idleCycles = 0;
-		int keyCode = event.getKeyCode();
-		int key = event.getKeyChar();
-		if (key < 30) {
-			key = 0;
-		}
-		if (keyCode == KeyEvent.VK_LEFT) {
-			key = 1;
-		}
-		if (keyCode == KeyEvent.VK_RIGHT) {
-			key = 2;
-		}
-		if (keyCode == KeyEvent.VK_UP) {
-			key = 3;
-		}
-		if (keyCode == KeyEvent.VK_DOWN) {
-			key = 4;
-		}
-		if (keyCode == KeyEvent.VK_CONTROL) {
-			key = 5;
-		}
-		if (keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_DELETE) {
-			key = 8;
-		}
-		if (keyCode == KeyEvent.VK_TAB) {
-			key = 9;
-		}
-		if (keyCode == KeyEvent.VK_ENTER) {
-			key = 10;
-		}
-		if (keyCode >= KeyEvent.VK_F1 && keyCode <= KeyEvent.VK_F12) {
-			key = 1008 + keyCode - KeyEvent.VK_F1;
-		}
-		if (keyCode == KeyEvent.VK_HOME) {
-			key = 1000;
-		}
-		if (keyCode == KeyEvent.VK_END) {
-			key = 1001;
-		}
-		if (keyCode == KeyEvent.VK_PAGE_UP) {
-			key = 1002;
-		}
-		if (keyCode == KeyEvent.VK_PAGE_DOWN) {
-			key = 1003;
-		}
+		synchronized (inputLock) {
+			idleCycles = 0;
+			int keyCode = event.getKeyCode();
+			int key = event.getKeyChar();
+			if (key < 30) {
+				key = 0;
+			}
+			if (keyCode == KeyEvent.VK_LEFT) {
+				key = 1;
+			}
+			if (keyCode == KeyEvent.VK_RIGHT) {
+				key = 2;
+			}
+			if (keyCode == KeyEvent.VK_UP) {
+				key = 3;
+			}
+			if (keyCode == KeyEvent.VK_DOWN) {
+				key = 4;
+			}
+			if (keyCode == KeyEvent.VK_CONTROL) {
+				key = 5;
+			}
+			if (keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_DELETE) {
+				key = 8;
+			}
+			if (keyCode == KeyEvent.VK_TAB) {
+				key = 9;
+			}
+			if (keyCode == KeyEvent.VK_ENTER) {
+				key = 10;
+			}
+			if (keyCode >= KeyEvent.VK_F1 && keyCode <= KeyEvent.VK_F12) {
+				key = 1008 + keyCode - KeyEvent.VK_F1;
+			}
+			if (keyCode == KeyEvent.VK_HOME) {
+				key = 1000;
+			}
+			if (keyCode == KeyEvent.VK_END) {
+				key = 1001;
+			}
+			if (keyCode == KeyEvent.VK_PAGE_UP) {
+				key = 1002;
+			}
+			if (keyCode == KeyEvent.VK_PAGE_DOWN) {
+				key = 1003;
+			}
 
-		if (key > 0 && key < 128) {
-			keyStatus[key] = 1;
-		}
-		if (key > 4) {
-			keyQueue[keyQueueWriteIndex] = key;
-			keyQueueWriteIndex = (keyQueueWriteIndex + 1) & 0x7f;
+			if (key > 0 && key < 128) {
+				keyStatus[key] = 1;
+			}
+			if (key > 4) {
+				keyQueue[keyQueueWriteIndex] = key;
+				keyQueueWriteIndex = (keyQueueWriteIndex + 1) & 0x7f;
+			}
 		}
 	}
 
@@ -499,39 +594,41 @@ public class GameShell extends Canvas
 	 */
 	@Override
 	public final void keyReleased(KeyEvent event) {
-		idleCycles = 0;
-		int keyCode = event.getKeyCode();
-		int key = event.getKeyChar();
-		if (key < 30) {
-			key = 0;
-		}
-		if (keyCode == KeyEvent.VK_LEFT) {
-			key = 1;
-		}
-		if (keyCode == KeyEvent.VK_RIGHT) {
-			key = 2;
-		}
-		if (keyCode == KeyEvent.VK_UP) {
-			key = 3;
-		}
-		if (keyCode == KeyEvent.VK_DOWN) {
-			key = 4;
-		}
-		if (keyCode == KeyEvent.VK_CONTROL) {
-			key = 5;
-		}
-		if (keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_DELETE) {
-			key = 8;
-		}
-		if (keyCode == KeyEvent.VK_TAB) {
-			key = 9;
-		}
-		if (keyCode == KeyEvent.VK_ENTER) {
-			key = 10;
-		}
+		synchronized (inputLock) {
+			idleCycles = 0;
+			int keyCode = event.getKeyCode();
+			int key = event.getKeyChar();
+			if (key < 30) {
+				key = 0;
+			}
+			if (keyCode == KeyEvent.VK_LEFT) {
+				key = 1;
+			}
+			if (keyCode == KeyEvent.VK_RIGHT) {
+				key = 2;
+			}
+			if (keyCode == KeyEvent.VK_UP) {
+				key = 3;
+			}
+			if (keyCode == KeyEvent.VK_DOWN) {
+				key = 4;
+			}
+			if (keyCode == KeyEvent.VK_CONTROL) {
+				key = 5;
+			}
+			if (keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_DELETE) {
+				key = 8;
+			}
+			if (keyCode == KeyEvent.VK_TAB) {
+				key = 9;
+			}
+			if (keyCode == KeyEvent.VK_ENTER) {
+				key = 10;
+			}
 
-		if (key > 0 && key < 128) {
-			keyStatus[key] = 0;
+			if (key > 0 && key < 128) {
+				keyStatus[key] = 0;
+			}
 		}
 	}
 
@@ -546,12 +643,14 @@ public class GameShell extends Canvas
 
 	/** Returns the next queued client key code, or {@code -1} when empty. */
 	public final int pollKey() {
-		int key = -1;
-		if (keyQueueWriteIndex != keyQueueReadIndex) {
-			key = keyQueue[keyQueueReadIndex];
-			keyQueueReadIndex = (keyQueueReadIndex + 1) & 0x7f;
+		synchronized (inputLock) {
+			int key = -1;
+			if (keyQueueWriteIndex != keyQueueReadIndex) {
+				key = keyQueue[keyQueueReadIndex];
+				keyQueueReadIndex = (keyQueueReadIndex + 1) & 0x7f;
+			}
+			return key;
 		}
-		return key;
 	}
 
 	/**
@@ -561,8 +660,10 @@ public class GameShell extends Canvas
 	 */
 	@Override
 	public final void focusGained(FocusEvent event) {
-		hasFocus = true;
-		clearScreen = true;
+		synchronized (inputLock) {
+			hasFocus = true;
+			clearScreen = true;
+		}
 	}
 
 	/**
@@ -572,9 +673,11 @@ public class GameShell extends Canvas
 	 */
 	@Override
 	public final void focusLost(FocusEvent event) {
-		hasFocus = false;
-		for (int keyCode = 0; keyCode < KEY_BUFFER_SIZE; keyCode++) {
-			keyStatus[keyCode] = 0;
+		synchronized (inputLock) {
+			hasFocus = false;
+			for (int keyCode = 0; keyCode < KEY_BUFFER_SIZE; keyCode++) {
+				keyStatus[keyCode] = 0;
+			}
 		}
 	}
 
