@@ -62,6 +62,7 @@ import rs2.net.IsaacCipher;
 import rs2.scene.InteractiveObject;
 import rs2.scene.PendingSpawn;
 import rs2.scene.Region;
+import rs2.scene.Scene;
 import rs2.scene.tile.FloorDecoration;
 import rs2.scene.tile.Wall;
 import rs2.scene.tile.WallDecoration;
@@ -413,7 +414,7 @@ public class client extends GameShell {
 		super.gameBuffer = null;
 		Player.modelCache = null;
 		Rasterizer3D.clear();
-		Class22.method240(false);
+		Scene.clearStatic();
 		Model.clearModelLoader();
 		AnimationFrame.clear();
 		System.gc();
@@ -642,7 +643,7 @@ public class client extends GameShell {
 	public void method26(int i, int j) {
 		NodeDeque class6 = aClass6ArrayArrayArray1323[anInt1091][i][j];
 		if (class6 == null) {
-			aClass22_1164.method262(anInt1091, i, j);
+			aClass22_1164.removeGroundItemTile(anInt1091, i, j);
 			return;
 		}
 		int k = 0xfa0a1f01;
@@ -672,12 +673,12 @@ public class client extends GameShell {
 		}
 
 		int i1 = i + (j << 7) + 0x60000000;
-		aClass22_1164.method248(method110(j * 128 + 64, i * 128 + 64, (byte) 9, anInt1091), anInt1091,
-				((Renderable) (obj)), ((Renderable) (obj1)), i1, ((Renderable) (obj2)), 2, j, i);
+		aClass22_1164.addGroundItemTile(anInt1091, i,
+				j, method110(j * 128 + 64, i * 128 + 64, (byte) 9, anInt1091), i1, ((Renderable) (obj)), ((Renderable) (obj1)), ((Renderable) (obj2)));
 	}
 
 	public static void method27() {
-		Class22.aBoolean451 = false;
+		Scene.lowMemory = false;
 		Rasterizer3D.lowMemory = false;
 		aBoolean926 = false;
 		Region.lowMemory = false;
@@ -886,12 +887,12 @@ public class client extends GameShell {
 				super.clickButton = 0;
 			}
 		}
-		if (Class22.anInt485 != -1) {
-			int j = Class22.anInt485;
-			int j1 = Class22.anInt486;
+		if (Scene.pickedTileX != -1) {
+			int j = Scene.pickedTileX;
+			int j1 = Scene.pickedTileY;
 			boolean flag = method35(true, false, j1, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 0, 0, 0, 0,
 					j, 0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-			Class22.anInt485 = -1;
+			Scene.pickedTileX = -1;
 			if (flag) {
 				anInt1020 = super.clickX;
 				anInt1021 = super.clickY;
@@ -3059,7 +3060,7 @@ public class client extends GameShell {
 			if (k == i)
 				continue;
 			i = k;
-			if (j1 == 2 && aClass22_1164.method271(anInt1091, l, i1, k) >= 0) {
+			if (j1 == 2 && aClass22_1164.getConfig(anInt1091, l, i1, k) >= 0) {
 				GameObjectDefinition class47 = GameObjectDefinition.lookup(k1);
 				if (class47.morphIds != null)
 					class47 = class47.transform();
@@ -3239,28 +3240,28 @@ public class client extends GameShell {
 			boolean flag = false;
 			boolean flag1 = false;
 			if (k1 == 0)
-				l1 = aClass22_1164.method267(i1, j, l);
+				l1 = aClass22_1164.getWallUid(i1, j, l);
 			if (k1 == 1)
-				l1 = aClass22_1164.method268(j, (byte) 4, i1, l);
+				l1 = aClass22_1164.getWallDecorationUid(i1, j, l);
 			if (k1 == 2)
-				l1 = aClass22_1164.method269(i1, j, l);
+				l1 = aClass22_1164.getInteractiveObjectUid(i1, j, l);
 			if (k1 == 3)
-				l1 = aClass22_1164.method270(i1, j, l);
+				l1 = aClass22_1164.getFloorDecorationUid(i1, j, l);
 			if (l1 != 0) {
-				int l2 = aClass22_1164.method271(i1, j, l, l1);
+				int l2 = aClass22_1164.getConfig(i1, j, l, l1);
 				int i2 = l1 >> 14 & 0x7fff;
 				int j2 = l2 & 0x1f;
 				int k2 = l2 >> 6;
 				if (k1 == 0) {
-					aClass22_1164.method258(l, i1, j, true);
+					aClass22_1164.removeWall(i1, j, l);
 					GameObjectDefinition class47 = GameObjectDefinition.lookup(i2);
 					if (class47.blocksMovement)
 						aClass46Array1260[i1].unmarkWall(j, l, j2, k2, class47.blocksProjectiles);
 				}
 				if (k1 == 1)
-					aClass22_1164.method259(false, j, l, i1);
+					aClass22_1164.removeWallDecoration(i1, j, l);
 				if (k1 == 2) {
-					aClass22_1164.method260(l, i1, -779, j);
+					aClass22_1164.removeInteractiveObject(i1, j, l);
 					GameObjectDefinition class47_1 = GameObjectDefinition.lookup(i2);
 					if (j + class47_1.sizeX > 103 || l + class47_1.sizeX > 103 || j + class47_1.sizeY > 103
 							|| l + class47_1.sizeY > 103)
@@ -3270,7 +3271,7 @@ public class client extends GameShell {
 								class47_1.blocksProjectiles);
 				}
 				if (k1 == 3) {
-					aClass22_1164.method261(j, l, true, i1);
+					aClass22_1164.removeFloorDecoration(i1, j, l);
 					GameObjectDefinition class47_2 = GameObjectDefinition.lookup(i2);
 					if (class47_2.blocksMovement && class47_2.interactive)
 						aClass46Array1260[i1].unmarkBlocked(j, l);
@@ -3445,9 +3446,8 @@ public class client extends GameShell {
 								anInt1325);
 				}
 				class50_sub1_sub4_sub2.advance(anInt951);
-				aClass22_1164.method252(-1, class50_sub1_sub4_sub2, (int) class50_sub1_sub4_sub2.x,
-						(int) class50_sub1_sub4_sub2.z, false, 0, anInt1091, 60, (int) class50_sub1_sub4_sub2.y,
-						class50_sub1_sub4_sub2.yaw);
+				aClass22_1164.addEntity(anInt1091, (int) class50_sub1_sub4_sub2.x, (int) class50_sub1_sub4_sub2.y,
+						(int) class50_sub1_sub4_sub2.z, class50_sub1_sub4_sub2, -1, 60, false, class50_sub1_sub4_sub2.yaw);
 			}
 
 		anInt1168++;
@@ -3722,12 +3722,12 @@ public class client extends GameShell {
 			}
 			if (!class50_sub1_sub4_sub3_sub1.definition.clickable)
 				k += 0x80000000;
-			aClass22_1164.method252(k, class50_sub1_sub4_sub3_sub1, ((Actor) (class50_sub1_sub4_sub3_sub1)).x,
+			aClass22_1164.addEntity(anInt1091, ((Actor) (class50_sub1_sub4_sub3_sub1)).x, ((Actor) (class50_sub1_sub4_sub3_sub1)).y,
 					method110(((Actor) (class50_sub1_sub4_sub3_sub1)).y, ((Actor) (class50_sub1_sub4_sub3_sub1)).x,
 							(byte) 9, anInt1091),
-					((Actor) (class50_sub1_sub4_sub3_sub1)).animationStretches, 0, anInt1091,
-					(((Actor) (class50_sub1_sub4_sub3_sub1)).size - 1) * 64 + 60,
-					((Actor) (class50_sub1_sub4_sub3_sub1)).y, ((Actor) (class50_sub1_sub4_sub3_sub1)).rotation);
+					class50_sub1_sub4_sub3_sub1, k, (((Actor) (class50_sub1_sub4_sub3_sub1)).size - 1) * 64 + 60,
+					((Actor) (class50_sub1_sub4_sub3_sub1)).animationStretches,
+					((Actor) (class50_sub1_sub4_sub3_sub1)).rotation);
 		}
 
 	}
@@ -4311,7 +4311,7 @@ public class client extends GameShell {
 			Archive class2_5 = method61(14076, anIntArray837[8], "sounds", 55, 8, "sound effects");
 			aByteArrayArrayArray1125 = new byte[4][104][104];
 			anIntArrayArrayArray891 = new int[4][105][105];
-			aClass22_1164 = new Class22(anIntArrayArrayArray891, 104, 4, 104, (byte) 5);
+			aClass22_1164 = new Scene(anIntArrayArrayArray891, 4, 104, 104);
 			for (int j = 0; j < 4; j++)
 				aClass46Array1260[j] = new CollisionMap(104, 104);
 
@@ -4635,7 +4635,7 @@ public class client extends GameShell {
 				ai[l8] = k9 * l9 >> 16;
 			}
 
-			Class22.method277(334, 22845, ai, 800, 500, 512);
+			Scene.buildVisibilityMaps(500, 800, 512, 334, ai);
 			Censor.load(class2_4);
 			aClass7_1248 = new MouseRecorder(this);
 			startThread(aClass7_1248, 10);
@@ -5516,9 +5516,9 @@ public class client extends GameShell {
 				if (class50_sub1_sub4_sub6.finished)
 					class50_sub1_sub4_sub6.unlink();
 				else
-					aClass22_1164.method252(-1, class50_sub1_sub4_sub6, class50_sub1_sub4_sub6.x,
-							class50_sub1_sub4_sub6.z, false, 0, class50_sub1_sub4_sub6.plane, 60,
-							class50_sub1_sub4_sub6.y, 0);
+					aClass22_1164.addEntity(class50_sub1_sub4_sub6.plane, class50_sub1_sub4_sub6.x, class50_sub1_sub4_sub6.y,
+							class50_sub1_sub4_sub6.z, class50_sub1_sub4_sub6, -1, 60, false,
+							0);
 			}
 
 	}
@@ -5917,7 +5917,7 @@ public class client extends GameShell {
 
 	public boolean method80(int i, int j, int k, int l) {
 		int i1 = l >> 14 & 0x7fff;
-		int j1 = aClass22_1164.method271(anInt1091, k, i, l);
+		int j1 = aClass22_1164.getConfig(anInt1091, k, i, l);
 		if (j1 == -1)
 			return false;
 		int k1 = j1 & 0x1f;
@@ -6732,7 +6732,7 @@ public class client extends GameShell {
 			aClass6_1282.clear();
 			Rasterizer3D.clearTextureCache();
 			method49(383);
-			aClass22_1164.method241((byte) 7);
+			aClass22_1164.clear();
 			System.gc();
 			for (int j = 0; j < 4; j++)
 				aClass46Array1260[j].reset();
@@ -6857,9 +6857,9 @@ public class client extends GameShell {
 			if (l3 < anInt1091 - 1)
 				l3 = anInt1091 - 1;
 			if (aBoolean926)
-				aClass22_1164.method242(Region.minimumPlane, true);
+				aClass22_1164.setMinPlane(Region.minimumPlane);
 			else
-				aClass22_1164.method242(0, true);
+				aClass22_1164.setMinPlane(0);
 			for (int j5 = 0; j5 < 104; j5++) {
 				for (int j7 = 0; j7 < 104; j7++)
 					method26(j5, j7);
@@ -7127,7 +7127,7 @@ public class client extends GameShell {
 	}
 
 	public static void method101(boolean flag) {
-		Class22.aBoolean451 = true;
+		Scene.lowMemory = true;
 		if (!flag)
 			aBoolean1242 = !aBoolean1242;
 		Rasterizer3D.lowMemory = true;
@@ -7916,9 +7916,9 @@ public class client extends GameShell {
 			int j1 = 24628 + (103 - i1) * 512 * 4;
 			for (int l1 = 1; l1 < 103; l1++) {
 				if ((aByteArrayArrayArray1125[i][l1][i1] & 0x18) == 0)
-					aClass22_1164.method276(ai, j1, 512, i, l1, i1);
+					aClass22_1164.drawMinimapTile(ai, j1, 512, i, l1, i1);
 				if (i < 3 && (aByteArrayArrayArray1125[i + 1][l1][i1] & 8) != 0)
-					aClass22_1164.method276(ai, j1, 512, i + 1, l1, i1);
+					aClass22_1164.drawMinimapTile(ai, j1, 512, i + 1, l1, i1);
 				j1 += 4;
 			}
 
@@ -7953,7 +7953,7 @@ public class client extends GameShell {
 		anInt1076 = 0;
 		for (int l2 = 0; l2 < 104; l2++) {
 			for (int i3 = 0; i3 < 104; i3++) {
-				int j3 = aClass22_1164.method270(anInt1091, l2, i3);
+				int j3 = aClass22_1164.getFloorDecorationUid(anInt1091, l2, i3);
 				if (j3 != 0) {
 					j3 = j3 >> 14 & 0x7fff;
 					int k3 = GameObjectDefinition.lookup(j3).mapFunctionId;
@@ -8139,12 +8139,11 @@ public class client extends GameShell {
 				class50_sub1_sub4_sub3_sub2.isUnanimated = false;
 				class50_sub1_sub4_sub3_sub2.tileHeight = method110(((Actor) (class50_sub1_sub4_sub3_sub2)).y,
 						((Actor) (class50_sub1_sub4_sub3_sub2)).x, (byte) 9, anInt1091);
-				aClass22_1164.method253(class50_sub1_sub4_sub3_sub2.tileHeight,
-						class50_sub1_sub4_sub3_sub2.attachedModelMinY, 60, 7, class50_sub1_sub4_sub3_sub2,
-						class50_sub1_sub4_sub3_sub2.attachedModelMinX, ((Actor) (class50_sub1_sub4_sub3_sub2)).y,
-						class50_sub1_sub4_sub3_sub2.attachedModelMaxY, ((Actor) (class50_sub1_sub4_sub3_sub2)).x,
-						((Actor) (class50_sub1_sub4_sub3_sub2)).rotation, class50_sub1_sub4_sub3_sub2.attachedModelMaxX,
-						anInt1091, l);
+				aClass22_1164.addEntityBounds(anInt1091,
+						class50_sub1_sub4_sub3_sub2.attachedModelMinX, class50_sub1_sub4_sub3_sub2.attachedModelMinY, class50_sub1_sub4_sub3_sub2.attachedModelMaxX, class50_sub1_sub4_sub3_sub2.attachedModelMaxY,
+						((Actor) (class50_sub1_sub4_sub3_sub2)).x, ((Actor) (class50_sub1_sub4_sub3_sub2)).y,
+						class50_sub1_sub4_sub3_sub2.tileHeight, class50_sub1_sub4_sub3_sub2,
+						((Actor) (class50_sub1_sub4_sub3_sub2)).rotation, l);
 				continue;
 			}
 			if ((((Actor) (class50_sub1_sub4_sub3_sub2)).x & 0x7f) == 64
@@ -8155,10 +8154,9 @@ public class client extends GameShell {
 			}
 			class50_sub1_sub4_sub3_sub2.tileHeight = method110(((Actor) (class50_sub1_sub4_sub3_sub2)).y,
 					((Actor) (class50_sub1_sub4_sub3_sub2)).x, (byte) 9, anInt1091);
-			aClass22_1164.method252(l, class50_sub1_sub4_sub3_sub2, ((Actor) (class50_sub1_sub4_sub3_sub2)).x,
-					class50_sub1_sub4_sub3_sub2.tileHeight, ((Actor) (class50_sub1_sub4_sub3_sub2)).animationStretches,
-					0, anInt1091, 60, ((Actor) (class50_sub1_sub4_sub3_sub2)).y,
-					((Actor) (class50_sub1_sub4_sub3_sub2)).rotation);
+			aClass22_1164.addEntity(anInt1091, ((Actor) (class50_sub1_sub4_sub3_sub2)).x, ((Actor) (class50_sub1_sub4_sub3_sub2)).y,
+					class50_sub1_sub4_sub3_sub2.tileHeight, class50_sub1_sub4_sub3_sub2,
+					l, 60, ((Actor) (class50_sub1_sub4_sub3_sub2)).animationStretches, ((Actor) (class50_sub1_sub4_sub3_sub2)).rotation);
 		}
 
 		if (i == 0)
@@ -8408,9 +8406,9 @@ public class client extends GameShell {
 		}
 		if (i1 == 14)
 			if (!aBoolean1065)
-				aClass22_1164.method279(0, super.clickX - 4, super.clickY - 4);
+				aClass22_1164.setClick(super.clickX - 4, super.clickY - 4);
 			else
-				aClass22_1164.method279(0, k - 4, l - 4);
+				aClass22_1164.setClick(k - 4, l - 4);
 		if (i1 == 903) {
 			aClass50_Sub1_Sub2_964.writeOpcode(1);
 			aClass50_Sub1_Sub2_964.writeShort(j1);
@@ -9301,7 +9299,7 @@ public class client extends GameShell {
 		aString1093 = "";
 		method49(383);
 		aBoolean1137 &= flag;
-		aClass22_1164.method241((byte) 7);
+		aClass22_1164.clear();
 		for (int i = 0; i < 4; i++)
 			aClass46Array1260[i].reset();
 
@@ -9773,7 +9771,7 @@ public class client extends GameShell {
 				int i20 = anIntArrayArrayArray891[anInt1091][j16 + 1][l17 + 1];
 				int l20 = anIntArrayArrayArray891[anInt1091][j16][l17 + 1];
 				if (i12 == 0) {
-					Wall class44 = aClass22_1164.method263(anInt1091, 17734, j16, l17);
+					Wall class44 = aClass22_1164.getWall(anInt1091, j16, l17);
 					if (class44 != null) {
 						int k21 = class44.uid >> 14 & 0x7fff;
 						if (k6 == 2) {
@@ -9785,13 +9783,13 @@ public class client extends GameShell {
 					}
 				}
 				if (i12 == 1) {
-					WallDecoration class35 = aClass22_1164.method264(anInt1091, l17, j16, false);
+					WallDecoration class35 = aClass22_1164.getWallDecoration(anInt1091, j16, l17);
 					if (class35 != null)
 						class35.renderable = new DynamicObject(class35.uid >> 14 & 0x7fff, 4, 0, l18, j19, i20, l20, i1,
 								false);
 				}
 				if (i12 == 2) {
-					InteractiveObject class5 = aClass22_1164.method265(j16, (byte) 32, l17, anInt1091);
+					InteractiveObject class5 = aClass22_1164.getInteractiveObject(anInt1091, j16, l17);
 					if (k6 == 11)
 						k6 = 10;
 					if (class5 != null)
@@ -9799,7 +9797,7 @@ public class client extends GameShell {
 								false);
 				}
 				if (i12 == 3) {
-					FloorDecoration class28 = aClass22_1164.method266(anInt1091, l17, 0, j16);
+					FloorDecoration class28 = aClass22_1164.getFloorDecoration(anInt1091, j16, l17);
 					if (class28 != null)
 						class28.renderable = new DynamicObject(class28.uid >> 14 & 0x7fff, 22, j9, l18, j19, i20, l20,
 								i1, false);
@@ -10162,15 +10160,15 @@ public class client extends GameShell {
 		if (byte0 != -61)
 			aClass50_Sub1_Sub2_964.writeByte(175);
 		if (class50_sub2.sceneLayer == 0)
-			i = aClass22_1164.method267(class50_sub2.plane, class50_sub2.x, class50_sub2.y);
+			i = aClass22_1164.getWallUid(class50_sub2.plane, class50_sub2.x, class50_sub2.y);
 		if (class50_sub2.sceneLayer == 1)
-			i = aClass22_1164.method268(class50_sub2.x, (byte) 4, class50_sub2.plane, class50_sub2.y);
+			i = aClass22_1164.getWallDecorationUid(class50_sub2.plane, class50_sub2.x, class50_sub2.y);
 		if (class50_sub2.sceneLayer == 2)
-			i = aClass22_1164.method269(class50_sub2.plane, class50_sub2.x, class50_sub2.y);
+			i = aClass22_1164.getInteractiveObjectUid(class50_sub2.plane, class50_sub2.x, class50_sub2.y);
 		if (class50_sub2.sceneLayer == 3)
-			i = aClass22_1164.method270(class50_sub2.plane, class50_sub2.x, class50_sub2.y);
+			i = aClass22_1164.getFloorDecorationUid(class50_sub2.plane, class50_sub2.x, class50_sub2.y);
 		if (i != 0) {
-			int i1 = aClass22_1164.method271(class50_sub2.plane, class50_sub2.x, class50_sub2.y, i);
+			int i1 = aClass22_1164.getConfig(class50_sub2.plane, class50_sub2.x, class50_sub2.y, i);
 			j = i >> 14 & 0x7fff;
 			k = i1 & 0x1f;
 			l = i1 >> 6;
@@ -10790,10 +10788,10 @@ public class client extends GameShell {
 	}
 
 	public void method150(int i, int j, int k, int l, int i1, int j1) {
-		int k1 = aClass22_1164.method267(j, k, i);
+		int k1 = aClass22_1164.getWallUid(j, k, i);
 		i1 = 62 / i1;
 		if (k1 != 0) {
-			int l1 = aClass22_1164.method271(j, k, i, k1);
+			int l1 = aClass22_1164.getConfig(j, k, i, k1);
 			int k2 = l1 >> 6 & 3;
 			int i3 = l1 & 0x1f;
 			int k3 = j1;
@@ -10866,9 +10864,9 @@ public class client extends GameShell {
 					}
 			}
 		}
-		k1 = aClass22_1164.method269(j, k, i);
+		k1 = aClass22_1164.getInteractiveObjectUid(j, k, i);
 		if (k1 != 0) {
-			int i2 = aClass22_1164.method271(j, k, i, k1);
+			int i2 = aClass22_1164.getConfig(j, k, i, k1);
 			int l2 = i2 >> 6 & 3;
 			int j3 = i2 & 0x1f;
 			int l3 = k1 >> 14 & 0x7fff;
@@ -10899,7 +10897,7 @@ public class client extends GameShell {
 				}
 			}
 		}
-		k1 = aClass22_1164.method270(j, k, i);
+		k1 = aClass22_1164.getFloorDecorationUid(j, k, i);
 		if (k1 != 0) {
 			int j2 = k1 >> 14 & 0x7fff;
 			GameObjectDefinition class47 = GameObjectDefinition.lookup(j2);
@@ -10972,8 +10970,8 @@ public class client extends GameShell {
 		Model.mouseX = super.mouseX - 4;
 		Model.mouseY = super.mouseY - 4;
 		Rasterizer.resetPixels();
-		aClass22_1164.method280(anInt1216, k, 0, anInt1217, anInt1218, anInt1220, anInt1219);
-		aClass22_1164.method255(anInt897);
+		aClass22_1164.render(anInt1216, anInt1218, anInt1217, k, anInt1220, anInt1219);
+		aClass22_1164.clearTemporaryObjects();
 		method121(false);
 		method127();
 		method65(l2, -927);
@@ -11064,7 +11062,6 @@ public class client extends GameShell {
 		aBoolean892 = false;
 		anInt894 = -992;
 		aClass50_Sub1_Sub1_Sub1Array896 = new ImageRGB[8];
-		anInt897 = 559;
 		aBoolean900 = false;
 		anInt917 = 2;
 		aBoolean918 = true;
@@ -11294,7 +11291,6 @@ public class client extends GameShell {
 	public int anInt894;
 	public static int anInt895;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1Array896[];
-	public int anInt897;
 	public IsaacCipher aClass24_899;
 	public boolean aBoolean900;
 	public long aLong902;
@@ -11551,7 +11547,7 @@ public class client extends GameShell {
 	public byte aByte1161;
 	public static int anInt1162;
 	public boolean aBoolean1163;
-	public Class22 aClass22_1164;
+	public Scene aClass22_1164;
 	public static int anInt1165;
 	public int anIntArray1166[];
 	public static Player aClass50_Sub1_Sub4_Sub3_Sub2_1167;

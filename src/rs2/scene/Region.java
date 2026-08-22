@@ -1,6 +1,5 @@
 package rs2.scene;
 
-import rs2.Class22;
 import rs2.cache.def.FloorDefinition;
 import rs2.cache.def.GameObjectDefinition;
 import rs2.cache.ondemand.OnDemandFetcher;
@@ -73,7 +72,7 @@ public class Region {
      */
     public static void addLocation(int objectId, int heightPlane, int type, int orientation,
                                    int x, int y, int scenePlane, CollisionMap collisionMap,
-                                   Class22 scene, int[][][] heights) {
+                                   Scene scene, int[][][] heights) {
         int southWestHeight = heights[heightPlane][x][y];
         int southEastHeight = heights[heightPlane][x + 1][y];
         int northEastHeight = heights[heightPlane][x + 1][y + 1];
@@ -90,7 +89,7 @@ public class Region {
         if (type == 22) {
             Renderable renderable = createRenderable(definition, objectId, 22, orientation,
                     southWestHeight, southEastHeight, northEastHeight, northWestHeight);
-            scene.method247(x, y, 669, config, uid, averageHeight, scenePlane, renderable);
+            scene.addFloorDecoration(scenePlane, x, y, averageHeight, uid, config, renderable);
             if (definition.blocksMovement && definition.interactive) {
                 collisionMap.markBlocked(x, y);
             }
@@ -104,8 +103,8 @@ public class Region {
                 int extraFlags = type == 11 ? 256 : 0;
                 int footprintX = (orientation == 1 || orientation == 3) ? definition.sizeY : definition.sizeX;
                 int footprintY = (orientation == 1 || orientation == 3) ? definition.sizeX : definition.sizeY;
-                scene.method251(scenePlane, footprintX, y, renderable, config, extraFlags, x, -896,
-                        footprintY, averageHeight, uid);
+                scene.addGameObject(scenePlane, x, y, footprintX, footprintY, averageHeight, renderable, extraFlags,
+                        uid, config);
             }
             if (definition.blocksMovement) {
                 collisionMap.markSolidOccupant(x, y, definition.sizeX, definition.sizeY,
@@ -117,7 +116,7 @@ public class Region {
         if (type >= 12) {
             Renderable renderable = createRenderable(definition, objectId, type, orientation,
                     southWestHeight, southEastHeight, northEastHeight, northWestHeight);
-            scene.method251(scenePlane, 1, y, renderable, config, 0, x, -896, 1, averageHeight, uid);
+            scene.addGameObject(scenePlane, x, y, 1, 1, averageHeight, renderable, 0, uid, config);
             if (definition.blocksMovement) {
                 collisionMap.markSolidOccupant(x, y, definition.sizeX, definition.sizeY,
                         orientation, definition.blocksProjectiles);
@@ -128,8 +127,8 @@ public class Region {
         if (type == 0) {
             Renderable renderable = createRenderable(definition, objectId, 0, orientation,
                     southWestHeight, southEastHeight, northEastHeight, northWestHeight);
-            scene.method249(averageHeight, 49878, 0, WALL_ORIENTATION_FLAGS[orientation], null,
-                    x, uid, config, y, renderable, scenePlane);
+            scene.addWall(scenePlane, x, y, averageHeight, uid,
+                    config, renderable, null, WALL_ORIENTATION_FLAGS[orientation], 0);
             if (definition.blocksMovement) {
                 collisionMap.markWall(x, y, type, orientation, definition.blocksProjectiles);
             }
@@ -139,8 +138,8 @@ public class Region {
         if (type == 1) {
             Renderable renderable = createRenderable(definition, objectId, 1, orientation,
                     southWestHeight, southEastHeight, northEastHeight, northWestHeight);
-            scene.method249(averageHeight, 49878, 0, DIAGONAL_WALL_ORIENTATION_FLAGS[orientation], null,
-                    x, uid, config, y, renderable, scenePlane);
+            scene.addWall(scenePlane, x, y, averageHeight, uid,
+                    config, renderable, null, DIAGONAL_WALL_ORIENTATION_FLAGS[orientation], 0);
             if (definition.blocksMovement) {
                 collisionMap.markWall(x, y, type, orientation, definition.blocksProjectiles);
             }
@@ -153,8 +152,8 @@ public class Region {
                     southWestHeight, southEastHeight, northEastHeight, northWestHeight);
             Renderable secondary = createRenderable(definition, objectId, 2, nextOrientation,
                     southWestHeight, southEastHeight, northEastHeight, northWestHeight);
-            scene.method249(averageHeight, 49878, WALL_ORIENTATION_FLAGS[nextOrientation],
-                    WALL_ORIENTATION_FLAGS[orientation], secondary, x, uid, config, y, primary, scenePlane);
+            scene.addWall(scenePlane, x, y,
+                    averageHeight, uid, config, primary, secondary, WALL_ORIENTATION_FLAGS[orientation], WALL_ORIENTATION_FLAGS[nextOrientation]);
             if (definition.blocksMovement) {
                 collisionMap.markWall(x, y, type, orientation, definition.blocksProjectiles);
             }
@@ -164,8 +163,8 @@ public class Region {
         if (type == 3) {
             Renderable renderable = createRenderable(definition, objectId, 3, orientation,
                     southWestHeight, southEastHeight, northEastHeight, northWestHeight);
-            scene.method249(averageHeight, 49878, 0, DIAGONAL_WALL_ORIENTATION_FLAGS[orientation], null,
-                    x, uid, config, y, renderable, scenePlane);
+            scene.addWall(scenePlane, x, y, averageHeight, uid,
+                    config, renderable, null, DIAGONAL_WALL_ORIENTATION_FLAGS[orientation], 0);
             if (definition.blocksMovement) {
                 collisionMap.markWall(x, y, type, orientation, definition.blocksProjectiles);
             }
@@ -175,7 +174,7 @@ public class Region {
         if (type == 9) {
             Renderable renderable = createRenderable(definition, objectId, 9, orientation,
                     southWestHeight, southEastHeight, northEastHeight, northWestHeight);
-            scene.method251(scenePlane, 1, y, renderable, config, 0, x, -896, 1, averageHeight, uid);
+            scene.addGameObject(scenePlane, x, y, 1, 1, averageHeight, renderable, 0, uid, config);
             if (definition.blocksMovement) {
                 collisionMap.markSolidOccupant(x, y, definition.sizeX, definition.sizeY,
                         orientation, definition.blocksProjectiles);
@@ -209,26 +208,26 @@ public class Region {
         Renderable decoration = createRenderable(definition, objectId, 4, 0,
                 southWestHeight, southEastHeight, northEastHeight, northWestHeight);
         if (type == 4) {
-            scene.method250(scenePlane, WALL_ORIENTATION_FLAGS[orientation], orientation * 512, uid, config,
-                    x, 0, y, 0, averageHeight, decoration, -930);
+            scene.addWallDecoration(scenePlane, x, y, averageHeight, 0,
+                    0, orientation * 512, uid, config, WALL_ORIENTATION_FLAGS[orientation], decoration);
         } else if (type == 5) {
             int displacement = 16;
-            int wallUid = scene.method267(scenePlane, x, y);
+            int wallUid = scene.getWallUid(scenePlane, x, y);
             if (wallUid > 0) {
                 displacement = GameObjectDefinition.lookup(wallUid >> 14 & 0x7fff).decorDisplacement;
             }
-            scene.method250(scenePlane, WALL_ORIENTATION_FLAGS[orientation], orientation * 512, uid, config,
-                    x, WALL_DECORATION_Y_OFFSETS[orientation] * displacement, y,
-                    WALL_DECORATION_X_OFFSETS[orientation] * displacement, averageHeight, decoration, -930);
+            scene.addWallDecoration(scenePlane, x, y, averageHeight, WALL_DECORATION_X_OFFSETS[orientation] * displacement,
+                    WALL_DECORATION_Y_OFFSETS[orientation] * displacement, orientation * 512, uid,
+                    config, WALL_ORIENTATION_FLAGS[orientation], decoration);
         } else if (type == 6) {
-            scene.method250(scenePlane, 256, orientation, uid, config, x, 0, y, 0,
-                    averageHeight, decoration, -930);
+            scene.addWallDecoration(scenePlane, x, y, averageHeight, 0, 0, orientation, uid, config,
+                    256, decoration);
         } else if (type == 7) {
-            scene.method250(scenePlane, 512, orientation, uid, config, x, 0, y, 0,
-                    averageHeight, decoration, -930);
+            scene.addWallDecoration(scenePlane, x, y, averageHeight, 0, 0, orientation, uid, config,
+                    512, decoration);
         } else if (type == 8) {
-            scene.method250(scenePlane, 768, orientation, uid, config, x, 0, y, 0,
-                    averageHeight, decoration, -930);
+            scene.addWallDecoration(scenePlane, x, y, averageHeight, 0, 0, orientation, uid, config,
+                    768, decoration);
         }
     }
 
@@ -263,7 +262,7 @@ public class Region {
     /**
      * Finalizes terrain collision, lighting, floor tiles, bridges and occluders after map decoding.
      */
-    public void buildScene(CollisionMap[] collisionMaps, Class22 scene) {
+    public void buildScene(CollisionMap[] collisionMaps, Scene scene) {
         applyBlockedTileCollision(collisionMaps);
         randomizeFloorColorOffsets();
 
@@ -273,7 +272,7 @@ public class Region {
             applyEffectivePlanes(plane, scene);
         }
 
-        scene.method272((byte) 2, -10, -50, -50);
+        scene.shadeModels(-50, -10, -50);
         applyBridgeTiles(scene);
         buildOccluders();
     }
@@ -343,7 +342,7 @@ public class Region {
         }
     }
 
-    private void buildFloorTiles(int plane, Class22 scene) {
+    private void buildFloorTiles(int plane, Scene scene) {
         for (int y = 0; y < height; y++) {
             hueSums[y] = 0;
             saturationSums[y] = 0;
@@ -470,7 +469,7 @@ public class Region {
                 }
 
                 if (overlayId == 0) {
-                    scene.method246(plane, x, y, 0, 0, -1,
+                    scene.addTile(plane, x, y, 0, 0, -1,
                             southWestHeight, southEastHeight, northEastHeight, northWestHeight,
                             adjustUnderlayLightness(underlayHsl, southWestLight),
                             adjustUnderlayLightness(underlayHsl, southEastLight),
@@ -500,7 +499,7 @@ public class Region {
                             adjustOverlayLightness(overlay.randomizedPackedHsl, 96)];
                 }
 
-                scene.method246(plane, x, y, shape, overlayRotation, textureId,
+                scene.addTile(plane, x, y, shape, overlayRotation, textureId,
                         southWestHeight, southEastHeight, northEastHeight, northWestHeight,
                         adjustUnderlayLightness(underlayHsl, southWestLight),
                         adjustUnderlayLightness(underlayHsl, southEastLight),
@@ -522,19 +521,19 @@ public class Region {
                         && getEffectivePlane(plane, x, y) == currentPlane);
     }
 
-    private void applyEffectivePlanes(int plane, Class22 scene) {
+    private void applyEffectivePlanes(int plane, Scene scene) {
         for (int y = 1; y < height - 1; y++) {
             for (int x = 1; x < width - 1; x++) {
-                scene.method245(plane, x, y, getEffectivePlane(plane, x, y));
+                scene.setTileLogicHeight(plane, x, y, getEffectivePlane(plane, x, y));
             }
         }
     }
 
-    private void applyBridgeTiles(Class22 scene) {
+    private void applyBridgeTiles(Scene scene) {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 if ((tileFlags[1][x][y] & 0x2) == 2) {
-                    scene.method243(true, x, y);
+                    scene.setBridgeMode(x, y);
                 }
             }
         }
@@ -605,8 +604,8 @@ public class Region {
         }
         int upperZ = tileHeights[maxPlane][x][minY] - 240;
         int lowerZ = tileHeights[minPlane][x][minY];
-        Class22.method244(-8967, x * 128, lowerZ, x * 128, maxY * 128 + 128,
-                targetPlane, minY * 128, upperZ, 1);
+        Scene.addOccluder(targetPlane, x * 128, upperZ, x * 128, maxY * 128 + 128,
+                lowerZ, minY * 128, 1);
         for (int plane = minPlane; plane <= maxPlane; plane++) {
             for (int tileY = minY; tileY <= maxY; tileY++) {
                 occlusionFlags[plane][x][tileY] &= ~mask;
@@ -649,8 +648,8 @@ public class Region {
         }
         int upperZ = tileHeights[maxPlane][minX][y] - 240;
         int lowerZ = tileHeights[minPlane][minX][y];
-        Class22.method244(-8967, minX * 128, lowerZ, maxX * 128 + 128, y * 128,
-                targetPlane, y * 128, upperZ, 2);
+        Scene.addOccluder(targetPlane, minX * 128, upperZ, maxX * 128 + 128, y * 128,
+                lowerZ, y * 128, 2);
         for (int plane = minPlane; plane <= maxPlane; plane++) {
             for (int tileX = minX; tileX <= maxX; tileX++) {
                 occlusionFlags[plane][tileX][y] &= ~mask;
@@ -691,8 +690,8 @@ public class Region {
             return;
         }
         int worldZ = tileHeights[plane][minX][minY];
-        Class22.method244(-8967, minX * 128, worldZ, maxX * 128 + 128, maxY * 128 + 128,
-                targetPlane, minY * 128, worldZ, 4);
+        Scene.addOccluder(targetPlane, minX * 128, worldZ, maxX * 128 + 128, maxY * 128 + 128,
+                worldZ, minY * 128, 4);
         for (int tileX = minX; tileX <= maxX; tileX++) {
             for (int tileY = minY; tileY <= maxY; tileY++) {
                 occlusionFlags[plane][tileX][tileY] &= ~mask;
@@ -786,7 +785,7 @@ public class Region {
     /** Decodes one rotated 8x8 landscape/object chunk from a 64x64 map square. */
     public void loadObjectChunk(byte[] data, int sourcePlane, int sourceX, int sourceY,
                                 int destinationPlane, int destinationX, int destinationY,
-                                int rotation, CollisionMap[] collisionMaps, Class22 scene) {
+                                int rotation, CollisionMap[] collisionMaps, Scene scene) {
         Buffer buffer = new Buffer(data);
         int objectId = -1;
         for (;;) {
@@ -838,7 +837,7 @@ public class Region {
 
     /** Places one map-loaded object and updates region shadow/occlusion work state. */
     private void placeLocation(int objectId, int type, int orientation, int plane, int x, int y,
-                               CollisionMap collisionMap, Class22 scene) {
+                               CollisionMap collisionMap, Scene scene) {
         if (lowMemory && (tileFlags[0][x][y] & 0x2) == 0) {
             if ((tileFlags[plane][x][y] & 0x10) != 0 || getEffectivePlane(plane, x, y) != currentPlane) {
                 return;
@@ -864,7 +863,7 @@ public class Region {
             if (!lowMemory || definition.interactive || definition.obstructsGround) {
                 Renderable renderable = createRenderable(definition, objectId, 22, orientation,
                         southWestHeight, southEastHeight, northEastHeight, northWestHeight);
-                scene.method247(x, y, 669, config, uid, averageHeight, plane, renderable);
+                scene.addFloorDecoration(plane, x, y, averageHeight, uid, config, renderable);
                 if (definition.blocksMovement && definition.interactive && collisionMap != null) {
                     collisionMap.markBlocked(x, y);
                 }
@@ -879,8 +878,8 @@ public class Region {
                 int extraFlags = type == 11 ? 256 : 0;
                 int footprintX = (orientation == 1 || orientation == 3) ? definition.sizeY : definition.sizeX;
                 int footprintY = (orientation == 1 || orientation == 3) ? definition.sizeX : definition.sizeY;
-                boolean inserted = scene.method251(plane, footprintX, y, renderable, config, extraFlags,
-                        x, -896, footprintY, averageHeight, uid);
+                boolean inserted = scene.addGameObject(plane, x, y, footprintX, footprintY, averageHeight,
+                        renderable, extraFlags, uid, config);
                 if (inserted && definition.castsShadow) {
                     Model shadowModel = renderable instanceof Model
                             ? (Model) renderable
@@ -911,7 +910,7 @@ public class Region {
         if (type >= 12) {
             Renderable renderable = createRenderable(definition, objectId, type, orientation,
                     southWestHeight, southEastHeight, northEastHeight, northWestHeight);
-            scene.method251(plane, 1, y, renderable, config, 0, x, -896, 1, averageHeight, uid);
+            scene.addGameObject(plane, x, y, 1, 1, averageHeight, renderable, 0, uid, config);
             if (type >= 12 && type <= 17 && type != 13 && plane > 0) {
                 occlusionFlags[plane][x][y] |= 0x924;
             }
@@ -925,8 +924,8 @@ public class Region {
         if (type == 0) {
             Renderable renderable = createRenderable(definition, objectId, 0, orientation,
                     southWestHeight, southEastHeight, northEastHeight, northWestHeight);
-            scene.method249(averageHeight, 49878, 0, WALL_ORIENTATION_FLAGS[orientation], null,
-                    x, uid, config, y, renderable, plane);
+            scene.addWall(plane, x, y, averageHeight, uid,
+                    config, renderable, null, WALL_ORIENTATION_FLAGS[orientation], 0);
             if (orientation == 0) {
                 if (definition.castsShadow) {
                     shadowIntensity[plane][x][y] = 50;
@@ -964,7 +963,7 @@ public class Region {
                 collisionMap.markWall(x, y, type, orientation, definition.blocksProjectiles);
             }
             if (definition.decorDisplacement != 16) {
-                scene.method257(y, definition.decorDisplacement, plane, x, 0);
+                scene.displaceWallDecoration(plane, x, y, definition.decorDisplacement);
             }
             return;
         }
@@ -972,8 +971,8 @@ public class Region {
         if (type == 1) {
             Renderable renderable = createRenderable(definition, objectId, 1, orientation,
                     southWestHeight, southEastHeight, northEastHeight, northWestHeight);
-            scene.method249(averageHeight, 49878, 0, DIAGONAL_WALL_ORIENTATION_FLAGS[orientation], null,
-                    x, uid, config, y, renderable, plane);
+            scene.addWall(plane, x, y, averageHeight, uid,
+                    config, renderable, null, DIAGONAL_WALL_ORIENTATION_FLAGS[orientation], 0);
             if (definition.castsShadow) {
                 if (orientation == 0) {
                     shadowIntensity[plane][x][y + 1] = 50;
@@ -997,8 +996,8 @@ public class Region {
                     southWestHeight, southEastHeight, northEastHeight, northWestHeight);
             Renderable secondary = createRenderable(definition, objectId, 2, nextOrientation,
                     southWestHeight, southEastHeight, northEastHeight, northWestHeight);
-            scene.method249(averageHeight, 49878, WALL_ORIENTATION_FLAGS[nextOrientation],
-                    WALL_ORIENTATION_FLAGS[orientation], secondary, x, uid, config, y, primary, plane);
+            scene.addWall(plane, x, y,
+                    averageHeight, uid, config, primary, secondary, WALL_ORIENTATION_FLAGS[orientation], WALL_ORIENTATION_FLAGS[nextOrientation]);
             if (definition.modelClipped) {
                 if (orientation == 0) {
                     occlusionFlags[plane][x][y] |= 0x249;
@@ -1018,7 +1017,7 @@ public class Region {
                 collisionMap.markWall(x, y, type, orientation, definition.blocksProjectiles);
             }
             if (definition.decorDisplacement != 16) {
-                scene.method257(y, definition.decorDisplacement, plane, x, 0);
+                scene.displaceWallDecoration(plane, x, y, definition.decorDisplacement);
             }
             return;
         }
@@ -1026,8 +1025,8 @@ public class Region {
         if (type == 3) {
             Renderable renderable = createRenderable(definition, objectId, 3, orientation,
                     southWestHeight, southEastHeight, northEastHeight, northWestHeight);
-            scene.method249(averageHeight, 49878, 0, DIAGONAL_WALL_ORIENTATION_FLAGS[orientation], null,
-                    x, uid, config, y, renderable, plane);
+            scene.addWall(plane, x, y, averageHeight, uid,
+                    config, renderable, null, DIAGONAL_WALL_ORIENTATION_FLAGS[orientation], 0);
             if (definition.castsShadow) {
                 if (orientation == 0) {
                     shadowIntensity[plane][x][y + 1] = 50;
@@ -1048,7 +1047,7 @@ public class Region {
         if (type == 9) {
             Renderable renderable = createRenderable(definition, objectId, 9, orientation,
                     southWestHeight, southEastHeight, northEastHeight, northWestHeight);
-            scene.method251(plane, 1, y, renderable, config, 0, x, -896, 1, averageHeight, uid);
+            scene.addGameObject(plane, x, y, 1, 1, averageHeight, renderable, 0, uid, config);
             if (definition.blocksMovement && collisionMap != null) {
                 collisionMap.markSolidOccupant(x, y, definition.sizeX, definition.sizeY,
                         orientation, definition.blocksProjectiles);
@@ -1082,26 +1081,26 @@ public class Region {
         Renderable decoration = createRenderable(definition, objectId, 4, 0,
                 southWestHeight, southEastHeight, northEastHeight, northWestHeight);
         if (type == 4) {
-            scene.method250(plane, WALL_ORIENTATION_FLAGS[orientation], orientation * 512, uid, config,
-                    x, 0, y, 0, averageHeight, decoration, -930);
+            scene.addWallDecoration(plane, x, y, averageHeight, 0,
+                    0, orientation * 512, uid, config, WALL_ORIENTATION_FLAGS[orientation], decoration);
         } else if (type == 5) {
             int displacement = 16;
-            int wallUid = scene.method267(plane, x, y);
+            int wallUid = scene.getWallUid(plane, x, y);
             if (wallUid > 0) {
                 displacement = GameObjectDefinition.lookup(wallUid >> 14 & 0x7fff).decorDisplacement;
             }
-            scene.method250(plane, WALL_ORIENTATION_FLAGS[orientation], orientation * 512, uid, config,
-                    x, WALL_DECORATION_Y_OFFSETS[orientation] * displacement, y,
-                    WALL_DECORATION_X_OFFSETS[orientation] * displacement, averageHeight, decoration, -930);
+            scene.addWallDecoration(plane, x, y, averageHeight, WALL_DECORATION_X_OFFSETS[orientation] * displacement,
+                    WALL_DECORATION_Y_OFFSETS[orientation] * displacement, orientation * 512, uid,
+                    config, WALL_ORIENTATION_FLAGS[orientation], decoration);
         } else if (type == 6) {
-            scene.method250(plane, 256, orientation, uid, config, x, 0, y, 0,
-                    averageHeight, decoration, -930);
+            scene.addWallDecoration(plane, x, y, averageHeight, 0, 0, orientation, uid, config,
+                    256, decoration);
         } else if (type == 7) {
-            scene.method250(plane, 512, orientation, uid, config, x, 0, y, 0,
-                    averageHeight, decoration, -930);
+            scene.addWallDecoration(plane, x, y, averageHeight, 0, 0, orientation, uid, config,
+                    512, decoration);
         } else if (type == 8) {
-            scene.method250(plane, 768, orientation, uid, config, x, 0, y, 0,
-                    averageHeight, decoration, -930);
+            scene.addWallDecoration(plane, x, y, averageHeight, 0, 0, orientation, uid, config,
+                    768, decoration);
         }
     }
 
@@ -1154,7 +1153,7 @@ public class Region {
 
     /** Decodes a complete delta-encoded landscape/object map square. */
     public void loadObjectRegion(byte[] data, int baseX, int baseY,
-                                 CollisionMap[] collisionMaps, Class22 scene) {
+                                 CollisionMap[] collisionMaps, Scene scene) {
         Buffer buffer = new Buffer(data);
         int objectId = -1;
         for (;;) {
