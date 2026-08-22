@@ -195,10 +195,10 @@ public class GameObjectDefinition {
 		int morphIndex = -1;
 		if (varbitId != -1) {
 			Varbit varbit = Varbit.definitions[varbitId];
-			int mask = client.anIntArray1214[varbit.mostSignificantBit - varbit.leastSignificantBit];
-			morphIndex = clientInstance.anIntArray1039[varbit.varpId] >> varbit.leastSignificantBit & mask;
+			int mask = client.bitMasks[varbit.mostSignificantBit - varbit.leastSignificantBit];
+			morphIndex = clientInstance.varpValues[varbit.varpId] >> varbit.leastSignificantBit & mask;
 		} else if (varpId != -1) {
-			morphIndex = clientInstance.anIntArray1039[varpId];
+			morphIndex = clientInstance.varpValues[varpId];
 		}
 		if (morphIndex < 0 || morphIndex >= morphIds.length || morphIds[morphIndex] == -1) {
 			return null;

@@ -353,11 +353,11 @@ public class NpcDefinition {
 			int varp = varbit.varpId;
 			int leastBit = varbit.leastSignificantBit;
 			int mostBit = varbit.mostSignificantBit;
-			int mask = client.anIntArray1214[mostBit - leastBit];
-			return clientInstance.anIntArray1039[varp] >> leastBit & mask;
+			int mask = client.bitMasks[mostBit - leastBit];
+			return clientInstance.varpValues[varp] >> leastBit & mask;
 		}
 		if (varpId != -1) {
-			return clientInstance.anIntArray1039[varpId];
+			return clientInstance.varpValues[varpId];
 		}
 		return -1;
 	}
