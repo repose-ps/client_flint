@@ -34,6 +34,8 @@ import rs2.cache.ondemand.OnDemandFetcher;
 import rs2.cache.ondemand.OnDemandRequest;
 import rs2.cache.ui.Widget;
 import rs2.chat.ChatCodec;
+import rs2.chat.ChatHistory;
+import rs2.chat.SocialManager;
 import rs2.chat.Censor;
 import rs2.collection.Node;
 import rs2.collection.NodeDeque;
@@ -64,6 +66,7 @@ import rs2.media.renderable.Player;
 import rs2.media.renderable.Projectile;
 import rs2.media.renderable.Renderable;
 import rs2.net.Buffer;
+import rs2.net.ChatPacketEncoder;
 import rs2.net.BufferedConnection;
 import rs2.net.Ipv4Address;
 import rs2.net.NetworkSession;
@@ -162,7 +165,7 @@ public class client extends GameShell {
 				System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid");
 				return;
 			}
-			anInt923 = Integer.parseInt(args[0]);
+			currentWorldId = Integer.parseInt(args[0]);
 			anInt924 = Integer.parseInt(args[1]);
 			if (args[2].equals("lowmem"))
 				method101(true);
@@ -258,9 +261,7 @@ public class client extends GameShell {
 		aClass50_Sub1_Sub1_Sub3_985 = null;
 		aClass50_Sub1_Sub1_Sub3_986 = null;
 		aClass50_Sub1_Sub1_Sub3_987 = null;
-		aStringArray849 = null;
-		aLongArray1130 = null;
-		anIntArray1267 = null;
+		socialManager.clearFriendReferencesForQuit();
 		aClass18_1108 = null;
 		aClass18_1109 = null;
 		aClass18_1110 = null;
@@ -314,7 +315,7 @@ public class client extends GameShell {
 			networkSession = null;
 		}
 		aByteArray1245 = null;
-		aClass50_Sub1_Sub2_1131 = null;
+		chatBuffer = null;
 		aClass50_Sub1_Sub1_Sub3Array1153 = null;
 		aClass50_Sub1_Sub1_Sub1Array1031 = null;
 		aClass50_Sub1_Sub1_Sub3Array976 = null;
@@ -457,10 +458,10 @@ public class client extends GameShell {
 				j -= 101;
 			else
 				j--;
-			aStringArray1184[anInt1183] = "Remove @whi@" + aStringArray849[j];
+			aStringArray1184[anInt1183] = "Remove @whi@" + socialManager.friendNames[j];
 			anIntArray981[anInt1183] = 775;
 			anInt1183++;
-			aStringArray1184[anInt1183] = "Message @whi@" + aStringArray849[j];
+			aStringArray1184[anInt1183] = "Message @whi@" + socialManager.friendNames[j];
 			anIntArray981[anInt1183] = 984;
 			anInt1183++;
 			return true;
@@ -736,7 +737,6 @@ public class client extends GameShell {
 		if (anInt1053 == -1) {
 			processMinimapClick();
 			method21(false);
-			method39(true);
 		}
 		if (super.mouseButton == 1 || super.clickButton == 1)
 			anInt1094++;
@@ -758,7 +758,7 @@ public class client extends GameShell {
 			updateCinematicCamera();
 		cameraController.advanceShakeCycles();
 
-		method30((byte) 2);
+		processKeyboardInput();
 		super.idleCycles++;
 		if (super.idleCycles > 4500) {
 			logoutTimer = 250;
@@ -791,67 +791,56 @@ public class client extends GameShell {
 	}
 
 
-	public void method30(byte byte0) {
-		if (byte0 == 2)
-			byte0 = 0;
-		else
-			return;
+	/* Legacy client.method30(byte byte0): byte0 -> removed required value 2 sentinel. */
+	public void processKeyboardInput() {
 		do {
 			int i = pollKey();
 			if (i == -1)
 				break;
 			if (anInt1169 != -1 && anInt1169 == anInt1231) {
-				if (i == 8 && aString839.length() > 0)
-					aString839 = aString839.substring(0, aString839.length() - 1);
+				if (i == 8 && reportAbuseName.length() > 0)
+					reportAbuseName = reportAbuseName.substring(0, reportAbuseName.length() - 1);
 				if ((i >= 97 && i <= 122 || i >= 65 && i <= 90 || i >= 48 && i <= 57 || i == 32)
-						&& aString839.length() < 12)
-					aString839 += (char) i;
-			} else if (aBoolean866) {
-				if (i >= 32 && i <= 122 && aString1026.length() < 80) {
-					aString1026 += (char) i;
+						&& reportAbuseName.length() < 12)
+					reportAbuseName += (char) i;
+			} else if (messagePromptRaised) {
+				if (i >= 32 && i <= 122 && promptInput.length() < 80) {
+					promptInput += (char) i;
 					aBoolean1240 = true;
 				}
-				if (i == 8 && aString1026.length() > 0) {
-					aString1026 = aString1026.substring(0, aString1026.length() - 1);
+				if (i == 8 && promptInput.length() > 0) {
+					promptInput = promptInput.substring(0, promptInput.length() - 1);
 					aBoolean1240 = true;
 				}
 				if (i == 13 || i == 10) {
-					aBoolean866 = false;
+					messagePromptRaised = false;
 					aBoolean1240 = true;
-					if (anInt1221 == 1) {
-						long l = Base37.encode(aString1026);
-						method102(l, -45229);
+					if (promptAction == 1) {
+						long l = Base37.encode(promptInput);
+						addFriend(l);
 					}
-					if (anInt1221 == 2 && anInt859 > 0) {
-						long l1 = Base37.encode(aString1026);
-						method53(l1, 0);
+					if (promptAction == 2 && socialManager.friendCount > 0) {
+						long l1 = Base37.encode(promptInput);
+						removeFriend(l1);
 					}
-					if (anInt1221 == 3 && aString1026.length() > 0) {
-						networkSession.outgoing.writeOpcode(227);
-						networkSession.outgoing.writeByte(0);
-						int j = networkSession.outgoing.position;
-						networkSession.outgoing.writeLong(aLong1141);
-						ChatCodec.encode(aString1026, networkSession.outgoing);
-						networkSession.outgoing.writeLength(networkSession.outgoing.position - j);
-						aString1026 = ChatCodec.normalize(aString1026);
-						aString1026 = Censor.censor(aString1026);
-						method47(TextFormatter.formatDisplayName(Base37.decode(aLong1141)), aString1026, 6);
-						if (anInt887 == 2) {
-							anInt887 = 1;
-							aBoolean1212 = true;
-							networkSession.outgoing.writeOpcode(176);
-							networkSession.outgoing.writeByte(anInt1006);
-							networkSession.outgoing.writeByte(anInt887);
-							networkSession.outgoing.writeByte(anInt1227);
+					if (promptAction == 3 && promptInput.length() > 0) {
+						ChatPacketEncoder.writePrivateMessage(networkSession.outgoing, privateMessageTarget, promptInput);
+						promptInput = ChatCodec.normalize(promptInput);
+						promptInput = Censor.censor(promptInput);
+						addChatMessage(TextFormatter.formatDisplayName(Base37.decode(privateMessageTarget)), promptInput, 6);
+						if (privateChatMode == 2) {
+							privateChatMode = 1;
+							chatModesRedraw = true;
+							ChatPacketEncoder.writeChatModes(networkSession.outgoing, publicChatMode, privateChatMode, tradeMode);
 						}
 					}
-					if (anInt1221 == 4 && anInt855 < 100) {
-						long l2 = Base37.encode(aString1026);
-						method90(anInt1154, l2);
+					if (promptAction == 4 && socialManager.ignoreCount < 100) {
+						long l2 = Base37.encode(promptInput);
+						addIgnore(l2);
 					}
-					if (anInt1221 == 5 && anInt855 > 0) {
-						long l3 = Base37.encode(aString1026);
-						method97(325, l3);
+					if (promptAction == 5 && socialManager.ignoreCount > 0) {
+						long l3 = Base37.encode(promptInput);
+						removeIgnore(l3);
 					}
 				}
 			} else if (anInt1244 == 1) {
@@ -903,30 +892,30 @@ public class client extends GameShell {
 					aBoolean1240 = true;
 				}
 			} else if (anInt988 == -1 && anInt1053 == -1) {
-				if (i >= 32 && i <= 122 && aString1104.length() < 80) {
-					aString1104 += (char) i;
+				if (i >= 32 && i <= 122 && chatInput.length() < 80) {
+					chatInput += (char) i;
 					aBoolean1240 = true;
 				}
-				if (i == 8 && aString1104.length() > 0) {
-					aString1104 = aString1104.substring(0, aString1104.length() - 1);
+				if (i == 8 && chatInput.length() > 0) {
+					chatInput = chatInput.substring(0, chatInput.length() - 1);
 					aBoolean1240 = true;
 				}
-				if ((i == 13 || i == 10) && aString1104.length() > 0) {
+				if ((i == 13 || i == 10) && chatInput.length() > 0) {
 					if (playerRights == 2) {
-						if (aString1104.equals("::clientdrop"))
+						if (chatInput.equals("::clientdrop"))
 							reconnect();
-						if (aString1104.equals("::lag"))
+						if (chatInput.equals("::lag"))
 							method138(false);
-						if (aString1104.equals("::prefetchmusic")) {
+						if (chatInput.equals("::prefetchmusic")) {
 							for (int i1 = 0; i1 < aClass32_Sub1_1291.getFileCount(2); i1++)
 								aClass32_Sub1_1291.setExtraPriority(2, i1, (byte) 1);
 
 						}
-						if (aString1104.equals("::fpson"))
+						if (chatInput.equals("::fpson"))
 							aBoolean868 = true;
-						if (aString1104.equals("::fpsoff"))
+						if (chatInput.equals("::fpsoff"))
 							aBoolean868 = false;
-						if (aString1104.equals("::noclip")) {
+						if (chatInput.equals("::noclip")) {
 							for (int j1 = 0; j1 < 4; j1++) {
 								for (int k1 = 1; k1 < 103; k1++) {
 									for (int j2 = 1; j2 < 103; j2++)
@@ -938,103 +927,89 @@ public class client extends GameShell {
 
 						}
 					}
-					if (aString1104.startsWith("::")) {
-						networkSession.outgoing.writeOpcode(56);
-						networkSession.outgoing.writeByte(aString1104.length() - 1);
-						networkSession.outgoing.writeString(aString1104.substring(2));
+					if (chatInput.startsWith("::")) {
+						ChatPacketEncoder.writeCommand(networkSession.outgoing, chatInput);
 					} else {
-						String s = aString1104.toLowerCase();
+						String s = chatInput.toLowerCase();
 						int i2 = 0;
 						if (s.startsWith("yellow:")) {
 							i2 = 0;
-							aString1104 = aString1104.substring(7);
+							chatInput = chatInput.substring(7);
 						} else if (s.startsWith("red:")) {
 							i2 = 1;
-							aString1104 = aString1104.substring(4);
+							chatInput = chatInput.substring(4);
 						} else if (s.startsWith("green:")) {
 							i2 = 2;
-							aString1104 = aString1104.substring(6);
+							chatInput = chatInput.substring(6);
 						} else if (s.startsWith("cyan:")) {
 							i2 = 3;
-							aString1104 = aString1104.substring(5);
+							chatInput = chatInput.substring(5);
 						} else if (s.startsWith("purple:")) {
 							i2 = 4;
-							aString1104 = aString1104.substring(7);
+							chatInput = chatInput.substring(7);
 						} else if (s.startsWith("white:")) {
 							i2 = 5;
-							aString1104 = aString1104.substring(6);
+							chatInput = chatInput.substring(6);
 						} else if (s.startsWith("flash1:")) {
 							i2 = 6;
-							aString1104 = aString1104.substring(7);
+							chatInput = chatInput.substring(7);
 						} else if (s.startsWith("flash2:")) {
 							i2 = 7;
-							aString1104 = aString1104.substring(7);
+							chatInput = chatInput.substring(7);
 						} else if (s.startsWith("flash3:")) {
 							i2 = 8;
-							aString1104 = aString1104.substring(7);
+							chatInput = chatInput.substring(7);
 						} else if (s.startsWith("glow1:")) {
 							i2 = 9;
-							aString1104 = aString1104.substring(6);
+							chatInput = chatInput.substring(6);
 						} else if (s.startsWith("glow2:")) {
 							i2 = 10;
-							aString1104 = aString1104.substring(6);
+							chatInput = chatInput.substring(6);
 						} else if (s.startsWith("glow3:")) {
 							i2 = 11;
-							aString1104 = aString1104.substring(6);
+							chatInput = chatInput.substring(6);
 						}
-						s = aString1104.toLowerCase();
+						s = chatInput.toLowerCase();
 						int k2 = 0;
 						if (s.startsWith("wave:")) {
 							k2 = 1;
-							aString1104 = aString1104.substring(5);
+							chatInput = chatInput.substring(5);
 						} else if (s.startsWith("wave2:")) {
 							k2 = 2;
-							aString1104 = aString1104.substring(6);
+							chatInput = chatInput.substring(6);
 						} else if (s.startsWith("shake:")) {
 							k2 = 3;
-							aString1104 = aString1104.substring(6);
+							chatInput = chatInput.substring(6);
 						} else if (s.startsWith("scroll:")) {
 							k2 = 4;
-							aString1104 = aString1104.substring(7);
+							chatInput = chatInput.substring(7);
 						} else if (s.startsWith("slide:")) {
 							k2 = 5;
-							aString1104 = aString1104.substring(6);
+							chatInput = chatInput.substring(6);
 						}
-						networkSession.outgoing.writeOpcode(49);
-						networkSession.outgoing.writeByte(0);
-						int i3 = networkSession.outgoing.position;
-						networkSession.outgoing.writeByteNeg(i2);
-						networkSession.outgoing.writeByteAdd(k2);
-						aClass50_Sub1_Sub2_1131.position = 0;
-						ChatCodec.encode(aString1104, aClass50_Sub1_Sub2_1131);
-						networkSession.outgoing.writeBytes(aClass50_Sub1_Sub2_1131.payload, 0,
-								aClass50_Sub1_Sub2_1131.position);
-						networkSession.outgoing.writeLength(networkSession.outgoing.position - i3);
-						aString1104 = ChatCodec.normalize(aString1104);
-						aString1104 = Censor.censor(aString1104);
-						localPlayer.overheadText = aString1104;
+						ChatPacketEncoder.writePublicMessage(networkSession.outgoing, i2, k2, chatInput, chatBuffer);
+						chatInput = ChatCodec.normalize(chatInput);
+						chatInput = Censor.censor(chatInput);
+						localPlayer.overheadText = chatInput;
 						localPlayer.overheadTextColor = i2;
 						localPlayer.overheadTextEffect = k2;
 						localPlayer.overheadTextCyclesRemaining = 150;
 						if (playerRights == 2)
-							method47("@cr2@" + localPlayer.name,
+							addChatMessage("@cr2@" + localPlayer.name,
 									((Actor) (localPlayer)).overheadText, 2);
 						else if (playerRights == 1)
-							method47("@cr1@" + localPlayer.name,
+							addChatMessage("@cr1@" + localPlayer.name,
 									((Actor) (localPlayer)).overheadText, 2);
 						else
-							method47(localPlayer.name,
+							addChatMessage(localPlayer.name,
 									((Actor) (localPlayer)).overheadText, 2);
-						if (anInt1006 == 2) {
-							anInt1006 = 3;
-							aBoolean1212 = true;
-							networkSession.outgoing.writeOpcode(176);
-							networkSession.outgoing.writeByte(anInt1006);
-							networkSession.outgoing.writeByte(anInt887);
-							networkSession.outgoing.writeByte(anInt1227);
+						if (publicChatMode == 2) {
+							publicChatMode = 3;
+							chatModesRedraw = true;
+							ChatPacketEncoder.writeChatModes(networkSession.outgoing, publicChatMode, privateChatMode, tradeMode);
 						}
 					}
-					aString1104 = "";
+					chatInput = "";
 					aBoolean1240 = true;
 				}
 			}
@@ -1260,7 +1235,7 @@ public class client extends GameShell {
 			return true;
 		}
 		if (networkSession.incomingOpcode == 6) {
-			aBoolean866 = false;
+			messagePromptRaised = false;
 			anInt1244 = 2;
 			aString949 = "";
 			aBoolean1240 = true;
@@ -1268,10 +1243,10 @@ public class client extends GameShell {
 			return true;
 		}
 		if (networkSession.incomingOpcode == 201) {
-			anInt1006 = networkSession.incoming.readUnsignedByte();
-			anInt887 = networkSession.incoming.readUnsignedByte();
-			anInt1227 = networkSession.incoming.readUnsignedByte();
-			aBoolean1212 = true;
+			publicChatMode = networkSession.incoming.readUnsignedByte();
+			privateChatMode = networkSession.incoming.readUnsignedByte();
+			tradeMode = networkSession.incoming.readUnsignedByte();
+			chatModesRedraw = true;
 			aBoolean1240 = true;
 			networkSession.incomingOpcode = -1;
 			return true;
@@ -1380,7 +1355,7 @@ public class client extends GameShell {
 			networkSession.incoming.readUnsignedShort();
 			anInt1208 = networkSession.incoming.readUnsignedShort();
 			anInt1170 = networkSession.incoming.readUnsignedShortLE();
-			anInt1273 = networkSession.incoming.readUnsignedShortAdd();
+			unreadMessageCount = networkSession.incoming.readUnsignedShortAdd();
 			anInt1215 = networkSession.incoming.readUnsignedShortAdd();
 			anInt992 = networkSession.incoming.readUnsignedShort();
 			anInt1241 = networkSession.incoming.readIntLE();
@@ -1395,46 +1370,25 @@ public class client extends GameShell {
 			if (s.endsWith(":tradereq:")) {
 				String s3 = s.substring(0, s.indexOf(":"));
 				long l18 = Base37.encode(s3);
-				boolean flag1 = false;
-				for (int l27 = 0; l27 < anInt855; l27++) {
-					if (aLongArray1073[l27] != l18)
-						continue;
-					flag1 = true;
-					break;
-				}
-
-				if (!flag1 && anInt1246 == 0)
-					method47(s3, "wishes to trade with you.", 4);
+				boolean ignored = socialManager.isIgnored(l18);
+				if (!ignored && tutorialIslandFlag == 0)
+					addChatMessage(s3, "wishes to trade with you.", 4);
 			} else if (s.endsWith(":duelreq:")) {
 				String s4 = s.substring(0, s.indexOf(":"));
 				long l19 = Base37.encode(s4);
-				boolean flag2 = false;
-				for (int i28 = 0; i28 < anInt855; i28++) {
-					if (aLongArray1073[i28] != l19)
-						continue;
-					flag2 = true;
-					break;
-				}
-
-				if (!flag2 && anInt1246 == 0)
-					method47(s4, "wishes to duel with you.", 8);
+				boolean ignored = socialManager.isIgnored(l19);
+				if (!ignored && tutorialIslandFlag == 0)
+					addChatMessage(s4, "wishes to duel with you.", 8);
 			} else if (s.endsWith(":chalreq:")) {
 				String s5 = s.substring(0, s.indexOf(":"));
 				long l20 = Base37.encode(s5);
-				boolean flag3 = false;
-				for (int j28 = 0; j28 < anInt855; j28++) {
-					if (aLongArray1073[j28] != l20)
-						continue;
-					flag3 = true;
-					break;
-				}
-
-				if (!flag3 && anInt1246 == 0) {
+				boolean ignored = socialManager.isIgnored(l20);
+				if (!ignored && tutorialIslandFlag == 0) {
 					String s8 = s.substring(s.indexOf(":") + 1, s.length() - 9);
-					method47(s5, s8, 8);
+					addChatMessage(s5, s8, 8);
 				}
 			} else {
-				method47("", s, 0);
+				addChatMessage("", s, 0);
 			}
 			networkSession.incomingOpcode = -1;
 			return true;
@@ -1537,56 +1491,15 @@ public class client extends GameShell {
 			return true;
 		}
 		if (networkSession.incomingOpcode == 78) {
-			long l5 = networkSession.incoming.readLong();
-			int k18 = networkSession.incoming.readUnsignedByte();
-			String s7 = TextFormatter.formatDisplayName(Base37.decode(l5));
-			for (int k25 = 0; k25 < anInt859; k25++) {
-				if (l5 != aLongArray1130[k25])
-					continue;
-				if (anIntArray1267[k25] != k18) {
-					anIntArray1267[k25] = k18;
-					aBoolean1181 = true;
-					if (k18 > 0)
-						method47("", s7 + " has logged in.", 5);
-					if (k18 == 0)
-						method47("", s7 + " has logged out.", 5);
-				}
-				s7 = null;
-				break;
-			}
-
-			if (s7 != null && anInt859 < 200) {
-				aLongArray1130[anInt859] = l5;
-				aStringArray849[anInt859] = s7;
-				anIntArray1267[anInt859] = k18;
-				anInt859++;
+			long encodedName = networkSession.incoming.readLong();
+			int world = networkSession.incoming.readUnsignedByte();
+			if (socialManager.updateFriend(encodedName, world, currentWorldId, this::addChatMessage))
 				aBoolean1181 = true;
-			}
-			for (boolean flag5 = false; !flag5;) {
-				flag5 = true;
-				for (int j30 = 0; j30 < anInt859 - 1; j30++)
-					if (anIntArray1267[j30] != anInt923 && anIntArray1267[j30 + 1] == anInt923
-							|| anIntArray1267[j30] == 0 && anIntArray1267[j30 + 1] != 0) {
-						int l31 = anIntArray1267[j30];
-						anIntArray1267[j30] = anIntArray1267[j30 + 1];
-						anIntArray1267[j30 + 1] = l31;
-						String s10 = aStringArray849[j30];
-						aStringArray849[j30] = aStringArray849[j30 + 1];
-						aStringArray849[j30 + 1] = s10;
-						long l33 = aLongArray1130[j30];
-						aLongArray1130[j30] = aLongArray1130[j30 + 1];
-						aLongArray1130[j30 + 1] = l33;
-						aBoolean1181 = true;
-						flag5 = false;
-					}
-
-			}
-
 			networkSession.incomingOpcode = -1;
 			return true;
 		}
 		if (networkSession.incomingOpcode == 58) {
-			aBoolean866 = false;
+			messagePromptRaised = false;
 			anInt1244 = 1;
 			aString949 = "";
 			aBoolean1240 = true;
@@ -1627,36 +1540,22 @@ public class client extends GameShell {
 			long l6 = networkSession.incoming.readLong();
 			int i19 = networkSession.incoming.readInt();
 			int j23 = networkSession.incoming.readUnsignedByte();
-			boolean flag4 = false;
-			for (int k28 = 0; k28 < 100; k28++) {
-				if (anIntArray1258[k28] != i19)
-					continue;
+			boolean flag4 = chatHistory.hasRecentPrivateMessage(i19);
+
+			if (j23 <= 1 && socialManager.isIgnored(l6))
 				flag4 = true;
-				break;
-			}
-
-			if (j23 <= 1) {
-				for (int k30 = 0; k30 < anInt855; k30++) {
-					if (aLongArray1073[k30] != l6)
-						continue;
-					flag4 = true;
-					break;
-				}
-
-			}
-			if (!flag4 && anInt1246 == 0)
+			if (!flag4 && tutorialIslandFlag == 0)
 				try {
-					anIntArray1258[anInt1152] = i19;
-					anInt1152 = (anInt1152 + 1) % 100;
+					chatHistory.rememberPrivateMessage(i19);
 					String s9 = ChatCodec.decode(networkSession.incoming, networkSession.incomingLength - 13);
 					if (j23 != 3)
 						s9 = Censor.censor(s9);
 					if (j23 == 2 || j23 == 3)
-						method47("@cr2@" + TextFormatter.formatDisplayName(Base37.decode(l6)), s9, 7);
+						addChatMessage("@cr2@" + TextFormatter.formatDisplayName(Base37.decode(l6)), s9, 7);
 					else if (j23 == 1)
-						method47("@cr1@" + TextFormatter.formatDisplayName(Base37.decode(l6)), s9, 7);
+						addChatMessage("@cr1@" + TextFormatter.formatDisplayName(Base37.decode(l6)), s9, 7);
 					else
-						method47(TextFormatter.formatDisplayName(Base37.decode(l6)), s9, 3);
+						addChatMessage(TextFormatter.formatDisplayName(Base37.decode(l6)), s9, 3);
 				} catch (Exception exception1) {
 					Signlink.reportError("cde1");
 				}
@@ -1864,10 +1763,7 @@ public class client extends GameShell {
 			return true;
 		}
 		if (networkSession.incomingOpcode == 226) {
-			anInt855 = networkSession.incomingLength / 8;
-			for (int k8 = 0; k8 < anInt855; k8++)
-				aLongArray1073[k8] = networkSession.incoming.readLong();
-
+			socialManager.replaceIgnoreList(networkSession.incoming, networkSession.incomingLength);
 			networkSession.incomingOpcode = -1;
 			return true;
 		}
@@ -1957,7 +1853,7 @@ public class client extends GameShell {
 			return true;
 		}
 		if (networkSession.incomingOpcode == 251) {
-			anInt860 = networkSession.incoming.readUnsignedByte();
+			socialManager.friendListStatus = networkSession.incoming.readUnsignedByte();
 			aBoolean1181 = true;
 			networkSession.incomingOpcode = -1;
 			return true;
@@ -1972,7 +1868,7 @@ public class client extends GameShell {
 		}
 		if (networkSession.incomingOpcode == 90) {
 			currentPlane = actorSynchronizer.decodePlayerUpdate(networkSession.incoming, networkSession.incomingLength, anInt1325,
-					currentPlane, username, aClass50_Sub1_Sub2_1131, actorChatHandler);
+					currentPlane, username, chatBuffer, actorChatHandler);
 			regionManager.playerUpdateReceived();
 			networkSession.incomingOpcode = -1;
 			return true;
@@ -2142,53 +2038,11 @@ public class client extends GameShell {
 
 	}
 
-	public void method39(boolean flag) {
-		if (!flag)
-			if (super.clickButton == 1) {
-			if (super.clickX >= 6 && super.clickX <= 106 && super.clickY >= 467 && super.clickY <= 499) {
-				anInt1006 = (anInt1006 + 1) % 4;
-				aBoolean1212 = true;
-				aBoolean1240 = true;
-				networkSession.outgoing.writeOpcode(176);
-				networkSession.outgoing.writeByte(anInt1006);
-				networkSession.outgoing.writeByte(anInt887);
-				networkSession.outgoing.writeByte(anInt1227);
-			}
-			if (super.clickX >= 135 && super.clickX <= 235 && super.clickY >= 467 && super.clickY <= 499) {
-				anInt887 = (anInt887 + 1) % 3;
-				aBoolean1212 = true;
-				aBoolean1240 = true;
-				networkSession.outgoing.writeOpcode(176);
-				networkSession.outgoing.writeByte(anInt1006);
-				networkSession.outgoing.writeByte(anInt887);
-				networkSession.outgoing.writeByte(anInt1227);
-			}
-			if (super.clickX >= 273 && super.clickX <= 373 && super.clickY >= 467 && super.clickY <= 499) {
-				anInt1227 = (anInt1227 + 1) % 3;
-				aBoolean1212 = true;
-				aBoolean1240 = true;
-				networkSession.outgoing.writeOpcode(176);
-				networkSession.outgoing.writeByte(anInt1006);
-				networkSession.outgoing.writeByte(anInt887);
-				networkSession.outgoing.writeByte(anInt1227);
-			}
-			if (super.clickX >= 412 && super.clickX <= 512 && super.clickY >= 467 && super.clickY <= 499)
-				if (anInt1169 == -1) {
-					method15(false);
-					aString839 = "";
-					aBoolean1098 = false;
-					anInt1231 = anInt1169 = Widget.reportAbuseInterfaceId;
-				} else {
-					method47("", "Please close the interface you have open before using 'report abuse'", 0);
-				}
-			anInt1160++;
-			if (anInt1160 > 161) {
-				anInt1160 = 0;
-				networkSession.outgoing.writeOpcode(22);
-				networkSession.outgoing.writeShort(38304);
-			}
-		}
-	}
+	/*
+	 * Legacy client.method39(boolean flag) was removed. Its only caller passed true,
+	 * while all contained behavior was guarded by !flag, so it was behaviorally inert.
+	 */
+
 
 
 
@@ -2424,23 +2278,22 @@ public class client extends GameShell {
 		Widget.unloadGroup(i);
 	}
 
-	public void method47(String s, String s1, int i) {
-		if (i == 0 && anInt1191 != -1) {
-			aString1058 = s1;
+	/*
+	 * Legacy client.method47(String s, String s1, int i):
+	 *   s  -> sender
+	 *   s1 -> message
+	 *   i  -> type
+	 */
+	public void addChatMessage(String sender, String message, int type) {
+		if (type == 0 && anInt1191 != -1) {
+			aString1058 = message;
 			super.clickButton = 0;
 		}
 		if (anInt988 == -1)
 			aBoolean1240 = true;
-		for (int j = 99; j > 0; j--) {
-			anIntArray1296[j] = anIntArray1296[j - 1];
-			aStringArray1297[j] = aStringArray1297[j - 1];
-			aStringArray1298[j] = aStringArray1298[j - 1];
-		}
-
-		anIntArray1296[0] = i;
-		aStringArray1297[0] = s;
-		aStringArray1298[0] = s1;
+		chatHistory.add(sender, message, type);
 	}
+
 
 
 	public void method49(int i) {
@@ -2532,33 +2385,16 @@ public class client extends GameShell {
 		}
 	}
 
-	public void method53(long l, int i) {
-		try {
-			if (l == 0L)
-				return;
-			for (int j = 0; j < anInt859; j++) {
-				if (aLongArray1130[j] != l)
-					continue;
-				anInt859--;
-				aBoolean1181 = true;
-				for (int k = j; k < anInt859; k++) {
-					aStringArray849[k] = aStringArray849[k + 1];
-					anIntArray1267[k] = anIntArray1267[k + 1];
-					aLongArray1130[k] = aLongArray1130[k + 1];
-				}
-
-				networkSession.outgoing.writeOpcode(141);
-				networkSession.outgoing.writeLong(l);
-				break;
-			}
-
-			networkSession.incomingLength += i;
-			return;
-		} catch (RuntimeException runtimeexception) {
-			Signlink.reportError("38799, " + l + ", " + i + ", " + runtimeexception.toString());
-		}
-		throw new RuntimeException();
+	/*
+	 * Legacy client.method53(long l, int i):
+	 *   l -> encodedName
+	 *   i -> removed zero sentinel; the original only added it to incomingLength.
+	 */
+	public void removeFriend(long encodedName) {
+		if (socialManager.removeFriend(encodedName, networkSession.outgoing))
+			aBoolean1181 = true;
 	}
+
 
 	public void method54(int i) {
 		if (anInt1113 != 0)
@@ -2724,22 +2560,22 @@ public class client extends GameShell {
 		int j = class13.contentType;
 		if (i <= 0)
 			networkSession.incomingOpcode = -1;
-		if (anInt860 == 2) {
+		if (socialManager.friendListStatus == 2) {
 			if (j == 201) {
 				aBoolean1240 = true;
 				anInt1244 = 0;
-				aBoolean866 = true;
-				aString1026 = "";
-				anInt1221 = 1;
-				aString937 = "Enter name of friend to add to list";
+				messagePromptRaised = true;
+				promptInput = "";
+				promptAction = 1;
+				promptMessage = "Enter name of friend to add to list";
 			}
 			if (j == 202) {
 				aBoolean1240 = true;
 				anInt1244 = 0;
-				aBoolean866 = true;
-				aString1026 = "";
-				anInt1221 = 2;
-				aString937 = "Enter name of friend to delete from list";
+				messagePromptRaised = true;
+				promptInput = "";
+				promptAction = 2;
+				promptMessage = "Enter name of friend to delete from list";
 			}
 		}
 		if (j == 205) {
@@ -2749,18 +2585,18 @@ public class client extends GameShell {
 		if (j == 501) {
 			aBoolean1240 = true;
 			anInt1244 = 0;
-			aBoolean866 = true;
-			aString1026 = "";
-			anInt1221 = 4;
-			aString937 = "Enter name of player to add to list";
+			messagePromptRaised = true;
+			promptInput = "";
+			promptAction = 4;
+			promptMessage = "Enter name of player to add to list";
 		}
 		if (j == 502) {
 			aBoolean1240 = true;
 			anInt1244 = 0;
-			aBoolean866 = true;
-			aString1026 = "";
-			anInt1221 = 5;
-			aString937 = "Enter name of player to delete from list";
+			messagePromptRaised = true;
+			promptInput = "";
+			promptAction = 5;
+			promptMessage = "Enter name of player to delete from list";
 		}
 		if (j >= 300 && j <= 313) {
 			int k = (j - 300) / 2;
@@ -2809,14 +2645,14 @@ public class client extends GameShell {
 			return true;
 		}
 		if (j == 620)
-			aBoolean1098 = !aBoolean1098;
+			reportAbuseMutePlayer = !reportAbuseMutePlayer;
 		if (j >= 601 && j <= 613) {
 			method15(false);
-			if (aString839.length() > 0) {
+			if (reportAbuseName.length() > 0) {
 				networkSession.outgoing.writeOpcode(184);
-				networkSession.outgoing.writeLong(Base37.encode(aString839));
+				networkSession.outgoing.writeLong(Base37.encode(reportAbuseName));
 				networkSession.outgoing.writeByte(j - 601);
-				networkSession.outgoing.writeByte(aBoolean1098 ? 1 : 0);
+				networkSession.outgoing.writeByte(reportAbuseMutePlayer ? 1 : 0);
 			}
 		}
 		return false;
@@ -3671,7 +3507,7 @@ public class client extends GameShell {
 			aBoolean1181 = true;
 			aBoolean1240 = true;
 			aBoolean950 = true;
-			aBoolean1212 = true;
+			chatModesRedraw = true;
 			if (regionManager.loadingStage != RegionManager.STAGE_LOADED) {
 				aClass18_1158.draw(super.graphics, 4, 4);
 				aClass18_1157.draw(super.graphics, 550, 4);
@@ -3700,16 +3536,16 @@ public class client extends GameShell {
 			aBoolean1181 = false;
 		}
 		if (anInt988 == -1 && anInt1244 == 0) {
-			aClass13_1249.scrollY = anInt1107 - anInt851 - 77;
+			aClass13_1249.scrollY = chatContentHeight - chatScrollOffset - 77;
 			if (super.mouseX > 448 && super.mouseX < 560 && super.mouseY > 332)
-				method42(anInt1107, 0, aClass13_1249, (byte) 102, super.mouseY - 357, -1, super.mouseX - 17, 77, 463);
-			int j = anInt1107 - 77 - aClass13_1249.scrollY;
+				method42(chatContentHeight, 0, aClass13_1249, (byte) 102, super.mouseY - 357, -1, super.mouseX - 17, 77, 463);
+			int j = chatContentHeight - 77 - aClass13_1249.scrollY;
 			if (j < 0)
 				j = 0;
-			if (j > anInt1107 - 77)
-				j = anInt1107 - 77;
-			if (anInt851 != j) {
-				anInt851 = j;
+			if (j > chatContentHeight - 77)
+				j = chatContentHeight - 77;
+			if (chatScrollOffset != j) {
+				chatScrollOffset = j;
 				aBoolean1240 = true;
 			}
 		}
@@ -3829,32 +3665,32 @@ public class client extends GameShell {
 			aClass18_1158.bindRaster();
 			Rasterizer3D.scanlineOffsets = anIntArray1002;
 		}
-		if (aBoolean1212) {
-			aBoolean1212 = false;
+		if (chatModesRedraw) {
+			chatModesRedraw = false;
 			aClass18_1108.bindRaster();
 			aClass50_Sub1_Sub1_Sub3_965.draw(0, 0);
 			aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Public chat", 55, 28, 0xffffff, true);
-			if (anInt1006 == 0)
+			if (publicChatMode == 0)
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("On", 55, 41, 65280, true);
-			if (anInt1006 == 1)
+			if (publicChatMode == 1)
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Friends", 55, 41, 0xffff00, true);
-			if (anInt1006 == 2)
+			if (publicChatMode == 2)
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Off", 55, 41, 0xff0000, true);
-			if (anInt1006 == 3)
+			if (publicChatMode == 3)
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Hide", 55, 41, 65535, true);
 			aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Private chat", 184, 28, 0xffffff, true);
-			if (anInt887 == 0)
+			if (privateChatMode == 0)
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("On", 184, 41, 65280, true);
-			if (anInt887 == 1)
+			if (privateChatMode == 1)
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Friends", 184, 41, 0xffff00, true);
-			if (anInt887 == 2)
+			if (privateChatMode == 2)
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Off", 184, 41, 0xff0000, true);
 			aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Trade/compete", 324, 28, 0xffffff, true);
-			if (anInt1227 == 0)
+			if (tradeMode == 0)
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("On", 324, 41, 65280, true);
-			if (anInt1227 == 1)
+			if (tradeMode == 1)
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Friends", 324, 41, 0xffff00, true);
-			if (anInt1227 == 2)
+			if (tradeMode == 2)
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Off", 324, 41, 0xff0000, true);
 			aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Report abuse", 458, 33, 0xffffff, true);
 			aClass18_1108.draw(super.graphics, 0, 453);
@@ -3868,18 +3704,18 @@ public class client extends GameShell {
 		}
 	}
 
-	public void method75(int i) {
-		networkSession.incomingLength += i;
-		if (anInt1223 == 0)
+	/* Legacy client.method75(int i): i -> removed zero sentinel. */
+	public void drawSplitPrivateChat() {
+		if (splitPrivateChat == 0)
 			return;
 		TypeFace class50_sub1_sub1_sub2 = aClass50_Sub1_Sub1_Sub2_1060;
 		int j = 0;
 		if (anInt1057 != 0)
 			j = 1;
 		for (int k = 0; k < 100; k++)
-			if (aStringArray1298[k] != null) {
-				int l = anIntArray1296[k];
-				String s = aStringArray1297[k];
+			if (chatHistory.messages[k] != null) {
+				int l = chatHistory.types[k];
+				String s = chatHistory.senders[k];
 				byte byte0 = 0;
 				if (s != null && s.startsWith("@cr1@")) {
 					s = s.substring(5);
@@ -3889,7 +3725,7 @@ public class client extends GameShell {
 					s = s.substring(5);
 					byte0 = 2;
 				}
-				if ((l == 3 || l == 7) && (l == 7 || anInt887 == 0 || anInt887 == 1 && method148(13292, s))) {
+				if ((l == 3 || l == 7) && (l == 7 || privateChatMode == 0 || privateChatMode == 1 && isFriendOrSelf(s))) {
 					int i1 = 329 - j * 13;
 					int l1 = 4;
 					class50_sub1_sub1_sub2.drawText("From", l1, i1, 0);
@@ -3903,22 +3739,22 @@ public class client extends GameShell {
 						aClass50_Sub1_Sub1_Sub3Array1142[1].draw(l1, i1 - 12);
 						l1 += 14;
 					}
-					class50_sub1_sub1_sub2.drawText(s + ": " + aStringArray1298[k], l1, i1, 0);
-					class50_sub1_sub1_sub2.drawText(s + ": " + aStringArray1298[k], l1, i1 - 1, 65535);
+					class50_sub1_sub1_sub2.drawText(s + ": " + chatHistory.messages[k], l1, i1, 0);
+					class50_sub1_sub1_sub2.drawText(s + ": " + chatHistory.messages[k], l1, i1 - 1, 65535);
 					if (++j >= 5)
 						return;
 				}
-				if (l == 5 && anInt887 < 2) {
+				if (l == 5 && privateChatMode < 2) {
 					int j1 = 329 - j * 13;
-					class50_sub1_sub1_sub2.drawText(aStringArray1298[k], 4, j1, 0);
-					class50_sub1_sub1_sub2.drawText(aStringArray1298[k], 4, j1 - 1, 65535);
+					class50_sub1_sub1_sub2.drawText(chatHistory.messages[k], 4, j1, 0);
+					class50_sub1_sub1_sub2.drawText(chatHistory.messages[k], 4, j1 - 1, 65535);
 					if (++j >= 5)
 						return;
 				}
-				if (l == 6 && anInt887 < 2) {
+				if (l == 6 && privateChatMode < 2) {
 					int k1 = 329 - j * 13;
-					class50_sub1_sub1_sub2.drawText("To " + s + ": " + aStringArray1298[k], 4, k1, 0);
-					class50_sub1_sub1_sub2.drawText("To " + s + ": " + aStringArray1298[k], 4, k1 - 1, 65535);
+					class50_sub1_sub1_sub2.drawText("To " + s + ": " + chatHistory.messages[k], 4, k1, 0);
+					class50_sub1_sub1_sub2.drawText("To " + s + ": " + chatHistory.messages[k], 4, k1 - 1, 65535);
 					if (++j >= 5)
 						return;
 				}
@@ -4042,8 +3878,7 @@ public class client extends GameShell {
 				anInt1183 = 0;
 				aBoolean1065 = false;
 				super.idleCycles = 0;
-				for (int j1 = 0; j1 < 100; j1++)
-					aStringArray1298[j1] = null;
+				chatHistory.clearMessages();
 
 				anInt1146 = 0;
 				anInt1171 = 0;
@@ -4057,8 +3892,7 @@ public class client extends GameShell {
 				destinationY = 0;
 				localPlayer = actorSynchronizer.reset();
 				worldState.resetTransientState();
-				anInt860 = 0;
-				anInt859 = 0;
+				socialManager.resetForLogin();
 				method44(anInt1191);
 				anInt1191 = -1;
 				method44(anInt988);
@@ -4077,7 +3911,7 @@ public class client extends GameShell {
 				anInt1285 = 3;
 				anInt1244 = 0;
 				aBoolean1065 = false;
-				aBoolean866 = false;
+				messagePromptRaised = false;
 				aString1058 = null;
 				anInt1319 = 0;
 				anInt1213 = -1;
@@ -4498,9 +4332,9 @@ public class client extends GameShell {
 		aClass18_1159.bindRaster();
 		Rasterizer3D.scanlineOffsets = anIntArray1000;
 		aClass50_Sub1_Sub1_Sub3_1187.draw(0, 0);
-		if (aBoolean866) {
-			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(aString937, 239, 40, 0);
-			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(aString1026 + "*", 239, 60, 128);
+		if (messagePromptRaised) {
+			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(promptMessage, 239, 40, 0);
+			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(promptInput + "*", 239, 60, 128);
 		} else if (anInt1244 == 1) {
 			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText("Enter amount:", 239, 40, 0);
 			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(aString949 + "*", 239, 60, 128);
@@ -4542,10 +4376,10 @@ public class client extends GameShell {
 			int k = 0;
 			Rasterizer.setCoordinates(0, 0, 463, 77);
 			for (int i1 = 0; i1 < 100; i1++)
-				if (aStringArray1298[i1] != null) {
-					int j1 = anIntArray1296[i1];
-					int k1 = (70 - k * 14) + anInt851;
-					String s1 = aStringArray1297[i1];
+				if (chatHistory.messages[i1] != null) {
+					int j1 = chatHistory.types[i1];
+					int k1 = (70 - k * 14) + chatScrollOffset;
+					String s1 = chatHistory.senders[i1];
 					byte byte0 = 0;
 					if (s1 != null && s1.startsWith("@cr1@")) {
 						s1 = s1.substring(5);
@@ -4557,10 +4391,10 @@ public class client extends GameShell {
 					}
 					if (j1 == 0) {
 						if (k1 > 0 && k1 < 110)
-							class50_sub1_sub1_sub2_1.drawText(aStringArray1298[i1], 4, k1, 0);
+							class50_sub1_sub1_sub2_1.drawText(chatHistory.messages[i1], 4, k1, 0);
 						k++;
 					}
-					if ((j1 == 1 || j1 == 2) && (j1 == 1 || anInt1006 == 0 || anInt1006 == 1 && method148(13292, s1))) {
+					if ((j1 == 1 || j1 == 2) && (j1 == 1 || publicChatMode == 0 || publicChatMode == 1 && isFriendOrSelf(s1))) {
 						if (k1 > 0 && k1 < 110) {
 							int l1 = 4;
 							if (byte0 == 1) {
@@ -4573,12 +4407,12 @@ public class client extends GameShell {
 							}
 							class50_sub1_sub1_sub2_1.drawText(s1 + ":", l1, k1, 0);
 							l1 += class50_sub1_sub1_sub2_1.getFormattedTextWidth(s1) + 8;
-							class50_sub1_sub1_sub2_1.drawText(aStringArray1298[i1], l1, k1, 255);
+							class50_sub1_sub1_sub2_1.drawText(chatHistory.messages[i1], l1, k1, 255);
 						}
 						k++;
 					}
-					if ((j1 == 3 || j1 == 7) && anInt1223 == 0
-							&& (j1 == 7 || anInt887 == 0 || anInt887 == 1 && method148(13292, s1))) {
+					if ((j1 == 3 || j1 == 7) && splitPrivateChat == 0
+							&& (j1 == 7 || privateChatMode == 0 || privateChatMode == 1 && isFriendOrSelf(s1))) {
 						if (k1 > 0 && k1 < 110) {
 							int i2 = 4;
 							class50_sub1_sub1_sub2_1.drawText("From", i2, k1, 0);
@@ -4593,47 +4427,47 @@ public class client extends GameShell {
 							}
 							class50_sub1_sub1_sub2_1.drawText(s1 + ":", i2, k1, 0);
 							i2 += class50_sub1_sub1_sub2_1.getFormattedTextWidth(s1) + 8;
-							class50_sub1_sub1_sub2_1.drawText(aStringArray1298[i1], i2, k1, 0x800000);
+							class50_sub1_sub1_sub2_1.drawText(chatHistory.messages[i1], i2, k1, 0x800000);
 						}
 						k++;
 					}
-					if (j1 == 4 && (anInt1227 == 0 || anInt1227 == 1 && method148(13292, s1))) {
+					if (j1 == 4 && (tradeMode == 0 || tradeMode == 1 && isFriendOrSelf(s1))) {
 						if (k1 > 0 && k1 < 110)
-							class50_sub1_sub1_sub2_1.drawText(s1 + " " + aStringArray1298[i1], 4, k1, 0x800080);
+							class50_sub1_sub1_sub2_1.drawText(s1 + " " + chatHistory.messages[i1], 4, k1, 0x800080);
 						k++;
 					}
-					if (j1 == 5 && anInt1223 == 0 && anInt887 < 2) {
+					if (j1 == 5 && splitPrivateChat == 0 && privateChatMode < 2) {
 						if (k1 > 0 && k1 < 110)
-							class50_sub1_sub1_sub2_1.drawText(aStringArray1298[i1], 4, k1, 0x800000);
+							class50_sub1_sub1_sub2_1.drawText(chatHistory.messages[i1], 4, k1, 0x800000);
 						k++;
 					}
-					if (j1 == 6 && anInt1223 == 0 && anInt887 < 2) {
+					if (j1 == 6 && splitPrivateChat == 0 && privateChatMode < 2) {
 						if (k1 > 0 && k1 < 110) {
 							class50_sub1_sub1_sub2_1.drawText("To " + s1 + ":", 4, k1, 0);
-							class50_sub1_sub1_sub2_1.drawText(aStringArray1298[i1],
+							class50_sub1_sub1_sub2_1.drawText(chatHistory.messages[i1],
 									12 + class50_sub1_sub1_sub2_1.getFormattedTextWidth("To " + s1), k1, 0x800000);
 						}
 						k++;
 					}
-					if (j1 == 8 && (anInt1227 == 0 || anInt1227 == 1 && method148(13292, s1))) {
+					if (j1 == 8 && (tradeMode == 0 || tradeMode == 1 && isFriendOrSelf(s1))) {
 						if (k1 > 0 && k1 < 110)
-							class50_sub1_sub1_sub2_1.drawText(s1 + " " + aStringArray1298[i1], 4, k1, 0x7e3200);
+							class50_sub1_sub1_sub2_1.drawText(s1 + " " + chatHistory.messages[i1], 4, k1, 0x7e3200);
 						k++;
 					}
 				}
 
 			Rasterizer.resetCoordinates();
-			anInt1107 = k * 14 + 7;
-			if (anInt1107 < 78)
-				anInt1107 = 78;
-			method56(true, anInt1107 - anInt851 - 77, 463, 77, anInt1107, 0);
+			chatContentHeight = k * 14 + 7;
+			if (chatContentHeight < 78)
+				chatContentHeight = 78;
+			method56(true, chatContentHeight - chatScrollOffset - 77, 463, 77, chatContentHeight, 0);
 			String s;
 			if (localPlayer != null && localPlayer.name != null)
 				s = localPlayer.name;
 			else
 				s = TextFormatter.formatDisplayName(username);
 			class50_sub1_sub1_sub2_1.drawText(s + ":", 4, 90, 0);
-			class50_sub1_sub1_sub2_1.drawText(aString1104 + "*",
+			class50_sub1_sub1_sub2_1.drawText(chatInput + "*",
 					6 + class50_sub1_sub1_sub2_1.getFormattedTextWidth(s + ": "), 90, 255);
 			Rasterizer.drawHorizontalLine(0, 77, 479, 0);
 		}
@@ -4760,7 +4594,7 @@ public class client extends GameShell {
 		minimapRenderer.draw(worldState, actorSynchronizer, localPlayer, currentPlane,
 				cameraController.followYaw, destinationX, destinationY, anInt1197, anInt1226,
 				anInt844, anInt845, anInt1151, anInt1325, regionManager.baseX, regionManager.baseY,
-				assets, name -> method148(13292, name));
+				assets, name -> isFriendOrSelf(name));
 	}
 
 
@@ -4819,39 +4653,16 @@ public class client extends GameShell {
 			return "*";
 	}
 
-	public void method90(int i, long l) {
-		try {
-			if (i != -916)
-				networkSession.incomingOpcode = networkSession.incoming.readUnsignedByte();
-			if (l == 0L)
-				return;
-			if (anInt855 >= 100) {
-				method47("", "Your ignore list is full. Max of 100 hit", 0);
-				return;
-			}
-			String s = TextFormatter.formatDisplayName(Base37.decode(l));
-			for (int j = 0; j < anInt855; j++)
-				if (aLongArray1073[j] == l) {
-					method47("", s + " is already on your ignore list", 0);
-					return;
-				}
-
-			for (int k = 0; k < anInt859; k++)
-				if (aLongArray1130[k] == l) {
-					method47("", "Please remove " + s + " from your friend list first", 0);
-					return;
-				}
-
-			aLongArray1073[anInt855++] = l;
+	/*
+	 * Legacy client.method90(int i, long l):
+	 *   i -> removed -916 sentinel
+	 *   l -> encodedName
+	 */
+	public void addIgnore(long encodedName) {
+		if (socialManager.addIgnore(encodedName, networkSession.outgoing, this::addChatMessage))
 			aBoolean1181 = true;
-			networkSession.outgoing.writeOpcode(217);
-			networkSession.outgoing.writeLong(l);
-			return;
-		} catch (RuntimeException runtimeexception) {
-			Signlink.reportError("27939, " + i + ", " + l + ", " + runtimeexception.toString());
-		}
-		throw new RuntimeException();
 	}
+
 
 	public void processGameLoop() {
 		if (aBoolean1016 || aBoolean1283 || aBoolean1097)
@@ -4880,7 +4691,7 @@ public class client extends GameShell {
 				anInt1129 = anInt1315;
 			return;
 		}
-		method111(anInt1178);
+		buildSplitPrivateChatMenu();
 		anInt915 = 0;
 		anInt1315 = 0;
 		if (super.mouseX > 4 && super.mouseY > 4 && super.mouseX < 516 && super.mouseY < 338)
@@ -4915,7 +4726,7 @@ public class client extends GameShell {
 			else if (anInt1191 != -1)
 				method66(357, Widget.get(anInt1191), 3, 0, 17, super.mouseX, 23658, super.mouseY);
 			else if (super.mouseY < 434 && super.mouseX < 426 && anInt1244 == 0)
-				method113(466, super.mouseX - 17, super.mouseY - 357);
+				buildChatboxMessageMenu(super.mouseY - 357);
 		if ((anInt988 != -1 || anInt1191 != -1) && anInt915 != anInt1106) {
 			aBoolean1240 = true;
 			anInt1106 = anInt915;
@@ -5007,30 +4818,16 @@ public class client extends GameShell {
 	}
 
 
-	public void method97(int i, long l) {
-		try {
-			if (l == 0L)
-				return;
-			for (int j = 0; j < anInt855; j++) {
-				if (aLongArray1073[j] != l)
-					continue;
-				anInt855--;
-				aBoolean1181 = true;
-				for (int k = j; k < anInt855; k++)
-					aLongArray1073[k] = aLongArray1073[k + 1];
-
-				networkSession.outgoing.writeOpcode(160);
-				networkSession.outgoing.writeLong(l);
-				break;
-			}
-
-			i = 42 / i;
-			return;
-		} catch (RuntimeException runtimeexception) {
-			Signlink.reportError("45745, " + i + ", " + l + ", " + runtimeexception.toString());
-		}
-		throw new RuntimeException();
+	/*
+	 * Legacy client.method97(int i, long l):
+	 *   i -> removed 325 division sentinel
+	 *   l -> encodedName
+	 */
+	public void removeIgnore(long encodedName) {
+		if (socialManager.removeIgnore(encodedName, networkSession.outgoing))
+			aBoolean1181 = true;
 	}
+
 
 	public void method98(int i) {
 		char c = '\u0100';
@@ -5136,69 +4933,38 @@ public class client extends GameShell {
 		GameObjectDefinition.lowMemory = true;
 	}
 
-	public void method102(long l, int i) {
-		try {
-			if (l == 0L)
-				return;
-			if (anInt859 >= 100 && anInt1068 != 1) {
-				method47("", "Your friendlist is full. Max of 100 for free users, and 200 for members", 0);
-				return;
-			}
-			if (anInt859 >= 200) {
-				method47("", "Your friendlist is full. Max of 100 for free users, and 200 for members", 0);
-				return;
-			}
-			String s = TextFormatter.formatDisplayName(Base37.decode(l));
-			for (int j = 0; j < anInt859; j++)
-				if (aLongArray1130[j] == l) {
-					method47("", s + " is already on your friend list", 0);
-					return;
-				}
-
-			for (int k = 0; k < anInt855; k++)
-				if (aLongArray1073[k] == l) {
-					method47("", "Please remove " + s + " from your ignore list first", 0);
-					return;
-				}
-
-			if (s.equals(localPlayer.name))
-				return;
-			aStringArray849[anInt859] = s;
-			if (i != -45229)
-				anInt1178 = -30;
-			aLongArray1130[anInt859] = l;
-			anIntArray1267[anInt859] = 0;
-			anInt859++;
+	/*
+	 * Legacy client.method102(long l, int i):
+	 *   l -> encodedName
+	 *   i -> removed -45229 sentinel
+	 */
+	public void addFriend(long encodedName) {
+		boolean membersAccount = anInt1068 == 1;
+		if (socialManager.addFriend(encodedName, membersAccount, localPlayer.name, networkSession.outgoing, this::addChatMessage))
 			aBoolean1181 = true;
-			networkSession.outgoing.writeOpcode(120);
-			networkSession.outgoing.writeLong(l);
-			return;
-		} catch (RuntimeException runtimeexception) {
-			Signlink.reportError("94629, " + l + ", " + i + ", " + runtimeexception.toString());
-		}
-		throw new RuntimeException();
 	}
+
 
 	public void method103(Widget class13) {
 		int i = class13.contentType;
 		if (i >= 1 && i <= 100 || i >= 701 && i <= 800) {
-			if (i == 1 && anInt860 == 0) {
+			if (i == 1 && socialManager.friendListStatus == 0) {
 				class13.text = "Loading friend list";
 				class13.buttonType = 0;
 				return;
 			}
-			if (i == 1 && anInt860 == 1) {
+			if (i == 1 && socialManager.friendListStatus == 1) {
 				class13.text = "Connecting to friendserver";
 				class13.buttonType = 0;
 				return;
 			}
-			if (i == 2 && anInt860 != 2) {
+			if (i == 2 && socialManager.friendListStatus != 2) {
 				class13.text = "Please wait...";
 				class13.buttonType = 0;
 				return;
 			}
-			int j = anInt859;
-			if (anInt860 != 2)
+			int j = socialManager.friendCount;
+			if (socialManager.friendListStatus != 2)
 				j = 0;
 			if (i > 700)
 				i -= 601;
@@ -5209,14 +4975,14 @@ public class client extends GameShell {
 				class13.buttonType = 0;
 				return;
 			} else {
-				class13.text = aStringArray849[i];
+				class13.text = socialManager.friendNames[i];
 				class13.buttonType = 1;
 				return;
 			}
 		}
 		if (i >= 101 && i <= 200 || i >= 801 && i <= 900) {
-			int k = anInt859;
-			if (anInt860 != 2)
+			int k = socialManager.friendCount;
+			if (socialManager.friendListStatus != 2)
 				k = 0;
 			if (i > 800)
 				i -= 701;
@@ -5227,23 +4993,23 @@ public class client extends GameShell {
 				class13.buttonType = 0;
 				return;
 			}
-			if (anIntArray1267[i] == 0)
+			if (socialManager.friendWorlds[i] == 0)
 				class13.text = "@red@Offline";
-			else if (anIntArray1267[i] < 200) {
-				if (anIntArray1267[i] == anInt923)
-					class13.text = "@gre@World" + (anIntArray1267[i] - 9);
+			else if (socialManager.friendWorlds[i] < 200) {
+				if (socialManager.friendWorlds[i] == currentWorldId)
+					class13.text = "@gre@World" + (socialManager.friendWorlds[i] - 9);
 				else
-					class13.text = "@yel@World" + (anIntArray1267[i] - 9);
-			} else if (anIntArray1267[i] == anInt923)
-				class13.text = "@gre@Classic" + (anIntArray1267[i] - 219);
+					class13.text = "@yel@World" + (socialManager.friendWorlds[i] - 9);
+			} else if (socialManager.friendWorlds[i] == currentWorldId)
+				class13.text = "@gre@Classic" + (socialManager.friendWorlds[i] - 219);
 			else
-				class13.text = "@yel@Classic" + (anIntArray1267[i] - 219);
+				class13.text = "@yel@Classic" + (socialManager.friendWorlds[i] - 219);
 			class13.buttonType = 1;
 			return;
 		}
 		if (i == 203) {
-			int l = anInt859;
-			if (anInt860 != 2)
+			int l = socialManager.friendCount;
+			if (socialManager.friendListStatus != 2)
 				l = 0;
 			class13.scrollHeight = l * 15 + 20;
 			if (class13.scrollHeight <= class13.height)
@@ -5251,31 +5017,31 @@ public class client extends GameShell {
 			return;
 		}
 		if (i >= 401 && i <= 500) {
-			if ((i -= 401) == 0 && anInt860 == 0) {
+			if ((i -= 401) == 0 && socialManager.friendListStatus == 0) {
 				class13.text = "Loading ignore list";
 				class13.buttonType = 0;
 				return;
 			}
-			if (i == 1 && anInt860 == 0) {
+			if (i == 1 && socialManager.friendListStatus == 0) {
 				class13.text = "Please wait...";
 				class13.buttonType = 0;
 				return;
 			}
-			int i1 = anInt855;
-			if (anInt860 == 0)
+			int i1 = socialManager.ignoreCount;
+			if (socialManager.friendListStatus == 0)
 				i1 = 0;
 			if (i >= i1) {
 				class13.text = "";
 				class13.buttonType = 0;
 				return;
 			} else {
-				class13.text = TextFormatter.formatDisplayName(Base37.decode(aLongArray1073[i]));
+				class13.text = TextFormatter.formatDisplayName(Base37.decode(socialManager.ignoreEncodedNames[i]));
 				class13.buttonType = 1;
 				return;
 			}
 		}
 		if (i == 503) {
-			class13.scrollHeight = anInt855 * 15 + 20;
+			class13.scrollHeight = socialManager.ignoreCount * 15 + 20;
 			if (class13.scrollHeight <= class13.height)
 				class13.scrollHeight = class13.height + 1;
 			return;
@@ -5345,7 +5111,7 @@ public class client extends GameShell {
 			}
 		}
 		if (i == 600) {
-			class13.text = aString839;
+			class13.text = reportAbuseName;
 			if (anInt1325 % 20 < 10) {
 				class13.text += "|";
 				return;
@@ -5356,7 +5122,7 @@ public class client extends GameShell {
 		}
 		if (i == 620)
 			if (playerRights >= 1) {
-				if (aBoolean1098) {
+				if (reportAbuseMutePlayer) {
 					class13.color = 0xff0000;
 					class13.text = "Moderator option: Mute player for 48 hours: <ON>";
 				} else {
@@ -5398,12 +5164,12 @@ public class client extends GameShell {
 			}
 		if (i == 662) {
 			String s;
-			if (anInt1273 == 0)
+			if (unreadMessageCount == 0)
 				s = "@yel@0 unread messages";
-			else if (anInt1273 == 1)
+			else if (unreadMessageCount == 1)
 				s = "@gre@1 unread message";
 			else
-				s = "@gre@" + anInt1273 + " unread messages";
+				s = "@gre@" + unreadMessageCount + " unread messages";
 			class13.text = "You have " + s + "\\nin your message centre.";
 		}
 		if (i == 663)
@@ -5528,7 +5294,7 @@ public class client extends GameShell {
 		if (k == 6)
 			anInt998 = l;
 		if (k == 8) {
-			anInt1223 = l;
+			splitPrivateChat = l;
 			aBoolean1240 = true;
 		}
 		if (k == 9)
@@ -5543,19 +5309,18 @@ public class client extends GameShell {
 				+ ((i & 0xff00) * i1 + (j & 0xff00) * k & 0xff0000) >> 8;
 	}
 
-	public void method107(int i) {
-		anInt1246 = 0;
+	/* Legacy client.method107(int i): i -> removed negative sentinel. */
+	public void updateTutorialIslandFlag() {
+		tutorialIslandFlag = 0;
 		int j = (((Actor) (localPlayer)).x >> 7) + regionManager.baseX;
-		int k;
-		for (k = (((Actor) (localPlayer)).y >> 7) + regionManager.baseY; i >= 0;)
-			return;
+		int k = (((Actor) (localPlayer)).y >> 7) + regionManager.baseY;
 
 		if (j >= 3053 && j <= 3156 && k >= 3056 && k <= 3136)
-			anInt1246 = 1;
+			tutorialIslandFlag = 1;
 		if (j >= 3072 && j <= 3118 && k >= 9492 && k <= 9535)
-			anInt1246 = 1;
-		if (anInt1246 == 1 && j >= 3139 && j <= 3199 && k >= 3008 && k <= 3062)
-			anInt1246 = 0;
+			tutorialIslandFlag = 1;
+		if (tutorialIslandFlag == 1 && j >= 3139 && j <= 3199 && k >= 3008 && k <= 3062)
+			tutorialIslandFlag = 0;
 	}
 
 	public void method108() {
@@ -5625,7 +5390,7 @@ public class client extends GameShell {
 	}
 
 	public void method109() {
-		method75(0);
+		drawSplitPrivateChat();
 		if (anInt1023 == 1)
 			aClass50_Sub1_Sub1_Sub1Array896[anInt1022 / 100].drawImage(anInt1020 - 8 - 4, anInt1021 - 8 - 4);
 		if (anInt1023 == 2)
@@ -5638,7 +5403,7 @@ public class client extends GameShell {
 			method88(anInt951, anInt1169);
 			method142(0, 0, Widget.get(anInt1169), 0, 8);
 		}
-		method107(-7);
+		updateTutorialIslandFlag();
 		if (!aBoolean1065) {
 			method91();
 			method34((byte) -79);
@@ -5693,17 +5458,17 @@ public class client extends GameShell {
 		}
 	}
 
-	public void method111(int i) {
-		i = 21 / i;
-		if (anInt1223 == 0)
+	/* Legacy client.method111(int i): i -> removed nonzero division sentinel. */
+	public void buildSplitPrivateChatMenu() {
+		if (splitPrivateChat == 0)
 			return;
 		int j = 0;
 		if (anInt1057 != 0)
 			j = 1;
 		for (int k = 0; k < 100; k++)
-			if (aStringArray1298[k] != null) {
-				int l = anIntArray1296[k];
-				String s = aStringArray1297[k];
+			if (chatHistory.messages[k] != null) {
+				int l = chatHistory.types[k];
+				String s = chatHistory.senders[k];
 				boolean flag = false;
 				if (s != null && s.startsWith("@cr1@")) {
 					s = s.substring(5);
@@ -5713,10 +5478,10 @@ public class client extends GameShell {
 					s = s.substring(5);
 					byte byte0 = 2;
 				}
-				if ((l == 3 || l == 7) && (l == 7 || anInt887 == 0 || anInt887 == 1 && method148(13292, s))) {
+				if ((l == 3 || l == 7) && (l == 7 || privateChatMode == 0 || privateChatMode == 1 && isFriendOrSelf(s))) {
 					int i1 = 329 - j * 13;
 					if (super.mouseX > 4 && super.mouseY - 4 > i1 - 10 && super.mouseY - 4 <= i1 + 3) {
-						int j1 = aClass50_Sub1_Sub1_Sub2_1060.getFormattedTextWidth("From:  " + s + aStringArray1298[k])
+						int j1 = aClass50_Sub1_Sub1_Sub2_1060.getFormattedTextWidth("From:  " + s + chatHistory.messages[k])
 								+ 25;
 						if (j1 > 450)
 							j1 = 450;
@@ -5737,7 +5502,7 @@ public class client extends GameShell {
 					if (++j >= 5)
 						return;
 				}
-				if ((l == 5 || l == 6) && anInt887 < 2 && ++j >= 5)
+				if ((l == 5 || l == 6) && privateChatMode < 2 && ++j >= 5)
 					return;
 			}
 
@@ -5759,17 +5524,22 @@ public class client extends GameShell {
 
 	}
 
-	public void method113(int i, int j, int k) {
+	/*
+	 * Legacy client.method113(int i, int j, int k):
+	 *   i -> removed nonzero division sentinel
+	 *   j -> removed unused mouseX within chatbox
+	 *   k -> mouseY within chatbox
+	 */
+	public void buildChatboxMessageMenu(int mouseY) {
 		int l = 0;
-		i = 44 / i;
 		for (int i1 = 0; i1 < 100; i1++) {
-			if (aStringArray1298[i1] == null)
+			if (chatHistory.messages[i1] == null)
 				continue;
-			int j1 = anIntArray1296[i1];
-			int k1 = (70 - l * 14) + anInt851 + 4;
+			int j1 = chatHistory.types[i1];
+			int k1 = (70 - l * 14) + chatScrollOffset + 4;
 			if (k1 < -20)
 				break;
-			String s = aStringArray1297[i1];
+			String s = chatHistory.senders[i1];
 			boolean flag = false;
 			if (s != null && s.startsWith("@cr1@")) {
 				s = s.substring(5);
@@ -5781,8 +5551,8 @@ public class client extends GameShell {
 			}
 			if (j1 == 0)
 				l++;
-			if ((j1 == 1 || j1 == 2) && (j1 == 1 || anInt1006 == 0 || anInt1006 == 1 && method148(13292, s))) {
-				if (k > k1 - 14 && k <= k1 && !s.equals(localPlayer.name)) {
+			if ((j1 == 1 || j1 == 2) && (j1 == 1 || publicChatMode == 0 || publicChatMode == 1 && isFriendOrSelf(s))) {
+				if (mouseY > k1 - 14 && mouseY <= k1 && !s.equals(localPlayer.name)) {
 					if (playerRights >= 1) {
 						aStringArray1184[anInt1183] = "Report abuse @whi@" + s;
 						anIntArray981[anInt1183] = 507;
@@ -5797,9 +5567,9 @@ public class client extends GameShell {
 				}
 				l++;
 			}
-			if ((j1 == 3 || j1 == 7) && anInt1223 == 0
-					&& (j1 == 7 || anInt887 == 0 || anInt887 == 1 && method148(13292, s))) {
-				if (k > k1 - 14 && k <= k1) {
+			if ((j1 == 3 || j1 == 7) && splitPrivateChat == 0
+					&& (j1 == 7 || privateChatMode == 0 || privateChatMode == 1 && isFriendOrSelf(s))) {
+				if (mouseY > k1 - 14 && mouseY <= k1) {
 					if (playerRights >= 1) {
 						aStringArray1184[anInt1183] = "Report abuse @whi@" + s;
 						anIntArray981[anInt1183] = 507;
@@ -5814,18 +5584,18 @@ public class client extends GameShell {
 				}
 				l++;
 			}
-			if (j1 == 4 && (anInt1227 == 0 || anInt1227 == 1 && method148(13292, s))) {
-				if (k > k1 - 14 && k <= k1) {
+			if (j1 == 4 && (tradeMode == 0 || tradeMode == 1 && isFriendOrSelf(s))) {
+				if (mouseY > k1 - 14 && mouseY <= k1) {
 					aStringArray1184[anInt1183] = "Accept trade @whi@" + s;
 					anIntArray981[anInt1183] = 544;
 					anInt1183++;
 				}
 				l++;
 			}
-			if ((j1 == 5 || j1 == 6) && anInt1223 == 0 && anInt887 < 2)
+			if ((j1 == 5 || j1 == 6) && splitPrivateChat == 0 && privateChatMode < 2)
 				l++;
-			if (j1 == 8 && (anInt1227 == 0 || anInt1227 == 1 && method148(13292, s))) {
-				if (k > k1 - 14 && k <= k1) {
+			if (j1 == 8 && (tradeMode == 0 || tradeMode == 1 && isFriendOrSelf(s))) {
+				if (mouseY > k1 - 14 && mouseY <= k1) {
 					aStringArray1184[anInt1183] = "Accept challenge @whi@" + s;
 					anIntArray981[anInt1183] = 695;
 					anInt1183++;
@@ -6022,13 +5792,13 @@ public class client extends GameShell {
 			if (l1 != -1) {
 				long l3 = Base37.encode(s.substring(l1 + 5).trim());
 				if (i1 == 762)
-					method102(l3, -45229);
+					addFriend(l3);
 				if (i1 == 574)
-					method90(anInt1154, l3);
+					addIgnore(l3);
 				if (i1 == 775)
-					method53(l3, 0);
+					removeFriend(l3);
 				if (i1 == 859)
-					method97(325, l3);
+					removeIgnore(l3);
 			}
 		}
 		if (i1 == 930) {
@@ -6257,7 +6027,7 @@ public class client extends GameShell {
 				}
 
 				if (!flag8)
-					method47("", "Unable to find " + s7, 0);
+					addChatMessage("", "Unable to find " + s7, 0);
 			}
 		}
 		if (i1 == 225) {
@@ -6368,7 +6138,7 @@ public class client extends GameShell {
 				s5 = new String(class16.description);
 			else
 				s5 = "It's a " + class16.name + ".";
-			method47("", s5, 0);
+			addChatMessage("", s5, 0);
 		}
 		if (i1 == 352) {
 			Widget class13_2 = Widget.get(l);
@@ -6388,7 +6158,7 @@ public class client extends GameShell {
 				s9 = new String(class47.description);
 			else
 				s9 = "It's a " + class47.name + ".";
-			method47("", s9, 0);
+			addChatMessage("", s9, 0);
 		}
 		if (i1 == 575 && !aBoolean1239) {
 			networkSession.outgoing.writeOpcode(226);
@@ -6458,7 +6228,7 @@ public class client extends GameShell {
 						s10 = new String(class37.description);
 					else
 						s10 = "It's a " + class37.name + ".";
-					method47("", s10, 0);
+					addChatMessage("", s10, 0);
 				}
 			}
 		}
@@ -6501,11 +6271,11 @@ public class client extends GameShell {
 			if (k2 != -1)
 				if (anInt1169 == -1) {
 					method15(false);
-					aString839 = s2.substring(k2 + 5).trim();
-					aBoolean1098 = false;
+					reportAbuseName = s2.substring(k2 + 5).trim();
+					reportAbuseMutePlayer = false;
 					anInt1231 = anInt1169 = Widget.reportAbuseInterfaceId;
 				} else {
-					method47("", "Please close the interface you have open before using 'report abuse'", 0);
+					addChatMessage("", "Please close the interface you have open before using 'report abuse'", 0);
 				}
 		}
 		if (i1 == 389) {
@@ -6534,22 +6304,16 @@ public class client extends GameShell {
 			int l2 = s3.indexOf("@whi@");
 			if (l2 != -1) {
 				long l4 = Base37.encode(s3.substring(l2 + 5).trim());
-				int k3 = -1;
-				for (int i4 = 0; i4 < anInt859; i4++) {
-					if (aLongArray1130[i4] != l4)
-						continue;
-					k3 = i4;
-					break;
-				}
+				int k3 = socialManager.findFriendIndex(l4);
 
-				if (k3 != -1 && anIntArray1267[k3] > 0) {
+				if (k3 != -1 && socialManager.friendWorlds[k3] > 0) {
 					aBoolean1240 = true;
 					anInt1244 = 0;
-					aBoolean866 = true;
-					aString1026 = "";
-					anInt1221 = 3;
-					aLong1141 = aLongArray1130[k3];
-					aString937 = "Enter message to send to " + aStringArray849[k3];
+					messagePromptRaised = true;
+					promptInput = "";
+					promptAction = 3;
+					privateMessageTarget = socialManager.friendEncodedNames[k3];
+					promptMessage = "Enter message to send to " + socialManager.friendNames[k3];
 				}
 			}
 		}
@@ -6614,7 +6378,7 @@ public class client extends GameShell {
 				s6 = new String(class16_1.description);
 			else
 				s6 = "It's a " + class16_1.name + ".";
-			method47("", s6, 0);
+			addChatMessage("", s6, 0);
 		}
 		if (i1 == 408) {
 			Player class50_sub1_sub4_sub3_sub2_6 = actorSynchronizer.players[j1];
@@ -6688,8 +6452,8 @@ public class client extends GameShell {
 						aClass50_Sub1_Sub1_Sub1Array954[0].drawImage(projectedX - 12, projectedY - 28);
 				}
 			}
-			if (((Actor) (obj)).overheadText != null && (i >= actorSynchronizer.playerCount || anInt1006 == 0 || anInt1006 == 3
-					|| anInt1006 == 1 && method148(13292, ((Player) obj).name))) {
+			if (((Actor) (obj)).overheadText != null && (i >= actorSynchronizer.playerCount || publicChatMode == 0 || publicChatMode == 3
+					|| publicChatMode == 1 && isFriendOrSelf(((Player) obj).name))) {
 				projectActorToScreen((Actor) obj, ((Actor) obj).height);
 				if (projectedX > -1 && anInt939 < anInt940) {
 					anIntArray944[anInt939] = aClass50_Sub1_Sub1_Sub2_1061.getTextWidth(((Actor) (obj)).overheadText)
@@ -7890,17 +7654,15 @@ public class client extends GameShell {
 		aBoolean1046 = true;
 	}
 
-	public boolean method148(int i, String s) {
-		if (s == null)
-			return false;
-		for (int j = 0; j < anInt859; j++)
-			if (s.equalsIgnoreCase(aStringArray849[j]))
-				return true;
-
-		if (i != 13292)
-			aBoolean1014 = !aBoolean1014;
-		return s.equalsIgnoreCase(localPlayer.name);
+	/*
+	 * Legacy client.method148(int i, String s):
+	 *   i -> removed 13292 sentinel
+	 *   s -> name
+	 */
+	public boolean isFriendOrSelf(String name) {
+		return socialManager.isFriendOrSelf(name, localPlayer.name);
 	}
+
 
 	public void method149(int i) {
 		while (i >= 0)
@@ -8101,13 +7863,12 @@ public class client extends GameShell {
 
 	public client() {
 		anIntArray837 = new int[9];
-		aString839 = "";
+		reportAbuseName = "";
 		anIntArray843 = new int[Skills.COUNT];
-		aStringArray849 = new String[200];
 		aString861 = "";
 		aStringArray863 = new String[100];
 		anIntArray864 = new int[100];
-		aBoolean866 = false;
+		messagePromptRaised = false;
 		aBoolean892 = false;
 		anInt894 = -992;
 		aClass50_Sub1_Sub1_Sub1Array896 = new ImageRGB[8];
@@ -8117,6 +7878,8 @@ public class client extends GameShell {
 		anIntArray920 = new int[151];
 		anInt921 = 8;
 		networkSession = new NetworkSession();
+		socialManager = new SocialManager();
+		chatHistory = new ChatHistory();
 		pathfinder = new Pathfinder();
 		actorSynchronizer = new ActorSynchronizer();
 		actorUpdater = new ActorUpdater();
@@ -8129,7 +7892,7 @@ public class client extends GameShell {
 		projectedX = -1;
 		projectedY = -1;
 		anInt935 = -1;
-		aString937 = "";
+		promptMessage = "";
 		anInt938 = -214;
 		anInt940 = 50;
 		anIntArray941 = new int[anInt940];
@@ -8156,10 +7919,9 @@ public class client extends GameShell {
 		anIntArray982 = new int[500];
 		anInt988 = -1;
 		anIntArray1005 = new int[2000];
-		aBoolean1014 = false;
 		aBoolean1016 = false;
 		anIntArray1019 = new int[151];
-		aString1026 = "";
+		promptInput = "";
 		aBoolean1028 = false;
 		anIntArray1029 = new int[Skills.COUNT];
 		aClass50_Sub1_Sub1_Sub1Array1031 = new ImageRGB[100];
@@ -8174,7 +7936,6 @@ public class client extends GameShell {
 		aStringArray1069 = new String[5];
 		aBooleanArray1070 = new boolean[5];
 		anInt1072 = 20411;
-		aLongArray1073 = new long[100];
 		aBoolean1074 = false;
 		aClass50_Sub1_Sub1_Sub1Array1079 = new ImageRGB[32];
 		anInt1080 = 0x4d4233;
@@ -8184,13 +7945,12 @@ public class client extends GameShell {
 		username = "";
 		password = "";
 		aBoolean1097 = false;
-		aBoolean1098 = false;
+		reportAbuseMutePlayer = false;
 		anIntArray1099 = new int[5];
-		aString1104 = "";
-		anInt1107 = 78;
+		chatInput = "";
+		chatContentHeight = 78;
 		aBoolean1127 = false;
-		aLongArray1130 = new long[200];
-		aClass50_Sub1_Sub2_1131 = new Buffer(new byte[5000]);
+		chatBuffer = new Buffer(new byte[5000]);
 		anInt1135 = 0x766654;
 		aBoolean1136 = false;
 		loggedIn = false;
@@ -8198,20 +7958,18 @@ public class client extends GameShell {
 		aByte1143 = -80;
 		aBoolean1144 = true;
 		aClass50_Sub1_Sub1_Sub3Array1153 = new IndexedImage[100];
-		anInt1154 = -916;
 		aBoolean1155 = false;
 		aByte1161 = 97;
 		regionManager.instanced = false;
 		anIntArray1166 = new int[256];
 		anInt1169 = -1;
-		anInt1178 = 300;
 		anIntArray1180 = new int[33];
 		aBoolean1181 = false;
 		aClass50_Sub1_Sub1_Sub1Array1182 = new ImageRGB[20];
 		aStringArray1184 = new String[500];
 		anInt1191 = -1;
 		regionManager.awaitingPlayerUpdate = false;
-		aBoolean1212 = false;
+		chatModesRedraw = false;
 		anInt1213 = -1;
 		aClass23Array1228 = new CacheIndex[5];
 		anInt1231 = -1;
@@ -8220,11 +7978,9 @@ public class client extends GameShell {
 		aBoolean1243 = false;
 		aByteArray1245 = new byte[16384];
 		aClass13_1249 = new Widget();
-		anIntArray1258 = new int[100];
 		anIntArray1259 = new int[50];
 		cameraOrientationChanged = false;
 		aBoolean1266 = true;
-		anIntArray1267 = new int[200];
 		aBoolean1271 = true;
 		anInt1272 = -1;
 		aBoolean1275 = true;
@@ -8237,9 +7993,6 @@ public class client extends GameShell {
 		anIntArray1286 = new int[33];
 		anInt1287 = 0x332d25;
 		aClass50_Sub1_Sub1_Sub1Array1288 = new ImageRGB[32];
-		anIntArray1296 = new int[100];
-		aStringArray1297 = new String[100];
-		aStringArray1298 = new String[100];
 		aBoolean1301 = true;
 		aBoolean1314 = false;
 		anInt1318 = 416;
@@ -8251,7 +8004,7 @@ public class client extends GameShell {
 	}
 
 	public int anIntArray837[];
-	public String aString839;
+	public String reportAbuseName;
 	public static BigInteger aBigInteger840 = new BigInteger(
 			"7162900525229798032761816791230527296329313291232324290237849263501208207972894053929065636522363163621000728841182238772712427862772219676577293600221789");
 	public static int anInt841;
@@ -8262,18 +8015,14 @@ public class client extends GameShell {
 	public int anInt846;
 	public int anInt847;
 	public int anInt848;
-	public String aStringArray849[];
 	public int loginFailures;
-	public int anInt851;
-	public int anInt855;
-	public int anInt859;
-	public int anInt860;
+	public int chatScrollOffset;
 	public String aString861;
 	public int anInt862;
 	public String aStringArray863[];
 	public int anIntArray864[];
 	public int anInt865;
-	public boolean aBoolean866;
+	public boolean messagePromptRaised;
 	public int playerRights;
 	public static boolean aBoolean868;
 	public int logoutTimer;
@@ -8282,7 +8031,7 @@ public class client extends GameShell {
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_882;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_883;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_884;
-	public int anInt887;
+	public int privateChatMode;
 	public Archive aClass2_888;
 	public boolean aBoolean892;
 	public int anInt893;
@@ -8305,7 +8054,7 @@ public class client extends GameShell {
 	public boolean aBoolean919;
 	public int anIntArray920[];
 	public int anInt921;
-	public static int anInt923 = 10;
+	public static int currentWorldId = 10;
 	public static int anInt924;
 	public static boolean aBoolean925 = true;
 	public static boolean aBoolean926;
@@ -8315,7 +8064,7 @@ public class client extends GameShell {
 	public int projectedX;
 	public int projectedY;
 	public int anInt935;
-	public String aString937;
+	public String promptMessage;
 	public int anInt938;
 	public int anInt939;
 	public int anInt940;
@@ -8340,6 +8089,8 @@ public class client extends GameShell {
 	public int anInt960;
 	public static boolean accountFlagged;
 	public NetworkSession networkSession;
+	private final SocialManager socialManager;
+	private final ChatHistory chatHistory;
 	private final Pathfinder pathfinder;
 	private final ActorSynchronizer actorSynchronizer;
 	private final ActorUpdater actorUpdater;
@@ -8352,22 +8103,17 @@ public class client extends GameShell {
 	private final ActorSynchronizer.ChatHandler actorChatHandler = new ActorSynchronizer.ChatHandler() {
 		@Override
 		public boolean isIgnored(long encodedName) {
-			for (int index = 0; index < anInt855; index++) {
-				if (aLongArray1073[index] == encodedName) {
-					return true;
-				}
-			}
-			return false;
+			return socialManager.isIgnored(encodedName);
 		}
 
 		@Override
 		public boolean isChatSuppressed() {
-			return anInt1246 != 0;
+			return tutorialIslandFlag != 0;
 		}
 
 		@Override
 		public void addChatMessage(String sender, String message, int type) {
-			method47(sender, message, type);
+			client.this.addChatMessage(sender, message, type);
 		}
 	};
 	public int localPlayerServerIndex;
@@ -8395,7 +8141,7 @@ public class client extends GameShell {
 	public int anIntArray1002[];
 	public int anIntArray1003[];
 	public int anIntArray1005[];
-	public int anInt1006;
+	public int publicChatMode;
 	public static String aString1007 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!\"\243$%^&*()-_=+[{]};:'@#~,<.>/?\\| ";
 	public static final int anIntArrayArray1008[][] = {
 			{ 6798, 107, 10283, 16, 4797, 7744, 5799, 4634, 33697, 22433, 2983, 54193 },
@@ -8405,7 +8151,6 @@ public class client extends GameShell {
 	public int anInt1011;
 	public int anInt1012;
 	public static int anInt1013;
-	public boolean aBoolean1014;
 	public int anInt1015;
 	public boolean aBoolean1016;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1_1017;
@@ -8415,7 +8160,7 @@ public class client extends GameShell {
 	public int anInt1021;
 	public int anInt1022;
 	public int anInt1023;
-	public String aString1026;
+	public String promptInput;
 	public String aString1027;
 	public boolean aBoolean1028;
 	public int anIntArray1029[];
@@ -8449,7 +8194,6 @@ public class client extends GameShell {
 	public String aStringArray1069[];
 	public boolean aBooleanArray1070[];
 	public int anInt1072;
-	public long aLongArray1073[];
 	public boolean aBoolean1074;
 	public int anInt1075;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1Array1079[];
@@ -8469,15 +8213,15 @@ public class client extends GameShell {
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_1095;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_1096;
 	public boolean aBoolean1097;
-	public boolean aBoolean1098;
+	public boolean reportAbuseMutePlayer;
 	public int anIntArray1099[];
 	public static int anInt1100;
 	public int anInt1101;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1_1102;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1_1103;
-	public String aString1104;
+	public String chatInput;
 	public int anInt1106;
-	public int anInt1107;
+	public int chatContentHeight;
 	public GraphicsBuffer aClass18_1108;
 	public GraphicsBuffer aClass18_1109;
 	public GraphicsBuffer aClass18_1110;
@@ -8494,13 +8238,12 @@ public class client extends GameShell {
 	public boolean aBoolean1127;
 	public int anInt1128;
 	public int anInt1129;
-	public long aLongArray1130[];
-	public Buffer aClass50_Sub1_Sub2_1131;
+	public Buffer chatBuffer;
 	public int anInt1135;
 	public boolean aBoolean1136;
 	public boolean loggedIn;
 	public static int anInt1139;
-	public long aLong1141;
+	public long privateMessageTarget;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3Array1142[];
 	public byte aByte1143;
 	public boolean aBoolean1144;
@@ -8510,15 +8253,12 @@ public class client extends GameShell {
 	public int anInt1149;
 	public String aString1150;
 	public int anInt1151;
-	public int anInt1152;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3Array1153[];
-	public int anInt1154;
 	public boolean aBoolean1155;
 	public GraphicsBuffer aClass18_1156;
 	public GraphicsBuffer aClass18_1157;
 	public GraphicsBuffer aClass18_1158;
 	public GraphicsBuffer aClass18_1159;
-	public static int anInt1160;
 	public byte aByte1161;
 	public static int anInt1162;
 	public static int anInt1165;
@@ -8531,7 +8271,6 @@ public class client extends GameShell {
 	public String aString1174;
 	public int anIntArray1176[];
 	public int anIntArray1177[];
-	public int anInt1178;
 	public int anInt1179;
 	public int anIntArray1180[];
 	public boolean aBoolean1181;
@@ -8559,17 +8298,17 @@ public class client extends GameShell {
 	public GraphicsBuffer aClass18_1206;
 	public static boolean aBoolean1207;
 	public int anInt1208;
-	public boolean aBoolean1212;
+	public boolean chatModesRedraw;
 	public int anInt1213;
 	public static int anIntArray1214[];
 	public int anInt1215;
-	public int anInt1221;
+	public int promptAction;
 	public int anInt1222;
-	public int anInt1223;
+	public int splitPrivateChat;
 	public Socket jaggrabSocket;
 	public int anInt1225;
 	public int anInt1226;
-	public int anInt1227;
+	public int tradeMode;
 	public CacheIndex aClass23Array1228[];
 	public static int anInt1230;
 	public int anInt1231;
@@ -8583,25 +8322,23 @@ public class client extends GameShell {
 	public volatile boolean aBoolean1243;
 	public int anInt1244;
 	public byte aByteArray1245[];
-	public int anInt1246;
+	public int tutorialIslandFlag;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1_1247;
 	public MouseRecorder aClass7_1248;
 	public Widget aClass13_1249;
 	public long aLong1250;
 	public final int anInt1257 = 100;
-	public int anIntArray1258[];
 	public int anIntArray1259[];
 	public int cameraPacketCooldown;
 	public boolean cameraOrientationChanged;
 	public boolean aBoolean1266;
-	public int anIntArray1267[];
 	public static final int anIntArray1268[] = { 9104, 10275, 7595, 3610, 7975, 8526, 918, 38802, 24466, 10145, 58654,
 			5027, 1457, 16565, 34991, 25486 };
 	public int anInt1269;
 	public int anInt1270;
 	public boolean aBoolean1271;
 	public int anInt1272;
-	public int anInt1273;
+	public int unreadMessageCount;
 	public boolean aBoolean1275;
 	public int lastMinimapPlane;
 	public boolean aBoolean1277;
@@ -8618,9 +8355,6 @@ public class client extends GameShell {
 	public OnDemandFetcher aClass32_Sub1_1291;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_1292;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_1293;
-	public int anIntArray1296[];
-	public String aStringArray1297[];
-	public String aStringArray1298[];
 	public int anInt1299;
 	public int anInt1300;
 	public boolean aBoolean1301;
