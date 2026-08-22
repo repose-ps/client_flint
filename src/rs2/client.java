@@ -38,6 +38,7 @@ import rs2.chat.Censor;
 import rs2.collection.Node;
 import rs2.collection.NodeDeque;
 import rs2.game.Skills;
+import rs2.game.Pathfinder;
 import rs2.input.MouseRecorder;
 import rs2.media.AnimationFrame;
 import rs2.media.GraphicsBuffer;
@@ -58,6 +59,7 @@ import rs2.net.Buffer;
 import rs2.net.BufferedConnection;
 import rs2.net.Ipv4Address;
 import rs2.net.NetworkSession;
+import rs2.net.MovementPacketEncoder;
 import rs2.scene.InteractiveObject;
 import rs2.scene.PendingSpawn;
 import rs2.scene.Region;
@@ -322,10 +324,6 @@ public class client extends GameShell {
 		aClass18_1204 = null;
 		aClass18_1205 = null;
 		aClass18_1206 = null;
-		anIntArrayArray885 = null;
-		anIntArrayArray1189 = null;
-		anIntArray1123 = null;
-		anIntArray1124 = null;
 		aClass50_Sub1_Sub1_Sub1_1192 = null;
 		aClass50_Sub1_Sub1_Sub1_1193 = null;
 		aClass50_Sub1_Sub1_Sub1_1194 = null;
@@ -885,8 +883,7 @@ public class client extends GameShell {
 		if (Scene.pickedTileX != -1) {
 			int j = Scene.pickedTileX;
 			int j1 = Scene.pickedTileY;
-			boolean flag = method35(true, false, j1, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 0, 0, 0, 0,
-					j, 0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+			boolean flag = walkTo(true, j, j1, 0, 0, MovementPacketEncoder.SCREEN, 0, 0, 0);
 			Scene.pickedTileX = -1;
 			if (flag) {
 				anInt1020 = super.clickX;
@@ -1768,7 +1765,7 @@ public class client extends GameShell {
 			return true;
 		}
 		if (networkSession.incomingOpcode == 61) {
-			anInt1120 = 0;
+			destinationX = 0;
 			networkSession.incomingOpcode = -1;
 			return true;
 		}
@@ -2290,9 +2287,9 @@ public class client extends GameShell {
 					class50_sub2_1.unlink();
 			}
 
-			if (anInt1120 != 0) {
-				anInt1120 -= i21;
-				anInt1121 -= k24;
+			if (destinationX != 0) {
+				destinationX -= i21;
+				destinationY -= k24;
 			}
 			aBoolean1211 = false;
 			networkSession.incomingOpcode = -1;
@@ -2540,209 +2537,41 @@ public class client extends GameShell {
 		aClass50_Sub1_Sub1_Sub2_1061.drawRandomizedTextWithTags(s, 4, 15, 0xffffff, anInt1325 / 1000, true);
 	}
 
-	public boolean method35(boolean flag, boolean flag1, int i, int j, int k, int l, int i1, int j1, int k1, int l1,
-			int i2, int j2) {
-		byte byte0 = 104;
-		byte byte1 = 104;
-		for (int k2 = 0; k2 < byte0; k2++) {
-			for (int l2 = 0; l2 < byte1; l2++) {
-				anIntArrayArray885[k2][l2] = 0;
-				anIntArrayArray1189[k2][l2] = 0x5f5e0ff;
-			}
-
+	/*
+	 * Legacy client.method35(boolean flag, boolean flag1, int i, int j, int k, int l,
+	 *         int i1, int j1, int k1, int l1, int i2, int j2)
+	 *
+	 * Parameter mapping:
+	 *   flag  -> allowAlternative
+	 *   flag1 -> removed dummy branch (all supplied callers pass false)
+	 *   i     -> destinationY
+	 *   j     -> removed startY (always local player's pathY[0])
+	 *   k     -> targetWidth
+	 *   l     -> targetHeight
+	 *   i1    -> movementType
+	 *   j1    -> interactionType
+	 *   k1    -> destinationX
+	 *   l1    -> accessMask
+	 *   i2    -> orientation
+	 *   j2    -> removed startX (always local player's pathX[0])
+	 */
+	private boolean walkTo(boolean allowAlternative, int targetX, int targetY, int targetWidth, int targetHeight,
+			int movementType, int interactionType, int orientation, int accessMask) {
+		Actor localPlayer = aClass50_Sub1_Sub4_Sub3_Sub2_1167;
+		Pathfinder.Route route = pathfinder.findRoute(aClass46Array1260[anInt1091], localPlayer.pathX[0],
+				localPlayer.pathY[0], targetX, targetY, targetWidth, targetHeight, interactionType, orientation, accessMask,
+				allowAlternative);
+		alternativeRoute = 0;
+		if (route == null) {
+			return false;
 		}
 
-		int i3 = j2;
-		int j3 = j;
-		anIntArrayArray885[j2][j] = 99;
-		anIntArrayArray1189[j2][j] = 0;
-		int k3 = 0;
-		int l3 = 0;
-		anIntArray1123[k3] = j2;
-		anIntArray1124[k3++] = j;
-		boolean flag2 = false;
-		int i4 = anIntArray1123.length;
-		int ai[][] = aClass46Array1260[anInt1091].flags;
-		while (l3 != k3) {
-			i3 = anIntArray1123[l3];
-			j3 = anIntArray1124[l3];
-			l3 = (l3 + 1) % i4;
-			if (i3 == k1 && j3 == i) {
-				flag2 = true;
-				break;
-			}
-			if (j1 != 0) {
-				if ((j1 < 5 || j1 == 10) && aClass46Array1260[anInt1091].reachedWall(i3, j3, k1, i, j1 - 1, i2)) {
-					flag2 = true;
-					break;
-				}
-				if (j1 < 10 && aClass46Array1260[anInt1091].reachedWallDecoration(i3, j3, k1, i, j1 - 1, i2)) {
-					flag2 = true;
-					break;
-				}
-			}
-			if (k != 0 && l != 0 && aClass46Array1260[anInt1091].reachedObject(i3, j3, k1, i, k, l, l1)) {
-				flag2 = true;
-				break;
-			}
-			int k4 = anIntArrayArray1189[i3][j3] + 1;
-			if (i3 > 0 && anIntArrayArray885[i3 - 1][j3] == 0 && (ai[i3 - 1][j3] & 0x1280108) == 0) {
-				anIntArray1123[k3] = i3 - 1;
-				anIntArray1124[k3] = j3;
-				k3 = (k3 + 1) % i4;
-				anIntArrayArray885[i3 - 1][j3] = 2;
-				anIntArrayArray1189[i3 - 1][j3] = k4;
-			}
-			if (i3 < byte0 - 1 && anIntArrayArray885[i3 + 1][j3] == 0 && (ai[i3 + 1][j3] & 0x1280180) == 0) {
-				anIntArray1123[k3] = i3 + 1;
-				anIntArray1124[k3] = j3;
-				k3 = (k3 + 1) % i4;
-				anIntArrayArray885[i3 + 1][j3] = 8;
-				anIntArrayArray1189[i3 + 1][j3] = k4;
-			}
-			if (j3 > 0 && anIntArrayArray885[i3][j3 - 1] == 0 && (ai[i3][j3 - 1] & 0x1280102) == 0) {
-				anIntArray1123[k3] = i3;
-				anIntArray1124[k3] = j3 - 1;
-				k3 = (k3 + 1) % i4;
-				anIntArrayArray885[i3][j3 - 1] = 1;
-				anIntArrayArray1189[i3][j3 - 1] = k4;
-			}
-			if (j3 < byte1 - 1 && anIntArrayArray885[i3][j3 + 1] == 0 && (ai[i3][j3 + 1] & 0x1280120) == 0) {
-				anIntArray1123[k3] = i3;
-				anIntArray1124[k3] = j3 + 1;
-				k3 = (k3 + 1) % i4;
-				anIntArrayArray885[i3][j3 + 1] = 4;
-				anIntArrayArray1189[i3][j3 + 1] = k4;
-			}
-			if (i3 > 0 && j3 > 0 && anIntArrayArray885[i3 - 1][j3 - 1] == 0 && (ai[i3 - 1][j3 - 1] & 0x128010e) == 0
-					&& (ai[i3 - 1][j3] & 0x1280108) == 0 && (ai[i3][j3 - 1] & 0x1280102) == 0) {
-				anIntArray1123[k3] = i3 - 1;
-				anIntArray1124[k3] = j3 - 1;
-				k3 = (k3 + 1) % i4;
-				anIntArrayArray885[i3 - 1][j3 - 1] = 3;
-				anIntArrayArray1189[i3 - 1][j3 - 1] = k4;
-			}
-			if (i3 < byte0 - 1 && j3 > 0 && anIntArrayArray885[i3 + 1][j3 - 1] == 0
-					&& (ai[i3 + 1][j3 - 1] & 0x1280183) == 0 && (ai[i3 + 1][j3] & 0x1280180) == 0
-					&& (ai[i3][j3 - 1] & 0x1280102) == 0) {
-				anIntArray1123[k3] = i3 + 1;
-				anIntArray1124[k3] = j3 - 1;
-				k3 = (k3 + 1) % i4;
-				anIntArrayArray885[i3 + 1][j3 - 1] = 9;
-				anIntArrayArray1189[i3 + 1][j3 - 1] = k4;
-			}
-			if (i3 > 0 && j3 < byte1 - 1 && anIntArrayArray885[i3 - 1][j3 + 1] == 0
-					&& (ai[i3 - 1][j3 + 1] & 0x1280138) == 0 && (ai[i3 - 1][j3] & 0x1280108) == 0
-					&& (ai[i3][j3 + 1] & 0x1280120) == 0) {
-				anIntArray1123[k3] = i3 - 1;
-				anIntArray1124[k3] = j3 + 1;
-				k3 = (k3 + 1) % i4;
-				anIntArrayArray885[i3 - 1][j3 + 1] = 6;
-				anIntArrayArray1189[i3 - 1][j3 + 1] = k4;
-			}
-			if (i3 < byte0 - 1 && j3 < byte1 - 1 && anIntArrayArray885[i3 + 1][j3 + 1] == 0
-					&& (ai[i3 + 1][j3 + 1] & 0x12801e0) == 0 && (ai[i3 + 1][j3] & 0x1280180) == 0
-					&& (ai[i3][j3 + 1] & 0x1280120) == 0) {
-				anIntArray1123[k3] = i3 + 1;
-				anIntArray1124[k3] = j3 + 1;
-				k3 = (k3 + 1) % i4;
-				anIntArrayArray885[i3 + 1][j3 + 1] = 12;
-				anIntArrayArray1189[i3 + 1][j3 + 1] = k4;
-			}
-		}
-		anInt1126 = 0;
-		if (!flag2)
-			if (flag) {
-				int l4 = 1000;
-				int j5 = 100;
-				byte byte2 = 10;
-				for (int i6 = k1 - byte2; i6 <= k1 + byte2; i6++) {
-					for (int k6 = i - byte2; k6 <= i + byte2; k6++)
-						if (i6 >= 0 && k6 >= 0 && i6 < 104 && k6 < 104 && anIntArrayArray1189[i6][k6] < 100) {
-							int i7 = 0;
-							if (i6 < k1)
-								i7 = k1 - i6;
-							else if (i6 > (k1 + k) - 1)
-								i7 = i6 - ((k1 + k) - 1);
-							int j7 = 0;
-							if (k6 < i)
-								j7 = i - k6;
-							else if (k6 > (i + l) - 1)
-								j7 = k6 - ((i + l) - 1);
-							int k7 = i7 * i7 + j7 * j7;
-							if (k7 < l4 || k7 == l4 && anIntArrayArray1189[i6][k6] < j5) {
-								l4 = k7;
-								j5 = anIntArrayArray1189[i6][k6];
-								i3 = i6;
-								j3 = k6;
-							}
-						}
-
-				}
-
-				if (l4 == 1000)
-					return false;
-				if (i3 == j2 && j3 == j)
-					return false;
-				anInt1126 = 1;
-			} else {
-				return false;
-			}
-		l3 = 0;
-		if (flag1)
-			startUp();
-		anIntArray1123[l3] = i3;
-		anIntArray1124[l3++] = j3;
-		int k5;
-		for (int i5 = k5 = anIntArrayArray885[i3][j3]; i3 != j2 || j3 != j; i5 = anIntArrayArray885[i3][j3]) {
-			if (i5 != k5) {
-				k5 = i5;
-				anIntArray1123[l3] = i3;
-				anIntArray1124[l3++] = j3;
-			}
-			if ((i5 & 2) != 0)
-				i3++;
-			else if ((i5 & 8) != 0)
-				i3--;
-			if ((i5 & 1) != 0)
-				j3++;
-			else if ((i5 & 4) != 0)
-				j3--;
-		}
-
-		if (l3 > 0) {
-			int j4 = l3;
-			if (j4 > 25)
-				j4 = 25;
-			l3--;
-			int l5 = anIntArray1123[l3];
-			int j6 = anIntArray1124[l3];
-			if (i1 == 0) {
-				networkSession.outgoing.writeOpcode(28);
-				networkSession.outgoing.writeByte(j4 + j4 + 3);
-			}
-			if (i1 == 1) {
-				networkSession.outgoing.writeOpcode(213);
-				networkSession.outgoing.writeByte(j4 + j4 + 3 + 14);
-			}
-			if (i1 == 2) {
-				networkSession.outgoing.writeOpcode(247);
-				networkSession.outgoing.writeByte(j4 + j4 + 3);
-			}
-			networkSession.outgoing.writeShortAddLE(l5 + anInt1040);
-			networkSession.outgoing.writeByte(super.keyStatus[5] != 1 ? 0 : 1);
-			networkSession.outgoing.writeShortAddLE(j6 + anInt1041);
-			anInt1120 = anIntArray1123[0];
-			anInt1121 = anIntArray1124[0];
-			for (int l6 = 1; l6 < j4; l6++) {
-				l3--;
-				networkSession.outgoing.writeByte(anIntArray1123[l3] - l5);
-				networkSession.outgoing.writeByteSub(anIntArray1124[l3] - j6);
-			}
-
-			return true;
-		}
-		return i1 != 1;
+		alternativeRoute = route.isAlternative() ? 1 : 0;
+		destinationX = route.getDestinationX();
+		destinationY = route.getDestinationY();
+		MovementPacketEncoder.write(networkSession.outgoing, route, movementType, anInt1040, anInt1041,
+				keyStatus[5] == 1);
+		return true;
 	}
 
 	public void method36(int i) {
@@ -3701,7 +3530,7 @@ public class client extends GameShell {
 		}
 		method125(-332, "Please wait - attempting to reestablish", "Connection lost");
 		anInt1050 = 0;
-		anInt1120 = 0;
+		destinationX = 0;
 		BufferedConnection previousConnection = networkSession.getConnection();
 		loggedIn = false;
 		loginFailures = 0;
@@ -5624,8 +5453,8 @@ public class client extends GameShell {
 				anInt1252 = (int) (Math.random() * 20D) - 10 & 0x7ff;
 				anInt1050 = 0;
 				anInt1276 = -1;
-				anInt1120 = 0;
-				anInt1121 = 0;
+				destinationX = 0;
+				destinationY = 0;
 				anInt971 = 0;
 				anInt1133 = 0;
 				for (int i2 = 0; i2 < anInt968; i2++) {
@@ -5852,38 +5681,42 @@ public class client extends GameShell {
 		loginMessage2 = "Error connecting to server.";
 	}
 
-	public boolean method80(int i, int j, int k, int l) {
-		int i1 = l >> 14 & 0x7fff;
-		int j1 = aClass22_1164.getConfig(anInt1091, k, i, l);
-		if (j1 == -1)
+	/*
+	 * Legacy client.method80(int i, int j, int k, int l)
+	 *   i -> tileY
+	 *   j -> removed dummy value (all supplied callers pass 0; only added to incoming packet length)
+	 *   k -> tileX
+	 *   l -> uid
+	 */
+	private boolean walkToGameObject(int tileY, int tileX, int uid) {
+		int objectId = uid >> 14 & 0x7fff;
+		int config = aClass22_1164.getConfig(anInt1091, tileX, tileY, uid);
+		if (config == -1)
 			return false;
-		int k1 = j1 & 0x1f;
-		int l1 = j1 >> 6 & 3;
-		if (k1 == 10 || k1 == 11 || k1 == 22) {
-			GameObjectDefinition class47 = GameObjectDefinition.lookup(i1);
-			int i2;
-			int j2;
-			if (l1 == 0 || l1 == 2) {
-				i2 = class47.sizeX;
-				j2 = class47.sizeY;
+		int type = config & 0x1f;
+		int orientation = config >> 6 & 3;
+		if (type == 10 || type == 11 || type == 22) {
+			GameObjectDefinition definition = GameObjectDefinition.lookup(objectId);
+			int width;
+			int height;
+			if (orientation == 0 || orientation == 2) {
+				width = definition.sizeX;
+				height = definition.sizeY;
 			} else {
-				i2 = class47.sizeY;
-				j2 = class47.sizeX;
+				width = definition.sizeY;
+				height = definition.sizeX;
 			}
-			int k2 = class47.surroundings;
-			if (l1 != 0)
-				k2 = (k2 << l1 & 0xf) + (k2 >> 4 - l1);
-			method35(true, false, i, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], i2, j2, 2, 0, k, k2, 0,
-					((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+			int accessMask = definition.surroundings;
+			if (orientation != 0)
+				accessMask = (accessMask << orientation & 0xf) + (accessMask >> 4 - orientation);
+			walkTo(true, tileX, tileY, width, height, MovementPacketEncoder.INTERACTION, 0, 0, accessMask);
 		} else {
-			method35(true, false, i, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 0, 0, 2, k1 + 1, k, 0, l1,
-					((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+			walkTo(true, tileX, tileY, 0, 0, MovementPacketEncoder.INTERACTION, type + 1, orientation, 0);
 		}
-		anInt1020 = super.clickX;
-		anInt1021 = super.clickY;
+		anInt1020 = clickX;
+		anInt1021 = clickY;
 		anInt1023 = 2;
 		anInt1022 = 0;
-		networkSession.incomingLength += j;
 		return true;
 	}
 
@@ -6442,9 +6275,9 @@ public class client extends GameShell {
 				}
 			}
 		}
-		if (anInt1120 != 0) {
-			int k2 = (anInt1120 * 4 + 2) - ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).x / 32;
-			int i5 = (anInt1121 * 4 + 2) - ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).y / 32;
+		if (destinationX != 0) {
+			int k2 = (destinationX * 4 + 2) - ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).x / 32;
+			int i5 = (destinationY * 4 + 2) - ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).y / 32;
 			method130(i5, true, aClass50_Sub1_Sub1_Sub1_1036, k2);
 		}
 		Rasterizer.drawFilledRectangle(97, 78, 3, 3, 0xffffff);
@@ -8044,9 +7877,9 @@ public class client extends GameShell {
 	}
 
 	public void method119(int i, boolean flag) {
-		if (((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).x >> 7 == anInt1120
-				&& ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).y >> 7 == anInt1121)
-			anInt1120 = 0;
+		if (((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).x >> 7 == destinationX
+				&& ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).y >> 7 == destinationY)
+			destinationX = 0;
 		int j = anInt971;
 		if (flag)
 			j = 1;
@@ -8118,10 +7951,7 @@ public class client extends GameShell {
 		if (i1 == 200) {
 			Player class50_sub1_sub4_sub3_sub2 = aClass50_Sub1_Sub4_Sub3_Sub2Array970[j1];
 			if (class50_sub1_sub4_sub3_sub2 != null) {
-				method35(false, false, ((Actor) (class50_sub1_sub4_sub3_sub2)).pathY[0],
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
-						((Actor) (class50_sub1_sub4_sub3_sub2)).pathX[0], 0, 0,
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				walkTo(false, ((Actor) (class50_sub1_sub4_sub3_sub2)).pathX[0], ((Actor) (class50_sub1_sub4_sub3_sub2)).pathY[0], 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 				anInt1020 = super.clickX;
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
@@ -8153,10 +7983,7 @@ public class client extends GameShell {
 		if (i1 == 876) {
 			Player class50_sub1_sub4_sub3_sub2_1 = aClass50_Sub1_Sub4_Sub3_Sub2Array970[j1];
 			if (class50_sub1_sub4_sub3_sub2_1 != null) {
-				method35(false, false, ((Actor) (class50_sub1_sub4_sub3_sub2_1)).pathY[0],
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
-						((Actor) (class50_sub1_sub4_sub3_sub2_1)).pathX[0], 0, 0,
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				walkTo(false, ((Actor) (class50_sub1_sub4_sub3_sub2_1)).pathX[0], ((Actor) (class50_sub1_sub4_sub3_sub2_1)).pathY[0], 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 				anInt1020 = super.clickX;
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
@@ -8168,10 +7995,7 @@ public class client extends GameShell {
 		if (i1 == 921) {
 			Npc class50_sub1_sub4_sub3_sub1 = aClass50_Sub1_Sub4_Sub3_Sub1Array1132[j1];
 			if (class50_sub1_sub4_sub3_sub1 != null) {
-				method35(false, false, ((Actor) (class50_sub1_sub4_sub3_sub1)).pathY[0],
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
-						((Actor) (class50_sub1_sub4_sub3_sub1)).pathX[0], 0, 0,
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				walkTo(false, ((Actor) (class50_sub1_sub4_sub3_sub1)).pathX[0], ((Actor) (class50_sub1_sub4_sub3_sub1)).pathY[0], 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 				anInt1020 = super.clickX;
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
@@ -8200,7 +8024,7 @@ public class client extends GameShell {
 			if (Widget.get(l).parentId == anInt988)
 				anInt1332 = 3;
 		}
-		if (i1 == 467 && method80(l, 0, k, j1)) {
+		if (i1 == 467 && walkToGameObject(l, k, j1)) {
 			networkSession.outgoing.writeOpcode(152);
 			networkSession.outgoing.writeShortLE(j1 >> 14 & 0x7fff);
 			networkSession.outgoing.writeShortLE(anInt1148);
@@ -8226,10 +8050,7 @@ public class client extends GameShell {
 		if (i1 == 553) {
 			Npc class50_sub1_sub4_sub3_sub1_1 = aClass50_Sub1_Sub4_Sub3_Sub1Array1132[j1];
 			if (class50_sub1_sub4_sub3_sub1_1 != null) {
-				method35(false, false, ((Actor) (class50_sub1_sub4_sub3_sub1_1)).pathY[0],
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
-						((Actor) (class50_sub1_sub4_sub3_sub1_1)).pathX[0], 0, 0,
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				walkTo(false, ((Actor) (class50_sub1_sub4_sub3_sub1_1)).pathX[0], ((Actor) (class50_sub1_sub4_sub3_sub1_1)).pathY[0], 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 				anInt1020 = super.clickX;
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
@@ -8241,10 +8062,7 @@ public class client extends GameShell {
 		if (i1 == 677) {
 			Player class50_sub1_sub4_sub3_sub2_2 = aClass50_Sub1_Sub4_Sub3_Sub2Array970[j1];
 			if (class50_sub1_sub4_sub3_sub2_2 != null) {
-				method35(false, false, ((Actor) (class50_sub1_sub4_sub3_sub2_2)).pathY[0],
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
-						((Actor) (class50_sub1_sub4_sub3_sub2_2)).pathX[0], 0, 0,
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				walkTo(false, ((Actor) (class50_sub1_sub4_sub3_sub2_2)).pathX[0], ((Actor) (class50_sub1_sub4_sub3_sub2_2)).pathY[0], 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 				anInt1020 = super.clickX;
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
@@ -8269,11 +8087,9 @@ public class client extends GameShell {
 			}
 		}
 		if (i1 == 930) {
-			boolean flag = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 0, 0, 2, 0,
-					k, 0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+			boolean flag = walkTo(false, k, l, 0, 0, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 			if (!flag)
-				flag = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0, k,
-						0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				flag = walkTo(false, k, l, 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 			anInt1020 = super.clickX;
 			anInt1021 = super.clickY;
 			anInt1023 = 2;
@@ -8300,10 +8116,7 @@ public class client extends GameShell {
 		if (i1 == 347) {
 			Npc class50_sub1_sub4_sub3_sub1_2 = aClass50_Sub1_Sub4_Sub3_Sub1Array1132[j1];
 			if (class50_sub1_sub4_sub3_sub1_2 != null) {
-				method35(false, false, ((Actor) (class50_sub1_sub4_sub3_sub1_2)).pathY[0],
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
-						((Actor) (class50_sub1_sub4_sub3_sub1_2)).pathX[0], 0, 0,
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				walkTo(false, ((Actor) (class50_sub1_sub4_sub3_sub1_2)).pathX[0], ((Actor) (class50_sub1_sub4_sub3_sub1_2)).pathY[0], 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 				anInt1020 = super.clickX;
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
@@ -8329,10 +8142,7 @@ public class client extends GameShell {
 		if (i1 == 493) {
 			Player class50_sub1_sub4_sub3_sub2_3 = aClass50_Sub1_Sub4_Sub3_Sub2Array970[j1];
 			if (class50_sub1_sub4_sub3_sub2_3 != null) {
-				method35(false, false, ((Actor) (class50_sub1_sub4_sub3_sub2_3)).pathY[0],
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
-						((Actor) (class50_sub1_sub4_sub3_sub2_3)).pathX[0], 0, 0,
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				walkTo(false, ((Actor) (class50_sub1_sub4_sub3_sub2_3)).pathX[0], ((Actor) (class50_sub1_sub4_sub3_sub2_3)).pathY[0], 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 				anInt1020 = super.clickX;
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
@@ -8381,10 +8191,7 @@ public class client extends GameShell {
 		if (i1 == 118) {
 			Npc class50_sub1_sub4_sub3_sub1_3 = aClass50_Sub1_Sub4_Sub3_Sub1Array1132[j1];
 			if (class50_sub1_sub4_sub3_sub1_3 != null) {
-				method35(false, false, ((Actor) (class50_sub1_sub4_sub3_sub1_3)).pathY[0],
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
-						((Actor) (class50_sub1_sub4_sub3_sub1_3)).pathX[0], 0, 0,
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				walkTo(false, ((Actor) (class50_sub1_sub4_sub3_sub1_3)).pathX[0], ((Actor) (class50_sub1_sub4_sub3_sub1_3)).pathY[0], 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 				anInt1020 = super.clickX;
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
@@ -8399,7 +8206,7 @@ public class client extends GameShell {
 				networkSession.outgoing.writeShortAddLE(j1);
 			}
 		}
-		if (i1 == 376 && method80(l, 0, k, j1)) {
+		if (i1 == 376 && walkToGameObject(l, k, j1)) {
 			networkSession.outgoing.writeOpcode(210);
 			networkSession.outgoing.writeShort(anInt1172);
 			networkSession.outgoing.writeShortLE(j1 >> 14 & 0x7fff);
@@ -8409,10 +8216,7 @@ public class client extends GameShell {
 		if (i1 == 432) {
 			Npc class50_sub1_sub4_sub3_sub1_4 = aClass50_Sub1_Sub4_Sub3_Sub1Array1132[j1];
 			if (class50_sub1_sub4_sub3_sub1_4 != null) {
-				method35(false, false, ((Actor) (class50_sub1_sub4_sub3_sub1_4)).pathY[0],
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
-						((Actor) (class50_sub1_sub4_sub3_sub1_4)).pathX[0], 0, 0,
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				walkTo(false, ((Actor) (class50_sub1_sub4_sub3_sub1_4)).pathX[0], ((Actor) (class50_sub1_sub4_sub3_sub1_4)).pathY[0], 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 				anInt1020 = super.clickX;
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
@@ -8426,10 +8230,7 @@ public class client extends GameShell {
 		if (i1 == 918) {
 			Player class50_sub1_sub4_sub3_sub2_4 = aClass50_Sub1_Sub4_Sub3_Sub2Array970[j1];
 			if (class50_sub1_sub4_sub3_sub2_4 != null) {
-				method35(false, false, ((Actor) (class50_sub1_sub4_sub3_sub2_4)).pathY[0],
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
-						((Actor) (class50_sub1_sub4_sub3_sub2_4)).pathX[0], 0, 0,
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				walkTo(false, ((Actor) (class50_sub1_sub4_sub3_sub2_4)).pathX[0], ((Actor) (class50_sub1_sub4_sub3_sub2_4)).pathY[0], 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 				anInt1020 = super.clickX;
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
@@ -8442,10 +8243,7 @@ public class client extends GameShell {
 		if (i1 == 67) {
 			Npc class50_sub1_sub4_sub3_sub1_5 = aClass50_Sub1_Sub4_Sub3_Sub1Array1132[j1];
 			if (class50_sub1_sub4_sub3_sub1_5 != null) {
-				method35(false, false, ((Actor) (class50_sub1_sub4_sub3_sub1_5)).pathY[0],
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
-						((Actor) (class50_sub1_sub4_sub3_sub1_5)).pathX[0], 0, 0,
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				walkTo(false, ((Actor) (class50_sub1_sub4_sub3_sub1_5)).pathX[0], ((Actor) (class50_sub1_sub4_sub3_sub1_5)).pathY[0], 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 				anInt1020 = super.clickX;
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
@@ -8456,11 +8254,9 @@ public class client extends GameShell {
 			}
 		}
 		if (i1 == 68) {
-			boolean flag1 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 0, 0, 2,
-					0, k, 0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+			boolean flag1 = walkTo(false, k, l, 0, 0, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 			if (!flag1)
-				flag1 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0, k,
-						0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				flag1 = walkTo(false, k, l, 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 			anInt1020 = super.clickX;
 			anInt1021 = super.clickY;
 			anInt1023 = 2;
@@ -8471,11 +8267,9 @@ public class client extends GameShell {
 			networkSession.outgoing.writeShortAddLE(j1);
 		}
 		if (i1 == 684) {
-			boolean flag2 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 0, 0, 2,
-					0, k, 0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+			boolean flag2 = walkTo(false, k, l, 0, 0, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 			if (!flag2)
-				flag2 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0, k,
-						0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				flag2 = walkTo(false, k, l, 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 			anInt1020 = super.clickX;
 			anInt1021 = super.clickY;
 			anInt1023 = 2;
@@ -8504,10 +8298,7 @@ public class client extends GameShell {
 					if (class50_sub1_sub4_sub3_sub2_7 == null || class50_sub1_sub4_sub3_sub2_7.name == null
 							|| !class50_sub1_sub4_sub3_sub2_7.name.equalsIgnoreCase(s7))
 						continue;
-					method35(false, false, ((Actor) (class50_sub1_sub4_sub3_sub2_7)).pathY[0],
-							((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
-							((Actor) (class50_sub1_sub4_sub3_sub2_7)).pathX[0], 0, 0,
-							((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+					walkTo(false, ((Actor) (class50_sub1_sub4_sub3_sub2_7)).pathX[0], ((Actor) (class50_sub1_sub4_sub3_sub2_7)).pathY[0], 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 					if (i1 == 544) {
 						networkSession.outgoing.writeOpcode(116);
 						networkSession.outgoing.writeShortLE(anIntArray972[j3]);
@@ -8588,21 +8379,21 @@ public class client extends GameShell {
 				anInt1332 = 3;
 		}
 		if (i1 == 1280) {
-			method80(l, 0, k, j1);
+			walkToGameObject(l, k, j1);
 			networkSession.outgoing.writeOpcode(55);
 			networkSession.outgoing.writeShortLE(j1 >> 14 & 0x7fff);
 			networkSession.outgoing.writeShortLE(l + anInt1041);
 			networkSession.outgoing.writeShort(k + anInt1040);
 		}
 		if (i1 == 35) {
-			method80(l, 0, k, j1);
+			walkToGameObject(l, k, j1);
 			networkSession.outgoing.writeOpcode(181);
 			networkSession.outgoing.writeShortAdd(k + anInt1040);
 			networkSession.outgoing.writeShortLE(l + anInt1041);
 			networkSession.outgoing.writeShortLE(j1 >> 14 & 0x7fff);
 		}
 		if (i1 == 888) {
-			method80(l, 0, k, j1);
+			walkToGameObject(l, k, j1);
 			networkSession.outgoing.writeOpcode(50);
 			networkSession.outgoing.writeShortAdd(l + anInt1041);
 			networkSession.outgoing.writeShortLE(j1 >> 14 & 0x7fff);
@@ -8660,18 +8451,16 @@ public class client extends GameShell {
 			aBoolean1239 = true;
 		}
 		if (i1 == 892) {
-			method80(l, 0, k, j1);
+			walkToGameObject(l, k, j1);
 			networkSession.outgoing.writeOpcode(136);
 			networkSession.outgoing.writeShort(k + anInt1040);
 			networkSession.outgoing.writeShortLE(l + anInt1041);
 			networkSession.outgoing.writeShort(j1 >> 14 & 0x7fff);
 		}
 		if (i1 == 270) {
-			boolean flag3 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 0, 0, 2,
-					0, k, 0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+			boolean flag3 = walkTo(false, k, l, 0, 0, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 			if (!flag3)
-				flag3 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0, k,
-						0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				flag3 = walkTo(false, k, l, 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 			anInt1020 = super.clickX;
 			anInt1021 = super.clickY;
 			anInt1023 = 2;
@@ -8684,10 +8473,7 @@ public class client extends GameShell {
 		if (i1 == 596) {
 			Player class50_sub1_sub4_sub3_sub2_5 = aClass50_Sub1_Sub4_Sub3_Sub2Array970[j1];
 			if (class50_sub1_sub4_sub3_sub2_5 != null) {
-				method35(false, false, ((Actor) (class50_sub1_sub4_sub3_sub2_5)).pathY[0],
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
-						((Actor) (class50_sub1_sub4_sub3_sub2_5)).pathX[0], 0, 0,
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				walkTo(false, ((Actor) (class50_sub1_sub4_sub3_sub2_5)).pathX[0], ((Actor) (class50_sub1_sub4_sub3_sub2_5)).pathY[0], 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 				anInt1020 = super.clickX;
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
@@ -8700,11 +8486,9 @@ public class client extends GameShell {
 			}
 		}
 		if (i1 == 100) {
-			boolean flag4 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 0, 0, 2,
-					0, k, 0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+			boolean flag4 = walkTo(false, k, l, 0, 0, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 			if (!flag4)
-				flag4 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0, k,
-						0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				flag4 = walkTo(false, k, l, 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 			anInt1020 = super.clickX;
 			anInt1021 = super.clickY;
 			anInt1023 = 2;
@@ -8734,11 +8518,9 @@ public class client extends GameShell {
 			}
 		}
 		if (i1 == 26) {
-			boolean flag5 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 0, 0, 2,
-					0, k, 0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+			boolean flag5 = walkTo(false, k, l, 0, 0, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 			if (!flag5)
-				flag5 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0, k,
-						0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				flag5 = walkTo(false, k, l, 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 			anInt1020 = super.clickX;
 			anInt1021 = super.clickY;
 			anInt1023 = 2;
@@ -8782,7 +8564,7 @@ public class client extends GameShell {
 				}
 		}
 		if (i1 == 389) {
-			method80(l, 0, k, j1);
+			walkToGameObject(l, k, j1);
 			networkSession.outgoing.writeOpcode(241);
 			networkSession.outgoing.writeShort(j1 >> 14 & 0x7fff);
 			networkSession.outgoing.writeShort(k + anInt1040);
@@ -8842,10 +8624,7 @@ public class client extends GameShell {
 		if (i1 == 318) {
 			Npc class50_sub1_sub4_sub3_sub1_7 = aClass50_Sub1_Sub4_Sub3_Sub1Array1132[j1];
 			if (class50_sub1_sub4_sub3_sub1_7 != null) {
-				method35(false, false, ((Actor) (class50_sub1_sub4_sub3_sub1_7)).pathY[0],
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
-						((Actor) (class50_sub1_sub4_sub3_sub1_7)).pathX[0], 0, 0,
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				walkTo(false, ((Actor) (class50_sub1_sub4_sub3_sub1_7)).pathX[0], ((Actor) (class50_sub1_sub4_sub3_sub1_7)).pathY[0], 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 				anInt1020 = super.clickX;
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
@@ -8855,11 +8634,9 @@ public class client extends GameShell {
 			}
 		}
 		if (i1 == 199) {
-			boolean flag6 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 0, 0, 2,
-					0, k, 0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+			boolean flag6 = walkTo(false, k, l, 0, 0, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 			if (!flag6)
-				flag6 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0, k,
-						0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				flag6 = walkTo(false, k, l, 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 			anInt1020 = super.clickX;
 			anInt1021 = super.clickY;
 			anInt1023 = 2;
@@ -8897,10 +8674,7 @@ public class client extends GameShell {
 		if (i1 == 408) {
 			Player class50_sub1_sub4_sub3_sub2_6 = aClass50_Sub1_Sub4_Sub3_Sub2Array970[j1];
 			if (class50_sub1_sub4_sub3_sub2_6 != null) {
-				method35(false, false, ((Actor) (class50_sub1_sub4_sub3_sub2_6)).pathY[0],
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
-						((Actor) (class50_sub1_sub4_sub3_sub2_6)).pathX[0], 0, 0,
-						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				walkTo(false, ((Actor) (class50_sub1_sub4_sub3_sub2_6)).pathX[0], ((Actor) (class50_sub1_sub4_sub3_sub2_6)).pathY[0], 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
 				anInt1020 = super.clickX;
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
@@ -10568,8 +10342,7 @@ public class client extends GameShell {
 				int k1 = j * i1 - i * l >> 11;
 				int l1 = ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).x + j1 >> 7;
 				int i2 = ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).y - k1 >> 7;
-				boolean flag = method35(true, false, i2, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 0, 0,
-						1, 0, l1, 0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
+				boolean flag = walkTo(true, l1, i2, 0, 0, MovementPacketEncoder.MINIMAP, 0, 0, 0);
 				if (flag) {
 					networkSession.outgoing.writeByte(i);
 					networkSession.outgoing.writeByte(j);
@@ -10580,7 +10353,7 @@ public class client extends GameShell {
 					networkSession.outgoing.writeByte(89);
 					networkSession.outgoing.writeShort(((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).x);
 					networkSession.outgoing.writeShort(((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).y);
-					networkSession.outgoing.writeByte(anInt1126);
+					networkSession.outgoing.writeByte(alternativeRoute);
 					networkSession.outgoing.writeByte(63);
 				}
 			}
@@ -10987,7 +10760,6 @@ public class client extends GameShell {
 		anIntArray864 = new int[100];
 		aBoolean866 = false;
 		anIntArrayArrayArray879 = new int[4][13][13];
-		anIntArrayArray885 = new int[104][104];
 		anIntArrayArray886 = new int[104][104];
 		aBoolean892 = false;
 		anInt894 = -992;
@@ -11001,6 +10773,7 @@ public class client extends GameShell {
 		aBooleanArray927 = new boolean[5];
 		anInt928 = -188;
 		networkSession = new NetworkSession();
+		pathfinder = new Pathfinder();
 		loginBuffer = new Buffer(new byte[5000]);
 		anInt931 = 0x23201b;
 		anInt932 = -1;
@@ -11078,8 +10851,6 @@ public class client extends GameShell {
 		aString1104 = "";
 		anIntArray1105 = new int[5];
 		anInt1107 = 78;
-		anIntArray1123 = new int[4000];
-		anIntArray1124 = new int[4000];
 		aBoolean1127 = false;
 		aLongArray1130 = new long[200];
 		aClass50_Sub1_Sub2_1131 = new Buffer(new byte[5000]);
@@ -11104,7 +10875,6 @@ public class client extends GameShell {
 		aBoolean1181 = false;
 		aClass50_Sub1_Sub1_Sub1Array1182 = new ImageRGB[20];
 		aStringArray1184 = new String[500];
-		anIntArrayArray1189 = new int[104][104];
 		anInt1191 = -1;
 		aBoolean1209 = false;
 		aClass6_1210 = new NodeDeque();
@@ -11204,7 +10974,6 @@ public class client extends GameShell {
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_882;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_883;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_884;
-	public int anIntArrayArray885[][];
 	public int anIntArrayArray886[][];
 	public int anInt887;
 	public Archive aClass2_888;
@@ -11273,6 +11042,7 @@ public class client extends GameShell {
 	public int anInt961;
 	public static boolean accountFlagged;
 	public NetworkSession networkSession;
+	private final Pathfinder pathfinder;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_965;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_966;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_967;
@@ -11424,13 +11194,11 @@ public class client extends GameShell {
 	public ImageRGB aClass50_Sub1_Sub1_Sub1_1116;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3Array1117[];
 	public int anInt1118;
-	public int anInt1120;
-	public int anInt1121;
+	public int destinationX;
+	public int destinationY;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1_1122;
-	public int anIntArray1123[];
-	public int anIntArray1124[];
 	public byte aByteArrayArrayArray1125[][][];
-	public int anInt1126;
+	public int alternativeRoute;
 	public boolean aBoolean1127;
 	public int anInt1128;
 	public int anInt1129;
@@ -11490,7 +11258,6 @@ public class client extends GameShell {
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_1185;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_1186;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_1187;
-	public int anIntArrayArray1189[][];
 	public int anInt1191;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1_1192;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1_1193;

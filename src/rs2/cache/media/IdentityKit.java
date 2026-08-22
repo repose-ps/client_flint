@@ -114,8 +114,7 @@ public class IdentityKit {
 			models[index] = Model.getModel(bodyModelIds[index]);
 		}
 
-		Model model = models.length == 1 ? models[0]
-				: new Model(models.length, models);
+		Model model = models.length == 1 ? models[0] : new Model(models.length, models);
 		recolor(model);
 		return model;
 	}

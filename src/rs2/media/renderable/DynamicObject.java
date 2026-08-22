@@ -101,7 +101,8 @@ public class DynamicObject extends Renderable {
 			}
 		}
 
-		GameObjectDefinition definition = morphIds != null ? resolveDefinition() : GameObjectDefinition.lookup(objectId);
+		GameObjectDefinition definition = morphIds != null ? resolveDefinition()
+				: GameObjectDefinition.lookup(objectId);
 		if (definition == null) {
 			return null;
 		}

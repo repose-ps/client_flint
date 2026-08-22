@@ -320,7 +320,6 @@ public class ItemDefinition {
 		return class50_sub1_sub4_sub4;
 	}
 
-
 	public static void clear() {
 		modelCache = null;
 		ItemSpriteFactory.clear();

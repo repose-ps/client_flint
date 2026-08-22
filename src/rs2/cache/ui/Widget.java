@@ -255,8 +255,7 @@ public class Widget {
 		modelAmbient = 64;
 		modelContrast = 768;
 
-		Model baseModel = active ? getMediaModel(activeMediaType, activeMediaId)
-				: getMediaModel(mediaType, mediaId);
+		Model baseModel = active ? getMediaModel(activeMediaType, activeMediaId) : getMediaModel(mediaType, mediaId);
 		if (baseModel == null) {
 			return null;
 		}
@@ -265,7 +264,8 @@ public class Widget {
 			return baseModel;
 		}
 
-		Model model = new Model(baseModel, false, true, AnimationFrame.isNull(primaryFrameId) & AnimationFrame.isNull(secondaryFrameId));
+		Model model = new Model(baseModel, false, true,
+				AnimationFrame.isNull(primaryFrameId) & AnimationFrame.isNull(secondaryFrameId));
 		if (primaryFrameId != -1 || secondaryFrameId != -1) {
 			model.createBones();
 		}
