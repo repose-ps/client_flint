@@ -7,7 +7,6 @@ import rs2.cache.ondemand.OnDemandFetcher;
 import rs2.collection.LruCache;
 import rs2.media.AnimationFrame;
 import rs2.media.renderable.Model;
-import rs2.media.renderable.Renderable;
 import rs2.net.Buffer;
 
 /**

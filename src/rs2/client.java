@@ -65,12 +65,12 @@ import rs2.scene.tile.FloorDecoration;
 import rs2.scene.tile.Wall;
 import rs2.scene.tile.WallDecoration;
 import rs2.scene.util.CollisionMap;
-import rs2.sign.signlink;
+import rs2.sign.Signlink;
 import rs2.sound.SoundTrack;
 import rs2.text.Base37;
 import rs2.text.TextFormatter;
 
-public class client extends Applet_Sub1 {
+public class client extends GameShell {
 
 	public void method14(String s, int i) {
 		if (s == null || s.length() == 0) {
@@ -193,7 +193,7 @@ public class client extends Applet_Sub1 {
 			if (args[2].equals("lowmem"))
 				method101(true);
 			else if (args[2].equals("highmem")) {
-				method27(true);
+				method27();
 			} else {
 				System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid");
 				return;
@@ -206,10 +206,10 @@ public class client extends Applet_Sub1 {
 				System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid");
 				return;
 			}
-			signlink.storeid = Integer.parseInt(args[4]);
-			signlink.startpriv(InetAddress.getLocalHost());
+			Signlink.storeId = Integer.parseInt(args[4]);
+			Signlink.start(InetAddress.getLocalHost());
 			client client1 = new client();
-			client1.method1(anInt1025, 503, 765);
+			client1.createFrame(765, 503);
 			return;
 		} catch (Exception exception) {
 			return;
@@ -266,11 +266,6 @@ public class client extends Applet_Sub1 {
 
 	public void method19(String s) {
 		System.out.println(s);
-		try {
-			getAppletContext().showDocument(new URL(getCodeBase(), "loaderror_" + s + ".html"));
-		} catch (Exception exception) {
-			exception.printStackTrace();
-		}
 		do
 			try {
 				Thread.sleep(1000L);
@@ -290,7 +285,7 @@ public class client extends Applet_Sub1 {
 			return i / 0xf4240 + "M";
 	}
 
-	public void method8(int i) {
+	public void cleanUpForQuit() {
 		aClass50_Sub1_Sub4_Sub3_Sub2Array970 = null;
 		anIntArray972 = null;
 		anIntArray974 = null;
@@ -402,7 +397,6 @@ public class client extends Applet_Sub1 {
 		anIntArray982 = null;
 		aStringArray1184 = null;
 		aClass6ArrayArrayArray1323 = null;
-		i = 96 / i;
 		aClass6_1261 = null;
 		method141(28614);
 		GameObjectDefinition.clear();
@@ -415,7 +409,7 @@ public class client extends Applet_Sub1 {
 		SpotAnimation.definitions = null;
 		SpotAnimation.modelCache = null;
 		Varp.definitions = null;
-		super.aClass18_15 = null;
+		super.gameBuffer = null;
 		Player.modelCache = null;
 		Rasterizer3D.clear();
 		Class22.method240(false);
@@ -427,86 +421,86 @@ public class client extends Applet_Sub1 {
 	public void method21(boolean flag) {
 		if (flag)
 			return;
-		if (super.anInt28 == 1) {
-			if (super.anInt29 >= 539 && super.anInt29 <= 573 && super.anInt30 >= 169 && super.anInt30 < 205
+		if (super.clickButton == 1) {
+			if (super.clickX >= 539 && super.clickX <= 573 && super.clickY >= 169 && super.clickY < 205
 					&& anIntArray1081[0] != -1) {
 				aBoolean1181 = true;
 				anInt1285 = 0;
 				aBoolean950 = true;
 			}
-			if (super.anInt29 >= 569 && super.anInt29 <= 599 && super.anInt30 >= 168 && super.anInt30 < 205
+			if (super.clickX >= 569 && super.clickX <= 599 && super.clickY >= 168 && super.clickY < 205
 					&& anIntArray1081[1] != -1) {
 				aBoolean1181 = true;
 				anInt1285 = 1;
 				aBoolean950 = true;
 			}
-			if (super.anInt29 >= 597 && super.anInt29 <= 627 && super.anInt30 >= 168 && super.anInt30 < 205
+			if (super.clickX >= 597 && super.clickX <= 627 && super.clickY >= 168 && super.clickY < 205
 					&& anIntArray1081[2] != -1) {
 				aBoolean1181 = true;
 				anInt1285 = 2;
 				aBoolean950 = true;
 			}
-			if (super.anInt29 >= 625 && super.anInt29 <= 669 && super.anInt30 >= 168 && super.anInt30 < 203
+			if (super.clickX >= 625 && super.clickX <= 669 && super.clickY >= 168 && super.clickY < 203
 					&& anIntArray1081[3] != -1) {
 				aBoolean1181 = true;
 				anInt1285 = 3;
 				aBoolean950 = true;
 			}
-			if (super.anInt29 >= 666 && super.anInt29 <= 696 && super.anInt30 >= 168 && super.anInt30 < 205
+			if (super.clickX >= 666 && super.clickX <= 696 && super.clickY >= 168 && super.clickY < 205
 					&& anIntArray1081[4] != -1) {
 				aBoolean1181 = true;
 				anInt1285 = 4;
 				aBoolean950 = true;
 			}
-			if (super.anInt29 >= 694 && super.anInt29 <= 724 && super.anInt30 >= 168 && super.anInt30 < 205
+			if (super.clickX >= 694 && super.clickX <= 724 && super.clickY >= 168 && super.clickY < 205
 					&& anIntArray1081[5] != -1) {
 				aBoolean1181 = true;
 				anInt1285 = 5;
 				aBoolean950 = true;
 			}
-			if (super.anInt29 >= 722 && super.anInt29 <= 756 && super.anInt30 >= 169 && super.anInt30 < 205
+			if (super.clickX >= 722 && super.clickX <= 756 && super.clickY >= 169 && super.clickY < 205
 					&& anIntArray1081[6] != -1) {
 				aBoolean1181 = true;
 				anInt1285 = 6;
 				aBoolean950 = true;
 			}
-			if (super.anInt29 >= 540 && super.anInt29 <= 574 && super.anInt30 >= 466 && super.anInt30 < 502
+			if (super.clickX >= 540 && super.clickX <= 574 && super.clickY >= 466 && super.clickY < 502
 					&& anIntArray1081[7] != -1) {
 				aBoolean1181 = true;
 				anInt1285 = 7;
 				aBoolean950 = true;
 			}
-			if (super.anInt29 >= 572 && super.anInt29 <= 602 && super.anInt30 >= 466 && super.anInt30 < 503
+			if (super.clickX >= 572 && super.clickX <= 602 && super.clickY >= 466 && super.clickY < 503
 					&& anIntArray1081[8] != -1) {
 				aBoolean1181 = true;
 				anInt1285 = 8;
 				aBoolean950 = true;
 			}
-			if (super.anInt29 >= 599 && super.anInt29 <= 629 && super.anInt30 >= 466 && super.anInt30 < 503
+			if (super.clickX >= 599 && super.clickX <= 629 && super.clickY >= 466 && super.clickY < 503
 					&& anIntArray1081[9] != -1) {
 				aBoolean1181 = true;
 				anInt1285 = 9;
 				aBoolean950 = true;
 			}
-			if (super.anInt29 >= 627 && super.anInt29 <= 671 && super.anInt30 >= 467 && super.anInt30 < 502
+			if (super.clickX >= 627 && super.clickX <= 671 && super.clickY >= 467 && super.clickY < 502
 					&& anIntArray1081[10] != -1) {
 				aBoolean1181 = true;
 				anInt1285 = 10;
 				aBoolean950 = true;
 			}
-			if (super.anInt29 >= 669 && super.anInt29 <= 699 && super.anInt30 >= 466 && super.anInt30 < 503
+			if (super.clickX >= 669 && super.clickX <= 699 && super.clickY >= 466 && super.clickY < 503
 					&& anIntArray1081[11] != -1) {
 				aBoolean1181 = true;
 				anInt1285 = 11;
 				aBoolean950 = true;
 			}
-			if (super.anInt29 >= 696 && super.anInt29 <= 726 && super.anInt30 >= 466 && super.anInt30 < 503
+			if (super.clickX >= 696 && super.clickX <= 726 && super.clickY >= 466 && super.clickY < 503
 					&& anIntArray1081[12] != -1) {
 				aBoolean1181 = true;
 				anInt1285 = 12;
 				aBoolean950 = true;
 			}
-			if (super.anInt29 >= 724 && super.anInt29 <= 758 && super.anInt30 >= 466 && super.anInt30 < 502
+			if (super.clickX >= 724 && super.clickX <= 758 && super.clickY >= 466 && super.clickY < 502
 					&& anIntArray1081[13] != -1) {
 				aBoolean1181 = true;
 				anInt1285 = 13;
@@ -528,15 +522,15 @@ public class client extends Applet_Sub1 {
 				anInt1262 += (j - anInt1262) / 16;
 			if (anInt1263 != k)
 				anInt1263 += (k - anInt1263) / 16;
-			if (super.anIntArray32[1] == 1)
+			if (super.keyStatus[1] == 1)
 				anInt1253 += (-24 - anInt1253) / 2;
-			else if (super.anIntArray32[2] == 1)
+			else if (super.keyStatus[2] == 1)
 				anInt1253 += (24 - anInt1253) / 2;
 			else
 				anInt1253 /= 2;
-			if (super.anIntArray32[3] == 1)
+			if (super.keyStatus[3] == 1)
 				anInt1254 += (12 - anInt1254) / 2;
-			else if (super.anIntArray32[4] == 1)
+			else if (super.keyStatus[4] == 1)
 				anInt1254 += (-12 - anInt1254) / 2;
 			else
 				anInt1254 /= 2;
@@ -578,7 +572,7 @@ public class client extends Applet_Sub1 {
 				return;
 			}
 		} catch (Exception _ex) {
-			signlink.reporterror("glfc_ex " + ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).x + ","
+			Signlink.reportError("glfc_ex " + ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).x + ","
 					+ ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).y + "," + anInt1262 + "," + anInt1263 + ","
 					+ anInt889 + "," + anInt890 + "," + anInt1040 + "," + anInt1041);
 			throw new RuntimeException("eek");
@@ -619,8 +613,8 @@ public class client extends Applet_Sub1 {
 		if (!aBoolean1266) {
 			return;
 		} else {
-			signlink.midifade = flag ? 1 : 0;
-			signlink.midisave(abyte0, abyte0.length);
+			Signlink.midiFade = flag ? 1 : 0;
+			Signlink.saveMidi(abyte0, abyte0.length);
 			i = 71 / i;
 			return;
 		}
@@ -681,13 +675,11 @@ public class client extends Applet_Sub1 {
 				((Renderable) (obj)), ((Renderable) (obj1)), i1, ((Renderable) (obj2)), 2, j, i);
 	}
 
-	public static void method27(boolean flag) {
+	public static void method27() {
 		Class22.aBoolean451 = false;
 		Rasterizer3D.lowMemory = false;
 		aBoolean926 = false;
 		Region.lowMemory = false;
-		if (!flag)
-			anInt1025 = 143;
 		GameObjectDefinition.lowMemory = false;
 	}
 
@@ -704,7 +696,7 @@ public class client extends Applet_Sub1 {
 			return;
 		synchronized (aClass7_1248.lock) {
 			if (aBoolean962) {
-				if (super.anInt28 != 0 || aClass7_1248.sampleCount >= 40) {
+				if (super.clickButton != 0 || aClass7_1248.sampleCount >= 40) {
 					aClass50_Sub1_Sub2_964.writeOpcode(171);
 					aClass50_Sub1_Sub2_964.writeByte(0);
 					int i2 = aClass50_Sub1_Sub2_964.position;
@@ -768,24 +760,24 @@ public class client extends Applet_Sub1 {
 				aClass7_1248.sampleCount = 0;
 			}
 		}
-		if (super.anInt28 != 0) {
-			long l = (super.aLong31 - aLong902) / 50L;
+		if (super.clickButton != 0) {
+			long l = (super.clickTime - aLong902) / 50L;
 			if (l > 4095L)
 				l = 4095L;
-			aLong902 = super.aLong31;
-			int j2 = super.anInt30;
+			aLong902 = super.clickTime;
+			int j2 = super.clickY;
 			if (j2 < 0)
 				j2 = 0;
 			else if (j2 > 502)
 				j2 = 502;
-			int j3 = super.anInt29;
+			int j3 = super.clickX;
 			if (j3 < 0)
 				j3 = 0;
 			else if (j3 > 764)
 				j3 = 764;
 			int j4 = j2 * 765 + j3;
 			int i5 = 0;
-			if (super.anInt28 == 2)
+			if (super.clickButton == 2)
 				i5 = 1;
 			int k5 = (int) l;
 			aClass50_Sub1_Sub2_964.writeOpcode(19);
@@ -793,8 +785,7 @@ public class client extends Applet_Sub1 {
 		}
 		if (anInt1264 > 0)
 			anInt1264--;
-		if (super.anIntArray32[1] == 1 || super.anIntArray32[2] == 1 || super.anIntArray32[3] == 1
-				|| super.anIntArray32[4] == 1)
+		if (super.keyStatus[1] == 1 || super.keyStatus[2] == 1 || super.keyStatus[3] == 1 || super.keyStatus[4] == 1)
 			aBoolean1265 = true;
 		if (aBoolean1265 && anInt1264 <= 0) {
 			anInt1264 = 20;
@@ -803,12 +794,12 @@ public class client extends Applet_Sub1 {
 			aClass50_Sub1_Sub2_964.writeShortLE(anInt1251);
 			aClass50_Sub1_Sub2_964.writeShortLE(anInt1252);
 		}
-		if (super.aBoolean19 && !aBoolean1275) {
+		if (super.hasFocus && !aBoolean1275) {
 			aBoolean1275 = true;
 			aClass50_Sub1_Sub2_964.writeOpcode(187);
 			aClass50_Sub1_Sub2_964.writeByte(1);
 		}
-		if (!super.aBoolean19 && aBoolean1275) {
+		if (!super.hasFocus && aBoolean1275) {
 			aBoolean1275 = false;
 			aClass50_Sub1_Sub2_964.writeOpcode(187);
 			aClass50_Sub1_Sub2_964.writeByte(0);
@@ -840,10 +831,10 @@ public class client extends Applet_Sub1 {
 		}
 		if (anInt1113 != 0) {
 			anInt1269++;
-			if (super.anInt22 > anInt1114 + 5 || super.anInt22 < anInt1114 - 5 || super.anInt23 > anInt1115 + 5
-					|| super.anInt23 < anInt1115 - 5)
+			if (super.mouseX > anInt1114 + 5 || super.mouseX < anInt1114 - 5 || super.mouseY > anInt1115 + 5
+					|| super.mouseY < anInt1115 - 5)
 				aBoolean1155 = true;
-			if (super.anInt21 == 0) {
+			if (super.mouseButton == 0) {
 				if (anInt1113 == 2)
 					aBoolean1181 = true;
 				if (anInt1113 == 3)
@@ -851,7 +842,7 @@ public class client extends Applet_Sub1 {
 				anInt1113 = 0;
 				if (aBoolean1155 && anInt1269 >= 5) {
 					anInt1064 = -1;
-					method91(-521);
+					method91();
 					if (anInt1064 == anInt1111 && anInt1063 != anInt1112) {
 						Widget class13 = Widget.get(anInt1111);
 						int i1 = 0;
@@ -891,7 +882,7 @@ public class client extends Applet_Sub1 {
 				else if (anInt1183 > 0)
 					method120(anInt1183 - 1, 8);
 				anInt1329 = 10;
-				super.anInt28 = 0;
+				super.clickButton = 0;
 			}
 		}
 		if (Class22.anInt485 != -1) {
@@ -901,16 +892,16 @@ public class client extends Applet_Sub1 {
 					j, 0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
 			Class22.anInt485 = -1;
 			if (flag) {
-				anInt1020 = super.anInt29;
-				anInt1021 = super.anInt30;
+				anInt1020 = super.clickX;
+				anInt1021 = super.clickY;
 				anInt1023 = 1;
 				anInt1022 = 0;
 			}
 		}
-		if (super.anInt28 == 1 && aString1058 != null) {
+		if (super.clickButton == 1 && aString1058 != null) {
 			aString1058 = null;
 			aBoolean1240 = true;
-			super.anInt28 = 0;
+			super.clickButton = 0;
 		}
 		method54(0);
 		if (anInt1053 == -1) {
@@ -918,7 +909,7 @@ public class client extends Applet_Sub1 {
 			method21(false);
 			method39(true);
 		}
-		if (super.anInt21 == 1 || super.anInt28 == 1)
+		if (super.mouseButton == 1 || super.clickButton == 1)
 			anInt1094++;
 		if (anInt1284 != 0 || anInt1044 != 0 || anInt1129 != 0) {
 			if (anInt893 < 100) {
@@ -940,10 +931,10 @@ public class client extends Applet_Sub1 {
 			anIntArray1145[k]++;
 
 		method30((byte) 2);
-		super.anInt20++;
-		if (super.anInt20 > 4500) {
+		super.idleCycles++;
+		if (super.idleCycles > 4500) {
 			anInt873 = 250;
-			super.anInt20 -= 500;
+			super.idleCycles -= 500;
 			aClass50_Sub1_Sub2_964.writeOpcode(202);
 		}
 		anInt1118++;
@@ -1095,7 +1086,7 @@ public class client extends Applet_Sub1 {
 		else
 			return;
 		do {
-			int i = method5(-983);
+			int i = pollKey();
 			if (i == -1)
 				break;
 			if (anInt1169 != -1 && anInt1169 == anInt1231) {
@@ -1133,8 +1124,7 @@ public class client extends Applet_Sub1 {
 						aClass50_Sub1_Sub2_964.writeLength(aClass50_Sub1_Sub2_964.position - j);
 						aString1026 = ChatCodec.normalize(aString1026);
 						aString1026 = Class45.method383((byte) 0, aString1026);
-						method47(TextFormatter.formatDisplayName(Base37.decode(aLong1141)), (byte) -123, aString1026,
-								6);
+						method47(TextFormatter.formatDisplayName(Base37.decode(aLong1141)), aString1026, 6);
 						if (anInt887 == 2) {
 							anInt887 = 1;
 							aBoolean1212 = true;
@@ -1316,13 +1306,13 @@ public class client extends Applet_Sub1 {
 						aClass50_Sub1_Sub4_Sub3_Sub2_1167.overheadTextEffect = k2;
 						aClass50_Sub1_Sub4_Sub3_Sub2_1167.overheadTextCyclesRemaining = 150;
 						if (anInt867 == 2)
-							method47("@cr2@" + aClass50_Sub1_Sub4_Sub3_Sub2_1167.name, (byte) -123,
+							method47("@cr2@" + aClass50_Sub1_Sub4_Sub3_Sub2_1167.name,
 									((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).overheadText, 2);
 						else if (anInt867 == 1)
-							method47("@cr1@" + aClass50_Sub1_Sub4_Sub3_Sub2_1167.name, (byte) -123,
+							method47("@cr1@" + aClass50_Sub1_Sub4_Sub3_Sub2_1167.name,
 									((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).overheadText, 2);
 						else
-							method47(aClass50_Sub1_Sub4_Sub3_Sub2_1167.name, (byte) -123,
+							method47(aClass50_Sub1_Sub4_Sub3_Sub2_1167.name,
 									((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).overheadText, 2);
 						if (anInt1006 == 2) {
 							anInt1006 = 3;
@@ -1341,11 +1331,6 @@ public class client extends Applet_Sub1 {
 	}
 
 	public DataInputStream method31(String s) throws IOException {
-		if (!aBoolean900)
-			if (signlink.mainapp != null)
-				return signlink.openurl(s);
-			else
-				return new DataInputStream((new URL(getCodeBase(), s)).openStream());
 		if (aSocket1224 != null) {
 			try {
 				aSocket1224.close();
@@ -1362,10 +1347,7 @@ public class client extends Applet_Sub1 {
 	}
 
 	public Socket method32(int i) throws IOException {
-		if (signlink.mainapp != null)
-			return signlink.opensocket(i);
-		else
-			return new Socket(InetAddress.getByName(getCodeBase().getHost()), i);
+		return Signlink.openSocket(i);
 	}
 
 	public boolean method33(int i) {
@@ -1730,7 +1712,7 @@ public class client extends Applet_Sub1 {
 				anInt1241 = aClass50_Sub1_Sub2_1188.readIntLE();
 				anInt1034 = aClass50_Sub1_Sub2_1188.readUnsignedShortAddLE();
 				aClass50_Sub1_Sub2_1188.readUnsignedByteAdd();
-				signlink.dnslookup(Ipv4Address.format(anInt1241));
+				Signlink.lookupDns(Ipv4Address.format(anInt1241));
 				anInt870 = -1;
 				return true;
 			}
@@ -1748,7 +1730,7 @@ public class client extends Applet_Sub1 {
 					}
 
 					if (!flag1 && anInt1246 == 0)
-						method47(s3, (byte) -123, "wishes to trade with you.", 4);
+						method47(s3, "wishes to trade with you.", 4);
 				} else if (s.endsWith(":duelreq:")) {
 					String s4 = s.substring(0, s.indexOf(":"));
 					long l19 = Base37.encode(s4);
@@ -1761,7 +1743,7 @@ public class client extends Applet_Sub1 {
 					}
 
 					if (!flag2 && anInt1246 == 0)
-						method47(s4, (byte) -123, "wishes to duel with you.", 8);
+						method47(s4, "wishes to duel with you.", 8);
 				} else if (s.endsWith(":chalreq:")) {
 					String s5 = s.substring(0, s.indexOf(":"));
 					long l20 = Base37.encode(s5);
@@ -1775,10 +1757,10 @@ public class client extends Applet_Sub1 {
 
 					if (!flag3 && anInt1246 == 0) {
 						String s8 = s.substring(s.indexOf(":") + 1, s.length() - 9);
-						method47(s5, (byte) -123, s8, 8);
+						method47(s5, s8, 8);
 					}
 				} else {
-					method47("", (byte) -123, s, 0);
+					method47("", s, 0);
 				}
 				anInt870 = -1;
 				return true;
@@ -1895,9 +1877,9 @@ public class client extends Applet_Sub1 {
 						anIntArray1267[k25] = k18;
 						aBoolean1181 = true;
 						if (k18 > 0)
-							method47("", (byte) -123, s7 + " has logged in.", 5);
+							method47("", s7 + " has logged in.", 5);
 						if (k18 == 0)
-							method47("", (byte) -123, s7 + " has logged out.", 5);
+							method47("", s7 + " has logged out.", 5);
 					}
 					s7 = null;
 					break;
@@ -1962,9 +1944,8 @@ public class client extends Applet_Sub1 {
 
 				for (PendingSpawn class50_sub2 = (PendingSpawn) aClass6_1261
 						.first(); class50_sub2 != null; class50_sub2 = (PendingSpawn) aClass6_1261.next())
-					if (class50_sub2.x >= anInt989 && class50_sub2.x < anInt989 + 8
-							&& class50_sub2.y >= anInt990 && class50_sub2.y < anInt990 + 8
-							&& class50_sub2.plane == anInt1091)
+					if (class50_sub2.x >= anInt989 && class50_sub2.x < anInt989 + 8 && class50_sub2.y >= anInt990
+							&& class50_sub2.y < anInt990 + 8 && class50_sub2.plane == anInt1091)
 						class50_sub2.restoreDelay = 0;
 
 				anInt870 = -1;
@@ -2014,13 +1995,13 @@ public class client extends Applet_Sub1 {
 						if (j23 != 3)
 							s9 = Class45.method383((byte) 0, s9);
 						if (j23 == 2 || j23 == 3)
-							method47("@cr2@" + TextFormatter.formatDisplayName(Base37.decode(l6)), (byte) -123, s9, 7);
+							method47("@cr2@" + TextFormatter.formatDisplayName(Base37.decode(l6)), s9, 7);
 						else if (j23 == 1)
-							method47("@cr1@" + TextFormatter.formatDisplayName(Base37.decode(l6)), (byte) -123, s9, 7);
+							method47("@cr1@" + TextFormatter.formatDisplayName(Base37.decode(l6)), s9, 7);
 						else
-							method47(TextFormatter.formatDisplayName(Base37.decode(l6)), (byte) -123, s9, 3);
+							method47(TextFormatter.formatDisplayName(Base37.decode(l6)), s9, 3);
 					} catch (Exception exception1) {
-						signlink.reporterror("cde1");
+						Signlink.reportError("cde1");
 					}
 				anInt870 = -1;
 				return true;
@@ -2565,7 +2546,7 @@ public class client extends Applet_Sub1 {
 				anInt870 = -1;
 				return true;
 			}
-			signlink.reporterror("T1 - " + anInt870 + "," + anInt869 + " - " + anInt904 + "," + anInt905);
+			Signlink.reportError("T1 - " + anInt870 + "," + anInt869 + " - " + anInt904 + "," + anInt905);
 			method124(true);
 		} catch (IOException _ex) {
 			method59(1);
@@ -2576,7 +2557,7 @@ public class client extends Applet_Sub1 {
 			for (int j16 = 0; j16 < anInt869 && j16 < 50; j16++)
 				s1 = s1 + aClass50_Sub1_Sub2_1188.payload[j16] + ",";
 
-			signlink.reporterror(s1);
+			Signlink.reportError(s1);
 			method124(true);
 		}
 		return true;
@@ -2749,7 +2730,7 @@ public class client extends Applet_Sub1 {
 			}
 		l3 = 0;
 		if (flag1)
-			method6();
+			startUp();
 		anIntArray1123[l3] = i3;
 		anIntArray1124[l3++] = j3;
 		int k5;
@@ -2789,7 +2770,7 @@ public class client extends Applet_Sub1 {
 				aClass50_Sub1_Sub2_964.writeByte(j4 + j4 + 3);
 			}
 			aClass50_Sub1_Sub2_964.writeShortAddLE(l5 + anInt1040);
-			aClass50_Sub1_Sub2_964.writeByte(super.anIntArray32[5] != 1 ? 0 : 1);
+			aClass50_Sub1_Sub2_964.writeByte(super.keyStatus[5] != 1 ? 0 : 1);
 			aClass50_Sub1_Sub2_964.writeShortAddLE(j6 + anInt1041);
 			anInt1120 = anIntArray1123[0];
 			anInt1121 = anIntArray1124[0];
@@ -2816,20 +2797,17 @@ public class client extends Applet_Sub1 {
 					if (class50_sub2.previousId < 0
 							|| Region.isGameObjectModelReady(class50_sub2.previousId, class50_sub2.previousType)) {
 						method45(class50_sub2.previousOrientation, class50_sub2.x, class50_sub2.previousId,
-								class50_sub2.y, class50_sub2.plane, class50_sub2.previousType,
-								class50_sub2.sceneLayer);
+								class50_sub2.y, class50_sub2.plane, class50_sub2.previousType, class50_sub2.sceneLayer);
 						class50_sub2.unlink();
 					}
 				} else {
 					if (class50_sub2.spawnDelay > 0)
 						class50_sub2.spawnDelay--;
 					if (class50_sub2.spawnDelay == 0 && class50_sub2.x >= 1 && class50_sub2.y >= 1
-							&& class50_sub2.x <= 102 && class50_sub2.y <= 102
-							&& (class50_sub2.spawnId < 0
+							&& class50_sub2.x <= 102 && class50_sub2.y <= 102 && (class50_sub2.spawnId < 0
 									|| Region.isGameObjectModelReady(class50_sub2.spawnId, class50_sub2.spawnType))) {
-						method45(class50_sub2.spawnOrientation, class50_sub2.x, class50_sub2.spawnId,
-								class50_sub2.y, class50_sub2.plane, class50_sub2.spawnType,
-								class50_sub2.sceneLayer);
+						method45(class50_sub2.spawnOrientation, class50_sub2.x, class50_sub2.spawnId, class50_sub2.y,
+								class50_sub2.plane, class50_sub2.spawnType, class50_sub2.sceneLayer);
 						class50_sub2.spawnDelay = -1;
 						if (class50_sub2.spawnId == class50_sub2.previousId && class50_sub2.previousId == -1)
 							class50_sub2.unlink();
@@ -2844,15 +2822,8 @@ public class client extends Applet_Sub1 {
 		}
 	}
 
-	public String method37(int i) {
-		if (i != -42588)
-			anInt870 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-		if (signlink.mainapp != null)
-			return signlink.mainapp.getDocumentBase().getHost().toLowerCase();
-		if (super.aFrame_Sub1_17 != null)
-			return "runescape.com";
-		else
-			return super.getDocumentBase().getHost().toLowerCase();
+	public String method37() {
+		return "runescape.com";
 	}
 
 	public void method38(int i, int j, int k, Player class50_sub1_sub4_sub3_sub2) {
@@ -2926,8 +2897,8 @@ public class client extends Applet_Sub1 {
 	public void method39(boolean flag) {
 		if (!flag)
 			aClass6ArrayArrayArray1323 = null;
-		if (super.anInt28 == 1) {
-			if (super.anInt29 >= 6 && super.anInt29 <= 106 && super.anInt30 >= 467 && super.anInt30 <= 499) {
+		if (super.clickButton == 1) {
+			if (super.clickX >= 6 && super.clickX <= 106 && super.clickY >= 467 && super.clickY <= 499) {
 				anInt1006 = (anInt1006 + 1) % 4;
 				aBoolean1212 = true;
 				aBoolean1240 = true;
@@ -2936,7 +2907,7 @@ public class client extends Applet_Sub1 {
 				aClass50_Sub1_Sub2_964.writeByte(anInt887);
 				aClass50_Sub1_Sub2_964.writeByte(anInt1227);
 			}
-			if (super.anInt29 >= 135 && super.anInt29 <= 235 && super.anInt30 >= 467 && super.anInt30 <= 499) {
+			if (super.clickX >= 135 && super.clickX <= 235 && super.clickY >= 467 && super.clickY <= 499) {
 				anInt887 = (anInt887 + 1) % 3;
 				aBoolean1212 = true;
 				aBoolean1240 = true;
@@ -2945,7 +2916,7 @@ public class client extends Applet_Sub1 {
 				aClass50_Sub1_Sub2_964.writeByte(anInt887);
 				aClass50_Sub1_Sub2_964.writeByte(anInt1227);
 			}
-			if (super.anInt29 >= 273 && super.anInt29 <= 373 && super.anInt30 >= 467 && super.anInt30 <= 499) {
+			if (super.clickX >= 273 && super.clickX <= 373 && super.clickY >= 467 && super.clickY <= 499) {
 				anInt1227 = (anInt1227 + 1) % 3;
 				aBoolean1212 = true;
 				aBoolean1240 = true;
@@ -2954,15 +2925,14 @@ public class client extends Applet_Sub1 {
 				aClass50_Sub1_Sub2_964.writeByte(anInt887);
 				aClass50_Sub1_Sub2_964.writeByte(anInt1227);
 			}
-			if (super.anInt29 >= 412 && super.anInt29 <= 512 && super.anInt30 >= 467 && super.anInt30 <= 499)
+			if (super.clickX >= 412 && super.clickX <= 512 && super.clickY >= 467 && super.clickY <= 499)
 				if (anInt1169 == -1) {
 					method15(false);
 					aString839 = "";
 					aBoolean1098 = false;
 					anInt1231 = anInt1169 = Widget.reportAbuseInterfaceId;
 				} else {
-					method47("", (byte) -123, "Please close the interface you have open before using 'report abuse'",
-							0);
+					method47("", "Please close the interface you have open before using 'report abuse'", 0);
 				}
 			anInt1160++;
 			if (anInt1160 > 161) {
@@ -3072,8 +3042,8 @@ public class client extends Applet_Sub1 {
 		if (anInt1146 == 0 && anInt1171 == 0) {
 			aStringArray1184[anInt1183] = "Walk here";
 			anIntArray981[anInt1183] = 14;
-			anIntArray979[anInt1183] = super.anInt22;
-			anIntArray980[anInt1183] = super.anInt23;
+			anIntArray979[anInt1183] = super.mouseX;
+			anIntArray980[anInt1183] = super.mouseY;
 			anInt1183++;
 		}
 		int i = -1;
@@ -3114,8 +3084,7 @@ public class client extends Applet_Sub1 {
 					if (class47.actions != null) {
 						for (int l1 = 4; l1 >= 0; l1--)
 							if (class47.actions[l1] != null) {
-								aStringArray1184[anInt1183] = class47.actions[l1] + " @cya@"
-										+ class47.name;
+								aStringArray1184[anInt1183] = class47.actions[l1] + " @cya@" + class47.name;
 								if (l1 == 0)
 									anIntArray981[anInt1183] = 35;
 								if (l1 == 1)
@@ -3310,7 +3279,8 @@ public class client extends Applet_Sub1 {
 				int i3 = i1;
 				if (i3 < 3 && (aByteArrayArrayArray1125[1][j][l] & 2) == 2)
 					i3++;
-				Region.addLocation(k, i3, j1, i, j, l, i1, aClass46Array1260[i1], aClass22_1164, anIntArrayArrayArray891);
+				Region.addLocation(k, i3, j1, i, j, l, i1, aClass46Array1260[i1], aClass22_1164,
+						anIntArrayArrayArray891);
 			}
 		}
 	}
@@ -3326,7 +3296,7 @@ public class client extends Applet_Sub1 {
 
 		}
 		if (j > anInt1133) {
-			signlink.reporterror(aString1092 + " Too many npcs");
+			Signlink.reportError(aString1092 + " Too many npcs");
 			throw new RuntimeException("eek");
 		}
 		anInt1133 = 0;
@@ -3368,10 +3338,10 @@ public class client extends Applet_Sub1 {
 
 	}
 
-	public void method47(String s, byte byte0, String s1, int i) {
+	public void method47(String s, String s1, int i) {
 		if (i == 0 && anInt1191 != -1) {
 			aString1058 = s1;
-			super.anInt28 = 0;
+			super.clickButton = 0;
 		}
 		if (anInt988 == -1)
 			aBoolean1240 = true;
@@ -3381,8 +3351,6 @@ public class client extends Applet_Sub1 {
 			aStringArray1298[j] = aStringArray1298[j - 1];
 		}
 
-		if (byte0 != aByte901)
-			anInt1140 = aClass24_899.nextInt();
 		anIntArray1296[0] = i;
 		aStringArray1297[0] = s;
 		aStringArray1298[0] = s1;
@@ -3393,7 +3361,7 @@ public class client extends Applet_Sub1 {
 		anInt1294 = 0;
 		anInt973 = 0;
 		method46(i, (byte) -58, class50_sub1_sub2);
-		method132(class50_sub1_sub2, i, false);
+		method132(class50_sub1_sub2, i);
 		method62(class50_sub1_sub2, i, 838);
 		for (int j = 0; j < anInt1294; j++) {
 			int k = anIntArray1295[j];
@@ -3404,13 +3372,13 @@ public class client extends Applet_Sub1 {
 		}
 
 		if (class50_sub1_sub2.position != i) {
-			signlink.reporterror(
+			Signlink.reportError(
 					aString1092 + " size mismatch in getnpcpos - pos:" + class50_sub1_sub2.position + " psize:" + i);
 			throw new RuntimeException("eek");
 		}
 		for (int l = 0; l < anInt1133; l++)
 			if (aClass50_Sub1_Sub4_Sub3_Sub1Array1132[anIntArray1134[l]] == null) {
-				signlink.reporterror(aString1092 + " null entry in npc list - pos:" + l + " size:" + anInt1133);
+				Signlink.reportError(aString1092 + " null entry in npc list - pos:" + l + " size:" + anInt1133);
 				throw new RuntimeException("eek");
 			}
 
@@ -3430,9 +3398,9 @@ public class client extends Applet_Sub1 {
 	}
 
 	public void method50() {
-		signlink.midiplay = false;
-		signlink.midifade = 0;
-		signlink.midi = "stop";
+		Signlink.midiPlayPending = false;
+		Signlink.midiFade = 0;
+		Signlink.midi = "stop";
 	}
 
 	public void method51(boolean flag) {
@@ -3493,7 +3461,7 @@ public class client extends Applet_Sub1 {
 		aClass50_Sub1_Sub1_Sub3_1293 = new IndexedImage(aClass2_888, "titlebutton", 0);
 		aClass50_Sub1_Sub1_Sub3Array1117 = new IndexedImage[12];
 		if (flag)
-			method6();
+			startUp();
 		for (int i = 0; i < 12; i++)
 			aClass50_Sub1_Sub1_Sub3Array1117[i] = new IndexedImage(aClass2_888, "runes", i);
 
@@ -3550,11 +3518,11 @@ public class client extends Applet_Sub1 {
 		method83(null, 0);
 		anIntArray1084 = new int[32768];
 		anIntArray1085 = new int[32768];
-		method13(10, true, "Connecting to fileserver");
+		drawLoadingText(10, "Connecting to fileserver");
 		if (!aBoolean1243) {
 			aBoolean1314 = true;
 			aBoolean1243 = true;
-			method12(this, 2);
+			startThread(this, 2);
 		}
 	}
 
@@ -3581,7 +3549,7 @@ public class client extends Applet_Sub1 {
 			anInt869 += i;
 			return;
 		} catch (RuntimeException runtimeexception) {
-			signlink.reporterror("38799, " + l + ", " + i + ", " + runtimeexception.toString());
+			Signlink.reportError("38799, " + l + ", " + i + ", " + runtimeexception.toString());
 		}
 		throw new RuntimeException();
 	}
@@ -3589,16 +3557,15 @@ public class client extends Applet_Sub1 {
 	public void method54(int i) {
 		if (anInt1113 != 0)
 			return;
-		int j = super.anInt28;
+		int j = super.clickButton;
 		if (i != 0)
 			anInt870 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-		if (anInt1171 == 1 && super.anInt29 >= 516 && super.anInt30 >= 160 && super.anInt29 <= 765
-				&& super.anInt30 <= 205)
+		if (anInt1171 == 1 && super.clickX >= 516 && super.clickY >= 160 && super.clickX <= 765 && super.clickY <= 205)
 			j = 0;
 		if (aBoolean1065) {
 			if (j != 1) {
-				int k = super.anInt22;
-				int j1 = super.anInt23;
+				int k = super.mouseX;
+				int j1 = super.mouseY;
 				if (anInt1304 == 0) {
 					k -= 4;
 					j1 -= 4;
@@ -3624,8 +3591,8 @@ public class client extends Applet_Sub1 {
 				int l = anInt1305;
 				int k1 = anInt1306;
 				int i2 = anInt1307;
-				int k2 = super.anInt29;
-				int l2 = super.anInt30;
+				int k2 = super.clickX;
+				int l2 = super.clickY;
 				if (anInt1304 == 0) {
 					k2 -= 4;
 					l2 -= 4;
@@ -3669,8 +3636,8 @@ public class client extends Applet_Sub1 {
 						anInt1111 = j2;
 						anInt1112 = l1;
 						anInt1113 = 2;
-						anInt1114 = super.anInt29;
-						anInt1115 = super.anInt30;
+						anInt1114 = super.clickX;
+						anInt1115 = super.clickY;
 						if (Widget.get(j2).parentId == anInt1169)
 							anInt1113 = 1;
 						if (Widget.get(j2).parentId == anInt988)
@@ -3765,7 +3732,7 @@ public class client extends Applet_Sub1 {
 	}
 
 	public void method58(int i, int j) {
-		signlink.wavevol = j;
+		Signlink.waveVolume = j;
 		if (i <= 0)
 			anInt1051 = 57;
 	}
@@ -3923,7 +3890,7 @@ public class client extends Applet_Sub1 {
 			anInt1281 = -343;
 		while (abyte0 == null) {
 			String s2 = "Unknown error";
-			method13(k, true, "Requesting " + s1);
+			drawLoadingText(k, "Requesting " + s1);
 			Object obj = null;
 			try {
 				int l1 = 0;
@@ -3950,7 +3917,7 @@ public class client extends Applet_Sub1 {
 					k2 += k3;
 					int l3 = (k2 * 100) / j2;
 					if (l3 != l1)
-						method13(k, true, "Loading " + s1 + " - " + l3 + "%");
+						drawLoadingText(k, "Loading " + s1 + " - " + l3 + "%");
 					l1 = l3;
 				}
 				datainputstream.close();
@@ -3978,26 +3945,26 @@ public class client extends Applet_Sub1 {
 			} catch (NullPointerException _ex) {
 				s2 = "Null error";
 				abyte0 = null;
-				if (!signlink.reporterror)
+				if (!Signlink.reportErrors)
 					return null;
 			} catch (ArrayIndexOutOfBoundsException _ex) {
 				s2 = "Bounds error";
 				abyte0 = null;
-				if (!signlink.reporterror)
+				if (!Signlink.reportErrors)
 					return null;
 			} catch (Exception _ex) {
 				s2 = "Unexpected error";
 				abyte0 = null;
-				if (!signlink.reporterror)
+				if (!Signlink.reportErrors)
 					return null;
 			}
 			if (abyte0 == null) {
 				for (int i2 = i1; i2 > 0; i2--) {
 					if (k1 >= 3) {
-						method13(k, true, "Game updated - please reload page");
+						drawLoadingText(k, "Game updated - please reload page");
 						i2 = 10;
 					} else {
-						method13(k, true, s2 + " - Retrying in " + i2);
+						drawLoadingText(k, s2 + " - Retrying in " + i2);
 					}
 					try {
 						Thread.sleep(1000L);
@@ -4142,11 +4109,9 @@ public class client extends Applet_Sub1 {
 			if (((Actor) (class50_sub1_sub4_sub3_sub2)).overheadText.charAt(0) == '~') {
 				class50_sub1_sub4_sub3_sub2.overheadText = ((Actor) (class50_sub1_sub4_sub3_sub2)).overheadText
 						.substring(1);
-				method47(class50_sub1_sub4_sub3_sub2.name, (byte) -123,
-						((Actor) (class50_sub1_sub4_sub3_sub2)).overheadText, 2);
+				method47(class50_sub1_sub4_sub3_sub2.name, ((Actor) (class50_sub1_sub4_sub3_sub2)).overheadText, 2);
 			} else if (class50_sub1_sub4_sub3_sub2 == aClass50_Sub1_Sub4_Sub3_Sub2_1167)
-				method47(class50_sub1_sub4_sub3_sub2.name, (byte) -123,
-						((Actor) (class50_sub1_sub4_sub3_sub2)).overheadText, 2);
+				method47(class50_sub1_sub4_sub3_sub2.name, ((Actor) (class50_sub1_sub4_sub3_sub2)).overheadText, 2);
 			class50_sub1_sub4_sub3_sub2.overheadTextColor = 0;
 			class50_sub1_sub4_sub3_sub2.overheadTextEffect = 0;
 			class50_sub1_sub4_sub3_sub2.overheadTextCyclesRemaining = 150;
@@ -4227,13 +4192,13 @@ public class client extends Applet_Sub1 {
 						class50_sub1_sub4_sub3_sub2.overheadTextEffect = i2 & 0xff;
 						class50_sub1_sub4_sub3_sub2.overheadTextCyclesRemaining = 150;
 						if (i3 == 2 || i3 == 3)
-							method47("@cr2@" + class50_sub1_sub4_sub3_sub2.name, (byte) -123, s, 1);
+							method47("@cr2@" + class50_sub1_sub4_sub3_sub2.name, s, 1);
 						else if (i3 == 1)
-							method47("@cr1@" + class50_sub1_sub4_sub3_sub2.name, (byte) -123, s, 1);
+							method47("@cr1@" + class50_sub1_sub4_sub3_sub2.name, s, 1);
 						else
-							method47(class50_sub1_sub4_sub3_sub2.name, (byte) -123, s, 2);
+							method47(class50_sub1_sub4_sub3_sub2.name, s, 2);
 					} catch (Exception exception) {
-						signlink.reporterror("cde2");
+						Signlink.reportError("cde2");
 					}
 			}
 			class50_sub1_sub2.position = i4 + l3;
@@ -4251,7 +4216,7 @@ public class client extends Applet_Sub1 {
 	public void method64(int i) {
 		if (aClass18_1198 != null)
 			return;
-		super.aClass18_15 = null;
+		super.gameBuffer = null;
 		aClass18_1159 = null;
 		aClass18_1157 = null;
 		aClass18_1156 = null;
@@ -4261,23 +4226,23 @@ public class client extends Applet_Sub1 {
 		for (aClass18_1110 = null; i >= 0;)
 			return;
 
-		aClass18_1201 = new GraphicsBuffer(method11(-756), 128, 265);
+		aClass18_1201 = new GraphicsBuffer(getGameComponent(), 128, 265);
 		Rasterizer.resetPixels();
-		aClass18_1202 = new GraphicsBuffer(method11(-756), 128, 265);
+		aClass18_1202 = new GraphicsBuffer(getGameComponent(), 128, 265);
 		Rasterizer.resetPixels();
-		aClass18_1198 = new GraphicsBuffer(method11(-756), 509, 171);
+		aClass18_1198 = new GraphicsBuffer(getGameComponent(), 509, 171);
 		Rasterizer.resetPixels();
-		aClass18_1199 = new GraphicsBuffer(method11(-756), 360, 132);
+		aClass18_1199 = new GraphicsBuffer(getGameComponent(), 360, 132);
 		Rasterizer.resetPixels();
-		aClass18_1200 = new GraphicsBuffer(method11(-756), 360, 200);
+		aClass18_1200 = new GraphicsBuffer(getGameComponent(), 360, 200);
 		Rasterizer.resetPixels();
-		aClass18_1203 = new GraphicsBuffer(method11(-756), 202, 238);
+		aClass18_1203 = new GraphicsBuffer(getGameComponent(), 202, 238);
 		Rasterizer.resetPixels();
-		aClass18_1204 = new GraphicsBuffer(method11(-756), 203, 238);
+		aClass18_1204 = new GraphicsBuffer(getGameComponent(), 203, 238);
 		Rasterizer.resetPixels();
-		aClass18_1205 = new GraphicsBuffer(method11(-756), 74, 94);
+		aClass18_1205 = new GraphicsBuffer(getGameComponent(), 74, 94);
 		Rasterizer.resetPixels();
-		aClass18_1206 = new GraphicsBuffer(method11(-756), 75, 94);
+		aClass18_1206 = new GraphicsBuffer(getGameComponent(), 75, 94);
 		Rasterizer.resetPixels();
 		if (aClass2_888 != null) {
 			method139(aBoolean1207);
@@ -4286,17 +4251,15 @@ public class client extends Applet_Sub1 {
 		aBoolean1046 = true;
 	}
 
-	public void method6() {
-		method13(20, true, "Starting up");
-		if (signlink.sunjava)
-			super.anInt8 = 5;
+	public void startUp() {
+		drawLoadingText(20, "Starting up");
 		if (aBoolean999) {
 			aBoolean1016 = true;
 			return;
 		}
 		aBoolean999 = true;
 		boolean flag = false;
-		String s = method37(-42588);
+		String s = method37();
 		if (s.endsWith("jagex.com"))
 			flag = true;
 		if (s.endsWith("runescape.com"))
@@ -4325,9 +4288,9 @@ public class client extends Applet_Sub1 {
 			aBoolean1097 = true;
 			return;
 		}
-		if (signlink.cache_dat != null) {
+		if (Signlink.cacheData != null) {
 			for (int i = 0; i < 5; i++)
-				aClass23Array1228[i] = new CacheIndex(i + 1, 0x927c0, signlink.cache_dat, signlink.cache_idx[i]);
+				aClass23Array1228[i] = new CacheIndex(i + 1, 0x927c0, Signlink.cacheData, Signlink.cacheIndexes[i]);
 
 		}
 		try {
@@ -4353,7 +4316,7 @@ public class client extends Applet_Sub1 {
 
 			aClass50_Sub1_Sub1_Sub1_1122 = new ImageRGB(512, 512);
 			Archive class2_6 = method61(14076, anIntArray837[5], "versionlist", 60, 5, "update list");
-			method13(60, true, "Connecting to update server");
+			drawLoadingText(60, "Connecting to update server");
 			aClass32_Sub1_1291 = new OnDemandFetcher();
 			aClass32_Sub1_1291.start(class2_6, this);
 			AnimationFrame.initialize(aClass32_Sub1_1291.getAnimationCount());
@@ -4374,7 +4337,7 @@ public class client extends Applet_Sub1 {
 					}
 				}
 			}
-			method13(65, true, "Requesting animations");
+			drawLoadingText(65, "Requesting animations");
 			int k = aClass32_Sub1_1291.getFileCount(1);
 			for (int l = 0; l < k; l++)
 				aClass32_Sub1_1291.request(1, l);
@@ -4382,7 +4345,7 @@ public class client extends Applet_Sub1 {
 			while (aClass32_Sub1_1291.getOutstandingRequestCount() > 0) {
 				int i1 = k - aClass32_Sub1_1291.getOutstandingRequestCount();
 				if (i1 > 0)
-					method13(65, true, "Loading animations - " + (i1 * 100) / k + "%");
+					drawLoadingText(65, "Loading animations - " + (i1 * 100) / k + "%");
 				method77(false);
 				try {
 					Thread.sleep(100L);
@@ -4393,7 +4356,7 @@ public class client extends Applet_Sub1 {
 					return;
 				}
 			}
-			method13(70, true, "Requesting models");
+			drawLoadingText(70, "Requesting models");
 			k = aClass32_Sub1_1291.getFileCount(0);
 			for (int j1 = 0; j1 < k; j1++) {
 				int k1 = aClass32_Sub1_1291.getModelIndex(j1);
@@ -4405,7 +4368,7 @@ public class client extends Applet_Sub1 {
 			while (aClass32_Sub1_1291.getOutstandingRequestCount() > 0) {
 				int l1 = k - aClass32_Sub1_1291.getOutstandingRequestCount();
 				if (l1 > 0)
-					method13(70, true, "Loading models - " + (l1 * 100) / k + "%");
+					drawLoadingText(70, "Loading models - " + (l1 * 100) / k + "%");
 				method77(false);
 				try {
 					Thread.sleep(100L);
@@ -4413,7 +4376,7 @@ public class client extends Applet_Sub1 {
 				}
 			}
 			if (aClass23Array1228[0] != null) {
-				method13(75, true, "Requesting maps");
+				drawLoadingText(75, "Requesting maps");
 				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(47, 48, 0));
 				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(47, 48, 1));
 				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(48, 48, 0));
@@ -4430,7 +4393,7 @@ public class client extends Applet_Sub1 {
 				while (aClass32_Sub1_1291.getOutstandingRequestCount() > 0) {
 					int i2 = k - aClass32_Sub1_1291.getOutstandingRequestCount();
 					if (i2 > 0)
-						method13(75, true, "Loading maps - " + (i2 * 100) / k + "%");
+						drawLoadingText(75, "Loading maps - " + (i2 * 100) / k + "%");
 					method77(false);
 					try {
 						Thread.sleep(100L);
@@ -4477,7 +4440,7 @@ public class client extends Applet_Sub1 {
 					aClass32_Sub1_1291.setExtraPriority(0, i3, (byte) 1);
 			}
 
-			method13(80, true, "Unpacking media");
+			drawLoadingText(80, "Unpacking media");
 			aClass50_Sub1_Sub1_Sub3_1185 = new IndexedImage(class2_2, "invback", 0);
 			aClass50_Sub1_Sub1_Sub3_1187 = new IndexedImage(class2_2, "chatback", 0);
 			aClass50_Sub1_Sub1_Sub3_1186 = new IndexedImage(class2_2, "mapback", 0);
@@ -4544,31 +4507,40 @@ public class client extends Applet_Sub1 {
 				aClass50_Sub1_Sub1_Sub3Array1142[k5] = new IndexedImage(class2_2, "mod_icons", k5);
 
 			ImageRGB class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backleft1", 0);
-			aClass18_906 = new GraphicsBuffer(method11(-756), class50_sub1_sub1_sub1.width, class50_sub1_sub1_sub1.height);
+			aClass18_906 = new GraphicsBuffer(getGameComponent(), class50_sub1_sub1_sub1.width,
+					class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
 			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backleft2", 0);
-			aClass18_907 = new GraphicsBuffer(method11(-756), class50_sub1_sub1_sub1.width, class50_sub1_sub1_sub1.height);
+			aClass18_907 = new GraphicsBuffer(getGameComponent(), class50_sub1_sub1_sub1.width,
+					class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
 			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backright1", 0);
-			aClass18_908 = new GraphicsBuffer(method11(-756), class50_sub1_sub1_sub1.width, class50_sub1_sub1_sub1.height);
+			aClass18_908 = new GraphicsBuffer(getGameComponent(), class50_sub1_sub1_sub1.width,
+					class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
 			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backright2", 0);
-			aClass18_909 = new GraphicsBuffer(method11(-756), class50_sub1_sub1_sub1.width, class50_sub1_sub1_sub1.height);
+			aClass18_909 = new GraphicsBuffer(getGameComponent(), class50_sub1_sub1_sub1.width,
+					class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
 			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backtop1", 0);
-			aClass18_910 = new GraphicsBuffer(method11(-756), class50_sub1_sub1_sub1.width, class50_sub1_sub1_sub1.height);
+			aClass18_910 = new GraphicsBuffer(getGameComponent(), class50_sub1_sub1_sub1.width,
+					class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
 			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backvmid1", 0);
-			aClass18_911 = new GraphicsBuffer(method11(-756), class50_sub1_sub1_sub1.width, class50_sub1_sub1_sub1.height);
+			aClass18_911 = new GraphicsBuffer(getGameComponent(), class50_sub1_sub1_sub1.width,
+					class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
 			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backvmid2", 0);
-			aClass18_912 = new GraphicsBuffer(method11(-756), class50_sub1_sub1_sub1.width, class50_sub1_sub1_sub1.height);
+			aClass18_912 = new GraphicsBuffer(getGameComponent(), class50_sub1_sub1_sub1.width,
+					class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
 			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backvmid3", 0);
-			aClass18_913 = new GraphicsBuffer(method11(-756), class50_sub1_sub1_sub1.width, class50_sub1_sub1_sub1.height);
+			aClass18_913 = new GraphicsBuffer(getGameComponent(), class50_sub1_sub1_sub1.width,
+					class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
 			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backhmid2", 0);
-			aClass18_914 = new GraphicsBuffer(method11(-756), class50_sub1_sub1_sub1.width, class50_sub1_sub1_sub1.height);
+			aClass18_914 = new GraphicsBuffer(getGameComponent(), class50_sub1_sub1_sub1.width,
+					class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
 			int l5 = (int) (Math.random() * 21D) - 10;
 			int i6 = (int) (Math.random() * 21D) - 10;
@@ -4581,11 +4553,11 @@ public class client extends Applet_Sub1 {
 					aClass50_Sub1_Sub1_Sub3Array1153[l6].adjustPalette(l5 + k6, i6 + k6, j6 + k6);
 			}
 
-			method13(83, true, "Unpacking textures");
+			drawLoadingText(83, "Unpacking textures");
 			Rasterizer3D.loadTextures(class2_3);
 			Rasterizer3D.setBrightness(0.80000000000000004D);
 			Rasterizer3D.initializeTexturePool(20);
-			method13(86, true, "Unpacking config");
+			drawLoadingText(86, "Unpacking config");
 			AnimationSequence.load(class2);
 			GameObjectDefinition.load(class2);
 			FloorDefinition.load(class2);
@@ -4597,16 +4569,16 @@ public class client extends Applet_Sub1 {
 			Varbit.load(class2);
 			ItemDefinition.membersWorld = aBoolean925;
 			if (!aBoolean926) {
-				method13(90, true, "Unpacking sounds");
+				drawLoadingText(90, "Unpacking sounds");
 				byte abyte0[] = class2_5.read("sounds.dat");
 				Buffer class50_sub1_sub2 = new Buffer(abyte0);
 				SoundTrack.load(class50_sub1_sub2);
 			}
-			method13(95, true, "Unpacking interfaces");
+			drawLoadingText(95, "Unpacking interfaces");
 			TypeFace aclass50_sub1_sub1_sub2[] = { aClass50_Sub1_Sub1_Sub2_1059, aClass50_Sub1_Sub1_Sub2_1060,
 					aClass50_Sub1_Sub1_Sub2_1061, aClass50_Sub1_Sub1_Sub2_1062 };
 			Widget.load(class2_1, class2_2, aclass50_sub1_sub1_sub2);
-			method13(100, true, "Preparing game engine");
+			drawLoadingText(100, "Preparing game engine");
 			for (int i7 = 0; i7 < 33; i7++) {
 				int j7 = 999;
 				int l7 = 0;
@@ -4665,13 +4637,13 @@ public class client extends Applet_Sub1 {
 			Class22.method277(334, 22845, ai, 800, 500, 512);
 			Class45.method373(class2_4);
 			aClass7_1248 = new MouseRecorder(this);
-			method12(aClass7_1248, 10);
+			startThread(aClass7_1248, 10);
 			DynamicObject.clientInstance = this;
 			GameObjectDefinition.clientInstance = this;
 			NpcDefinition.clientInstance = this;
 			return;
 		} catch (Exception exception) {
-			signlink.reporterror("loaderror " + aString1027 + " " + anInt1322);
+			Signlink.reportError("loaderror " + aString1027 + " " + anInt1322);
 		}
 		aBoolean1283 = true;
 	}
@@ -5226,14 +5198,14 @@ public class client extends Applet_Sub1 {
 	}
 
 	public void method74(int i) {
-		if (anInt1053 != -1 && (anInt1071 == 2 || super.aClass18_15 != null)) {
+		if (anInt1053 != -1 && (anInt1071 == 2 || super.gameBuffer != null)) {
 			if (anInt1071 == 2) {
 				method88(anInt951, anInt1053);
 				if (anInt960 != -1)
 					method88(anInt951, anInt960);
 				anInt951 = 0;
-				method147(anInt1140);
-				super.aClass18_15.bindRaster();
+				method147();
+				super.gameBuffer.bindRaster();
 				Rasterizer3D.scanlineOffsets = anIntArray1003;
 				Rasterizer.resetPixels();
 				aBoolean1046 = true;
@@ -5252,34 +5224,34 @@ public class client extends Applet_Sub1 {
 					method142(0, 0, class13_1, 0, 8);
 				}
 				if (!aBoolean1065) {
-					method91(-521);
+					method91();
 					method34((byte) -79);
 				} else {
 					method128(false);
 				}
 			}
-			super.aClass18_15.draw(super.aGraphics14, 0, 0);
+			super.gameBuffer.draw(super.graphics, 0, 0);
 			return;
 		}
 		if (aBoolean1046) {
 			method122(-906);
 			aBoolean1046 = false;
-			aClass18_906.draw(super.aGraphics14, 0, 4);
-			aClass18_907.draw(super.aGraphics14, 0, 357);
-			aClass18_908.draw(super.aGraphics14, 722, 4);
-			aClass18_909.draw(super.aGraphics14, 743, 205);
-			aClass18_910.draw(super.aGraphics14, 0, 0);
-			aClass18_911.draw(super.aGraphics14, 516, 4);
-			aClass18_912.draw(super.aGraphics14, 516, 205);
-			aClass18_913.draw(super.aGraphics14, 496, 357);
-			aClass18_914.draw(super.aGraphics14, 0, 338);
+			aClass18_906.draw(super.graphics, 0, 4);
+			aClass18_907.draw(super.graphics, 0, 357);
+			aClass18_908.draw(super.graphics, 722, 4);
+			aClass18_909.draw(super.graphics, 743, 205);
+			aClass18_910.draw(super.graphics, 0, 0);
+			aClass18_911.draw(super.graphics, 516, 4);
+			aClass18_912.draw(super.graphics, 516, 205);
+			aClass18_913.draw(super.graphics, 496, 357);
+			aClass18_914.draw(super.graphics, 0, 338);
 			aBoolean1181 = true;
 			aBoolean1240 = true;
 			aBoolean950 = true;
 			aBoolean1212 = true;
 			if (anInt1071 != 2) {
-				aClass18_1158.draw(super.aGraphics14, 4, 4);
-				aClass18_1157.draw(super.aGraphics14, 550, 4);
+				aClass18_1158.draw(super.graphics, 4, 4);
+				aClass18_1157.draw(super.graphics, 550, 4);
 			}
 			anInt1237++;
 			if (anInt1237 > 85) {
@@ -5288,7 +5260,7 @@ public class client extends Applet_Sub1 {
 			}
 		}
 		if (anInt1071 == 2)
-			method151(2);
+			method151();
 		if (aBoolean1065 && anInt1304 == 1)
 			aBoolean1181 = true;
 		if (anInt1089 != -1) {
@@ -5306,8 +5278,8 @@ public class client extends Applet_Sub1 {
 		}
 		if (anInt988 == -1 && anInt1244 == 0) {
 			aClass13_1249.scrollY = anInt1107 - anInt851 - 77;
-			if (super.anInt22 > 448 && super.anInt22 < 560 && super.anInt23 > 332)
-				method42(anInt1107, 0, aClass13_1249, (byte) 102, super.anInt23 - 357, -1, super.anInt22 - 17, 77, 463);
+			if (super.mouseX > 448 && super.mouseX < 560 && super.mouseY > 332)
+				method42(anInt1107, 0, aClass13_1249, (byte) 102, super.mouseY - 357, -1, super.mouseX - 17, 77, 463);
 			int j = anInt1107 - 77 - aClass13_1249.scrollY;
 			if (j < 0)
 				j = 0;
@@ -5321,8 +5293,8 @@ public class client extends Applet_Sub1 {
 		if (anInt988 == -1 && anInt1244 == 3) {
 			int k = anInt862 * 14 + 7;
 			aClass13_1249.scrollY = anInt865;
-			if (super.anInt22 > 448 && super.anInt22 < 560 && super.anInt23 > 332)
-				method42(k, 0, aClass13_1249, (byte) 102, super.anInt23 - 357, -1, super.anInt22 - 17, 77, 463);
+			if (super.mouseX > 448 && super.mouseX < 560 && super.mouseY > 332)
+				method42(k, 0, aClass13_1249, (byte) 102, super.mouseY - 357, -1, super.mouseX - 17, 77, 463);
 			int i1 = aClass13_1249.scrollY;
 			if (i1 < 0)
 				i1 = 0;
@@ -5352,7 +5324,7 @@ public class client extends Applet_Sub1 {
 		}
 		if (anInt1071 == 2) {
 			method87(503);
-			aClass18_1157.draw(super.aGraphics14, 550, 4);
+			aClass18_1157.draw(super.graphics, 550, 4);
 		}
 		if (anInt1213 != -1)
 			aBoolean950 = true;
@@ -5397,7 +5369,7 @@ public class client extends Applet_Sub1 {
 				if (anIntArray1081[6] != -1 && (anInt1213 != 6 || anInt1325 % 20 < 10))
 					aClass50_Sub1_Sub1_Sub3Array976[6].draw(208, 13);
 			}
-			aClass18_1110.draw(super.aGraphics14, 516, 160);
+			aClass18_1110.draw(super.graphics, 516, 160);
 			aClass18_1109.bindRaster();
 			aClass50_Sub1_Sub1_Sub3_966.draw(0, 0);
 			if (anInt1089 == -1) {
@@ -5430,7 +5402,7 @@ public class client extends Applet_Sub1 {
 				if (anIntArray1081[13] != -1 && (anInt1213 != 13 || anInt1325 % 20 < 10))
 					aClass50_Sub1_Sub1_Sub3Array976[12].draw(226, 2);
 			}
-			aClass18_1109.draw(super.aGraphics14, 496, 466);
+			aClass18_1109.draw(super.graphics, 496, 466);
 			aClass18_1158.bindRaster();
 			Rasterizer3D.scanlineOffsets = anIntArray1002;
 		}
@@ -5462,7 +5434,7 @@ public class client extends Applet_Sub1 {
 			if (anInt1227 == 2)
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Off", 324, 41, 0xff0000, true);
 			aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Report abuse", 458, 33, 0xffffff, true);
-			aClass18_1108.draw(super.aGraphics14, 0, 453);
+			aClass18_1108.draw(super.graphics, 0, 453);
 			aClass18_1158.bindRaster();
 			Rasterizer3D.scanlineOffsets = anIntArray1002;
 		}
@@ -5529,22 +5501,6 @@ public class client extends Applet_Sub1 {
 				}
 			}
 
-	}
-
-	public void init() {
-		anInt923 = Integer.parseInt(getParameter("nodeid"));
-		anInt924 = Integer.parseInt(getParameter("portoff"));
-		String s = getParameter("lowmem");
-		if (s != null && s.equals("1"))
-			method101(true);
-		else
-			method27(true);
-		String s1 = getParameter("free");
-		if (s1 != null && s1.equals("1"))
-			aBoolean925 = false;
-		else
-			aBoolean925 = true;
-		method2(765, 503, 2);
 	}
 
 	public void method76(int i) {
@@ -5615,11 +5571,10 @@ public class client extends Applet_Sub1 {
 			for (int j = 1; j > 0; j++)
 				;
 		}
-		return signlink.wavereplay();
+		return Signlink.replayWave();
 	}
 
 	public void method79(String s, String s1, boolean flag) {
-		signlink.errorname = s;
 		try {
 			if (!flag) {
 				aString957 = "";
@@ -5653,7 +5608,7 @@ public class client extends Applet_Sub1 {
 				aClass50_Sub1_Sub2_964.writeInt(ai[1]);
 				aClass50_Sub1_Sub2_964.writeInt(ai[2]);
 				aClass50_Sub1_Sub2_964.writeInt(ai[3]);
-				aClass50_Sub1_Sub2_964.writeInt(signlink.uid);
+				aClass50_Sub1_Sub2_964.writeInt(Signlink.uid);
 				aClass50_Sub1_Sub2_964.writeString(s);
 				aClass50_Sub1_Sub2_964.writeString(s1);
 				aClass50_Sub1_Sub2_964.encryptRsa(aBigInteger1316, aBigInteger840);
@@ -5692,7 +5647,7 @@ public class client extends Applet_Sub1 {
 				aLong902 = 0L;
 				anInt1299 = 0;
 				aClass7_1248.sampleCount = 0;
-				super.aBoolean19 = true;
+				super.hasFocus = true;
 				aBoolean1275 = true;
 				aBoolean1137 = true;
 				aClass50_Sub1_Sub2_964.position = 0;
@@ -5708,7 +5663,7 @@ public class client extends Applet_Sub1 {
 				anInt1197 = 0;
 				anInt1183 = 0;
 				aBoolean1065 = false;
-				super.anInt20 = 0;
+				super.idleCycles = 0;
 				for (int j1 = 0; j1 < 100; j1++)
 					aStringArray1298[j1] = null;
 
@@ -5986,8 +5941,8 @@ public class client extends Applet_Sub1 {
 			method35(true, false, i, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 0, 0, 2, k1 + 1, k, 0, l1,
 					((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
 		}
-		anInt1020 = super.anInt29;
-		anInt1021 = super.anInt30;
+		anInt1020 = super.clickX;
+		anInt1021 = super.clickY;
 		anInt1023 = 2;
 		anInt1022 = 0;
 		anInt869 += j;
@@ -6335,7 +6290,7 @@ public class client extends Applet_Sub1 {
 		}
 		if (aBoolean1065 && anInt1304 == 2)
 			method128(false);
-		aClass18_1159.draw(super.aGraphics14, 17, 357);
+		aClass18_1159.draw(super.graphics, 17, 357);
 		aClass18_1158.bindRaster();
 		Rasterizer3D.scanlineOffsets = anIntArray1002;
 		if (i != 0)
@@ -6382,7 +6337,7 @@ public class client extends Applet_Sub1 {
 		int k = 0;
 		while (anIntArray837[8] == 0) {
 			String s = "Unknown problem";
-			method13(20, true, "Connecting to web server");
+			drawLoadingText(20, "Connecting to web server");
 			try {
 				DataInputStream datainputstream = method31("crc" + (int) (Math.random() * 99999999D) + "-" + 377);
 				Buffer class50_sub1_sub2 = new Buffer(new byte[40]);
@@ -6409,17 +6364,17 @@ public class client extends Applet_Sub1 {
 			} catch (Exception _ex) {
 				s = "logic problem";
 				anIntArray837[8] = 0;
-				if (!signlink.reporterror)
+				if (!Signlink.reportErrors)
 					return;
 			}
 			if (anIntArray837[8] == 0) {
 				k++;
 				for (int l = i; l > 0; l--) {
 					if (k >= 10) {
-						method13(10, true, "Game updated - please reload page");
+						drawLoadingText(10, "Game updated - please reload page");
 						l = 10;
 					} else {
-						method13(10, true, s + " - Will retry in " + l + " secs.");
+						drawLoadingText(10, s + " - Will retry in " + l + " secs.");
 					}
 					try {
 						Thread.sleep(1000L);
@@ -6559,17 +6514,6 @@ public class client extends Applet_Sub1 {
 		Rasterizer3D.scanlineOffsets = anIntArray1002;
 	}
 
-	public URL getCodeBase() {
-		if (signlink.mainapp != null)
-			return signlink.mainapp.getCodeBase();
-		try {
-			if (super.aFrame_Sub1_17 != null)
-				return new URL("http://127.0.0.1:" + (80 + anInt924));
-		} catch (Exception _ex) {
-		}
-		return super.getCodeBase();
-	}
-
 	public boolean method88(int i, int j) {
 		boolean flag = false;
 		Widget class13 = Widget.get(j);
@@ -6632,19 +6576,19 @@ public class client extends Applet_Sub1 {
 			if (l == 0L)
 				return;
 			if (anInt855 >= 100) {
-				method47("", (byte) -123, "Your ignore list is full. Max of 100 hit", 0);
+				method47("", "Your ignore list is full. Max of 100 hit", 0);
 				return;
 			}
 			String s = TextFormatter.formatDisplayName(Base37.decode(l));
 			for (int j = 0; j < anInt855; j++)
 				if (aLongArray1073[j] == l) {
-					method47("", (byte) -123, s + " is already on your ignore list", 0);
+					method47("", s + " is already on your ignore list", 0);
 					return;
 				}
 
 			for (int k = 0; k < anInt859; k++)
 				if (aLongArray1130[k] == l) {
-					method47("", (byte) -123, "Please remove " + s + " from your friend list first", 0);
+					method47("", "Please remove " + s + " from your friend list first", 0);
 					return;
 				}
 
@@ -6654,17 +6598,15 @@ public class client extends Applet_Sub1 {
 			aClass50_Sub1_Sub2_964.writeLong(l);
 			return;
 		} catch (RuntimeException runtimeexception) {
-			signlink.reporterror("27939, " + i + ", " + l + ", " + runtimeexception.toString());
+			Signlink.reportError("27939, " + i + ", " + l + ", " + runtimeexception.toString());
 		}
 		throw new RuntimeException();
 	}
 
-	public void method7(byte byte0) {
+	public void processGameLoop() {
 		if (aBoolean1016 || aBoolean1283 || aBoolean1097)
 			return;
 		anInt1325++;
-		if (byte0 != -111)
-			return;
 		if (!aBoolean1137)
 			method149(-724);
 		else
@@ -6672,18 +6614,16 @@ public class client extends Applet_Sub1 {
 		method77(false);
 	}
 
-	public void method91(int i) {
+	public void method91() {
 		if (anInt1113 != 0)
 			return;
 		aStringArray1184[0] = "Cancel";
 		anIntArray981[0] = 1016;
 		anInt1183 = 1;
-		if (i >= 0)
-			anInt1004 = aClass24_899.nextInt();
 		if (anInt1053 != -1) {
 			anInt915 = 0;
 			anInt1315 = 0;
-			method66(0, Widget.get(anInt1053), 0, 0, 0, super.anInt22, 23658, super.anInt23);
+			method66(0, Widget.get(anInt1053), 0, 0, 0, super.mouseX, 23658, super.mouseY);
 			if (anInt915 != anInt1302)
 				anInt1302 = anInt915;
 			if (anInt1315 != anInt1129)
@@ -6693,9 +6633,9 @@ public class client extends Applet_Sub1 {
 		method111(anInt1178);
 		anInt915 = 0;
 		anInt1315 = 0;
-		if (super.anInt22 > 4 && super.anInt23 > 4 && super.anInt22 < 516 && super.anInt23 < 338)
+		if (super.mouseX > 4 && super.mouseY > 4 && super.mouseX < 516 && super.mouseY < 338)
 			if (anInt1169 != -1)
-				method66(4, Widget.get(anInt1169), 0, 0, 4, super.anInt22, 23658, super.anInt23);
+				method66(4, Widget.get(anInt1169), 0, 0, 4, super.mouseX, 23658, super.mouseY);
 			else
 				method43((byte) 7);
 		if (anInt915 != anInt1302)
@@ -6704,11 +6644,11 @@ public class client extends Applet_Sub1 {
 			anInt1129 = anInt1315;
 		anInt915 = 0;
 		anInt1315 = 0;
-		if (super.anInt22 > 553 && super.anInt23 > 205 && super.anInt22 < 743 && super.anInt23 < 466)
+		if (super.mouseX > 553 && super.mouseY > 205 && super.mouseX < 743 && super.mouseY < 466)
 			if (anInt1089 != -1)
-				method66(205, Widget.get(anInt1089), 1, 0, 553, super.anInt22, 23658, super.anInt23);
+				method66(205, Widget.get(anInt1089), 1, 0, 553, super.mouseX, 23658, super.mouseY);
 			else if (anIntArray1081[anInt1285] != -1)
-				method66(205, Widget.get(anIntArray1081[anInt1285]), 1, 0, 553, super.anInt22, 23658, super.anInt23);
+				method66(205, Widget.get(anIntArray1081[anInt1285]), 1, 0, 553, super.mouseX, 23658, super.mouseY);
 		if (anInt915 != anInt1280) {
 			aBoolean1181 = true;
 			anInt1280 = anInt915;
@@ -6719,13 +6659,13 @@ public class client extends Applet_Sub1 {
 		}
 		anInt915 = 0;
 		anInt1315 = 0;
-		if (super.anInt22 > 17 && super.anInt23 > 357 && super.anInt22 < 496 && super.anInt23 < 453)
+		if (super.mouseX > 17 && super.mouseY > 357 && super.mouseX < 496 && super.mouseY < 453)
 			if (anInt988 != -1)
-				method66(357, Widget.get(anInt988), 2, 0, 17, super.anInt22, 23658, super.anInt23);
+				method66(357, Widget.get(anInt988), 2, 0, 17, super.mouseX, 23658, super.mouseY);
 			else if (anInt1191 != -1)
-				method66(357, Widget.get(anInt1191), 3, 0, 17, super.anInt22, 23658, super.anInt23);
-			else if (super.anInt23 < 434 && super.anInt22 < 426 && anInt1244 == 0)
-				method113(466, super.anInt22 - 17, super.anInt23 - 357);
+				method66(357, Widget.get(anInt1191), 3, 0, 17, super.mouseX, 23658, super.mouseY);
+			else if (super.mouseY < 434 && super.mouseX < 426 && anInt1244 == 0)
+				method113(466, super.mouseX - 17, super.mouseY - 357);
 		if ((anInt988 != -1 || anInt1191 != -1) && anInt915 != anInt1106) {
 			aBoolean1240 = true;
 			anInt1106 = anInt915;
@@ -6814,7 +6754,8 @@ public class client extends Applet_Sub1 {
 					int l5 = (anIntArray856[j3] & 0xff) * 64 - anInt1041;
 					byte abyte0[] = aByteArrayArray838[j3];
 					if (abyte0 != null)
-						class8.loadTerrainRegion(abyte0, j4, l5, (anInt889 - 6) * 8, (anInt890 - 6) * 8, aClass46Array1260);
+						class8.loadTerrainRegion(abyte0, j4, l5, (anInt889 - 6) * 8, (anInt890 - 6) * 8,
+								aClass46Array1260);
 				}
 
 				for (int k4 = 0; k4 < l2; k4++) {
@@ -6851,8 +6792,8 @@ public class client extends Applet_Sub1 {
 								for (int j12 = 0; j12 < anIntArray856.length; j12++) {
 									if (anIntArray856[j12] != l11 || aByteArrayArray838[j12] == null)
 										continue;
-									class8.loadTerrainChunk(aByteArrayArray838[j12], l9, (l10 & 7) * 8, (j11 & 7) * 8, k3, l4 * 8, k6 * 8,
-											j10, aClass46Array1260);
+									class8.loadTerrainChunk(aByteArrayArray838[j12], l9, (l10 & 7) * 8, (j11 & 7) * 8,
+											k3, l4 * 8, k6 * 8, j10, aClass46Array1260);
 									flag = true;
 									break;
 								}
@@ -6928,11 +6869,11 @@ public class client extends Applet_Sub1 {
 		} catch (Exception exception) {
 		}
 		GameObjectDefinition.clearModelCaches();
-		if (super.aFrame_Sub1_17 != null) {
+		if (super.gameFrame != null) {
 			aClass50_Sub1_Sub2_964.writeOpcode(78);
 			aClass50_Sub1_Sub2_964.writeInt(0x3f008edd);
 		}
-		if (aBoolean926 && signlink.cache_dat != null) {
+		if (aBoolean926 && Signlink.cacheData != null) {
 			int k = aClass32_Sub1_1291.getFileCount(0);
 			for (int j1 = 0; j1 < k; j1++) {
 				int i2 = aClass32_Sub1_1291.getModelIndex(j1);
@@ -7036,13 +6977,13 @@ public class client extends Applet_Sub1 {
 		}
 
 		if (class50_sub1_sub2.position != i) {
-			signlink.reporterror(
+			Signlink.reportError(
 					"Error packet size mismatch in getplayer pos:" + class50_sub1_sub2.position + " psize:" + i);
 			throw new RuntimeException("eek");
 		}
 		for (int i1 = 0; i1 < anInt971; i1++)
 			if (aClass50_Sub1_Sub4_Sub3_Sub2Array970[anIntArray972[i1]] == null) {
-				signlink.reporterror(aString1092 + " null entry in pl list - pos:" + i1 + " size:" + anInt971);
+				Signlink.reportError(aString1092 + " null entry in pl list - pos:" + i1 + " size:" + anInt971);
 				throw new RuntimeException("eek");
 			}
 
@@ -7068,16 +7009,9 @@ public class client extends Applet_Sub1 {
 			i = 42 / i;
 			return;
 		} catch (RuntimeException runtimeexception) {
-			signlink.reporterror("45745, " + i + ", " + l + ", " + runtimeexception.toString());
+			Signlink.reportError("45745, " + i + ", " + l + ", " + runtimeexception.toString());
 		}
 		throw new RuntimeException();
-	}
-
-	public String getParameter(String s) {
-		if (signlink.mainapp != null)
-			return signlink.mainapp.getParameter(s);
-		else
-			return super.getParameter(s);
 	}
 
 	public void method98(int i) {
@@ -7133,7 +7067,7 @@ public class client extends Applet_Sub1 {
 			k1 += k2;
 		}
 
-		aClass18_1201.draw(super.aGraphics14, 0, 0);
+		aClass18_1201.draw(super.graphics, 0, 0);
 		i = 66 / i;
 		for (int j2 = 0; j2 < 33920; j2++)
 			aClass18_1202.pixels[j2] = aClass50_Sub1_Sub1_Sub1_1018.pixels[j2];
@@ -7162,15 +7096,15 @@ public class client extends Applet_Sub1 {
 			k1 += 128 - l3 - j3;
 		}
 
-		aClass18_1202.draw(super.aGraphics14, 637, 0);
+		aClass18_1202.draw(super.graphics, 637, 0);
 	}
 
 	public void method99(boolean flag, byte byte0, int i) {
 		if (byte0 != 8)
 			aClass50_Sub1_Sub2_964.writeByte(49);
-		signlink.midivol = i;
+		Signlink.midiVolume = i;
 		if (flag)
-			signlink.midi = "voladjust";
+			Signlink.midi = "voladjust";
 	}
 
 	public void method100(int i) {
@@ -7206,23 +7140,23 @@ public class client extends Applet_Sub1 {
 			if (l == 0L)
 				return;
 			if (anInt859 >= 100 && anInt1068 != 1) {
-				method47("", (byte) -123, "Your friendlist is full. Max of 100 for free users, and 200 for members", 0);
+				method47("", "Your friendlist is full. Max of 100 for free users, and 200 for members", 0);
 				return;
 			}
 			if (anInt859 >= 200) {
-				method47("", (byte) -123, "Your friendlist is full. Max of 100 for free users, and 200 for members", 0);
+				method47("", "Your friendlist is full. Max of 100 for free users, and 200 for members", 0);
 				return;
 			}
 			String s = TextFormatter.formatDisplayName(Base37.decode(l));
 			for (int j = 0; j < anInt859; j++)
 				if (aLongArray1130[j] == l) {
-					method47("", (byte) -123, s + " is already on your friend list", 0);
+					method47("", s + " is already on your friend list", 0);
 					return;
 				}
 
 			for (int k = 0; k < anInt855; k++)
 				if (aLongArray1073[k] == l) {
-					method47("", (byte) -123, "Please remove " + s + " from your ignore list first", 0);
+					method47("", "Please remove " + s + " from your ignore list first", 0);
 					return;
 				}
 
@@ -7239,16 +7173,12 @@ public class client extends Applet_Sub1 {
 			aClass50_Sub1_Sub2_964.writeLong(l);
 			return;
 		} catch (RuntimeException runtimeexception) {
-			signlink.reporterror("94629, " + l + ", " + i + ", " + runtimeexception.toString());
+			Signlink.reportError("94629, " + l + ", " + i + ", " + runtimeexception.toString());
 		}
 		throw new RuntimeException();
 	}
 
-	public void method103(byte byte0, Widget class13) {
-		if (byte0 == 2)
-			byte0 = 0;
-		else
-			anInt1004 = -82;
+	public void method103(Widget class13) {
 		int i = class13.contentType;
 		if (i >= 1 && i <= 100 || i >= 701 && i <= 800) {
 			if (i == 1 && anInt860 == 0) {
@@ -7444,7 +7374,7 @@ public class client extends Applet_Sub1 {
 				s1 = "yesterday";
 			else
 				s1 = k1 + " days ago";
-			class13.text = "You last logged in @red@" + s1 + "@bla@ from: @red@" + signlink.dns;
+			class13.text = "You last logged in @red@" + s1 + "@bla@ from: @red@" + Signlink.dns;
 		}
 		if (i == 661)
 			if (anInt1034 == 0)
@@ -7637,13 +7567,13 @@ public class client extends Applet_Sub1 {
 
 		j += 8;
 		int i1 = 15 * anInt1183 + 21;
-		if (super.anInt29 > 4 && super.anInt30 > 4 && super.anInt29 < 516 && super.anInt30 < 338) {
-			int j1 = super.anInt29 - 4 - j / 2;
+		if (super.clickX > 4 && super.clickY > 4 && super.clickX < 516 && super.clickY < 338) {
+			int j1 = super.clickX - 4 - j / 2;
 			if (j1 + j > 512)
 				j1 = 512 - j;
 			if (j1 < 0)
 				j1 = 0;
-			int i2 = super.anInt30 - 4;
+			int i2 = super.clickY - 4;
 			if (i2 + i1 > 334)
 				i2 = 334 - i1;
 			if (i2 < 0)
@@ -7655,13 +7585,13 @@ public class client extends Applet_Sub1 {
 			anInt1307 = j;
 			anInt1308 = 15 * anInt1183 + 22;
 		}
-		if (super.anInt29 > 553 && super.anInt30 > 205 && super.anInt29 < 743 && super.anInt30 < 466) {
-			int k1 = super.anInt29 - 553 - j / 2;
+		if (super.clickX > 553 && super.clickY > 205 && super.clickX < 743 && super.clickY < 466) {
+			int k1 = super.clickX - 553 - j / 2;
 			if (k1 < 0)
 				k1 = 0;
 			else if (k1 + j > 190)
 				k1 = 190 - j;
-			int j2 = super.anInt30 - 205;
+			int j2 = super.clickY - 205;
 			if (j2 < 0)
 				j2 = 0;
 			else if (j2 + i1 > 261)
@@ -7673,13 +7603,13 @@ public class client extends Applet_Sub1 {
 			anInt1307 = j;
 			anInt1308 = 15 * anInt1183 + 22;
 		}
-		if (super.anInt29 > 17 && super.anInt30 > 357 && super.anInt29 < 496 && super.anInt30 < 453) {
-			int l1 = super.anInt29 - 17 - j / 2;
+		if (super.clickX > 17 && super.clickY > 357 && super.clickX < 496 && super.clickY < 453) {
+			int l1 = super.clickX - 17 - j / 2;
 			if (l1 < 0)
 				l1 = 0;
 			else if (l1 + j > 479)
 				l1 = 479 - j;
-			int k2 = super.anInt30 - 357;
+			int k2 = super.clickY - 357;
 			if (k2 < 0)
 				k2 = 0;
 			else if (k2 + i1 > 96)
@@ -7709,7 +7639,7 @@ public class client extends Applet_Sub1 {
 		}
 		method107(-7);
 		if (!aBoolean1065) {
-			method91(-521);
+			method91();
 			method34((byte) -79);
 		} else if (anInt1304 == 0)
 			method128(false);
@@ -7719,11 +7649,11 @@ public class client extends Applet_Sub1 {
 			char c = '\u01FB';
 			int k = 20;
 			int i1 = 0xffff00;
-			if (super.anInt10 < 30 && aBoolean926)
+			if (super.fps < 30 && aBoolean926)
 				i1 = 0xff0000;
-			if (super.anInt10 < 20 && !aBoolean926)
+			if (super.fps < 20 && !aBoolean926)
 				i1 = 0xff0000;
-			aClass50_Sub1_Sub1_Sub2_1060.drawRightAlignedText("Fps:" + super.anInt10, c, k, i1);
+			aClass50_Sub1_Sub1_Sub2_1060.drawRightAlignedText("Fps:" + super.fps, c, k, i1);
 			k += 15;
 			Runtime runtime = Runtime.getRuntime();
 			int j1 = (int) ((runtime.totalMemory() - runtime.freeMemory()) / 1024L);
@@ -7780,13 +7710,6 @@ public class client extends Applet_Sub1 {
 		return i2 * (128 - l1) + j2 * l1 >> 7;
 	}
 
-	public AppletContext getAppletContext() {
-		if (signlink.mainapp != null)
-			return signlink.mainapp.getAppletContext();
-		else
-			return super.getAppletContext();
-	}
-
 	public void method111(int i) {
 		i = 21 / i;
 		if (anInt1223 == 0)
@@ -7809,12 +7732,12 @@ public class client extends Applet_Sub1 {
 				}
 				if ((l == 3 || l == 7) && (l == 7 || anInt887 == 0 || anInt887 == 1 && method148(13292, s))) {
 					int i1 = 329 - j * 13;
-					if (super.anInt22 > 4 && super.anInt23 - 4 > i1 - 10 && super.anInt23 - 4 <= i1 + 3) {
+					if (super.mouseX > 4 && super.mouseY - 4 > i1 - 10 && super.mouseY - 4 <= i1 + 3) {
 						int j1 = aClass50_Sub1_Sub1_Sub2_1060.getFormattedTextWidth("From:  " + s + aStringArray1298[k])
 								+ 25;
 						if (j1 > 450)
 							j1 = 450;
-						if (super.anInt22 < 4 + j1) {
+						if (super.mouseX < 4 + j1) {
 							if (anInt867 >= 1) {
 								aStringArray1184[anInt1183] = "Report abuse @whi@" + s;
 								anIntArray981[anInt1183] = 2507;
@@ -7938,7 +7861,7 @@ public class client extends Applet_Sub1 {
 
 		}
 		if (k > anInt971) {
-			signlink.reporterror(aString1092 + " Too many players");
+			Signlink.reportError(aString1092 + " Too many players");
 			throw new RuntimeException("eek");
 		}
 		anInt971 = 0;
@@ -8071,7 +7994,7 @@ public class client extends Applet_Sub1 {
 		if (abyte0 == null)
 			return true;
 		else
-			return signlink.wavesave(abyte0, j);
+			return Signlink.saveWave(abyte0, j);
 	}
 
 	public int method117(byte byte0) {
@@ -8079,7 +8002,7 @@ public class client extends Applet_Sub1 {
 		if (byte0 == aByte956)
 			byte0 = 0;
 		else
-			method6();
+			startUp();
 		if (anInt1219 < 310) {
 			anInt978++;
 			if (anInt978 > 1457) {
@@ -8176,16 +8099,10 @@ public class client extends Applet_Sub1 {
 			return 3;
 	}
 
-	public void method12(Runnable runnable, int i) {
+	public void startThread(Runnable runnable, int i) {
 		if (i > 10)
 			i = 10;
-		if (signlink.mainapp != null) {
-			signlink.startthread(runnable, i);
-			return;
-		} else {
-			super.method12(runnable, i);
-			return;
-		}
+		Signlink.startThread(runnable, i);
 	}
 
 	public void method119(int i, boolean flag) {
@@ -8269,8 +8186,8 @@ public class client extends Applet_Sub1 {
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
 						((Actor) (class50_sub1_sub4_sub3_sub2)).pathX[0], 0, 0,
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-				anInt1020 = super.anInt29;
-				anInt1021 = super.anInt30;
+				anInt1020 = super.clickX;
+				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
 				aClass50_Sub1_Sub2_964.writeOpcode(245);
@@ -8304,8 +8221,8 @@ public class client extends Applet_Sub1 {
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
 						((Actor) (class50_sub1_sub4_sub3_sub2_1)).pathX[0], 0, 0,
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-				anInt1020 = super.anInt29;
-				anInt1021 = super.anInt30;
+				anInt1020 = super.clickX;
+				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
 				aClass50_Sub1_Sub2_964.writeOpcode(45);
@@ -8319,8 +8236,8 @@ public class client extends Applet_Sub1 {
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
 						((Actor) (class50_sub1_sub4_sub3_sub1)).pathX[0], 0, 0,
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-				anInt1020 = super.anInt29;
-				anInt1021 = super.anInt30;
+				anInt1020 = super.clickX;
+				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
 				aClass50_Sub1_Sub2_964.writeOpcode(67);
@@ -8377,8 +8294,8 @@ public class client extends Applet_Sub1 {
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
 						((Actor) (class50_sub1_sub4_sub3_sub1_1)).pathX[0], 0, 0,
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-				anInt1020 = super.anInt29;
-				anInt1021 = super.anInt30;
+				anInt1020 = super.clickX;
+				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
 				aClass50_Sub1_Sub2_964.writeOpcode(42);
@@ -8392,8 +8309,8 @@ public class client extends Applet_Sub1 {
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
 						((Actor) (class50_sub1_sub4_sub3_sub2_2)).pathX[0], 0, 0,
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-				anInt1020 = super.anInt29;
-				anInt1021 = super.anInt30;
+				anInt1020 = super.clickX;
+				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
 				aClass50_Sub1_Sub2_964.writeOpcode(116);
@@ -8421,8 +8338,8 @@ public class client extends Applet_Sub1 {
 			if (!flag)
 				flag = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0, k,
 						0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-			anInt1020 = super.anInt29;
-			anInt1021 = super.anInt30;
+			anInt1020 = super.clickX;
+			anInt1021 = super.clickY;
 			anInt1023 = 2;
 			anInt1022 = 0;
 			aClass50_Sub1_Sub2_964.writeOpcode(54);
@@ -8451,8 +8368,8 @@ public class client extends Applet_Sub1 {
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
 						((Actor) (class50_sub1_sub4_sub3_sub1_2)).pathX[0], 0, 0,
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-				anInt1020 = super.anInt29;
-				anInt1021 = super.anInt30;
+				anInt1020 = super.clickX;
+				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
 				aClass50_Sub1_Sub2_964.writeOpcode(57);
@@ -8480,8 +8397,8 @@ public class client extends Applet_Sub1 {
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
 						((Actor) (class50_sub1_sub4_sub3_sub2_3)).pathX[0], 0, 0,
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-				anInt1020 = super.anInt29;
-				anInt1021 = super.anInt30;
+				anInt1020 = super.clickX;
+				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
 				aClass50_Sub1_Sub2_964.writeOpcode(233);
@@ -8490,7 +8407,7 @@ public class client extends Applet_Sub1 {
 		}
 		if (i1 == 14)
 			if (!aBoolean1065)
-				aClass22_1164.method279(0, super.anInt29 - 4, super.anInt30 - 4);
+				aClass22_1164.method279(0, super.clickX - 4, super.clickY - 4);
 			else
 				aClass22_1164.method279(0, k - 4, l - 4);
 		if (i1 == 903) {
@@ -8532,8 +8449,8 @@ public class client extends Applet_Sub1 {
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
 						((Actor) (class50_sub1_sub4_sub3_sub1_3)).pathX[0], 0, 0,
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-				anInt1020 = super.anInt29;
-				anInt1021 = super.anInt30;
+				anInt1020 = super.clickX;
+				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
 				anInt1235 += j1;
@@ -8560,8 +8477,8 @@ public class client extends Applet_Sub1 {
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
 						((Actor) (class50_sub1_sub4_sub3_sub1_4)).pathX[0], 0, 0,
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-				anInt1020 = super.anInt29;
-				anInt1021 = super.anInt30;
+				anInt1020 = super.clickX;
+				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
 				aClass50_Sub1_Sub2_964.writeOpcode(8);
@@ -8577,8 +8494,8 @@ public class client extends Applet_Sub1 {
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
 						((Actor) (class50_sub1_sub4_sub3_sub2_4)).pathX[0], 0, 0,
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-				anInt1020 = super.anInt29;
-				anInt1021 = super.anInt30;
+				anInt1020 = super.clickX;
+				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
 				aClass50_Sub1_Sub2_964.writeOpcode(31);
@@ -8593,8 +8510,8 @@ public class client extends Applet_Sub1 {
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
 						((Actor) (class50_sub1_sub4_sub3_sub1_5)).pathX[0], 0, 0,
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-				anInt1020 = super.anInt29;
-				anInt1021 = super.anInt30;
+				anInt1020 = super.clickX;
+				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
 				aClass50_Sub1_Sub2_964.writeOpcode(104);
@@ -8608,8 +8525,8 @@ public class client extends Applet_Sub1 {
 			if (!flag1)
 				flag1 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0, k,
 						0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-			anInt1020 = super.anInt29;
-			anInt1021 = super.anInt30;
+			anInt1020 = super.clickX;
+			anInt1021 = super.clickY;
 			anInt1023 = 2;
 			anInt1022 = 0;
 			aClass50_Sub1_Sub2_964.writeOpcode(77);
@@ -8623,8 +8540,8 @@ public class client extends Applet_Sub1 {
 			if (!flag2)
 				flag2 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0, k,
 						0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-			anInt1020 = super.anInt29;
-			anInt1021 = super.anInt30;
+			anInt1020 = super.clickX;
+			anInt1021 = super.clickY;
 			anInt1023 = 2;
 			anInt1022 = 0;
 			if ((j1 & 3) == 0)
@@ -8668,7 +8585,7 @@ public class client extends Applet_Sub1 {
 				}
 
 				if (!flag8)
-					method47("", (byte) -123, "Unable to find " + s7, 0);
+					method47("", "Unable to find " + s7, 0);
 			}
 		}
 		if (i1 == 225) {
@@ -8779,7 +8696,7 @@ public class client extends Applet_Sub1 {
 				s5 = new String(class16.description);
 			else
 				s5 = "It's a " + class16.name + ".";
-			method47("", (byte) -123, s5, 0);
+			method47("", s5, 0);
 		}
 		if (i1 == 352) {
 			Widget class13_2 = Widget.get(l);
@@ -8799,7 +8716,7 @@ public class client extends Applet_Sub1 {
 				s9 = new String(class47.description);
 			else
 				s9 = "It's a " + class47.name + ".";
-			method47("", (byte) -123, s9, 0);
+			method47("", s9, 0);
 		}
 		if (i1 == 575 && !aBoolean1239) {
 			aClass50_Sub1_Sub2_964.writeOpcode(226);
@@ -8819,8 +8736,8 @@ public class client extends Applet_Sub1 {
 			if (!flag3)
 				flag3 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0, k,
 						0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-			anInt1020 = super.anInt29;
-			anInt1021 = super.anInt30;
+			anInt1020 = super.clickX;
+			anInt1021 = super.clickY;
 			anInt1023 = 2;
 			anInt1022 = 0;
 			aClass50_Sub1_Sub2_964.writeOpcode(230);
@@ -8835,8 +8752,8 @@ public class client extends Applet_Sub1 {
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
 						((Actor) (class50_sub1_sub4_sub3_sub2_5)).pathX[0], 0, 0,
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-				anInt1020 = super.anInt29;
-				anInt1021 = super.anInt30;
+				anInt1020 = super.clickX;
+				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
 				aClass50_Sub1_Sub2_964.writeOpcode(143);
@@ -8852,8 +8769,8 @@ public class client extends Applet_Sub1 {
 			if (!flag4)
 				flag4 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0, k,
 						0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-			anInt1020 = super.anInt29;
-			anInt1021 = super.anInt30;
+			anInt1020 = super.clickX;
+			anInt1021 = super.clickY;
 			anInt1023 = 2;
 			anInt1022 = 0;
 			aClass50_Sub1_Sub2_964.writeOpcode(211);
@@ -8876,7 +8793,7 @@ public class client extends Applet_Sub1 {
 						s10 = new String(class37.description);
 					else
 						s10 = "It's a " + class37.name + ".";
-					method47("", (byte) -123, s10, 0);
+					method47("", s10, 0);
 				}
 			}
 		}
@@ -8886,8 +8803,8 @@ public class client extends Applet_Sub1 {
 			if (!flag5)
 				flag5 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0, k,
 						0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-			anInt1020 = super.anInt29;
-			anInt1021 = super.anInt30;
+			anInt1020 = super.clickX;
+			anInt1021 = super.clickY;
 			anInt1023 = 2;
 			anInt1022 = 0;
 			anInt1100++;
@@ -8925,8 +8842,7 @@ public class client extends Applet_Sub1 {
 					aBoolean1098 = false;
 					anInt1231 = anInt1169 = Widget.reportAbuseInterfaceId;
 				} else {
-					method47("", (byte) -123, "Please close the interface you have open before using 'report abuse'",
-							0);
+					method47("", "Please close the interface you have open before using 'report abuse'", 0);
 				}
 		}
 		if (i1 == 389) {
@@ -8994,8 +8910,8 @@ public class client extends Applet_Sub1 {
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
 						((Actor) (class50_sub1_sub4_sub3_sub1_7)).pathX[0], 0, 0,
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-				anInt1020 = super.anInt29;
-				anInt1021 = super.anInt30;
+				anInt1020 = super.clickX;
+				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
 				aClass50_Sub1_Sub2_964.writeOpcode(112);
@@ -9008,8 +8924,8 @@ public class client extends Applet_Sub1 {
 			if (!flag6)
 				flag6 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0, k,
 						0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-			anInt1020 = super.anInt29;
-			anInt1021 = super.anInt30;
+			anInt1020 = super.clickX;
+			anInt1021 = super.clickY;
 			anInt1023 = 2;
 			anInt1022 = 0;
 			aClass50_Sub1_Sub2_964.writeOpcode(83);
@@ -9040,7 +8956,7 @@ public class client extends Applet_Sub1 {
 				s6 = new String(class16_1.description);
 			else
 				s6 = "It's a " + class16_1.name + ".";
-			method47("", (byte) -123, s6, 0);
+			method47("", s6, 0);
 		}
 		if (i1 == 408) {
 			Player class50_sub1_sub4_sub3_sub2_6 = aClass50_Sub1_Sub4_Sub3_Sub2Array970[j1];
@@ -9049,8 +8965,8 @@ public class client extends Applet_Sub1 {
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 1, 1, 2, 0,
 						((Actor) (class50_sub1_sub4_sub3_sub2_6)).pathX[0], 0, 0,
 						((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
-				anInt1020 = super.anInt29;
-				anInt1021 = super.anInt30;
+				anInt1020 = super.clickX;
+				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
 				aClass50_Sub1_Sub2_964.writeOpcode(194);
@@ -9290,7 +9206,7 @@ public class client extends Applet_Sub1 {
 			return;
 		} else {
 			method141(28614);
-			super.aClass18_15 = null;
+			super.gameBuffer = null;
 			aClass18_1198 = null;
 			aClass18_1199 = null;
 			aClass18_1200 = null;
@@ -9300,16 +9216,16 @@ public class client extends Applet_Sub1 {
 			aClass18_1204 = null;
 			aClass18_1205 = null;
 			aClass18_1206 = null;
-			aClass18_1159 = new GraphicsBuffer(method11(-756), 479, 96);
-			aClass18_1157 = new GraphicsBuffer(method11(-756), 172, 156);
+			aClass18_1159 = new GraphicsBuffer(getGameComponent(), 479, 96);
+			aClass18_1157 = new GraphicsBuffer(getGameComponent(), 172, 156);
 			Rasterizer.resetPixels();
 			aClass50_Sub1_Sub1_Sub3_1186.draw(0, 0);
-			aClass18_1156 = new GraphicsBuffer(method11(-756), 190, 261);
-			aClass18_1158 = new GraphicsBuffer(method11(-756), 512, 334);
+			aClass18_1156 = new GraphicsBuffer(getGameComponent(), 190, 261);
+			aClass18_1158 = new GraphicsBuffer(getGameComponent(), 512, 334);
 			Rasterizer.resetPixels();
-			aClass18_1108 = new GraphicsBuffer(method11(-756), 496, 50);
-			aClass18_1109 = new GraphicsBuffer(method11(-756), 269, 37);
-			aClass18_1110 = new GraphicsBuffer(method11(-756), 249, 45);
+			aClass18_1108 = new GraphicsBuffer(getGameComponent(), 496, 50);
+			aClass18_1109 = new GraphicsBuffer(getGameComponent(), 269, 37);
+			aClass18_1110 = new GraphicsBuffer(getGameComponent(), 249, 45);
 			aBoolean1046 = true;
 			aClass18_1158.bindRaster();
 			Rasterizer3D.scanlineOffsets = anIntArray1002;
@@ -9318,11 +9234,11 @@ public class client extends Applet_Sub1 {
 	}
 
 	public void method123(int i) {
-		Graphics g = method11(-756).getGraphics();
+		Graphics g = getGameComponent().getGraphics();
 		g.setColor(Color.black);
 		i = 68 / i;
 		g.fillRect(0, 0, 765, 503);
-		method4((byte) 103, 1);
+		setTargetFps(1);
 		if (aBoolean1283) {
 			aBoolean1243 = false;
 			g.setFont(new Font("Helvetica", 1, 16));
@@ -9411,11 +9327,11 @@ public class client extends Applet_Sub1 {
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredText(s, 257, j, 0);
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredText(s, 256, j - 1, 0xffffff);
 			}
-			aClass18_1158.draw(super.aGraphics14, 4, 4);
+			aClass18_1158.draw(super.graphics, 4, 4);
 			return;
 		}
-		if (super.aClass18_15 != null) {
-			super.aClass18_15.bindRaster();
+		if (super.gameBuffer != null) {
+			super.gameBuffer.bindRaster();
 			Rasterizer3D.scanlineOffsets = anIntArray1003;
 			int k = 251;
 			char c = '\u012C';
@@ -9431,7 +9347,7 @@ public class client extends Applet_Sub1 {
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredText(s, 383, k, 0);
 				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredText(s, 382, k - 1, 0xffffff);
 			}
-			super.aClass18_15.draw(super.aGraphics14, 0, 0);
+			super.gameBuffer.draw(super.graphics, 0, 0);
 		}
 	}
 
@@ -9454,14 +9370,12 @@ public class client extends Applet_Sub1 {
 			aClass50_Sub1_Sub1_Sub1Array954[0].drawImage(anInt932 - 12, anInt933 - 28);
 	}
 
-	public void method9(int i) {
+	public void processDrawing() {
 		if (aBoolean1016 || aBoolean1283 || aBoolean1097) {
 			method123(281);
 			return;
 		}
 		anInt1309++;
-		if (i <= 0)
-			anInt1004 = -382;
 		if (!aBoolean1137)
 			method131((byte) -50, false);
 		else
@@ -9481,8 +9395,8 @@ public class client extends Applet_Sub1 {
 		Rasterizer.drawFilledRectangle(i + 1, j + 1, k - 2, 16, 0);
 		Rasterizer.drawUnfilledRectangle(i + 1, j + 18, k - 2, l - 19, 0);
 		aClass50_Sub1_Sub1_Sub2_1061.drawText("Choose Option", i + 3, j + 14, i1);
-		int j1 = super.anInt22;
-		int k1 = super.anInt23;
+		int j1 = super.mouseX;
+		int k1 = super.mouseY;
 		if (anInt1304 == 0) {
 			j1 -= 4;
 			k1 -= 4;
@@ -9715,21 +9629,19 @@ public class client extends Applet_Sub1 {
 			aClass50_Sub1_Sub1_Sub3_1293.draw(k1 - 73, j2 - 20);
 			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags("Cancel", k1, j2 + 5, 0xffffff, true);
 		}
-		aClass18_1200.draw(super.aGraphics14, 202, 171);
+		aClass18_1200.draw(super.graphics, 202, 171);
 		if (aBoolean1046) {
 			aBoolean1046 = false;
-			aClass18_1198.draw(super.aGraphics14, 128, 0);
-			aClass18_1199.draw(super.aGraphics14, 202, 371);
-			aClass18_1203.draw(super.aGraphics14, 0, 265);
-			aClass18_1204.draw(super.aGraphics14, 562, 265);
-			aClass18_1205.draw(super.aGraphics14, 128, 171);
-			aClass18_1206.draw(super.aGraphics14, 562, 171);
+			aClass18_1198.draw(super.graphics, 128, 0);
+			aClass18_1199.draw(super.graphics, 202, 371);
+			aClass18_1203.draw(super.graphics, 0, 265);
+			aClass18_1204.draw(super.graphics, 562, 265);
+			aClass18_1205.draw(super.graphics, 128, 171);
+			aClass18_1206.draw(super.graphics, 562, 171);
 		}
 	}
 
-	public void method132(Buffer class50_sub1_sub2, int i, boolean flag) {
-		if (flag)
-			anInt1140 = 287;
+	public void method132(Buffer class50_sub1_sub2, int i) {
 		while (class50_sub1_sub2.bitPosition + 21 < i * 8) {
 			int j = class50_sub1_sub2.readBits(14);
 			if (j == 16383)
@@ -10059,7 +9971,7 @@ public class client extends Applet_Sub1 {
 			method142(0, 0, Widget.get(anIntArray1081[anInt1285]), 0, 8);
 		if (aBoolean1065 && anInt1304 == 1)
 			method128(false);
-		aClass18_1156.draw(super.aGraphics14, 553, 205);
+		aClass18_1156.draw(super.graphics, 553, 205);
 		aClass18_1158.bindRaster();
 		Rasterizer3D.scanlineOffsets = anIntArray1002;
 		if (byte0 == 7)
@@ -10132,30 +10044,22 @@ public class client extends Applet_Sub1 {
 			aBoolean1028 = !aBoolean1028;
 		if (aClass17_1024 != null)
 			aClass17_1024.printDebugInformation();
-		super.aBoolean11 = true;
+		super.debugTiming = true;
 	}
 
-	public Component method11(int i) {
-		while (i >= 0) {
-			for (int j = 1; j > 0; j++)
-				;
-		}
-		if (signlink.mainapp != null)
-			return signlink.mainapp;
-		if (super.aFrame_Sub1_17 != null)
-			return super.aFrame_Sub1_17;
+	public Component getGameComponent() {
+		if (super.gameFrame != null)
+			return super.gameFrame;
 		else
 			return this;
 	}
 
-	public void method13(int i, boolean flag, String s) {
+	public void drawLoadingText(int i, String s) {
 		anInt1322 = i;
-		if (!flag)
-			aBoolean934 = !aBoolean934;
 		aString1027 = s;
 		method64(-188);
 		if (aClass2_888 == null) {
-			super.method13(i, true, s);
+			super.drawLoadingText(i, s);
 			return;
 		}
 		aClass18_1200.bindRaster();
@@ -10170,19 +10074,19 @@ public class client extends Applet_Sub1 {
 		Rasterizer.drawFilledRectangle(c / 2 - 150, j + 2, i * 3, 30, 0x8c1111);
 		Rasterizer.drawFilledRectangle((c / 2 - 150) + i * 3, j + 2, 300 - i * 3, 30, 0);
 		aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(s, c / 2, (c1 / 2 + 5) - byte0, 0xffffff);
-		aClass18_1200.draw(super.aGraphics14, 202, 171);
+		aClass18_1200.draw(super.graphics, 202, 171);
 		if (aBoolean1046) {
 			aBoolean1046 = false;
 			if (!aBoolean1243) {
-				aClass18_1201.draw(super.aGraphics14, 0, 0);
-				aClass18_1202.draw(super.aGraphics14, 637, 0);
+				aClass18_1201.draw(super.graphics, 0, 0);
+				aClass18_1202.draw(super.graphics, 637, 0);
 			}
-			aClass18_1198.draw(super.aGraphics14, 128, 0);
-			aClass18_1199.draw(super.aGraphics14, 202, 371);
-			aClass18_1203.draw(super.aGraphics14, 0, 265);
-			aClass18_1204.draw(super.aGraphics14, 562, 265);
-			aClass18_1205.draw(super.aGraphics14, 128, 171);
-			aClass18_1206.draw(super.aGraphics14, 562, 171);
+			aClass18_1198.draw(super.graphics, 128, 0);
+			aClass18_1199.draw(super.graphics, 202, 371);
+			aClass18_1203.draw(super.graphics, 0, 265);
+			aClass18_1204.draw(super.graphics, 562, 265);
+			aClass18_1205.draw(super.graphics, 128, 171);
+			aClass18_1206.draw(super.graphics, 562, 171);
 		}
 	}
 
@@ -10259,8 +10163,7 @@ public class client extends Applet_Sub1 {
 		if (class50_sub2.sceneLayer == 0)
 			i = aClass22_1164.method267(class50_sub2.plane, class50_sub2.x, class50_sub2.y);
 		if (class50_sub2.sceneLayer == 1)
-			i = aClass22_1164.method268(class50_sub2.x, (byte) 4, class50_sub2.plane,
-					class50_sub2.y);
+			i = aClass22_1164.method268(class50_sub2.x, (byte) 4, class50_sub2.plane, class50_sub2.y);
 		if (class50_sub2.sceneLayer == 2)
 			i = aClass22_1164.method269(class50_sub2.plane, class50_sub2.x, class50_sub2.y);
 		if (class50_sub2.sceneLayer == 3)
@@ -10322,7 +10225,7 @@ public class client extends Applet_Sub1 {
 			k2 += class13_1.xOffset;
 			l2 += class13_1.yOffset;
 			if (class13_1.contentType > 0)
-				method103((byte) 2, class13_1);
+				method103(class13_1);
 			if (class13_1.type == 0) {
 				if (class13_1.scrollY > class13_1.scrollHeight - class13_1.height)
 					class13_1.scrollY = class13_1.scrollHeight - class13_1.height;
@@ -10352,12 +10255,12 @@ public class client extends Applet_Sub1 {
 									int k11 = 0;
 									if (anInt1146 == 1 && anInt1147 == i3 && anInt1148 == class13_1.id)
 										k11 = 0xffffff;
-									ImageRGB class50_sub1_sub1_sub1_2 = ItemSpriteFactory.getSprite(l10, class13_1.itemAmounts[i3],
-											k11);
+									ImageRGB class50_sub1_sub1_sub1_2 = ItemSpriteFactory.getSprite(l10,
+											class13_1.itemAmounts[i3], k11);
 									if (class50_sub1_sub1_sub1_2 != null) {
 										if (anInt1113 != 0 && anInt1112 == i3 && anInt1111 == class13_1.id) {
-											i7 = super.anInt22 - anInt1114;
-											j8 = super.anInt23 - anInt1115;
+											i7 = super.mouseX - anInt1114;
+											j8 = super.mouseY - anInt1115;
 											if (i7 < 5 && i7 > -5)
 												i7 = 0;
 											if (j8 < 5 && j8 > -5)
@@ -10639,7 +10542,7 @@ public class client extends Applet_Sub1 {
 		if (anInt1071 == 1) {
 			int i = method144(5);
 			if (i != 0 && System.currentTimeMillis() - aLong1229 > 0x57e40L) {
-				signlink.reporterror(aString1092 + " glcfb " + aLong930 + "," + i + "," + aBoolean926 + ","
+				Signlink.reportError(aString1092 + " glcfb " + aLong930 + "," + i + "," + aBoolean926 + ","
 						+ aClass23Array1228[0] + "," + aClass32_Sub1_1291.getOutstandingRequestCount() + "," + anInt1091
 						+ "," + anInt889 + "," + anInt890);
 				aLong1229 = System.currentTimeMillis();
@@ -10721,9 +10624,9 @@ public class client extends Applet_Sub1 {
 			return;
 		if (anInt1050 != 0)
 			return;
-		if (super.anInt28 == 1) {
-			int i = super.anInt29 - 25 - 550;
-			int j = super.anInt30 - 5 - 4;
+		if (super.clickButton == 1) {
+			int i = super.clickX - 25 - 550;
+			int j = super.clickY - 5 - 4;
 			if (i >= 0 && j >= 0 && i < 146 && j < 151) {
 				i -= 73;
 				j -= 75;
@@ -10755,15 +10658,13 @@ public class client extends Applet_Sub1 {
 		}
 	}
 
-	public void method147(int i) {
-		if (super.aClass18_15 != null)
+	public void method147() {
+		if (super.gameBuffer != null)
 			return;
 		method141(28614);
 		aClass18_1198 = null;
 		aClass18_1199 = null;
 		aClass18_1200 = null;
-		if (i >= 0)
-			anInt1004 = -4;
 		aClass18_1201 = null;
 		aClass18_1202 = null;
 		aClass18_1203 = null;
@@ -10777,7 +10678,7 @@ public class client extends Applet_Sub1 {
 		aClass18_1108 = null;
 		aClass18_1109 = null;
 		aClass18_1110 = null;
-		super.aClass18_15 = new GraphicsBuffer(method11(-756), 765, 503);
+		super.gameBuffer = new GraphicsBuffer(getGameComponent(), 765, 503);
 		aBoolean1046 = true;
 	}
 
@@ -10797,17 +10698,17 @@ public class client extends Applet_Sub1 {
 		while (i >= 0)
 			anInt870 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
 		if (anInt1225 == 0) {
-			int j = super.anInt12 / 2 - 80;
-			int i1 = super.anInt13 / 2 + 20;
+			int j = super.canvasWidth / 2 - 80;
+			int i1 = super.canvasHeight / 2 + 20;
 			i1 += 20;
-			if (super.anInt28 == 1 && super.anInt29 >= j - 75 && super.anInt29 <= j + 75 && super.anInt30 >= i1 - 20
-					&& super.anInt30 <= i1 + 20) {
+			if (super.clickButton == 1 && super.clickX >= j - 75 && super.clickX <= j + 75 && super.clickY >= i1 - 20
+					&& super.clickY <= i1 + 20) {
 				anInt1225 = 3;
 				anInt977 = 0;
 			}
-			j = super.anInt12 / 2 + 80;
-			if (super.anInt28 == 1 && super.anInt29 >= j - 75 && super.anInt29 <= j + 75 && super.anInt30 >= i1 - 20
-					&& super.anInt30 <= i1 + 20) {
+			j = super.canvasWidth / 2 + 80;
+			if (super.clickButton == 1 && super.clickX >= j - 75 && super.clickX <= j + 75 && super.clickY >= i1 - 20
+					&& super.clickY <= i1 + 20) {
 				aString957 = "";
 				aString958 = "Enter your username & password.";
 				anInt1225 = 2;
@@ -10816,34 +10717,34 @@ public class client extends Applet_Sub1 {
 			}
 		} else {
 			if (anInt1225 == 2) {
-				int k = super.anInt13 / 2 - 40;
+				int k = super.canvasHeight / 2 - 40;
 				k += 30;
 				k += 25;
-				if (super.anInt28 == 1 && super.anInt30 >= k - 15 && super.anInt30 < k)
+				if (super.clickButton == 1 && super.clickY >= k - 15 && super.clickY < k)
 					anInt977 = 0;
 				k += 15;
-				if (super.anInt28 == 1 && super.anInt30 >= k - 15 && super.anInt30 < k)
+				if (super.clickButton == 1 && super.clickY >= k - 15 && super.clickY < k)
 					anInt977 = 1;
 				k += 15;
-				int j1 = super.anInt12 / 2 - 80;
-				int l1 = super.anInt13 / 2 + 50;
+				int j1 = super.canvasWidth / 2 - 80;
+				int l1 = super.canvasHeight / 2 + 50;
 				l1 += 20;
-				if (super.anInt28 == 1 && super.anInt29 >= j1 - 75 && super.anInt29 <= j1 + 75
-						&& super.anInt30 >= l1 - 20 && super.anInt30 <= l1 + 20) {
+				if (super.clickButton == 1 && super.clickX >= j1 - 75 && super.clickX <= j1 + 75
+						&& super.clickY >= l1 - 20 && super.clickY <= l1 + 20) {
 					anInt850 = 0;
 					method79(aString1092, aString1093, false);
 					if (aBoolean1137)
 						return;
 				}
-				j1 = super.anInt12 / 2 + 80;
-				if (super.anInt28 == 1 && super.anInt29 >= j1 - 75 && super.anInt29 <= j1 + 75
-						&& super.anInt30 >= l1 - 20 && super.anInt30 <= l1 + 20) {
+				j1 = super.canvasWidth / 2 + 80;
+				if (super.clickButton == 1 && super.clickX >= j1 - 75 && super.clickX <= j1 + 75
+						&& super.clickY >= l1 - 20 && super.clickY <= l1 + 20) {
 					anInt1225 = 0;
 					aString1092 = "";
 					aString1093 = "";
 				}
 				do {
-					int i2 = method5(-983);
+					int i2 = pollKey();
 					if (i2 == -1)
 						break;
 					boolean flag = false;
@@ -10877,11 +10778,11 @@ public class client extends Applet_Sub1 {
 				return;
 			}
 			if (anInt1225 == 3) {
-				int l = super.anInt12 / 2;
-				int k1 = super.anInt13 / 2 + 50;
+				int l = super.canvasWidth / 2;
+				int k1 = super.canvasHeight / 2 + 50;
 				k1 += 20;
-				if (super.anInt28 == 1 && super.anInt29 >= l - 75 && super.anInt29 <= l + 75 && super.anInt30 >= k1 - 20
-						&& super.anInt30 <= k1 + 20)
+				if (super.clickButton == 1 && super.clickX >= l - 75 && super.clickX <= l + 75
+						&& super.clickY >= k1 - 20 && super.clickY <= k1 + 20)
 					anInt1225 = 0;
 			}
 		}
@@ -11012,7 +10913,7 @@ public class client extends Applet_Sub1 {
 		}
 	}
 
-	public void method151(int i) {
+	public void method151() {
 		anInt1138++;
 		method119(0, true);
 		method57(751, true);
@@ -11042,8 +10943,6 @@ public class client extends Applet_Sub1 {
 		int k1 = anInt1218;
 		int l1 = anInt1219;
 		int i2 = anInt1220;
-		if (i != 2)
-			anInt1004 = aClass24_899.nextInt();
 		for (int j2 = 0; j2 < 5; j2++)
 			if (aBooleanArray927[j2]) {
 				int k2 = (int) ((Math.random() * (double) (anIntArray1105[j2] * 2 + 1) - (double) anIntArray1105[j2])
@@ -11069,8 +10968,8 @@ public class client extends Applet_Sub1 {
 		int l2 = Rasterizer3D.textureCycle;
 		Model.pickingEnabled = true;
 		Model.pickedCount = 0;
-		Model.mouseX = super.anInt22 - 4;
-		Model.mouseY = super.anInt23 - 4;
+		Model.mouseX = super.mouseX - 4;
+		Model.mouseY = super.mouseY - 4;
 		Rasterizer.resetPixels();
 		aClass22_1164.method280(anInt1216, k, 0, anInt1217, anInt1218, anInt1220, anInt1219);
 		aClass22_1164.method255(anInt897);
@@ -11078,7 +10977,7 @@ public class client extends Applet_Sub1 {
 		method127();
 		method65(l2, -927);
 		method109();
-		aClass18_1158.draw(super.aGraphics14, 4, 4);
+		aClass18_1158.draw(super.graphics, 4, 4);
 		anInt1216 = i1;
 		anInt1217 = j1;
 		anInt1218 = k1;
@@ -11088,7 +10987,7 @@ public class client extends Applet_Sub1 {
 
 	public void method152(int i) {
 		if (i != -23763)
-			method6();
+			startUp();
 		for (int j = 0; j < anInt1035; j++)
 			if (anIntArray1259[j] <= 0) {
 				boolean flag = false;
@@ -11111,7 +11010,7 @@ public class client extends Applet_Sub1 {
 						}
 					}
 				} catch (Exception exception) {
-					if (signlink.reporterror) {
+					if (Signlink.reportErrors) {
 						aClass50_Sub1_Sub2_964.writeOpcode(80);
 						aClass50_Sub1_Sub2_964.writeShort(anIntArray1090[j] & 0x7fff);
 					} else {
@@ -11166,7 +11065,6 @@ public class client extends Applet_Sub1 {
 		aClass50_Sub1_Sub1_Sub1Array896 = new ImageRGB[8];
 		anInt897 = 559;
 		aBoolean900 = false;
-		aByte901 = -123;
 		anInt917 = 2;
 		aBoolean918 = true;
 		aBoolean919 = true;
@@ -11178,7 +11076,6 @@ public class client extends Applet_Sub1 {
 		anInt931 = 0x23201b;
 		anInt932 = -1;
 		anInt933 = -1;
-		aBoolean934 = true;
 		anInt935 = -1;
 		aString937 = "";
 		anInt938 = -214;
@@ -11263,7 +11160,6 @@ public class client extends Applet_Sub1 {
 		anInt1135 = 0x766654;
 		aBoolean1136 = false;
 		aBoolean1137 = false;
-		anInt1140 = -110;
 		aClass50_Sub1_Sub1_Sub3Array1142 = new IndexedImage[2];
 		aByte1143 = -80;
 		aBoolean1144 = true;
@@ -11400,7 +11296,6 @@ public class client extends Applet_Sub1 {
 	public int anInt897;
 	public IsaacCipher aClass24_899;
 	public boolean aBoolean900;
-	public byte aByte901;
 	public long aLong902;
 	public int anInt903;
 	public int anInt904;
@@ -11432,7 +11327,6 @@ public class client extends Applet_Sub1 {
 	public int anInt931;
 	public int anInt932;
 	public int anInt933;
-	public boolean aBoolean934;
 	public int anInt935;
 	public String aString937;
 	public int anInt938;
@@ -11500,7 +11394,6 @@ public class client extends Applet_Sub1 {
 	public int anIntArray1001[];
 	public int anIntArray1002[];
 	public int anIntArray1003[];
-	public int anInt1004;
 	public int anIntArray1005[];
 	public int anInt1006;
 	public static String aString1007 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!\"\243$%^&*()-_=+[{]};:'@#~,<.>/?\\| ";
@@ -11525,7 +11418,6 @@ public class client extends Applet_Sub1 {
 	public int anInt1022;
 	public int anInt1023;
 	public BufferedConnection aClass17_1024;
-	public static int anInt1025 = -352;
 	public String aString1026;
 	public String aString1027;
 	public boolean aBoolean1028;
@@ -11635,7 +11527,6 @@ public class client extends Applet_Sub1 {
 	public boolean aBoolean1137;
 	public int anInt1138;
 	public static int anInt1139;
-	public int anInt1140;
 	public long aLong1141;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3Array1142[];
 	public byte aByte1143;

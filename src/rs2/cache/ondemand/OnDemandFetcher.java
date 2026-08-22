@@ -13,7 +13,7 @@ import rs2.cache.Archive;
 import rs2.collection.DualNodeDeque;
 import rs2.collection.NodeDeque;
 import rs2.net.Buffer;
-import rs2.sign.signlink;
+import rs2.sign.Signlink;
 
 /**
  * Revision-377 on-demand cache and update-server loader.
@@ -82,7 +82,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 				if (currentRequest != null) {
 					idleCycles = 0;
 					if (fileLength == 0) {
-						signlink.reporterror("Rej: " + type + "," + id);
+						Signlink.reportError("Rej: " + type + "," + id);
 						currentRequest.buffer = null;
 						if (currentRequest.incomplete) {
 							synchronized (completedQueue) {
@@ -382,7 +382,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 			}
 			return;
 		} catch (Exception exception) {
-			signlink.reporterror("od_ex " + exception.getMessage());
+			Signlink.reportError("od_ex " + exception.getMessage());
 		}
 	}
 
@@ -506,7 +506,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 
 		this.clientInstance = clientInstance;
 		running = true;
-		this.clientInstance.method12(this, 2);
+		this.clientInstance.startThread(this, 2);
 	}
 
 	public void clearExtraRequests() {
