@@ -321,7 +321,7 @@ public class Widget {
 			model = NpcDefinition.lookup(mediaId).getHeadModel();
 		}
 		if (mediaType == 3) {
-			model = client.aClass50_Sub1_Sub4_Sub3_Sub2_1167.getHeadModel();
+			model = client.localPlayer.getHeadModel();
 		}
 		if (mediaType == 4) {
 			model = itemDefinition.getUnlitModel(50);
