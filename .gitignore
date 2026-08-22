@@ -29,3 +29,9 @@ replay_pid*
 .gitattributes
 .settings/*
 rscache/*
+
+# maven
+/target/
+/.mvn/wrapper/dists/
+/rscache/
+
