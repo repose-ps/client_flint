@@ -78,7 +78,8 @@ public class Model extends Renderable {
 		int hasVertexSkins = footer.readUnsignedByte();
 		int xDataLength = footer.readUnsignedShort();
 		int yDataLength = footer.readUnsignedShort();
-		int zDataLength = footer.readUnsignedShort();
+//		int zDataLength = footer.readUnsignedShort();
+		footer.readUnsignedShort(); // unused
 		int triangleDataLength = footer.readUnsignedShort();
 
 		int offset = 0;

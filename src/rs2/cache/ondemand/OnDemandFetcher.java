@@ -363,7 +363,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 					idleCycles = 0;
 					statusString = "";
 				}
-				if (clientInstance.aBoolean1137 && socket != null && outputStream != null
+				if (clientInstance.loggedIn && socket != null && outputStream != null
 						&& (highestPriority > 0 || clientInstance.aClass23Array1228[0] == null)) {
 					keepAliveCycles++;
 					if (keepAliveCycles > KEEP_ALIVE_AFTER_CYCLES) {
@@ -591,7 +591,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 					return;
 				}
 				lastSocketOpenTime = now;
-				socket = clientInstance.method32(43594 + client.anInt924);
+				socket = clientInstance.openSocket(43594 + client.anInt924);
 				inputStream = socket.getInputStream();
 				outputStream = socket.getOutputStream();
 				outputStream.write(UPDATE_SERVER_HANDSHAKE);
@@ -606,7 +606,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 			ioBuffer[2] = (byte) request.id;
 			if (request.incomplete) {
 				ioBuffer[3] = 2;
-			} else if (!clientInstance.aBoolean1137) {
+			} else if (!clientInstance.loggedIn) {
 				ioBuffer[3] = 1;
 			} else {
 				ioBuffer[3] = 0;

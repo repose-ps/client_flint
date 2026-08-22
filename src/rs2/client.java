@@ -56,9 +56,8 @@ import rs2.media.renderable.Projectile;
 import rs2.media.renderable.Renderable;
 import rs2.net.Buffer;
 import rs2.net.BufferedConnection;
-import rs2.net.IncomingPacketLengths;
 import rs2.net.Ipv4Address;
-import rs2.net.IsaacCipher;
+import rs2.net.NetworkSession;
 import rs2.scene.InteractiveObject;
 import rs2.scene.PendingSpawn;
 import rs2.scene.Region;
@@ -116,7 +115,7 @@ public class client extends GameShell {
 	}
 
 	public void method15(boolean flag) {
-		aClass50_Sub1_Sub2_964.writeOpcode(110);
+		networkSession.outgoing.writeOpcode(110);
 		if (flag)
 			aClass6ArrayArrayArray1323 = null;
 		if (anInt1089 != -1) {
@@ -178,7 +177,7 @@ public class client extends GameShell {
 			byte0 = 0;
 			return;
 		} else {
-			anInt870 = -1;
+			networkSession.incomingOpcode = -1;
 			return;
 		}
 	}
@@ -360,9 +359,7 @@ public class client extends GameShell {
 		aClass50_Sub1_Sub1_Sub1Array954 = null;
 		aClass50_Sub1_Sub1_Sub1Array896 = null;
 		method50();
-		aClass50_Sub1_Sub2_964 = null;
-		aClass50_Sub1_Sub2_929 = null;
-		aClass50_Sub1_Sub2_1188 = null;
+		loginBuffer = null;
 		aClass18_1156 = null;
 		aClass18_1157 = null;
 		aClass18_1158 = null;
@@ -370,12 +367,10 @@ public class client extends GameShell {
 		aClass50_Sub1_Sub1_Sub3_1185 = null;
 		aClass50_Sub1_Sub1_Sub3_1186 = null;
 		aClass50_Sub1_Sub1_Sub3_1187 = null;
-		try {
-			if (aClass17_1024 != null)
-				aClass17_1024.close();
-		} catch (Exception _ex) {
+		if (networkSession != null) {
+			networkSession.closeConnection();
+			networkSession = null;
 		}
-		aClass17_1024 = null;
 		anIntArray1077 = null;
 		anIntArray1078 = null;
 		aClass50_Sub1_Sub1_Sub1Array1278 = null;
@@ -624,7 +619,7 @@ public class client extends GameShell {
 
 	public void method25(int i) {
 		if (i != 0)
-			aClass50_Sub1_Sub2_964.writeByte(186);
+			networkSession.outgoing.writeByte(186);
 		aBoolean1277 = true;
 		for (int j = 0; j < 7; j++) {
 			anIntArray1326[j] = -1;
@@ -688,23 +683,23 @@ public class client extends GameShell {
 	public void method28(byte byte0) {
 		if (anInt1057 > 1)
 			anInt1057--;
-		if (anInt873 > 0)
-			anInt873--;
+		if (logoutTimer > 0)
+			logoutTimer--;
 		for (int i = 0; i < 5; i++)
-			if (!method33(21389))
+			if (!processIncomingPacket())
 				break;
 
-		if (!aBoolean1137)
+		if (!loggedIn)
 			return;
 		synchronized (aClass7_1248.lock) {
-			if (aBoolean962) {
+			if (accountFlagged) {
 				if (super.clickButton != 0 || aClass7_1248.sampleCount >= 40) {
-					aClass50_Sub1_Sub2_964.writeOpcode(171);
-					aClass50_Sub1_Sub2_964.writeByte(0);
-					int i2 = aClass50_Sub1_Sub2_964.position;
+					networkSession.outgoing.writeOpcode(171);
+					networkSession.outgoing.writeByte(0);
+					int i2 = networkSession.outgoing.position;
 					int i3 = 0;
 					for (int i4 = 0; i4 < aClass7_1248.sampleCount; i4++) {
-						if (i2 - aClass50_Sub1_Sub2_964.position >= 240)
+						if (i2 - networkSession.outgoing.position >= 240)
 							break;
 						i3++;
 						int k4 = aClass7_1248.yCoordinates[i4];
@@ -734,19 +729,19 @@ public class client extends GameShell {
 							if (anInt1299 < 8 && i6 >= -32 && i6 <= 31 && j6 >= -32 && j6 <= 31) {
 								i6 += 32;
 								j6 += 32;
-								aClass50_Sub1_Sub2_964.writeShort((anInt1299 << 12) + (i6 << 6) + j6);
+								networkSession.outgoing.writeShort((anInt1299 << 12) + (i6 << 6) + j6);
 								anInt1299 = 0;
 							} else if (anInt1299 < 8) {
-								aClass50_Sub1_Sub2_964.writeMedium(0x800000 + (anInt1299 << 19) + l5);
+								networkSession.outgoing.writeMedium(0x800000 + (anInt1299 << 19) + l5);
 								anInt1299 = 0;
 							} else {
-								aClass50_Sub1_Sub2_964.writeInt(0xc0000000 + (anInt1299 << 19) + l5);
+								networkSession.outgoing.writeInt(0xc0000000 + (anInt1299 << 19) + l5);
 								anInt1299 = 0;
 							}
 						}
 					}
 
-					aClass50_Sub1_Sub2_964.writeLength(aClass50_Sub1_Sub2_964.position - i2);
+					networkSession.outgoing.writeLength(networkSession.outgoing.position - i2);
 					if (i3 >= aClass7_1248.sampleCount) {
 						aClass7_1248.sampleCount = 0;
 					} else {
@@ -782,8 +777,8 @@ public class client extends GameShell {
 			if (super.clickButton == 2)
 				i5 = 1;
 			int k5 = (int) l;
-			aClass50_Sub1_Sub2_964.writeOpcode(19);
-			aClass50_Sub1_Sub2_964.writeInt((k5 << 20) + (i5 << 19) + j4);
+			networkSession.outgoing.writeOpcode(19);
+			networkSession.outgoing.writeInt((k5 << 20) + (i5 << 19) + j4);
 		}
 		if (anInt1264 > 0)
 			anInt1264--;
@@ -792,26 +787,26 @@ public class client extends GameShell {
 		if (aBoolean1265 && anInt1264 <= 0) {
 			anInt1264 = 20;
 			aBoolean1265 = false;
-			aClass50_Sub1_Sub2_964.writeOpcode(140);
-			aClass50_Sub1_Sub2_964.writeShortLE(anInt1251);
-			aClass50_Sub1_Sub2_964.writeShortLE(anInt1252);
+			networkSession.outgoing.writeOpcode(140);
+			networkSession.outgoing.writeShortLE(anInt1251);
+			networkSession.outgoing.writeShortLE(anInt1252);
 		}
 		if (super.hasFocus && !aBoolean1275) {
 			aBoolean1275 = true;
-			aClass50_Sub1_Sub2_964.writeOpcode(187);
-			aClass50_Sub1_Sub2_964.writeByte(1);
+			networkSession.outgoing.writeOpcode(187);
+			networkSession.outgoing.writeByte(1);
 		}
 		if (!super.hasFocus && aBoolean1275) {
 			aBoolean1275 = false;
-			aClass50_Sub1_Sub2_964.writeOpcode(187);
-			aClass50_Sub1_Sub2_964.writeByte(0);
+			networkSession.outgoing.writeOpcode(187);
+			networkSession.outgoing.writeByte(0);
 		}
 		method143((byte) -40);
 		method36(16220);
 		method152(-23763);
-		anInt871++;
-		if (anInt871 > 750)
-			method59(1);
+		networkSession.incomingIdleCycles++;
+		if (networkSession.incomingIdleCycles > 750)
+			reconnect();
 		method100(0);
 		method67(-37214);
 		method85(0);
@@ -873,11 +868,11 @@ public class client extends GameShell {
 						} else {
 							class13.swapItems(anInt1063, anInt1112);
 						}
-						aClass50_Sub1_Sub2_964.writeOpcode(123);
-						aClass50_Sub1_Sub2_964.writeShortAddLE(anInt1063);
-						aClass50_Sub1_Sub2_964.writeByteAdd(i1);
-						aClass50_Sub1_Sub2_964.writeShortAdd(anInt1111);
-						aClass50_Sub1_Sub2_964.writeShortLE(anInt1112);
+						networkSession.outgoing.writeOpcode(123);
+						networkSession.outgoing.writeShortAddLE(anInt1063);
+						networkSession.outgoing.writeByteAdd(i1);
+						networkSession.outgoing.writeShortAdd(anInt1111);
+						networkSession.outgoing.writeShortLE(anInt1112);
 					}
 				} else if ((anInt1300 == 1 || method126(anInt1183 - 1, aByte1161)) && anInt1183 > 2)
 					method108();
@@ -935,9 +930,9 @@ public class client extends GameShell {
 		method30((byte) 2);
 		super.idleCycles++;
 		if (super.idleCycles > 4500) {
-			anInt873 = 250;
+			logoutTimer = 250;
 			super.idleCycles -= 500;
-			aClass50_Sub1_Sub2_964.writeOpcode(202);
+			networkSession.outgoing.writeOpcode(202);
 		}
 		anInt1118++;
 		if (anInt1118 > 500) {
@@ -979,23 +974,21 @@ public class client extends GameShell {
 			anInt1234 = 1;
 		if (anInt1233 > 10)
 			anInt1234 = -1;
-		anInt872++;
+		networkSession.outgoingIdleCycles++;
 		if (byte0 != 4)
-			anInt870 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-		if (anInt872 > 50)
-			aClass50_Sub1_Sub2_964.writeOpcode(40);
+			networkSession.incomingOpcode = networkSession.incoming.readUnsignedByte();
+		if (networkSession.outgoingIdleCycles > 50)
+			networkSession.outgoing.writeOpcode(40);
 		try {
-			if (aClass17_1024 != null && aClass50_Sub1_Sub2_964.position > 0) {
-				aClass17_1024.write(aClass50_Sub1_Sub2_964.payload, 0, aClass50_Sub1_Sub2_964.position);
-				aClass50_Sub1_Sub2_964.position = 0;
-				anInt872 = 0;
+			if (networkSession.outgoing.position > 0) {
+				networkSession.flushOutgoing();
 				return;
 			}
 		} catch (IOException _ex) {
-			method59(1);
+			reconnect();
 			return;
 		} catch (Exception exception) {
-			method124(true);
+			logout();
 		}
 	}
 
@@ -1118,22 +1111,22 @@ public class client extends GameShell {
 						method53(l1, 0);
 					}
 					if (anInt1221 == 3 && aString1026.length() > 0) {
-						aClass50_Sub1_Sub2_964.writeOpcode(227);
-						aClass50_Sub1_Sub2_964.writeByte(0);
-						int j = aClass50_Sub1_Sub2_964.position;
-						aClass50_Sub1_Sub2_964.writeLong(aLong1141);
-						ChatCodec.encode(aString1026, aClass50_Sub1_Sub2_964);
-						aClass50_Sub1_Sub2_964.writeLength(aClass50_Sub1_Sub2_964.position - j);
+						networkSession.outgoing.writeOpcode(227);
+						networkSession.outgoing.writeByte(0);
+						int j = networkSession.outgoing.position;
+						networkSession.outgoing.writeLong(aLong1141);
+						ChatCodec.encode(aString1026, networkSession.outgoing);
+						networkSession.outgoing.writeLength(networkSession.outgoing.position - j);
 						aString1026 = ChatCodec.normalize(aString1026);
 						aString1026 = Censor.censor(aString1026);
 						method47(TextFormatter.formatDisplayName(Base37.decode(aLong1141)), aString1026, 6);
 						if (anInt887 == 2) {
 							anInt887 = 1;
 							aBoolean1212 = true;
-							aClass50_Sub1_Sub2_964.writeOpcode(176);
-							aClass50_Sub1_Sub2_964.writeByte(anInt1006);
-							aClass50_Sub1_Sub2_964.writeByte(anInt887);
-							aClass50_Sub1_Sub2_964.writeByte(anInt1227);
+							networkSession.outgoing.writeOpcode(176);
+							networkSession.outgoing.writeByte(anInt1006);
+							networkSession.outgoing.writeByte(anInt887);
+							networkSession.outgoing.writeByte(anInt1227);
 						}
 					}
 					if (anInt1221 == 4 && anInt855 < 100) {
@@ -1161,8 +1154,8 @@ public class client extends GameShell {
 							k = Integer.parseInt(aString949);
 						} catch (Exception _ex) {
 						}
-						aClass50_Sub1_Sub2_964.writeOpcode(75);
-						aClass50_Sub1_Sub2_964.writeInt(k);
+						networkSession.outgoing.writeOpcode(75);
+						networkSession.outgoing.writeInt(k);
 					}
 					anInt1244 = 0;
 					aBoolean1240 = true;
@@ -1178,8 +1171,8 @@ public class client extends GameShell {
 				}
 				if (i == 13 || i == 10) {
 					if (aString949.length() > 0) {
-						aClass50_Sub1_Sub2_964.writeOpcode(206);
-						aClass50_Sub1_Sub2_964.writeLong(Base37.encode(aString949));
+						networkSession.outgoing.writeOpcode(206);
+						networkSession.outgoing.writeLong(Base37.encode(aString949));
 					}
 					anInt1244 = 0;
 					aBoolean1240 = true;
@@ -1203,9 +1196,9 @@ public class client extends GameShell {
 					aBoolean1240 = true;
 				}
 				if ((i == 13 || i == 10) && aString1104.length() > 0) {
-					if (anInt867 == 2) {
+					if (playerRights == 2) {
 						if (aString1104.equals("::clientdrop"))
-							method59(1);
+							reconnect();
 						if (aString1104.equals("::lag"))
 							method138(false);
 						if (aString1104.equals("::prefetchmusic")) {
@@ -1230,9 +1223,9 @@ public class client extends GameShell {
 						}
 					}
 					if (aString1104.startsWith("::")) {
-						aClass50_Sub1_Sub2_964.writeOpcode(56);
-						aClass50_Sub1_Sub2_964.writeByte(aString1104.length() - 1);
-						aClass50_Sub1_Sub2_964.writeString(aString1104.substring(2));
+						networkSession.outgoing.writeOpcode(56);
+						networkSession.outgoing.writeByte(aString1104.length() - 1);
+						networkSession.outgoing.writeString(aString1104.substring(2));
 					} else {
 						String s = aString1104.toLowerCase();
 						int i2 = 0;
@@ -1291,26 +1284,26 @@ public class client extends GameShell {
 							k2 = 5;
 							aString1104 = aString1104.substring(6);
 						}
-						aClass50_Sub1_Sub2_964.writeOpcode(49);
-						aClass50_Sub1_Sub2_964.writeByte(0);
-						int i3 = aClass50_Sub1_Sub2_964.position;
-						aClass50_Sub1_Sub2_964.writeByteNeg(i2);
-						aClass50_Sub1_Sub2_964.writeByteAdd(k2);
+						networkSession.outgoing.writeOpcode(49);
+						networkSession.outgoing.writeByte(0);
+						int i3 = networkSession.outgoing.position;
+						networkSession.outgoing.writeByteNeg(i2);
+						networkSession.outgoing.writeByteAdd(k2);
 						aClass50_Sub1_Sub2_1131.position = 0;
 						ChatCodec.encode(aString1104, aClass50_Sub1_Sub2_1131);
-						aClass50_Sub1_Sub2_964.writeBytes(aClass50_Sub1_Sub2_1131.payload, 0,
+						networkSession.outgoing.writeBytes(aClass50_Sub1_Sub2_1131.payload, 0,
 								aClass50_Sub1_Sub2_1131.position);
-						aClass50_Sub1_Sub2_964.writeLength(aClass50_Sub1_Sub2_964.position - i3);
+						networkSession.outgoing.writeLength(networkSession.outgoing.position - i3);
 						aString1104 = ChatCodec.normalize(aString1104);
 						aString1104 = Censor.censor(aString1104);
 						aClass50_Sub1_Sub4_Sub3_Sub2_1167.overheadText = aString1104;
 						aClass50_Sub1_Sub4_Sub3_Sub2_1167.overheadTextColor = i2;
 						aClass50_Sub1_Sub4_Sub3_Sub2_1167.overheadTextEffect = k2;
 						aClass50_Sub1_Sub4_Sub3_Sub2_1167.overheadTextCyclesRemaining = 150;
-						if (anInt867 == 2)
+						if (playerRights == 2)
 							method47("@cr2@" + aClass50_Sub1_Sub4_Sub3_Sub2_1167.name,
 									((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).overheadText, 2);
-						else if (anInt867 == 1)
+						else if (playerRights == 1)
 							method47("@cr1@" + aClass50_Sub1_Sub4_Sub3_Sub2_1167.name,
 									((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).overheadText, 2);
 						else
@@ -1319,10 +1312,10 @@ public class client extends GameShell {
 						if (anInt1006 == 2) {
 							anInt1006 = 3;
 							aBoolean1212 = true;
-							aClass50_Sub1_Sub2_964.writeOpcode(176);
-							aClass50_Sub1_Sub2_964.writeByte(anInt1006);
-							aClass50_Sub1_Sub2_964.writeByte(anInt887);
-							aClass50_Sub1_Sub2_964.writeByte(anInt1227);
+							networkSession.outgoing.writeOpcode(176);
+							networkSession.outgoing.writeByte(anInt1006);
+							networkSession.outgoing.writeByte(anInt887);
+							networkSession.outgoing.writeByte(anInt1227);
 						}
 					}
 					aString1104 = "";
@@ -1332,1236 +1325,1201 @@ public class client extends GameShell {
 		} while (true);
 	}
 
-	public DataInputStream method31(String s) throws IOException {
-		if (aSocket1224 != null) {
+	public DataInputStream openJaggrabStream(String request) throws IOException {
+		if (jaggrabSocket != null) {
 			try {
-				aSocket1224.close();
+				jaggrabSocket.close();
 			} catch (Exception _ex) {
 			}
-			aSocket1224 = null;
+			jaggrabSocket = null;
 		}
-		aSocket1224 = method32(43595);
-		aSocket1224.setSoTimeout(10000);
-		java.io.InputStream inputstream = aSocket1224.getInputStream();
-		OutputStream outputstream = aSocket1224.getOutputStream();
-		outputstream.write(("JAGGRAB /" + s + "\n\n").getBytes());
+		jaggrabSocket = openSocket(43595);
+		jaggrabSocket.setSoTimeout(10000);
+		java.io.InputStream inputstream = jaggrabSocket.getInputStream();
+		OutputStream outputstream = jaggrabSocket.getOutputStream();
+		outputstream.write(("JAGGRAB /" + request + "\n\n").getBytes());
 		return new DataInputStream(inputstream);
 	}
 
-	public Socket method32(int i) throws IOException {
-		return Signlink.openSocket(i);
+	public Socket openSocket(int port) throws IOException {
+		return Signlink.openSocket(port);
 	}
 
-	public boolean method33(int i) {
-		if (i != 21389) {
-			for (int j = 1; j > 0; j++)
-				;
-		}
-		if (aClass17_1024 == null)
-			return false;
+	public boolean processIncomingPacket() {
 		try {
-			int k = aClass17_1024.available();
-			if (k == 0)
+			if (!networkSession.readIncomingPacket())
 				return false;
-			if (anInt870 == -1) {
-				aClass17_1024.readFully(aClass50_Sub1_Sub2_1188.payload, 0, 1);
-				anInt870 = aClass50_Sub1_Sub2_1188.payload[0] & 0xff;
-				if (aClass24_899 != null)
-					anInt870 = anInt870 - aClass24_899.nextInt() & 0xff;
-				anInt869 = IncomingPacketLengths.LENGTHS[anInt870];
-				k--;
-			}
-			if (anInt869 == -1)
-				if (k > 0) {
-					aClass17_1024.readFully(aClass50_Sub1_Sub2_1188.payload, 0, 1);
-					anInt869 = aClass50_Sub1_Sub2_1188.payload[0] & 0xff;
-					k--;
-				} else {
-					return false;
-				}
-			if (anInt869 == -2)
-				if (k > 1) {
-					aClass17_1024.readFully(aClass50_Sub1_Sub2_1188.payload, 0, 2);
-					aClass50_Sub1_Sub2_1188.position = 0;
-					anInt869 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-					k -= 2;
-				} else {
-					return false;
-				}
-			if (k < anInt869)
-				return false;
-			aClass50_Sub1_Sub2_1188.position = 0;
-			aClass17_1024.readFully(aClass50_Sub1_Sub2_1188.payload, 0, anInt869);
-			anInt871 = 0;
-			anInt905 = anInt904;
-			anInt904 = anInt903;
-			anInt903 = anInt870;
-			if (anInt870 == 166) {
-				int l = aClass50_Sub1_Sub2_1188.readShortLE();
-				int l10 = aClass50_Sub1_Sub2_1188.readShortLE();
-				int k16 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-				Widget class13_5 = Widget.get(k16);
-				class13_5.xOffset = l10;
-				class13_5.yOffset = l;
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 186) {
-				int i1 = aClass50_Sub1_Sub2_1188.readUnsignedShortAdd();
-				int i11 = aClass50_Sub1_Sub2_1188.readUnsignedShortAddLE();
-				int l16 = aClass50_Sub1_Sub2_1188.readUnsignedShortAdd();
-				int i22 = aClass50_Sub1_Sub2_1188.readUnsignedShortLE();
-				Widget.get(i11).modelPitch = i1;
-				Widget.get(i11).modelYaw = i22;
-				Widget.get(i11).modelZoom = l16;
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 216) {
-				int j1 = aClass50_Sub1_Sub2_1188.readUnsignedShortAddLE();
-				int j11 = aClass50_Sub1_Sub2_1188.readUnsignedShortAddLE();
-				Widget.get(j11).mediaType = 1;
-				Widget.get(j11).mediaId = j1;
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 26) {
-				int k1 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-				int k11 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				int i17 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-				if (i17 == 65535) {
-					if (anInt1035 < 50) {
-						anIntArray1090[anInt1035] = (short) k1;
-						anIntArray1321[anInt1035] = k11;
-						anIntArray1259[anInt1035] = 0;
-						anInt1035++;
-					}
-				} else if (aBoolean1301 && !aBoolean926 && anInt1035 < 50) {
-					anIntArray1090[anInt1035] = k1;
+			return dispatchIncomingPacket();
+		} catch (IOException _ex) {
+			reconnect();
+		} catch (Exception exception) {
+			String s1 = "T2 - " + networkSession.incomingOpcode + "," + networkSession.secondLastOpcode + "," + networkSession.thirdLastOpcode + " - " + networkSession.incomingLength + ","
+					+ (anInt1040 + ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]) + ","
+					+ (anInt1041 + ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0]) + " - ";
+			for (int j16 = 0; j16 < networkSession.incomingLength && j16 < 50; j16++)
+				s1 = s1 + networkSession.incoming.payload[j16] + ",";
+
+			Signlink.reportError(s1);
+			logout();
+		}
+		return true;
+	}
+
+	private boolean dispatchIncomingPacket() {
+		if (networkSession.incomingOpcode == 166) {
+			int l = networkSession.incoming.readShortLE();
+			int l10 = networkSession.incoming.readShortLE();
+			int k16 = networkSession.incoming.readUnsignedShort();
+			Widget class13_5 = Widget.get(k16);
+			class13_5.xOffset = l10;
+			class13_5.yOffset = l;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 186) {
+			int i1 = networkSession.incoming.readUnsignedShortAdd();
+			int i11 = networkSession.incoming.readUnsignedShortAddLE();
+			int l16 = networkSession.incoming.readUnsignedShortAdd();
+			int i22 = networkSession.incoming.readUnsignedShortLE();
+			Widget.get(i11).modelPitch = i1;
+			Widget.get(i11).modelYaw = i22;
+			Widget.get(i11).modelZoom = l16;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 216) {
+			int j1 = networkSession.incoming.readUnsignedShortAddLE();
+			int j11 = networkSession.incoming.readUnsignedShortAddLE();
+			Widget.get(j11).mediaType = 1;
+			Widget.get(j11).mediaId = j1;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 26) {
+			int k1 = networkSession.incoming.readUnsignedShort();
+			int k11 = networkSession.incoming.readUnsignedByte();
+			int i17 = networkSession.incoming.readUnsignedShort();
+			if (i17 == 65535) {
+				if (anInt1035 < 50) {
+					anIntArray1090[anInt1035] = (short) k1;
 					anIntArray1321[anInt1035] = k11;
-					anIntArray1259[anInt1035] = i17 + SoundTrack.trackDelays[k1];
+					anIntArray1259[anInt1035] = 0;
 					anInt1035++;
 				}
-				anInt870 = -1;
-				return true;
+			} else if (aBoolean1301 && !aBoolean926 && anInt1035 < 50) {
+				anIntArray1090[anInt1035] = k1;
+				anIntArray1321[anInt1035] = k11;
+				anIntArray1259[anInt1035] = i17 + SoundTrack.trackDelays[k1];
+				anInt1035++;
 			}
-			if (anInt870 == 182) {
-				int l1 = aClass50_Sub1_Sub2_1188.readUnsignedShortAdd();
-				byte byte0 = aClass50_Sub1_Sub2_1188.readByteSub();
-				anIntArray1005[l1] = byte0;
-				if (anIntArray1039[l1] != byte0) {
-					anIntArray1039[l1] = byte0;
-					method105(0, l1);
-					aBoolean1181 = true;
-					if (anInt1191 != -1)
-						aBoolean1240 = true;
-				}
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 13) {
-				for (int i2 = 0; i2 < aClass50_Sub1_Sub4_Sub3_Sub2Array970.length; i2++)
-					if (aClass50_Sub1_Sub4_Sub3_Sub2Array970[i2] != null)
-						aClass50_Sub1_Sub4_Sub3_Sub2Array970[i2].sequence = -1;
-
-				for (int l11 = 0; l11 < aClass50_Sub1_Sub4_Sub3_Sub1Array1132.length; l11++)
-					if (aClass50_Sub1_Sub4_Sub3_Sub1Array1132[l11] != null)
-						aClass50_Sub1_Sub4_Sub3_Sub1Array1132[l11].sequence = -1;
-
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 156) {
-				anInt1050 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 162) {
-				int j2 = aClass50_Sub1_Sub2_1188.readUnsignedShortAdd();
-				int i12 = aClass50_Sub1_Sub2_1188.readUnsignedShortLE();
-				Widget.get(i12).mediaType = 2;
-				Widget.get(i12).mediaId = j2;
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 109) {
-				int k2 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-				method112((byte) 36, k2);
-				if (anInt1089 != -1) {
-					method44(anInt1089);
-					anInt1089 = -1;
-					aBoolean1181 = true;
-					aBoolean950 = true;
-				}
-				if (anInt1053 != -1) {
-					method44(anInt1053);
-					anInt1053 = -1;
-					aBoolean1046 = true;
-				}
-				if (anInt960 != -1) {
-					method44(anInt960);
-					anInt960 = -1;
-				}
-				if (anInt1169 != -1) {
-					method44(anInt1169);
-					anInt1169 = -1;
-				}
-				if (anInt988 != k2) {
-					method44(anInt988);
-					anInt988 = k2;
-				}
-				aBoolean1239 = false;
-				aBoolean1240 = true;
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 220) {
-				int l2 = aClass50_Sub1_Sub2_1188.readUnsignedShortAddLE();
-				if (l2 == 65535)
-					l2 = -1;
-				if (l2 != anInt1327 && aBoolean1266 && !aBoolean926 && anInt1128 == 0) {
-					anInt1270 = l2;
-					aBoolean1271 = true;
-					aClass32_Sub1_1291.request(2, anInt1270);
-				}
-				anInt1327 = l2;
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 249) {
-				int i3 = aClass50_Sub1_Sub2_1188.readUnsignedShortLE();
-				int j12 = aClass50_Sub1_Sub2_1188.readMediumME();
-				if (aBoolean1266 && !aBoolean926) {
-					anInt1270 = i3;
-					aBoolean1271 = false;
-					aClass32_Sub1_1291.request(2, anInt1270);
-					anInt1128 = j12;
-				}
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 158) {
-				int j3 = aClass50_Sub1_Sub2_1188.readShortLE();
-				if (j3 != anInt1191) {
-					method44(anInt1191);
-					anInt1191 = j3;
-				}
-				aBoolean1240 = true;
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 218) {
-				int k3 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-				int k12 = aClass50_Sub1_Sub2_1188.readUnsignedShortAdd();
-				int j17 = k12 >> 10 & 0x1f;
-				int j22 = k12 >> 5 & 0x1f;
-				int l24 = k12 & 0x1f;
-				Widget.get(k3).color = (j17 << 19) + (j22 << 11) + (l24 << 3);
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 157) {
-				int l3 = aClass50_Sub1_Sub2_1188.readUnsignedByteNeg();
-				String s2 = aClass50_Sub1_Sub2_1188.readString();
-				int k17 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				if (l3 >= 1 && l3 <= 5) {
-					if (s2.equalsIgnoreCase("null"))
-						s2 = null;
-					aStringArray1069[l3 - 1] = s2;
-					aBooleanArray1070[l3 - 1] = k17 == 0;
-				}
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 6) {
-				aBoolean866 = false;
-				anInt1244 = 2;
-				aString949 = "";
-				aBoolean1240 = true;
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 201) {
-				anInt1006 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				anInt887 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				anInt1227 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				aBoolean1212 = true;
-				aBoolean1240 = true;
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 199) {
-				anInt1197 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				if (anInt1197 == 1)
-					anInt1226 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-				if (anInt1197 >= 2 && anInt1197 <= 6) {
-					if (anInt1197 == 2) {
-						anInt847 = 64;
-						anInt848 = 64;
-					}
-					if (anInt1197 == 3) {
-						anInt847 = 0;
-						anInt848 = 64;
-					}
-					if (anInt1197 == 4) {
-						anInt847 = 128;
-						anInt848 = 64;
-					}
-					if (anInt1197 == 5) {
-						anInt847 = 64;
-						anInt848 = 0;
-					}
-					if (anInt1197 == 6) {
-						anInt847 = 64;
-						anInt848 = 128;
-					}
-					anInt1197 = 2;
-					anInt844 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-					anInt845 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-					anInt846 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				}
-				if (anInt1197 == 10)
-					anInt1151 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 167) {
-				aBoolean1211 = true;
-				anInt993 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				anInt994 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				anInt995 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-				anInt996 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				anInt997 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				if (anInt997 >= 100) {
-					int i4 = anInt993 * 128 + 64;
-					int l12 = anInt994 * 128 + 64;
-					int l17 = method110(l12, i4, (byte) 9, anInt1091) - anInt995;
-					int k22 = i4 - anInt1216;
-					int i25 = l17 - anInt1217;
-					int k27 = l12 - anInt1218;
-					int i30 = (int) Math.sqrt(k22 * k22 + k27 * k27);
-					anInt1219 = (int) (Math.atan2(i25, i30) * 325.94900000000001D) & 0x7ff;
-					anInt1220 = (int) (Math.atan2(k22, k27) * -325.94900000000001D) & 0x7ff;
-					if (anInt1219 < 128)
-						anInt1219 = 128;
-					if (anInt1219 > 383)
-						anInt1219 = 383;
-				}
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 5) {
-				method124(true);
-				anInt870 = -1;
-				return false;
-			}
-			if (anInt870 == 115) {
-				int j4 = aClass50_Sub1_Sub2_1188.readIntIME();
-				int i13 = aClass50_Sub1_Sub2_1188.readUnsignedShortLE();
-				anIntArray1005[i13] = j4;
-				if (anIntArray1039[i13] != j4) {
-					anIntArray1039[i13] = j4;
-					method105(0, i13);
-					aBoolean1181 = true;
-					if (anInt1191 != -1)
-						aBoolean1240 = true;
-				}
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 29) {
-				if (anInt1089 != -1) {
-					method44(anInt1089);
-					anInt1089 = -1;
-					aBoolean1181 = true;
-					aBoolean950 = true;
-				}
-				if (anInt988 != -1) {
-					method44(anInt988);
-					anInt988 = -1;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 182) {
+			int l1 = networkSession.incoming.readUnsignedShortAdd();
+			byte byte0 = networkSession.incoming.readByteSub();
+			anIntArray1005[l1] = byte0;
+			if (anIntArray1039[l1] != byte0) {
+				anIntArray1039[l1] = byte0;
+				method105(0, l1);
+				aBoolean1181 = true;
+				if (anInt1191 != -1)
 					aBoolean1240 = true;
-				}
-				if (anInt1053 != -1) {
-					method44(anInt1053);
-					anInt1053 = -1;
-					aBoolean1046 = true;
-				}
-				if (anInt960 != -1) {
-					method44(anInt960);
-					anInt960 = -1;
-				}
-				if (anInt1169 != -1) {
-					method44(anInt1169);
-					anInt1169 = -1;
-				}
-				if (anInt1244 != 0) {
-					anInt1244 = 0;
-					aBoolean1240 = true;
-				}
-				aBoolean1239 = false;
-				anInt870 = -1;
-				return true;
 			}
-			if (anInt870 == 76) {
-				anInt1083 = aClass50_Sub1_Sub2_1188.readUnsignedShortLE();
-				anInt1075 = aClass50_Sub1_Sub2_1188.readUnsignedShortAddLE();
-				aClass50_Sub1_Sub2_1188.readUnsignedShort();
-				anInt1208 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-				anInt1170 = aClass50_Sub1_Sub2_1188.readUnsignedShortLE();
-				anInt1273 = aClass50_Sub1_Sub2_1188.readUnsignedShortAdd();
-				anInt1215 = aClass50_Sub1_Sub2_1188.readUnsignedShortAdd();
-				anInt992 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-				anInt1241 = aClass50_Sub1_Sub2_1188.readIntLE();
-				anInt1034 = aClass50_Sub1_Sub2_1188.readUnsignedShortAddLE();
-				aClass50_Sub1_Sub2_1188.readUnsignedByteAdd();
-				Signlink.lookupDns(Ipv4Address.format(anInt1241));
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 63) {
-				String s = aClass50_Sub1_Sub2_1188.readString();
-				if (s.endsWith(":tradereq:")) {
-					String s3 = s.substring(0, s.indexOf(":"));
-					long l18 = Base37.encode(s3);
-					boolean flag1 = false;
-					for (int l27 = 0; l27 < anInt855; l27++) {
-						if (aLongArray1073[l27] != l18)
-							continue;
-						flag1 = true;
-						break;
-					}
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 13) {
+			for (int i2 = 0; i2 < aClass50_Sub1_Sub4_Sub3_Sub2Array970.length; i2++)
+				if (aClass50_Sub1_Sub4_Sub3_Sub2Array970[i2] != null)
+					aClass50_Sub1_Sub4_Sub3_Sub2Array970[i2].sequence = -1;
 
-					if (!flag1 && anInt1246 == 0)
-						method47(s3, "wishes to trade with you.", 4);
-				} else if (s.endsWith(":duelreq:")) {
-					String s4 = s.substring(0, s.indexOf(":"));
-					long l19 = Base37.encode(s4);
-					boolean flag2 = false;
-					for (int i28 = 0; i28 < anInt855; i28++) {
-						if (aLongArray1073[i28] != l19)
-							continue;
-						flag2 = true;
-						break;
-					}
+			for (int l11 = 0; l11 < aClass50_Sub1_Sub4_Sub3_Sub1Array1132.length; l11++)
+				if (aClass50_Sub1_Sub4_Sub3_Sub1Array1132[l11] != null)
+					aClass50_Sub1_Sub4_Sub3_Sub1Array1132[l11].sequence = -1;
 
-					if (!flag2 && anInt1246 == 0)
-						method47(s4, "wishes to duel with you.", 8);
-				} else if (s.endsWith(":chalreq:")) {
-					String s5 = s.substring(0, s.indexOf(":"));
-					long l20 = Base37.encode(s5);
-					boolean flag3 = false;
-					for (int j28 = 0; j28 < anInt855; j28++) {
-						if (aLongArray1073[j28] != l20)
-							continue;
-						flag3 = true;
-						break;
-					}
-
-					if (!flag3 && anInt1246 == 0) {
-						String s8 = s.substring(s.indexOf(":") + 1, s.length() - 9);
-						method47(s5, s8, 8);
-					}
-				} else {
-					method47("", s, 0);
-				}
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 50) {
-				int k4 = aClass50_Sub1_Sub2_1188.readSignedShort();
-				if (k4 >= 0)
-					method112((byte) 36, k4);
-				if (k4 != anInt1279) {
-					method44(anInt1279);
-					anInt1279 = k4;
-				}
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 82) {
-				boolean flag = aClass50_Sub1_Sub2_1188.readUnsignedByte() == 1;
-				int j13 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-				Widget.get(j13).mouseoverTriggered = flag;
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 174) {
-				if (anInt1285 == 12)
-					aBoolean1181 = true;
-				anInt1030 = aClass50_Sub1_Sub2_1188.readSignedShort();
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 233) {
-				anInt1319 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 61) {
-				anInt1120 = 0;
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 128) {
-				int l4 = aClass50_Sub1_Sub2_1188.readUnsignedShortAdd();
-				int k13 = aClass50_Sub1_Sub2_1188.readUnsignedShortAddLE();
-				if (anInt988 != -1) {
-					method44(anInt988);
-					anInt988 = -1;
-					aBoolean1240 = true;
-				}
-				if (anInt1053 != -1) {
-					method44(anInt1053);
-					anInt1053 = -1;
-					aBoolean1046 = true;
-				}
-				if (anInt960 != -1) {
-					method44(anInt960);
-					anInt960 = -1;
-				}
-				if (anInt1169 != l4) {
-					method44(anInt1169);
-					anInt1169 = l4;
-				}
-				if (anInt1089 != k13) {
-					method44(anInt1089);
-					anInt1089 = k13;
-				}
-				if (anInt1244 != 0) {
-					anInt1244 = 0;
-					aBoolean1240 = true;
-				}
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 156) {
+			anInt1050 = networkSession.incoming.readUnsignedByte();
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 162) {
+			int j2 = networkSession.incoming.readUnsignedShortAdd();
+			int i12 = networkSession.incoming.readUnsignedShortLE();
+			Widget.get(i12).mediaType = 2;
+			Widget.get(i12).mediaId = j2;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 109) {
+			int k2 = networkSession.incoming.readUnsignedShort();
+			method112((byte) 36, k2);
+			if (anInt1089 != -1) {
+				method44(anInt1089);
+				anInt1089 = -1;
 				aBoolean1181 = true;
 				aBoolean950 = true;
-				aBoolean1239 = false;
-				anInt870 = -1;
-				return true;
 			}
-			if (anInt870 == 67) {
-				int i5 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				int l13 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				int i18 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				int l22 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				aBooleanArray927[i5] = true;
-				anIntArray1105[i5] = l13;
-				anIntArray852[i5] = i18;
-				anIntArray991[i5] = l22;
-				anIntArray1145[i5] = 0;
-				anInt870 = -1;
-				return true;
+			if (anInt1053 != -1) {
+				method44(anInt1053);
+				anInt1053 = -1;
+				aBoolean1046 = true;
 			}
-			if (anInt870 == 134) {
-				aBoolean1181 = true;
-				int j5 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-				Widget class13 = Widget.get(j5);
-				while (aClass50_Sub1_Sub2_1188.position < anInt869) {
-					int j18 = aClass50_Sub1_Sub2_1188.readUnsignedSmart();
-					int i23 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-					int j25 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-					if (j25 == 255)
-						j25 = aClass50_Sub1_Sub2_1188.readInt();
-					if (j18 >= 0 && j18 < class13.itemIds.length) {
-						class13.itemIds[j18] = i23;
-						class13.itemAmounts[j18] = j25;
-					}
+			if (anInt960 != -1) {
+				method44(anInt960);
+				anInt960 = -1;
+			}
+			if (anInt1169 != -1) {
+				method44(anInt1169);
+				anInt1169 = -1;
+			}
+			if (anInt988 != k2) {
+				method44(anInt988);
+				anInt988 = k2;
+			}
+			aBoolean1239 = false;
+			aBoolean1240 = true;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 220) {
+			int l2 = networkSession.incoming.readUnsignedShortAddLE();
+			if (l2 == 65535)
+				l2 = -1;
+			if (l2 != anInt1327 && aBoolean1266 && !aBoolean926 && anInt1128 == 0) {
+				anInt1270 = l2;
+				aBoolean1271 = true;
+				aClass32_Sub1_1291.request(2, anInt1270);
+			}
+			anInt1327 = l2;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 249) {
+			int i3 = networkSession.incoming.readUnsignedShortLE();
+			int j12 = networkSession.incoming.readMediumME();
+			if (aBoolean1266 && !aBoolean926) {
+				anInt1270 = i3;
+				aBoolean1271 = false;
+				aClass32_Sub1_1291.request(2, anInt1270);
+				anInt1128 = j12;
+			}
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 158) {
+			int j3 = networkSession.incoming.readShortLE();
+			if (j3 != anInt1191) {
+				method44(anInt1191);
+				anInt1191 = j3;
+			}
+			aBoolean1240 = true;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 218) {
+			int k3 = networkSession.incoming.readUnsignedShort();
+			int k12 = networkSession.incoming.readUnsignedShortAdd();
+			int j17 = k12 >> 10 & 0x1f;
+			int j22 = k12 >> 5 & 0x1f;
+			int l24 = k12 & 0x1f;
+			Widget.get(k3).color = (j17 << 19) + (j22 << 11) + (l24 << 3);
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 157) {
+			int l3 = networkSession.incoming.readUnsignedByteNeg();
+			String s2 = networkSession.incoming.readString();
+			int k17 = networkSession.incoming.readUnsignedByte();
+			if (l3 >= 1 && l3 <= 5) {
+				if (s2.equalsIgnoreCase("null"))
+					s2 = null;
+				aStringArray1069[l3 - 1] = s2;
+				aBooleanArray1070[l3 - 1] = k17 == 0;
+			}
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 6) {
+			aBoolean866 = false;
+			anInt1244 = 2;
+			aString949 = "";
+			aBoolean1240 = true;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 201) {
+			anInt1006 = networkSession.incoming.readUnsignedByte();
+			anInt887 = networkSession.incoming.readUnsignedByte();
+			anInt1227 = networkSession.incoming.readUnsignedByte();
+			aBoolean1212 = true;
+			aBoolean1240 = true;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 199) {
+			anInt1197 = networkSession.incoming.readUnsignedByte();
+			if (anInt1197 == 1)
+				anInt1226 = networkSession.incoming.readUnsignedShort();
+			if (anInt1197 >= 2 && anInt1197 <= 6) {
+				if (anInt1197 == 2) {
+					anInt847 = 64;
+					anInt848 = 64;
 				}
-				anInt870 = -1;
-				return true;
+				if (anInt1197 == 3) {
+					anInt847 = 0;
+					anInt848 = 64;
+				}
+				if (anInt1197 == 4) {
+					anInt847 = 128;
+					anInt848 = 64;
+				}
+				if (anInt1197 == 5) {
+					anInt847 = 64;
+					anInt848 = 0;
+				}
+				if (anInt1197 == 6) {
+					anInt847 = 64;
+					anInt848 = 128;
+				}
+				anInt1197 = 2;
+				anInt844 = networkSession.incoming.readUnsignedShort();
+				anInt845 = networkSession.incoming.readUnsignedShort();
+				anInt846 = networkSession.incoming.readUnsignedByte();
 			}
-			if (anInt870 == 78) {
-				long l5 = aClass50_Sub1_Sub2_1188.readLong();
-				int k18 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				String s7 = TextFormatter.formatDisplayName(Base37.decode(l5));
-				for (int k25 = 0; k25 < anInt859; k25++) {
-					if (l5 != aLongArray1130[k25])
+			if (anInt1197 == 10)
+				anInt1151 = networkSession.incoming.readUnsignedShort();
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 167) {
+			aBoolean1211 = true;
+			anInt993 = networkSession.incoming.readUnsignedByte();
+			anInt994 = networkSession.incoming.readUnsignedByte();
+			anInt995 = networkSession.incoming.readUnsignedShort();
+			anInt996 = networkSession.incoming.readUnsignedByte();
+			anInt997 = networkSession.incoming.readUnsignedByte();
+			if (anInt997 >= 100) {
+				int i4 = anInt993 * 128 + 64;
+				int l12 = anInt994 * 128 + 64;
+				int l17 = method110(l12, i4, (byte) 9, anInt1091) - anInt995;
+				int k22 = i4 - anInt1216;
+				int i25 = l17 - anInt1217;
+				int k27 = l12 - anInt1218;
+				int i30 = (int) Math.sqrt(k22 * k22 + k27 * k27);
+				anInt1219 = (int) (Math.atan2(i25, i30) * 325.94900000000001D) & 0x7ff;
+				anInt1220 = (int) (Math.atan2(k22, k27) * -325.94900000000001D) & 0x7ff;
+				if (anInt1219 < 128)
+					anInt1219 = 128;
+				if (anInt1219 > 383)
+					anInt1219 = 383;
+			}
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 5) {
+			logout();
+			networkSession.incomingOpcode = -1;
+			return false;
+		}
+		if (networkSession.incomingOpcode == 115) {
+			int j4 = networkSession.incoming.readIntIME();
+			int i13 = networkSession.incoming.readUnsignedShortLE();
+			anIntArray1005[i13] = j4;
+			if (anIntArray1039[i13] != j4) {
+				anIntArray1039[i13] = j4;
+				method105(0, i13);
+				aBoolean1181 = true;
+				if (anInt1191 != -1)
+					aBoolean1240 = true;
+			}
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 29) {
+			if (anInt1089 != -1) {
+				method44(anInt1089);
+				anInt1089 = -1;
+				aBoolean1181 = true;
+				aBoolean950 = true;
+			}
+			if (anInt988 != -1) {
+				method44(anInt988);
+				anInt988 = -1;
+				aBoolean1240 = true;
+			}
+			if (anInt1053 != -1) {
+				method44(anInt1053);
+				anInt1053 = -1;
+				aBoolean1046 = true;
+			}
+			if (anInt960 != -1) {
+				method44(anInt960);
+				anInt960 = -1;
+			}
+			if (anInt1169 != -1) {
+				method44(anInt1169);
+				anInt1169 = -1;
+			}
+			if (anInt1244 != 0) {
+				anInt1244 = 0;
+				aBoolean1240 = true;
+			}
+			aBoolean1239 = false;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 76) {
+			anInt1083 = networkSession.incoming.readUnsignedShortLE();
+			anInt1075 = networkSession.incoming.readUnsignedShortAddLE();
+			networkSession.incoming.readUnsignedShort();
+			anInt1208 = networkSession.incoming.readUnsignedShort();
+			anInt1170 = networkSession.incoming.readUnsignedShortLE();
+			anInt1273 = networkSession.incoming.readUnsignedShortAdd();
+			anInt1215 = networkSession.incoming.readUnsignedShortAdd();
+			anInt992 = networkSession.incoming.readUnsignedShort();
+			anInt1241 = networkSession.incoming.readIntLE();
+			anInt1034 = networkSession.incoming.readUnsignedShortAddLE();
+			networkSession.incoming.readUnsignedByteAdd();
+			Signlink.lookupDns(Ipv4Address.format(anInt1241));
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 63) {
+			String s = networkSession.incoming.readString();
+			if (s.endsWith(":tradereq:")) {
+				String s3 = s.substring(0, s.indexOf(":"));
+				long l18 = Base37.encode(s3);
+				boolean flag1 = false;
+				for (int l27 = 0; l27 < anInt855; l27++) {
+					if (aLongArray1073[l27] != l18)
 						continue;
-					if (anIntArray1267[k25] != k18) {
-						anIntArray1267[k25] = k18;
-						aBoolean1181 = true;
-						if (k18 > 0)
-							method47("", s7 + " has logged in.", 5);
-						if (k18 == 0)
-							method47("", s7 + " has logged out.", 5);
-					}
-					s7 = null;
+					flag1 = true;
 					break;
 				}
 
-				if (s7 != null && anInt859 < 200) {
-					aLongArray1130[anInt859] = l5;
-					aStringArray849[anInt859] = s7;
-					anIntArray1267[anInt859] = k18;
-					anInt859++;
-					aBoolean1181 = true;
-				}
-				for (boolean flag5 = false; !flag5;) {
-					flag5 = true;
-					for (int j30 = 0; j30 < anInt859 - 1; j30++)
-						if (anIntArray1267[j30] != anInt923 && anIntArray1267[j30 + 1] == anInt923
-								|| anIntArray1267[j30] == 0 && anIntArray1267[j30 + 1] != 0) {
-							int l31 = anIntArray1267[j30];
-							anIntArray1267[j30] = anIntArray1267[j30 + 1];
-							anIntArray1267[j30 + 1] = l31;
-							String s10 = aStringArray849[j30];
-							aStringArray849[j30] = aStringArray849[j30 + 1];
-							aStringArray849[j30 + 1] = s10;
-							long l33 = aLongArray1130[j30];
-							aLongArray1130[j30] = aLongArray1130[j30 + 1];
-							aLongArray1130[j30 + 1] = l33;
-							aBoolean1181 = true;
-							flag5 = false;
-						}
-
+				if (!flag1 && anInt1246 == 0)
+					method47(s3, "wishes to trade with you.", 4);
+			} else if (s.endsWith(":duelreq:")) {
+				String s4 = s.substring(0, s.indexOf(":"));
+				long l19 = Base37.encode(s4);
+				boolean flag2 = false;
+				for (int i28 = 0; i28 < anInt855; i28++) {
+					if (aLongArray1073[i28] != l19)
+						continue;
+					flag2 = true;
+					break;
 				}
 
-				anInt870 = -1;
-				return true;
+				if (!flag2 && anInt1246 == 0)
+					method47(s4, "wishes to duel with you.", 8);
+			} else if (s.endsWith(":chalreq:")) {
+				String s5 = s.substring(0, s.indexOf(":"));
+				long l20 = Base37.encode(s5);
+				boolean flag3 = false;
+				for (int j28 = 0; j28 < anInt855; j28++) {
+					if (aLongArray1073[j28] != l20)
+						continue;
+					flag3 = true;
+					break;
+				}
+
+				if (!flag3 && anInt1246 == 0) {
+					String s8 = s.substring(s.indexOf(":") + 1, s.length() - 9);
+					method47(s5, s8, 8);
+				}
+			} else {
+				method47("", s, 0);
 			}
-			if (anInt870 == 58) {
-				aBoolean866 = false;
-				anInt1244 = 1;
-				aString949 = "";
-				aBoolean1240 = true;
-				anInt870 = -1;
-				return true;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 50) {
+			int k4 = networkSession.incoming.readSignedShort();
+			if (k4 >= 0)
+				method112((byte) 36, k4);
+			if (k4 != anInt1279) {
+				method44(anInt1279);
+				anInt1279 = k4;
 			}
-			if (anInt870 == 252) {
-				anInt1285 = aClass50_Sub1_Sub2_1188.readUnsignedByteNeg();
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 82) {
+			boolean flag = networkSession.incoming.readUnsignedByte() == 1;
+			int j13 = networkSession.incoming.readUnsignedShort();
+			Widget.get(j13).mouseoverTriggered = flag;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 174) {
+			if (anInt1285 == 12)
 				aBoolean1181 = true;
-				aBoolean950 = true;
-				anInt870 = -1;
-				return true;
+			anInt1030 = networkSession.incoming.readSignedShort();
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 233) {
+			anInt1319 = networkSession.incoming.readUnsignedByte();
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 61) {
+			anInt1120 = 0;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 128) {
+			int l4 = networkSession.incoming.readUnsignedShortAdd();
+			int k13 = networkSession.incoming.readUnsignedShortAddLE();
+			if (anInt988 != -1) {
+				method44(anInt988);
+				anInt988 = -1;
+				aBoolean1240 = true;
 			}
-			if (anInt870 == 40) {
-				anInt990 = aClass50_Sub1_Sub2_1188.readUnsignedByteSub();
-				anInt989 = aClass50_Sub1_Sub2_1188.readUnsignedByteNeg();
-				for (int k5 = anInt989; k5 < anInt989 + 8; k5++) {
-					for (int i14 = anInt990; i14 < anInt990 + 8; i14++)
-						if (aClass6ArrayArrayArray1323[anInt1091][k5][i14] != null) {
-							aClass6ArrayArrayArray1323[anInt1091][k5][i14] = null;
-							method26(k5, i14);
-						}
-
+			if (anInt1053 != -1) {
+				method44(anInt1053);
+				anInt1053 = -1;
+				aBoolean1046 = true;
+			}
+			if (anInt960 != -1) {
+				method44(anInt960);
+				anInt960 = -1;
+			}
+			if (anInt1169 != l4) {
+				method44(anInt1169);
+				anInt1169 = l4;
+			}
+			if (anInt1089 != k13) {
+				method44(anInt1089);
+				anInt1089 = k13;
+			}
+			if (anInt1244 != 0) {
+				anInt1244 = 0;
+				aBoolean1240 = true;
+			}
+			aBoolean1181 = true;
+			aBoolean950 = true;
+			aBoolean1239 = false;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 67) {
+			int i5 = networkSession.incoming.readUnsignedByte();
+			int l13 = networkSession.incoming.readUnsignedByte();
+			int i18 = networkSession.incoming.readUnsignedByte();
+			int l22 = networkSession.incoming.readUnsignedByte();
+			aBooleanArray927[i5] = true;
+			anIntArray1105[i5] = l13;
+			anIntArray852[i5] = i18;
+			anIntArray991[i5] = l22;
+			anIntArray1145[i5] = 0;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 134) {
+			aBoolean1181 = true;
+			int j5 = networkSession.incoming.readUnsignedShort();
+			Widget class13 = Widget.get(j5);
+			while (networkSession.incoming.position < networkSession.incomingLength) {
+				int j18 = networkSession.incoming.readUnsignedSmart();
+				int i23 = networkSession.incoming.readUnsignedShort();
+				int j25 = networkSession.incoming.readUnsignedByte();
+				if (j25 == 255)
+					j25 = networkSession.incoming.readInt();
+				if (j18 >= 0 && j18 < class13.itemIds.length) {
+					class13.itemIds[j18] = i23;
+					class13.itemAmounts[j18] = j25;
 				}
-
-				for (PendingSpawn class50_sub2 = (PendingSpawn) aClass6_1261
-						.first(); class50_sub2 != null; class50_sub2 = (PendingSpawn) aClass6_1261.next())
-					if (class50_sub2.x >= anInt989 && class50_sub2.x < anInt989 + 8 && class50_sub2.y >= anInt990
-							&& class50_sub2.y < anInt990 + 8 && class50_sub2.plane == anInt1091)
-						class50_sub2.restoreDelay = 0;
-
-				anInt870 = -1;
-				return true;
 			}
-			if (anInt870 == 255) {
-				int i6 = aClass50_Sub1_Sub2_1188.readUnsignedShortAddLE();
-				Widget.get(i6).mediaType = 3;
-				if (aClass50_Sub1_Sub4_Sub3_Sub2_1167.npcDefinition == null)
-					Widget.get(i6).mediaId = (aClass50_Sub1_Sub4_Sub3_Sub2_1167.bodyColors[0] << 25)
-							+ (aClass50_Sub1_Sub4_Sub3_Sub2_1167.bodyColors[4] << 20)
-							+ (aClass50_Sub1_Sub4_Sub3_Sub2_1167.equipment[0] << 15)
-							+ (aClass50_Sub1_Sub4_Sub3_Sub2_1167.equipment[8] << 10)
-							+ (aClass50_Sub1_Sub4_Sub3_Sub2_1167.equipment[11] << 5)
-							+ aClass50_Sub1_Sub4_Sub3_Sub2_1167.equipment[1];
-				else
-					Widget.get(i6).mediaId = (int) (0x12345678L + aClass50_Sub1_Sub4_Sub3_Sub2_1167.npcDefinition.id);
-				anInt870 = -1;
-				return true;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 78) {
+			long l5 = networkSession.incoming.readLong();
+			int k18 = networkSession.incoming.readUnsignedByte();
+			String s7 = TextFormatter.formatDisplayName(Base37.decode(l5));
+			for (int k25 = 0; k25 < anInt859; k25++) {
+				if (l5 != aLongArray1130[k25])
+					continue;
+				if (anIntArray1267[k25] != k18) {
+					anIntArray1267[k25] = k18;
+					aBoolean1181 = true;
+					if (k18 > 0)
+						method47("", s7 + " has logged in.", 5);
+					if (k18 == 0)
+						method47("", s7 + " has logged out.", 5);
+				}
+				s7 = null;
+				break;
 			}
-			if (anInt870 == 135) {
-				long l6 = aClass50_Sub1_Sub2_1188.readLong();
-				int i19 = aClass50_Sub1_Sub2_1188.readInt();
-				int j23 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				boolean flag4 = false;
-				for (int k28 = 0; k28 < 100; k28++) {
-					if (anIntArray1258[k28] != i19)
+
+			if (s7 != null && anInt859 < 200) {
+				aLongArray1130[anInt859] = l5;
+				aStringArray849[anInt859] = s7;
+				anIntArray1267[anInt859] = k18;
+				anInt859++;
+				aBoolean1181 = true;
+			}
+			for (boolean flag5 = false; !flag5;) {
+				flag5 = true;
+				for (int j30 = 0; j30 < anInt859 - 1; j30++)
+					if (anIntArray1267[j30] != anInt923 && anIntArray1267[j30 + 1] == anInt923
+							|| anIntArray1267[j30] == 0 && anIntArray1267[j30 + 1] != 0) {
+						int l31 = anIntArray1267[j30];
+						anIntArray1267[j30] = anIntArray1267[j30 + 1];
+						anIntArray1267[j30 + 1] = l31;
+						String s10 = aStringArray849[j30];
+						aStringArray849[j30] = aStringArray849[j30 + 1];
+						aStringArray849[j30 + 1] = s10;
+						long l33 = aLongArray1130[j30];
+						aLongArray1130[j30] = aLongArray1130[j30 + 1];
+						aLongArray1130[j30 + 1] = l33;
+						aBoolean1181 = true;
+						flag5 = false;
+					}
+
+			}
+
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 58) {
+			aBoolean866 = false;
+			anInt1244 = 1;
+			aString949 = "";
+			aBoolean1240 = true;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 252) {
+			anInt1285 = networkSession.incoming.readUnsignedByteNeg();
+			aBoolean1181 = true;
+			aBoolean950 = true;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 40) {
+			anInt990 = networkSession.incoming.readUnsignedByteSub();
+			anInt989 = networkSession.incoming.readUnsignedByteNeg();
+			for (int k5 = anInt989; k5 < anInt989 + 8; k5++) {
+				for (int i14 = anInt990; i14 < anInt990 + 8; i14++)
+					if (aClass6ArrayArrayArray1323[anInt1091][k5][i14] != null) {
+						aClass6ArrayArrayArray1323[anInt1091][k5][i14] = null;
+						method26(k5, i14);
+					}
+
+			}
+
+			for (PendingSpawn class50_sub2 = (PendingSpawn) aClass6_1261
+					.first(); class50_sub2 != null; class50_sub2 = (PendingSpawn) aClass6_1261.next())
+				if (class50_sub2.x >= anInt989 && class50_sub2.x < anInt989 + 8 && class50_sub2.y >= anInt990
+						&& class50_sub2.y < anInt990 + 8 && class50_sub2.plane == anInt1091)
+					class50_sub2.restoreDelay = 0;
+
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 255) {
+			int i6 = networkSession.incoming.readUnsignedShortAddLE();
+			Widget.get(i6).mediaType = 3;
+			if (aClass50_Sub1_Sub4_Sub3_Sub2_1167.npcDefinition == null)
+				Widget.get(i6).mediaId = (aClass50_Sub1_Sub4_Sub3_Sub2_1167.bodyColors[0] << 25)
+						+ (aClass50_Sub1_Sub4_Sub3_Sub2_1167.bodyColors[4] << 20)
+						+ (aClass50_Sub1_Sub4_Sub3_Sub2_1167.equipment[0] << 15)
+						+ (aClass50_Sub1_Sub4_Sub3_Sub2_1167.equipment[8] << 10)
+						+ (aClass50_Sub1_Sub4_Sub3_Sub2_1167.equipment[11] << 5)
+						+ aClass50_Sub1_Sub4_Sub3_Sub2_1167.equipment[1];
+			else
+				Widget.get(i6).mediaId = (int) (0x12345678L + aClass50_Sub1_Sub4_Sub3_Sub2_1167.npcDefinition.id);
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 135) {
+			long l6 = networkSession.incoming.readLong();
+			int i19 = networkSession.incoming.readInt();
+			int j23 = networkSession.incoming.readUnsignedByte();
+			boolean flag4 = false;
+			for (int k28 = 0; k28 < 100; k28++) {
+				if (anIntArray1258[k28] != i19)
+					continue;
+				flag4 = true;
+				break;
+			}
+
+			if (j23 <= 1) {
+				for (int k30 = 0; k30 < anInt855; k30++) {
+					if (aLongArray1073[k30] != l6)
 						continue;
 					flag4 = true;
 					break;
 				}
 
-				if (j23 <= 1) {
-					for (int k30 = 0; k30 < anInt855; k30++) {
-						if (aLongArray1073[k30] != l6)
-							continue;
-						flag4 = true;
-						break;
-					}
-
-				}
-				if (!flag4 && anInt1246 == 0)
-					try {
-						anIntArray1258[anInt1152] = i19;
-						anInt1152 = (anInt1152 + 1) % 100;
-						String s9 = ChatCodec.decode(aClass50_Sub1_Sub2_1188, anInt869 - 13);
-						if (j23 != 3)
-							s9 = Censor.censor(s9);
-						if (j23 == 2 || j23 == 3)
-							method47("@cr2@" + TextFormatter.formatDisplayName(Base37.decode(l6)), s9, 7);
-						else if (j23 == 1)
-							method47("@cr1@" + TextFormatter.formatDisplayName(Base37.decode(l6)), s9, 7);
-						else
-							method47(TextFormatter.formatDisplayName(Base37.decode(l6)), s9, 3);
-					} catch (Exception exception1) {
-						Signlink.reportError("cde1");
-					}
-				anInt870 = -1;
-				return true;
 			}
-			if (anInt870 == 183) {
-				anInt989 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				anInt990 = aClass50_Sub1_Sub2_1188.readUnsignedByteAdd();
-				while (aClass50_Sub1_Sub2_1188.position < anInt869) {
-					int j6 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-					method133(aClass50_Sub1_Sub2_1188, 0, j6);
-				}
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 159) {
-				int k6 = aClass50_Sub1_Sub2_1188.readUnsignedShortAddLE();
-				method112((byte) 36, k6);
-				if (anInt1089 != -1) {
-					method44(anInt1089);
-					anInt1089 = -1;
-					aBoolean1181 = true;
-					aBoolean950 = true;
-				}
-				if (anInt988 != -1) {
-					method44(anInt988);
-					anInt988 = -1;
-					aBoolean1240 = true;
-				}
-				if (anInt1053 != -1) {
-					method44(anInt1053);
-					anInt1053 = -1;
-					aBoolean1046 = true;
-				}
-				if (anInt960 != -1) {
-					method44(anInt960);
-					anInt960 = -1;
-				}
-				if (anInt1169 != k6) {
-					method44(anInt1169);
-					anInt1169 = k6;
-				}
-				if (anInt1244 != 0) {
-					anInt1244 = 0;
-					aBoolean1240 = true;
-				}
-				aBoolean1239 = false;
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 246) {
-				int i7 = aClass50_Sub1_Sub2_1188.readUnsignedShortAddLE();
-				method112((byte) 36, i7);
-				if (anInt988 != -1) {
-					method44(anInt988);
-					anInt988 = -1;
-					aBoolean1240 = true;
-				}
-				if (anInt1053 != -1) {
-					method44(anInt1053);
-					anInt1053 = -1;
-					aBoolean1046 = true;
-				}
-				if (anInt960 != -1) {
-					method44(anInt960);
-					anInt960 = -1;
-				}
-				if (anInt1169 != -1) {
-					method44(anInt1169);
-					anInt1169 = -1;
-				}
-				if (anInt1089 != i7) {
-					method44(anInt1089);
-					anInt1089 = i7;
-				}
-				if (anInt1244 != 0) {
-					anInt1244 = 0;
-					aBoolean1240 = true;
-				}
-				aBoolean1181 = true;
-				aBoolean950 = true;
-				aBoolean1239 = false;
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 49) {
-				aBoolean1181 = true;
-				int j7 = aClass50_Sub1_Sub2_1188.readUnsignedByteNeg();
-				int j14 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				int j19 = aClass50_Sub1_Sub2_1188.readInt();
-				anIntArray843[j7] = j19;
-				anIntArray1029[j7] = j14;
-				anIntArray1054[j7] = 1;
-				for (int k23 = 0; k23 < 98; k23++)
-					if (j19 >= anIntArray952[k23])
-						anIntArray1054[j7] = k23 + 2;
-
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 206) {
-				aBoolean1181 = true;
-				int k7 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-				Widget class13_1 = Widget.get(k7);
-				int k19 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-				for (int l23 = 0; l23 < k19; l23++) {
-					class13_1.itemIds[l23] = aClass50_Sub1_Sub2_1188.readUnsignedShortAddLE();
-					int l25 = aClass50_Sub1_Sub2_1188.readUnsignedByteNeg();
-					if (l25 == 255)
-						l25 = aClass50_Sub1_Sub2_1188.readIntLE();
-					class13_1.itemAmounts[l23] = l25;
-				}
-
-				for (int i26 = k19; i26 < class13_1.itemIds.length; i26++) {
-					class13_1.itemIds[i26] = 0;
-					class13_1.itemAmounts[i26] = 0;
-				}
-
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 222 || anInt870 == 53) {
-				int l7 = anInt889;
-				int k14 = anInt890;
-				if (anInt870 == 222) {
-					k14 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-					l7 = aClass50_Sub1_Sub2_1188.readUnsignedShortAddLE();
-					aBoolean1163 = false;
-				}
-				if (anInt870 == 53) {
-					l7 = aClass50_Sub1_Sub2_1188.readUnsignedShortAdd();
-					aClass50_Sub1_Sub2_1188.startBitAccess();
-					for (int i20 = 0; i20 < 4; i20++) {
-						for (int i24 = 0; i24 < 13; i24++) {
-							for (int j26 = 0; j26 < 13; j26++) {
-								int l28 = aClass50_Sub1_Sub2_1188.readBits(1);
-								if (l28 == 1)
-									anIntArrayArrayArray879[i20][i24][j26] = aClass50_Sub1_Sub2_1188.readBits(26);
-								else
-									anIntArrayArrayArray879[i20][i24][j26] = -1;
-							}
-
-						}
-
-					}
-
-					aClass50_Sub1_Sub2_1188.finishBitAccess();
-					k14 = aClass50_Sub1_Sub2_1188.readUnsignedShortAdd();
-					aBoolean1163 = true;
-				}
-				if (anInt889 == l7 && anInt890 == k14 && anInt1071 == 2) {
-					anInt870 = -1;
-					return true;
-				}
-				anInt889 = l7;
-				anInt890 = k14;
-				anInt1040 = (anInt889 - 6) * 8;
-				anInt1041 = (anInt890 - 6) * 8;
-				aBoolean1067 = false;
-				if ((anInt889 / 8 == 48 || anInt889 / 8 == 49) && anInt890 / 8 == 48)
-					aBoolean1067 = true;
-				if (anInt889 / 8 == 48 && anInt890 / 8 == 148)
-					aBoolean1067 = true;
-				anInt1071 = 1;
-				aLong1229 = System.currentTimeMillis();
-				method125(-332, null, "Loading - please wait.");
-				if (anInt870 == 222) {
-					int j20 = 0;
-					for (int j24 = (anInt889 - 6) / 8; j24 <= (anInt889 + 6) / 8; j24++) {
-						for (int k26 = (anInt890 - 6) / 8; k26 <= (anInt890 + 6) / 8; k26++)
-							j20++;
-
-					}
-
-					aByteArrayArray838 = new byte[j20][];
-					aByteArrayArray1232 = new byte[j20][];
-					anIntArray856 = new int[j20];
-					anIntArray857 = new int[j20];
-					anIntArray858 = new int[j20];
-					j20 = 0;
-					for (int l26 = (anInt889 - 6) / 8; l26 <= (anInt889 + 6) / 8; l26++) {
-						for (int i29 = (anInt890 - 6) / 8; i29 <= (anInt890 + 6) / 8; i29++) {
-							anIntArray856[j20] = (l26 << 8) + i29;
-							if (aBoolean1067
-									&& (i29 == 49 || i29 == 149 || i29 == 147 || l26 == 50 || l26 == 49 && i29 == 47)) {
-								anIntArray857[j20] = -1;
-								anIntArray858[j20] = -1;
-								j20++;
-							} else {
-								int l30 = anIntArray857[j20] = aClass32_Sub1_1291.getMapFileId(l26, i29, 0);
-								if (l30 != -1)
-									aClass32_Sub1_1291.request(3, l30);
-								int i32 = anIntArray858[j20] = aClass32_Sub1_1291.getMapFileId(l26, i29, 1);
-								if (i32 != -1)
-									aClass32_Sub1_1291.request(3, i32);
-								j20++;
-							}
-						}
-
-					}
-
-				}
-				if (anInt870 == 53) {
-					int k20 = 0;
-					int ai[] = new int[676];
-					for (int i27 = 0; i27 < 4; i27++) {
-						for (int j29 = 0; j29 < 13; j29++) {
-							for (int i31 = 0; i31 < 13; i31++) {
-								int j32 = anIntArrayArrayArray879[i27][j29][i31];
-								if (j32 != -1) {
-									int i33 = j32 >> 14 & 0x3ff;
-									int k33 = j32 >> 3 & 0x7ff;
-									int j34 = (i33 / 8 << 8) + k33 / 8;
-									for (int l34 = 0; l34 < k20; l34++) {
-										if (ai[l34] != j34)
-											continue;
-										j34 = -1;
-										break;
-									}
-
-									if (j34 != -1)
-										ai[k20++] = j34;
-								}
-							}
-
-						}
-
-					}
-
-					aByteArrayArray838 = new byte[k20][];
-					aByteArrayArray1232 = new byte[k20][];
-					anIntArray856 = new int[k20];
-					anIntArray857 = new int[k20];
-					anIntArray858 = new int[k20];
-					for (int k29 = 0; k29 < k20; k29++) {
-						int j31 = anIntArray856[k29] = ai[k29];
-						int k32 = j31 >> 8 & 0xff;
-						int j33 = j31 & 0xff;
-						int i34 = anIntArray857[k29] = aClass32_Sub1_1291.getMapFileId(k32, j33, 0);
-						if (i34 != -1)
-							aClass32_Sub1_1291.request(3, i34);
-						int k34 = anIntArray858[k29] = aClass32_Sub1_1291.getMapFileId(k32, j33, 1);
-						if (k34 != -1)
-							aClass32_Sub1_1291.request(3, k34);
-					}
-
-				}
-				int i21 = anInt1040 - anInt1042;
-				int k24 = anInt1041 - anInt1043;
-				anInt1042 = anInt1040;
-				anInt1043 = anInt1041;
-				for (int j27 = 0; j27 < 16384; j27++) {
-					Npc class50_sub1_sub4_sub3_sub1 = aClass50_Sub1_Sub4_Sub3_Sub1Array1132[j27];
-					if (class50_sub1_sub4_sub3_sub1 != null) {
-						for (int k31 = 0; k31 < 10; k31++) {
-							((Actor) (class50_sub1_sub4_sub3_sub1)).pathX[k31] -= i21;
-							((Actor) (class50_sub1_sub4_sub3_sub1)).pathY[k31] -= k24;
-						}
-
-						class50_sub1_sub4_sub3_sub1.x -= i21 * 128;
-						class50_sub1_sub4_sub3_sub1.y -= k24 * 128;
-					}
-				}
-
-				for (int l29 = 0; l29 < anInt968; l29++) {
-					Player class50_sub1_sub4_sub3_sub2 = aClass50_Sub1_Sub4_Sub3_Sub2Array970[l29];
-					if (class50_sub1_sub4_sub3_sub2 != null) {
-						for (int l32 = 0; l32 < 10; l32++) {
-							((Actor) (class50_sub1_sub4_sub3_sub2)).pathX[l32] -= i21;
-							((Actor) (class50_sub1_sub4_sub3_sub2)).pathY[l32] -= k24;
-						}
-
-						class50_sub1_sub4_sub3_sub2.x -= i21 * 128;
-						class50_sub1_sub4_sub3_sub2.y -= k24 * 128;
-					}
-				}
-
-				aBoolean1209 = true;
-				byte byte1 = 0;
-				byte byte2 = 104;
-				byte byte3 = 1;
-				if (i21 < 0) {
-					byte1 = 103;
-					byte2 = -1;
-					byte3 = -1;
-				}
-				byte byte4 = 0;
-				byte byte5 = 104;
-				byte byte6 = 1;
-				if (k24 < 0) {
-					byte4 = 103;
-					byte5 = -1;
-					byte6 = -1;
-				}
-				for (int i35 = byte1; i35 != byte2; i35 += byte3) {
-					for (int j35 = byte4; j35 != byte5; j35 += byte6) {
-						int k35 = i35 + i21;
-						int l35 = j35 + k24;
-						for (int i36 = 0; i36 < 4; i36++)
-							if (k35 >= 0 && l35 >= 0 && k35 < 104 && l35 < 104)
-								aClass6ArrayArrayArray1323[i36][i35][j35] = aClass6ArrayArrayArray1323[i36][k35][l35];
-							else
-								aClass6ArrayArrayArray1323[i36][i35][j35] = null;
-
-					}
-
-				}
-
-				for (PendingSpawn class50_sub2_1 = (PendingSpawn) aClass6_1261
-						.first(); class50_sub2_1 != null; class50_sub2_1 = (PendingSpawn) aClass6_1261.next()) {
-					class50_sub2_1.x -= i21;
-					class50_sub2_1.y -= k24;
-					if (class50_sub2_1.x < 0 || class50_sub2_1.y < 0 || class50_sub2_1.x >= 104
-							|| class50_sub2_1.y >= 104)
-						class50_sub2_1.unlink();
-				}
-
-				if (anInt1120 != 0) {
-					anInt1120 -= i21;
-					anInt1121 -= k24;
-				}
-				aBoolean1211 = false;
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 190) {
-				anInt1057 = aClass50_Sub1_Sub2_1188.readUnsignedShortLE() * 30;
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 41 || anInt870 == 121 || anInt870 == 203 || anInt870 == 106 || anInt870 == 59
-					|| anInt870 == 181 || anInt870 == 208 || anInt870 == 107 || anInt870 == 142 || anInt870 == 88
-					|| anInt870 == 152) {
-				method133(aClass50_Sub1_Sub2_1188, 0, anInt870);
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 125) {
-				if (anInt1285 == 12)
-					aBoolean1181 = true;
-				anInt1324 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 21) {
-				int i8 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-				int l14 = aClass50_Sub1_Sub2_1188.readUnsignedShortLE();
-				int j21 = aClass50_Sub1_Sub2_1188.readUnsignedShortAddLE();
-				if (l14 == 65535) {
-					Widget.get(j21).mediaType = 0;
-					anInt870 = -1;
-					return true;
-				} else {
-					ItemDefinition class16 = ItemDefinition.lookup(l14);
-					Widget.get(j21).mediaType = 4;
-					Widget.get(j21).mediaId = l14;
-					Widget.get(j21).modelPitch = class16.xan2d;
-					Widget.get(j21).modelYaw = class16.yan2d;
-					Widget.get(j21).modelZoom = (class16.zoom2d * 100) / i8;
-					anInt870 = -1;
-					return true;
-				}
-			}
-			if (anInt870 == 3) {
-				aBoolean1211 = true;
-				anInt874 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				anInt875 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				anInt876 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-				anInt877 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				anInt878 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				if (anInt878 >= 100) {
-					anInt1216 = anInt874 * 128 + 64;
-					anInt1218 = anInt875 * 128 + 64;
-					anInt1217 = method110(anInt1218, anInt1216, (byte) 9, anInt1091) - anInt876;
-				}
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 2) {
-				int j8 = aClass50_Sub1_Sub2_1188.readUnsignedShortAddLE();
-				int i15 = aClass50_Sub1_Sub2_1188.readShortAdd();
-				Widget class13_3 = Widget.get(j8);
-				if (class13_3.animationId != i15 || i15 == -1) {
-					class13_3.animationId = i15;
-					class13_3.animationFrame = 0;
-					class13_3.animationCycle = 0;
-				}
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 71) {
-				method48(aClass50_Sub1_Sub2_1188, aBoolean1038, anInt869);
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 226) {
-				anInt855 = anInt869 / 8;
-				for (int k8 = 0; k8 < anInt855; k8++)
-					aLongArray1073[k8] = aClass50_Sub1_Sub2_1188.readLong();
-
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 10) {
-				int l8 = aClass50_Sub1_Sub2_1188.readUnsignedByteSub();
-				int j15 = aClass50_Sub1_Sub2_1188.readUnsignedShortAdd();
-				if (j15 == 65535)
-					j15 = -1;
-				if (anIntArray1081[l8] != j15) {
-					method44(anIntArray1081[l8]);
-					anIntArray1081[l8] = j15;
-				}
-				aBoolean1181 = true;
-				aBoolean950 = true;
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 219) {
-				int i9 = aClass50_Sub1_Sub2_1188.readUnsignedShortLE();
-				Widget class13_2 = Widget.get(i9);
-				for (int k21 = 0; k21 < class13_2.itemIds.length; k21++) {
-					class13_2.itemIds[k21] = -1;
-					class13_2.itemIds[k21] = 0;
-				}
-
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 238) {
-				anInt1213 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				if (anInt1213 == anInt1285) {
-					if (anInt1213 == 3)
-						anInt1285 = 1;
+			if (!flag4 && anInt1246 == 0)
+				try {
+					anIntArray1258[anInt1152] = i19;
+					anInt1152 = (anInt1152 + 1) % 100;
+					String s9 = ChatCodec.decode(networkSession.incoming, networkSession.incomingLength - 13);
+					if (j23 != 3)
+						s9 = Censor.censor(s9);
+					if (j23 == 2 || j23 == 3)
+						method47("@cr2@" + TextFormatter.formatDisplayName(Base37.decode(l6)), s9, 7);
+					else if (j23 == 1)
+						method47("@cr1@" + TextFormatter.formatDisplayName(Base37.decode(l6)), s9, 7);
 					else
-						anInt1285 = 3;
-					aBoolean1181 = true;
+						method47(TextFormatter.formatDisplayName(Base37.decode(l6)), s9, 3);
+				} catch (Exception exception1) {
+					Signlink.reportError("cde1");
 				}
-				anInt870 = -1;
-				return true;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 183) {
+			anInt989 = networkSession.incoming.readUnsignedByte();
+			anInt990 = networkSession.incoming.readUnsignedByteAdd();
+			while (networkSession.incoming.position < networkSession.incomingLength) {
+				int j6 = networkSession.incoming.readUnsignedByte();
+				method133(networkSession.incoming, 0, j6);
 			}
-			if (anInt870 == 148) {
-				aBoolean1211 = false;
-				for (int j9 = 0; j9 < 5; j9++)
-					aBooleanArray927[j9] = false;
-
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 126) {
-				anInt1068 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
-				anInt961 = aClass50_Sub1_Sub2_1188.readUnsignedShortLE();
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 75) {
-				anInt989 = aClass50_Sub1_Sub2_1188.readUnsignedByteNeg();
-				anInt990 = aClass50_Sub1_Sub2_1188.readUnsignedByteAdd();
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 253) {
-				int k9 = aClass50_Sub1_Sub2_1188.readUnsignedShortLE();
-				int k15 = aClass50_Sub1_Sub2_1188.readUnsignedShortAdd();
-				method112((byte) 36, k15);
-				if (k9 != -1)
-					method112((byte) 36, k9);
-				if (anInt1169 != -1) {
-					method44(anInt1169);
-					anInt1169 = -1;
-				}
-				if (anInt1089 != -1) {
-					method44(anInt1089);
-					anInt1089 = -1;
-				}
-				if (anInt988 != -1) {
-					method44(anInt988);
-					anInt988 = -1;
-				}
-				if (anInt1053 != k15) {
-					method44(anInt1053);
-					anInt1053 = k15;
-				}
-				if (anInt960 != k15) {
-					method44(anInt960);
-					anInt960 = k9;
-				}
-				anInt1244 = 0;
-				aBoolean1239 = false;
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 251) {
-				anInt860 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 159) {
+			int k6 = networkSession.incoming.readUnsignedShortAddLE();
+			method112((byte) 36, k6);
+			if (anInt1089 != -1) {
+				method44(anInt1089);
+				anInt1089 = -1;
 				aBoolean1181 = true;
-				anInt870 = -1;
-				return true;
+				aBoolean950 = true;
 			}
-			if (anInt870 == 18) {
-				int l9 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-				int l15 = aClass50_Sub1_Sub2_1188.readUnsignedShortAdd();
-				int l21 = aClass50_Sub1_Sub2_1188.readUnsignedShortLE();
-				Widget.get(l15).modelRotationSpeed = (l9 << 16) + l21;
-				anInt870 = -1;
-				return true;
+			if (anInt988 != -1) {
+				method44(anInt988);
+				anInt988 = -1;
+				aBoolean1240 = true;
 			}
-			if (anInt870 == 90) {
-				method96(anInt869, 69, aClass50_Sub1_Sub2_1188);
-				aBoolean1209 = false;
-				anInt870 = -1;
-				return true;
+			if (anInt1053 != -1) {
+				method44(anInt1053);
+				anInt1053 = -1;
+				aBoolean1046 = true;
 			}
-			if (anInt870 == 113) {
-				for (int i10 = 0; i10 < anIntArray1039.length; i10++)
-					if (anIntArray1039[i10] != anIntArray1005[i10]) {
-						anIntArray1039[i10] = anIntArray1005[i10];
-						method105(0, i10);
-						aBoolean1181 = true;
+			if (anInt960 != -1) {
+				method44(anInt960);
+				anInt960 = -1;
+			}
+			if (anInt1169 != k6) {
+				method44(anInt1169);
+				anInt1169 = k6;
+			}
+			if (anInt1244 != 0) {
+				anInt1244 = 0;
+				aBoolean1240 = true;
+			}
+			aBoolean1239 = false;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 246) {
+			int i7 = networkSession.incoming.readUnsignedShortAddLE();
+			method112((byte) 36, i7);
+			if (anInt988 != -1) {
+				method44(anInt988);
+				anInt988 = -1;
+				aBoolean1240 = true;
+			}
+			if (anInt1053 != -1) {
+				method44(anInt1053);
+				anInt1053 = -1;
+				aBoolean1046 = true;
+			}
+			if (anInt960 != -1) {
+				method44(anInt960);
+				anInt960 = -1;
+			}
+			if (anInt1169 != -1) {
+				method44(anInt1169);
+				anInt1169 = -1;
+			}
+			if (anInt1089 != i7) {
+				method44(anInt1089);
+				anInt1089 = i7;
+			}
+			if (anInt1244 != 0) {
+				anInt1244 = 0;
+				aBoolean1240 = true;
+			}
+			aBoolean1181 = true;
+			aBoolean950 = true;
+			aBoolean1239 = false;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 49) {
+			aBoolean1181 = true;
+			int j7 = networkSession.incoming.readUnsignedByteNeg();
+			int j14 = networkSession.incoming.readUnsignedByte();
+			int j19 = networkSession.incoming.readInt();
+			anIntArray843[j7] = j19;
+			anIntArray1029[j7] = j14;
+			anIntArray1054[j7] = 1;
+			for (int k23 = 0; k23 < 98; k23++)
+				if (j19 >= anIntArray952[k23])
+					anIntArray1054[j7] = k23 + 2;
+
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 206) {
+			aBoolean1181 = true;
+			int k7 = networkSession.incoming.readUnsignedShort();
+			Widget class13_1 = Widget.get(k7);
+			int k19 = networkSession.incoming.readUnsignedShort();
+			for (int l23 = 0; l23 < k19; l23++) {
+				class13_1.itemIds[l23] = networkSession.incoming.readUnsignedShortAddLE();
+				int l25 = networkSession.incoming.readUnsignedByteNeg();
+				if (l25 == 255)
+					l25 = networkSession.incoming.readIntLE();
+				class13_1.itemAmounts[l23] = l25;
+			}
+
+			for (int i26 = k19; i26 < class13_1.itemIds.length; i26++) {
+				class13_1.itemIds[i26] = 0;
+				class13_1.itemAmounts[i26] = 0;
+			}
+
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 222 || networkSession.incomingOpcode == 53) {
+			int l7 = anInt889;
+			int k14 = anInt890;
+			if (networkSession.incomingOpcode == 222) {
+				k14 = networkSession.incoming.readUnsignedShort();
+				l7 = networkSession.incoming.readUnsignedShortAddLE();
+				aBoolean1163 = false;
+			}
+			if (networkSession.incomingOpcode == 53) {
+				l7 = networkSession.incoming.readUnsignedShortAdd();
+				networkSession.incoming.startBitAccess();
+				for (int i20 = 0; i20 < 4; i20++) {
+					for (int i24 = 0; i24 < 13; i24++) {
+						for (int j26 = 0; j26 < 13; j26++) {
+							int l28 = networkSession.incoming.readBits(1);
+							if (l28 == 1)
+								anIntArrayArrayArray879[i20][i24][j26] = networkSession.incoming.readBits(26);
+							else
+								anIntArrayArrayArray879[i20][i24][j26] = -1;
+						}
+
 					}
 
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 232) {
-				int j10 = aClass50_Sub1_Sub2_1188.readUnsignedShortAddLE();
-				String s6 = aClass50_Sub1_Sub2_1188.readString();
-				Widget.get(j10).text = s6;
-				if (Widget.get(j10).parentId == anIntArray1081[anInt1285])
-					aBoolean1181 = true;
-				anInt870 = -1;
-				return true;
-			}
-			if (anInt870 == 200) {
-				int k10 = aClass50_Sub1_Sub2_1188.readUnsignedShort();
-				int i16 = aClass50_Sub1_Sub2_1188.readUnsignedShortAddLE();
-				Widget class13_4 = Widget.get(k10);
-				if (class13_4 != null && class13_4.type == 0) {
-					if (i16 < 0)
-						i16 = 0;
-					if (i16 > class13_4.scrollHeight - class13_4.height)
-						i16 = class13_4.scrollHeight - class13_4.height;
-					class13_4.scrollY = i16;
 				}
-				anInt870 = -1;
+
+				networkSession.incoming.finishBitAccess();
+				k14 = networkSession.incoming.readUnsignedShortAdd();
+				aBoolean1163 = true;
+			}
+			if (anInt889 == l7 && anInt890 == k14 && anInt1071 == 2) {
+				networkSession.incomingOpcode = -1;
 				return true;
 			}
-			Signlink.reportError("T1 - " + anInt870 + "," + anInt869 + " - " + anInt904 + "," + anInt905);
-			method124(true);
-		} catch (IOException _ex) {
-			method59(1);
-		} catch (Exception exception) {
-			String s1 = "T2 - " + anInt870 + "," + anInt904 + "," + anInt905 + " - " + anInt869 + ","
-					+ (anInt1040 + ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]) + ","
-					+ (anInt1041 + ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0]) + " - ";
-			for (int j16 = 0; j16 < anInt869 && j16 < 50; j16++)
-				s1 = s1 + aClass50_Sub1_Sub2_1188.payload[j16] + ",";
+			anInt889 = l7;
+			anInt890 = k14;
+			anInt1040 = (anInt889 - 6) * 8;
+			anInt1041 = (anInt890 - 6) * 8;
+			aBoolean1067 = false;
+			if ((anInt889 / 8 == 48 || anInt889 / 8 == 49) && anInt890 / 8 == 48)
+				aBoolean1067 = true;
+			if (anInt889 / 8 == 48 && anInt890 / 8 == 148)
+				aBoolean1067 = true;
+			anInt1071 = 1;
+			aLong1229 = System.currentTimeMillis();
+			method125(-332, null, "Loading - please wait.");
+			if (networkSession.incomingOpcode == 222) {
+				int j20 = 0;
+				for (int j24 = (anInt889 - 6) / 8; j24 <= (anInt889 + 6) / 8; j24++) {
+					for (int k26 = (anInt890 - 6) / 8; k26 <= (anInt890 + 6) / 8; k26++)
+						j20++;
 
-			Signlink.reportError(s1);
-			method124(true);
+				}
+
+				aByteArrayArray838 = new byte[j20][];
+				aByteArrayArray1232 = new byte[j20][];
+				anIntArray856 = new int[j20];
+				anIntArray857 = new int[j20];
+				anIntArray858 = new int[j20];
+				j20 = 0;
+				for (int l26 = (anInt889 - 6) / 8; l26 <= (anInt889 + 6) / 8; l26++) {
+					for (int i29 = (anInt890 - 6) / 8; i29 <= (anInt890 + 6) / 8; i29++) {
+						anIntArray856[j20] = (l26 << 8) + i29;
+						if (aBoolean1067
+								&& (i29 == 49 || i29 == 149 || i29 == 147 || l26 == 50 || l26 == 49 && i29 == 47)) {
+							anIntArray857[j20] = -1;
+							anIntArray858[j20] = -1;
+							j20++;
+						} else {
+							int l30 = anIntArray857[j20] = aClass32_Sub1_1291.getMapFileId(l26, i29, 0);
+							if (l30 != -1)
+								aClass32_Sub1_1291.request(3, l30);
+							int i32 = anIntArray858[j20] = aClass32_Sub1_1291.getMapFileId(l26, i29, 1);
+							if (i32 != -1)
+								aClass32_Sub1_1291.request(3, i32);
+							j20++;
+						}
+					}
+
+				}
+
+			}
+			if (networkSession.incomingOpcode == 53) {
+				int k20 = 0;
+				int ai[] = new int[676];
+				for (int i27 = 0; i27 < 4; i27++) {
+					for (int j29 = 0; j29 < 13; j29++) {
+						for (int i31 = 0; i31 < 13; i31++) {
+							int j32 = anIntArrayArrayArray879[i27][j29][i31];
+							if (j32 != -1) {
+								int i33 = j32 >> 14 & 0x3ff;
+								int k33 = j32 >> 3 & 0x7ff;
+								int j34 = (i33 / 8 << 8) + k33 / 8;
+								for (int l34 = 0; l34 < k20; l34++) {
+									if (ai[l34] != j34)
+										continue;
+									j34 = -1;
+									break;
+								}
+
+								if (j34 != -1)
+									ai[k20++] = j34;
+							}
+						}
+
+					}
+
+				}
+
+				aByteArrayArray838 = new byte[k20][];
+				aByteArrayArray1232 = new byte[k20][];
+				anIntArray856 = new int[k20];
+				anIntArray857 = new int[k20];
+				anIntArray858 = new int[k20];
+				for (int k29 = 0; k29 < k20; k29++) {
+					int j31 = anIntArray856[k29] = ai[k29];
+					int k32 = j31 >> 8 & 0xff;
+					int j33 = j31 & 0xff;
+					int i34 = anIntArray857[k29] = aClass32_Sub1_1291.getMapFileId(k32, j33, 0);
+					if (i34 != -1)
+						aClass32_Sub1_1291.request(3, i34);
+					int k34 = anIntArray858[k29] = aClass32_Sub1_1291.getMapFileId(k32, j33, 1);
+					if (k34 != -1)
+						aClass32_Sub1_1291.request(3, k34);
+				}
+
+			}
+			int i21 = anInt1040 - anInt1042;
+			int k24 = anInt1041 - anInt1043;
+			anInt1042 = anInt1040;
+			anInt1043 = anInt1041;
+			for (int j27 = 0; j27 < 16384; j27++) {
+				Npc class50_sub1_sub4_sub3_sub1 = aClass50_Sub1_Sub4_Sub3_Sub1Array1132[j27];
+				if (class50_sub1_sub4_sub3_sub1 != null) {
+					for (int k31 = 0; k31 < 10; k31++) {
+						((Actor) (class50_sub1_sub4_sub3_sub1)).pathX[k31] -= i21;
+						((Actor) (class50_sub1_sub4_sub3_sub1)).pathY[k31] -= k24;
+					}
+
+					class50_sub1_sub4_sub3_sub1.x -= i21 * 128;
+					class50_sub1_sub4_sub3_sub1.y -= k24 * 128;
+				}
+			}
+
+			for (int l29 = 0; l29 < anInt968; l29++) {
+				Player class50_sub1_sub4_sub3_sub2 = aClass50_Sub1_Sub4_Sub3_Sub2Array970[l29];
+				if (class50_sub1_sub4_sub3_sub2 != null) {
+					for (int l32 = 0; l32 < 10; l32++) {
+						((Actor) (class50_sub1_sub4_sub3_sub2)).pathX[l32] -= i21;
+						((Actor) (class50_sub1_sub4_sub3_sub2)).pathY[l32] -= k24;
+					}
+
+					class50_sub1_sub4_sub3_sub2.x -= i21 * 128;
+					class50_sub1_sub4_sub3_sub2.y -= k24 * 128;
+				}
+			}
+
+			aBoolean1209 = true;
+			byte byte1 = 0;
+			byte byte2 = 104;
+			byte byte3 = 1;
+			if (i21 < 0) {
+				byte1 = 103;
+				byte2 = -1;
+				byte3 = -1;
+			}
+			byte byte4 = 0;
+			byte byte5 = 104;
+			byte byte6 = 1;
+			if (k24 < 0) {
+				byte4 = 103;
+				byte5 = -1;
+				byte6 = -1;
+			}
+			for (int i35 = byte1; i35 != byte2; i35 += byte3) {
+				for (int j35 = byte4; j35 != byte5; j35 += byte6) {
+					int k35 = i35 + i21;
+					int l35 = j35 + k24;
+					for (int i36 = 0; i36 < 4; i36++)
+						if (k35 >= 0 && l35 >= 0 && k35 < 104 && l35 < 104)
+							aClass6ArrayArrayArray1323[i36][i35][j35] = aClass6ArrayArrayArray1323[i36][k35][l35];
+						else
+							aClass6ArrayArrayArray1323[i36][i35][j35] = null;
+
+				}
+
+			}
+
+			for (PendingSpawn class50_sub2_1 = (PendingSpawn) aClass6_1261
+					.first(); class50_sub2_1 != null; class50_sub2_1 = (PendingSpawn) aClass6_1261.next()) {
+				class50_sub2_1.x -= i21;
+				class50_sub2_1.y -= k24;
+				if (class50_sub2_1.x < 0 || class50_sub2_1.y < 0 || class50_sub2_1.x >= 104
+						|| class50_sub2_1.y >= 104)
+					class50_sub2_1.unlink();
+			}
+
+			if (anInt1120 != 0) {
+				anInt1120 -= i21;
+				anInt1121 -= k24;
+			}
+			aBoolean1211 = false;
+			networkSession.incomingOpcode = -1;
+			return true;
 		}
+		if (networkSession.incomingOpcode == 190) {
+			anInt1057 = networkSession.incoming.readUnsignedShortLE() * 30;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 41 || networkSession.incomingOpcode == 121 || networkSession.incomingOpcode == 203 || networkSession.incomingOpcode == 106 || networkSession.incomingOpcode == 59
+				|| networkSession.incomingOpcode == 181 || networkSession.incomingOpcode == 208 || networkSession.incomingOpcode == 107 || networkSession.incomingOpcode == 142 || networkSession.incomingOpcode == 88
+				|| networkSession.incomingOpcode == 152) {
+			method133(networkSession.incoming, 0, networkSession.incomingOpcode);
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 125) {
+			if (anInt1285 == 12)
+				aBoolean1181 = true;
+			anInt1324 = networkSession.incoming.readUnsignedByte();
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 21) {
+			int i8 = networkSession.incoming.readUnsignedShort();
+			int l14 = networkSession.incoming.readUnsignedShortLE();
+			int j21 = networkSession.incoming.readUnsignedShortAddLE();
+			if (l14 == 65535) {
+				Widget.get(j21).mediaType = 0;
+				networkSession.incomingOpcode = -1;
+				return true;
+			} else {
+				ItemDefinition class16 = ItemDefinition.lookup(l14);
+				Widget.get(j21).mediaType = 4;
+				Widget.get(j21).mediaId = l14;
+				Widget.get(j21).modelPitch = class16.xan2d;
+				Widget.get(j21).modelYaw = class16.yan2d;
+				Widget.get(j21).modelZoom = (class16.zoom2d * 100) / i8;
+				networkSession.incomingOpcode = -1;
+				return true;
+			}
+		}
+		if (networkSession.incomingOpcode == 3) {
+			aBoolean1211 = true;
+			anInt874 = networkSession.incoming.readUnsignedByte();
+			anInt875 = networkSession.incoming.readUnsignedByte();
+			anInt876 = networkSession.incoming.readUnsignedShort();
+			anInt877 = networkSession.incoming.readUnsignedByte();
+			anInt878 = networkSession.incoming.readUnsignedByte();
+			if (anInt878 >= 100) {
+				anInt1216 = anInt874 * 128 + 64;
+				anInt1218 = anInt875 * 128 + 64;
+				anInt1217 = method110(anInt1218, anInt1216, (byte) 9, anInt1091) - anInt876;
+			}
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 2) {
+			int j8 = networkSession.incoming.readUnsignedShortAddLE();
+			int i15 = networkSession.incoming.readShortAdd();
+			Widget class13_3 = Widget.get(j8);
+			if (class13_3.animationId != i15 || i15 == -1) {
+				class13_3.animationId = i15;
+				class13_3.animationFrame = 0;
+				class13_3.animationCycle = 0;
+			}
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 71) {
+			method48(networkSession.incoming, aBoolean1038, networkSession.incomingLength);
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 226) {
+			anInt855 = networkSession.incomingLength / 8;
+			for (int k8 = 0; k8 < anInt855; k8++)
+				aLongArray1073[k8] = networkSession.incoming.readLong();
+
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 10) {
+			int l8 = networkSession.incoming.readUnsignedByteSub();
+			int j15 = networkSession.incoming.readUnsignedShortAdd();
+			if (j15 == 65535)
+				j15 = -1;
+			if (anIntArray1081[l8] != j15) {
+				method44(anIntArray1081[l8]);
+				anIntArray1081[l8] = j15;
+			}
+			aBoolean1181 = true;
+			aBoolean950 = true;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 219) {
+			int i9 = networkSession.incoming.readUnsignedShortLE();
+			Widget class13_2 = Widget.get(i9);
+			for (int k21 = 0; k21 < class13_2.itemIds.length; k21++) {
+				class13_2.itemIds[k21] = -1;
+				class13_2.itemIds[k21] = 0;
+			}
+
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 238) {
+			anInt1213 = networkSession.incoming.readUnsignedByte();
+			if (anInt1213 == anInt1285) {
+				if (anInt1213 == 3)
+					anInt1285 = 1;
+				else
+					anInt1285 = 3;
+				aBoolean1181 = true;
+			}
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 148) {
+			aBoolean1211 = false;
+			for (int j9 = 0; j9 < 5; j9++)
+				aBooleanArray927[j9] = false;
+
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 126) {
+			anInt1068 = networkSession.incoming.readUnsignedByte();
+			anInt961 = networkSession.incoming.readUnsignedShortLE();
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 75) {
+			anInt989 = networkSession.incoming.readUnsignedByteNeg();
+			anInt990 = networkSession.incoming.readUnsignedByteAdd();
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 253) {
+			int k9 = networkSession.incoming.readUnsignedShortLE();
+			int k15 = networkSession.incoming.readUnsignedShortAdd();
+			method112((byte) 36, k15);
+			if (k9 != -1)
+				method112((byte) 36, k9);
+			if (anInt1169 != -1) {
+				method44(anInt1169);
+				anInt1169 = -1;
+			}
+			if (anInt1089 != -1) {
+				method44(anInt1089);
+				anInt1089 = -1;
+			}
+			if (anInt988 != -1) {
+				method44(anInt988);
+				anInt988 = -1;
+			}
+			if (anInt1053 != k15) {
+				method44(anInt1053);
+				anInt1053 = k15;
+			}
+			if (anInt960 != k15) {
+				method44(anInt960);
+				anInt960 = k9;
+			}
+			anInt1244 = 0;
+			aBoolean1239 = false;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 251) {
+			anInt860 = networkSession.incoming.readUnsignedByte();
+			aBoolean1181 = true;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 18) {
+			int l9 = networkSession.incoming.readUnsignedShort();
+			int l15 = networkSession.incoming.readUnsignedShortAdd();
+			int l21 = networkSession.incoming.readUnsignedShortLE();
+			Widget.get(l15).modelRotationSpeed = (l9 << 16) + l21;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 90) {
+			method96(networkSession.incomingLength, 69, networkSession.incoming);
+			aBoolean1209 = false;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 113) {
+			for (int i10 = 0; i10 < anIntArray1039.length; i10++)
+				if (anIntArray1039[i10] != anIntArray1005[i10]) {
+					anIntArray1039[i10] = anIntArray1005[i10];
+					method105(0, i10);
+					aBoolean1181 = true;
+				}
+
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 232) {
+			int j10 = networkSession.incoming.readUnsignedShortAddLE();
+			String s6 = networkSession.incoming.readString();
+			Widget.get(j10).text = s6;
+			if (Widget.get(j10).parentId == anIntArray1081[anInt1285])
+				aBoolean1181 = true;
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		if (networkSession.incomingOpcode == 200) {
+			int k10 = networkSession.incoming.readUnsignedShort();
+			int i16 = networkSession.incoming.readUnsignedShortAddLE();
+			Widget class13_4 = Widget.get(k10);
+			if (class13_4 != null && class13_4.type == 0) {
+				if (i16 < 0)
+					i16 = 0;
+				if (i16 > class13_4.scrollHeight - class13_4.height)
+					i16 = class13_4.scrollHeight - class13_4.height;
+				class13_4.scrollY = i16;
+			}
+			networkSession.incomingOpcode = -1;
+			return true;
+		}
+		Signlink.reportError("T1 - " + networkSession.incomingOpcode + "," + networkSession.incomingLength + " - " + networkSession.secondLastOpcode + "," + networkSession.thirdLastOpcode);
+		logout();
 		return true;
 	}
 
@@ -2760,26 +2718,26 @@ public class client extends GameShell {
 			int l5 = anIntArray1123[l3];
 			int j6 = anIntArray1124[l3];
 			if (i1 == 0) {
-				aClass50_Sub1_Sub2_964.writeOpcode(28);
-				aClass50_Sub1_Sub2_964.writeByte(j4 + j4 + 3);
+				networkSession.outgoing.writeOpcode(28);
+				networkSession.outgoing.writeByte(j4 + j4 + 3);
 			}
 			if (i1 == 1) {
-				aClass50_Sub1_Sub2_964.writeOpcode(213);
-				aClass50_Sub1_Sub2_964.writeByte(j4 + j4 + 3 + 14);
+				networkSession.outgoing.writeOpcode(213);
+				networkSession.outgoing.writeByte(j4 + j4 + 3 + 14);
 			}
 			if (i1 == 2) {
-				aClass50_Sub1_Sub2_964.writeOpcode(247);
-				aClass50_Sub1_Sub2_964.writeByte(j4 + j4 + 3);
+				networkSession.outgoing.writeOpcode(247);
+				networkSession.outgoing.writeByte(j4 + j4 + 3);
 			}
-			aClass50_Sub1_Sub2_964.writeShortAddLE(l5 + anInt1040);
-			aClass50_Sub1_Sub2_964.writeByte(super.keyStatus[5] != 1 ? 0 : 1);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(j6 + anInt1041);
+			networkSession.outgoing.writeShortAddLE(l5 + anInt1040);
+			networkSession.outgoing.writeByte(super.keyStatus[5] != 1 ? 0 : 1);
+			networkSession.outgoing.writeShortAddLE(j6 + anInt1041);
 			anInt1120 = anIntArray1123[0];
 			anInt1121 = anIntArray1124[0];
 			for (int l6 = 1; l6 < j4; l6++) {
 				l3--;
-				aClass50_Sub1_Sub2_964.writeByte(anIntArray1123[l3] - l5);
-				aClass50_Sub1_Sub2_964.writeByteSub(anIntArray1124[l3] - j6);
+				networkSession.outgoing.writeByte(anIntArray1123[l3] - l5);
+				networkSession.outgoing.writeByteSub(anIntArray1124[l3] - j6);
 			}
 
 			return true;
@@ -2904,28 +2862,28 @@ public class client extends GameShell {
 				anInt1006 = (anInt1006 + 1) % 4;
 				aBoolean1212 = true;
 				aBoolean1240 = true;
-				aClass50_Sub1_Sub2_964.writeOpcode(176);
-				aClass50_Sub1_Sub2_964.writeByte(anInt1006);
-				aClass50_Sub1_Sub2_964.writeByte(anInt887);
-				aClass50_Sub1_Sub2_964.writeByte(anInt1227);
+				networkSession.outgoing.writeOpcode(176);
+				networkSession.outgoing.writeByte(anInt1006);
+				networkSession.outgoing.writeByte(anInt887);
+				networkSession.outgoing.writeByte(anInt1227);
 			}
 			if (super.clickX >= 135 && super.clickX <= 235 && super.clickY >= 467 && super.clickY <= 499) {
 				anInt887 = (anInt887 + 1) % 3;
 				aBoolean1212 = true;
 				aBoolean1240 = true;
-				aClass50_Sub1_Sub2_964.writeOpcode(176);
-				aClass50_Sub1_Sub2_964.writeByte(anInt1006);
-				aClass50_Sub1_Sub2_964.writeByte(anInt887);
-				aClass50_Sub1_Sub2_964.writeByte(anInt1227);
+				networkSession.outgoing.writeOpcode(176);
+				networkSession.outgoing.writeByte(anInt1006);
+				networkSession.outgoing.writeByte(anInt887);
+				networkSession.outgoing.writeByte(anInt1227);
 			}
 			if (super.clickX >= 273 && super.clickX <= 373 && super.clickY >= 467 && super.clickY <= 499) {
 				anInt1227 = (anInt1227 + 1) % 3;
 				aBoolean1212 = true;
 				aBoolean1240 = true;
-				aClass50_Sub1_Sub2_964.writeOpcode(176);
-				aClass50_Sub1_Sub2_964.writeByte(anInt1006);
-				aClass50_Sub1_Sub2_964.writeByte(anInt887);
-				aClass50_Sub1_Sub2_964.writeByte(anInt1227);
+				networkSession.outgoing.writeOpcode(176);
+				networkSession.outgoing.writeByte(anInt1006);
+				networkSession.outgoing.writeByte(anInt887);
+				networkSession.outgoing.writeByte(anInt1227);
 			}
 			if (super.clickX >= 412 && super.clickX <= 512 && super.clickY >= 467 && super.clickY <= 499)
 				if (anInt1169 == -1) {
@@ -2939,8 +2897,8 @@ public class client extends GameShell {
 			anInt1160++;
 			if (anInt1160 > 161) {
 				anInt1160 = 0;
-				aClass50_Sub1_Sub2_964.writeOpcode(22);
-				aClass50_Sub1_Sub2_964.writeShort(38304);
+				networkSession.outgoing.writeOpcode(22);
+				networkSession.outgoing.writeShort(38304);
 			}
 		}
 	}
@@ -2964,7 +2922,6 @@ public class client extends GameShell {
 		if (j == 0)
 			return;
 		int k = class50_sub1_sub2.readBits(2);
-		aBoolean1137 &= flag;
 		if (k == 0) {
 			anIntArray974[anInt973++] = anInt969;
 			return;
@@ -3050,7 +3007,7 @@ public class client extends GameShell {
 		}
 		int i = -1;
 		if (byte0 != 7)
-			anInt870 = -1;
+			networkSession.incomingOpcode = -1;
 		for (int j = 0; j < Model.pickedCount; j++) {
 			int k = Model.pickedUids[j];
 			int l = k & 0x7f;
@@ -3298,7 +3255,7 @@ public class client extends GameShell {
 
 		}
 		if (j > anInt1133) {
-			Signlink.reportError(aString1092 + " Too many npcs");
+			Signlink.reportError(username + " Too many npcs");
 			throw new RuntimeException("eek");
 		}
 		anInt1133 = 0;
@@ -3359,7 +3316,6 @@ public class client extends GameShell {
 	}
 
 	public void method48(Buffer class50_sub1_sub2, boolean flag, int i) {
-		aBoolean1137 &= flag;
 		anInt1294 = 0;
 		anInt973 = 0;
 		method46(i, (byte) -58, class50_sub1_sub2);
@@ -3375,12 +3331,12 @@ public class client extends GameShell {
 
 		if (class50_sub1_sub2.position != i) {
 			Signlink.reportError(
-					aString1092 + " size mismatch in getnpcpos - pos:" + class50_sub1_sub2.position + " psize:" + i);
+					username + " size mismatch in getnpcpos - pos:" + class50_sub1_sub2.position + " psize:" + i);
 			throw new RuntimeException("eek");
 		}
 		for (int l = 0; l < anInt1133; l++)
 			if (aClass50_Sub1_Sub4_Sub3_Sub1Array1132[anIntArray1134[l]] == null) {
-				Signlink.reportError(aString1092 + " null entry in npc list - pos:" + l + " size:" + anInt1133);
+				Signlink.reportError(username + " null entry in npc list - pos:" + l + " size:" + anInt1133);
 				throw new RuntimeException("eek");
 			}
 
@@ -3453,7 +3409,7 @@ public class client extends GameShell {
 		anInt1168++;
 		if (anInt1168 > 51) {
 			anInt1168 = 0;
-			aClass50_Sub1_Sub2_964.writeOpcode(248);
+			networkSession.outgoing.writeOpcode(248);
 		}
 	}
 
@@ -3542,12 +3498,12 @@ public class client extends GameShell {
 					aLongArray1130[k] = aLongArray1130[k + 1];
 				}
 
-				aClass50_Sub1_Sub2_964.writeOpcode(141);
-				aClass50_Sub1_Sub2_964.writeLong(l);
+				networkSession.outgoing.writeOpcode(141);
+				networkSession.outgoing.writeLong(l);
 				break;
 			}
 
-			anInt869 += i;
+			networkSession.incomingLength += i;
 			return;
 		} catch (RuntimeException runtimeexception) {
 			Signlink.reportError("38799, " + l + ", " + i + ", " + runtimeexception.toString());
@@ -3560,7 +3516,7 @@ public class client extends GameShell {
 			return;
 		int j = super.clickButton;
 		if (i != 0)
-			anInt870 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
+			networkSession.incomingOpcode = networkSession.incoming.readUnsignedByte();
 		if (anInt1171 == 1 && super.clickX >= 516 && super.clickY >= 160 && super.clickX <= 765 && super.clickY <= 205)
 			j = 0;
 		if (aBoolean1065) {
@@ -3659,7 +3615,7 @@ public class client extends GameShell {
 	public void method55(int i, ImageRGB class50_sub1_sub1_sub1, int j, int k) {
 		int l = k * k + i * i;
 		while (j >= 0)
-			anInt870 = -1;
+			networkSession.incomingOpcode = -1;
 		if (l > 4225 && l < 0x15f90) {
 			int i1 = anInt1252 + anInt916 & 0x7ff;
 			int j1 = Model.SINE[i1];
@@ -3738,24 +3694,23 @@ public class client extends GameShell {
 			anInt1051 = 57;
 	}
 
-	public void method59(int i) {
-		if (anInt873 > 0) {
-			method124(true);
+	public void reconnect() {
+		if (logoutTimer > 0) {
+			logout();
 			return;
 		}
 		method125(-332, "Please wait - attempting to reestablish", "Connection lost");
 		anInt1050 = 0;
-		if (i != 1)
-			aBoolean1242 = !aBoolean1242;
 		anInt1120 = 0;
-		BufferedConnection class17 = aClass17_1024;
-		aBoolean1137 = false;
-		anInt850 = 0;
-		method79(aString1092, aString1093, true);
-		if (!aBoolean1137)
-			method124(true);
+		BufferedConnection previousConnection = networkSession.getConnection();
+		loggedIn = false;
+		loginFailures = 0;
+		login(username, password, true);
+		if (!loggedIn)
+			logout();
 		try {
-			class17.close();
+			if (previousConnection != null)
+				previousConnection.close();
 			return;
 		} catch (Exception _ex) {
 			return;
@@ -3765,7 +3720,7 @@ public class client extends GameShell {
 	public boolean method60(int i, Widget class13) {
 		int j = class13.contentType;
 		if (i <= 0)
-			anInt870 = -1;
+			networkSession.incomingOpcode = -1;
 		if (anInt860 == 2) {
 			if (j == 201) {
 				aBoolean1240 = true;
@@ -3785,7 +3740,7 @@ public class client extends GameShell {
 			}
 		}
 		if (j == 205) {
-			anInt873 = 250;
+			logoutTimer = 250;
 			return true;
 		}
 		if (j == 501) {
@@ -3840,13 +3795,13 @@ public class client extends GameShell {
 			method25(anInt1015);
 		}
 		if (j == 326) {
-			aClass50_Sub1_Sub2_964.writeOpcode(163);
-			aClass50_Sub1_Sub2_964.writeByte(aBoolean1144 ? 0 : 1);
+			networkSession.outgoing.writeOpcode(163);
+			networkSession.outgoing.writeByte(aBoolean1144 ? 0 : 1);
 			for (int i1 = 0; i1 < 7; i1++)
-				aClass50_Sub1_Sub2_964.writeByte(anIntArray1326[i1]);
+				networkSession.outgoing.writeByte(anIntArray1326[i1]);
 
 			for (int l1 = 0; l1 < 5; l1++)
-				aClass50_Sub1_Sub2_964.writeByte(anIntArray1099[l1]);
+				networkSession.outgoing.writeByte(anIntArray1099[l1]);
 
 			return true;
 		}
@@ -3855,10 +3810,10 @@ public class client extends GameShell {
 		if (j >= 601 && j <= 613) {
 			method15(false);
 			if (aString839.length() > 0) {
-				aClass50_Sub1_Sub2_964.writeOpcode(184);
-				aClass50_Sub1_Sub2_964.writeLong(Base37.encode(aString839));
-				aClass50_Sub1_Sub2_964.writeByte(j - 601);
-				aClass50_Sub1_Sub2_964.writeByte(aBoolean1098 ? 1 : 0);
+				networkSession.outgoing.writeOpcode(184);
+				networkSession.outgoing.writeLong(Base37.encode(aString839));
+				networkSession.outgoing.writeByte(j - 601);
+				networkSession.outgoing.writeByte(aBoolean1098 ? 1 : 0);
 			}
 		}
 		return false;
@@ -3895,7 +3850,7 @@ public class client extends GameShell {
 			Object obj = null;
 			try {
 				int l1 = 0;
-				DataInputStream datainputstream = method31(s + j);
+				DataInputStream datainputstream = openJaggrabStream(s + j);
 				byte abyte1[] = new byte[6];
 				datainputstream.readFully(abyte1, 0, 6);
 				Buffer class50_sub1_sub2 = new Buffer(abyte1);
@@ -4890,7 +4845,7 @@ public class client extends GameShell {
 		}
 
 		if (i != -37214)
-			aClass50_Sub1_Sub2_964.writeByte(41);
+			networkSession.outgoing.writeByte(41);
 	}
 
 	public void method68(int i, byte byte0, Actor class50_sub1_sub4_sub3) {
@@ -5024,7 +4979,7 @@ public class client extends GameShell {
 			j1 -= 2048;
 		int k1 = class50_sub1_sub4_sub3.walkBackSequence;
 		if (i != 0)
-			aClass50_Sub1_Sub2_964.writeByte(34);
+			networkSession.outgoing.writeByte(34);
 		if (j1 >= -256 && j1 <= 256)
 			k1 = class50_sub1_sub4_sub3.walkSequence;
 		else if (j1 >= 256 && j1 < 768)
@@ -5078,7 +5033,7 @@ public class client extends GameShell {
 
 	public void method72(byte byte0, Actor class50_sub1_sub4_sub3) {
 		if (byte0 != 8)
-			anInt928 = aClass24_899.nextInt();
+			anInt928 = networkSession.nextIncomingOpcodeCipherValue();
 		if (class50_sub1_sub4_sub3.turnSpeed == 0)
 			return;
 		if (class50_sub1_sub4_sub3.targetIndex != -1 && class50_sub1_sub4_sub3.targetIndex < 32768) {
@@ -5133,7 +5088,7 @@ public class client extends GameShell {
 
 	public void method73(Actor class50_sub1_sub4_sub3, int i) {
 		while (i >= 0)
-			anInt1328 = aClass24_899.nextInt();
+			anInt1328 = networkSession.nextIncomingOpcodeCipherValue();
 		class50_sub1_sub4_sub3.animationStretches = false;
 		if (class50_sub1_sub4_sub3.movementSequence != -1) {
 			AnimationSequence class14 = AnimationSequence.sequences[class50_sub1_sub4_sub3.movementSequence];
@@ -5257,7 +5212,7 @@ public class client extends GameShell {
 			anInt1237++;
 			if (anInt1237 > 85) {
 				anInt1237 = 0;
-				aClass50_Sub1_Sub2_964.writeOpcode(168);
+				networkSession.outgoing.writeOpcode(168);
 			}
 		}
 		if (anInt1071 == 2)
@@ -5332,8 +5287,8 @@ public class client extends GameShell {
 		if (aBoolean950) {
 			if (anInt1213 != -1 && anInt1213 == anInt1285) {
 				anInt1213 = -1;
-				aClass50_Sub1_Sub2_964.writeOpcode(119);
-				aClass50_Sub1_Sub2_964.writeByte(anInt1285);
+				networkSession.outgoing.writeOpcode(119);
+				networkSession.outgoing.writeByte(anInt1285);
 			}
 			aBoolean950 = false;
 			aClass18_1110.bindRaster();
@@ -5447,7 +5402,7 @@ public class client extends GameShell {
 	}
 
 	public void method75(int i) {
-		anInt869 += i;
+		networkSession.incomingLength += i;
 		if (anInt1223 == 0)
 			return;
 		TypeFace class50_sub1_sub1_sub2 = aClass50_Sub1_Sub1_Sub2_1060;
@@ -5525,7 +5480,7 @@ public class client extends GameShell {
 
 	public void method77(boolean flag) {
 		if (flag)
-			anInt870 = -1;
+			networkSession.incomingOpcode = -1;
 		do {
 			OnDemandRequest class50_sub1_sub3;
 			do {
@@ -5575,92 +5530,81 @@ public class client extends GameShell {
 		return Signlink.replayWave();
 	}
 
-	public void method79(String s, String s1, boolean flag) {
+	public void login(String loginUsername, String loginPassword, boolean reconnecting) {
 		try {
-			if (!flag) {
-				aString957 = "";
-				aString958 = "Connecting to server...";
+			if (!reconnecting) {
+				loginMessage1 = "";
+				loginMessage2 = "Connecting to server...";
 				method131((byte) -50, true);
 			}
-			aClass17_1024 = new BufferedConnection(method32(43594 + anInt924));
-			long l = Base37.encode(s);
+			networkSession.connect(openSocket(43594 + anInt924));
+			long l = Base37.encode(loginUsername);
 			int i = (int) (l >> 16 & 31L);
-			aClass50_Sub1_Sub2_964.position = 0;
-			aClass50_Sub1_Sub2_964.writeByte(14);
-			aClass50_Sub1_Sub2_964.writeByte(i);
-			aClass17_1024.write(aClass50_Sub1_Sub2_964.payload, 0, 2);
+			networkSession.outgoing.position = 0;
+			networkSession.outgoing.writeByte(14);
+			networkSession.outgoing.writeByte(i);
+			networkSession.write(networkSession.outgoing.payload, 0, 2);
 			for (int j = 0; j < 8; j++)
-				aClass17_1024.read();
+				networkSession.read();
 
-			int k = aClass17_1024.read();
+			int k = networkSession.read();
 			int i1 = k;
 			if (k == 0) {
-				aClass17_1024.readFully(aClass50_Sub1_Sub2_1188.payload, 0, 8);
-				aClass50_Sub1_Sub2_1188.position = 0;
-				aLong930 = aClass50_Sub1_Sub2_1188.readLong();
+				networkSession.readFully(networkSession.incoming.payload, 0, 8);
+				networkSession.incoming.position = 0;
+				serverSessionKey = networkSession.incoming.readLong();
 				int ai[] = new int[4];
 				ai[0] = (int) (Math.random() * 99999999D);
 				ai[1] = (int) (Math.random() * 99999999D);
-				ai[2] = (int) (aLong930 >> 32);
-				ai[3] = (int) aLong930;
-				aClass50_Sub1_Sub2_964.position = 0;
-				aClass50_Sub1_Sub2_964.writeByte(10);
-				aClass50_Sub1_Sub2_964.writeInt(ai[0]);
-				aClass50_Sub1_Sub2_964.writeInt(ai[1]);
-				aClass50_Sub1_Sub2_964.writeInt(ai[2]);
-				aClass50_Sub1_Sub2_964.writeInt(ai[3]);
-				aClass50_Sub1_Sub2_964.writeInt(Signlink.uid);
-				aClass50_Sub1_Sub2_964.writeString(s);
-				aClass50_Sub1_Sub2_964.writeString(s1);
-				aClass50_Sub1_Sub2_964.encryptRsa(aBigInteger1316, aBigInteger840);
-				aClass50_Sub1_Sub2_929.position = 0;
-				if (flag)
-					aClass50_Sub1_Sub2_929.writeByte(18);
+				ai[2] = (int) (serverSessionKey >> 32);
+				ai[3] = (int) serverSessionKey;
+				networkSession.outgoing.position = 0;
+				networkSession.outgoing.writeByte(10);
+				networkSession.outgoing.writeInt(ai[0]);
+				networkSession.outgoing.writeInt(ai[1]);
+				networkSession.outgoing.writeInt(ai[2]);
+				networkSession.outgoing.writeInt(ai[3]);
+				networkSession.outgoing.writeInt(Signlink.uid);
+				networkSession.outgoing.writeString(loginUsername);
+				networkSession.outgoing.writeString(loginPassword);
+				networkSession.outgoing.encryptRsa(aBigInteger1316, aBigInteger840);
+				loginBuffer.position = 0;
+				if (reconnecting)
+					loginBuffer.writeByte(18);
 				else
-					aClass50_Sub1_Sub2_929.writeByte(16);
-				aClass50_Sub1_Sub2_929.writeByte(aClass50_Sub1_Sub2_964.position + 36 + 1 + 1 + 2);
-				aClass50_Sub1_Sub2_929.writeByte(255);
-				aClass50_Sub1_Sub2_929.writeShort(377);
-				aClass50_Sub1_Sub2_929.writeByte(aBoolean926 ? 1 : 0);
+					loginBuffer.writeByte(16);
+				loginBuffer.writeByte(networkSession.outgoing.position + 36 + 1 + 1 + 2);
+				loginBuffer.writeByte(255);
+				loginBuffer.writeShort(377);
+				loginBuffer.writeByte(aBoolean926 ? 1 : 0);
 				for (int l1 = 0; l1 < 9; l1++)
-					aClass50_Sub1_Sub2_929.writeInt(anIntArray837[l1]);
+					loginBuffer.writeInt(anIntArray837[l1]);
 
-				aClass50_Sub1_Sub2_929.writeBytes(aClass50_Sub1_Sub2_964.payload, 0, aClass50_Sub1_Sub2_964.position);
-				aClass50_Sub1_Sub2_964.opcodeCipher = new IsaacCipher(ai);
-				for (int j2 = 0; j2 < 4; j2++)
-					ai[j2] += 50;
-
-				aClass24_899 = new IsaacCipher(ai);
-				aClass17_1024.write(aClass50_Sub1_Sub2_929.payload, 0, aClass50_Sub1_Sub2_929.position);
-				k = aClass17_1024.read();
+				loginBuffer.writeBytes(networkSession.outgoing.payload, 0, networkSession.outgoing.position);
+				networkSession.initializeOpcodeCiphers(ai);
+				networkSession.write(loginBuffer.payload, 0, loginBuffer.position);
+				k = networkSession.read();
 			}
 			if (k == 1) {
 				try {
 					Thread.sleep(2000L);
 				} catch (Exception _ex) {
 				}
-				method79(s, s1, flag);
+				login(loginUsername, loginPassword, reconnecting);
 				return;
 			}
 			if (k == 2) {
-				anInt867 = aClass17_1024.read();
-				aBoolean962 = aClass17_1024.read() == 1;
+				playerRights = networkSession.read();
+				accountFlagged = networkSession.read() == 1;
 				aLong902 = 0L;
 				anInt1299 = 0;
 				aClass7_1248.sampleCount = 0;
 				super.hasFocus = true;
 				aBoolean1275 = true;
-				aBoolean1137 = true;
-				aClass50_Sub1_Sub2_964.position = 0;
-				aClass50_Sub1_Sub2_1188.position = 0;
-				anInt870 = -1;
-				anInt903 = -1;
-				anInt904 = -1;
-				anInt905 = -1;
-				anInt869 = 0;
-				anInt871 = 0;
+				loggedIn = true;
+				networkSession.resetPacketState();
 				anInt1057 = 0;
-				anInt873 = 0;
+				logoutTimer = 0;
 				anInt1197 = 0;
 				anInt1183 = 0;
 				aBoolean1065 = false;
@@ -5753,70 +5697,63 @@ public class client extends GameShell {
 				return;
 			}
 			if (k == 3) {
-				aString957 = "";
-				aString958 = "Invalid username or password.";
+				loginMessage1 = "";
+				loginMessage2 = "Invalid username or password.";
 				return;
 			}
 			if (k == 4) {
-				aString957 = "Your account has been disabled.";
-				aString958 = "Please check your message-centre for details.";
+				loginMessage1 = "Your account has been disabled.";
+				loginMessage2 = "Please check your message-centre for details.";
 				return;
 			}
 			if (k == 5) {
-				aString957 = "Your account is already logged in.";
-				aString958 = "Try again in 60 secs...";
+				loginMessage1 = "Your account is already logged in.";
+				loginMessage2 = "Try again in 60 secs...";
 				return;
 			}
 			if (k == 6) {
-				aString957 = "RuneScape has been updated!";
-				aString958 = "Please reload this page.";
+				loginMessage1 = "RuneScape has been updated!";
+				loginMessage2 = "Please reload this page.";
 				return;
 			}
 			if (k == 7) {
-				aString957 = "This world is full.";
-				aString958 = "Please use a different world.";
+				loginMessage1 = "This world is full.";
+				loginMessage2 = "Please use a different world.";
 				return;
 			}
 			if (k == 8) {
-				aString957 = "Unable to connect.";
-				aString958 = "Login server offline.";
+				loginMessage1 = "Unable to connect.";
+				loginMessage2 = "Login server offline.";
 				return;
 			}
 			if (k == 9) {
-				aString957 = "Login limit exceeded.";
-				aString958 = "Too many connections from your address.";
+				loginMessage1 = "Login limit exceeded.";
+				loginMessage2 = "Too many connections from your address.";
 				return;
 			}
 			if (k == 10) {
-				aString957 = "Unable to connect.";
-				aString958 = "Bad session id.";
+				loginMessage1 = "Unable to connect.";
+				loginMessage2 = "Bad session id.";
 				return;
 			}
 			if (k == 12) {
-				aString957 = "You need a members account to login to this world.";
-				aString958 = "Please subscribe, or use a different world.";
+				loginMessage1 = "You need a members account to login to this world.";
+				loginMessage2 = "Please subscribe, or use a different world.";
 				return;
 			}
 			if (k == 13) {
-				aString957 = "Could not complete login.";
-				aString958 = "Please try using a different world.";
+				loginMessage1 = "Could not complete login.";
+				loginMessage2 = "Please try using a different world.";
 				return;
 			}
 			if (k == 14) {
-				aString957 = "The server is being updated.";
-				aString958 = "Please wait 1 minute and try again.";
+				loginMessage1 = "The server is being updated.";
+				loginMessage2 = "Please wait 1 minute and try again.";
 				return;
 			}
 			if (k == 15) {
-				aBoolean1137 = true;
-				aClass50_Sub1_Sub2_964.position = 0;
-				aClass50_Sub1_Sub2_1188.position = 0;
-				anInt870 = -1;
-				anInt903 = -1;
-				anInt904 = -1;
-				anInt905 = -1;
-				anInt869 = 0;
-				anInt871 = 0;
+				loggedIn = true;
+				networkSession.resetPacketState();
 				anInt1057 = 0;
 				anInt1183 = 0;
 				aBoolean1065 = false;
@@ -5824,30 +5761,30 @@ public class client extends GameShell {
 				return;
 			}
 			if (k == 16) {
-				aString957 = "Login attempts exceeded.";
-				aString958 = "Please wait 1 minute and try again.";
+				loginMessage1 = "Login attempts exceeded.";
+				loginMessage2 = "Please wait 1 minute and try again.";
 				return;
 			}
 			if (k == 17) {
-				aString957 = "You are standing in a members-only area.";
-				aString958 = "To play on this world move to a free area first";
+				loginMessage1 = "You are standing in a members-only area.";
+				loginMessage2 = "To play on this world move to a free area first";
 				return;
 			}
 			if (k == 18) {
-				aString957 = "Account locked as we suspect it has been stolen.";
-				aString958 = "Press 'recover a locked account' on front page.";
+				loginMessage1 = "Account locked as we suspect it has been stolen.";
+				loginMessage2 = "Press 'recover a locked account' on front page.";
 				return;
 			}
 			if (k == 20) {
-				aString957 = "Invalid loginserver requested";
-				aString958 = "Please try using a different world.";
+				loginMessage1 = "Invalid loginserver requested";
+				loginMessage2 = "Please try using a different world.";
 				return;
 			}
 			if (k == 21) {
-				int k1 = aClass17_1024.read();
+				int k1 = networkSession.read();
 				for (k1 += 3; k1 >= 0; k1--) {
-					aString957 = "You have only just left another world";
-					aString958 = "Your profile will be transferred in: " + k1;
+					loginMessage1 = "You have only just left another world";
+					loginMessage2 = "Your profile will be transferred in: " + k1;
 					method131((byte) -50, true);
 					try {
 						Thread.sleep(1200L);
@@ -5855,64 +5792,64 @@ public class client extends GameShell {
 					}
 				}
 
-				method79(s, s1, flag);
+				login(loginUsername, loginPassword, reconnecting);
 				return;
 			}
 			if (k == 22) {
-				aString957 = "Malformed login packet.";
-				aString958 = "Please try again.";
+				loginMessage1 = "Malformed login packet.";
+				loginMessage2 = "Please try again.";
 				return;
 			}
 			if (k == 23) {
-				aString957 = "No reply from loginserver.";
-				aString958 = "Please try again.";
+				loginMessage1 = "No reply from loginserver.";
+				loginMessage2 = "Please try again.";
 				return;
 			}
 			if (k == 24) {
-				aString957 = "Error loading your profile.";
-				aString958 = "Please contact customer support.";
+				loginMessage1 = "Error loading your profile.";
+				loginMessage2 = "Please contact customer support.";
 				return;
 			}
 			if (k == 25) {
-				aString957 = "Unexpected loginserver response.";
-				aString958 = "Please try using a different world.";
+				loginMessage1 = "Unexpected loginserver response.";
+				loginMessage2 = "Please try using a different world.";
 				return;
 			}
 			if (k == 26) {
-				aString957 = "This computers address has been blocked";
-				aString958 = "as it was used to break our rules";
+				loginMessage1 = "This computers address has been blocked";
+				loginMessage2 = "as it was used to break our rules";
 				return;
 			}
 			if (k == -1) {
 				if (i1 == 0) {
-					if (anInt850 < 2) {
+					if (loginFailures < 2) {
 						try {
 							Thread.sleep(2000L);
 						} catch (Exception _ex) {
 						}
-						anInt850++;
-						method79(s, s1, flag);
+						loginFailures++;
+						login(loginUsername, loginPassword, reconnecting);
 						return;
 					} else {
-						aString957 = "No response from loginserver";
-						aString958 = "Please wait 1 minute and try again.";
+						loginMessage1 = "No response from loginserver";
+						loginMessage2 = "Please wait 1 minute and try again.";
 						return;
 					}
 				} else {
-					aString957 = "No response from server";
-					aString958 = "Please try using a different world.";
+					loginMessage1 = "No response from server";
+					loginMessage2 = "Please try using a different world.";
 					return;
 				}
 			} else {
 				System.out.println("response:" + k);
-				aString957 = "Unexpected server response";
-				aString958 = "Please try using a different world.";
+				loginMessage1 = "Unexpected server response";
+				loginMessage2 = "Please try using a different world.";
 				return;
 			}
 		} catch (IOException _ex) {
-			aString957 = "";
+			loginMessage1 = "";
 		}
-		aString958 = "Error connecting to server.";
+		loginMessage2 = "Error connecting to server.";
 	}
 
 	public boolean method80(int i, int j, int k, int l) {
@@ -5946,7 +5883,7 @@ public class client extends GameShell {
 		anInt1021 = super.clickY;
 		anInt1023 = 2;
 		anInt1022 = 0;
-		anInt869 += j;
+		networkSession.incomingLength += j;
 		return true;
 	}
 
@@ -6105,7 +6042,7 @@ public class client extends GameShell {
 	}
 
 	public void method83(IndexedImage class50_sub1_sub1_sub3, int i) {
-		anInt869 += i;
+		networkSession.incomingLength += i;
 		int j = 256;
 		for (int k = 0; k < anIntArray1176.length; k++)
 			anIntArray1176[k] = 0;
@@ -6283,7 +6220,7 @@ public class client extends GameShell {
 			if (aClass50_Sub1_Sub4_Sub3_Sub2_1167 != null && aClass50_Sub1_Sub4_Sub3_Sub2_1167.name != null)
 				s = aClass50_Sub1_Sub4_Sub3_Sub2_1167.name;
 			else
-				s = TextFormatter.formatDisplayName(aString1092);
+				s = TextFormatter.formatDisplayName(username);
 			class50_sub1_sub1_sub2_1.drawText(s + ":", 4, 90, 0);
 			class50_sub1_sub1_sub2_1.drawText(aString1104 + "*",
 					6 + class50_sub1_sub1_sub2_1.getFormattedTextWidth(s + ": "), 90, 255);
@@ -6314,7 +6251,7 @@ public class client extends GameShell {
 			}
 		}
 
-		anInt869 += i;
+		networkSession.incomingLength += i;
 		for (int l = 0; l < anInt1133; l++) {
 			int i1 = anIntArray1134[l];
 			Npc class50_sub1_sub4_sub3_sub1 = aClass50_Sub1_Sub4_Sub3_Sub1Array1132[i1];
@@ -6340,7 +6277,7 @@ public class client extends GameShell {
 			String s = "Unknown problem";
 			drawLoadingText(20, "Connecting to web server");
 			try {
-				DataInputStream datainputstream = method31("crc" + (int) (Math.random() * 99999999D) + "-" + 377);
+				DataInputStream datainputstream = openJaggrabStream("crc" + (int) (Math.random() * 99999999D) + "-" + 377);
 				Buffer class50_sub1_sub2 = new Buffer(new byte[40]);
 				datainputstream.readFully(class50_sub1_sub2.payload, 0, 40);
 				datainputstream.close();
@@ -6573,7 +6510,7 @@ public class client extends GameShell {
 	public void method90(int i, long l) {
 		try {
 			if (i != -916)
-				anInt870 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
+				networkSession.incomingOpcode = networkSession.incoming.readUnsignedByte();
 			if (l == 0L)
 				return;
 			if (anInt855 >= 100) {
@@ -6595,8 +6532,8 @@ public class client extends GameShell {
 
 			aLongArray1073[anInt855++] = l;
 			aBoolean1181 = true;
-			aClass50_Sub1_Sub2_964.writeOpcode(217);
-			aClass50_Sub1_Sub2_964.writeLong(l);
+			networkSession.outgoing.writeOpcode(217);
+			networkSession.outgoing.writeLong(l);
 			return;
 		} catch (RuntimeException runtimeexception) {
 			Signlink.reportError("27939, " + i + ", " + l + ", " + runtimeexception.toString());
@@ -6608,7 +6545,7 @@ public class client extends GameShell {
 		if (aBoolean1016 || aBoolean1283 || aBoolean1097)
 			return;
 		anInt1325++;
-		if (!aBoolean1137)
+		if (!loggedIn)
 			method149(-724);
 		else
 			method28((byte) 4);
@@ -6748,7 +6685,7 @@ public class client extends GameShell {
 
 			Region class8 = new Region(anIntArrayArrayArray891, aByteArrayArrayArray1125, 104, 104);
 			int l2 = aByteArrayArray838.length;
-			aClass50_Sub1_Sub2_964.writeOpcode(40);
+			networkSession.outgoing.writeOpcode(40);
 			if (!aBoolean1163) {
 				for (int j3 = 0; j3 < l2; j3++) {
 					int j4 = (anIntArray856[j3] >> 8) * 64 - anInt1040;
@@ -6767,7 +6704,7 @@ public class client extends GameShell {
 						class8.fillMissingTerrain(i6, l7, 64, 64);
 				}
 
-				aClass50_Sub1_Sub2_964.writeOpcode(40);
+				networkSession.outgoing.writeOpcode(40);
 				for (int j6 = 0; j6 < l2; j6++) {
 					byte abyte1[] = aByteArrayArray1232[j6];
 					if (abyte1 != null) {
@@ -6817,7 +6754,7 @@ public class client extends GameShell {
 
 				}
 
-				aClass50_Sub1_Sub2_964.writeOpcode(40);
+				networkSession.outgoing.writeOpcode(40);
 				for (int i7 = 0; i7 < 4; i7++) {
 					for (int j8 = 0; j8 < 13; j8++) {
 						for (int j9 = 0; j9 < 13; j9++) {
@@ -6844,13 +6781,13 @@ public class client extends GameShell {
 				}
 
 			}
-			aClass50_Sub1_Sub2_964.writeOpcode(40);
+			networkSession.outgoing.writeOpcode(40);
 			class8.buildScene(aClass46Array1260, aClass22_1164);
 			if (aClass18_1158 != null) {
 				aClass18_1158.bindRaster();
 				Rasterizer3D.scanlineOffsets = anIntArray1002;
 			}
-			aClass50_Sub1_Sub2_964.writeOpcode(40);
+			networkSession.outgoing.writeOpcode(40);
 			int l3 = Region.minimumPlane;
 			if (l3 > anInt1091)
 				l3 = anInt1091;
@@ -6871,8 +6808,8 @@ public class client extends GameShell {
 		}
 		GameObjectDefinition.clearModelCaches();
 		if (super.gameFrame != null) {
-			aClass50_Sub1_Sub2_964.writeOpcode(78);
-			aClass50_Sub1_Sub2_964.writeInt(0x3f008edd);
+			networkSession.outgoing.writeOpcode(78);
+			networkSession.outgoing.writeInt(0x3f008edd);
 		}
 		if (aBoolean926 && Signlink.cacheData != null) {
 			int k = aClass32_Sub1_1291.getFileCount(0);
@@ -6916,7 +6853,7 @@ public class client extends GameShell {
 		int k1 = 2048 - k & 0x7ff;
 		int l1 = 2048 - i1 & 0x7ff;
 		if (byte0 != -103)
-			anInt870 = -1;
+			networkSession.incomingOpcode = -1;
 		int i2 = 0;
 		int j2 = 0;
 		int k2 = l;
@@ -6984,7 +6921,7 @@ public class client extends GameShell {
 		}
 		for (int i1 = 0; i1 < anInt971; i1++)
 			if (aClass50_Sub1_Sub4_Sub3_Sub2Array970[anIntArray972[i1]] == null) {
-				Signlink.reportError(aString1092 + " null entry in pl list - pos:" + i1 + " size:" + anInt971);
+				Signlink.reportError(username + " null entry in pl list - pos:" + i1 + " size:" + anInt971);
 				throw new RuntimeException("eek");
 			}
 
@@ -7002,8 +6939,8 @@ public class client extends GameShell {
 				for (int k = j; k < anInt855; k++)
 					aLongArray1073[k] = aLongArray1073[k + 1];
 
-				aClass50_Sub1_Sub2_964.writeOpcode(160);
-				aClass50_Sub1_Sub2_964.writeLong(l);
+				networkSession.outgoing.writeOpcode(160);
+				networkSession.outgoing.writeLong(l);
 				break;
 			}
 
@@ -7102,7 +7039,7 @@ public class client extends GameShell {
 
 	public void method99(boolean flag, byte byte0, int i) {
 		if (byte0 != 8)
-			aClass50_Sub1_Sub2_964.writeByte(49);
+			networkSession.outgoing.writeByte(49);
 		Signlink.midiVolume = i;
 		if (flag)
 			Signlink.midi = "voladjust";
@@ -7170,8 +7107,8 @@ public class client extends GameShell {
 			anIntArray1267[anInt859] = 0;
 			anInt859++;
 			aBoolean1181 = true;
-			aClass50_Sub1_Sub2_964.writeOpcode(120);
-			aClass50_Sub1_Sub2_964.writeLong(l);
+			networkSession.outgoing.writeOpcode(120);
+			networkSession.outgoing.writeLong(l);
 			return;
 		} catch (RuntimeException runtimeexception) {
 			Signlink.reportError("94629, " + l + ", " + i + ", " + runtimeexception.toString());
@@ -7355,7 +7292,7 @@ public class client extends GameShell {
 			}
 		}
 		if (i == 620)
-			if (anInt867 >= 1) {
+			if (playerRights >= 1) {
 				if (aBoolean1098) {
 					class13.color = 0xff0000;
 					class13.text = "Moderator option: Mute player for 48 hours: <ON>";
@@ -7439,7 +7376,7 @@ public class client extends GameShell {
 
 	public String method104(int i, byte byte0) {
 		if (byte0 != 83)
-			anInt870 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
+			networkSession.incomingOpcode = networkSession.incoming.readUnsignedByte();
 		if (i > anInt1170 + 10) {
 			return "Unknown";
 		} else {
@@ -7455,7 +7392,7 @@ public class client extends GameShell {
 	}
 
 	public void method105(int i, int j) {
-		anInt869 += i;
+		networkSession.incomingLength += i;
 		int k = Varp.definitions[j].clientCode;
 		if (k == 0)
 			return;
@@ -7537,7 +7474,7 @@ public class client extends GameShell {
 
 	public int method106(int i, int j, int k, int l) {
 		if (l < 8 || l > 8)
-			aClass50_Sub1_Sub2_964.writeByte(235);
+			networkSession.outgoing.writeByte(235);
 		int i1 = 256 - k;
 		return ((i & 0xff00ff) * i1 + (j & 0xff00ff) * k & 0xff00ff00)
 				+ ((i & 0xff00) * i1 + (j & 0xff00) * k & 0xff0000) >> 8;
@@ -7677,8 +7614,8 @@ public class client extends GameShell {
 			anInt895++;
 			if (anInt895 > 112) {
 				anInt895 = 0;
-				aClass50_Sub1_Sub2_964.writeOpcode(197);
-				aClass50_Sub1_Sub2_964.writeInt(0);
+				networkSession.outgoing.writeOpcode(197);
+				networkSession.outgoing.writeInt(0);
 			}
 		}
 	}
@@ -7739,7 +7676,7 @@ public class client extends GameShell {
 						if (j1 > 450)
 							j1 = 450;
 						if (super.mouseX < 4 + j1) {
-							if (anInt867 >= 1) {
+							if (playerRights >= 1) {
 								aStringArray1184[anInt1183] = "Report abuse @whi@" + s;
 								anIntArray981[anInt1183] = 2507;
 								anInt1183++;
@@ -7763,7 +7700,7 @@ public class client extends GameShell {
 
 	public void method112(byte byte0, int i) {
 		if (byte0 != 36)
-			aClass50_Sub1_Sub2_964.writeByte(6);
+			networkSession.outgoing.writeByte(6);
 		Widget class13 = Widget.get(i);
 		for (int j = 0; j < class13.children.length; j++) {
 			if (class13.children[j] == -1)
@@ -7801,7 +7738,7 @@ public class client extends GameShell {
 				l++;
 			if ((j1 == 1 || j1 == 2) && (j1 == 1 || anInt1006 == 0 || anInt1006 == 1 && method148(13292, s))) {
 				if (k > k1 - 14 && k <= k1 && !s.equals(aClass50_Sub1_Sub4_Sub3_Sub2_1167.name)) {
-					if (anInt867 >= 1) {
+					if (playerRights >= 1) {
 						aStringArray1184[anInt1183] = "Report abuse @whi@" + s;
 						anIntArray981[anInt1183] = 507;
 						anInt1183++;
@@ -7818,7 +7755,7 @@ public class client extends GameShell {
 			if ((j1 == 3 || j1 == 7) && anInt1223 == 0
 					&& (j1 == 7 || anInt887 == 0 || anInt887 == 1 && method148(13292, s))) {
 				if (k > k1 - 14 && k <= k1) {
-					if (anInt867 >= 1) {
+					if (playerRights >= 1) {
 						aStringArray1184[anInt1183] = "Report abuse @whi@" + s;
 						anIntArray981[anInt1183] = 507;
 						anInt1183++;
@@ -7862,12 +7799,12 @@ public class client extends GameShell {
 
 		}
 		if (k > anInt971) {
-			Signlink.reportError(aString1092 + " Too many players");
+			Signlink.reportError(username + " Too many players");
 			throw new RuntimeException("eek");
 		}
 		anInt971 = 0;
 		if (j >= 0)
-			anInt870 = -1;
+			networkSession.incomingOpcode = -1;
 		for (int i1 = 0; i1 < k; i1++) {
 			int j1 = anIntArray972[i1];
 			Player class50_sub1_sub4_sub3_sub2 = aClass50_Sub1_Sub4_Sub3_Sub2Array970[j1];
@@ -7927,7 +7864,7 @@ public class client extends GameShell {
 		int k1 = ((238 + (int) (Math.random() * 20D)) - 10 << 16) + ((238 + (int) (Math.random() * 20D)) - 10 << 8)
 				+ ((238 + (int) (Math.random() * 20D)) - 10);
 		if (j != 0)
-			anInt870 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
+			networkSession.incomingOpcode = networkSession.incoming.readUnsignedByte();
 		int i2 = (238 + (int) (Math.random() * 20D)) - 10 << 16;
 		aClass50_Sub1_Sub1_Sub1_1122.createRasterizer();
 		for (int j2 = 1; j2 < 103; j2++) {
@@ -7947,8 +7884,8 @@ public class client extends GameShell {
 		anInt1082++;
 		if (anInt1082 > 177) {
 			anInt1082 = 0;
-			aClass50_Sub1_Sub2_964.writeOpcode(173);
-			aClass50_Sub1_Sub2_964.writeMedium(0x288b80);
+			networkSession.outgoing.writeOpcode(173);
+			networkSession.outgoing.writeMedium(0x288b80);
 		}
 		anInt1076 = 0;
 		for (int l2 = 0; l2 < 104; l2++) {
@@ -8008,21 +7945,21 @@ public class client extends GameShell {
 			anInt978++;
 			if (anInt978 > 1457) {
 				anInt978 = 0;
-				aClass50_Sub1_Sub2_964.writeOpcode(244);
-				aClass50_Sub1_Sub2_964.writeByte(0);
-				int j = aClass50_Sub1_Sub2_964.position;
-				aClass50_Sub1_Sub2_964.writeByte(219);
-				aClass50_Sub1_Sub2_964.writeShort(37745);
-				aClass50_Sub1_Sub2_964.writeByte(61);
-				aClass50_Sub1_Sub2_964.writeShort(43756);
-				aClass50_Sub1_Sub2_964.writeShort((int) (Math.random() * 65536D));
-				aClass50_Sub1_Sub2_964.writeByte((int) (Math.random() * 256D));
-				aClass50_Sub1_Sub2_964.writeShort(51171);
+				networkSession.outgoing.writeOpcode(244);
+				networkSession.outgoing.writeByte(0);
+				int j = networkSession.outgoing.position;
+				networkSession.outgoing.writeByte(219);
+				networkSession.outgoing.writeShort(37745);
+				networkSession.outgoing.writeByte(61);
+				networkSession.outgoing.writeShort(43756);
+				networkSession.outgoing.writeShort((int) (Math.random() * 65536D));
+				networkSession.outgoing.writeByte((int) (Math.random() * 256D));
+				networkSession.outgoing.writeShort(51171);
 				if ((int) (Math.random() * 2D) == 0)
-					aClass50_Sub1_Sub2_964.writeShort(15808);
-				aClass50_Sub1_Sub2_964.writeByte(97);
-				aClass50_Sub1_Sub2_964.writeByte((int) (Math.random() * 256D));
-				aClass50_Sub1_Sub2_964.writeLength(aClass50_Sub1_Sub2_964.position - j);
+					networkSession.outgoing.writeShort(15808);
+				networkSession.outgoing.writeByte(97);
+				networkSession.outgoing.writeByte((int) (Math.random() * 256D));
+				networkSession.outgoing.writeLength(networkSession.outgoing.position - j);
 			}
 			int k = anInt1216 >> 7;
 			int l = anInt1218 >> 7;
@@ -8093,7 +8030,7 @@ public class client extends GameShell {
 	public int method118(int i) {
 		int j = method110(anInt1218, anInt1216, (byte) 9, anInt1091);
 		while (i >= 0)
-			anInt870 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
+			networkSession.incomingOpcode = networkSession.incoming.readUnsignedByte();
 		if (j - anInt1217 < 800 && (aByteArrayArrayArray1125[anInt1091][anInt1216 >> 7][anInt1218 >> 7] & 4) != 0)
 			return anInt1091;
 		else
@@ -8171,7 +8108,7 @@ public class client extends GameShell {
 		int i1 = anIntArray981[i];
 		int j1 = anIntArray982[i];
 		if (j < anInt921 || j > anInt921)
-			anInt870 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
+			networkSession.incomingOpcode = networkSession.incoming.readUnsignedByte();
 		if (i1 >= 2000)
 			i1 -= 2000;
 		if (anInt1244 != 0 && i1 != 1016) {
@@ -8189,21 +8126,21 @@ public class client extends GameShell {
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
-				aClass50_Sub1_Sub2_964.writeOpcode(245);
-				aClass50_Sub1_Sub2_964.writeShortAddLE(j1);
+				networkSession.outgoing.writeOpcode(245);
+				networkSession.outgoing.writeShortAddLE(j1);
 			}
 		}
 		if (i1 == 227) {
 			anInt1165++;
 			if (anInt1165 >= 62) {
-				aClass50_Sub1_Sub2_964.writeOpcode(165);
-				aClass50_Sub1_Sub2_964.writeByte(206);
+				networkSession.outgoing.writeOpcode(165);
+				networkSession.outgoing.writeByte(206);
 				anInt1165 = 0;
 			}
-			aClass50_Sub1_Sub2_964.writeOpcode(228);
-			aClass50_Sub1_Sub2_964.writeShortLE(k);
-			aClass50_Sub1_Sub2_964.writeShortAdd(j1);
-			aClass50_Sub1_Sub2_964.writeShort(l);
+			networkSession.outgoing.writeOpcode(228);
+			networkSession.outgoing.writeShortLE(k);
+			networkSession.outgoing.writeShortAdd(j1);
+			networkSession.outgoing.writeShort(l);
 			anInt1329 = 0;
 			anInt1330 = l;
 			anInt1331 = k;
@@ -8224,8 +8161,8 @@ public class client extends GameShell {
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
-				aClass50_Sub1_Sub2_964.writeOpcode(45);
-				aClass50_Sub1_Sub2_964.writeShortAdd(j1);
+				networkSession.outgoing.writeOpcode(45);
+				networkSession.outgoing.writeShortAdd(j1);
 			}
 		}
 		if (i1 == 921) {
@@ -8239,21 +8176,21 @@ public class client extends GameShell {
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
-				aClass50_Sub1_Sub2_964.writeOpcode(67);
-				aClass50_Sub1_Sub2_964.writeShortAdd(j1);
+				networkSession.outgoing.writeOpcode(67);
+				networkSession.outgoing.writeShortAdd(j1);
 			}
 		}
 		if (i1 == 961) {
 			anInt1139 += j1;
 			if (anInt1139 >= 115) {
-				aClass50_Sub1_Sub2_964.writeOpcode(126);
-				aClass50_Sub1_Sub2_964.writeByte(125);
+				networkSession.outgoing.writeOpcode(126);
+				networkSession.outgoing.writeByte(125);
 				anInt1139 = 0;
 			}
-			aClass50_Sub1_Sub2_964.writeOpcode(203);
-			aClass50_Sub1_Sub2_964.writeShortAdd(l);
-			aClass50_Sub1_Sub2_964.writeShortLE(k);
-			aClass50_Sub1_Sub2_964.writeShortLE(j1);
+			networkSession.outgoing.writeOpcode(203);
+			networkSession.outgoing.writeShortAdd(l);
+			networkSession.outgoing.writeShortLE(k);
+			networkSession.outgoing.writeShortLE(j1);
 			anInt1329 = 0;
 			anInt1330 = l;
 			anInt1331 = k;
@@ -8264,19 +8201,19 @@ public class client extends GameShell {
 				anInt1332 = 3;
 		}
 		if (i1 == 467 && method80(l, 0, k, j1)) {
-			aClass50_Sub1_Sub2_964.writeOpcode(152);
-			aClass50_Sub1_Sub2_964.writeShortLE(j1 >> 14 & 0x7fff);
-			aClass50_Sub1_Sub2_964.writeShortLE(anInt1148);
-			aClass50_Sub1_Sub2_964.writeShortLE(anInt1149);
-			aClass50_Sub1_Sub2_964.writeShortLE(l + anInt1041);
-			aClass50_Sub1_Sub2_964.writeShort(anInt1147);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(k + anInt1040);
+			networkSession.outgoing.writeOpcode(152);
+			networkSession.outgoing.writeShortLE(j1 >> 14 & 0x7fff);
+			networkSession.outgoing.writeShortLE(anInt1148);
+			networkSession.outgoing.writeShortLE(anInt1149);
+			networkSession.outgoing.writeShortLE(l + anInt1041);
+			networkSession.outgoing.writeShort(anInt1147);
+			networkSession.outgoing.writeShortAddLE(k + anInt1040);
 		}
 		if (i1 == 9) {
-			aClass50_Sub1_Sub2_964.writeOpcode(3);
-			aClass50_Sub1_Sub2_964.writeShortAdd(j1);
-			aClass50_Sub1_Sub2_964.writeShort(l);
-			aClass50_Sub1_Sub2_964.writeShort(k);
+			networkSession.outgoing.writeOpcode(3);
+			networkSession.outgoing.writeShortAdd(j1);
+			networkSession.outgoing.writeShort(l);
+			networkSession.outgoing.writeShort(k);
 			anInt1329 = 0;
 			anInt1330 = l;
 			anInt1331 = k;
@@ -8297,8 +8234,8 @@ public class client extends GameShell {
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
-				aClass50_Sub1_Sub2_964.writeOpcode(42);
-				aClass50_Sub1_Sub2_964.writeShortLE(j1);
+				networkSession.outgoing.writeOpcode(42);
+				networkSession.outgoing.writeShortLE(j1);
 			}
 		}
 		if (i1 == 677) {
@@ -8312,8 +8249,8 @@ public class client extends GameShell {
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
-				aClass50_Sub1_Sub2_964.writeOpcode(116);
-				aClass50_Sub1_Sub2_964.writeShortLE(j1);
+				networkSession.outgoing.writeOpcode(116);
+				networkSession.outgoing.writeShortLE(j1);
 			}
 		}
 		if (i1 == 762 || i1 == 574 || i1 == 775 || i1 == 859) {
@@ -8341,16 +8278,16 @@ public class client extends GameShell {
 			anInt1021 = super.clickY;
 			anInt1023 = 2;
 			anInt1022 = 0;
-			aClass50_Sub1_Sub2_964.writeOpcode(54);
-			aClass50_Sub1_Sub2_964.writeShortAdd(j1);
-			aClass50_Sub1_Sub2_964.writeShortLE(l + anInt1041);
-			aClass50_Sub1_Sub2_964.writeShort(k + anInt1040);
+			networkSession.outgoing.writeOpcode(54);
+			networkSession.outgoing.writeShortAdd(j1);
+			networkSession.outgoing.writeShortLE(l + anInt1041);
+			networkSession.outgoing.writeShort(k + anInt1040);
 		}
 		if (i1 == 399) {
-			aClass50_Sub1_Sub2_964.writeOpcode(24);
-			aClass50_Sub1_Sub2_964.writeShortLE(l);
-			aClass50_Sub1_Sub2_964.writeShortLE(j1);
-			aClass50_Sub1_Sub2_964.writeShortAdd(k);
+			networkSession.outgoing.writeOpcode(24);
+			networkSession.outgoing.writeShortLE(l);
+			networkSession.outgoing.writeShortLE(j1);
+			networkSession.outgoing.writeShortAdd(k);
 			anInt1329 = 0;
 			anInt1330 = l;
 			anInt1331 = k;
@@ -8371,16 +8308,16 @@ public class client extends GameShell {
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
-				aClass50_Sub1_Sub2_964.writeOpcode(57);
-				aClass50_Sub1_Sub2_964.writeShort(j1);
-				aClass50_Sub1_Sub2_964.writeShortLE(anInt1149);
-				aClass50_Sub1_Sub2_964.writeShortAddLE(anInt1148);
-				aClass50_Sub1_Sub2_964.writeShort(anInt1147);
+				networkSession.outgoing.writeOpcode(57);
+				networkSession.outgoing.writeShort(j1);
+				networkSession.outgoing.writeShortLE(anInt1149);
+				networkSession.outgoing.writeShortAddLE(anInt1148);
+				networkSession.outgoing.writeShort(anInt1147);
 			}
 		}
 		if (i1 == 890) {
-			aClass50_Sub1_Sub2_964.writeOpcode(79);
-			aClass50_Sub1_Sub2_964.writeShort(l);
+			networkSession.outgoing.writeOpcode(79);
+			networkSession.outgoing.writeShort(l);
 			Widget class13 = Widget.get(l);
 			if (class13.cs1Instructions != null && class13.cs1Instructions[0][0] == 5) {
 				int i2 = class13.cs1Instructions[0][1];
@@ -8400,8 +8337,8 @@ public class client extends GameShell {
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
-				aClass50_Sub1_Sub2_964.writeOpcode(233);
-				aClass50_Sub1_Sub2_964.writeShortAdd(j1);
+				networkSession.outgoing.writeOpcode(233);
+				networkSession.outgoing.writeShortAdd(j1);
 			}
 		}
 		if (i1 == 14)
@@ -8410,13 +8347,13 @@ public class client extends GameShell {
 			else
 				aClass22_1164.setClick(k - 4, l - 4);
 		if (i1 == 903) {
-			aClass50_Sub1_Sub2_964.writeOpcode(1);
-			aClass50_Sub1_Sub2_964.writeShort(j1);
-			aClass50_Sub1_Sub2_964.writeShortLE(anInt1147);
-			aClass50_Sub1_Sub2_964.writeShortLE(anInt1149);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(anInt1148);
-			aClass50_Sub1_Sub2_964.writeShortAdd(k);
-			aClass50_Sub1_Sub2_964.writeShortAdd(l);
+			networkSession.outgoing.writeOpcode(1);
+			networkSession.outgoing.writeShort(j1);
+			networkSession.outgoing.writeShortLE(anInt1147);
+			networkSession.outgoing.writeShortLE(anInt1149);
+			networkSession.outgoing.writeShortAddLE(anInt1148);
+			networkSession.outgoing.writeShortAdd(k);
+			networkSession.outgoing.writeShortAdd(l);
 			anInt1329 = 0;
 			anInt1330 = l;
 			anInt1331 = k;
@@ -8427,11 +8364,11 @@ public class client extends GameShell {
 				anInt1332 = 3;
 		}
 		if (i1 == 361) {
-			aClass50_Sub1_Sub2_964.writeOpcode(36);
-			aClass50_Sub1_Sub2_964.writeShort(anInt1172);
-			aClass50_Sub1_Sub2_964.writeShortAdd(l);
-			aClass50_Sub1_Sub2_964.writeShortAdd(k);
-			aClass50_Sub1_Sub2_964.writeShortAdd(j1);
+			networkSession.outgoing.writeOpcode(36);
+			networkSession.outgoing.writeShort(anInt1172);
+			networkSession.outgoing.writeShortAdd(l);
+			networkSession.outgoing.writeShortAdd(k);
+			networkSession.outgoing.writeShortAdd(j1);
 			anInt1329 = 0;
 			anInt1330 = l;
 			anInt1331 = k;
@@ -8454,20 +8391,20 @@ public class client extends GameShell {
 				anInt1022 = 0;
 				anInt1235 += j1;
 				if (anInt1235 >= 143) {
-					aClass50_Sub1_Sub2_964.writeOpcode(157);
-					aClass50_Sub1_Sub2_964.writeInt(0);
+					networkSession.outgoing.writeOpcode(157);
+					networkSession.outgoing.writeInt(0);
 					anInt1235 = 0;
 				}
-				aClass50_Sub1_Sub2_964.writeOpcode(13);
-				aClass50_Sub1_Sub2_964.writeShortAddLE(j1);
+				networkSession.outgoing.writeOpcode(13);
+				networkSession.outgoing.writeShortAddLE(j1);
 			}
 		}
 		if (i1 == 376 && method80(l, 0, k, j1)) {
-			aClass50_Sub1_Sub2_964.writeOpcode(210);
-			aClass50_Sub1_Sub2_964.writeShort(anInt1172);
-			aClass50_Sub1_Sub2_964.writeShortLE(j1 >> 14 & 0x7fff);
-			aClass50_Sub1_Sub2_964.writeShortAdd(k + anInt1040);
-			aClass50_Sub1_Sub2_964.writeShortLE(l + anInt1041);
+			networkSession.outgoing.writeOpcode(210);
+			networkSession.outgoing.writeShort(anInt1172);
+			networkSession.outgoing.writeShortLE(j1 >> 14 & 0x7fff);
+			networkSession.outgoing.writeShortAdd(k + anInt1040);
+			networkSession.outgoing.writeShortLE(l + anInt1041);
 		}
 		if (i1 == 432) {
 			Npc class50_sub1_sub4_sub3_sub1_4 = aClass50_Sub1_Sub4_Sub3_Sub1Array1132[j1];
@@ -8480,8 +8417,8 @@ public class client extends GameShell {
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
-				aClass50_Sub1_Sub2_964.writeOpcode(8);
-				aClass50_Sub1_Sub2_964.writeShortLE(j1);
+				networkSession.outgoing.writeOpcode(8);
+				networkSession.outgoing.writeShortLE(j1);
 			}
 		}
 		if (i1 == 639)
@@ -8497,9 +8434,9 @@ public class client extends GameShell {
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
-				aClass50_Sub1_Sub2_964.writeOpcode(31);
-				aClass50_Sub1_Sub2_964.writeShort(j1);
-				aClass50_Sub1_Sub2_964.writeShortLE(anInt1172);
+				networkSession.outgoing.writeOpcode(31);
+				networkSession.outgoing.writeShort(j1);
+				networkSession.outgoing.writeShortLE(anInt1172);
 			}
 		}
 		if (i1 == 67) {
@@ -8513,9 +8450,9 @@ public class client extends GameShell {
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
-				aClass50_Sub1_Sub2_964.writeOpcode(104);
-				aClass50_Sub1_Sub2_964.writeShortAdd(anInt1172);
-				aClass50_Sub1_Sub2_964.writeShortLE(j1);
+				networkSession.outgoing.writeOpcode(104);
+				networkSession.outgoing.writeShortAdd(anInt1172);
+				networkSession.outgoing.writeShortLE(j1);
 			}
 		}
 		if (i1 == 68) {
@@ -8528,10 +8465,10 @@ public class client extends GameShell {
 			anInt1021 = super.clickY;
 			anInt1023 = 2;
 			anInt1022 = 0;
-			aClass50_Sub1_Sub2_964.writeOpcode(77);
-			aClass50_Sub1_Sub2_964.writeShortAdd(k + anInt1040);
-			aClass50_Sub1_Sub2_964.writeShort(l + anInt1041);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(j1);
+			networkSession.outgoing.writeOpcode(77);
+			networkSession.outgoing.writeShortAdd(k + anInt1040);
+			networkSession.outgoing.writeShort(l + anInt1041);
+			networkSession.outgoing.writeShortAddLE(j1);
 		}
 		if (i1 == 684) {
 			boolean flag2 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 0, 0, 2,
@@ -8546,14 +8483,14 @@ public class client extends GameShell {
 			if ((j1 & 3) == 0)
 				anInt1052++;
 			if (anInt1052 >= 84) {
-				aClass50_Sub1_Sub2_964.writeOpcode(222);
-				aClass50_Sub1_Sub2_964.writeMedium(0xabc842);
+				networkSession.outgoing.writeOpcode(222);
+				networkSession.outgoing.writeMedium(0xabc842);
 				anInt1052 = 0;
 			}
-			aClass50_Sub1_Sub2_964.writeOpcode(71);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(j1);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(k + anInt1040);
-			aClass50_Sub1_Sub2_964.writeShortAdd(l + anInt1041);
+			networkSession.outgoing.writeOpcode(71);
+			networkSession.outgoing.writeShortAddLE(j1);
+			networkSession.outgoing.writeShortAddLE(k + anInt1040);
+			networkSession.outgoing.writeShortAdd(l + anInt1041);
 		}
 		if (i1 == 544 || i1 == 695) {
 			String s1 = aStringArray1184[i];
@@ -8572,12 +8509,12 @@ public class client extends GameShell {
 							((Actor) (class50_sub1_sub4_sub3_sub2_7)).pathX[0], 0, 0,
 							((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
 					if (i1 == 544) {
-						aClass50_Sub1_Sub2_964.writeOpcode(116);
-						aClass50_Sub1_Sub2_964.writeShortLE(anIntArray972[j3]);
+						networkSession.outgoing.writeOpcode(116);
+						networkSession.outgoing.writeShortLE(anIntArray972[j3]);
 					}
 					if (i1 == 695) {
-						aClass50_Sub1_Sub2_964.writeOpcode(245);
-						aClass50_Sub1_Sub2_964.writeShortAddLE(anIntArray972[j3]);
+						networkSession.outgoing.writeOpcode(245);
+						networkSession.outgoing.writeShortAddLE(anIntArray972[j3]);
 					}
 					flag8 = true;
 					break;
@@ -8588,10 +8525,10 @@ public class client extends GameShell {
 			}
 		}
 		if (i1 == 225) {
-			aClass50_Sub1_Sub2_964.writeOpcode(177);
-			aClass50_Sub1_Sub2_964.writeShortAdd(k);
-			aClass50_Sub1_Sub2_964.writeShortLE(j1);
-			aClass50_Sub1_Sub2_964.writeShortLE(l);
+			networkSession.outgoing.writeOpcode(177);
+			networkSession.outgoing.writeShortAdd(k);
+			networkSession.outgoing.writeShortLE(j1);
+			networkSession.outgoing.writeShortLE(l);
 			anInt1329 = 0;
 			anInt1330 = l;
 			anInt1331 = k;
@@ -8623,10 +8560,10 @@ public class client extends GameShell {
 			return;
 		}
 		if (i1 == 891) {
-			aClass50_Sub1_Sub2_964.writeOpcode(4);
-			aClass50_Sub1_Sub2_964.writeShortLE(k);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(j1);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(l);
+			networkSession.outgoing.writeOpcode(4);
+			networkSession.outgoing.writeShortLE(k);
+			networkSession.outgoing.writeShortAddLE(j1);
+			networkSession.outgoing.writeShortAddLE(l);
 			anInt1329 = 0;
 			anInt1330 = l;
 			anInt1331 = k;
@@ -8637,10 +8574,10 @@ public class client extends GameShell {
 				anInt1332 = 3;
 		}
 		if (i1 == 894) {
-			aClass50_Sub1_Sub2_964.writeOpcode(158);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(k);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(j1);
-			aClass50_Sub1_Sub2_964.writeShortLE(l);
+			networkSession.outgoing.writeOpcode(158);
+			networkSession.outgoing.writeShortAddLE(k);
+			networkSession.outgoing.writeShortAddLE(j1);
+			networkSession.outgoing.writeShortLE(l);
 			anInt1329 = 0;
 			anInt1330 = l;
 			anInt1331 = k;
@@ -8652,30 +8589,30 @@ public class client extends GameShell {
 		}
 		if (i1 == 1280) {
 			method80(l, 0, k, j1);
-			aClass50_Sub1_Sub2_964.writeOpcode(55);
-			aClass50_Sub1_Sub2_964.writeShortLE(j1 >> 14 & 0x7fff);
-			aClass50_Sub1_Sub2_964.writeShortLE(l + anInt1041);
-			aClass50_Sub1_Sub2_964.writeShort(k + anInt1040);
+			networkSession.outgoing.writeOpcode(55);
+			networkSession.outgoing.writeShortLE(j1 >> 14 & 0x7fff);
+			networkSession.outgoing.writeShortLE(l + anInt1041);
+			networkSession.outgoing.writeShort(k + anInt1040);
 		}
 		if (i1 == 35) {
 			method80(l, 0, k, j1);
-			aClass50_Sub1_Sub2_964.writeOpcode(181);
-			aClass50_Sub1_Sub2_964.writeShortAdd(k + anInt1040);
-			aClass50_Sub1_Sub2_964.writeShortLE(l + anInt1041);
-			aClass50_Sub1_Sub2_964.writeShortLE(j1 >> 14 & 0x7fff);
+			networkSession.outgoing.writeOpcode(181);
+			networkSession.outgoing.writeShortAdd(k + anInt1040);
+			networkSession.outgoing.writeShortLE(l + anInt1041);
+			networkSession.outgoing.writeShortLE(j1 >> 14 & 0x7fff);
 		}
 		if (i1 == 888) {
 			method80(l, 0, k, j1);
-			aClass50_Sub1_Sub2_964.writeOpcode(50);
-			aClass50_Sub1_Sub2_964.writeShortAdd(l + anInt1041);
-			aClass50_Sub1_Sub2_964.writeShortLE(j1 >> 14 & 0x7fff);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(k + anInt1040);
+			networkSession.outgoing.writeOpcode(50);
+			networkSession.outgoing.writeShortAdd(l + anInt1041);
+			networkSession.outgoing.writeShortLE(j1 >> 14 & 0x7fff);
+			networkSession.outgoing.writeShortAddLE(k + anInt1040);
 		}
 		if (i1 == 324) {
-			aClass50_Sub1_Sub2_964.writeOpcode(161);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(k);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(j1);
-			aClass50_Sub1_Sub2_964.writeShortLE(l);
+			networkSession.outgoing.writeOpcode(161);
+			networkSession.outgoing.writeShortAddLE(k);
+			networkSession.outgoing.writeShortAddLE(j1);
+			networkSession.outgoing.writeShortLE(l);
 			anInt1329 = 0;
 			anInt1330 = l;
 			anInt1331 = k;
@@ -8703,8 +8640,8 @@ public class client extends GameShell {
 			if (class13_2.contentType > 0)
 				flag7 = method60(631, class13_2);
 			if (flag7) {
-				aClass50_Sub1_Sub2_964.writeOpcode(79);
-				aClass50_Sub1_Sub2_964.writeShort(l);
+				networkSession.outgoing.writeOpcode(79);
+				networkSession.outgoing.writeShort(l);
 			}
 		}
 		if (i1 == 1412) {
@@ -8718,16 +8655,16 @@ public class client extends GameShell {
 			method47("", s9, 0);
 		}
 		if (i1 == 575 && !aBoolean1239) {
-			aClass50_Sub1_Sub2_964.writeOpcode(226);
-			aClass50_Sub1_Sub2_964.writeShort(l);
+			networkSession.outgoing.writeOpcode(226);
+			networkSession.outgoing.writeShort(l);
 			aBoolean1239 = true;
 		}
 		if (i1 == 892) {
 			method80(l, 0, k, j1);
-			aClass50_Sub1_Sub2_964.writeOpcode(136);
-			aClass50_Sub1_Sub2_964.writeShort(k + anInt1040);
-			aClass50_Sub1_Sub2_964.writeShortLE(l + anInt1041);
-			aClass50_Sub1_Sub2_964.writeShort(j1 >> 14 & 0x7fff);
+			networkSession.outgoing.writeOpcode(136);
+			networkSession.outgoing.writeShort(k + anInt1040);
+			networkSession.outgoing.writeShortLE(l + anInt1041);
+			networkSession.outgoing.writeShort(j1 >> 14 & 0x7fff);
 		}
 		if (i1 == 270) {
 			boolean flag3 = method35(false, false, l, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 0, 0, 2,
@@ -8739,10 +8676,10 @@ public class client extends GameShell {
 			anInt1021 = super.clickY;
 			anInt1023 = 2;
 			anInt1022 = 0;
-			aClass50_Sub1_Sub2_964.writeOpcode(230);
-			aClass50_Sub1_Sub2_964.writeShortLE(j1);
-			aClass50_Sub1_Sub2_964.writeShortAdd(k + anInt1040);
-			aClass50_Sub1_Sub2_964.writeShort(l + anInt1041);
+			networkSession.outgoing.writeOpcode(230);
+			networkSession.outgoing.writeShortLE(j1);
+			networkSession.outgoing.writeShortAdd(k + anInt1040);
+			networkSession.outgoing.writeShort(l + anInt1041);
 		}
 		if (i1 == 596) {
 			Player class50_sub1_sub4_sub3_sub2_5 = aClass50_Sub1_Sub4_Sub3_Sub2Array970[j1];
@@ -8755,11 +8692,11 @@ public class client extends GameShell {
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
-				aClass50_Sub1_Sub2_964.writeOpcode(143);
-				aClass50_Sub1_Sub2_964.writeShortLE(anInt1149);
-				aClass50_Sub1_Sub2_964.writeShortAddLE(anInt1147);
-				aClass50_Sub1_Sub2_964.writeShort(anInt1148);
-				aClass50_Sub1_Sub2_964.writeShortAdd(j1);
+				networkSession.outgoing.writeOpcode(143);
+				networkSession.outgoing.writeShortLE(anInt1149);
+				networkSession.outgoing.writeShortAddLE(anInt1147);
+				networkSession.outgoing.writeShort(anInt1148);
+				networkSession.outgoing.writeShortAdd(j1);
 			}
 		}
 		if (i1 == 100) {
@@ -8772,13 +8709,13 @@ public class client extends GameShell {
 			anInt1021 = super.clickY;
 			anInt1023 = 2;
 			anInt1022 = 0;
-			aClass50_Sub1_Sub2_964.writeOpcode(211);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(anInt1147);
-			aClass50_Sub1_Sub2_964.writeShortAdd(anInt1149);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(l + anInt1041);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(k + anInt1040);
-			aClass50_Sub1_Sub2_964.writeShortLE(anInt1148);
-			aClass50_Sub1_Sub2_964.writeShortLE(j1);
+			networkSession.outgoing.writeOpcode(211);
+			networkSession.outgoing.writeShortAddLE(anInt1147);
+			networkSession.outgoing.writeShortAdd(anInt1149);
+			networkSession.outgoing.writeShortAddLE(l + anInt1041);
+			networkSession.outgoing.writeShortAddLE(k + anInt1040);
+			networkSession.outgoing.writeShortLE(anInt1148);
+			networkSession.outgoing.writeShortLE(j1);
 		}
 		if (i1 == 1668) {
 			Npc class50_sub1_sub4_sub3_sub1_6 = aClass50_Sub1_Sub4_Sub3_Sub1Array1132[j1];
@@ -8808,20 +8745,20 @@ public class client extends GameShell {
 			anInt1022 = 0;
 			anInt1100++;
 			if (anInt1100 >= 120) {
-				aClass50_Sub1_Sub2_964.writeOpcode(95);
-				aClass50_Sub1_Sub2_964.writeInt(0);
+				networkSession.outgoing.writeOpcode(95);
+				networkSession.outgoing.writeInt(0);
 				anInt1100 = 0;
 			}
-			aClass50_Sub1_Sub2_964.writeOpcode(100);
-			aClass50_Sub1_Sub2_964.writeShort(k + anInt1040);
-			aClass50_Sub1_Sub2_964.writeShortAdd(l + anInt1041);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(j1);
+			networkSession.outgoing.writeOpcode(100);
+			networkSession.outgoing.writeShort(k + anInt1040);
+			networkSession.outgoing.writeShortAdd(l + anInt1041);
+			networkSession.outgoing.writeShortAddLE(j1);
 		}
 		if (i1 == 444) {
-			aClass50_Sub1_Sub2_964.writeOpcode(91);
-			aClass50_Sub1_Sub2_964.writeShortLE(j1);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(k);
-			aClass50_Sub1_Sub2_964.writeShort(l);
+			networkSession.outgoing.writeOpcode(91);
+			networkSession.outgoing.writeShortLE(j1);
+			networkSession.outgoing.writeShortAddLE(k);
+			networkSession.outgoing.writeShort(l);
 			anInt1329 = 0;
 			anInt1330 = l;
 			anInt1331 = k;
@@ -8846,16 +8783,16 @@ public class client extends GameShell {
 		}
 		if (i1 == 389) {
 			method80(l, 0, k, j1);
-			aClass50_Sub1_Sub2_964.writeOpcode(241);
-			aClass50_Sub1_Sub2_964.writeShort(j1 >> 14 & 0x7fff);
-			aClass50_Sub1_Sub2_964.writeShort(k + anInt1040);
-			aClass50_Sub1_Sub2_964.writeShortAdd(l + anInt1041);
+			networkSession.outgoing.writeOpcode(241);
+			networkSession.outgoing.writeShort(j1 >> 14 & 0x7fff);
+			networkSession.outgoing.writeShort(k + anInt1040);
+			networkSession.outgoing.writeShortAdd(l + anInt1041);
 		}
 		if (i1 == 564) {
-			aClass50_Sub1_Sub2_964.writeOpcode(231);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(l);
-			aClass50_Sub1_Sub2_964.writeShortLE(k);
-			aClass50_Sub1_Sub2_964.writeShort(j1);
+			networkSession.outgoing.writeOpcode(231);
+			networkSession.outgoing.writeShortAddLE(l);
+			networkSession.outgoing.writeShortLE(k);
+			networkSession.outgoing.writeShort(j1);
 			anInt1329 = 0;
 			anInt1330 = l;
 			anInt1331 = k;
@@ -8890,8 +8827,8 @@ public class client extends GameShell {
 			}
 		}
 		if (i1 == 518) {
-			aClass50_Sub1_Sub2_964.writeOpcode(79);
-			aClass50_Sub1_Sub2_964.writeShort(l);
+			networkSession.outgoing.writeOpcode(79);
+			networkSession.outgoing.writeShort(l);
 			Widget class13_3 = Widget.get(l);
 			if (class13_3.cs1Instructions != null && class13_3.cs1Instructions[0][0] == 5) {
 				int i3 = class13_3.cs1Instructions[0][1];
@@ -8913,8 +8850,8 @@ public class client extends GameShell {
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
-				aClass50_Sub1_Sub2_964.writeOpcode(112);
-				aClass50_Sub1_Sub2_964.writeShortLE(j1);
+				networkSession.outgoing.writeOpcode(112);
+				networkSession.outgoing.writeShortLE(j1);
 			}
 		}
 		if (i1 == 199) {
@@ -8927,11 +8864,11 @@ public class client extends GameShell {
 			anInt1021 = super.clickY;
 			anInt1023 = 2;
 			anInt1022 = 0;
-			aClass50_Sub1_Sub2_964.writeOpcode(83);
-			aClass50_Sub1_Sub2_964.writeShortLE(j1);
-			aClass50_Sub1_Sub2_964.writeShort(l + anInt1041);
-			aClass50_Sub1_Sub2_964.writeShortLE(anInt1172);
-			aClass50_Sub1_Sub2_964.writeShortAddLE(k + anInt1040);
+			networkSession.outgoing.writeOpcode(83);
+			networkSession.outgoing.writeShortLE(j1);
+			networkSession.outgoing.writeShort(l + anInt1041);
+			networkSession.outgoing.writeShortLE(anInt1172);
+			networkSession.outgoing.writeShortAddLE(k + anInt1040);
 		}
 		if (i1 == 55) {
 			method44(anInt1191);
@@ -8968,8 +8905,8 @@ public class client extends GameShell {
 				anInt1021 = super.clickY;
 				anInt1023 = 2;
 				anInt1022 = 0;
-				aClass50_Sub1_Sub2_964.writeOpcode(194);
-				aClass50_Sub1_Sub2_964.writeShortLE(j1);
+				networkSession.outgoing.writeOpcode(194);
+				networkSession.outgoing.writeShortLE(j1);
 			}
 		}
 		anInt1146 = 0;
@@ -9195,7 +9132,7 @@ public class client extends GameShell {
 		}
 
 		if (flag)
-			anInt870 = -1;
+			networkSession.incomingOpcode = -1;
 	}
 
 	public void method122(int i) {
@@ -9286,19 +9223,13 @@ public class client extends GameShell {
 		}
 	}
 
-	public void method124(boolean flag) {
-		try {
-			if (aClass17_1024 != null)
-				aClass17_1024.close();
-		} catch (Exception _ex) {
-		}
-		aClass17_1024 = null;
-		aBoolean1137 = false;
+	public void logout() {
+		networkSession.closeConnection();
+		loggedIn = false;
 		anInt1225 = 0;
-		aString1092 = "";
-		aString1093 = "";
+		username = "";
+		password = "";
 		method49(383);
-		aBoolean1137 &= flag;
 		aClass22_1164.clear();
 		for (int i = 0; i < 4; i++)
 			aClass46Array1260[i].reset();
@@ -9375,7 +9306,7 @@ public class client extends GameShell {
 			return;
 		}
 		anInt1309++;
-		if (!aBoolean1137)
+		if (!loggedIn)
 			method131((byte) -50, false);
 		else
 			method74(7);
@@ -9384,7 +9315,7 @@ public class client extends GameShell {
 
 	public void method128(boolean flag) {
 		if (flag)
-			aClass50_Sub1_Sub2_964.writeByte(23);
+			networkSession.outgoing.writeByte(23);
 		int i = anInt1305;
 		int j = anInt1306;
 		int k = anInt1307;
@@ -9540,7 +9471,7 @@ public class client extends GameShell {
 		i1 = (i1 * 256) / (anInt1233 + 256);
 		j1 = (j1 * 256) / (anInt1233 + 256);
 		if (!flag)
-			anInt870 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
+			networkSession.incomingOpcode = networkSession.incoming.readUnsignedByte();
 		int k1 = i * i1 + j * j1 >> 16;
 		int l1 = i * j1 - j * i1 >> 16;
 		if (l > 2500) {
@@ -9582,19 +9513,19 @@ public class client extends GameShell {
 		}
 		if (anInt1225 == 2) {
 			int k = c1 / 2 - 40;
-			if (aString957.length() > 0) {
-				aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags(aString957, c / 2, k - 15, 0xffff00, true);
-				aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags(aString958, c / 2, k, 0xffff00, true);
+			if (loginMessage1.length() > 0) {
+				aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags(loginMessage1, c / 2, k - 15, 0xffff00, true);
+				aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags(loginMessage2, c / 2, k, 0xffff00, true);
 				k += 30;
 			} else {
-				aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags(aString958, c / 2, k - 7, 0xffff00, true);
+				aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags(loginMessage2, c / 2, k - 7, 0xffff00, true);
 				k += 30;
 			}
 			aClass50_Sub1_Sub1_Sub2_1061.drawTextWithTags(
-					"Username: " + aString1092 + ((anInt977 == 0) & (anInt1325 % 40 < 20) ? "@yel@|" : ""), c / 2 - 90,
+					"Username: " + username + ((anInt977 == 0) & (anInt1325 % 40 < 20) ? "@yel@|" : ""), c / 2 - 90,
 					k, 0xffffff, true);
 			k += 15;
-			aClass50_Sub1_Sub1_Sub2_1061.drawTextWithTags("Password: " + TextFormatter.mask(aString1093)
+			aClass50_Sub1_Sub1_Sub2_1061.drawTextWithTags("Password: " + TextFormatter.mask(password)
 					+ ((anInt977 == 1) & (anInt1325 % 40 < 20) ? "@yel@|" : ""), c / 2 - 88, k, 0xffffff, true);
 			k += 15;
 			if (!flag) {
@@ -10017,7 +9948,7 @@ public class client extends GameShell {
 		j2 = i1 * k1 - k * j1 >> 16;
 		k = i1 * j1 + k * k1 >> 16;
 		while (l >= 0)
-			anInt870 = -1;
+			networkSession.incomingOpcode = -1;
 		i1 = j2;
 		if (k >= 50) {
 			anInt932 = Rasterizer3D.centerX + (i << 9) / k;
@@ -10037,12 +9968,12 @@ public class client extends GameShell {
 			System.out.println("Od-cycle:" + aClass32_Sub1_1291.onDemandCycle);
 		System.out.println("loop-cycle:" + anInt1325);
 		System.out.println("draw-cycle:" + anInt1309);
-		System.out.println("ptype:" + anInt870);
-		System.out.println("psize:" + anInt869);
+		System.out.println("ptype:" + networkSession.incomingOpcode);
+		System.out.println("psize:" + networkSession.incomingLength);
 		if (flag)
 			aBoolean1028 = !aBoolean1028;
-		if (aClass17_1024 != null)
-			aClass17_1024.printDebugInformation();
+		if (networkSession.isConnected())
+			networkSession.printDebugInformation();
 		super.debugTiming = true;
 	}
 
@@ -10158,7 +10089,7 @@ public class client extends GameShell {
 		int k = 0;
 		int l = 0;
 		if (byte0 != -61)
-			aClass50_Sub1_Sub2_964.writeByte(175);
+			networkSession.outgoing.writeByte(175);
 		if (class50_sub2.sceneLayer == 0)
 			i = aClass22_1164.getWallUid(class50_sub2.plane, class50_sub2.x, class50_sub2.y);
 		if (class50_sub2.sceneLayer == 1)
@@ -10216,7 +10147,7 @@ public class client extends GameShell {
 		Rasterizer.setCoordinates(j, i, j + class13.width, i + class13.height);
 		int i2 = class13.children.length;
 		if (l != 8)
-			anInt870 = -1;
+			networkSession.incomingOpcode = -1;
 		for (int j2 = 0; j2 < i2; j2++) {
 			int k2 = class13.childX[j2] + j;
 			int l2 = (class13.childY[j2] + i) - k;
@@ -10541,7 +10472,7 @@ public class client extends GameShell {
 		if (anInt1071 == 1) {
 			int i = method144(5);
 			if (i != 0 && System.currentTimeMillis() - aLong1229 > 0x57e40L) {
-				Signlink.reportError(aString1092 + " glcfb " + aLong930 + "," + i + "," + aBoolean926 + ","
+				Signlink.reportError(username + " glcfb " + serverSessionKey + "," + i + "," + aBoolean926 + ","
 						+ aClass23Array1228[0] + "," + aClass32_Sub1_1291.getOutstandingRequestCount() + "," + anInt1091
 						+ "," + anInt889 + "," + anInt890);
 				aLong1229 = System.currentTimeMillis();
@@ -10585,7 +10516,7 @@ public class client extends GameShell {
 			anInt1071 = 2;
 			Region.currentPlane = anInt1091;
 			method93(175);
-			aClass50_Sub1_Sub2_964.writeOpcode(6);
+			networkSession.outgoing.writeOpcode(6);
 			return 0;
 		}
 	}
@@ -10615,7 +10546,6 @@ public class client extends GameShell {
 		class50_sub2.spawnOrientation = k;
 		class50_sub2.spawnDelay = k1;
 		class50_sub2.restoreDelay = l;
-		aBoolean1137 &= flag;
 	}
 
 	public void method146(byte byte0) {
@@ -10641,17 +10571,17 @@ public class client extends GameShell {
 				boolean flag = method35(true, false, i2, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathY[0], 0, 0,
 						1, 0, l1, 0, 0, ((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).pathX[0]);
 				if (flag) {
-					aClass50_Sub1_Sub2_964.writeByte(i);
-					aClass50_Sub1_Sub2_964.writeByte(j);
-					aClass50_Sub1_Sub2_964.writeShort(anInt1252);
-					aClass50_Sub1_Sub2_964.writeByte(57);
-					aClass50_Sub1_Sub2_964.writeByte(anInt916);
-					aClass50_Sub1_Sub2_964.writeByte(anInt1233);
-					aClass50_Sub1_Sub2_964.writeByte(89);
-					aClass50_Sub1_Sub2_964.writeShort(((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).x);
-					aClass50_Sub1_Sub2_964.writeShort(((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).y);
-					aClass50_Sub1_Sub2_964.writeByte(anInt1126);
-					aClass50_Sub1_Sub2_964.writeByte(63);
+					networkSession.outgoing.writeByte(i);
+					networkSession.outgoing.writeByte(j);
+					networkSession.outgoing.writeShort(anInt1252);
+					networkSession.outgoing.writeByte(57);
+					networkSession.outgoing.writeByte(anInt916);
+					networkSession.outgoing.writeByte(anInt1233);
+					networkSession.outgoing.writeByte(89);
+					networkSession.outgoing.writeShort(((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).x);
+					networkSession.outgoing.writeShort(((Actor) (aClass50_Sub1_Sub4_Sub3_Sub2_1167)).y);
+					networkSession.outgoing.writeByte(anInt1126);
+					networkSession.outgoing.writeByte(63);
 				}
 			}
 		}
@@ -10695,7 +10625,7 @@ public class client extends GameShell {
 
 	public void method149(int i) {
 		while (i >= 0)
-			anInt870 = aClass50_Sub1_Sub2_1188.readUnsignedByte();
+			networkSession.incomingOpcode = networkSession.incoming.readUnsignedByte();
 		if (anInt1225 == 0) {
 			int j = super.canvasWidth / 2 - 80;
 			int i1 = super.canvasHeight / 2 + 20;
@@ -10708,8 +10638,8 @@ public class client extends GameShell {
 			j = super.canvasWidth / 2 + 80;
 			if (super.clickButton == 1 && super.clickX >= j - 75 && super.clickX <= j + 75 && super.clickY >= i1 - 20
 					&& super.clickY <= i1 + 20) {
-				aString957 = "";
-				aString958 = "Enter your username & password.";
+				loginMessage1 = "";
+				loginMessage2 = "Enter your username & password.";
 				anInt1225 = 2;
 				anInt977 = 0;
 				return;
@@ -10730,17 +10660,17 @@ public class client extends GameShell {
 				l1 += 20;
 				if (super.clickButton == 1 && super.clickX >= j1 - 75 && super.clickX <= j1 + 75
 						&& super.clickY >= l1 - 20 && super.clickY <= l1 + 20) {
-					anInt850 = 0;
-					method79(aString1092, aString1093, false);
-					if (aBoolean1137)
+					loginFailures = 0;
+					login(username, password, false);
+					if (loggedIn)
 						return;
 				}
 				j1 = super.canvasWidth / 2 + 80;
 				if (super.clickButton == 1 && super.clickX >= j1 - 75 && super.clickX <= j1 + 75
 						&& super.clickY >= l1 - 20 && super.clickY <= l1 + 20) {
 					anInt1225 = 0;
-					aString1092 = "";
-					aString1093 = "";
+					username = "";
+					password = "";
 				}
 				do {
 					int i2 = pollKey();
@@ -10755,23 +10685,23 @@ public class client extends GameShell {
 					}
 
 					if (anInt977 == 0) {
-						if (i2 == 8 && aString1092.length() > 0)
-							aString1092 = aString1092.substring(0, aString1092.length() - 1);
+						if (i2 == 8 && username.length() > 0)
+							username = username.substring(0, username.length() - 1);
 						if (i2 == 9 || i2 == 10 || i2 == 13)
 							anInt977 = 1;
 						if (flag)
-							aString1092 += (char) i2;
-						if (aString1092.length() > 12)
-							aString1092 = aString1092.substring(0, 12);
+							username += (char) i2;
+						if (username.length() > 12)
+							username = username.substring(0, 12);
 					} else if (anInt977 == 1) {
-						if (i2 == 8 && aString1093.length() > 0)
-							aString1093 = aString1093.substring(0, aString1093.length() - 1);
+						if (i2 == 8 && password.length() > 0)
+							password = password.substring(0, password.length() - 1);
 						if (i2 == 9 || i2 == 10 || i2 == 13)
 							anInt977 = 0;
 						if (flag)
-							aString1093 += (char) i2;
-						if (aString1093.length() > 20)
-							aString1093 = aString1093.substring(0, 20);
+							password += (char) i2;
+						if (password.length() > 20)
+							password = password.substring(0, 20);
 					}
 				} while (true);
 				return;
@@ -11010,11 +10940,11 @@ public class client extends GameShell {
 					}
 				} catch (Exception exception) {
 					if (Signlink.reportErrors) {
-						aClass50_Sub1_Sub2_964.writeOpcode(80);
-						aClass50_Sub1_Sub2_964.writeShort(anIntArray1090[j] & 0x7fff);
+						networkSession.outgoing.writeOpcode(80);
+						networkSession.outgoing.writeShort(anIntArray1090[j] & 0x7fff);
 					} else {
-						aClass50_Sub1_Sub2_964.writeOpcode(80);
-						aClass50_Sub1_Sub2_964.writeShort(-1);
+						networkSession.outgoing.writeOpcode(80);
+						networkSession.outgoing.writeShort(-1);
 					}
 				}
 				if (!flag || anIntArray1259[j] == -5) {
@@ -11070,7 +11000,8 @@ public class client extends GameShell {
 		anInt921 = 8;
 		aBooleanArray927 = new boolean[5];
 		anInt928 = -188;
-		aClass50_Sub1_Sub2_929 = new Buffer(new byte[5000]);
+		networkSession = new NetworkSession();
+		loginBuffer = new Buffer(new byte[5000]);
 		anInt931 = 0x23201b;
 		anInt932 = -1;
 		anInt933 = -1;
@@ -11091,12 +11022,11 @@ public class client extends GameShell {
 		aBoolean953 = false;
 		aClass50_Sub1_Sub1_Sub1Array954 = new ImageRGB[32];
 		aByte956 = 1;
-		aString957 = "";
-		aString958 = "";
+		loginMessage1 = "";
+		loginMessage2 = "";
 		aBoolean959 = true;
 		anInt960 = -1;
 		anInt961 = -1;
-		aClass50_Sub1_Sub2_964 = new Buffer(new byte[5000]);
 		anInt968 = 2048;
 		anInt969 = 2047;
 		aClass50_Sub1_Sub4_Sub3_Sub2Array970 = new Player[anInt968];
@@ -11140,8 +11070,8 @@ public class client extends GameShell {
 		aCRC32_1088 = new CRC32();
 		anInt1089 = -1;
 		anIntArray1090 = new int[50];
-		aString1092 = "";
-		aString1093 = "";
+		username = "";
+		password = "";
 		aBoolean1097 = false;
 		aBoolean1098 = false;
 		anIntArray1099 = new int[5];
@@ -11157,7 +11087,7 @@ public class client extends GameShell {
 		anIntArray1134 = new int[16384];
 		anInt1135 = 0x766654;
 		aBoolean1136 = false;
-		aBoolean1137 = false;
+		loggedIn = false;
 		aClass50_Sub1_Sub1_Sub3Array1142 = new IndexedImage[2];
 		aByte1143 = -80;
 		aBoolean1144 = true;
@@ -11174,7 +11104,6 @@ public class client extends GameShell {
 		aBoolean1181 = false;
 		aClass50_Sub1_Sub1_Sub1Array1182 = new ImageRGB[20];
 		aStringArray1184 = new String[500];
-		aClass50_Sub1_Sub2_1188 = new Buffer(new byte[5000]);
 		anIntArrayArray1189 = new int[104][104];
 		anInt1191 = -1;
 		aBoolean1209 = false;
@@ -11244,7 +11173,7 @@ public class client extends GameShell {
 	public int anInt847;
 	public int anInt848;
 	public String aStringArray849[];
-	public int anInt850;
+	public int loginFailures;
 	public int anInt851;
 	public int anIntArray852[];
 	public int anInt853;
@@ -11261,13 +11190,9 @@ public class client extends GameShell {
 	public int anIntArray864[];
 	public int anInt865;
 	public boolean aBoolean866;
-	public int anInt867;
+	public int playerRights;
 	public static boolean aBoolean868;
-	public int anInt869;
-	public int anInt870;
-	public int anInt871;
-	public int anInt872;
-	public int anInt873;
+	public int logoutTimer;
 	public int anInt874;
 	public int anInt875;
 	public int anInt876;
@@ -11291,12 +11216,8 @@ public class client extends GameShell {
 	public int anInt894;
 	public static int anInt895;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1Array896[];
-	public IsaacCipher aClass24_899;
 	public boolean aBoolean900;
 	public long aLong902;
-	public int anInt903;
-	public int anInt904;
-	public int anInt905;
 	public GraphicsBuffer aClass18_906;
 	public GraphicsBuffer aClass18_907;
 	public GraphicsBuffer aClass18_908;
@@ -11319,8 +11240,8 @@ public class client extends GameShell {
 	public static boolean aBoolean926;
 	public boolean aBooleanArray927[];
 	public int anInt928;
-	public Buffer aClass50_Sub1_Sub2_929;
-	public long aLong930;
+	public Buffer loginBuffer;
+	public long serverSessionKey;
 	public int anInt931;
 	public int anInt932;
 	public int anInt933;
@@ -11345,13 +11266,13 @@ public class client extends GameShell {
 	public ImageRGB aClass50_Sub1_Sub1_Sub1Array954[];
 	public int anInt955;
 	public byte aByte956;
-	public String aString957;
-	public String aString958;
+	public String loginMessage1;
+	public String loginMessage2;
 	public boolean aBoolean959;
 	public int anInt960;
 	public int anInt961;
-	public static boolean aBoolean962;
-	public Buffer aClass50_Sub1_Sub2_964;
+	public static boolean accountFlagged;
+	public NetworkSession networkSession;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_965;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_966;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_967;
@@ -11414,7 +11335,6 @@ public class client extends GameShell {
 	public int anInt1021;
 	public int anInt1022;
 	public int anInt1023;
-	public BufferedConnection aClass17_1024;
 	public String aString1026;
 	public String aString1027;
 	public boolean aBoolean1028;
@@ -11477,8 +11397,8 @@ public class client extends GameShell {
 	public int anInt1089;
 	public int anIntArray1090[];
 	public int anInt1091;
-	public String aString1092;
-	public String aString1093;
+	public String username;
+	public String password;
 	public int anInt1094;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_1095;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_1096;
@@ -11521,7 +11441,7 @@ public class client extends GameShell {
 	public int anIntArray1134[];
 	public int anInt1135;
 	public boolean aBoolean1136;
-	public boolean aBoolean1137;
+	public boolean loggedIn;
 	public int anInt1138;
 	public static int anInt1139;
 	public long aLong1141;
@@ -11570,7 +11490,6 @@ public class client extends GameShell {
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_1185;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_1186;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_1187;
-	public Buffer aClass50_Sub1_Sub2_1188;
 	public int anIntArrayArray1189[][];
 	public int anInt1191;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1_1192;
@@ -11605,7 +11524,7 @@ public class client extends GameShell {
 	public int anInt1221;
 	public int anInt1222;
 	public int anInt1223;
-	public Socket aSocket1224;
+	public Socket jaggrabSocket;
 	public int anInt1225;
 	public int anInt1226;
 	public int anInt1227;
