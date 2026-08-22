@@ -1,6 +1,6 @@
 package rs2.cache.def;
 
-import rs2.client;
+import rs2.Client;
 import rs2.cache.Archive;
 import rs2.cache.cfg.Varbit;
 import rs2.cache.ondemand.OnDemandFetcher;
@@ -43,7 +43,7 @@ public class GameObjectDefinition {
 	public int translateZ;
 	private static Buffer dataBuffer;
 	public boolean contouredGround;
-	public static client clientInstance;
+	public static Client clientInstance;
 	private static final Model[] modelParts = new Model[4];
 	public static boolean lowMemory;
 	public int id = -1;
@@ -195,7 +195,7 @@ public class GameObjectDefinition {
 		int morphIndex = -1;
 		if (varbitId != -1) {
 			Varbit varbit = Varbit.definitions[varbitId];
-			int mask = client.bitMasks[varbit.mostSignificantBit - varbit.leastSignificantBit];
+			int mask = Client.bitMasks[varbit.mostSignificantBit - varbit.leastSignificantBit];
 			morphIndex = clientInstance.varpValues[varbit.varpId] >> varbit.leastSignificantBit & mask;
 		} else if (varpId != -1) {
 			morphIndex = clientInstance.varpValues[varpId];

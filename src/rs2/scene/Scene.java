@@ -243,7 +243,7 @@ public class Scene {
 		} else {
 			int j2 = x * 128 + 64 * tileWidth;
 			int k2 = y * 128 + 64 * tileHeight;
-			return method254(plane, x, y, tileWidth, tileHeight, j2, k2, drawHeight, renderable, rotation, false, uid,
+			return addInteractiveObject(plane, x, y, tileWidth, tileHeight, j2, k2, drawHeight, renderable, rotation, false, uid,
 					config);
 		}
 	}
@@ -270,7 +270,7 @@ public class Scene {
 		j2 /= 128;
 		maxWorldX /= 128;
 		maxWorldY /= 128;
-		return method254(plane, i2, j2, (maxWorldX - i2) + 1, (maxWorldY - j2) + 1, worldX, worldY, worldZ, renderable,
+		return addInteractiveObject(plane, i2, j2, (maxWorldX - i2) + 1, (maxWorldY - j2) + 1, worldX, worldY, worldZ, renderable,
 				yaw, true, uid, (byte) 0);
 	}
 
@@ -279,11 +279,11 @@ public class Scene {
 		if (renderable == null)
 			return true;
 		else
-			return method254(plane, minX, minY, (maxX - minX) + 1, (maxY - minY) + 1, worldX, worldY, worldZ,
+			return addInteractiveObject(plane, minX, minY, (maxX - minX) + 1, (maxY - minY) + 1, worldX, worldY, worldZ,
 					renderable, rotation, true, uid, (byte) 0);
 	}
 
-	public boolean method254(int plane, int minX, int minY, int tileWidth, int tileHeight, int worldX, int worldY,
+	public boolean addInteractiveObject(int plane, int minX, int minY, int tileWidth, int tileHeight, int worldX, int worldY,
 			int worldZ, Renderable renderable, int rotation, boolean temporary, int uid, byte config) {
 		for (int k2 = minX; k2 < minX + tileWidth; k2++) {
 			for (int l2 = minY; l2 < minY + tileHeight; l2++) {

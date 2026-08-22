@@ -257,8 +257,8 @@ public final class MinimapRenderer {
             for (int i = 0; i < mask.length; i++) {
                 if (mask[i] == 0) raster[i] = 0;
             }
-            assets.compass.shapeImageToPixels(0, 0, 33, 33, 256, 25, assets.compassXOffsets, cameraYaw,
-                    assets.compassWidths, 25);
+            assets.compass.shapeImageToPixels(0, 0, 33, 33, 256, 25, assets.compassMaskWidths, cameraYaw,
+                    assets.compassMaskOffsets, 25);
             assets.sceneBuffer.bindRaster();
             Rasterizer3D.scanlineOffsets = assets.sceneScanlineOffsets;
             return;
@@ -267,10 +267,10 @@ public final class MinimapRenderer {
         int rotation = cameraYaw + rotationOffset & 0x7ff;
         int mapX = 48 + localPlayer.x / 32;
         int mapY = 464 - localPlayer.y / 32;
-        mapImage.shapeImageToPixels(25, 5, 146, 151, 256 + zoomOffset, mapX, assets.minimapXOffsets,
-                rotation, assets.minimapWidths, mapY);
-        assets.compass.shapeImageToPixels(0, 0, 33, 33, 256, 25, assets.compassXOffsets, cameraYaw,
-                assets.compassWidths, 25);
+        mapImage.shapeImageToPixels(25, 5, 146, 151, 256 + zoomOffset, mapX, assets.minimapMaskWidths,
+                rotation, assets.minimapMaskOffsets, mapY);
+        assets.compass.shapeImageToPixels(0, 0, 33, 33, 256, 25, assets.compassMaskWidths, cameraYaw,
+                assets.compassMaskOffsets, 25);
 
         for (int i = 0; i < mapFunctionCount; i++) {
             int dx = mapFunctionX[i] * 4 + 2 - localPlayer.x / 32;
@@ -409,10 +409,10 @@ public final class MinimapRenderer {
         public GraphicsBuffer sceneBuffer;
         public IndexedImage minimapMask;
         public ImageRGB compass;
-        public int[] compassXOffsets;
-        public int[] compassWidths;
-        public int[] minimapXOffsets;
-        public int[] minimapWidths;
+        public int[] compassMaskWidths;
+        public int[] compassMaskOffsets;
+        public int[] minimapMaskWidths;
+        public int[] minimapMaskOffsets;
         public int[] sceneScanlineOffsets;
         public ImageRGB groundItemDot;
         public ImageRGB npcDot;

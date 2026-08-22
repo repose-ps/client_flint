@@ -8,7 +8,7 @@ import java.net.Socket;
 import java.util.zip.CRC32;
 import java.util.zip.GZIPInputStream;
 
-import rs2.client;
+import rs2.Client;
 import rs2.cache.Archive;
 import rs2.cache.ResourceLoader;
 import rs2.collection.DualNodeDeque;
@@ -29,7 +29,7 @@ import rs2.sign.Signlink;
  * <p>
  * The update-server response protocol uses a six-byte header followed by chunks
  * of at most 500 bytes. Completed cache/update-server payloads remain
- * GZIP-compressed until {@link #poll()} returns them to the client.
+ * GZIP-compressed until {@link #poll()} returns them to the Client.
  * </p>
  */
 public class OnDemandFetcher extends OnDemandProvider implements Runnable {
@@ -449,7 +449,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	 * {@code anim_index}, and {@code midi_index}.
 	 * </p>
 	 */
-	public void start(Archive archive, client clientInstance, ResourceLoader resourceLoader) {
+	public void start(Archive archive, Client clientInstance, ResourceLoader resourceLoader) {
 		String[] versionNames = { "model_version", "anim_version", "midi_version", "map_version" };
 		for (int type = 0; type < ARCHIVE_TYPE_COUNT; type++) {
 			byte[] bytes = archive.read(versionNames[type]);
@@ -593,7 +593,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 					return;
 				}
 				lastSocketOpenTime = now;
-				socket = clientInstance.openSocket(43594 + client.portOffset);
+				socket = clientInstance.openSocket(43594 + Client.portOffset);
 				inputStream = socket.getInputStream();
 				outputStream = socket.getOutputStream();
 				outputStream.write(UPDATE_SERVER_HANDSHAKE);
@@ -697,7 +697,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	private DualNodeDeque outstandingRequests;
 	private InputStream inputStream;
 	private OnDemandRequest currentRequest;
-	private client clientInstance;
+	private Client clientInstance;
 	private ResourceLoader resourceLoader;
 	private NodeDeque networkRequests;
 	private int keepAliveCycles;

@@ -10,7 +10,7 @@ import rs2.media.AnimationFrame;
 import rs2.media.TypeFace;
 import rs2.media.renderable.Model;
 import rs2.net.Buffer;
-import rs2.client;
+import rs2.Client;
 
 /**
  * A revision-377 interface widget definition and its small amount of mutable UI
@@ -65,7 +65,7 @@ public class Widget {
 	public int[] itemAmounts;
 	/**
 	 * Type-1 field consumed from the cache but not semantically used by this
-	 * client.
+	 * Client.
 	 */
 	public int type1UnknownValue;
 	public int activeMouseoverColor;
@@ -77,7 +77,7 @@ public class Widget {
 	public int[] childX;
 	/**
 	 * Type-1 field consumed from the cache but not semantically used by this
-	 * client.
+	 * Client.
 	 */
 	public boolean type1UnknownEnabled;
 	public int[][] cs1Instructions;
@@ -104,7 +104,7 @@ public class Widget {
 	public int mouseoverTargetId;
 	/**
 	 * Parent interface id containing content type 650. The supplied revision-377
-	 * client records this id while decoding but does not otherwise use it.
+	 * Client records this id while decoding but does not otherwise use it.
 	 */
 	public static int contentType650InterfaceId = -1;
 	public int[] cs1ComparisonValues;
@@ -126,7 +126,7 @@ public class Widget {
 	public int[] childY;
 	/**
 	 * Parent interface id containing content type 655. The supplied revision-377
-	 * client records this id while decoding but does not otherwise use it.
+	 * Client records this id while decoding but does not otherwise use it.
 	 */
 	public static int contentType655InterfaceId = -1;
 	private static int modelAmbient;
@@ -202,7 +202,7 @@ public class Widget {
 		}
 
 		// Sprite decoding is eager while loading. The archive reference is released
-		// exactly as in the original client; cached sprites remain available.
+		// exactly as in the original Client; cached sprites remain available.
 		spriteArchive = null;
 	}
 
@@ -237,7 +237,7 @@ public class Widget {
 	}
 
 	/**
-	 * Replaces the one-entry model source used for client-built widget models. The
+	 * Replaces the one-entry model source used for Client-built widget models. The
 	 * cache is cleared before insertion, preserving revision-377 behavior.
 	 */
 	public static void cacheModel(int mediaType, int mediaId, Model model) {
@@ -295,7 +295,7 @@ public class Widget {
 			return sprite;
 		} catch (Exception ignored) {
 			// Missing/malformed interface sprites were silently ignored by the
-			// original client and render as null.
+			// original Client and render as null.
 			return null;
 		}
 	}
@@ -321,7 +321,7 @@ public class Widget {
 			model = NpcDefinition.lookup(mediaId).getHeadModel();
 		}
 		if (mediaType == 3) {
-			model = client.localPlayer.getHeadModel();
+			model = Client.localPlayer.getHeadModel();
 		}
 		if (mediaType == 4) {
 			model = itemDefinition.getUnlitModel(50);

@@ -82,7 +82,7 @@ public class Archive {
 	 * Returns a newly allocated file, or {@code null} when the name is absent.
 	 *
 	 * <p>
-	 * Returning a fresh array preserves the original client's behavior and prevents
+	 * Returning a fresh array preserves the original Client's behavior and prevents
 	 * callers from mutating the archive's shared backing data.
 	 * </p>
 	 */
@@ -136,13 +136,4 @@ public class Archive {
 		}
 	}
 
-	public int anInt86;
-	public boolean aBoolean87;
-	public byte aByteArray88[];
-	public int anInt89;
-	public int anIntArray90[];
-	public int anIntArray91[];
-	public int anIntArray92[];
-	public int anIntArray93[];
-	public boolean aBoolean94;
 }

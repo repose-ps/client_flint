@@ -1,6 +1,6 @@
 package rs2.media.renderable;
 
-import rs2.client;
+import rs2.Client;
 import rs2.cache.cfg.Varbit;
 import rs2.cache.def.GameObjectDefinition;
 import rs2.cache.media.AnimationSequence;
@@ -23,7 +23,7 @@ public class DynamicObject extends Renderable {
 	public int objectId;
 	public int type;
 	public int orientation;
-	public static client clientInstance;
+	public static Client clientInstance;
 	public AnimationSequence sequence;
 	public int varbitId;
 	public int varpId;
@@ -44,7 +44,7 @@ public class DynamicObject extends Renderable {
 		if (animationId != -1) {
 			sequence = AnimationSequence.sequences[animationId];
 			frame = 0;
-			animationCycleStart = client.anInt1325 - 1;
+			animationCycleStart = Client.gameCycle - 1;
 			if (randomizeAnimation && sequence.frameStep != -1) {
 				frame = (int) (Math.random() * sequence.frameCount);
 				animationCycleStart -= (int) (Math.random() * sequence.getFrameLength(frame));
@@ -61,7 +61,7 @@ public class DynamicObject extends Renderable {
 		int morphIndex = -1;
 		if (varbitId != -1) {
 			Varbit varbit = Varbit.definitions[varbitId];
-			int mask = client.bitMasks[varbit.mostSignificantBit - varbit.leastSignificantBit];
+			int mask = Client.bitMasks[varbit.mostSignificantBit - varbit.leastSignificantBit];
 			morphIndex = clientInstance.varpValues[varbit.varpId] >> varbit.leastSignificantBit & mask;
 		} else if (varpId != -1) {
 			morphIndex = clientInstance.varpValues[varpId];
@@ -77,7 +77,7 @@ public class DynamicObject extends Renderable {
 	protected Model getModel() {
 		int frameId = -1;
 		if (sequence != null) {
-			int elapsed = client.anInt1325 - animationCycleStart;
+			int elapsed = Client.gameCycle - animationCycleStart;
 			if (elapsed > 100 && sequence.frameStep > 0) {
 				elapsed = 100;
 			}
@@ -94,7 +94,7 @@ public class DynamicObject extends Renderable {
 				sequence = null;
 				break;
 			}
-			animationCycleStart = client.anInt1325 - elapsed;
+			animationCycleStart = Client.gameCycle - elapsed;
 			if (sequence != null) {
 				frameId = sequence.primaryFrameIds[frame];
 			}

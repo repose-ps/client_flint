@@ -1,6 +1,6 @@
 package rs2.media.renderable;
 
-import rs2.client;
+import rs2.Client;
 import rs2.cache.def.ItemDefinition;
 import rs2.cache.def.NpcDefinition;
 import rs2.cache.media.AnimationSequence;
@@ -253,10 +253,10 @@ public class Player extends Actor {
 		}
 
 		if (attachedModel != null) {
-			if (client.anInt1325 >= attachedModelEndCycle) {
+			if (Client.gameCycle >= attachedModelEndCycle) {
 				attachedModel = null;
 			}
-			if (client.anInt1325 >= attachedModelStartCycle && client.anInt1325 < attachedModelEndCycle) {
+			if (Client.gameCycle >= attachedModelStartCycle && Client.gameCycle < attachedModelEndCycle) {
 				Model temporaryModel = attachedModel;
 				temporaryModel.translate(attachedModelX - x, attachedModelHeight - tileHeight, attachedModelY - y);
 				if (orientation == 512) {
@@ -329,7 +329,7 @@ public class Player extends Actor {
 
 		for (int index = 0; index < 5; index++) {
 			int color = buffer.readUnsignedByte();
-			if (color < 0 || color >= client.anIntArrayArray1008[index].length) {
+			if (color < 0 || color >= Client.bodyColorPalettes[index].length) {
 				color = 0;
 			}
 			bodyColors[index] = color;
@@ -387,10 +387,10 @@ public class Player extends Actor {
 	private void recolorAppearance(Model model) {
 		for (int index = 0; index < 5; index++) {
 			if (bodyColors[index] != 0) {
-				model.recolor(client.anIntArrayArray1008[index][0],
-						client.anIntArrayArray1008[index][bodyColors[index]]);
+				model.recolor(Client.bodyColorPalettes[index][0],
+						Client.bodyColorPalettes[index][bodyColors[index]]);
 				if (index == 1) {
-					model.recolor(client.anIntArray1268[0], client.anIntArray1268[bodyColors[index]]);
+					model.recolor(Client.skinColorPalette[0], Client.skinColorPalette[bodyColors[index]]);
 				}
 			}
 		}

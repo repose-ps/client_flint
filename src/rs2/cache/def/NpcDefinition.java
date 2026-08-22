@@ -1,6 +1,6 @@
 package rs2.cache.def;
 
-import rs2.client;
+import rs2.Client;
 import rs2.cache.Archive;
 import rs2.cache.cfg.Varbit;
 import rs2.collection.LruCache;
@@ -15,7 +15,7 @@ import rs2.net.Buffer;
  * Definitions are retained in the original 20-entry rotating decode cache,
  * while lit base body models use a separate 30-entry LRU cache. Morph selection
  * is controlled by either a varbit or a varp, with the varbit taking precedence
- * exactly as in the client.
+ * exactly as in the Client.
  * </p>
  */
 public class NpcDefinition {
@@ -26,11 +26,11 @@ public class NpcDefinition {
 	public int[] modelIds;
 	/**
 	 * Value consumed by opcode 91. Its role is not established by the supplied
-	 * client.
+	 * Client.
 	 */
 	public int opcode91Value = -1;
 	public long id = -1L;
-	public static client clientInstance;
+	public static Client clientInstance;
 	public int scaleY = 128;
 	public boolean clickable = true;
 	public int scaleXZ = 128;
@@ -40,7 +40,7 @@ public class NpcDefinition {
 	public boolean visibleOnMinimap = true;
 	/**
 	 * Value consumed by opcode 92. Its role is not established by the supplied
-	 * client.
+	 * Client.
 	 */
 	public int opcode92Value = -1;
 	public int prayerIcon = -1;
@@ -53,7 +53,7 @@ public class NpcDefinition {
 	public String[] actions;
 	/**
 	 * Value consumed by opcode 90. Its role is not established by the supplied
-	 * client.
+	 * Client.
 	 */
 	public int opcode90Value = -1;
 	public static int count;
@@ -353,7 +353,7 @@ public class NpcDefinition {
 			int varp = varbit.varpId;
 			int leastBit = varbit.leastSignificantBit;
 			int mostBit = varbit.mostSignificantBit;
-			int mask = client.bitMasks[mostBit - leastBit];
+			int mask = Client.bitMasks[mostBit - leastBit];
 			return clientInstance.varpValues[varp] >> leastBit & mask;
 		}
 		if (varpId != -1) {

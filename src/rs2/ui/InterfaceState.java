@@ -1,8 +1,8 @@
 package rs2.ui;
 
 /**
- * Mutable client-side state for revision-377 interfaces and inventory-widget
- * interaction. Protocol/menu code remains in the client until its own refactor
+ * Mutable Client-side state for revision-377 interfaces and inventory-widget
+ * interaction. Protocol/menu code remains in the Client until its own refactor
  * steps; this class only owns the state those systems coordinate through.
  */
 public final class InterfaceState {
@@ -22,9 +22,11 @@ public final class InterfaceState {
     public int itemSelected;
     public int selectedItemSlot;
     public int selectedItemWidgetId;
+    public int selectedItemId;
     public String selectedItemName;
 
     public int spellSelected;
+    public int selectedSpellWidgetId;
     public int selectedSpellTargetMask;
     public String selectedSpellAction;
 

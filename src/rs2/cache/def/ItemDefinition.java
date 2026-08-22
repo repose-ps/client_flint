@@ -34,7 +34,7 @@ public class ItemDefinition {
 		ItemDefinition class16 = cache[cacheIndex];
 		dataBuffer.position = offsets[i];
 		class16.id = i;
-		class16.method223();
+		class16.resetDefaults();
 		class16.decode(dataBuffer);
 		if (class16.noteTemplateId != -1)
 			class16.toNote();
@@ -328,7 +328,7 @@ public class ItemDefinition {
 		dataBuffer = null;
 	}
 
-	public void method223() {
+	public void resetDefaults() {
 		modelId = 0;
 		name = null;
 		description = null;
