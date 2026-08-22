@@ -8,318 +8,376 @@ import rs2.net.Buffer;
 
 public class ItemDefinition {
 
-	public boolean areHeadModelsReady(int i) {
-		int k = maleHeadModel0;
-		int l = maleHeadModel1;
-		if (i == 1) {
-			k = femaleHeadModel0;
-			l = femaleHeadModel1;
+	/**
+	 * Returns whether head models ready.
+	 *
+	 * @param gender the gender
+	 * @return whether the requested condition is satisfied
+	 */
+	public boolean areHeadModelsReady(int gender) {
+		int primaryHeadModelId = maleHeadModel0;
+		int secondaryHeadModelId = maleHeadModel1;
+		if (gender == 1) {
+			primaryHeadModelId = femaleHeadModel0;
+			secondaryHeadModelId = femaleHeadModel1;
 		}
-		if (k == -1)
+		if (primaryHeadModelId == -1)
 			return true;
-		boolean flag = true;
-		if (!Model.isLoaded(k))
-			flag = false;
-		if (l != -1 && !Model.isLoaded(l))
-			flag = false;
-		return flag;
+		boolean ready = true;
+		if (!Model.isLoaded(primaryHeadModelId))
+			ready = false;
+		if (secondaryHeadModelId != -1 && !Model.isLoaded(secondaryHeadModelId))
+			ready = false;
+		return ready;
 	}
 
-	public static ItemDefinition lookup(int i) {
-		for (int j = 0; j < 10; j++)
-			if (cache[j].id == i)
-				return cache[j];
+	/**
+	 * Performs the lookup operation.
+	 *
+	 * @param id the id
+	 * @return the matching value
+	 */
+	public static ItemDefinition lookup(int id) {
+		for (int cacheSlot = 0; cacheSlot < 10; cacheSlot++)
+			if (cache[cacheSlot].id == id)
+				return cache[cacheSlot];
 
 		cacheIndex = (cacheIndex + 1) % 10;
-		ItemDefinition class16 = cache[cacheIndex];
-		dataBuffer.position = offsets[i];
-		class16.id = i;
-		class16.resetDefaults();
-		class16.decode(dataBuffer);
-		if (class16.noteTemplateId != -1)
-			class16.toNote();
-		if (!membersWorld && class16.membersOnly) {
-			class16.name = "Members Object";
-			class16.description = "Login to a members' server to use this object.".getBytes();
-			class16.groundActions = null;
-			class16.inventoryActions = null;
-			class16.team = 0;
+		ItemDefinition definition = cache[cacheIndex];
+		dataBuffer.position = offsets[id];
+		definition.id = id;
+		definition.resetDefaults();
+		definition.decode(dataBuffer);
+		if (definition.noteTemplateId != -1)
+			definition.toNote();
+		if (!membersWorld && definition.membersOnly) {
+			definition.name = "Members Object";
+			definition.description = "Login to a members' server to use this object.".getBytes();
+			definition.groundActions = null;
+			definition.inventoryActions = null;
+			definition.team = 0;
 		}
-		return class16;
+		return definition;
 	}
 
-	public Model getWearableModel(int i) {
-		int j = maleModel0;
-		int k = maleModel1;
-		int l = maleModel2;
-		if (i == 1) {
-			j = femaleModel0;
-			k = femaleModel1;
-			l = femaleModel2;
+	/**
+	 * Returns wearable model.
+	 *
+	 * @param gender the gender
+	 * @return the wearable model
+	 */
+	public Model getWearableModel(int gender) {
+		int primaryModelId = maleModel0;
+		int secondaryModelId = maleModel1;
+		int tertiaryModelId = maleModel2;
+		if (gender == 1) {
+			primaryModelId = femaleModel0;
+			secondaryModelId = femaleModel1;
+			tertiaryModelId = femaleModel2;
 		}
-		if (j == -1)
+		if (primaryModelId == -1)
 			return null;
-		Model class50_sub1_sub4_sub4 = Model.getModel(j);
-		if (k != -1)
-			if (l != -1) {
-				Model class50_sub1_sub4_sub4_1 = Model.getModel(k);
-				Model class50_sub1_sub4_sub4_3 = Model.getModel(l);
-				Model aclass50_sub1_sub4_sub4_1[] = { class50_sub1_sub4_sub4, class50_sub1_sub4_sub4_1,
-						class50_sub1_sub4_sub4_3 };
-				class50_sub1_sub4_sub4 = new Model(3, aclass50_sub1_sub4_sub4_1);
+		Model model = Model.getModel(primaryModelId);
+		if (secondaryModelId != -1)
+			if (tertiaryModelId != -1) {
+				Model secondaryModel = Model.getModel(secondaryModelId);
+				Model tertiaryModel = Model.getModel(tertiaryModelId);
+				Model modelParts[] = { model, secondaryModel, tertiaryModel };
+				model = new Model(3, modelParts);
 			} else {
-				Model class50_sub1_sub4_sub4_2 = Model.getModel(k);
-				Model aclass50_sub1_sub4_sub4[] = { class50_sub1_sub4_sub4, class50_sub1_sub4_sub4_2 };
-				class50_sub1_sub4_sub4 = new Model(2, aclass50_sub1_sub4_sub4);
+				Model secondaryModel = Model.getModel(secondaryModelId);
+				Model modelParts[] = { model, secondaryModel };
+				model = new Model(2, modelParts);
 			}
-		if (i == 0 && maleOffset != 0)
-			class50_sub1_sub4_sub4.translate(0, maleOffset, 0);
-		if (i == 1 && femaleOffset != 0)
-			class50_sub1_sub4_sub4.translate(0, femaleOffset, 0);
+		if (gender == 0 && maleOffset != 0)
+			model.translate(0, maleOffset, 0);
+		if (gender == 1 && femaleOffset != 0)
+			model.translate(0, femaleOffset, 0);
 		if (recolorFrom != null) {
-			for (int i1 = 0; i1 < recolorFrom.length; i1++)
-				class50_sub1_sub4_sub4.recolor(recolorFrom[i1], recolorTo[i1]);
+			for (int recolorIndex = 0; recolorIndex < recolorFrom.length; recolorIndex++)
+				model.recolor(recolorFrom[recolorIndex], recolorTo[recolorIndex]);
 
 		}
-		return class50_sub1_sub4_sub4;
+		return model;
 	}
 
-	public static void load(Archive class2) {
-		dataBuffer = new Buffer(class2.read("obj.dat"));
-		Buffer class50_sub1_sub2 = new Buffer(class2.read("obj.idx"));
-		count = class50_sub1_sub2.readUnsignedShort();
+	/**
+	 * Loads this class's data from the supplied source.
+	 *
+	 * @param archive the archive
+	 */
+	public static void load(Archive archive) {
+		dataBuffer = new Buffer(archive.read("obj.dat"));
+		Buffer indexBuffer = new Buffer(archive.read("obj.idx"));
+		count = indexBuffer.readUnsignedShort();
 		offsets = new int[count];
-		int i = 2;
-		for (int j = 0; j < count; j++) {
-			offsets[j] = i;
-			i += class50_sub1_sub2.readUnsignedShort();
+		int offset = 2;
+		for (int id = 0; id < count; id++) {
+			offsets[id] = offset;
+			offset += indexBuffer.readUnsignedShort();
 		}
 
 		cache = new ItemDefinition[10];
-		for (int k = 0; k < 10; k++)
-			cache[k] = new ItemDefinition();
+		for (int cacheSlot = 0; cacheSlot < 10; cacheSlot++)
+			cache[cacheSlot] = new ItemDefinition();
 
 	}
 
+	/**
+	 * Performs the to note operation.
+	 */
 	public void toNote() {
-		ItemDefinition class16 = lookup(noteTemplateId);
-		modelId = class16.modelId;
-		zoom2d = class16.zoom2d;
-		xan2d = class16.xan2d;
-		yan2d = class16.yan2d;
-		zan2d = class16.zan2d;
-		offsetX2d = class16.offsetX2d;
-		offsetY2d = class16.offsetY2d;
-		recolorFrom = class16.recolorFrom;
-		recolorTo = class16.recolorTo;
-		ItemDefinition class16_1 = lookup(noteId);
-		name = class16_1.name;
-		membersOnly = class16_1.membersOnly;
-		price = class16_1.price;
-		String s = "a";
-		char c = class16_1.name.charAt(0);
-		if (c == 'A' || c == 'E' || c == 'I' || c == 'O' || c == 'U')
-			s = "an";
-		description = ("Swap this note at any bank for " + s + " " + class16_1.name + ".").getBytes();
+		ItemDefinition templateDefinition = lookup(noteTemplateId);
+		modelId = templateDefinition.modelId;
+		zoom2d = templateDefinition.zoom2d;
+		xan2d = templateDefinition.xan2d;
+		yan2d = templateDefinition.yan2d;
+		zan2d = templateDefinition.zan2d;
+		offsetX2d = templateDefinition.offsetX2d;
+		offsetY2d = templateDefinition.offsetY2d;
+		recolorFrom = templateDefinition.recolorFrom;
+		recolorTo = templateDefinition.recolorTo;
+		ItemDefinition noteDefinition = lookup(noteId);
+		name = noteDefinition.name;
+		membersOnly = noteDefinition.membersOnly;
+		price = noteDefinition.price;
+		String article = "a";
+		char firstCharacter = noteDefinition.name.charAt(0);
+		if (firstCharacter == 'A' || firstCharacter == 'E' || firstCharacter == 'I' || firstCharacter == 'O'
+				|| firstCharacter == 'U')
+			article = "an";
+		description = ("Swap this note at any bank for " + article + " " + noteDefinition.name + ".").getBytes();
 		stackable = true;
 	}
 
-	public boolean areWearableModelsReady(int j) {
-		int k = maleModel0;
-		int l = maleModel1;
-		int i1 = maleModel2;
-		if (j == 1) {
-			k = femaleModel0;
-			l = femaleModel1;
-			i1 = femaleModel2;
+	/**
+	 * Returns whether wearable models ready.
+	 *
+	 * @param gender the gender
+	 * @return whether the requested condition is satisfied
+	 */
+	public boolean areWearableModelsReady(int gender) {
+		int primaryModelId = maleModel0;
+		int secondaryModelId = maleModel1;
+		int tertiaryModelId = maleModel2;
+		if (gender == 1) {
+			primaryModelId = femaleModel0;
+			secondaryModelId = femaleModel1;
+			tertiaryModelId = femaleModel2;
 		}
-		if (k == -1)
+		if (primaryModelId == -1)
 			return true;
-		boolean flag = true;
-		if (!Model.isLoaded(k))
-			flag = false;
-		if (l != -1 && !Model.isLoaded(l))
-			flag = false;
-		if (i1 != -1 && !Model.isLoaded(i1))
-			flag = false;
-		return flag;
+		boolean ready = true;
+		if (!Model.isLoaded(primaryModelId))
+			ready = false;
+		if (secondaryModelId != -1 && !Model.isLoaded(secondaryModelId))
+			ready = false;
+		if (tertiaryModelId != -1 && !Model.isLoaded(tertiaryModelId))
+			ready = false;
+		return ready;
 	}
 
-	public Model getUnlitModel(int j) {
-		if (stackVariantIds != null && j > 1) {
-			int k = -1;
-			for (int l = 0; l < 10; l++)
-				if (j >= stackVariantAmounts[l] && stackVariantAmounts[l] != 0)
-					k = stackVariantIds[l];
+	/**
+	 * Returns unlit model.
+	 *
+	 * @param amount the amount
+	 * @return the unlit model
+	 */
+	public Model getUnlitModel(int amount) {
+		if (stackVariantIds != null && amount > 1) {
+			int variantId = -1;
+			for (int variantIndex = 0; variantIndex < 10; variantIndex++)
+				if (amount >= stackVariantAmounts[variantIndex] && stackVariantAmounts[variantIndex] != 0)
+					variantId = stackVariantIds[variantIndex];
 
-			if (k != -1)
-				return lookup(k).getUnlitModel(1);
+			if (variantId != -1)
+				return lookup(variantId).getUnlitModel(1);
 		}
-		Model class50_sub1_sub4_sub4 = Model.getModel(modelId);
-		if (class50_sub1_sub4_sub4 == null)
+		Model model = Model.getModel(modelId);
+		if (model == null)
 			return null;
 		if (recolorFrom != null) {
-			for (int i1 = 0; i1 < recolorFrom.length; i1++)
-				class50_sub1_sub4_sub4.recolor(recolorFrom[i1], recolorTo[i1]);
+			for (int recolorIndex = 0; recolorIndex < recolorFrom.length; recolorIndex++)
+				model.recolor(recolorFrom[recolorIndex], recolorTo[recolorIndex]);
 
 		}
-		return class50_sub1_sub4_sub4;
+		return model;
 	}
 
-	public void decode(Buffer class50_sub1_sub2) {
+	/**
+	 * Decodes this object from the supplied data.
+	 *
+	 * @param buffer the buffer
+	 */
+	public void decode(Buffer buffer) {
 		do {
-			int i = class50_sub1_sub2.readUnsignedByte();
-			if (i == 0)
+			int opcode = buffer.readUnsignedByte();
+			if (opcode == 0)
 				return;
-			if (i == 1)
-				modelId = class50_sub1_sub2.readUnsignedShort();
-			else if (i == 2)
-				name = class50_sub1_sub2.readString();
-			else if (i == 3)
-				description = class50_sub1_sub2.readStringBytes();
-			else if (i == 4)
-				zoom2d = class50_sub1_sub2.readUnsignedShort();
-			else if (i == 5)
-				xan2d = class50_sub1_sub2.readUnsignedShort();
-			else if (i == 6)
-				yan2d = class50_sub1_sub2.readUnsignedShort();
-			else if (i == 7) {
-				offsetX2d = class50_sub1_sub2.readUnsignedShort();
+			if (opcode == 1)
+				modelId = buffer.readUnsignedShort();
+			else if (opcode == 2)
+				name = buffer.readString();
+			else if (opcode == 3)
+				description = buffer.readStringBytes();
+			else if (opcode == 4)
+				zoom2d = buffer.readUnsignedShort();
+			else if (opcode == 5)
+				xan2d = buffer.readUnsignedShort();
+			else if (opcode == 6)
+				yan2d = buffer.readUnsignedShort();
+			else if (opcode == 7) {
+				offsetX2d = buffer.readUnsignedShort();
 				if (offsetX2d > 32767)
 					offsetX2d -= 0x10000;
-			} else if (i == 8) {
-				offsetY2d = class50_sub1_sub2.readUnsignedShort();
+			} else if (opcode == 8) {
+				offsetY2d = buffer.readUnsignedShort();
 				if (offsetY2d > 32767)
 					offsetY2d -= 0x10000;
-			} else if (i == 10)
-				opcode10Value = class50_sub1_sub2.readUnsignedShort();
-			else if (i == 11)
+			} else if (opcode == 10)
+				opcode10Value = buffer.readUnsignedShort();
+			else if (opcode == 11)
 				stackable = true;
-			else if (i == 12)
-				price = class50_sub1_sub2.readInt();
-			else if (i == 16)
+			else if (opcode == 12)
+				price = buffer.readInt();
+			else if (opcode == 16)
 				membersOnly = true;
-			else if (i == 23) {
-				maleModel0 = class50_sub1_sub2.readUnsignedShort();
-				maleOffset = class50_sub1_sub2.readSignedByte();
-			} else if (i == 24)
-				maleModel1 = class50_sub1_sub2.readUnsignedShort();
-			else if (i == 25) {
-				femaleModel0 = class50_sub1_sub2.readUnsignedShort();
-				femaleOffset = class50_sub1_sub2.readSignedByte();
-			} else if (i == 26)
-				femaleModel1 = class50_sub1_sub2.readUnsignedShort();
-			else if (i >= 30 && i < 35) {
+			else if (opcode == 23) {
+				maleModel0 = buffer.readUnsignedShort();
+				maleOffset = buffer.readSignedByte();
+			} else if (opcode == 24)
+				maleModel1 = buffer.readUnsignedShort();
+			else if (opcode == 25) {
+				femaleModel0 = buffer.readUnsignedShort();
+				femaleOffset = buffer.readSignedByte();
+			} else if (opcode == 26)
+				femaleModel1 = buffer.readUnsignedShort();
+			else if (opcode >= 30 && opcode < 35) {
 				if (groundActions == null)
 					groundActions = new String[5];
-				groundActions[i - 30] = class50_sub1_sub2.readString();
-				if (groundActions[i - 30].equalsIgnoreCase("hidden"))
-					groundActions[i - 30] = null;
-			} else if (i >= 35 && i < 40) {
+				groundActions[opcode - 30] = buffer.readString();
+				if (groundActions[opcode - 30].equalsIgnoreCase("hidden"))
+					groundActions[opcode - 30] = null;
+			} else if (opcode >= 35 && opcode < 40) {
 				if (inventoryActions == null)
 					inventoryActions = new String[5];
-				inventoryActions[i - 35] = class50_sub1_sub2.readString();
-			} else if (i == 40) {
-				int j = class50_sub1_sub2.readUnsignedByte();
-				recolorFrom = new int[j];
-				recolorTo = new int[j];
-				for (int k = 0; k < j; k++) {
-					recolorFrom[k] = class50_sub1_sub2.readUnsignedShort();
-					recolorTo[k] = class50_sub1_sub2.readUnsignedShort();
+				inventoryActions[opcode - 35] = buffer.readString();
+			} else if (opcode == 40) {
+				int recolorCount = buffer.readUnsignedByte();
+				recolorFrom = new int[recolorCount];
+				recolorTo = new int[recolorCount];
+				for (int recolorIndex = 0; recolorIndex < recolorCount; recolorIndex++) {
+					recolorFrom[recolorIndex] = buffer.readUnsignedShort();
+					recolorTo[recolorIndex] = buffer.readUnsignedShort();
 				}
 
-			} else if (i == 78)
-				maleModel2 = class50_sub1_sub2.readUnsignedShort();
-			else if (i == 79)
-				femaleModel2 = class50_sub1_sub2.readUnsignedShort();
-			else if (i == 90)
-				maleHeadModel0 = class50_sub1_sub2.readUnsignedShort();
-			else if (i == 91)
-				femaleHeadModel0 = class50_sub1_sub2.readUnsignedShort();
-			else if (i == 92)
-				maleHeadModel1 = class50_sub1_sub2.readUnsignedShort();
-			else if (i == 93)
-				femaleHeadModel1 = class50_sub1_sub2.readUnsignedShort();
-			else if (i == 95)
-				zan2d = class50_sub1_sub2.readUnsignedShort();
-			else if (i == 97)
-				noteId = class50_sub1_sub2.readUnsignedShort();
-			else if (i == 98)
-				noteTemplateId = class50_sub1_sub2.readUnsignedShort();
-			else if (i >= 100 && i < 110) {
+			} else if (opcode == 78)
+				maleModel2 = buffer.readUnsignedShort();
+			else if (opcode == 79)
+				femaleModel2 = buffer.readUnsignedShort();
+			else if (opcode == 90)
+				maleHeadModel0 = buffer.readUnsignedShort();
+			else if (opcode == 91)
+				femaleHeadModel0 = buffer.readUnsignedShort();
+			else if (opcode == 92)
+				maleHeadModel1 = buffer.readUnsignedShort();
+			else if (opcode == 93)
+				femaleHeadModel1 = buffer.readUnsignedShort();
+			else if (opcode == 95)
+				zan2d = buffer.readUnsignedShort();
+			else if (opcode == 97)
+				noteId = buffer.readUnsignedShort();
+			else if (opcode == 98)
+				noteTemplateId = buffer.readUnsignedShort();
+			else if (opcode >= 100 && opcode < 110) {
 				if (stackVariantIds == null) {
 					stackVariantIds = new int[10];
 					stackVariantAmounts = new int[10];
 				}
-				stackVariantIds[i - 100] = class50_sub1_sub2.readUnsignedShort();
-				stackVariantAmounts[i - 100] = class50_sub1_sub2.readUnsignedShort();
-			} else if (i == 110)
-				resizeX = class50_sub1_sub2.readUnsignedShort();
-			else if (i == 111)
-				resizeY = class50_sub1_sub2.readUnsignedShort();
-			else if (i == 112)
-				resizeZ = class50_sub1_sub2.readUnsignedShort();
-			else if (i == 113)
-				ambient = class50_sub1_sub2.readSignedByte();
-			else if (i == 114)
-				contrast = class50_sub1_sub2.readSignedByte() * 5;
-			else if (i == 115)
-				team = class50_sub1_sub2.readUnsignedByte();
+				stackVariantIds[opcode - 100] = buffer.readUnsignedShort();
+				stackVariantAmounts[opcode - 100] = buffer.readUnsignedShort();
+			} else if (opcode == 110)
+				resizeX = buffer.readUnsignedShort();
+			else if (opcode == 111)
+				resizeY = buffer.readUnsignedShort();
+			else if (opcode == 112)
+				resizeZ = buffer.readUnsignedShort();
+			else if (opcode == 113)
+				ambient = buffer.readSignedByte();
+			else if (opcode == 114)
+				contrast = buffer.readSignedByte() * 5;
+			else if (opcode == 115)
+				team = buffer.readUnsignedByte();
 		} while (true);
 	}
 
-	public Model getHeadModel(int i) {
-		int j = maleHeadModel0;
-		int k = maleHeadModel1;
-		if (i == 1) {
-			j = femaleHeadModel0;
-			k = femaleHeadModel1;
+	/**
+	 * Returns head model.
+	 *
+	 * @param gender the gender
+	 * @return the head model
+	 */
+	public Model getHeadModel(int gender) {
+		int primaryHeadModelId = maleHeadModel0;
+		int secondaryHeadModelId = maleHeadModel1;
+		if (gender == 1) {
+			primaryHeadModelId = femaleHeadModel0;
+			secondaryHeadModelId = femaleHeadModel1;
 		}
-		if (j == -1)
+		if (primaryHeadModelId == -1)
 			return null;
-		Model class50_sub1_sub4_sub4 = Model.getModel(j);
-		if (k != -1) {
-			Model class50_sub1_sub4_sub4_1 = Model.getModel(k);
-			Model aclass50_sub1_sub4_sub4[] = { class50_sub1_sub4_sub4, class50_sub1_sub4_sub4_1 };
-			class50_sub1_sub4_sub4 = new Model(2, aclass50_sub1_sub4_sub4);
+		Model model = Model.getModel(primaryHeadModelId);
+		if (secondaryHeadModelId != -1) {
+			Model secondaryModel = Model.getModel(secondaryHeadModelId);
+			Model modelParts[] = { model, secondaryModel };
+			model = new Model(2, modelParts);
 		}
 		if (recolorFrom != null) {
-			for (int l = 0; l < recolorFrom.length; l++)
-				class50_sub1_sub4_sub4.recolor(recolorFrom[l], recolorTo[l]);
+			for (int recolorIndex = 0; recolorIndex < recolorFrom.length; recolorIndex++)
+				model.recolor(recolorFrom[recolorIndex], recolorTo[recolorIndex]);
 
 		}
-		return class50_sub1_sub4_sub4;
+		return model;
 	}
 
-	public Model getModel(int i) {
-		if (stackVariantIds != null && i > 1) {
-			int j = -1;
-			for (int k = 0; k < 10; k++)
-				if (i >= stackVariantAmounts[k] && stackVariantAmounts[k] != 0)
-					j = stackVariantIds[k];
+	/**
+	 * Returns model.
+	 *
+	 * @param amount the amount
+	 * @return the model
+	 */
+	public Model getModel(int amount) {
+		if (stackVariantIds != null && amount > 1) {
+			int variantId = -1;
+			for (int variantIndex = 0; variantIndex < 10; variantIndex++)
+				if (amount >= stackVariantAmounts[variantIndex] && stackVariantAmounts[variantIndex] != 0)
+					variantId = stackVariantIds[variantIndex];
 
-			if (j != -1)
-				return lookup(j).getModel(1);
+			if (variantId != -1)
+				return lookup(variantId).getModel(1);
 		}
-		Model class50_sub1_sub4_sub4 = (Model) modelCache.get(id);
-		if (class50_sub1_sub4_sub4 != null)
-			return class50_sub1_sub4_sub4;
-		class50_sub1_sub4_sub4 = Model.getModel(modelId);
-		if (class50_sub1_sub4_sub4 == null)
+		Model model = (Model) modelCache.get(id);
+		if (model != null)
+			return model;
+		model = Model.getModel(modelId);
+		if (model == null)
 			return null;
 		if (resizeX != 128 || resizeY != 128 || resizeZ != 128)
-			class50_sub1_sub4_sub4.scale(resizeX, resizeY, resizeZ);
+			model.scale(resizeX, resizeY, resizeZ);
 		if (recolorFrom != null) {
-			for (int l = 0; l < recolorFrom.length; l++)
-				class50_sub1_sub4_sub4.recolor(recolorFrom[l], recolorTo[l]);
+			for (int recolorIndex = 0; recolorIndex < recolorFrom.length; recolorIndex++)
+				model.recolor(recolorFrom[recolorIndex], recolorTo[recolorIndex]);
 
 		}
-		class50_sub1_sub4_sub4.light(64 + ambient, 768 + contrast, -50, -10, -50, true);
-		class50_sub1_sub4_sub4.singleTile = true;
-		modelCache.put(id, class50_sub1_sub4_sub4);
-		return class50_sub1_sub4_sub4;
+		model.light(64 + ambient, 768 + contrast, -50, -10, -50, true);
+		model.singleTile = true;
+		modelCache.put(id, model);
+		return model;
 	}
 
+	/**
+	 * Clears the retained class state.
+	 */
 	public static void clear() {
 		modelCache = null;
 		ItemSpriteFactory.clear();
@@ -328,6 +386,9 @@ public class ItemDefinition {
 		dataBuffer = null;
 	}
 
+	/**
+	 * Resets defaults.
+	 */
 	public void resetDefaults() {
 		modelId = 0;
 		name = null;
@@ -370,56 +431,106 @@ public class ItemDefinition {
 		team = 0;
 	}
 
+	/**
+	 * Creates a new ItemDefinition instance.
+	 */
 	public ItemDefinition() {
 		id = -1;
 	}
 
+	/** Stores the female model0. */
 	public int femaleModel0;
+	/** Stores the offset x2d. */
 	public int offsetX2d;
+	/** Stores the description values. */
 	public byte description[];
+	/** Stores the name. */
 	public String name;
+	/** Stores the female offset. */
 	public byte femaleOffset;
+	/** Stores the male model1. */
 	public int maleModel1;
+	/** Stores the team. */
 	public int team;
+	/** Stores the note id. */
 	public int noteId;
+	/** Stores the male head model0. */
 	public int maleHeadModel0;
+	/** Stores the count. */
 	public static int count;
+	/** Stores the cache values. */
 	public static ItemDefinition cache[];
+	/** Stores the model cache. */
 	public static LruCache modelCache = new LruCache(50);
+	/** Stores the ground actions values. */
 	public String groundActions[];
+	/** Stores the zan2d. */
 	public int zan2d;
+	/** Stores the offset y2d. */
 	public int offsetY2d;
+	/** Stores the recolor to values. */
 	public int recolorTo[];
+	/** Stores the offsets values. */
 	public static int offsets[];
+	/** Stores the note template id. */
 	public int noteTemplateId;
+	/** Tracks whether members world. */
 	public static boolean membersWorld = true;
+	/** Stores the price. */
 	public int price;
+	/** Stores the inventory actions values. */
 	public String inventoryActions[];
+	/** Stores the cache index. */
 	public static int cacheIndex;
+	/** Stores the male model0. */
 	public int maleModel0;
+	/** Stores the ambient. */
 	public int ambient;
+	/** Stores the female model1. */
 	public int femaleModel1;
+	/** Stores the yan2d. */
 	public int yan2d;
+	/** Stores the resize y. */
 	public int resizeY;
+	/** Stores the contrast. */
 	public int contrast;
+	/** Stores the xan2d. */
 	public int xan2d;
+	/** Stores the model id. */
 	public int modelId;
+	/** Stores the male head model1. */
 	public int maleHeadModel1;
+	/** Stores the female head model1. */
 	public int femaleHeadModel1;
+	/** Stores the id. */
 	public int id;
+	/** Stores the recolor from values. */
 	public int recolorFrom[];
+	/** Stores the stack variant ids values. */
 	public int stackVariantIds[];
+	/** Stores the resize x. */
 	public int resizeX;
+	/** Stores the female model2. */
 	public int femaleModel2;
+	/** Stores the resize z. */
 	public int resizeZ;
+	/** Stores the zoom2d. */
 	public int zoom2d;
+	/** Stores the male model2. */
 	public int maleModel2;
+	/** Tracks whether stackable. */
 	public boolean stackable;
+	/** Stores the opcode10 value. */
 	public int opcode10Value;
+	/** Stores the data buffer. */
 	public static Buffer dataBuffer;
+	/** Stores the female head model0. */
 	public int femaleHeadModel0;
+	/** Stores the stack variant amounts values. */
 	public int stackVariantAmounts[];
+	/** Tracks whether members only. */
 	public boolean membersOnly;
+	/** Stores the male offset. */
 	public byte maleOffset;
 
 }

@@ -13,14 +13,27 @@ import rs2.net.Buffer;
 /** Full-colour software sprite backed by 24-bit RGB pixels. */
 public class ImageRGB extends Rasterizer {
 
+	/** Stores the pixels values. */
 	public int[] pixels;
+	/** Stores the width. */
 	public int width;
+	/** Stores the height. */
 	public int height;
+	/** Stores the offset x. */
 	public int offsetX;
+	/** Stores the offset y. */
 	public int offsetY;
+	/** Stores the max width. */
 	public int maxWidth;
+	/** Stores the max height. */
 	public int maxHeight;
 
+	/**
+	 * Creates a new ImageRGB instance.
+	 *
+	 * @param width  the width
+	 * @param height the height
+	 */
 	public ImageRGB(int width, int height) {
 		pixels = new int[width * height];
 		this.width = maxWidth = width;
@@ -28,6 +41,12 @@ public class ImageRGB extends Rasterizer {
 		offsetX = offsetY = 0;
 	}
 
+	/**
+	 * Creates a new ImageRGB instance.
+	 *
+	 * @param imagedata the imagedata
+	 * @param component the component
+	 */
 	public ImageRGB(byte[] imagedata, Component component) {
 		try {
 			Image image = Toolkit.getDefaultToolkit().createImage(imagedata);
@@ -49,6 +68,13 @@ public class ImageRGB extends Rasterizer {
 		}
 	}
 
+	/**
+	 * Creates a new ImageRGB instance.
+	 *
+	 * @param archive      the archive
+	 * @param archiveName  the archive name
+	 * @param archiveIndex the archive index
+	 */
 	public ImageRGB(Archive archive, String archiveName, int archiveIndex) {
 		Buffer dataBuffer = new Buffer(archive.read(archiveName + ".dat"));
 		Buffer indexBuffer = new Buffer(archive.read("index.dat"));
@@ -92,10 +118,20 @@ public class ImageRGB extends Rasterizer {
 		}
 	}
 
+	/**
+	 * Creates rasterizer.
+	 */
 	public void createRasterizer() {
 		Rasterizer.createRasterizer(pixels, width, height);
 	}
 
+	/**
+	 * Performs the adjust rgb operation.
+	 *
+	 * @param redOffset   the red offset
+	 * @param greenOffset the green offset
+	 * @param blueOffset  the blue offset
+	 */
 	public void adjustRgb(int redOffset, int greenOffset, int blueOffset) {
 		for (int pixel = 0; pixel < pixels.length; pixel++) {
 			int originalColor = pixels[pixel];
@@ -124,6 +160,9 @@ public class ImageRGB extends Rasterizer {
 
 	}
 
+	/**
+	 * Performs the trim operation.
+	 */
 	public void trim() {
 		int[] newPixels = new int[maxWidth * maxHeight];
 		for (int y = 0; y < height; y++) {
@@ -139,6 +178,12 @@ public class ImageRGB extends Rasterizer {
 		offsetY = 0;
 	}
 
+	/**
+	 * Draws inverse.
+	 *
+	 * @param x the x
+	 * @param y the y
+	 */
 	public void drawInverse(int x, int y) {
 		x += offsetX;
 		y += offsetY;
@@ -178,6 +223,18 @@ public class ImageRGB extends Rasterizer {
 				newHeight);
 	}
 
+	/**
+	 * Copies pixels.
+	 *
+	 * @param pixels                the pixels
+	 * @param rasterizerPixels      the rasterizer pixels
+	 * @param pixel                 the pixel
+	 * @param rasterizerPixel       the rasterizer pixel
+	 * @param pixelOffset           the pixel offset
+	 * @param rasterizerPixelOffset the rasterizer pixel offset
+	 * @param width                 the width
+	 * @param height                the height
+	 */
 	public void copyPixels(int[] pixels, int[] rasterizerPixels, int pixel, int rasterizerPixel, int pixelOffset,
 			int rasterizerPixelOffset, int width, int height) {
 		int shiftedWidth = -(width >> 2);
@@ -199,6 +256,12 @@ public class ImageRGB extends Rasterizer {
 
 	}
 
+	/**
+	 * Draws image.
+	 *
+	 * @param x the x
+	 * @param y the y
+	 */
 	public void drawImage(int x, int y) {
 		x += offsetX;
 		y += offsetY;
@@ -241,6 +304,19 @@ public class ImageRGB extends Rasterizer {
 		}
 	}
 
+	/**
+	 * Performs the shape image to pixels operation.
+	 *
+	 * @param pixels                the pixels
+	 * @param rasterizerPixels      the rasterizer pixels
+	 * @param pixel                 the pixel
+	 * @param rasterizerPixel       the rasterizer pixel
+	 * @param width                 the width
+	 * @param height                the height
+	 * @param pixelOffset           the pixel offset
+	 * @param rasterizerPixelOffset the rasterizer pixel offset
+	 * @param pixelColor            the pixel color
+	 */
 	public void shapeImageToPixels(int[] pixels, int[] rasterizerPixels, int pixel, int rasterizerPixel, int width,
 			int height, int pixelOffset, int rasterizerPixelOffset, int pixelColor) {
 		int shiftedWidth = -(width >> 2);
@@ -283,6 +359,13 @@ public class ImageRGB extends Rasterizer {
 
 	}
 
+	/**
+	 * Draws image alpha.
+	 *
+	 * @param x     the x
+	 * @param y     the y
+	 * @param alpha the alpha
+	 */
 	public void drawImageAlpha(int x, int y, int alpha) {
 		x += offsetX;
 		y += offsetY;
@@ -322,6 +405,20 @@ public class ImageRGB extends Rasterizer {
 		}
 	}
 
+	/**
+	 * Copies pixels alpha.
+	 *
+	 * @param pixels                the pixels
+	 * @param rasterizerPixels      the rasterizer pixels
+	 * @param pixel                 the pixel
+	 * @param rasterizerPixel       the rasterizer pixel
+	 * @param pixelOffset           the pixel offset
+	 * @param rasterizerPixelOffset the rasterizer pixel offset
+	 * @param width                 the width
+	 * @param height                the height
+	 * @param color                 the color
+	 * @param alpha                 the alpha
+	 */
 	public void copyPixelsAlpha(int[] pixels, int[] rasterizerPixels, int pixel, int rasterizerPixel, int pixelOffset,
 			int rasterizerPixelOffset, int width, int height, int color, int alpha) {
 		int alphaValue = 256 - alpha;
@@ -344,27 +441,41 @@ public class ImageRGB extends Rasterizer {
 
 	}
 
-	public void shapeImageToPixels(int x, int y, int width, int height, int zoom, int l, int[] ai, int k1, int[] ai1,
-			int i2) {
+	/**
+	 * Performs the shape image to pixels operation.
+	 *
+	 * @param x          the x
+	 * @param y          the y
+	 * @param width      the width
+	 * @param height     the height
+	 * @param zoom       the zoom
+	 * @param pivotX     the pivot x
+	 * @param rowWidths  the row widths
+	 * @param angle      the angle
+	 * @param rowOffsets the row offsets
+	 * @param pivotY     the pivot y
+	 */
+	public void shapeImageToPixels(int x, int y, int width, int height, int zoom, int pivotX, int[] rowWidths,
+			int angle, int[] rowOffsets, int pivotY) {
 		try {
 			int centerX = -width / 2;
 			int centerY = -height / 2;
-			int sine = (int) (Math.sin(k1 / 326.11000000000001D) * 65536D);
-			int cosine = (int) (Math.cos(k1 / 326.11000000000001D) * 65536D);
+			int sine = (int) (Math.sin(angle / 326.11000000000001D) * 65536D);
+			int cosine = (int) (Math.cos(angle / 326.11000000000001D) * 65536D);
 			sine = sine * zoom >> 8;
 			cosine = cosine * zoom >> 8;
-			int sourceOffsetX = (l << 16) + (centerY * sine + centerX * cosine);
-			int sourceOffsetY = (i2 << 16) + (centerY * cosine - centerX * sine);
+			int sourceOffsetX = (pivotX << 16) + (centerY * sine + centerX * cosine);
+			int sourceOffsetY = (pivotY << 16) + (centerY * cosine - centerX * sine);
 			int destinationOffset = x + y * Rasterizer.width;
 			for (y = 0; y < height; y++) {
-				int i4 = ai1[y];
-				int j4 = destinationOffset + i4;
-				int k4 = sourceOffsetX + cosine * i4;
-				int l4 = sourceOffsetY - sine * i4;
-				for (x = -ai[y]; x < 0; x++) {
-					Rasterizer.pixels[j4++] = pixels[(k4 >> 16) + (l4 >> 16) * this.width];
-					k4 += cosine;
-					l4 -= sine;
+				int rowOffset = rowOffsets[y];
+				int destinationPixel = destinationOffset + rowOffset;
+				int sourceX = sourceOffsetX + cosine * rowOffset;
+				int sourceY = sourceOffsetY - sine * rowOffset;
+				for (x = -rowWidths[y]; x < 0; x++) {
+					Rasterizer.pixels[destinationPixel++] = pixels[(sourceX >> 16) + (sourceY >> 16) * this.width];
+					sourceX += cosine;
+					sourceY -= sine;
 				}
 
 				sourceOffsetX += sine;
@@ -376,6 +487,18 @@ public class ImageRGB extends Rasterizer {
 		}
 	}
 
+	/**
+	 * Draws rotated.
+	 *
+	 * @param x      the x
+	 * @param y      the y
+	 * @param pivotX the pivot x
+	 * @param pivotY the pivot y
+	 * @param width  the width
+	 * @param height the height
+	 * @param zoom   the zoom
+	 * @param angle  the angle
+	 */
 	public void drawRotated(int x, int y, int pivotX, int pivotY, int width, int height, int zoom, double angle) {
 		try {
 			int centerX = -width / 2;
@@ -388,15 +511,15 @@ public class ImageRGB extends Rasterizer {
 			int sourceOffsetY = (pivotY << 16) + (centerY * cosine - centerX * sine);
 			int destinationOffset = x + y * Rasterizer.width;
 			for (y = 0; y < height; y++) {
-				int i = destinationOffset;
+				int destinationPixel = destinationOffset;
 				int offsetX = sourceOffsetX;
 				int offsetY = sourceOffsetY;
 				for (x = -width; x < 0; x++) {
 					int colour = pixels[(offsetX >> 16) + (offsetY >> 16) * this.width];
 					if (colour != 0)
-						Rasterizer.pixels[i++] = colour;
+						Rasterizer.pixels[destinationPixel++] = colour;
 					else
-						i++;
+						destinationPixel++;
 					offsetX += cosine;
 					offsetY -= sine;
 				}
@@ -410,86 +533,108 @@ public class ImageRGB extends Rasterizer {
 		}
 	}
 
+	/**
+	 * Draws to.
+	 *
+	 * @param indexedImage the indexed image
+	 * @param x            the x
+	 * @param y            the y
+	 */
 	public void drawTo(IndexedImage indexedImage, int x, int y) {
 		x += offsetX;
 		y += offsetY;
-		int l = x + y * Rasterizer.width;
-		int i1 = 0;
-		int j1 = height;
-		int k1 = width;
-		int l1 = Rasterizer.width - k1;
-		int i2 = 0;
+		int destinationPixel = x + y * Rasterizer.width;
+		int sourcePixel = 0;
+		int drawHeight = height;
+		int drawWidth = width;
+		int destinationRowSkip = Rasterizer.width - drawWidth;
+		int sourceRowSkip = 0;
 		if (y < Rasterizer.topY) {
-			int j2 = Rasterizer.topY - y;
-			j1 -= j2;
+			int clippedTop = Rasterizer.topY - y;
+			drawHeight -= clippedTop;
 			y = Rasterizer.topY;
-			i1 += j2 * k1;
-			l += j2 * Rasterizer.width;
+			sourcePixel += clippedTop * drawWidth;
+			destinationPixel += clippedTop * Rasterizer.width;
 		}
-		if (y + j1 > Rasterizer.bottomY)
-			j1 -= (y + j1) - Rasterizer.bottomY;
+		if (y + drawHeight > Rasterizer.bottomY)
+			drawHeight -= (y + drawHeight) - Rasterizer.bottomY;
 		if (x < Rasterizer.topX) {
-			int k2 = Rasterizer.topX - x;
-			k1 -= k2;
+			int clippedLeft = Rasterizer.topX - x;
+			drawWidth -= clippedLeft;
 			x = Rasterizer.topX;
-			i1 += k2;
-			l += k2;
-			i2 += k2;
-			l1 += k2;
+			sourcePixel += clippedLeft;
+			destinationPixel += clippedLeft;
+			sourceRowSkip += clippedLeft;
+			destinationRowSkip += clippedLeft;
 		}
-		if (x + k1 > Rasterizer.bottomX) {
-			int l2 = (x + k1) - Rasterizer.bottomX;
-			k1 -= l2;
-			i2 += l2;
-			l1 += l2;
+		if (x + drawWidth > Rasterizer.bottomX) {
+			int clippedRight = (x + drawWidth) - Rasterizer.bottomX;
+			drawWidth -= clippedRight;
+			sourceRowSkip += clippedRight;
+			destinationRowSkip += clippedRight;
 		}
-		if (k1 <= 0 || j1 <= 0) {
+		if (drawWidth <= 0 || drawHeight <= 0) {
 			return;
 		} else {
-			copyPixelsMasked(l, l1, pixels, k1, Rasterizer.pixels, indexedImage.pixels, j1, i1, i2);
+			copyPixelsMasked(destinationPixel, destinationRowSkip, pixels, drawWidth, Rasterizer.pixels,
+					indexedImage.pixels, drawHeight, sourcePixel, sourceRowSkip);
 			return;
 		}
 	}
 
-	private static void copyPixelsMasked(int i, int j, int ai[], int k, int ai1[], byte abyte0[], int i1, int j1,
-			int l1) {
-		int k1;
-		int i2 = -(k >> 2);
-		k = -(k & 3);
-		for (int j2 = -i1; j2 < 0; j2++) {
-			for (int k2 = i2; k2 < 0; k2++) {
-				k1 = ai[j1++];
-				if (k1 != 0 && abyte0[i] == 0)
-					ai1[i++] = k1;
+	/**
+	 * Copies pixels masked.
+	 *
+	 * @param destinationPixel   the destination pixel
+	 * @param destinationRowSkip the destination row skip
+	 * @param sourcePixels       the source pixels
+	 * @param drawWidth          the draw width
+	 * @param destinationPixels  the destination pixels
+	 * @param maskPixels         the mask pixels
+	 * @param drawHeight         the draw height
+	 * @param sourcePixel        the source pixel
+	 * @param sourceRowSkip      the source row skip
+	 */
+	private static void copyPixelsMasked(int destinationPixel, int destinationRowSkip, int sourcePixels[],
+			int drawWidth, int destinationPixels[], byte maskPixels[], int drawHeight, int sourcePixel,
+			int sourceRowSkip) {
+		int color;
+		int fourPixelGroups = -(drawWidth >> 2);
+		drawWidth = -(drawWidth & 3);
+		for (int rowCounter = -drawHeight; rowCounter < 0; rowCounter++) {
+			for (int groupCounter = fourPixelGroups; groupCounter < 0; groupCounter++) {
+				color = sourcePixels[sourcePixel++];
+				if (color != 0 && maskPixels[destinationPixel] == 0)
+					destinationPixels[destinationPixel++] = color;
 				else
-					i++;
-				k1 = ai[j1++];
-				if (k1 != 0 && abyte0[i] == 0)
-					ai1[i++] = k1;
+					destinationPixel++;
+				color = sourcePixels[sourcePixel++];
+				if (color != 0 && maskPixels[destinationPixel] == 0)
+					destinationPixels[destinationPixel++] = color;
 				else
-					i++;
-				k1 = ai[j1++];
-				if (k1 != 0 && abyte0[i] == 0)
-					ai1[i++] = k1;
+					destinationPixel++;
+				color = sourcePixels[sourcePixel++];
+				if (color != 0 && maskPixels[destinationPixel] == 0)
+					destinationPixels[destinationPixel++] = color;
 				else
-					i++;
-				k1 = ai[j1++];
-				if (k1 != 0 && abyte0[i] == 0)
-					ai1[i++] = k1;
+					destinationPixel++;
+				color = sourcePixels[sourcePixel++];
+				if (color != 0 && maskPixels[destinationPixel] == 0)
+					destinationPixels[destinationPixel++] = color;
 				else
-					i++;
+					destinationPixel++;
 			}
 
-			for (int l2 = k; l2 < 0; l2++) {
-				k1 = ai[j1++];
-				if (k1 != 0 && abyte0[i] == 0)
-					ai1[i++] = k1;
+			for (int remainderCounter = drawWidth; remainderCounter < 0; remainderCounter++) {
+				color = sourcePixels[sourcePixel++];
+				if (color != 0 && maskPixels[destinationPixel] == 0)
+					destinationPixels[destinationPixel++] = color;
 				else
-					i++;
+					destinationPixel++;
 			}
 
-			i += j;
-			j1 += l1;
+			destinationPixel += destinationRowSkip;
+			sourcePixel += sourceRowSkip;
 		}
 
 	}

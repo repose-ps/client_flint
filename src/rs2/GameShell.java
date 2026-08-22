@@ -32,56 +32,91 @@ import rs2.media.GraphicsBuffer;
 public class GameShell extends Canvas
 		implements Runnable, MouseListener, MouseMotionListener, KeyListener, FocusListener, WindowListener {
 
+	/** Defines the timing sample count constant. */
 	private static final int TIMING_SAMPLE_COUNT = 10;
+	/** Defines the key buffer size constant. */
 	private static final int KEY_BUFFER_SIZE = 128;
+	/** Defines the frame mouse x offset constant. */
 	private static final int FRAME_MOUSE_X_OFFSET = 4;
+	/** Defines the frame mouse y offset constant. */
 	private static final int FRAME_MOUSE_Y_OFFSET = 22;
 
+	/** Defines the shutdown requested constant. */
 	private static final int SHUTDOWN_REQUESTED = -1;
+	/** Defines the stopped constant. */
 	private static final int STOPPED = -2;
 
+	/** Stores the shutdown countdown. */
 	private int shutdownCountdown;
+	/** Stores the cycle duration millis. */
 	protected int cycleDurationMillis = 20;
+	/** Stores the minimum sleep millis. */
 	protected int minimumSleepMillis = 1;
+	/** Stores the timing samples values. */
 	private final long[] timingSamples = new long[TIMING_SAMPLE_COUNT];
 
+	/** Stores the fps. */
 	protected int fps;
+	/** Tracks whether debug timing. */
 	protected boolean debugTiming;
 
+	/** Stores the canvas width. */
 	protected int canvasWidth;
+	/** Stores the canvas height. */
 	protected int canvasHeight;
+	/** Stores the graphics. */
 	protected Graphics graphics;
+	/** Stores the game buffer. */
 	protected GraphicsBuffer gameBuffer;
+	/** Stores the game frame. */
 	protected GameFrame gameFrame;
 
+	/** Tracks whether clear screen. */
 	private boolean clearScreen = true;
+	/** Tracks whether has focus. */
 	protected boolean hasFocus = true;
+	/** Stores the idle cycles. */
 	protected int idleCycles;
 
 	/** Current mouse button state: 0 none, 1 primary, 2 meta/secondary. */
 	protected int mouseButton;
+	/** Stores the mouse x. */
 	protected int mouseX;
+	/** Stores the mouse y. */
 	protected int mouseY;
 
+	/** Stores the pending click button. */
 	private int pendingClickButton;
+	/** Stores the pending click x. */
 	private int pendingClickX;
+	/** Stores the pending click y. */
 	private int pendingClickY;
+	/** Stores the pending click time. */
 	private long pendingClickTime;
 
 	/** Mouse click latched at the start of the current client tick. */
 	protected int clickButton;
+	/** Stores the click x. */
 	protected int clickX;
+	/** Stores the click y. */
 	protected int clickY;
+	/** Stores the click time. */
 	protected long clickTime;
 
 	/** Pressed state for the client's 0..127 internal key codes. */
 	protected final int[] keyStatus = new int[KEY_BUFFER_SIZE];
+	/** Stores the key queue values. */
 	private final int[] keyQueue = new int[KEY_BUFFER_SIZE];
+	/** Stores the key queue read index. */
 	private int keyQueueReadIndex;
+	/** Stores the key queue write index. */
 	private int keyQueueWriteIndex;
 
 	/**
 	 * Creates the standalone game frame and starts this shell's game thread.
+	 * 
+	 * @param width  the width
+	 * @param height the height
 	 */
 	public final void createFrame(int width, int height) {
 		canvasWidth = width;
@@ -90,6 +125,9 @@ public class GameShell extends Canvas
 		initializeGraphics();
 	}
 
+	/**
+	 * Performs the initialize graphics operation.
+	 */
 	private void initializeGraphics() {
 		Component component = getGameComponent();
 		graphics = component.getGraphics();
@@ -97,6 +135,9 @@ public class GameShell extends Canvas
 		startThread(this, 1);
 	}
 
+	/**
+	 * Runs this component's main processing loop.
+	 */
 	@Override
 	public void run() {
 		Component component = getGameComponent();
@@ -117,8 +158,8 @@ public class GameShell extends Canvas
 		int accumulator = 0;
 		int interruptedSleeps = 0;
 
-		for (int i = 0; i < TIMING_SAMPLE_COUNT; i++) {
-			timingSamples[i] = System.currentTimeMillis();
+		for (int sampleIndex = 0; sampleIndex < TIMING_SAMPLE_COUNT; sampleIndex++) {
+			timingSamples[sampleIndex] = System.currentTimeMillis();
 		}
 
 		while (shutdownCountdown >= 0) {
@@ -158,9 +199,9 @@ public class GameShell extends Canvas
 			timingIndex = (timingIndex + 1) % TIMING_SAMPLE_COUNT;
 
 			if (sleepMillis > 1) {
-				for (int i = 0; i < TIMING_SAMPLE_COUNT; i++) {
-					if (timingSamples[i] != 0L) {
-						timingSamples[i] += sleepMillis;
+				for (int sampleIndex = 0; sampleIndex < TIMING_SAMPLE_COUNT; sampleIndex++) {
+					if (timingSamples[sampleIndex] != 0L) {
+						timingSamples[sampleIndex] += sleepMillis;
 					}
 				}
 			}
@@ -195,8 +236,8 @@ public class GameShell extends Canvas
 
 			if (debugTiming) {
 				System.out.println("ntime:" + currentTime);
-				for (int i = 0; i < TIMING_SAMPLE_COUNT; i++) {
-					int index = ((timingIndex - i - 1) + 20) % TIMING_SAMPLE_COUNT;
+				for (int sampleIndex = 0; sampleIndex < TIMING_SAMPLE_COUNT; sampleIndex++) {
+					int index = ((timingIndex - sampleIndex - 1) + 20) % TIMING_SAMPLE_COUNT;
 					System.out.println("otim" + index + ":" + timingSamples[index]);
 				}
 				System.out.println("fps:" + fps + " ratio:" + ratio + " count:" + accumulator);
@@ -233,7 +274,11 @@ public class GameShell extends Canvas
 		}
 	}
 
-	/** Sets the target game-loop frequency used by the original ratio timer. */
+	/**
+	 * Sets the target game-loop frequency used by the original ratio timer.
+	 * 
+	 * @param fps the fps
+	 */
 	public final void setTargetFps(int fps) {
 		cycleDurationMillis = 1000 / fps;
 	}
@@ -254,6 +299,11 @@ public class GameShell extends Canvas
 		}
 	}
 
+	/**
+	 * Updates the component using the supplied graphics context.
+	 *
+	 * @param graphics the graphics
+	 */
 	@Override
 	public final void update(Graphics graphics) {
 		if (this.graphics == null) {
@@ -262,6 +312,11 @@ public class GameShell extends Canvas
 		clearScreen = true;
 	}
 
+	/**
+	 * Paints the component using the supplied graphics context.
+	 *
+	 * @param graphics the graphics
+	 */
 	@Override
 	public final void paint(Graphics graphics) {
 		if (this.graphics == null) {
@@ -270,6 +325,11 @@ public class GameShell extends Canvas
 		clearScreen = true;
 	}
 
+	/**
+	 * Performs the mouse pressed operation.
+	 *
+	 * @param event the event
+	 */
 	@Override
 	public final void mousePressed(MouseEvent event) {
 		int x = event.getX();
@@ -292,20 +352,40 @@ public class GameShell extends Canvas
 		}
 	}
 
+	/**
+	 * Performs the mouse released operation.
+	 *
+	 * @param event the event
+	 */
 	@Override
 	public final void mouseReleased(MouseEvent event) {
 		idleCycles = 0;
 		mouseButton = 0;
 	}
 
+	/**
+	 * Performs the mouse clicked operation.
+	 *
+	 * @param event the event
+	 */
 	@Override
 	public final void mouseClicked(MouseEvent event) {
 	}
 
+	/**
+	 * Performs the mouse entered operation.
+	 *
+	 * @param event the event
+	 */
 	@Override
 	public final void mouseEntered(MouseEvent event) {
 	}
 
+	/**
+	 * Performs the mouse exited operation.
+	 *
+	 * @param event the event
+	 */
 	@Override
 	public final void mouseExited(MouseEvent event) {
 		idleCycles = 0;
@@ -313,16 +393,31 @@ public class GameShell extends Canvas
 		mouseY = -1;
 	}
 
+	/**
+	 * Performs the mouse dragged operation.
+	 *
+	 * @param event the event
+	 */
 	@Override
 	public final void mouseDragged(MouseEvent event) {
 		updateMousePosition(event);
 	}
 
+	/**
+	 * Performs the mouse moved operation.
+	 *
+	 * @param event the event
+	 */
 	@Override
 	public final void mouseMoved(MouseEvent event) {
 		updateMousePosition(event);
 	}
 
+	/**
+	 * Updates mouse position.
+	 *
+	 * @param event the event
+	 */
 	private void updateMousePosition(MouseEvent event) {
 		int x = event.getX();
 		int y = event.getY();
@@ -335,6 +430,11 @@ public class GameShell extends Canvas
 		mouseY = y;
 	}
 
+	/**
+	 * Performs the key pressed operation.
+	 *
+	 * @param event the event
+	 */
 	@Override
 	public final void keyPressed(KeyEvent event) {
 		idleCycles = 0;
@@ -392,6 +492,11 @@ public class GameShell extends Canvas
 		}
 	}
 
+	/**
+	 * Performs the key released operation.
+	 *
+	 * @param event the event
+	 */
 	@Override
 	public final void keyReleased(KeyEvent event) {
 		idleCycles = 0;
@@ -430,6 +535,11 @@ public class GameShell extends Canvas
 		}
 	}
 
+	/**
+	 * Performs the key typed operation.
+	 *
+	 * @param event the event
+	 */
 	@Override
 	public final void keyTyped(KeyEvent event) {
 	}
@@ -444,45 +554,90 @@ public class GameShell extends Canvas
 		return key;
 	}
 
+	/**
+	 * Performs the focus gained operation.
+	 *
+	 * @param event the event
+	 */
 	@Override
 	public final void focusGained(FocusEvent event) {
 		hasFocus = true;
 		clearScreen = true;
 	}
 
+	/**
+	 * Performs the focus lost operation.
+	 *
+	 * @param event the event
+	 */
 	@Override
 	public final void focusLost(FocusEvent event) {
 		hasFocus = false;
-		for (int i = 0; i < KEY_BUFFER_SIZE; i++) {
-			keyStatus[i] = 0;
+		for (int keyCode = 0; keyCode < KEY_BUFFER_SIZE; keyCode++) {
+			keyStatus[keyCode] = 0;
 		}
 	}
 
+	/**
+	 * Performs the window activated operation.
+	 *
+	 * @param event the event
+	 */
 	@Override
 	public final void windowActivated(WindowEvent event) {
 	}
 
+	/**
+	 * Performs the window closed operation.
+	 *
+	 * @param event the event
+	 */
 	@Override
 	public final void windowClosed(WindowEvent event) {
 	}
 
+	/**
+	 * Performs the window closing operation.
+	 *
+	 * @param event the event
+	 */
 	@Override
 	public final void windowClosing(WindowEvent event) {
 		shutdown();
 	}
 
+	/**
+	 * Performs the window deactivated operation.
+	 *
+	 * @param event the event
+	 */
 	@Override
 	public final void windowDeactivated(WindowEvent event) {
 	}
 
+	/**
+	 * Performs the window deiconified operation.
+	 *
+	 * @param event the event
+	 */
 	@Override
 	public final void windowDeiconified(WindowEvent event) {
 	}
 
+	/**
+	 * Performs the window iconified operation.
+	 *
+	 * @param event the event
+	 */
 	@Override
 	public final void windowIconified(WindowEvent event) {
 	}
 
+	/**
+	 * Performs the window opened operation.
+	 *
+	 * @param event the event
+	 */
 	@Override
 	public final void windowOpened(WindowEvent event) {
 	}
@@ -511,6 +666,9 @@ public class GameShell extends Canvas
 	/**
 	 * Starts a client worker thread with the original start-then-prioritize
 	 * ordering.
+	 * 
+	 * @param runnable the runnable
+	 * @param priority the priority
 	 */
 	public void startThread(Runnable runnable, int priority) {
 		Thread thread = new Thread(runnable);
@@ -518,7 +676,12 @@ public class GameShell extends Canvas
 		thread.setPriority(priority);
 	}
 
-	/** Draws the classic fixed-size loading bar directly through AWT. */
+	/**
+	 * Draws the classic fixed-size loading bar directly through AWT.
+	 * 
+	 * @param progress the progress
+	 * @param text     the text
+	 */
 	public void drawLoadingText(int progress, String text) {
 		while (graphics == null) {
 			Component component = getGameComponent();

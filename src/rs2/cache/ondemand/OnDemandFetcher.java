@@ -34,23 +34,41 @@ import rs2.sign.Signlink;
  */
 public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 
+	/** Defines the model constant. */
 	public static final int MODEL = 0;
+	/** Defines the animation constant. */
 	public static final int ANIMATION = 1;
+	/** Defines the midi constant. */
 	public static final int MIDI = 2;
+	/** Defines the map constant. */
 	public static final int MAP = 3;
 
+	/** Defines the archive type count constant. */
 	private static final int ARCHIVE_TYPE_COUNT = 4;
+	/** Defines the max active requests constant. */
 	private static final int MAX_ACTIVE_REQUESTS = 10;
+	/** Defines the response header length constant. */
 	private static final int RESPONSE_HEADER_LENGTH = 6;
+	/** Defines the response chunk length constant. */
 	private static final int RESPONSE_CHUNK_LENGTH = 500;
+	/** Defines the gzip buffer length constant. */
 	private static final int GZIP_BUFFER_LENGTH = 65_000;
+	/** Defines the resend after cycles constant. */
 	private static final int RESEND_AFTER_CYCLES = 50;
+	/** Defines the disconnect after idle cycles constant. */
 	private static final int DISCONNECT_AFTER_IDLE_CYCLES = 750;
+	/** Defines the keep alive after cycles constant. */
 	private static final int KEEP_ALIVE_AFTER_CYCLES = 500;
+	/** Defines the socket reopen delay millis constant. */
 	private static final long SOCKET_REOPEN_DELAY_MILLIS = 4_000L;
+	/** Defines the update server handshake constant. */
 	private static final int UPDATE_SERVER_HANDSHAKE = 15;
+	/** Defines the location prefetch type constant. */
 	private static final int LOCATION_PREFETCH_TYPE = 93;
 
+	/**
+	 * Reads data.
+	 */
 	private void readData() {
 		try {
 			int available = inputStream.available();
@@ -153,15 +171,29 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		}
 	}
 
+	/**
+	 * Returns model index.
+	 *
+	 * @param modelId the model id
+	 * @return the model index
+	 */
 	public int getModelIndex(int modelId) {
 		return modelIndices[modelId] & 0xff;
 	}
 
+	/**
+	 * Performs the request model operation.
+	 *
+	 * @param modelId the model id
+	 */
 	@Override
 	public void requestModel(int modelId) {
 		request(MODEL, modelId);
 	}
 
+	/**
+	 * Processes extra requests.
+	 */
 	private void processExtraRequests() {
 		while (mandatoryRequestCount == 0 && extraRequestCount < MAX_ACTIVE_REQUESTS) {
 			if (highestPriority == 0) {
@@ -219,6 +251,13 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		}
 	}
 
+	/**
+	 * Sets extra priority.
+	 *
+	 * @param type     the type
+	 * @param id       the id
+	 * @param priority the priority
+	 */
 	public void setExtraPriority(int type, int id, byte priority) {
 		if (!resourceLoader.hasCache())
 			return;
@@ -233,10 +272,22 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		totalFiles++;
 	}
 
+	/**
+	 * Returns whether midi preload.
+	 *
+	 * @param id the id
+	 * @return whether the requested condition is satisfied
+	 */
 	public boolean isMidiPreload(int id) {
 		return midiPreloadFlags[id] == 1;
 	}
 
+	/**
+	 * Performs the request operation.
+	 *
+	 * @param type the type
+	 * @param id   the id
+	 */
 	public void request(int type, int id) {
 		if (type < 0 || type > versions.length || id < 0 || id > versions[type].length)
 			return;
@@ -261,6 +312,11 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		}
 	}
 
+	/**
+	 * Performs the poll operation.
+	 *
+	 * @return the resulting value
+	 */
 	public OnDemandRequest poll() {
 		OnDemandRequest request;
 		synchronized (completedQueue) {
@@ -298,6 +354,9 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		return request;
 	}
 
+	/**
+	 * Runs this component's main processing loop.
+	 */
 	public void run() {
 		try {
 			while (running) {
@@ -387,6 +446,9 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		}
 	}
 
+	/**
+	 * Handles failed requests.
+	 */
 	private void handleFailedRequests() {
 		mandatoryRequestCount = 0;
 		extraRequestCount = 0;
@@ -415,6 +477,11 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		}
 	}
 
+	/**
+	 * Performs the preload maps operation.
+	 *
+	 * @param includeAllMaps whether include all maps
+	 */
 	public void preloadMaps(boolean includeAllMaps) {
 		for (int index = 0; index < regionIds.length; index++) {
 			if (includeAllMaps || mapPreloadFlags[index] != 0) {
@@ -424,12 +491,23 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		}
 	}
 
+	/**
+	 * Returns outstanding request count.
+	 *
+	 * @return the outstanding request count
+	 */
 	public int getOutstandingRequestCount() {
 		synchronized (outstandingRequests) {
 			return outstandingRequests.size();
 		}
 	}
 
+	/**
+	 * Returns whether landscape file.
+	 *
+	 * @param fileId the file id
+	 * @return whether the requested condition is satisfied
+	 */
 	public boolean isLandscapeFile(int fileId) {
 		for (int index = 0; index < regionIds.length; index++) {
 			if (landscapeFileIds[index] == fileId) {
@@ -448,6 +526,10 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	 * {@code model_index}, seven-byte {@code map_index} records,
 	 * {@code anim_index}, and {@code midi_index}.
 	 * </p>
+	 * 
+	 * @param archive        the archive
+	 * @param clientInstance the client instance
+	 * @param resourceLoader the resource loader
 	 */
 	public void start(Archive archive, Client clientInstance, ResourceLoader resourceLoader) {
 		String[] versionNames = { "model_version", "anim_version", "midi_version", "map_version" };
@@ -511,12 +593,21 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		this.clientInstance.startThread(this, 2);
 	}
 
+	/**
+	 * Clears extra requests.
+	 */
 	public void clearExtraRequests() {
 		synchronized (extraRequestQueue) {
 			extraRequestQueue.clear();
 		}
 	}
 
+	/**
+	 * Performs the queue extra request operation.
+	 *
+	 * @param type the type
+	 * @param id   the id
+	 */
 	public void queueExtraRequest(int type, int id) {
 		if (!resourceLoader.hasCache())
 			return;
@@ -535,6 +626,9 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		}
 	}
 
+	/**
+	 * Performs the check cache operation.
+	 */
 	private void checkCache() {
 		OnDemandRequest request;
 		synchronized (cacheRequestQueue) {
@@ -564,14 +658,31 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		}
 	}
 
+	/**
+	 * Performs the stop operation.
+	 */
 	public void stop() {
 		running = false;
 	}
 
+	/**
+	 * Returns file count.
+	 *
+	 * @param type the type
+	 * @return the file count
+	 */
 	public int getFileCount(int type) {
 		return versions[type].length;
 	}
 
+	/**
+	 * Performs the crc matches operation.
+	 *
+	 * @param data            the data
+	 * @param expectedVersion the expected version
+	 * @param expectedCrc     the expected crc
+	 * @return whether the operation succeeds
+	 */
 	private boolean crcMatches(byte[] data, int expectedVersion, int expectedCrc) {
 		if (data == null || data.length < 2)
 			return false;
@@ -585,6 +696,11 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		return crc == expectedCrc;
 	}
 
+	/**
+	 * Performs the send request operation.
+	 *
+	 * @param request the request
+	 */
 	private void sendRequest(OnDemandRequest request) {
 		try {
 			if (socket == null) {
@@ -631,22 +747,38 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		requestFailures++;
 	}
 
+	/**
+	 * Returns animation count.
+	 *
+	 * @return the animation count
+	 */
 	public int getAnimationCount() {
 		return animationIndex.length;
 	}
 
+	/**
+	 * Returns map file id.
+	 *
+	 * @param regionX  the region x
+	 * @param regionY  the region y
+	 * @param fileType the file type
+	 * @return the map file id
+	 */
 	public int getMapFileId(int regionX, int regionY, int fileType) {
 		int regionId = (regionX << 8) + regionY;
-		for (int j1 = 0; j1 < regionIds.length; j1++)
-			if (regionIds[j1] == regionId)
+		for (int regionIndex = 0; regionIndex < regionIds.length; regionIndex++)
+			if (regionIds[regionIndex] == regionId)
 				if (fileType == 0)
-					return terrainFileIds[j1];
+					return terrainFileIds[regionIndex];
 				else
-					return landscapeFileIds[j1];
+					return landscapeFileIds[regionIndex];
 
 		return -1;
 	}
 
+	/**
+	 * Creates a new OnDemandFetcher instance.
+	 */
 	public OnDemandFetcher() {
 		fileStatus = new byte[ARCHIVE_TYPE_COUNT][];
 		waiting = false;
@@ -665,45 +797,85 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		versions = new int[ARCHIVE_TYPE_COUNT][];
 	}
 
+	/** Stores the files loaded. */
 	private int filesLoaded;
+	/** Stores the model indices values. */
 	private byte[] modelIndices;
+	/** Stores the map preload flags values. */
 	private int[] mapPreloadFlags;
+	/** Stores the file status values. */
 	private byte[][] fileStatus;
+	/** Tracks whether waiting. */
 	private boolean waiting;
+	/** Tracks whether running. */
 	private boolean running;
+	/** Stores the cache request queue. */
 	private NodeDeque cacheRequestQueue;
+	/** Stores the highest priority. */
 	private int highestPriority;
+	/** Stores the mandatory request count. */
 	private int mandatoryRequestCount;
+	/** Stores the extra request count. */
 	private int extraRequestCount;
+	/** Stores the crcs values. */
 	private int[][] crcs;
+	/** Stores the region ids values. */
 	private int[] regionIds;
+	/** Stores the status string. */
 	public String statusString;
+	/** Stores the on demand cycle. */
 	public int onDemandCycle;
+	/** Stores the output stream. */
 	private OutputStream outputStream;
+	/** Stores the total files. */
 	public int totalFiles;
+	/** Stores the missing request queue. */
 	private NodeDeque missingRequestQueue;
+	/** Stores the idle cycles. */
 	private int idleCycles;
+	/** Stores the crc32. */
 	private CRC32 crc32;
+	/** Stores the socket. */
 	private Socket socket;
+	/** Stores the completed queue. */
 	private NodeDeque completedQueue;
+	/** Stores the extra request queue. */
 	private NodeDeque extraRequestQueue;
+	/** Stores the gzip buffer values. */
 	private byte[] gzipBuffer;
+	/** Stores the terrain file ids values. */
 	private int[] terrainFileIds;
+	/** Stores the current chunk offset. */
 	private int currentChunkOffset;
+	/** Stores the current chunk length. */
 	private int currentChunkLength;
+	/** Stores the io buffer values. */
 	private byte[] ioBuffer;
+	/** Stores the landscape file ids values. */
 	private int[] landscapeFileIds;
+	/** Stores the midi preload flags values. */
 	private int[] midiPreloadFlags;
+	/** Stores the outstanding requests. */
 	private DualNodeDeque outstandingRequests;
+	/** Stores the input stream. */
 	private InputStream inputStream;
+	/** Stores the current request. */
 	private OnDemandRequest currentRequest;
+	/** Stores the client instance. */
 	private Client clientInstance;
+	/** Stores the resource loader. */
 	private ResourceLoader resourceLoader;
+	/** Stores the network requests. */
 	private NodeDeque networkRequests;
+	/** Stores the keep alive cycles. */
 	private int keepAliveCycles;
+	/** Stores the animation index values. */
 	private int[] animationIndex;
+	/** Stores the versions values. */
 	private int[][] versions;
+	/** Stores the last socket open time. */
 	private long lastSocketOpenTime;
+	/** Stores the request failures. */
 	public int requestFailures;
 
 }

@@ -31,56 +31,107 @@ import rs2.net.Buffer;
  */
 public class GameObjectDefinition {
 
+	/** Stores the offsets values. */
 	private static int[] offsets;
 
+	/** Tracks whether interactive. */
 	public boolean interactive;
+	/** Stores the scale y. */
 	public int scaleY;
+	/** Stores the translate x. */
 	public int translateX;
+	/** Stores the model cache. */
 	private static LruCache modelCache = new LruCache(40);
+	/** Stores the model ids values. */
 	public int[] modelIds;
+	/** Stores the surroundings. */
 	public int surroundings;
+	/** Tracks whether obstructs ground. */
 	public boolean obstructsGround;
+	/** Stores the translate z. */
 	public int translateZ;
+	/** Stores the data buffer. */
 	private static Buffer dataBuffer;
+	/** Tracks whether contoured ground. */
 	public boolean contouredGround;
+	/** Stores the client instance. */
 	public static Client clientInstance;
+	/** Stores the model parts values. */
 	private static final Model[] modelParts = new Model[4];
+	/** Tracks whether low memory. */
 	public static boolean lowMemory;
+	/** Stores the id. */
 	public int id = -1;
+	/** Stores the size y. */
 	public int sizeY;
+	/** Stores the name. */
 	public String name = "null";
+	/** Stores the cache index. */
 	private static int cacheIndex;
+	/** Stores the varbit id. */
 	public int varbitId;
+	/** Stores the raw model cache. */
 	private static LruCache rawModelCache = new LruCache(500);
+	/** Stores the scale x. */
 	public int scaleX;
+	/** Stores the varp id. */
 	public int varpId;
+	/** Stores the cache values. */
 	private static GameObjectDefinition[] cache;
+	/** Stores the description values. */
 	public byte[] description;
+	/** Stores the ambient. */
 	public byte ambient;
+	/** Stores the translate y. */
 	public int translateY;
+	/** Stores the contrast. */
 	public byte contrast;
+	/** Stores the model types values. */
 	public int[] modelTypes;
+	/** Stores the actions values. */
 	public String[] actions;
+	/** Tracks whether hollow. */
 	public boolean hollow;
+	/** Stores the recolor to values. */
 	public int[] recolorTo;
+	/** Stores the support items. */
 	public int supportItems;
+	/** Stores the map scene id. */
 	public int mapSceneId;
+	/** Stores the scale z. */
 	public int scaleZ;
+	/** Tracks whether model clipped. */
 	public boolean modelClipped;
+	/** Tracks whether rotated. */
 	public boolean rotated;
+	/** Stores the recolor from values. */
 	public int[] recolorFrom;
+	/** Stores the size x. */
 	public int sizeX;
+	/** Stores the decor displacement. */
 	public int decorDisplacement;
+	/** Stores the animation id. */
 	public int animationId;
+	/** Tracks whether non flat shading. */
 	public boolean nonFlatShading;
+	/** Stores the morph ids values. */
 	public int[] morphIds;
+	/** Stores the map function id. */
 	public int mapFunctionId;
+	/** Tracks whether casts shadow. */
 	public boolean castsShadow;
+	/** Stores the count. */
 	public static int count;
+	/** Tracks whether blocks projectiles. */
 	public boolean blocksProjectiles;
+	/** Tracks whether blocks movement. */
 	public boolean blocksMovement;
 
-	/** Loads the indexed location-definition archive. */
+	/**
+	 * Loads the indexed location-definition archive.
+	 * 
+	 * @param archive the archive
+	 */
 	public static void load(Archive archive) {
 		dataBuffer = new Buffer(archive.read("loc.dat"));
 		Buffer index = new Buffer(archive.read("loc.idx"));
@@ -92,14 +143,16 @@ public class GameObjectDefinition {
 			offset += index.readUnsignedShort();
 		}
 		cache = new GameObjectDefinition[20];
-		for (int i = 0; i < cache.length; i++) {
-			cache[i] = new GameObjectDefinition();
+		for (int cacheSlot = 0; cacheSlot < cache.length; cacheSlot++) {
+			cache[cacheSlot] = new GameObjectDefinition();
 		}
 	}
 
 	/**
 	 * Looks up a definition through the original 20-entry rotating cache. The
 	 * replacement index is incremented before use, so the first miss uses slot 1.
+	 * 
+	 * @param id the id
 	 */
 	public static GameObjectDefinition lookup(int id) {
 		for (GameObjectDefinition definition : cache) {
@@ -140,6 +193,8 @@ public class GameObjectDefinition {
 	/**
 	 * Requests every source model referenced by this definition as a model
 	 * resource.
+	 * 
+	 * @param fetcher the fetcher
 	 */
 	public void requestModels(OnDemandFetcher fetcher) {
 		if (modelIds == null) {
@@ -164,7 +219,11 @@ public class GameObjectDefinition {
 		return ready;
 	}
 
-	/** Returns whether the model needed for a specific location type is loaded. */
+	/**
+	 * Returns whether the model needed for a specific location type is loaded.
+	 * 
+	 * @param type the type
+	 */
 	public boolean isModelReady(int type) {
 		if (modelTypes == null) {
 			if (modelIds == null) {
@@ -179,9 +238,9 @@ public class GameObjectDefinition {
 			}
 			return ready;
 		}
-		for (int i = 0; i < modelTypes.length; i++) {
-			if (modelTypes[i] == type) {
-				return Model.isLoaded(modelIds[i] & 0xffff);
+		for (int modelTypeIndex = 0; modelTypeIndex < modelTypes.length; modelTypeIndex++) {
+			if (modelTypes[modelTypeIndex] == type) {
+				return Model.isLoaded(modelIds[modelTypeIndex] & 0xffff);
 			}
 		}
 		return true;
@@ -209,6 +268,14 @@ public class GameObjectDefinition {
 	/**
 	 * Builds a model for a placed location and optionally contours it to the four
 	 * tile heights. Height order is south-west, south-east, north-east, north-west.
+	 * 
+	 * @param type            the type
+	 * @param orientation     the orientation
+	 * @param southWestHeight the south west height
+	 * @param southEastHeight the south east height
+	 * @param northEastHeight the north east height
+	 * @param northWestHeight the north west height
+	 * @param frameId         the frame id
 	 */
 	public Model getModelAt(int type, int orientation, int southWestHeight, int southEastHeight, int northEastHeight,
 			int northWestHeight, int frameId) {
@@ -234,6 +301,14 @@ public class GameObjectDefinition {
 		return model;
 	}
 
+	/**
+	 * Returns model.
+	 *
+	 * @param type        the type
+	 * @param orientation the orientation
+	 * @param frameId     the frame id
+	 * @return the model
+	 */
 	private Model getModel(int type, int orientation, int frameId) {
 		Model baseModel = null;
 		long cacheKey;
@@ -251,8 +326,8 @@ public class GameObjectDefinition {
 			}
 			boolean mirror = rotated ^ (orientation > 3);
 			int modelCount = modelIds.length;
-			for (int i = 0; i < modelCount; i++) {
-				int modelId = modelIds[i];
+			for (int modelPartIndex = 0; modelPartIndex < modelCount; modelPartIndex++) {
+				int modelId = modelIds[modelPartIndex];
 				if (mirror) {
 					modelId += 0x10000;
 				}
@@ -268,7 +343,7 @@ public class GameObjectDefinition {
 					rawModelCache.put(modelId, baseModel);
 				}
 				if (modelCount > 1) {
-					modelParts[i] = baseModel;
+					modelParts[modelPartIndex] = baseModel;
 				}
 			}
 			if (modelCount > 1) {
@@ -276,9 +351,9 @@ public class GameObjectDefinition {
 			}
 		} else {
 			int modelIndex = -1;
-			for (int i = 0; i < modelTypes.length; i++) {
-				if (modelTypes[i] == type) {
-					modelIndex = i;
+			for (int modelTypeIndex = 0; modelTypeIndex < modelTypes.length; modelTypeIndex++) {
+				if (modelTypes[modelTypeIndex] == type) {
+					modelIndex = modelTypeIndex;
 					break;
 				}
 			}
@@ -323,8 +398,8 @@ public class GameObjectDefinition {
 			model.rotateY90Ccw();
 		}
 		if (recolorFrom != null) {
-			for (int i = 0; i < recolorFrom.length; i++) {
-				model.recolor(recolorFrom[i], recolorTo[i]);
+			for (int recolorIndex = 0; recolorIndex < recolorFrom.length; recolorIndex++) {
+				model.recolor(recolorFrom[recolorIndex], recolorTo[recolorIndex]);
 			}
 		}
 		if (needsScale) {
@@ -341,6 +416,9 @@ public class GameObjectDefinition {
 		return model;
 	}
 
+	/**
+	 * Resets this object's mutable state.
+	 */
 	private void reset() {
 		modelIds = null;
 		modelTypes = null;
@@ -380,6 +458,11 @@ public class GameObjectDefinition {
 		morphIds = null;
 	}
 
+	/**
+	 * Decodes this object from the supplied data.
+	 *
+	 * @param buffer the buffer
+	 */
 	private void decode(Buffer buffer) {
 		int explicitInteractive = -1;
 		while (true) {
@@ -393,9 +476,9 @@ public class GameObjectDefinition {
 					if (modelIds == null || lowMemory) {
 						modelTypes = new int[length];
 						modelIds = new int[length];
-						for (int i = 0; i < length; i++) {
-							modelIds[i] = buffer.readUnsignedShort();
-							modelTypes[i] = buffer.readUnsignedByte();
+						for (int modelIndex = 0; modelIndex < length; modelIndex++) {
+							modelIds[modelIndex] = buffer.readUnsignedShort();
+							modelTypes[modelIndex] = buffer.readUnsignedByte();
 						}
 					} else {
 						buffer.position += length * 3;
@@ -411,8 +494,8 @@ public class GameObjectDefinition {
 					if (modelIds == null || lowMemory) {
 						modelTypes = null;
 						modelIds = new int[length];
-						for (int i = 0; i < length; i++) {
-							modelIds[i] = buffer.readUnsignedShort();
+						for (int modelIndex = 0; modelIndex < length; modelIndex++) {
+							modelIds[modelIndex] = buffer.readUnsignedShort();
 						}
 					} else {
 						buffer.position += length * 2;
@@ -460,9 +543,9 @@ public class GameObjectDefinition {
 				int length = buffer.readUnsignedByte();
 				recolorFrom = new int[length];
 				recolorTo = new int[length];
-				for (int i = 0; i < length; i++) {
-					recolorFrom[i] = buffer.readUnsignedShort();
-					recolorTo[i] = buffer.readUnsignedShort();
+				for (int recolorIndex = 0; recolorIndex < length; recolorIndex++) {
+					recolorFrom[recolorIndex] = buffer.readUnsignedShort();
+					recolorTo[recolorIndex] = buffer.readUnsignedShort();
 				}
 			} else if (opcode == 60) {
 				mapFunctionId = buffer.readUnsignedShort();
@@ -503,10 +586,10 @@ public class GameObjectDefinition {
 				}
 				int lastIndex = buffer.readUnsignedByte();
 				morphIds = new int[lastIndex + 1];
-				for (int i = 0; i <= lastIndex; i++) {
-					morphIds[i] = buffer.readUnsignedShort();
-					if (morphIds[i] == 65535) {
-						morphIds[i] = -1;
+				for (int morphIndex = 0; morphIndex <= lastIndex; morphIndex++) {
+					morphIds[morphIndex] = buffer.readUnsignedShort();
+					if (morphIds[morphIndex] == 65535) {
+						morphIds[morphIndex] = -1;
 					}
 				}
 			}

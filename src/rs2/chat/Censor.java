@@ -14,10 +14,17 @@ import rs2.net.Buffer;
  */
 public final class Censor {
 
+	/**
+	 * Creates a new Censor instance.
+	 */
 	private Censor() {
 	}
 
-	/** Loads the four revision-377 word-filter tables from the supplied archive. */
+	/**
+	 * Loads the four revision-377 word-filter tables from the supplied archive.
+	 * 
+	 * @param archive the archive
+	 */
 	public static void load(Archive archive) {
 		Buffer fragments = new Buffer(archive.read("fragmentsenc.txt"));
 		Buffer badWords = new Buffer(archive.read("badenc.txt"));
@@ -26,6 +33,14 @@ public final class Censor {
 		loadTables(fragments, badWords, domains, topLevelDomains);
 	}
 
+	/**
+	 * Loads tables.
+	 *
+	 * @param fragments             the fragments
+	 * @param badWordsBuffer        the bad words buffer
+	 * @param domains               the domains
+	 * @param topLevelDomainsBuffer the top level domains buffer
+	 */
 	private static void loadTables(Buffer fragments, Buffer badWordsBuffer, Buffer domains,
 			Buffer topLevelDomainsBuffer) {
 		readBadWords(badWordsBuffer);
@@ -34,6 +49,11 @@ public final class Censor {
 		readTopLevelDomains(topLevelDomainsBuffer);
 	}
 
+	/**
+	 * Reads top level domains.
+	 *
+	 * @param buffer the buffer
+	 */
 	private static void readTopLevelDomains(Buffer buffer) {
 		int count = buffer.readInt();
 		topLevelDomains = new char[count][];
@@ -49,6 +69,11 @@ public final class Censor {
 
 	}
 
+	/**
+	 * Reads bad words.
+	 *
+	 * @param buffer the buffer
+	 */
 	private static void readBadWords(Buffer buffer) {
 		int count = buffer.readInt();
 		badWords = new char[count][];
@@ -56,18 +81,35 @@ public final class Censor {
 		readBadWordEntries(buffer, badWords, badWordContextPairs);
 	}
 
+	/**
+	 * Reads domain words.
+	 *
+	 * @param buffer the buffer
+	 */
 	private static void readDomainWords(Buffer buffer) {
 		int count = buffer.readInt();
 		domainWords = new char[count][];
 		readWordList(buffer, domainWords);
 	}
 
+	/**
+	 * Reads fragment hashes.
+	 *
+	 * @param buffer the buffer
+	 */
 	private static void readFragmentHashes(Buffer buffer) {
 		fragmentHashes = new int[buffer.readInt()];
 		for (int index = 0; index < fragmentHashes.length; index++)
 			fragmentHashes[index] = buffer.readUnsignedShort();
 	}
 
+	/**
+	 * Reads bad word entries.
+	 *
+	 * @param buffer   the buffer
+	 * @param words    the words
+	 * @param contexts the contexts
+	 */
 	private static void readBadWordEntries(Buffer buffer, char words[][], byte contexts[][][]) {
 		for (int wordIndex = 0; wordIndex < words.length; wordIndex++) {
 			char word[] = new char[buffer.readUnsignedByte()];
@@ -87,6 +129,12 @@ public final class Censor {
 
 	}
 
+	/**
+	 * Reads word list.
+	 *
+	 * @param buffer the buffer
+	 * @param words  the words
+	 */
 	private static void readWordList(Buffer buffer, char words[][]) {
 		for (int wordIndex = 0; wordIndex < words.length; wordIndex++) {
 			char word[] = new char[buffer.readUnsignedByte()];
@@ -98,6 +146,11 @@ public final class Censor {
 
 	}
 
+	/**
+	 * Performs the sanitize operation.
+	 *
+	 * @param text the text
+	 */
 	private static void sanitize(char text[]) {
 		int writeIndex = 0;
 		for (int readIndex = 0; readIndex < text.length; readIndex++) {
@@ -114,12 +167,22 @@ public final class Censor {
 
 	}
 
+	/**
+	 * Returns whether valid character.
+	 *
+	 * @param character the character
+	 * @return whether the requested condition is satisfied
+	 */
 	private static boolean isValidCharacter(char character) {
 		return character >= ' ' && character <= '\177' || character == ' ' || character == '\n' || character == '\t'
 				|| character == '\243' || character == '\u20AC';
 	}
 
-	/** Returns the revision-377 censored representation of {@code text}. */
+	/**
+	 * Returns the revision-377 censored representation of {@code text}.
+	 * 
+	 * @param text the text
+	 */
 	public static String censor(String text) {
 		char characters[] = text.toCharArray();
 		sanitize(characters);
@@ -146,6 +209,12 @@ public final class Censor {
 		return (new String(characters)).trim();
 	}
 
+	/**
+	 * Performs the restore uppercase operation.
+	 *
+	 * @param filtered the filtered
+	 * @param original the original
+	 */
 	private static void restoreUppercase(char filtered[], char original[]) {
 		for (int index = 0; index < original.length; index++)
 			if (filtered[index] != '*' && isUppercaseLetter(original[index]))
@@ -153,6 +222,11 @@ public final class Censor {
 
 	}
 
+	/**
+	 * Performs the normalize capitalization operation.
+	 *
+	 * @param text the text
+	 */
 	private static void normalizeCapitalization(char text[]) {
 		boolean uppercaseAllowed = true;
 		for (int index = 0; index < text.length; index++) {
@@ -170,6 +244,11 @@ public final class Censor {
 
 	}
 
+	/**
+	 * Filters bad words.
+	 *
+	 * @param text the text
+	 */
 	private static void filterBadWords(char text[]) {
 		for (int pass = 0; pass < 2; pass++) {
 			for (int wordIndex = badWords.length - 1; wordIndex >= 0; wordIndex--)
@@ -179,6 +258,11 @@ public final class Censor {
 
 	}
 
+	/**
+	 * Filters domains.
+	 *
+	 * @param text the text
+	 */
 	private static void filterDomains(char text[]) {
 		char atFiltered[] = text.clone();
 		char atPattern[] = { '(', 'a', ')' };
@@ -191,46 +275,56 @@ public final class Censor {
 
 	}
 
+	/**
+	 * Filters domain.
+	 *
+	 * @param text        the text
+	 * @param dotFiltered the dot filtered
+	 * @param atFiltered  the at filtered
+	 * @param domain      the domain
+	 */
 	private static void filterDomain(char text[], char dotFiltered[], char atFiltered[], char domain[]) {
 		if (domain.length > text.length)
 			return;
-		int j;
-		for (int k = 0; k <= text.length - domain.length; k += j) {
-			int l = k;
-			int i1 = 0;
-			j = 1;
-			while (l < text.length) {
-				int j1 = 0;
-				char c = text[l];
-				char c1 = '\0';
-				if (l + 1 < text.length)
-					c1 = text[l + 1];
-				if (i1 < domain.length && (j1 = matchDomainCharacter(c, domain[i1], c1)) > 0) {
-					l += j1;
-					i1++;
+		int scanStep;
+		for (int startIndex = 0; startIndex <= text.length - domain.length; startIndex += scanStep) {
+			int textIndex = startIndex;
+			int domainIndex = 0;
+			scanStep = 1;
+			while (textIndex < text.length) {
+				int matchLength = 0;
+				char currentCharacter = text[textIndex];
+				char nextCharacter = '\0';
+				if (textIndex + 1 < text.length)
+					nextCharacter = text[textIndex + 1];
+				if (domainIndex < domain.length && (matchLength = matchDomainCharacter(currentCharacter,
+						domain[domainIndex], nextCharacter)) > 0) {
+					textIndex += matchLength;
+					domainIndex++;
 					continue;
 				}
-				if (i1 == 0)
+				if (domainIndex == 0)
 					break;
-				if ((j1 = matchDomainCharacter(c, domain[i1 - 1], c1)) > 0) {
-					l += j1;
-					if (i1 == 1)
-						j++;
+				if ((matchLength = matchDomainCharacter(currentCharacter, domain[domainIndex - 1],
+						nextCharacter)) > 0) {
+					textIndex += matchLength;
+					if (domainIndex == 1)
+						scanStep++;
 					continue;
 				}
-				if (i1 >= domain.length || !isSeparator(c))
+				if (domainIndex >= domain.length || !isSeparator(currentCharacter))
 					break;
-				l++;
+				textIndex++;
 			}
-			if (i1 >= domain.length) {
-				boolean flag1 = false;
-				int k1 = getDomainLeftContext(text, atFiltered, k);
-				int l1 = getDomainRightContext(dotFiltered, l - 1, text);
-				if (k1 > 2 || l1 > 2)
-					flag1 = true;
-				if (flag1) {
-					for (int i2 = k; i2 < l; i2++)
-						text[i2] = '*';
+			if (domainIndex >= domain.length) {
+				boolean shouldFilter = false;
+				int leftContext = getDomainLeftContext(text, atFiltered, startIndex);
+				int rightContext = getDomainRightContext(dotFiltered, textIndex - 1, text);
+				if (leftContext > 2 || rightContext > 2)
+					shouldFilter = true;
+				if (shouldFilter) {
+					for (int filterIndex = startIndex; filterIndex < textIndex; filterIndex++)
+						text[filterIndex] = '*';
 
 				}
 			}
@@ -238,52 +332,73 @@ public final class Censor {
 
 	}
 
+	/**
+	 * Returns domain left context.
+	 *
+	 * @param text       the text
+	 * @param atFiltered the at filtered
+	 * @param start      the start
+	 * @return the domain left context
+	 */
 	private static int getDomainLeftContext(char text[], char atFiltered[], int start) {
 		if (start == 0)
 			return 2;
-		for (int j = start - 1; j >= 0; j--) {
-			if (!isSeparator(text[j]))
+		for (int index = start - 1; index >= 0; index--) {
+			if (!isSeparator(text[index]))
 				break;
-			if (text[j] == '@')
+			if (text[index] == '@')
 				return 3;
 		}
 
-		int k = 0;
-		for (int l = start - 1; l >= 0; l--) {
-			if (!isSeparator(atFiltered[l]))
+		int maskedCount = 0;
+		for (int index = start - 1; index >= 0; index--) {
+			if (!isSeparator(atFiltered[index]))
 				break;
-			if (atFiltered[l] == '*')
-				k++;
+			if (atFiltered[index] == '*')
+				maskedCount++;
 		}
 
-		if (k >= 3)
+		if (maskedCount >= 3)
 			return 4;
 		return !isSeparator(text[start - 1]) ? 0 : 1;
 	}
 
+	/**
+	 * Returns domain right context.
+	 *
+	 * @param dotFiltered the dot filtered
+	 * @param end         the end
+	 * @param text        the text
+	 * @return the domain right context
+	 */
 	private static int getDomainRightContext(char dotFiltered[], int end, char text[]) {
 		if (end + 1 == text.length)
 			return 2;
-		for (int k = end + 1; k < text.length; k++) {
-			if (!isSeparator(text[k]))
+		for (int index = end + 1; index < text.length; index++) {
+			if (!isSeparator(text[index]))
 				break;
-			if (text[k] == '.' || text[k] == ',')
+			if (text[index] == '.' || text[index] == ',')
 				return 3;
 		}
 
-		int l = 0;
-		for (int i1 = end + 1; i1 < text.length; i1++) {
-			if (!isSeparator(dotFiltered[i1]))
+		int maskedCount = 0;
+		for (int index = end + 1; index < text.length; index++) {
+			if (!isSeparator(dotFiltered[index]))
 				break;
-			if (dotFiltered[i1] == '*')
-				l++;
+			if (dotFiltered[index] == '*')
+				maskedCount++;
 		}
 
-		if (l >= 3)
+		if (maskedCount >= 3)
 			return 4;
 		return !isSeparator(text[end + 1]) ? 0 : 1;
 	}
 
+	/**
+	 * Filters top level domains.
+	 *
+	 * @param text the text
+	 */
 	private static void filterTopLevelDomains(char text[]) {
 		char dotFiltered[] = text.clone();
 		char dotPattern[] = { 'd', 'o', 't' };
@@ -297,105 +412,115 @@ public final class Censor {
 
 	}
 
+	/**
+	 * Filters top level domain.
+	 *
+	 * @param text          the text
+	 * @param dotFiltered   the dot filtered
+	 * @param type          the type
+	 * @param tld           the tld
+	 * @param slashFiltered the slash filtered
+	 */
 	private static void filterTopLevelDomain(char text[], char dotFiltered[], int type, char tld[],
 			char slashFiltered[]) {
 		if (tld.length > text.length)
 			return;
-		int j;
-		for (int k = 0; k <= text.length - tld.length; k += j) {
-			int l = k;
-			int i1 = 0;
-			j = 1;
-			while (l < text.length) {
-				int j1 = 0;
-				char c = text[l];
-				char c1 = '\0';
-				if (l + 1 < text.length)
-					c1 = text[l + 1];
-				if (i1 < tld.length && (j1 = matchDomainCharacter(c, tld[i1], c1)) > 0) {
-					l += j1;
-					i1++;
+		int scanStep;
+		for (int startIndex = 0; startIndex <= text.length - tld.length; startIndex += scanStep) {
+			int textIndex = startIndex;
+			int tldIndex = 0;
+			scanStep = 1;
+			while (textIndex < text.length) {
+				int matchLength = 0;
+				char currentCharacter = text[textIndex];
+				char nextCharacter = '\0';
+				if (textIndex + 1 < text.length)
+					nextCharacter = text[textIndex + 1];
+				if (tldIndex < tld.length
+						&& (matchLength = matchDomainCharacter(currentCharacter, tld[tldIndex], nextCharacter)) > 0) {
+					textIndex += matchLength;
+					tldIndex++;
 					continue;
 				}
-				if (i1 == 0)
+				if (tldIndex == 0)
 					break;
-				if ((j1 = matchDomainCharacter(c, tld[i1 - 1], c1)) > 0) {
-					l += j1;
-					if (i1 == 1)
-						j++;
+				if ((matchLength = matchDomainCharacter(currentCharacter, tld[tldIndex - 1], nextCharacter)) > 0) {
+					textIndex += matchLength;
+					if (tldIndex == 1)
+						scanStep++;
 					continue;
 				}
-				if (i1 >= tld.length || !isSeparator(c))
+				if (tldIndex >= tld.length || !isSeparator(currentCharacter))
 					break;
-				l++;
+				textIndex++;
 			}
-			if (i1 >= tld.length) {
-				boolean flag1 = false;
-				int k1 = getTldLeftContext(dotFiltered, k, text);
-				int l1 = getTldRightContext(slashFiltered, l - 1, text);
-				if (type == 1 && k1 > 0 && l1 > 0)
-					flag1 = true;
-				if (type == 2 && (k1 > 2 && l1 > 0 || k1 > 0 && l1 > 2))
-					flag1 = true;
-				if (type == 3 && k1 > 0 && l1 > 2)
-					flag1 = true;
-				if (flag1) {
-					int i2 = k;
-					int j2 = l - 1;
-					if (k1 > 2) {
-						if (k1 == 4) {
-							boolean flag2 = false;
-							for (int l2 = i2 - 1; l2 >= 0; l2--)
-								if (flag2) {
-									if (dotFiltered[l2] != '*')
+			if (tldIndex >= tld.length) {
+				boolean shouldFilter = false;
+				int leftContext = getTldLeftContext(dotFiltered, startIndex, text);
+				int rightContext = getTldRightContext(slashFiltered, textIndex - 1, text);
+				if (type == 1 && leftContext > 0 && rightContext > 0)
+					shouldFilter = true;
+				if (type == 2 && (leftContext > 2 && rightContext > 0 || leftContext > 0 && rightContext > 2))
+					shouldFilter = true;
+				if (type == 3 && leftContext > 0 && rightContext > 2)
+					shouldFilter = true;
+				if (shouldFilter) {
+					int filterStart = startIndex;
+					int filterEnd = textIndex - 1;
+					if (leftContext > 2) {
+						if (leftContext == 4) {
+							boolean foundLeftMask = false;
+							for (int index = filterStart - 1; index >= 0; index--)
+								if (foundLeftMask) {
+									if (dotFiltered[index] != '*')
 										break;
-									i2 = l2;
-								} else if (dotFiltered[l2] == '*') {
-									i2 = l2;
-									flag2 = true;
+									filterStart = index;
+								} else if (dotFiltered[index] == '*') {
+									filterStart = index;
+									foundLeftMask = true;
 								}
 
 						}
-						boolean flag3 = false;
-						for (int i3 = i2 - 1; i3 >= 0; i3--)
-							if (flag3) {
-								if (isSeparator(text[i3]))
+						boolean foundLeftText = false;
+						for (int index = filterStart - 1; index >= 0; index--)
+							if (foundLeftText) {
+								if (isSeparator(text[index]))
 									break;
-								i2 = i3;
-							} else if (!isSeparator(text[i3])) {
-								flag3 = true;
-								i2 = i3;
+								filterStart = index;
+							} else if (!isSeparator(text[index])) {
+								foundLeftText = true;
+								filterStart = index;
 							}
 
 					}
-					if (l1 > 2) {
-						if (l1 == 4) {
-							boolean flag4 = false;
-							for (int j3 = j2 + 1; j3 < text.length; j3++)
-								if (flag4) {
-									if (slashFiltered[j3] != '*')
+					if (rightContext > 2) {
+						if (rightContext == 4) {
+							boolean foundRightMask = false;
+							for (int index = filterEnd + 1; index < text.length; index++)
+								if (foundRightMask) {
+									if (slashFiltered[index] != '*')
 										break;
-									j2 = j3;
-								} else if (slashFiltered[j3] == '*') {
-									j2 = j3;
-									flag4 = true;
+									filterEnd = index;
+								} else if (slashFiltered[index] == '*') {
+									filterEnd = index;
+									foundRightMask = true;
 								}
 
 						}
-						boolean flag5 = false;
-						for (int k3 = j2 + 1; k3 < text.length; k3++)
-							if (flag5) {
-								if (isSeparator(text[k3]))
+						boolean foundRightText = false;
+						for (int index = filterEnd + 1; index < text.length; index++)
+							if (foundRightText) {
+								if (isSeparator(text[index]))
 									break;
-								j2 = k3;
-							} else if (!isSeparator(text[k3])) {
-								flag5 = true;
-								j2 = k3;
+								filterEnd = index;
+							} else if (!isSeparator(text[index])) {
+								foundRightText = true;
+								filterEnd = index;
 							}
 
 					}
-					for (int k2 = i2; k2 <= j2; k2++)
-						text[k2] = '*';
+					for (int filterIndex = filterStart; filterIndex <= filterEnd; filterIndex++)
+						text[filterIndex] = '*';
 
 				}
 			}
@@ -403,165 +528,193 @@ public final class Censor {
 
 	}
 
+	/**
+	 * Returns tld left context.
+	 *
+	 * @param dotFiltered the dot filtered
+	 * @param start       the start
+	 * @param text        the text
+	 * @return the tld left context
+	 */
 	private static int getTldLeftContext(char dotFiltered[], int start, char text[]) {
 		if (start == 0)
 			return 2;
-		for (int k = start - 1; k >= 0; k--) {
-			if (!isSeparator(text[k]))
+		for (int index = start - 1; index >= 0; index--) {
+			if (!isSeparator(text[index]))
 				break;
-			if (text[k] == ',' || text[k] == '.')
+			if (text[index] == ',' || text[index] == '.')
 				return 3;
 		}
 
-		int l = 0;
-		for (int i1 = start - 1; i1 >= 0; i1--) {
-			if (!isSeparator(dotFiltered[i1]))
+		int maskedCount = 0;
+		for (int index = start - 1; index >= 0; index--) {
+			if (!isSeparator(dotFiltered[index]))
 				break;
-			if (dotFiltered[i1] == '*')
-				l++;
+			if (dotFiltered[index] == '*')
+				maskedCount++;
 		}
 
-		if (l >= 3)
+		if (maskedCount >= 3)
 			return 4;
 		return !isSeparator(text[start - 1]) ? 0 : 1;
 	}
 
+	/**
+	 * Returns tld right context.
+	 *
+	 * @param slashFiltered the slash filtered
+	 * @param end           the end
+	 * @param text          the text
+	 * @return the tld right context
+	 */
 	private static int getTldRightContext(char slashFiltered[], int end, char text[]) {
 		if (end + 1 == text.length)
 			return 2;
-		for (int l = end + 1; l < text.length; l++) {
-			if (!isSeparator(text[l]))
+		for (int index = end + 1; index < text.length; index++) {
+			if (!isSeparator(text[index]))
 				break;
-			if (text[l] == '\\' || text[l] == '/')
+			if (text[index] == '\\' || text[index] == '/')
 				return 3;
 		}
 
-		int i1 = 0;
-		for (int j1 = end + 1; j1 < text.length; j1++) {
-			if (!isSeparator(slashFiltered[j1]))
+		int maskedCount = 0;
+		for (int index = end + 1; index < text.length; index++) {
+			if (!isSeparator(slashFiltered[index]))
 				break;
-			if (slashFiltered[j1] == '*')
-				i1++;
+			if (slashFiltered[index] == '*')
+				maskedCount++;
 		}
 
-		if (i1 >= 5)
+		if (maskedCount >= 5)
 			return 4;
 		return !isSeparator(text[end + 1]) ? 0 : 1;
 	}
 
+	/**
+	 * Filters word.
+	 *
+	 * @param contextPairs the context pairs
+	 * @param word         the word
+	 * @param text         the text
+	 */
 	private static void filterWord(byte contextPairs[][], char word[], char text[]) {
 		if (word.length > text.length)
 			return;
-		int j;
-		for (int k = 0; k <= text.length - word.length; k += j) {
-			int l = k;
-			int i1 = 0;
-			int j1 = 0;
-			j = 1;
-			boolean flag1 = false;
-			boolean flag2 = false;
-			boolean flag3 = false;
-			while (l < text.length && (!flag2 || !flag3)) {
-				int k1 = 0;
-				char c = text[l];
-				char c2 = '\0';
-				if (l + 1 < text.length)
-					c2 = text[l + 1];
-				if (i1 < word.length && (k1 = matchBadWordCharacter(word[i1], c, c2)) > 0) {
-					if (k1 == 1 && isDigit(c))
-						flag2 = true;
-					if (k1 == 2 && (isDigit(c) || isDigit(c2)))
-						flag2 = true;
-					l += k1;
-					i1++;
+		int scanStep;
+		for (int startIndex = 0; startIndex <= text.length - word.length; startIndex += scanStep) {
+			int textIndex = startIndex;
+			int wordIndex = 0;
+			int skippedCharacterCount = 0;
+			scanStep = 1;
+			boolean containsSeparator = false;
+			boolean matchedDigitSubstitution = false;
+			boolean skippedDigit = false;
+			while (textIndex < text.length && (!matchedDigitSubstitution || !skippedDigit)) {
+				int matchLength = 0;
+				char currentCharacter = text[textIndex];
+				char nextCharacter = '\0';
+				if (textIndex + 1 < text.length)
+					nextCharacter = text[textIndex + 1];
+				if (wordIndex < word.length && (matchLength = matchBadWordCharacter(word[wordIndex], currentCharacter,
+						nextCharacter)) > 0) {
+					if (matchLength == 1 && isDigit(currentCharacter))
+						matchedDigitSubstitution = true;
+					if (matchLength == 2 && (isDigit(currentCharacter) || isDigit(nextCharacter)))
+						matchedDigitSubstitution = true;
+					textIndex += matchLength;
+					wordIndex++;
 					continue;
 				}
-				if (i1 == 0)
+				if (wordIndex == 0)
 					break;
-				if ((k1 = matchBadWordCharacter(word[i1 - 1], c, c2)) > 0) {
-					l += k1;
-					if (i1 == 1)
-						j++;
+				if ((matchLength = matchBadWordCharacter(word[wordIndex - 1], currentCharacter, nextCharacter)) > 0) {
+					textIndex += matchLength;
+					if (wordIndex == 1)
+						scanStep++;
 					continue;
 				}
-				if (i1 >= word.length || !isSkippableCharacter(c))
+				if (wordIndex >= word.length || !isSkippableCharacter(currentCharacter))
 					break;
-				if (isSeparator(c) && c != '\'')
-					flag1 = true;
-				if (isDigit(c))
-					flag3 = true;
-				l++;
-				if ((++j1 * 100) / (l - k) > 90)
+				if (isSeparator(currentCharacter) && currentCharacter != '\'')
+					containsSeparator = true;
+				if (isDigit(currentCharacter))
+					skippedDigit = true;
+				textIndex++;
+				if ((++skippedCharacterCount * 100) / (textIndex - startIndex) > 90)
 					break;
 			}
-			if (i1 >= word.length && (!flag2 || !flag3)) {
-				boolean flag4 = true;
-				if (!flag1) {
-					char c1 = ' ';
-					if (k - 1 >= 0)
-						c1 = text[k - 1];
-					char c3 = ' ';
-					if (l < text.length)
-						c3 = text[l];
-					byte byte0 = encodeContextCharacter(c1);
-					byte byte1 = encodeContextCharacter(c3);
-					if (contextPairs != null && containsContextPair(byte1, contextPairs, byte0))
-						flag4 = false;
+			if (wordIndex >= word.length && (!matchedDigitSubstitution || !skippedDigit)) {
+				boolean shouldFilter = true;
+				if (!containsSeparator) {
+					char leftCharacter = ' ';
+					if (startIndex - 1 >= 0)
+						leftCharacter = text[startIndex - 1];
+					char rightCharacter = ' ';
+					if (textIndex < text.length)
+						rightCharacter = text[textIndex];
+					byte leftContextCode = encodeContextCharacter(leftCharacter);
+					byte rightContextCode = encodeContextCharacter(rightCharacter);
+					if (contextPairs != null && containsContextPair(rightContextCode, contextPairs, leftContextCode))
+						shouldFilter = false;
 				} else {
-					boolean flag5 = false;
-					boolean flag6 = false;
-					if (k - 1 < 0 || isSeparator(text[k - 1]) && text[k - 1] != '\'')
-						flag5 = true;
-					if (l >= text.length || isSeparator(text[l]) && text[l] != '\'')
-						flag6 = true;
-					if (!flag5 || !flag6) {
-						boolean flag7 = false;
-						int k2 = k - 2;
-						if (flag5)
-							k2 = k;
-						for (; !flag7 && k2 < l; k2++)
-							if (k2 >= 0 && (!isSeparator(text[k2]) || text[k2] == '\'')) {
-								char ac2[] = new char[3];
-								int j3;
-								for (j3 = 0; j3 < 3; j3++) {
-									if (k2 + j3 >= text.length || isSeparator(text[k2 + j3]) && text[k2 + j3] != '\'')
+					boolean leftBoundary = false;
+					boolean rightBoundary = false;
+					if (startIndex - 1 < 0 || isSeparator(text[startIndex - 1]) && text[startIndex - 1] != '\'')
+						leftBoundary = true;
+					if (textIndex >= text.length || isSeparator(text[textIndex]) && text[textIndex] != '\'')
+						rightBoundary = true;
+					if (!leftBoundary || !rightBoundary) {
+						boolean disallowedFragmentFound = false;
+						int fragmentStart = startIndex - 2;
+						if (leftBoundary)
+							fragmentStart = startIndex;
+						for (; !disallowedFragmentFound && fragmentStart < textIndex; fragmentStart++)
+							if (fragmentStart >= 0
+									&& (!isSeparator(text[fragmentStart]) || text[fragmentStart] == '\'')) {
+								char fragment[] = new char[3];
+								int fragmentLength;
+								for (fragmentLength = 0; fragmentLength < 3; fragmentLength++) {
+									if (fragmentStart + fragmentLength >= text.length
+											|| isSeparator(text[fragmentStart + fragmentLength])
+													&& text[fragmentStart + fragmentLength] != '\'')
 										break;
-									ac2[j3] = text[k2 + j3];
+									fragment[fragmentLength] = text[fragmentStart + fragmentLength];
 								}
 
-								boolean flag8 = true;
-								if (j3 == 0)
-									flag8 = false;
-								if (j3 < 3 && k2 - 1 >= 0 && (!isSeparator(text[k2 - 1]) || text[k2 - 1] == '\''))
-									flag8 = false;
-								if (flag8 && !isAllowedFragment(ac2))
-									flag7 = true;
+								boolean completeFragment = true;
+								if (fragmentLength == 0)
+									completeFragment = false;
+								if (fragmentLength < 3 && fragmentStart - 1 >= 0
+										&& (!isSeparator(text[fragmentStart - 1]) || text[fragmentStart - 1] == '\''))
+									completeFragment = false;
+								if (completeFragment && !isAllowedFragment(fragment))
+									disallowedFragmentFound = true;
 							}
 
-						if (!flag7)
-							flag4 = false;
+						if (!disallowedFragmentFound)
+							shouldFilter = false;
 					}
 				}
-				if (flag4) {
-					int l1 = 0;
-					int i2 = 0;
-					int j2 = -1;
-					for (int l2 = k; l2 < l; l2++)
-						if (isDigit(text[l2]))
-							l1++;
-						else if (isLetter(text[l2])) {
-							i2++;
-							j2 = l2;
+				if (shouldFilter) {
+					int digitCount = 0;
+					int letterCount = 0;
+					int lastLetterIndex = -1;
+					for (int scanIndex = startIndex; scanIndex < textIndex; scanIndex++)
+						if (isDigit(text[scanIndex]))
+							digitCount++;
+						else if (isLetter(text[scanIndex])) {
+							letterCount++;
+							lastLetterIndex = scanIndex;
 						}
 
-					if (j2 > -1)
-						l1 -= l - 1 - j2;
-					if (l1 <= i2) {
-						for (int i3 = k; i3 < l; i3++)
-							text[i3] = '*';
+					if (lastLetterIndex > -1)
+						digitCount -= textIndex - 1 - lastLetterIndex;
+					if (digitCount <= letterCount) {
+						for (int filterIndex = startIndex; filterIndex < textIndex; filterIndex++)
+							text[filterIndex] = '*';
 
 					} else {
-						j = 1;
+						scanStep = 1;
 					}
 				}
 			}
@@ -569,25 +722,41 @@ public final class Censor {
 
 	}
 
+	/**
+	 * Performs the contains context pair operation.
+	 *
+	 * @param right the right
+	 * @param pairs the pairs
+	 * @param left  the left
+	 * @return whether the operation succeeds
+	 */
 	private static boolean containsContextPair(byte right, byte pairs[][], byte left) {
-		int j = 0;
-		if (pairs[j][0] == left && pairs[j][1] == right)
+		int lowerBound = 0;
+		if (pairs[lowerBound][0] == left && pairs[lowerBound][1] == right)
 			return true;
-		int k = pairs.length - 1;
-		if (pairs[k][0] == left && pairs[k][1] == right)
+		int upperBound = pairs.length - 1;
+		if (pairs[upperBound][0] == left && pairs[upperBound][1] == right)
 			return true;
 		do {
-			int l = (j + k) / 2;
-			if (pairs[l][0] == left && pairs[l][1] == right)
+			int midpoint = (lowerBound + upperBound) / 2;
+			if (pairs[midpoint][0] == left && pairs[midpoint][1] == right)
 				return true;
-			if (left < pairs[l][0] || left == pairs[l][0] && right < pairs[l][1])
-				k = l;
+			if (left < pairs[midpoint][0] || left == pairs[midpoint][0] && right < pairs[midpoint][1])
+				upperBound = midpoint;
 			else
-				j = l;
-		} while (j != k && j + 1 != k);
+				lowerBound = midpoint;
+		} while (lowerBound != upperBound && lowerBound + 1 != upperBound);
 		return false;
 	}
 
+	/**
+	 * Performs the match domain character operation.
+	 *
+	 * @param current  the current
+	 * @param expected the expected
+	 * @param next     the next
+	 * @return the resulting value
+	 */
 	private static int matchDomainCharacter(char current, char expected, char next) {
 		if (expected == current)
 			return 1;
@@ -604,6 +773,14 @@ public final class Censor {
 		return expected != 'l' || current != 'i' ? 0 : 1;
 	}
 
+	/**
+	 * Performs the match bad word character operation.
+	 *
+	 * @param expected the expected
+	 * @param current  the current
+	 * @param next     the next
+	 * @return the resulting value
+	 */
 	private static int matchBadWordCharacter(char expected, char current, char next) {
 		if (expected == current)
 			return 1;
@@ -705,6 +882,12 @@ public final class Censor {
 			return 0;
 	}
 
+	/**
+	 * Encodes context character.
+	 *
+	 * @param character the character
+	 * @return the resulting value
+	 */
 	private static byte encodeContextCharacter(char character) {
 		if (character >= 'a' && character <= 'z')
 			return (byte) ((character - 97) + 1);
@@ -716,131 +899,205 @@ public final class Censor {
 			return 27;
 	}
 
+	/**
+	 * Filters ip addresses.
+	 *
+	 * @param text the text
+	 */
 	private static void filterIpAddresses(char text[]) {
-		int j = 0;
-		int k = 0;
-		int l = 0;
-		int i1 = 0;
-		while ((j = findFirstDigit(k, text)) != -1) {
-			boolean flag = false;
-			for (int j1 = k; j1 >= 0 && j1 < j && !flag; j1++)
-				if (!isSeparator(text[j1]) && !isSkippableCharacter(text[j1]))
-					flag = true;
+		int digitStart = 0;
+		int scanPosition = 0;
+		int octetCount = 0;
+		int addressStart = 0;
+		while ((digitStart = findFirstDigit(scanPosition, text)) != -1) {
+			boolean hasInterveningText = false;
+			for (int index = scanPosition; index >= 0 && index < digitStart && !hasInterveningText; index++)
+				if (!isSeparator(text[index]) && !isSkippableCharacter(text[index]))
+					hasInterveningText = true;
 
-			if (flag)
-				l = 0;
-			if (l == 0)
-				i1 = j;
-			k = findFirstNonDigit(j, text);
-			int k1 = 0;
-			for (int l1 = j; l1 < k; l1++)
-				k1 = (k1 * 10 + text[l1]) - 48;
+			if (hasInterveningText)
+				octetCount = 0;
+			if (octetCount == 0)
+				addressStart = digitStart;
+			scanPosition = findFirstNonDigit(digitStart, text);
+			int octetValue = 0;
+			for (int index = digitStart; index < scanPosition; index++)
+				octetValue = (octetValue * 10 + text[index]) - 48;
 
-			if (k1 > 255 || k - j > 8)
-				l = 0;
+			if (octetValue > 255 || scanPosition - digitStart > 8)
+				octetCount = 0;
 			else
-				l++;
-			if (l == 4) {
-				for (int i2 = i1; i2 < k; i2++)
-					text[i2] = '*';
+				octetCount++;
+			if (octetCount == 4) {
+				for (int filterIndex = addressStart; filterIndex < scanPosition; filterIndex++)
+					text[filterIndex] = '*';
 
-				l = 0;
+				octetCount = 0;
 			}
 		}
 	}
 
+	/**
+	 * Finds first digit.
+	 *
+	 * @param start the start
+	 * @param text  the text
+	 * @return the matching position or value
+	 */
 	private static int findFirstDigit(int start, char text[]) {
-		for (int k = start; k < text.length && k >= 0; k++)
-			if (text[k] >= '0' && text[k] <= '9')
-				return k;
+		for (int index = start; index < text.length && index >= 0; index++)
+			if (text[index] >= '0' && text[index] <= '9')
+				return index;
 
 		return -1;
 	}
 
+	/**
+	 * Finds first non digit.
+	 *
+	 * @param start the start
+	 * @param text  the text
+	 * @return the matching position or value
+	 */
 	private static int findFirstNonDigit(int start, char text[]) {
-		for (int l = start; l < text.length && l >= 0; l++)
-			if (text[l] < '0' || text[l] > '9')
-				return l;
+		for (int index = start; index < text.length && index >= 0; index++)
+			if (text[index] < '0' || text[index] > '9')
+				return index;
 
 		return text.length;
 	}
 
+	/**
+	 * Returns whether separator.
+	 *
+	 * @param character the character
+	 * @return whether the requested condition is satisfied
+	 */
 	private static boolean isSeparator(char character) {
 		return !isLetter(character) && !isDigit(character);
 	}
 
+	/**
+	 * Returns whether skippable character.
+	 *
+	 * @param character the character
+	 * @return whether the requested condition is satisfied
+	 */
 	private static boolean isSkippableCharacter(char character) {
 		if (character < 'a' || character > 'z')
 			return true;
 		return character == 'v' || character == 'x' || character == 'j' || character == 'q' || character == 'z';
 	}
 
+	/**
+	 * Returns whether letter.
+	 *
+	 * @param character the character
+	 * @return whether the requested condition is satisfied
+	 */
 	private static boolean isLetter(char character) {
 		return character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z';
 	}
 
+	/**
+	 * Returns whether digit.
+	 *
+	 * @param character the character
+	 * @return whether the requested condition is satisfied
+	 */
 	private static boolean isDigit(char character) {
 		return character >= '0' && character <= '9';
 	}
 
+	/**
+	 * Returns whether lowercase letter.
+	 *
+	 * @param character the character
+	 * @return whether the requested condition is satisfied
+	 */
 	private static boolean isLowercaseLetter(char character) {
 		return character >= 'a' && character <= 'z';
 	}
 
+	/**
+	 * Returns whether uppercase letter.
+	 *
+	 * @param character the character
+	 * @return whether the requested condition is satisfied
+	 */
 	private static boolean isUppercaseLetter(char character) {
 		return character >= 'A' && character <= 'Z';
 	}
 
+	/**
+	 * Returns whether allowed fragment.
+	 *
+	 * @param fragment the fragment
+	 * @return whether the requested condition is satisfied
+	 */
 	private static boolean isAllowedFragment(char fragment[]) {
-		boolean flag = true;
-		for (int j = 0; j < fragment.length; j++)
-			if (!isDigit(fragment[j]) && fragment[j] != 0)
-				flag = false;
+		boolean allDigits = true;
+		for (int index = 0; index < fragment.length; index++)
+			if (!isDigit(fragment[index]) && fragment[index] != 0)
+				allDigits = false;
 
-		if (flag)
+		if (allDigits)
 			return true;
-		int k = encodeFragment(fragment);
-		int l = 0;
-		int i1 = fragmentHashes.length - 1;
-		if (k == fragmentHashes[l] || k == fragmentHashes[i1])
+		int encodedFragment = encodeFragment(fragment);
+		int lowerBound = 0;
+		int upperBound = fragmentHashes.length - 1;
+		if (encodedFragment == fragmentHashes[lowerBound] || encodedFragment == fragmentHashes[upperBound])
 			return true;
 		do {
-			int j1 = (l + i1) / 2;
-			if (k == fragmentHashes[j1])
+			int midpoint = (lowerBound + upperBound) / 2;
+			if (encodedFragment == fragmentHashes[midpoint])
 				return true;
-			if (k < fragmentHashes[j1])
-				i1 = j1;
+			if (encodedFragment < fragmentHashes[midpoint])
+				upperBound = midpoint;
 			else
-				l = j1;
-		} while (l != i1 && l + 1 != i1);
+				lowerBound = midpoint;
+		} while (lowerBound != upperBound && lowerBound + 1 != upperBound);
 		return false;
 	}
 
+	/**
+	 * Encodes fragment.
+	 *
+	 * @param fragment the fragment
+	 * @return the resulting value
+	 */
 	private static int encodeFragment(char fragment[]) {
 		if (fragment.length > 6)
 			return 0;
-		int i = 0;
-		for (int j = 0; j < fragment.length; j++) {
-			char expected = fragment[fragment.length - j - 1];
+		int encodedValue = 0;
+		for (int index = 0; index < fragment.length; index++) {
+			char expected = fragment[fragment.length - index - 1];
 			if (expected >= 'a' && expected <= 'z')
-				i = i * 38 + ((expected - 97) + 1);
+				encodedValue = encodedValue * 38 + ((expected - 97) + 1);
 			else if (expected == '\'')
-				i = i * 38 + 27;
+				encodedValue = encodedValue * 38 + 27;
 			else if (expected >= '0' && expected <= '9')
-				i = i * 38 + ((expected - 48) + 28);
+				encodedValue = encodedValue * 38 + ((expected - 48) + 28);
 			else if (expected != 0)
 				return 0;
 		}
 
-		return i;
+		return encodedValue;
 	}
 
+	/** Stores the fragment hashes values. */
 	private static int[] fragmentHashes;
+	/** Stores the bad words values. */
 	private static char[][] badWords;
+	/** Stores the bad word context pairs values. */
 	private static byte[][][] badWordContextPairs;
+	/** Stores the domain words values. */
 	private static char[][] domainWords;
+	/** Stores the top level domains values. */
 	private static char[][] topLevelDomains;
+	/** Stores the top level domain types values. */
 	private static int[] topLevelDomainTypes;
+	/** Defines the exceptions constant. */
 	private static final String[] EXCEPTIONS = { "cook", "cook's", "cooks", "seeks", "sheet", "woop", "woops", "faq",
 			"noob", "noobs" };
 
