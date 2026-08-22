@@ -156,6 +156,13 @@ public class SoundTrack {
 		int loopEndSample = SAMPLE_RATE * loopEnd / 1000;
 		if (loopBeginSample < 0 || loopBeginSample > sampleCount || loopEndSample < 0 || loopEndSample > sampleCount
 				|| loopBeginSample >= loopEndSample) {
+			/*
+			 * Historical revision-377 behavior sets the requested loop count to zero
+			 * rather than one. Cached track 1592 has loopEnd beyond its synthesized
+			 * duration, so this can produce a negative output length. Independent
+			 * historical Track sources contain the same arithmetic; keep it as a known
+			 * cache/live-data quirk rather than silently changing the mixer.
+			 */
 			loopCount = 0;
 		}
 

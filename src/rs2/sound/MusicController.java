@@ -30,20 +30,15 @@ public final class MusicController {
 
 	private static final class SignlinkMidiBackend implements MidiBackend {
 		public void setVolume(int volume, boolean adjustPlayingTrack) {
-			Signlink.midiVolume = volume;
-			if (adjustPlayingTrack)
-				Signlink.midi = "voladjust";
+			Signlink.setMidiVolume(volume, adjustPlayingTrack);
 		}
 
 		public void stop() {
-			Signlink.midiPlayPending = false;
-			Signlink.midiFade = 0;
-			Signlink.midi = "stop";
+			Signlink.stopMidi();
 		}
 
 		public void save(byte[] data, int length, boolean fade) {
-			Signlink.midiFade = fade ? 1 : 0;
-			Signlink.saveMidi(data, length);
+			Signlink.saveMidi(data, length, fade);
 		}
 	}
 

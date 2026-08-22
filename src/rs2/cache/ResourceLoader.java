@@ -63,6 +63,29 @@ public final class ResourceLoader {
 	}
 
 	/**
+	 * Returns whether all eight bootstrap archives needed before the on-demand
+	 * system are readable from cache index 0.
+	 *
+	 * <p>If any archive is absent or its sector chain cannot be read, startup must
+	 * fetch the revision CRC table before attempting JAGGRAB recovery.</p>
+	 */
+	public boolean hasAllBootstrapArchives() {
+		if (cacheIndices[0] == null) {
+			return false;
+		}
+		try {
+			for (int archiveId = 1; archiveId < ARCHIVE_COUNT; archiveId++) {
+				if (cacheIndices[0].read(archiveId) == null) {
+					return false;
+				}
+			}
+			return true;
+		} catch (RuntimeException exception) {
+			return false;
+		}
+	}
+
+	/**
 	 * Legacy client.method61(int i, int j, String s, int k, int l, String s1)
 	 *
 	 * Parameter mapping: i -> removed fixed 14076 sentinel j -> expectedCrc s ->

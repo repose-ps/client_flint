@@ -170,8 +170,9 @@ public class Client extends GameShell {
 	public static void main(String args[]) {
 		try {
 			System.out.println("RS2 user Client - release #" + 377);
-			if (args.length != 5) {
-				System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid");
+			if (args.length != 5 && args.length != 6) {
+				System.out.println(
+						"Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host]");
 				return;
 			}
 			currentWorldId = Integer.parseInt(args[0]);
@@ -181,7 +182,7 @@ public class Client extends GameShell {
 			else if (args[2].equals("highmem")) {
 				setHighMemory();
 			} else {
-				System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid");
+				System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host]");
 				return;
 			}
 			if (args[3].equals("free"))
@@ -189,11 +190,12 @@ public class Client extends GameShell {
 			else if (args[3].equals("members")) {
 				membersWorld = true;
 			} else {
-				System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid");
+				System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host]");
 				return;
 			}
 			Signlink.storeId = Integer.parseInt(args[4]);
-			Signlink.start(InetAddress.getLocalHost());
+			setServerHost(args.length == 6 ? args[5] : InetAddress.getLocalHost().getHostAddress());
+			Signlink.start(InetAddress.getByName(serverHost));
 			Client client1 = new Client();
 			client1.createFrame(765, 503);
 			return;
@@ -2029,7 +2031,15 @@ public class Client extends GameShell {
 	 * @return the resulting text
 	 */
 	public String getConfiguredHost() {
-		return "runescape.com";
+		return serverHost;
+	}
+
+	/** Configures the hostname used by all standalone game/update/archive sockets. */
+	public static void setServerHost(String host) {
+		if (host == null || host.trim().isEmpty()) {
+			throw new IllegalArgumentException("server host must not be blank");
+		}
+		serverHost = host.trim();
 	}
 
 	/*
@@ -2866,42 +2876,13 @@ public class Client extends GameShell {
 			return;
 		}
 		startupStarted = true;
-		boolean allowedHost = false;
-		String configuredHost = getConfiguredHost();
-		if (configuredHost.endsWith("jagex.com"))
-			allowedHost = true;
-		if (configuredHost.endsWith("runescape.com"))
-			allowedHost = true;
-		if (configuredHost.endsWith("192.168.1.2"))
-			allowedHost = true;
-		if (configuredHost.endsWith("192.168.1.231"))
-			allowedHost = true;
-		if (configuredHost.endsWith("192.168.1.229"))
-			allowedHost = true;
-		if (configuredHost.endsWith("192.168.1.228"))
-			allowedHost = true;
-		if (configuredHost.endsWith("192.168.1.227"))
-			allowedHost = true;
-		if (configuredHost.endsWith("192.168.1.226"))
-			allowedHost = true;
-		if (configuredHost.endsWith("192.168.1.224"))
-			allowedHost = true;
-		if (configuredHost.endsWith("192.168.1.223"))
-			allowedHost = true;
-		if (configuredHost.endsWith("192.168.1.221"))
-			allowedHost = true;
-		if (configuredHost.endsWith("127.0.0.1"))
-			allowedHost = true;
-		if (!allowedHost) {
-			invalidHostError = true;
-			return;
-		}
 		if (Signlink.cacheData != null) {
 			resourceLoader.initializeCacheIndices(Signlink.cacheData, Signlink.cacheIndexes);
 
 		}
 		try {
-//			loadArchiveCrcs(); TODO debug - intentionally disabled in supplied source
+			if (!resourceLoader.hasAllBootstrapArchives())
+				loadArchiveCrcs();
 			titleArchive = loadArchive(resourceLoader.getArchiveCrc(1), "title", 25, 1, "title screen");
 			smallFont = new TypeFace(false, titleArchive, "p11_full");
 			plainFont = new TypeFace(false, titleArchive, "p12_full");
@@ -4595,7 +4576,7 @@ public class Client extends GameShell {
 
 	/*
 	 * Legacy Client.method86(boolean flag): flag -> removed false sentinel. The
-	 * supplied startup path intentionally leaves this CRC refresh disabled.
+	 * startup now invokes this only when the local bootstrap cache is incomplete.
 	 */
 	/**
 	 * Retrieves and validates the nine-entry startup archive CRC table.
@@ -8213,6 +8194,9 @@ public class Client extends GameShell {
 	public static int currentWorldId = 10;
 	/** The client state for port offset. */
 	public static int portOffset;
+
+	/** Host used by every standalone socket opened through Signlink. */
+	private static String serverHost = "127.0.0.1";
 	/** Whether members world is currently active or requested. */
 	public static boolean membersWorld = true;
 	/** Whether low memory is currently active or requested. */

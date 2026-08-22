@@ -10,13 +10,16 @@ import java.io.RandomAccessFile;
 import java.net.InetAddress;
 import java.net.Socket;
 
+import rs2.sound.JavaSoundAudioPlayer;
+
 /**
  * Revision-377 asynchronous platform helper.
  *
  * <p>
  * The historical client called this class {@code signlink}. In this standalone
  * build it retains the cache, socket, DNS, worker-thread and sound/MIDI
- * file-request behavior, but no longer contains applet-relative URL operations.
+ * file-request behavior, and routes completed audio requests to the standalone Java
+ * Sound backend. It no longer contains applet-relative URL operations.
  * </p>
  */
 public final class Signlink implements Runnable {
@@ -27,6 +30,7 @@ public final class Signlink implements Runnable {
 	private static final int MAX_SAVE_LENGTH = 0x1e8480;
 	private static final int AUDIO_FILE_SLOTS = 5;
 	private static final long POLL_INTERVAL_MILLIS = 50L;
+	private static final JavaSoundAudioPlayer AUDIO_PLAYER = new JavaSoundAudioPlayer();
 
 	public static int uid;
 	public static int storeId = 32;
@@ -138,20 +142,23 @@ public final class Signlink implements Runnable {
 				}
 				dnsRequest = null;
 			} else if (saveRequest != null) {
+				File audioFile = new File(cacheDirectory + saveRequest);
 				if (saveBuffer != null) {
-					try (FileOutputStream output = new FileOutputStream(cacheDirectory + saveRequest)) {
+					try (FileOutputStream output = new FileOutputStream(audioFile)) {
 						output.write(saveBuffer, 0, saveLength);
 					} catch (Exception ignored) {
 					}
 				}
 
 				if (wavePlayPending) {
-					wave = cacheDirectory + saveRequest;
+					wave = audioFile.getPath();
 					wavePlayPending = false;
+					AUDIO_PLAYER.playWave(audioFile, waveVolume);
 				}
 				if (midiPlayPending) {
-					midi = cacheDirectory + saveRequest;
+					midi = audioFile.getPath();
 					midiPlayPending = false;
+					AUDIO_PLAYER.playMidi(audioFile, midiVolume, midiFade != 0);
 				}
 				saveRequest = null;
 			}
@@ -224,6 +231,29 @@ public final class Signlink implements Runnable {
 		threadRequest = runnable;
 	}
 
+	/** Applies the legacy WAV attenuation to the standalone Java Sound player. */
+	public static synchronized void setWaveVolume(int volume) {
+		waveVolume = volume;
+		AUDIO_PLAYER.setWaveVolume(volume);
+	}
+
+	/** Applies the legacy MIDI attenuation, optionally updating the live track. */
+	public static synchronized void setMidiVolume(int volume, boolean adjustPlayingTrack) {
+		midiVolume = volume;
+		if (adjustPlayingTrack) {
+			midi = "voladjust";
+			AUDIO_PLAYER.setMidiVolume(volume);
+		}
+	}
+
+	/** Stops standalone MIDI playback and preserves the historical control marker. */
+	public static synchronized void stopMidi() {
+		midiPlayPending = false;
+		midiFade = 0;
+		midi = "stop";
+		AUDIO_PLAYER.stopMidi();
+	}
+
 	/** Queues a WAV file save using the original five-slot filename ring. */
 	public static synchronized boolean saveWave(byte[] data, int length) {
 		if (length > MAX_SAVE_LENGTH) {
@@ -256,7 +286,7 @@ public final class Signlink implements Runnable {
 	}
 
 	/** Queues a MIDI file save using the original five-slot filename ring. */
-	public static synchronized void saveMidi(byte[] data, int length) {
+	public static synchronized void saveMidi(byte[] data, int length, boolean fade) {
 		if (length > MAX_SAVE_LENGTH || saveRequest != null) {
 			return;
 		}
@@ -264,8 +294,14 @@ public final class Signlink implements Runnable {
 		midiPosition = (midiPosition + 1) % AUDIO_FILE_SLOTS;
 		saveLength = length;
 		saveBuffer = data;
+		midiFade = fade ? 1 : 0;
 		midiPlayPending = true;
 		saveRequest = "jingle" + midiPosition + ".mid";
+	}
+
+	/** Compatibility overload retaining the currently selected fade mode. */
+	public static synchronized void saveMidi(byte[] data, int length) {
+		saveMidi(data, length, midiFade != 0);
 	}
 
 	/**

@@ -39,7 +39,7 @@ public final class SoundEffectQueue {
 		}
 
 		public void setVolume(int volume) {
-			Signlink.waveVolume = volume;
+			Signlink.setWaveVolume(volume);
 		}
 	}
 
