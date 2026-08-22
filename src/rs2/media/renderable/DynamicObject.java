@@ -1,9 +1,9 @@
 
 package rs2.media.renderable;
 
-import rs2.Class47;
 import rs2.client;
 import rs2.cache.cfg.Varbit;
+import rs2.cache.def.GameObjectDefinition;
 import rs2.cache.media.AnimationSequence;
 
 /**
@@ -52,13 +52,13 @@ public class DynamicObject extends Renderable {
 			}
 		}
 
-		Class47 definition = Class47.method423(objectId);
-		varbitId = definition.anInt778;
-		varpId = definition.anInt781;
-		morphIds = definition.anIntArray805;
+		GameObjectDefinition definition = GameObjectDefinition.lookup(objectId);
+		varbitId = definition.varbitId;
+		varpId = definition.varpId;
+		morphIds = definition.morphIds;
 	}
 
-	private Class47 resolveDefinition() {
+	private GameObjectDefinition resolveDefinition() {
 		int morphIndex = -1;
 		if (varbitId != -1) {
 			Varbit varbit = Varbit.definitions[varbitId];
@@ -71,7 +71,7 @@ public class DynamicObject extends Renderable {
 		if (morphIndex < 0 || morphIndex >= morphIds.length || morphIds[morphIndex] == -1) {
 			return null;
 		}
-		return Class47.method423(morphIds[morphIndex]);
+		return GameObjectDefinition.lookup(morphIds[morphIndex]);
 	}
 
 	@Override
@@ -101,11 +101,11 @@ public class DynamicObject extends Renderable {
 			}
 		}
 
-		Class47 definition = morphIds != null ? resolveDefinition() : Class47.method423(objectId);
+		GameObjectDefinition definition = morphIds != null ? resolveDefinition() : GameObjectDefinition.lookup(objectId);
 		if (definition == null) {
 			return null;
 		}
-		return definition.method431(type, orientation, southWestHeight, southEastHeight, northEastHeight,
+		return definition.getModelAt(type, orientation, southWestHeight, southEastHeight, northEastHeight,
 				northWestHeight, frameId);
 	}
 }
