@@ -45,6 +45,23 @@ public class SoundTrackEnvelope {
 	/** Number of samples advanced since the most recent reset. */
 	public int tick;
 
+	/**
+	 * Creates an envelope with the revision-377 default two-point shape.
+	 *
+	 * <p>
+	 * Filter definitions omit their envelope segment table when all filter
+	 * parameters are static. The synthesizer still advances the filter envelope,
+	 * so the historical default shape must exist even when no segment data is
+	 * serialized. A decoded envelope replaces these defaults in
+	 * {@link #decodeSegments(Buffer)}.
+	 * </p>
+	 */
+	public SoundTrackEnvelope() {
+		segmentCount = 2;
+		segmentDurations = new int[] { 0, 65535 };
+		segmentPeaks = new int[] { 0, 65535 };
+	}
+
 	/** Decodes the envelope header followed by its segment shape. */
 	public void decode(Buffer buffer) {
 		waveform = buffer.readUnsignedByte();

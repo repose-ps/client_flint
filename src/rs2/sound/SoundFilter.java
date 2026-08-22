@@ -147,5 +147,7 @@ public class SoundFilter {
 		if (alternateMask != 0 || unityGain[1] != unityGain[0]) {
 			envelope.decodeSegments(buffer);
 		}
+		// Static filters omit segment data and intentionally keep the envelope's
+		// revision-377 two-point constructor default.
 	}
 }
