@@ -34,6 +34,7 @@ import rs2.cache.ondemand.OnDemandFetcher;
 import rs2.cache.ondemand.OnDemandRequest;
 import rs2.cache.ui.Widget;
 import rs2.chat.ChatCodec;
+import rs2.chat.Censor;
 import rs2.collection.Node;
 import rs2.collection.NodeDeque;
 import rs2.game.Skills;
@@ -1123,7 +1124,7 @@ public class client extends GameShell {
 						ChatCodec.encode(aString1026, aClass50_Sub1_Sub2_964);
 						aClass50_Sub1_Sub2_964.writeLength(aClass50_Sub1_Sub2_964.position - j);
 						aString1026 = ChatCodec.normalize(aString1026);
-						aString1026 = Class45.method383((byte) 0, aString1026);
+						aString1026 = Censor.censor(aString1026);
 						method47(TextFormatter.formatDisplayName(Base37.decode(aLong1141)), aString1026, 6);
 						if (anInt887 == 2) {
 							anInt887 = 1;
@@ -1300,7 +1301,7 @@ public class client extends GameShell {
 								aClass50_Sub1_Sub2_1131.position);
 						aClass50_Sub1_Sub2_964.writeLength(aClass50_Sub1_Sub2_964.position - i3);
 						aString1104 = ChatCodec.normalize(aString1104);
-						aString1104 = Class45.method383((byte) 0, aString1104);
+						aString1104 = Censor.censor(aString1104);
 						aClass50_Sub1_Sub4_Sub3_Sub2_1167.overheadText = aString1104;
 						aClass50_Sub1_Sub4_Sub3_Sub2_1167.overheadTextColor = i2;
 						aClass50_Sub1_Sub4_Sub3_Sub2_1167.overheadTextEffect = k2;
@@ -1993,7 +1994,7 @@ public class client extends GameShell {
 						anInt1152 = (anInt1152 + 1) % 100;
 						String s9 = ChatCodec.decode(aClass50_Sub1_Sub2_1188, anInt869 - 13);
 						if (j23 != 3)
-							s9 = Class45.method383((byte) 0, s9);
+							s9 = Censor.censor(s9);
 						if (j23 == 2 || j23 == 3)
 							method47("@cr2@" + TextFormatter.formatDisplayName(Base37.decode(l6)), s9, 7);
 						else if (j23 == 1)
@@ -4186,7 +4187,7 @@ public class client extends GameShell {
 						class50_sub1_sub2.readBytesAdd(aClass50_Sub1_Sub2_1131.payload, 0, l3);
 						aClass50_Sub1_Sub2_1131.position = 0;
 						String s = ChatCodec.decode(aClass50_Sub1_Sub2_1131, l3);
-						s = Class45.method383((byte) 0, s);
+						s = Censor.censor(s);
 						class50_sub1_sub4_sub3_sub2.overheadText = s;
 						class50_sub1_sub4_sub3_sub2.overheadTextColor = i2 >> 8;
 						class50_sub1_sub4_sub3_sub2.overheadTextEffect = i2 & 0xff;
@@ -4635,7 +4636,7 @@ public class client extends GameShell {
 			}
 
 			Class22.method277(334, 22845, ai, 800, 500, 512);
-			Class45.method373(class2_4);
+			Censor.load(class2_4);
 			aClass7_1248 = new MouseRecorder(this);
 			startThread(aClass7_1248, 10);
 			DynamicObject.clientInstance = this;
