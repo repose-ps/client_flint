@@ -74,6 +74,8 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Creates an empty buffer with the requested capacity.
+	 * 
+	 * @param capacity the capacity
 	 */
 	public Buffer(int capacity) {
 		this(new byte[capacity]);
@@ -83,14 +85,18 @@ public class Buffer extends DualNode {
 	 * Wraps an existing byte array and starts the cursor at zero.
 	 *
 	 * The array is not copied.
+	 * 
+	 * @param byteData the byte data
 	 */
-	public Buffer(byte abyte0[]) {
-		payload = abyte0;
+	public Buffer(byte byteData[]) {
+		payload = byteData;
 		position = 0;
 	}
 
 	/**
 	 * Writes an outgoing packet opcode obfuscated by ISAAC.
+	 * 
+	 * @param opcode the opcode
 	 */
 	public void writeOpcode(int opcode) {
 		payload[position++] = (byte) (opcode + opcodeCipher.nextInt());
@@ -98,6 +104,8 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes an 8-bit value.
+	 * 
+	 * @param value the value
 	 */
 	public void writeByte(int value) {
 		payload[position++] = (byte) value;
@@ -105,6 +113,8 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes a big-endian 16-bit value.
+	 * 
+	 * @param value the value
 	 */
 	public void writeShort(int value) {
 		payload[position++] = (byte) (value >> 8);
@@ -113,6 +123,8 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes a little-endian 16-bit value.
+	 * 
+	 * @param value the value
 	 */
 	public void writeShortLE(int value) {
 		payload[position++] = (byte) value;
@@ -121,6 +133,8 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes a big-endian 24-bit value.
+	 * 
+	 * @param value the value
 	 */
 	public void writeMedium(int value) {
 		payload[position++] = (byte) (value >> 16);
@@ -130,26 +144,32 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes a big-endian 32-bit value.
+	 * 
+	 * @param inputValue the input value
 	 */
-	public void writeInt(int i) {
-		payload[position++] = (byte) (i >> 24);
-		payload[position++] = (byte) (i >> 16);
-		payload[position++] = (byte) (i >> 8);
-		payload[position++] = (byte) i;
+	public void writeInt(int inputValue) {
+		payload[position++] = (byte) (inputValue >> 24);
+		payload[position++] = (byte) (inputValue >> 16);
+		payload[position++] = (byte) (inputValue >> 8);
+		payload[position++] = (byte) inputValue;
 	}
 
 	/**
 	 * Writes a little-endian 32-bit value.
+	 * 
+	 * @param inputValue the input value
 	 */
-	public void writeIntLE(int i) {
-		payload[position++] = (byte) i;
-		payload[position++] = (byte) (i >> 8);
-		payload[position++] = (byte) (i >> 16);
-		payload[position++] = (byte) (i >> 24);
+	public void writeIntLE(int inputValue) {
+		payload[position++] = (byte) inputValue;
+		payload[position++] = (byte) (inputValue >> 8);
+		payload[position++] = (byte) (inputValue >> 16);
+		payload[position++] = (byte) (inputValue >> 24);
 	}
 
 	/**
 	 * Writes a big-endian 64-bit value.
+	 * 
+	 * @param value the value
 	 */
 	public void writeLong(long value) {
 		payload[position++] = (byte) (int) (value >> 56);
@@ -166,6 +186,8 @@ public class Buffer extends DualNode {
 	 * Writes the client's legacy one-byte-per-character string format.
 	 *
 	 * Strings are terminated by line-feed ({@code 0x0A}), not a zero byte.
+	 * 
+	 * @param value the value
 	 */
 	public void writeString(String value) {
 		for (int index = 0; index < value.length(); index++) {
@@ -177,6 +199,10 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Copies bytes into this buffer and advances the cursor.
+	 * 
+	 * @param source the source
+	 * @param offset the offset
+	 * @param length the length
 	 */
 	public void writeBytes(byte source[], int offset, int length) {
 		System.arraycopy(source, offset, payload, position, length);
@@ -195,6 +221,8 @@ public class Buffer extends DualNode {
 	 * <li>Write the variable-length payload.</li>
 	 * <li>Call this method with the number of payload bytes written.</li>
 	 * </ol>
+	 * 
+	 * @param length the length
 	 */
 	public void writeLength(int length) {
 		payload[position - length - 1] = (byte) length;
@@ -284,6 +312,10 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Copies bytes out of this buffer and advances the cursor.
+	 * 
+	 * @param destination       the destination
+	 * @param destinationOffset the destination offset
+	 * @param length            the length
 	 */
 	public void readBytes(byte[] destination, int destinationOffset, int length) {
 		System.arraycopy(payload, position, destination, destinationOffset, length);
@@ -305,6 +337,8 @@ public class Buffer extends DualNode {
 	 * Call {@link #startBitAccess()} before the first bit read and
 	 * {@link #finishBitAccess()} before returning to byte reads.
 	 * </p>
+	 * 
+	 * @param count the count
 	 */
 	public int readBits(int count) {
 		int byteIndex = bitPosition >>> 3;
@@ -368,8 +402,8 @@ public class Buffer extends DualNode {
 	 * revision 377 login block.
 	 * </p>
 	 *
-	 * @param exponent RSA public exponent
-	 * @param modulus  RSA modulus
+	 * @param exponent the exponent
+	 * @param modulus  the modulus
 	 */
 	public void encryptRsa(BigInteger exponent, BigInteger modulus) {
 		int length = position;
@@ -395,6 +429,8 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes a byte with the add transformation.
+	 * 
+	 * @param value the value
 	 */
 	public void writeByteAdd(int value) {
 		payload[position++] = (byte) (value + 128);
@@ -402,6 +438,8 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes a byte with the neg transformation.
+	 * 
+	 * @param value the value
 	 */
 	public void writeByteNeg(int value) {
 		payload[position++] = (byte) (-value);
@@ -409,6 +447,8 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes a byte with the sub transformation.
+	 * 
+	 * @param value the value
 	 */
 	public void writeByteSub(int value) {
 		payload[position++] = (byte) (128 - value);
@@ -458,18 +498,22 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes a big-endian short whose low byte has the Add transformation.
+	 * 
+	 * @param inputValue the input value
 	 */
-	public void writeShortAdd(int i) {
-		payload[position++] = (byte) (i >> 8);
-		payload[position++] = (byte) (i + 128);
+	public void writeShortAdd(int inputValue) {
+		payload[position++] = (byte) (inputValue >> 8);
+		payload[position++] = (byte) (inputValue + 128);
 	}
 
 	/**
 	 * Writes a little-endian short whose low byte has the Add transformation.
+	 * 
+	 * @param inputValue the input value
 	 */
-	public void writeShortAddLE(int j) {
-		payload[position++] = (byte) (j + 128);
-		payload[position++] = (byte) (j >> 8);
+	public void writeShortAddLE(int inputValue) {
+		payload[position++] = (byte) (inputValue + 128);
+		payload[position++] = (byte) (inputValue >> 8);
 	}
 
 	/**
@@ -503,6 +547,11 @@ public class Buffer extends DualNode {
 		return (high << 8) | low;
 	}
 
+	/**
+	 * Reads short le.
+	 * 
+	 * @return the resulting int
+	 */
 	public int readShortLE() {
 		int value = readUnsignedShortLE();
 		return value > 32767 ? value - 65536 : value;
@@ -527,6 +576,11 @@ public class Buffer extends DualNode {
 		return (high << 16) | (middle << 8) | low;
 	}
 
+	/**
+	 * Reads int le.
+	 * 
+	 * @return the resulting int
+	 */
 	public int readIntLE() {
 		return readUnsignedByte() | (readUnsignedByte() << 8) | (readUnsignedByte() << 16) | (readUnsignedByte() << 24);
 	}
@@ -561,6 +615,10 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads forward from this buffer while filling the destination backward.
+	 * 
+	 * @param destination       the destination
+	 * @param destinationOffset the destination offset
+	 * @param length            the length
 	 */
 	public void readBytesReverse(byte[] destination, int destinationOffset, int length) {
 		for (int index = destinationOffset + length - 1; index >= destinationOffset; index--) {
@@ -570,6 +628,10 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads bytes after subtracting 128 from every encoded byte.
+	 * 
+	 * @param destination       the destination
+	 * @param destinationOffset the destination offset
+	 * @param length            the length
 	 */
 	public void readBytesAdd(byte[] destination, int destinationOffset, int length) {
 		int end = destinationOffset + length;

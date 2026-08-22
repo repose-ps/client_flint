@@ -5,6 +5,9 @@ package rs2.net;
  */
 public final class Ipv4Address {
 
+	/**
+	 * Initializes this instance.
+	 */
 	private Ipv4Address() {
 		throw new AssertionError("No instances");
 	}
@@ -15,6 +18,8 @@ public final class Ipv4Address {
 	 * <p>
 	 * For example, {@code 0x7f000001} becomes {@code 127.0.0.1}.
 	 * </p>
+	 * 
+	 * @param address the address
 	 */
 	public static String format(int address) {
 		return new StringBuilder(15).append(address >>> 24 & 0xff).append('.').append(address >>> 16 & 0xff).append('.')

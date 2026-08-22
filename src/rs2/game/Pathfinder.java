@@ -13,40 +13,71 @@ import rs2.scene.util.CollisionMap;
  * approximate-target heuristic and turn-point compression.
  * </p>
  */
-public final class Pathfinder {
+public final /**
+				 * Initializes this instance.
+				 */
+class Pathfinder {
 
+	/**
+	 * Stores map size.
+	 */
 	private static final int MAP_SIZE = 104;
+	/**
+	 * Stores queue capacity.
+	 */
 	private static final int QUEUE_CAPACITY = 4000;
+	/**
+	 * Stores unreachable distance.
+	 */
 	private static final int UNREACHABLE_DISTANCE = 0x5f5e0ff;
+	/**
+	 * Stores start direction.
+	 */
 	private static final int START_DIRECTION = 99;
+	/**
+	 * Stores alternative search radius.
+	 */
 	private static final int ALTERNATIVE_SEARCH_RADIUS = 10;
+	/**
+	 * Stores alternative max distance.
+	 */
 	private static final int ALTERNATIVE_MAX_DISTANCE = 100;
 
+	/**
+	 * Stores directions.
+	 */
 	private final int[][] directions = new int[MAP_SIZE][MAP_SIZE];
+	/**
+	 * Stores distances.
+	 */
 	private final int[][] distances = new int[MAP_SIZE][MAP_SIZE];
+	/**
+	 * Stores queue x.
+	 */
 	private final int[] queueX = new int[QUEUE_CAPACITY];
+	/**
+	 * Stores queue y.
+	 */
 	private final int[] queueY = new int[QUEUE_CAPACITY];
 
 	/**
 	 * Finds a route using the exact revision-377 local collision rules.
 	 *
-	 * @param collisionMap     collision map for the current plane
-	 * @param startX           mover start tile X
-	 * @param startY           mover start tile Y
-	 * @param destinationX     target tile/rectangle X
-	 * @param destinationY     target tile/rectangle Y
-	 * @param targetWidth      rectangular target width; zero for non-rectangle
-	 *                         targets
-	 * @param targetHeight     rectangular target height; zero for non-rectangle
-	 *                         targets
-	 * @param interactionType  location shape encoded as shape + 1, or zero for
-	 *                         ordinary tiles/rectangles
-	 * @param orientation      location orientation used by wall/decoration reach
-	 *                         checks
-	 * @param accessMask       rectangular target side restrictions
-	 * @param allowAlternative whether to choose the nearest short reachable tile
-	 *                         when the target cannot be reached
+	 * targets targets ordinary tiles/rectangles checks when the target cannot be
+	 * reached
+	 * 
 	 * @return compressed route, or {@code null} when no supported route exists
+	 * @param collisionMap     the collision map
+	 * @param startX           the start x
+	 * @param startY           the start y
+	 * @param destinationX     the destination x
+	 * @param destinationY     the destination y
+	 * @param targetWidth      the target width
+	 * @param targetHeight     the target height
+	 * @param interactionType  the interaction type
+	 * @param orientation      the orientation
+	 * @param accessMask       the access mask
+	 * @param allowAlternative the allow alternative
 	 */
 	public Route findRoute(CollisionMap collisionMap, int startX, int startY, int destinationX, int destinationY,
 			int targetWidth, int targetHeight, int interactionType, int orientation, int accessMask,
@@ -250,6 +281,9 @@ public final class Pathfinder {
 				alternative);
 	}
 
+	/**
+	 * Resets search.
+	 */
 	private void resetSearch() {
 		for (int x = 0; x < MAP_SIZE; x++) {
 			for (int y = 0; y < MAP_SIZE; y++) {
@@ -261,11 +295,31 @@ public final class Pathfinder {
 
 	/** Compressed turn-point route in the original endpoint-to-start order. */
 	public static final class Route {
+		/**
+		 * Stores x.
+		 */
 		private final int[] x;
+		/**
+		 * Stores y.
+		 */
 		private final int[] y;
+		/**
+		 * Number of waypoint entries.
+		 */
 		private final int waypointCount;
+		/**
+		 * Whether alternative.
+		 */
 		private final boolean alternative;
 
+		/**
+		 * Initializes this instance.
+		 * 
+		 * @param x             the x
+		 * @param y             the y
+		 * @param waypointCount the waypoint count
+		 * @param alternative   the alternative
+		 */
 		private Route(int[] x, int[] y, int waypointCount, boolean alternative) {
 			this.x = x;
 			this.y = y;
@@ -273,26 +327,58 @@ public final class Pathfinder {
 			this.alternative = alternative;
 		}
 
+		/**
+		 * Returns waypoint count.
+		 * 
+		 * @return the resulting int
+		 */
 		public int getWaypointCount() {
 			return waypointCount;
 		}
 
+		/**
+		 * Returns waypoint x.
+		 * 
+		 * @return the resulting int
+		 * @param index the index
+		 */
 		public int getWaypointX(int index) {
 			return x[index];
 		}
 
+		/**
+		 * Returns waypoint y.
+		 * 
+		 * @return the resulting int
+		 * @param index the index
+		 */
 		public int getWaypointY(int index) {
 			return y[index];
 		}
 
+		/**
+		 * Returns destination x.
+		 * 
+		 * @return the resulting int
+		 */
 		public int getDestinationX() {
 			return x[0];
 		}
 
+		/**
+		 * Returns destination y.
+		 * 
+		 * @return the resulting int
+		 */
 		public int getDestinationY() {
 			return y[0];
 		}
 
+		/**
+		 * Returns whether alternative.
+		 * 
+		 * @return the resulting boolean
+		 */
 		public boolean isAlternative() {
 			return alternative;
 		}

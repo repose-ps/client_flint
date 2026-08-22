@@ -14,34 +14,113 @@ import rs2.scene.util.TiledUtils;
 
 public class Region {
 
+	/**
+	 * Stores tile flags.
+	 */
 	private final byte[][][] tileFlags;
+	/**
+	 * Stores hue offset.
+	 */
 	private static int hueOffset = (int) (Math.random() * 17.0D) - 8;
+	/**
+	 * Stores overlay rotations.
+	 */
 	private final byte[][][] overlayRotations;
+	/**
+	 * Stores wall decoration y offsets.
+	 */
 	private static final int[] WALL_DECORATION_Y_OFFSETS = { 0, -1, 0, 1 };
+	/**
+	 * Stores hue sums.
+	 */
 	private final int[] hueSums;
+	/**
+	 * Stores saturation sums.
+	 */
 	private final int[] saturationSums;
+	/**
+	 * Stores lightness sums.
+	 */
 	private final int[] lightnessSums;
+	/**
+	 * Stores hue multiplier sums.
+	 */
 	private final int[] hueMultiplierSums;
+	/**
+	 * Stores underlay counts.
+	 */
 	private final int[] underlayCounts;
+	/**
+	 * Stores tile heights.
+	 */
 	private final int[][][] tileHeights;
+	/**
+	 * Stores minimum plane.
+	 */
 	public static int minimumPlane = 99;
+	/**
+	 * Stores width.
+	 */
 	private final int width;
+	/**
+	 * Stores height.
+	 */
 	private final int height;
+	/**
+	 * Stores overlay shapes.
+	 */
 	private final byte[][][] overlayShapes;
+	/**
+	 * Stores overlay ids.
+	 */
 	private final byte[][][] overlayIds;
+	/**
+	 * Stores wall orientation flags.
+	 */
 	private static final int[] WALL_ORIENTATION_FLAGS = { 1, 2, 4, 8 };
+	/**
+	 * Stores underlay ids.
+	 */
 	private final byte[][][] underlayIds;
+	/**
+	 * Stores wall decoration x offsets.
+	 */
 	private static final int[] WALL_DECORATION_X_OFFSETS = { 1, 0, -1, 0 };
+	/**
+	 * Stores current plane.
+	 */
 	public static int currentPlane;
+	/**
+	 * Stores lightness offset.
+	 */
 	private static int lightnessOffset = (int) (Math.random() * 33.0D) - 16;
+	/**
+	 * Stores shadow intensity.
+	 */
 	private final byte[][][] shadowIntensity;
+	/**
+	 * Stores tile lightness.
+	 */
 	private final int[][] tileLightness;
+	/**
+	 * Stores diagonal wall orientation flags.
+	 */
 	private static final int[] DIAGONAL_WALL_ORIENTATION_FLAGS = { 16, 32, 64, 128 };
+	/**
+	 * Stores occlusion flags.
+	 */
 	private final int[][][] occlusionFlags;
+	/**
+	 * Whether low memory.
+	 */
 	public static boolean lowMemory = true;
 
 	/**
 	 * Returns the effective render plane after bridge/roof tile flags are applied.
+	 * 
+	 * @param plane the plane
+	 * @param x     the x
+	 * @param y     the y
 	 */
 	public int getEffectivePlane(int plane, int x, int y) {
 		if ((tileFlags[plane][x][y] & 0x8) != 0) {
@@ -53,6 +132,19 @@ public class Region {
 		return plane;
 	}
 
+	/**
+	 * Performs create renderable.
+	 * 
+	 * @return the resulting renderable
+	 * @param definition      the definition
+	 * @param objectId        the object id
+	 * @param type            the type
+	 * @param orientation     the orientation
+	 * @param southWestHeight the south west height
+	 * @param southEastHeight the south east height
+	 * @param northEastHeight the north east height
+	 * @param northWestHeight the north west height
+	 */
 	private static Renderable createRenderable(GameObjectDefinition definition, int objectId, int type, int orientation,
 			int southWestHeight, int southEastHeight, int northEastHeight, int northWestHeight) {
 		if (definition.animationId == -1 && definition.morphIds == null) {
@@ -70,6 +162,17 @@ public class Region {
 	 * This is intentionally separate from map-build placement: live updates do not
 	 * modify the region shadow/occlusion work arrays or minimum-plane state.
 	 * </p>
+	 * 
+	 * @param objectId     the object id
+	 * @param heightPlane  the height plane
+	 * @param type         the type
+	 * @param orientation  the orientation
+	 * @param x            the x
+	 * @param y            the y
+	 * @param scenePlane   the scene plane
+	 * @param collisionMap the collision map
+	 * @param scene        the scene
+	 * @param heights      the heights
 	 */
 	public static void addLocation(int objectId, int heightPlane, int type, int orientation, int x, int y,
 			int scenePlane, CollisionMap collisionMap, Scene scene, int[][][] heights) {
@@ -232,6 +335,10 @@ public class Region {
 	/**
 	 * Clears one 8x8 instanced terrain chunk while preserving neighboring edge
 	 * heights.
+	 * 
+	 * @param plane the plane
+	 * @param x     the x
+	 * @param y     the y
 	 */
 	public void clearChunkHeights(int plane, int x, int y) {
 		for (int dx = 0; dx < 8; dx++) {
@@ -261,6 +368,9 @@ public class Region {
 	/**
 	 * Finalizes terrain collision, lighting, floor tiles, bridges and occluders
 	 * after map decoding.
+	 * 
+	 * @param collisionMaps the collision maps
+	 * @param scene         the scene
 	 */
 	public void buildScene(CollisionMap[] collisionMaps, Scene scene) {
 		applyBlockedTileCollision(collisionMaps);
@@ -277,6 +387,11 @@ public class Region {
 		buildOccluders();
 	}
 
+	/**
+	 * Applies blocked tile collision.
+	 * 
+	 * @param collisionMaps the collision maps
+	 */
 	private void applyBlockedTileCollision(CollisionMap[] collisionMaps) {
 		for (int plane = 0; plane < 4; plane++) {
 			for (int x = 0; x < 104; x++) {
@@ -296,6 +411,9 @@ public class Region {
 		}
 	}
 
+	/**
+	 * Performs randomize floor color offsets.
+	 */
 	private static void randomizeFloorColorOffsets() {
 		hueOffset += (int) (Math.random() * 5.0D) - 2;
 		if (hueOffset < -8) {
@@ -312,6 +430,11 @@ public class Region {
 		}
 	}
 
+	/**
+	 * Performs calculate tile lightness.
+	 * 
+	 * @param plane the plane
+	 */
 	private void calculateTileLightness(int plane) {
 		byte[][] planeShadows = shadowIntensity[plane];
 		int baseLightness = 96;
@@ -339,6 +462,12 @@ public class Region {
 		}
 	}
 
+	/**
+	 * Builds floor tiles.
+	 * 
+	 * @param plane the plane
+	 * @param scene the scene
+	 */
 	private void buildFloorTiles(int plane, Scene scene) {
 		for (int y = 0; y < height; y++) {
 			hueSums[y] = 0;
@@ -504,11 +633,25 @@ public class Region {
 		}
 	}
 
+	/**
+	 * Performs should build tile.
+	 * 
+	 * @return the resulting boolean
+	 * @param plane the plane
+	 * @param x     the x
+	 * @param y     the y
+	 */
 	private boolean shouldBuildTile(int plane, int x, int y) {
 		return !lowMemory || (tileFlags[0][x][y] & 0x2) != 0
 				|| ((tileFlags[plane][x][y] & 0x10) == 0 && getEffectivePlane(plane, x, y) == currentPlane);
 	}
 
+	/**
+	 * Applies effective planes.
+	 * 
+	 * @param plane the plane
+	 * @param scene the scene
+	 */
 	private void applyEffectivePlanes(int plane, Scene scene) {
 		for (int y = 1; y < height - 1; y++) {
 			for (int x = 1; x < width - 1; x++) {
@@ -517,6 +660,11 @@ public class Region {
 		}
 	}
 
+	/**
+	 * Applies bridge tiles.
+	 * 
+	 * @param scene the scene
+	 */
 	private void applyBridgeTiles(Scene scene) {
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
@@ -560,6 +708,15 @@ public class Region {
 		}
 	}
 
+	/**
+	 * Performs merge xwall occluder.
+	 * 
+	 * @param sourcePlane the source plane
+	 * @param targetPlane the target plane
+	 * @param x           the x
+	 * @param y           the y
+	 * @param mask        the mask
+	 */
 	private void mergeXWallOccluder(int sourcePlane, int targetPlane, int x, int y, int mask) {
 		int minY = y;
 		int maxY = y;
@@ -601,6 +758,15 @@ public class Region {
 		}
 	}
 
+	/**
+	 * Performs merge ywall occluder.
+	 * 
+	 * @param sourcePlane the source plane
+	 * @param targetPlane the target plane
+	 * @param x           the x
+	 * @param y           the y
+	 * @param mask        the mask
+	 */
 	private void mergeYWallOccluder(int sourcePlane, int targetPlane, int x, int y, int mask) {
 		int minX = x;
 		int maxX = x;
@@ -642,6 +808,15 @@ public class Region {
 		}
 	}
 
+	/**
+	 * Performs merge horizontal occluder.
+	 * 
+	 * @param plane       the plane
+	 * @param targetPlane the target plane
+	 * @param x           the x
+	 * @param y           the y
+	 * @param mask        the mask
+	 */
 	private void mergeHorizontalOccluder(int plane, int targetPlane, int x, int y, int mask) {
 		int minX = x;
 		int maxX = x;
@@ -681,7 +856,19 @@ public class Region {
 		}
 	}
 
-	/** Decodes one rotated 8x8 terrain chunk from a 64x64 map square. */
+	/**
+	 * Decodes one rotated 8x8 terrain chunk from a 64x64 map square.
+	 * 
+	 * @param data             the data
+	 * @param sourcePlane      the source plane
+	 * @param sourceX          the source x
+	 * @param sourceY          the source y
+	 * @param destinationPlane the destination plane
+	 * @param destinationX     the destination x
+	 * @param destinationY     the destination y
+	 * @param rotation         the rotation
+	 * @param collisionMaps    the collision maps
+	 */
 	public void loadTerrainChunk(byte[] data, int sourcePlane, int sourceX, int sourceY, int destinationPlane,
 			int destinationX, int destinationY, int rotation, CollisionMap[] collisionMaps) {
 		for (int x = 0; x < 8; x++) {
@@ -712,6 +899,9 @@ public class Region {
 
 	/**
 	 * Requests every source model referenced by a delta-encoded landscape stream.
+	 * 
+	 * @param buffer  the buffer
+	 * @param fetcher the fetcher
 	 */
 	public static void requestGameObjectModels(Buffer buffer, OnDemandFetcher fetcher) {
 		int objectId = -1;
@@ -734,6 +924,9 @@ public class Region {
 
 	/**
 	 * Returns whether the definition has the model required by a placement type.
+	 * 
+	 * @param objectId the object id
+	 * @param type     the type
 	 */
 	public static boolean isGameObjectModelReady(int objectId, int type) {
 		GameObjectDefinition definition = GameObjectDefinition.lookup(objectId);
@@ -746,6 +939,13 @@ public class Region {
 		return definition.isModelReady(type);
 	}
 
+	/**
+	 * Performs adjust underlay lightness.
+	 * 
+	 * @return the resulting int
+	 * @param packedHsl  the packed hsl
+	 * @param brightness the brightness
+	 */
 	private static int adjustUnderlayLightness(int packedHsl, int brightness) {
 		if (packedHsl == -1) {
 			return 12345678;
@@ -759,7 +959,20 @@ public class Region {
 		return (packedHsl & 0xff80) + brightness;
 	}
 
-	/** Decodes one rotated 8x8 landscape/object chunk from a 64x64 map square. */
+	/**
+	 * Decodes one rotated 8x8 landscape/object chunk from a 64x64 map square.
+	 * 
+	 * @param data             the data
+	 * @param sourcePlane      the source plane
+	 * @param sourceX          the source x
+	 * @param sourceY          the source y
+	 * @param destinationPlane the destination plane
+	 * @param destinationX     the destination x
+	 * @param destinationY     the destination y
+	 * @param rotation         the rotation
+	 * @param collisionMaps    the collision maps
+	 * @param scene            the scene
+	 */
 	public void loadObjectChunk(byte[] data, int sourcePlane, int sourceX, int sourceY, int destinationPlane,
 			int destinationX, int destinationY, int rotation, CollisionMap[] collisionMaps, Scene scene) {
 		Buffer buffer = new Buffer(data);
@@ -810,6 +1023,15 @@ public class Region {
 
 	/**
 	 * Places one map-loaded object and updates region shadow/occlusion work state.
+	 * 
+	 * @param objectId     the object id
+	 * @param type         the type
+	 * @param orientation  the orientation
+	 * @param plane        the plane
+	 * @param x            the x
+	 * @param y            the y
+	 * @param collisionMap the collision map
+	 * @param scene        the scene
 	 */
 	private void placeLocation(int objectId, int type, int orientation, int plane, int x, int y,
 			CollisionMap collisionMap, Scene scene) {
@@ -1075,7 +1297,16 @@ public class Region {
 		}
 	}
 
-	/** Decodes a complete 64x64 terrain map square into the local region. */
+	/**
+	 * Decodes a complete 64x64 terrain map square into the local region.
+	 * 
+	 * @param data          the data
+	 * @param baseX         the base x
+	 * @param baseY         the base y
+	 * @param noiseX        the noise x
+	 * @param noiseY        the noise y
+	 * @param collisionMaps the collision maps
+	 */
 	public void loadTerrainRegion(byte[] data, int baseX, int baseY, int noiseX, int noiseY,
 			CollisionMap[] collisionMaps) {
 		for (int plane = 0; plane < 4; plane++) {
@@ -1099,6 +1330,14 @@ public class Region {
 		}
 	}
 
+	/**
+	 * Initializes this instance.
+	 * 
+	 * @param tileHeights the tile heights
+	 * @param tileFlags   the tile flags
+	 * @param width       the width
+	 * @param height      the height
+	 */
 	public Region(int[][][] tileHeights, byte[][][] tileFlags, int width, int height) {
 		minimumPlane = 99;
 		this.width = width;
@@ -1119,7 +1358,15 @@ public class Region {
 		underlayCounts = new int[height];
 	}
 
-	/** Decodes a complete delta-encoded landscape/object map square. */
+	/**
+	 * Decodes a complete delta-encoded landscape/object map square.
+	 * 
+	 * @param data          the data
+	 * @param baseX         the base x
+	 * @param baseY         the base y
+	 * @param collisionMaps the collision maps
+	 * @param scene         the scene
+	 */
 	public void loadObjectRegion(byte[] data, int baseX, int baseY, CollisionMap[] collisionMaps, Scene scene) {
 		Buffer buffer = new Buffer(data);
 		int objectId = -1;
@@ -1160,6 +1407,11 @@ public class Region {
 	/**
 	 * Fills an unavailable terrain rectangle with shadow 127 and copied edge
 	 * heights.
+	 * 
+	 * @param x          the x
+	 * @param y          the y
+	 * @param areaWidth  the area width
+	 * @param areaHeight the area height
 	 */
 	public void fillMissingTerrain(int x, int y, int areaWidth, int areaHeight) {
 		for (int tileY = y; tileY <= y + areaHeight; tileY++) {
@@ -1187,6 +1439,10 @@ public class Region {
 	/**
 	 * Scans a landscape stream and verifies the first relevant placement of each
 	 * object has its models loaded.
+	 * 
+	 * @param data  the data
+	 * @param baseX the base x
+	 * @param baseY the base y
 	 */
 	public static boolean areObjectModelsReady(byte[] data, int baseX, int baseY) {
 		boolean ready = true;
@@ -1232,6 +1488,13 @@ public class Region {
 		}
 	}
 
+	/**
+	 * Performs adjust overlay lightness.
+	 * 
+	 * @return the resulting int
+	 * @param packedHsl  the packed hsl
+	 * @param brightness the brightness
+	 */
 	private static int adjustOverlayLightness(int packedHsl, int brightness) {
 		if (packedHsl == -2) {
 			return 12345678;
@@ -1256,6 +1519,14 @@ public class Region {
 	/**
 	 * Decodes one terrain-tile record. Out-of-bounds targets still consume the
 	 * complete record.
+	 * 
+	 * @param buffer   the buffer
+	 * @param plane    the plane
+	 * @param x        the x
+	 * @param y        the y
+	 * @param noiseX   the noise x
+	 * @param noiseY   the noise y
+	 * @param rotation the rotation
 	 */
 	private void decodeTile(Buffer buffer, int plane, int x, int y, int noiseX, int noiseY, int rotation) {
 		if (x >= 0 && x < 104 && y >= 0 && y < 104) {

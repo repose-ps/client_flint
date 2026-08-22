@@ -16,6 +16,9 @@ import rs2.cache.media.IndexedImage;
  */
 public class Rasterizer3D extends Rasterizer {
 
+	/**
+	 * Whether low memory.
+	 */
 	public static boolean lowMemory = true;
 	/**
 	 * Clips horizontal spans to the current 2D raster bounds when set by model
@@ -31,38 +34,95 @@ public class Rasterizer3D extends Rasterizer {
 	public static boolean gouraudBlockShading = true;
 	/** 0..255 source alpha used by flat and Gouraud scanlines. */
 	public static int alpha;
+	/**
+	 * Stores center x.
+	 */
 	public static int centerX;
+	/**
+	 * Stores center y.
+	 */
 	public static int centerY;
 
+	/**
+	 * Stores reciprocal15.
+	 */
 	public static int[] reciprocal15 = new int[512];
+	/**
+	 * Stores reciprocal16.
+	 */
 	public static int[] reciprocal16 = new int[2048];
+	/**
+	 * Stores sine.
+	 */
 	public static int[] SINE = new int[2048];
+	/**
+	 * Stores cosine.
+	 */
 	public static int[] COSINE = new int[2048];
+	/**
+	 * Stores scanline offsets.
+	 */
 	public static int[] scanlineOffsets;
 
+	/**
+	 * Number of loaded texture entries.
+	 */
 	private static int loadedTextureCount;
+	/**
+	 * Stores textures.
+	 */
 	public static IndexedImage[] textures = new IndexedImage[50];
+	/**
+	 * Stores texture has transparency.
+	 */
 	private static boolean[] textureHasTransparency = new boolean[50];
+	/**
+	 * Stores average texture colors.
+	 */
 	private static int[] averageTextureColors = new int[50];
+	/**
+	 * Stores texture pool available.
+	 */
 	private static int texturePoolAvailable;
+	/**
+	 * Stores texture pool.
+	 */
 	private static int[][] texturePool;
+	/**
+	 * Stores texture pixels.
+	 */
 	private static int[][] texturePixels = new int[50][];
+	/**
+	 * Stores texture last used.
+	 */
 	public static int[] textureLastUsed = new int[50];
+	/**
+	 * Stores texture cycle.
+	 */
 	public static int textureCycle;
+	/**
+	 * Stores hsl to rgb.
+	 */
 	public static int[] HSL_TO_RGB = new int[0x10000];
+	/**
+	 * Stores texture palettes.
+	 */
 	private static int[][] texturePalettes = new int[50][];
 
 	static {
-		for (int i = 1; i < 512; i++)
-			reciprocal15[i] = 32768 / i;
-		for (int i = 1; i < 2048; i++)
-			reciprocal16[i] = 0x10000 / i;
+		for (int loopIndex = 1; loopIndex < 512; loopIndex++)
+			reciprocal15[loopIndex] = 32768 / loopIndex;
+		for (int loopIndex2 = 1; loopIndex2 < 2048; loopIndex2++)
+			reciprocal16[loopIndex2] = 0x10000 / loopIndex2;
 		for (int angle = 0; angle < 2048; angle++) {
 			SINE[angle] = (int) (65536D * Math.sin(angle * 0.0030679614999999999D));
 			COSINE[angle] = (int) (65536D * Math.cos(angle * 0.0030679614999999999D));
 		}
 	}
 
+	/**
+	 * Initializes this instance.
+	 */
 	private Rasterizer3D() {
 	}
 
@@ -88,7 +148,9 @@ public class Rasterizer3D extends Rasterizer {
 		texturePalettes = null;
 	}
 
-	/** Builds scanline offsets from the current {@link Rasterizer} dimensions. */
+	/**
+	 * Builds scanline offsets from the current {@link Rasterizer} dimensions.
+	 */
 	public static void setDefaultBounds() {
 		scanlineOffsets = new int[Rasterizer.height];
 		for (int y = 0; y < Rasterizer.height; y++)
@@ -97,7 +159,12 @@ public class Rasterizer3D extends Rasterizer {
 		centerY = Rasterizer.height / 2;
 	}
 
-	/** Builds projection scanline offsets for an explicit viewport. */
+	/**
+	 * Builds projection scanline offsets for an explicit viewport.
+	 * 
+	 * @param width  the width
+	 * @param height the height
+	 */
 	public static void setBounds(int width, int height) {
 		scanlineOffsets = new int[height];
 		for (int y = 0; y < height; y++)
@@ -119,6 +186,8 @@ public class Rasterizer3D extends Rasterizer {
 	/**
 	 * Allocates the reusable expanded-texel pool if it has not already been
 	 * allocated.
+	 * 
+	 * @param capacity the capacity
 	 */
 	public static void initializeTexturePool(int capacity) {
 		if (texturePool != null)
@@ -132,6 +201,8 @@ public class Rasterizer3D extends Rasterizer {
 	/**
 	 * Loads numbered indexed textures 0..49; absent entries are silently skipped as
 	 * in 377.
+	 * 
+	 * @param archive the archive
 	 */
 	public static void loadTextures(Archive archive) {
 		loadedTextureCount = 0;
@@ -149,7 +220,11 @@ public class Rasterizer3D extends Rasterizer {
 		}
 	}
 
-	/** Returns the cached gamma-adjusted average palette colour for a texture. */
+	/**
+	 * Returns the cached gamma-adjusted average palette colour for a texture.
+	 * 
+	 * @param textureId the texture id
+	 */
 	public static int getAverageTextureColor(int textureId) {
 		if (averageTextureColors[textureId] != 0)
 			return averageTextureColors[textureId];
@@ -167,7 +242,11 @@ public class Rasterizer3D extends Rasterizer {
 		return averageTextureColors[textureId] = rgb;
 	}
 
-	/** Returns an expanded texture buffer to the shared pool. */
+	/**
+	 * Returns an expanded texture buffer to the shared pool.
+	 * 
+	 * @param textureId the texture id
+	 */
 	public static void releaseTexture(int textureId) {
 		if (texturePixels[textureId] == null)
 			return;
@@ -175,6 +254,12 @@ public class Rasterizer3D extends Rasterizer {
 		texturePixels[textureId] = null;
 	}
 
+	/**
+	 * Returns texture pixels.
+	 * 
+	 * @return the resulting int array
+	 * @param textureId the texture id
+	 */
 	private static int[] getTexturePixels(int textureId) {
 		textureLastUsed[textureId] = textureCycle++;
 		if (texturePixels[textureId] != null)
@@ -235,6 +320,8 @@ public class Rasterizer3D extends Rasterizer {
 	/**
 	 * Rebuilds the HSL and texture palettes using the client's randomized
 	 * brightness jitter.
+	 * 
+	 * @param brightness the brightness
 	 */
 	public static void setBrightness(double brightness) {
 		brightness += Math.random() * 0.029999999999999999D - 0.014999999999999999D;
@@ -246,12 +333,12 @@ public class Rasterizer3D extends Rasterizer {
 				double lightness = (double) lightnessIndex / 128D;
 				double red = lightness, green = lightness, blue = lightness;
 				if (saturation != 0.0D) {
-					double q = lightness < 0.5D ? lightness * (1.0D + saturation)
+					double upperComponent = lightness < 0.5D ? lightness * (1.0D + saturation)
 							: (lightness + saturation) - lightness * saturation;
-					double p = 2D * lightness - q;
-					red = hueToRgb(p, q, hue + 0.33333333333333331D);
-					green = hueToRgb(p, q, hue);
-					blue = hueToRgb(p, q, hue - 0.33333333333333331D);
+					double lowerComponent = 2D * lightness - upperComponent;
+					red = hueToRgb(lowerComponent, upperComponent, hue + 0.33333333333333331D);
+					green = hueToRgb(lowerComponent, upperComponent, hue);
+					blue = hueToRgb(lowerComponent, upperComponent, hue - 0.33333333333333331D);
 				}
 				int rgb = ((int) (red * 256D) << 16) + ((int) (green * 256D) << 8) + (int) (blue * 256D);
 				rgb = adjustBrightness(rgb, brightness);
@@ -264,11 +351,11 @@ public class Rasterizer3D extends Rasterizer {
 			if (textures[textureId] != null) {
 				int[] source = textures[textureId].palette;
 				texturePalettes[textureId] = new int[source.length];
-				for (int i = 0; i < source.length; i++) {
-					int rgb = adjustBrightness(source[i], brightness);
-					if ((rgb & 0xf8f8ff) == 0 && i != 0)
+				for (int loopIndex = 0; loopIndex < source.length; loopIndex++) {
+					int rgb = adjustBrightness(source[loopIndex], brightness);
+					if ((rgb & 0xf8f8ff) == 0 && loopIndex != 0)
 						rgb = 1;
-					texturePalettes[textureId][i] = rgb;
+					texturePalettes[textureId][loopIndex] = rgb;
 				}
 			}
 		}
@@ -276,20 +363,35 @@ public class Rasterizer3D extends Rasterizer {
 			releaseTexture(textureId);
 	}
 
-	private static double hueToRgb(double p, double q, double hue) {
+	/**
+	 * Performs hue to rgb.
+	 * 
+	 * @return the resulting double
+	 * @param lowerComponent the lower component
+	 * @param upperComponent the upper component
+	 * @param hue            the hue
+	 */
+	private static double hueToRgb(double lowerComponent, double upperComponent, double hue) {
 		if (hue > 1.0D)
 			hue--;
 		if (hue < 0.0D)
 			hue++;
 		if (6D * hue < 1.0D)
-			return p + (q - p) * 6D * hue;
+			return lowerComponent + (upperComponent - lowerComponent) * 6D * hue;
 		if (2D * hue < 1.0D)
-			return q;
+			return upperComponent;
 		if (3D * hue < 2D)
-			return p + (q - p) * (0.66666666666666663D - hue) * 6D;
-		return p;
+			return lowerComponent + (upperComponent - lowerComponent) * (0.66666666666666663D - hue) * 6D;
+		return lowerComponent;
 	}
 
+	/**
+	 * Performs adjust brightness.
+	 * 
+	 * @return the resulting int
+	 * @param rgb        the rgb
+	 * @param brightness the brightness
+	 */
 	public static int adjustBrightness(int rgb, double brightness) {
 		double red = Math.pow((double) (rgb >> 16) / 256D, brightness);
 		double green = Math.pow((double) (rgb >> 8 & 0xff) / 256D, brightness);
@@ -297,15 +399,62 @@ public class Rasterizer3D extends Rasterizer {
 		return ((int) (red * 256D) << 16) + ((int) (green * 256D) << 8) + (int) (blue * 256D);
 	}
 
+	/**
+	 * Draws gouraud triangle.
+	 * 
+	 * @param yA     the y a
+	 * @param yB     the y b
+	 * @param yC     the y c
+	 * @param xA     the x a
+	 * @param xB     the x b
+	 * @param xC     the x c
+	 * @param shadeA the shade a
+	 * @param shadeB the shade b
+	 * @param shadeC the shade c
+	 */
 	public static void drawGouraudTriangle(int yA, int yB, int yC, int xA, int xB, int xC, int shadeA, int shadeB,
 			int shadeC) {
 		drawGouraudTriangleInternal(yA, yB, yC, xA, xB, xC, shadeA, shadeB, shadeC);
 	}
 
+	/**
+	 * Draws flat triangle.
+	 * 
+	 * @param yA  the y a
+	 * @param yB  the y b
+	 * @param yC  the y c
+	 * @param xA  the x a
+	 * @param xB  the x b
+	 * @param xC  the x c
+	 * @param rgb the rgb
+	 */
 	public static void drawFlatTriangle(int yA, int yB, int yC, int xA, int xB, int xC, int rgb) {
 		drawFlatTriangleInternal(yA, yB, yC, xA, xB, xC, rgb);
 	}
 
+	/**
+	 * Draws textured triangle.
+	 * 
+	 * @param yA        the y a
+	 * @param yB        the y b
+	 * @param yC        the y c
+	 * @param xA        the x a
+	 * @param xB        the x b
+	 * @param xC        the x c
+	 * @param shadeA    the shade a
+	 * @param shadeB    the shade b
+	 * @param shadeC    the shade c
+	 * @param textureXA the texture xa
+	 * @param textureXB the texture xb
+	 * @param textureXC the texture xc
+	 * @param textureYA the texture ya
+	 * @param textureYB the texture yb
+	 * @param textureYC the texture yc
+	 * @param textureZA the texture za
+	 * @param textureZB the texture zb
+	 * @param textureZC the texture zc
+	 * @param textureId the texture id
+	 */
 	public static void drawTexturedTriangle(int yA, int yB, int yC, int xA, int xB, int xC, int shadeA, int shadeB,
 			int shadeC, int textureXA, int textureXB, int textureXC, int textureYA, int textureYB, int textureYC,
 			int textureZA, int textureZB, int textureZC, int textureId) {
@@ -313,1695 +462,1912 @@ public class Rasterizer3D extends Rasterizer {
 				textureYA, textureYB, textureYC, textureZA, textureZB, textureZC, textureId);
 	}
 
-	private static void drawGouraudTriangleInternal(int i, int j, int k, int l, int i1, int j1, int k1, int l1,
-			int i2) {
-		int j2 = 0;
-		int k2 = 0;
-		if (j != i) {
-			j2 = (i1 - l << 16) / (j - i);
-			k2 = (l1 - k1 << 15) / (j - i);
+	/**
+	 * Draws gouraud triangle internal.
+	 * 
+	 * @param inputValue  the input value
+	 * @param inputValue2 the input value2
+	 * @param inputValue3 the input value3
+	 * @param inputValue4 the input value4
+	 * @param inputValue5 the input value5
+	 * @param inputValue6 the input value6
+	 * @param inputValue7 the input value7
+	 * @param inputValue8 the input value8
+	 * @param inputValue9 the input value9
+	 */
+	private static void drawGouraudTriangleInternal(int inputValue, int inputValue2, int inputValue3, int inputValue4,
+			int inputValue5, int inputValue6, int inputValue7, int inputValue8, int inputValue9) {
+		int intermediateValue = 0;
+		int intermediateValue2 = 0;
+		if (inputValue2 != inputValue) {
+			intermediateValue = (inputValue5 - inputValue4 << 16) / (inputValue2 - inputValue);
+			intermediateValue2 = (inputValue8 - inputValue7 << 15) / (inputValue2 - inputValue);
 		}
-		int l2 = 0;
-		int i3 = 0;
-		if (k != j) {
-			l2 = (j1 - i1 << 16) / (k - j);
-			i3 = (i2 - l1 << 15) / (k - j);
+		int intermediateValue3 = 0;
+		int intermediateValue4 = 0;
+		if (inputValue3 != inputValue2) {
+			intermediateValue3 = (inputValue6 - inputValue5 << 16) / (inputValue3 - inputValue2);
+			intermediateValue4 = (inputValue9 - inputValue8 << 15) / (inputValue3 - inputValue2);
 		}
-		int j3 = 0;
-		int k3 = 0;
-		if (k != i) {
-			j3 = (l - j1 << 16) / (i - k);
-			k3 = (k1 - i2 << 15) / (i - k);
+		int intermediateValue5 = 0;
+		int intermediateValue6 = 0;
+		if (inputValue3 != inputValue) {
+			intermediateValue5 = (inputValue4 - inputValue6 << 16) / (inputValue - inputValue3);
+			intermediateValue6 = (inputValue7 - inputValue9 << 15) / (inputValue - inputValue3);
 		}
-		if (i <= j && i <= k) {
-			if (i >= Rasterizer.bottomY)
+		if (inputValue <= inputValue2 && inputValue <= inputValue3) {
+			if (inputValue >= Rasterizer.bottomY)
 				return;
-			if (j > Rasterizer.bottomY)
-				j = Rasterizer.bottomY;
-			if (k > Rasterizer.bottomY)
-				k = Rasterizer.bottomY;
-			if (j < k) {
-				j1 = l <<= 16;
-				i2 = k1 <<= 15;
-				if (i < 0) {
-					j1 -= j3 * i;
-					l -= j2 * i;
-					i2 -= k3 * i;
-					k1 -= k2 * i;
-					i = 0;
+			if (inputValue2 > Rasterizer.bottomY)
+				inputValue2 = Rasterizer.bottomY;
+			if (inputValue3 > Rasterizer.bottomY)
+				inputValue3 = Rasterizer.bottomY;
+			if (inputValue2 < inputValue3) {
+				inputValue6 = inputValue4 <<= 16;
+				inputValue9 = inputValue7 <<= 15;
+				if (inputValue < 0) {
+					inputValue6 -= intermediateValue5 * inputValue;
+					inputValue4 -= intermediateValue * inputValue;
+					inputValue9 -= intermediateValue6 * inputValue;
+					inputValue7 -= intermediateValue2 * inputValue;
+					inputValue = 0;
 				}
-				i1 <<= 16;
-				l1 <<= 15;
-				if (j < 0) {
-					i1 -= l2 * j;
-					l1 -= i3 * j;
-					j = 0;
+				inputValue5 <<= 16;
+				inputValue8 <<= 15;
+				if (inputValue2 < 0) {
+					inputValue5 -= intermediateValue3 * inputValue2;
+					inputValue8 -= intermediateValue4 * inputValue2;
+					inputValue2 = 0;
 				}
-				if (i != j && j3 < j2 || i == j && j3 > l2) {
-					k -= j;
-					j -= i;
-					for (i = scanlineOffsets[i]; --j >= 0; i += Rasterizer.width) {
-						drawGouraudScanline(Rasterizer.pixels, i, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
-						j1 += j3;
-						l += j2;
-						i2 += k3;
-						k1 += k2;
+				if (inputValue != inputValue2 && intermediateValue5 < intermediateValue
+						|| inputValue == inputValue2 && intermediateValue5 > intermediateValue3) {
+					inputValue3 -= inputValue2;
+					inputValue2 -= inputValue;
+					for (inputValue = scanlineOffsets[inputValue]; --inputValue2 >= 0; inputValue += Rasterizer.width) {
+						drawGouraudScanline(Rasterizer.pixels, inputValue, 0, 0, inputValue6 >> 16, inputValue4 >> 16,
+								inputValue9 >> 7, inputValue7 >> 7);
+						inputValue6 += intermediateValue5;
+						inputValue4 += intermediateValue;
+						inputValue9 += intermediateValue6;
+						inputValue7 += intermediateValue2;
 					}
 
-					while (--k >= 0) {
-						drawGouraudScanline(Rasterizer.pixels, i, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
-						j1 += j3;
-						i1 += l2;
-						i2 += k3;
-						l1 += i3;
-						i += Rasterizer.width;
-					}
-					return;
-				}
-				k -= j;
-				j -= i;
-				for (i = scanlineOffsets[i]; --j >= 0; i += Rasterizer.width) {
-					drawGouraudScanline(Rasterizer.pixels, i, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
-					j1 += j3;
-					l += j2;
-					i2 += k3;
-					k1 += k2;
-				}
-
-				while (--k >= 0) {
-					drawGouraudScanline(Rasterizer.pixels, i, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
-					j1 += j3;
-					i1 += l2;
-					i2 += k3;
-					l1 += i3;
-					i += Rasterizer.width;
-				}
-				return;
-			}
-			i1 = l <<= 16;
-			l1 = k1 <<= 15;
-			if (i < 0) {
-				i1 -= j3 * i;
-				l -= j2 * i;
-				l1 -= k3 * i;
-				k1 -= k2 * i;
-				i = 0;
-			}
-			j1 <<= 16;
-			i2 <<= 15;
-			if (k < 0) {
-				j1 -= l2 * k;
-				i2 -= i3 * k;
-				k = 0;
-			}
-			if (i != k && j3 < j2 || i == k && l2 > j2) {
-				j -= k;
-				k -= i;
-				for (i = scanlineOffsets[i]; --k >= 0; i += Rasterizer.width) {
-					drawGouraudScanline(Rasterizer.pixels, i, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
-					i1 += j3;
-					l += j2;
-					l1 += k3;
-					k1 += k2;
-				}
-
-				while (--j >= 0) {
-					drawGouraudScanline(Rasterizer.pixels, i, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
-					j1 += l2;
-					l += j2;
-					i2 += i3;
-					k1 += k2;
-					i += Rasterizer.width;
-				}
-				return;
-			}
-			j -= k;
-			k -= i;
-			for (i = scanlineOffsets[i]; --k >= 0; i += Rasterizer.width) {
-				drawGouraudScanline(Rasterizer.pixels, i, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
-				i1 += j3;
-				l += j2;
-				l1 += k3;
-				k1 += k2;
-			}
-
-			while (--j >= 0) {
-				drawGouraudScanline(Rasterizer.pixels, i, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
-				j1 += l2;
-				l += j2;
-				i2 += i3;
-				k1 += k2;
-				i += Rasterizer.width;
-			}
-			return;
-		}
-		if (j <= k) {
-			if (j >= Rasterizer.bottomY)
-				return;
-			if (k > Rasterizer.bottomY)
-				k = Rasterizer.bottomY;
-			if (i > Rasterizer.bottomY)
-				i = Rasterizer.bottomY;
-			if (k < i) {
-				l = i1 <<= 16;
-				k1 = l1 <<= 15;
-				if (j < 0) {
-					l -= j2 * j;
-					i1 -= l2 * j;
-					k1 -= k2 * j;
-					l1 -= i3 * j;
-					j = 0;
-				}
-				j1 <<= 16;
-				i2 <<= 15;
-				if (k < 0) {
-					j1 -= j3 * k;
-					i2 -= k3 * k;
-					k = 0;
-				}
-				if (j != k && j2 < l2 || j == k && j2 > j3) {
-					i -= k;
-					k -= j;
-					for (j = scanlineOffsets[j]; --k >= 0; j += Rasterizer.width) {
-						drawGouraudScanline(Rasterizer.pixels, j, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
-						l += j2;
-						i1 += l2;
-						k1 += k2;
-						l1 += i3;
-					}
-
-					while (--i >= 0) {
-						drawGouraudScanline(Rasterizer.pixels, j, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
-						l += j2;
-						j1 += j3;
-						k1 += k2;
-						i2 += k3;
-						j += Rasterizer.width;
+					while (--inputValue3 >= 0) {
+						drawGouraudScanline(Rasterizer.pixels, inputValue, 0, 0, inputValue6 >> 16, inputValue5 >> 16,
+								inputValue9 >> 7, inputValue8 >> 7);
+						inputValue6 += intermediateValue5;
+						inputValue5 += intermediateValue3;
+						inputValue9 += intermediateValue6;
+						inputValue8 += intermediateValue4;
+						inputValue += Rasterizer.width;
 					}
 					return;
 				}
-				i -= k;
-				k -= j;
-				for (j = scanlineOffsets[j]; --k >= 0; j += Rasterizer.width) {
-					drawGouraudScanline(Rasterizer.pixels, j, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
-					l += j2;
-					i1 += l2;
-					k1 += k2;
-					l1 += i3;
+				inputValue3 -= inputValue2;
+				inputValue2 -= inputValue;
+				for (inputValue = scanlineOffsets[inputValue]; --inputValue2 >= 0; inputValue += Rasterizer.width) {
+					drawGouraudScanline(Rasterizer.pixels, inputValue, 0, 0, inputValue4 >> 16, inputValue6 >> 16,
+							inputValue7 >> 7, inputValue9 >> 7);
+					inputValue6 += intermediateValue5;
+					inputValue4 += intermediateValue;
+					inputValue9 += intermediateValue6;
+					inputValue7 += intermediateValue2;
 				}
 
-				while (--i >= 0) {
-					drawGouraudScanline(Rasterizer.pixels, j, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
-					l += j2;
-					j1 += j3;
-					k1 += k2;
-					i2 += k3;
-					j += Rasterizer.width;
-				}
-				return;
-			}
-			j1 = i1 <<= 16;
-			i2 = l1 <<= 15;
-			if (j < 0) {
-				j1 -= j2 * j;
-				i1 -= l2 * j;
-				i2 -= k2 * j;
-				l1 -= i3 * j;
-				j = 0;
-			}
-			l <<= 16;
-			k1 <<= 15;
-			if (i < 0) {
-				l -= j3 * i;
-				k1 -= k3 * i;
-				i = 0;
-			}
-			if (j2 < l2) {
-				k -= i;
-				i -= j;
-				for (j = scanlineOffsets[j]; --i >= 0; j += Rasterizer.width) {
-					drawGouraudScanline(Rasterizer.pixels, j, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
-					j1 += j2;
-					i1 += l2;
-					i2 += k2;
-					l1 += i3;
-				}
-
-				while (--k >= 0) {
-					drawGouraudScanline(Rasterizer.pixels, j, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
-					l += j3;
-					i1 += l2;
-					k1 += k3;
-					l1 += i3;
-					j += Rasterizer.width;
+				while (--inputValue3 >= 0) {
+					drawGouraudScanline(Rasterizer.pixels, inputValue, 0, 0, inputValue5 >> 16, inputValue6 >> 16,
+							inputValue8 >> 7, inputValue9 >> 7);
+					inputValue6 += intermediateValue5;
+					inputValue5 += intermediateValue3;
+					inputValue9 += intermediateValue6;
+					inputValue8 += intermediateValue4;
+					inputValue += Rasterizer.width;
 				}
 				return;
 			}
-			k -= i;
-			i -= j;
-			for (j = scanlineOffsets[j]; --i >= 0; j += Rasterizer.width) {
-				drawGouraudScanline(Rasterizer.pixels, j, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
-				j1 += j2;
-				i1 += l2;
-				i2 += k2;
-				l1 += i3;
+			inputValue5 = inputValue4 <<= 16;
+			inputValue8 = inputValue7 <<= 15;
+			if (inputValue < 0) {
+				inputValue5 -= intermediateValue5 * inputValue;
+				inputValue4 -= intermediateValue * inputValue;
+				inputValue8 -= intermediateValue6 * inputValue;
+				inputValue7 -= intermediateValue2 * inputValue;
+				inputValue = 0;
 			}
-
-			while (--k >= 0) {
-				drawGouraudScanline(Rasterizer.pixels, j, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
-				l += j3;
-				i1 += l2;
-				k1 += k3;
-				l1 += i3;
-				j += Rasterizer.width;
+			inputValue6 <<= 16;
+			inputValue9 <<= 15;
+			if (inputValue3 < 0) {
+				inputValue6 -= intermediateValue3 * inputValue3;
+				inputValue9 -= intermediateValue4 * inputValue3;
+				inputValue3 = 0;
 			}
-			return;
-		}
-		if (k >= Rasterizer.bottomY)
-			return;
-		if (i > Rasterizer.bottomY)
-			i = Rasterizer.bottomY;
-		if (j > Rasterizer.bottomY)
-			j = Rasterizer.bottomY;
-		if (i < j) {
-			i1 = j1 <<= 16;
-			l1 = i2 <<= 15;
-			if (k < 0) {
-				i1 -= l2 * k;
-				j1 -= j3 * k;
-				l1 -= i3 * k;
-				i2 -= k3 * k;
-				k = 0;
-			}
-			l <<= 16;
-			k1 <<= 15;
-			if (i < 0) {
-				l -= j2 * i;
-				k1 -= k2 * i;
-				i = 0;
-			}
-			if (l2 < j3) {
-				j -= i;
-				i -= k;
-				for (k = scanlineOffsets[k]; --i >= 0; k += Rasterizer.width) {
-					drawGouraudScanline(Rasterizer.pixels, k, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
-					i1 += l2;
-					j1 += j3;
-					l1 += i3;
-					i2 += k3;
+			if (inputValue != inputValue3 && intermediateValue5 < intermediateValue
+					|| inputValue == inputValue3 && intermediateValue3 > intermediateValue) {
+				inputValue2 -= inputValue3;
+				inputValue3 -= inputValue;
+				for (inputValue = scanlineOffsets[inputValue]; --inputValue3 >= 0; inputValue += Rasterizer.width) {
+					drawGouraudScanline(Rasterizer.pixels, inputValue, 0, 0, inputValue5 >> 16, inputValue4 >> 16,
+							inputValue8 >> 7, inputValue7 >> 7);
+					inputValue5 += intermediateValue5;
+					inputValue4 += intermediateValue;
+					inputValue8 += intermediateValue6;
+					inputValue7 += intermediateValue2;
 				}
 
-				while (--j >= 0) {
-					drawGouraudScanline(Rasterizer.pixels, k, 0, 0, i1 >> 16, l >> 16, l1 >> 7, k1 >> 7);
-					i1 += l2;
-					l += j2;
-					l1 += i3;
-					k1 += k2;
-					k += Rasterizer.width;
+				while (--inputValue2 >= 0) {
+					drawGouraudScanline(Rasterizer.pixels, inputValue, 0, 0, inputValue6 >> 16, inputValue4 >> 16,
+							inputValue9 >> 7, inputValue7 >> 7);
+					inputValue6 += intermediateValue3;
+					inputValue4 += intermediateValue;
+					inputValue9 += intermediateValue4;
+					inputValue7 += intermediateValue2;
+					inputValue += Rasterizer.width;
 				}
 				return;
 			}
-			j -= i;
-			i -= k;
-			for (k = scanlineOffsets[k]; --i >= 0; k += Rasterizer.width) {
-				drawGouraudScanline(Rasterizer.pixels, k, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
-				i1 += l2;
-				j1 += j3;
-				l1 += i3;
-				i2 += k3;
+			inputValue2 -= inputValue3;
+			inputValue3 -= inputValue;
+			for (inputValue = scanlineOffsets[inputValue]; --inputValue3 >= 0; inputValue += Rasterizer.width) {
+				drawGouraudScanline(Rasterizer.pixels, inputValue, 0, 0, inputValue4 >> 16, inputValue5 >> 16,
+						inputValue7 >> 7, inputValue8 >> 7);
+				inputValue5 += intermediateValue5;
+				inputValue4 += intermediateValue;
+				inputValue8 += intermediateValue6;
+				inputValue7 += intermediateValue2;
 			}
 
-			while (--j >= 0) {
-				drawGouraudScanline(Rasterizer.pixels, k, 0, 0, l >> 16, i1 >> 16, k1 >> 7, l1 >> 7);
-				i1 += l2;
-				l += j2;
-				l1 += i3;
-				k1 += k2;
-				k += Rasterizer.width;
+			while (--inputValue2 >= 0) {
+				drawGouraudScanline(Rasterizer.pixels, inputValue, 0, 0, inputValue4 >> 16, inputValue6 >> 16,
+						inputValue7 >> 7, inputValue9 >> 7);
+				inputValue6 += intermediateValue3;
+				inputValue4 += intermediateValue;
+				inputValue9 += intermediateValue4;
+				inputValue7 += intermediateValue2;
+				inputValue += Rasterizer.width;
 			}
 			return;
 		}
-		l = j1 <<= 16;
-		k1 = i2 <<= 15;
-		if (k < 0) {
-			l -= l2 * k;
-			j1 -= j3 * k;
-			k1 -= i3 * k;
-			i2 -= k3 * k;
-			k = 0;
-		}
-		i1 <<= 16;
-		l1 <<= 15;
-		if (j < 0) {
-			i1 -= j2 * j;
-			l1 -= k2 * j;
-			j = 0;
-		}
-		if (l2 < j3) {
-			i -= j;
-			j -= k;
-			for (k = scanlineOffsets[k]; --j >= 0; k += Rasterizer.width) {
-				drawGouraudScanline(Rasterizer.pixels, k, 0, 0, l >> 16, j1 >> 16, k1 >> 7, i2 >> 7);
-				l += l2;
-				j1 += j3;
-				k1 += i3;
-				i2 += k3;
+		if (inputValue2 <= inputValue3) {
+			if (inputValue2 >= Rasterizer.bottomY)
+				return;
+			if (inputValue3 > Rasterizer.bottomY)
+				inputValue3 = Rasterizer.bottomY;
+			if (inputValue > Rasterizer.bottomY)
+				inputValue = Rasterizer.bottomY;
+			if (inputValue3 < inputValue) {
+				inputValue4 = inputValue5 <<= 16;
+				inputValue7 = inputValue8 <<= 15;
+				if (inputValue2 < 0) {
+					inputValue4 -= intermediateValue * inputValue2;
+					inputValue5 -= intermediateValue3 * inputValue2;
+					inputValue7 -= intermediateValue2 * inputValue2;
+					inputValue8 -= intermediateValue4 * inputValue2;
+					inputValue2 = 0;
+				}
+				inputValue6 <<= 16;
+				inputValue9 <<= 15;
+				if (inputValue3 < 0) {
+					inputValue6 -= intermediateValue5 * inputValue3;
+					inputValue9 -= intermediateValue6 * inputValue3;
+					inputValue3 = 0;
+				}
+				if (inputValue2 != inputValue3 && intermediateValue < intermediateValue3
+						|| inputValue2 == inputValue3 && intermediateValue > intermediateValue5) {
+					inputValue -= inputValue3;
+					inputValue3 -= inputValue2;
+					for (inputValue2 = scanlineOffsets[inputValue2]; --inputValue3 >= 0; inputValue2 += Rasterizer.width) {
+						drawGouraudScanline(Rasterizer.pixels, inputValue2, 0, 0, inputValue4 >> 16, inputValue5 >> 16,
+								inputValue7 >> 7, inputValue8 >> 7);
+						inputValue4 += intermediateValue;
+						inputValue5 += intermediateValue3;
+						inputValue7 += intermediateValue2;
+						inputValue8 += intermediateValue4;
+					}
+
+					while (--inputValue >= 0) {
+						drawGouraudScanline(Rasterizer.pixels, inputValue2, 0, 0, inputValue4 >> 16, inputValue6 >> 16,
+								inputValue7 >> 7, inputValue9 >> 7);
+						inputValue4 += intermediateValue;
+						inputValue6 += intermediateValue5;
+						inputValue7 += intermediateValue2;
+						inputValue9 += intermediateValue6;
+						inputValue2 += Rasterizer.width;
+					}
+					return;
+				}
+				inputValue -= inputValue3;
+				inputValue3 -= inputValue2;
+				for (inputValue2 = scanlineOffsets[inputValue2]; --inputValue3 >= 0; inputValue2 += Rasterizer.width) {
+					drawGouraudScanline(Rasterizer.pixels, inputValue2, 0, 0, inputValue5 >> 16, inputValue4 >> 16,
+							inputValue8 >> 7, inputValue7 >> 7);
+					inputValue4 += intermediateValue;
+					inputValue5 += intermediateValue3;
+					inputValue7 += intermediateValue2;
+					inputValue8 += intermediateValue4;
+				}
+
+				while (--inputValue >= 0) {
+					drawGouraudScanline(Rasterizer.pixels, inputValue2, 0, 0, inputValue6 >> 16, inputValue4 >> 16,
+							inputValue9 >> 7, inputValue7 >> 7);
+					inputValue4 += intermediateValue;
+					inputValue6 += intermediateValue5;
+					inputValue7 += intermediateValue2;
+					inputValue9 += intermediateValue6;
+					inputValue2 += Rasterizer.width;
+				}
+				return;
+			}
+			inputValue6 = inputValue5 <<= 16;
+			inputValue9 = inputValue8 <<= 15;
+			if (inputValue2 < 0) {
+				inputValue6 -= intermediateValue * inputValue2;
+				inputValue5 -= intermediateValue3 * inputValue2;
+				inputValue9 -= intermediateValue2 * inputValue2;
+				inputValue8 -= intermediateValue4 * inputValue2;
+				inputValue2 = 0;
+			}
+			inputValue4 <<= 16;
+			inputValue7 <<= 15;
+			if (inputValue < 0) {
+				inputValue4 -= intermediateValue5 * inputValue;
+				inputValue7 -= intermediateValue6 * inputValue;
+				inputValue = 0;
+			}
+			if (intermediateValue < intermediateValue3) {
+				inputValue3 -= inputValue;
+				inputValue -= inputValue2;
+				for (inputValue2 = scanlineOffsets[inputValue2]; --inputValue >= 0; inputValue2 += Rasterizer.width) {
+					drawGouraudScanline(Rasterizer.pixels, inputValue2, 0, 0, inputValue6 >> 16, inputValue5 >> 16,
+							inputValue9 >> 7, inputValue8 >> 7);
+					inputValue6 += intermediateValue;
+					inputValue5 += intermediateValue3;
+					inputValue9 += intermediateValue2;
+					inputValue8 += intermediateValue4;
+				}
+
+				while (--inputValue3 >= 0) {
+					drawGouraudScanline(Rasterizer.pixels, inputValue2, 0, 0, inputValue4 >> 16, inputValue5 >> 16,
+							inputValue7 >> 7, inputValue8 >> 7);
+					inputValue4 += intermediateValue5;
+					inputValue5 += intermediateValue3;
+					inputValue7 += intermediateValue6;
+					inputValue8 += intermediateValue4;
+					inputValue2 += Rasterizer.width;
+				}
+				return;
+			}
+			inputValue3 -= inputValue;
+			inputValue -= inputValue2;
+			for (inputValue2 = scanlineOffsets[inputValue2]; --inputValue >= 0; inputValue2 += Rasterizer.width) {
+				drawGouraudScanline(Rasterizer.pixels, inputValue2, 0, 0, inputValue5 >> 16, inputValue6 >> 16,
+						inputValue8 >> 7, inputValue9 >> 7);
+				inputValue6 += intermediateValue;
+				inputValue5 += intermediateValue3;
+				inputValue9 += intermediateValue2;
+				inputValue8 += intermediateValue4;
 			}
 
-			while (--i >= 0) {
-				drawGouraudScanline(Rasterizer.pixels, k, 0, 0, i1 >> 16, j1 >> 16, l1 >> 7, i2 >> 7);
-				i1 += j2;
-				j1 += j3;
-				l1 += k2;
-				i2 += k3;
-				k += Rasterizer.width;
+			while (--inputValue3 >= 0) {
+				drawGouraudScanline(Rasterizer.pixels, inputValue2, 0, 0, inputValue5 >> 16, inputValue4 >> 16,
+						inputValue8 >> 7, inputValue7 >> 7);
+				inputValue4 += intermediateValue5;
+				inputValue5 += intermediateValue3;
+				inputValue7 += intermediateValue6;
+				inputValue8 += intermediateValue4;
+				inputValue2 += Rasterizer.width;
 			}
 			return;
 		}
-		i -= j;
-		j -= k;
-		for (k = scanlineOffsets[k]; --j >= 0; k += Rasterizer.width) {
-			drawGouraudScanline(Rasterizer.pixels, k, 0, 0, j1 >> 16, l >> 16, i2 >> 7, k1 >> 7);
-			l += l2;
-			j1 += j3;
-			k1 += i3;
-			i2 += k3;
+		if (inputValue3 >= Rasterizer.bottomY)
+			return;
+		if (inputValue > Rasterizer.bottomY)
+			inputValue = Rasterizer.bottomY;
+		if (inputValue2 > Rasterizer.bottomY)
+			inputValue2 = Rasterizer.bottomY;
+		if (inputValue < inputValue2) {
+			inputValue5 = inputValue6 <<= 16;
+			inputValue8 = inputValue9 <<= 15;
+			if (inputValue3 < 0) {
+				inputValue5 -= intermediateValue3 * inputValue3;
+				inputValue6 -= intermediateValue5 * inputValue3;
+				inputValue8 -= intermediateValue4 * inputValue3;
+				inputValue9 -= intermediateValue6 * inputValue3;
+				inputValue3 = 0;
+			}
+			inputValue4 <<= 16;
+			inputValue7 <<= 15;
+			if (inputValue < 0) {
+				inputValue4 -= intermediateValue * inputValue;
+				inputValue7 -= intermediateValue2 * inputValue;
+				inputValue = 0;
+			}
+			if (intermediateValue3 < intermediateValue5) {
+				inputValue2 -= inputValue;
+				inputValue -= inputValue3;
+				for (inputValue3 = scanlineOffsets[inputValue3]; --inputValue >= 0; inputValue3 += Rasterizer.width) {
+					drawGouraudScanline(Rasterizer.pixels, inputValue3, 0, 0, inputValue5 >> 16, inputValue6 >> 16,
+							inputValue8 >> 7, inputValue9 >> 7);
+					inputValue5 += intermediateValue3;
+					inputValue6 += intermediateValue5;
+					inputValue8 += intermediateValue4;
+					inputValue9 += intermediateValue6;
+				}
+
+				while (--inputValue2 >= 0) {
+					drawGouraudScanline(Rasterizer.pixels, inputValue3, 0, 0, inputValue5 >> 16, inputValue4 >> 16,
+							inputValue8 >> 7, inputValue7 >> 7);
+					inputValue5 += intermediateValue3;
+					inputValue4 += intermediateValue;
+					inputValue8 += intermediateValue4;
+					inputValue7 += intermediateValue2;
+					inputValue3 += Rasterizer.width;
+				}
+				return;
+			}
+			inputValue2 -= inputValue;
+			inputValue -= inputValue3;
+			for (inputValue3 = scanlineOffsets[inputValue3]; --inputValue >= 0; inputValue3 += Rasterizer.width) {
+				drawGouraudScanline(Rasterizer.pixels, inputValue3, 0, 0, inputValue6 >> 16, inputValue5 >> 16,
+						inputValue9 >> 7, inputValue8 >> 7);
+				inputValue5 += intermediateValue3;
+				inputValue6 += intermediateValue5;
+				inputValue8 += intermediateValue4;
+				inputValue9 += intermediateValue6;
+			}
+
+			while (--inputValue2 >= 0) {
+				drawGouraudScanline(Rasterizer.pixels, inputValue3, 0, 0, inputValue4 >> 16, inputValue5 >> 16,
+						inputValue7 >> 7, inputValue8 >> 7);
+				inputValue5 += intermediateValue3;
+				inputValue4 += intermediateValue;
+				inputValue8 += intermediateValue4;
+				inputValue7 += intermediateValue2;
+				inputValue3 += Rasterizer.width;
+			}
+			return;
+		}
+		inputValue4 = inputValue6 <<= 16;
+		inputValue7 = inputValue9 <<= 15;
+		if (inputValue3 < 0) {
+			inputValue4 -= intermediateValue3 * inputValue3;
+			inputValue6 -= intermediateValue5 * inputValue3;
+			inputValue7 -= intermediateValue4 * inputValue3;
+			inputValue9 -= intermediateValue6 * inputValue3;
+			inputValue3 = 0;
+		}
+		inputValue5 <<= 16;
+		inputValue8 <<= 15;
+		if (inputValue2 < 0) {
+			inputValue5 -= intermediateValue * inputValue2;
+			inputValue8 -= intermediateValue2 * inputValue2;
+			inputValue2 = 0;
+		}
+		if (intermediateValue3 < intermediateValue5) {
+			inputValue -= inputValue2;
+			inputValue2 -= inputValue3;
+			for (inputValue3 = scanlineOffsets[inputValue3]; --inputValue2 >= 0; inputValue3 += Rasterizer.width) {
+				drawGouraudScanline(Rasterizer.pixels, inputValue3, 0, 0, inputValue4 >> 16, inputValue6 >> 16,
+						inputValue7 >> 7, inputValue9 >> 7);
+				inputValue4 += intermediateValue3;
+				inputValue6 += intermediateValue5;
+				inputValue7 += intermediateValue4;
+				inputValue9 += intermediateValue6;
+			}
+
+			while (--inputValue >= 0) {
+				drawGouraudScanline(Rasterizer.pixels, inputValue3, 0, 0, inputValue5 >> 16, inputValue6 >> 16,
+						inputValue8 >> 7, inputValue9 >> 7);
+				inputValue5 += intermediateValue;
+				inputValue6 += intermediateValue5;
+				inputValue8 += intermediateValue2;
+				inputValue9 += intermediateValue6;
+				inputValue3 += Rasterizer.width;
+			}
+			return;
+		}
+		inputValue -= inputValue2;
+		inputValue2 -= inputValue3;
+		for (inputValue3 = scanlineOffsets[inputValue3]; --inputValue2 >= 0; inputValue3 += Rasterizer.width) {
+			drawGouraudScanline(Rasterizer.pixels, inputValue3, 0, 0, inputValue6 >> 16, inputValue4 >> 16,
+					inputValue9 >> 7, inputValue7 >> 7);
+			inputValue4 += intermediateValue3;
+			inputValue6 += intermediateValue5;
+			inputValue7 += intermediateValue4;
+			inputValue9 += intermediateValue6;
 		}
 
-		while (--i >= 0) {
-			drawGouraudScanline(Rasterizer.pixels, k, 0, 0, j1 >> 16, i1 >> 16, i2 >> 7, l1 >> 7);
-			i1 += j2;
-			j1 += j3;
-			l1 += k2;
-			i2 += k3;
-			k += Rasterizer.width;
+		while (--inputValue >= 0) {
+			drawGouraudScanline(Rasterizer.pixels, inputValue3, 0, 0, inputValue6 >> 16, inputValue5 >> 16,
+					inputValue9 >> 7, inputValue8 >> 7);
+			inputValue5 += intermediateValue;
+			inputValue6 += intermediateValue5;
+			inputValue8 += intermediateValue2;
+			inputValue9 += intermediateValue6;
+			inputValue3 += Rasterizer.width;
 		}
 	}
 
-	private static void drawGouraudScanline(int ai[], int i, int j, int k, int l, int i1, int j1, int k1) {
+	/**
+	 * Draws gouraud scanline.
+	 * 
+	 * @param values      the values
+	 * @param inputValue  the input value
+	 * @param inputValue2 the input value2
+	 * @param inputValue3 the input value3
+	 * @param inputValue4 the input value4
+	 * @param inputValue5 the input value5
+	 * @param inputValue6 the input value6
+	 * @param inputValue7 the input value7
+	 */
+	private static void drawGouraudScanline(int values[], int inputValue, int inputValue2, int inputValue3,
+			int inputValue4, int inputValue5, int inputValue6, int inputValue7) {
 		if (gouraudBlockShading) {
-			int l1;
+			int intermediateValue;
 			if (restrictEdges) {
-				if (i1 - l > 3)
-					l1 = (k1 - j1) / (i1 - l);
+				if (inputValue5 - inputValue4 > 3)
+					intermediateValue = (inputValue7 - inputValue6) / (inputValue5 - inputValue4);
 				else
-					l1 = 0;
-				if (i1 > Rasterizer.viewportRx)
-					i1 = Rasterizer.viewportRx;
-				if (l < 0) {
-					j1 -= l * l1;
-					l = 0;
+					intermediateValue = 0;
+				if (inputValue5 > Rasterizer.viewportRx)
+					inputValue5 = Rasterizer.viewportRx;
+				if (inputValue4 < 0) {
+					inputValue6 -= inputValue4 * intermediateValue;
+					inputValue4 = 0;
 				}
-				if (l >= i1)
+				if (inputValue4 >= inputValue5)
 					return;
-				i += l;
-				k = i1 - l >> 2;
-				l1 <<= 2;
+				inputValue += inputValue4;
+				inputValue3 = inputValue5 - inputValue4 >> 2;
+				intermediateValue <<= 2;
 			} else {
-				if (l >= i1)
+				if (inputValue4 >= inputValue5)
 					return;
-				i += l;
-				k = i1 - l >> 2;
-				if (k > 0)
-					l1 = (k1 - j1) * reciprocal15[k] >> 15;
+				inputValue += inputValue4;
+				inputValue3 = inputValue5 - inputValue4 >> 2;
+				if (inputValue3 > 0)
+					intermediateValue = (inputValue7 - inputValue6) * reciprocal15[inputValue3] >> 15;
 				else
-					l1 = 0;
+					intermediateValue = 0;
 			}
 			if (alpha == 0) {
-				while (--k >= 0) {
-					j = HSL_TO_RGB[j1 >> 8];
-					j1 += l1;
-					ai[i++] = j;
-					ai[i++] = j;
-					ai[i++] = j;
-					ai[i++] = j;
+				while (--inputValue3 >= 0) {
+					inputValue2 = HSL_TO_RGB[inputValue6 >> 8];
+					inputValue6 += intermediateValue;
+					values[inputValue++] = inputValue2;
+					values[inputValue++] = inputValue2;
+					values[inputValue++] = inputValue2;
+					values[inputValue++] = inputValue2;
 				}
-				k = i1 - l & 3;
-				if (k > 0) {
-					j = HSL_TO_RGB[j1 >> 8];
+				inputValue3 = inputValue5 - inputValue4 & 3;
+				if (inputValue3 > 0) {
+					inputValue2 = HSL_TO_RGB[inputValue6 >> 8];
 					do
-						ai[i++] = j;
-					while (--k > 0);
+						values[inputValue++] = inputValue2;
+					while (--inputValue3 > 0);
 					return;
 				}
 			} else {
-				int j2 = alpha;
-				int l2 = 256 - alpha;
-				while (--k >= 0) {
-					j = HSL_TO_RGB[j1 >> 8];
-					j1 += l1;
-					j = ((j & 0xff00ff) * l2 >> 8 & 0xff00ff) + ((j & 0xff00) * l2 >> 8 & 0xff00);
-					ai[i++] = j + ((ai[i] & 0xff00ff) * j2 >> 8 & 0xff00ff) + ((ai[i] & 0xff00) * j2 >> 8 & 0xff00);
-					ai[i++] = j + ((ai[i] & 0xff00ff) * j2 >> 8 & 0xff00ff) + ((ai[i] & 0xff00) * j2 >> 8 & 0xff00);
-					ai[i++] = j + ((ai[i] & 0xff00ff) * j2 >> 8 & 0xff00ff) + ((ai[i] & 0xff00) * j2 >> 8 & 0xff00);
-					ai[i++] = j + ((ai[i] & 0xff00ff) * j2 >> 8 & 0xff00ff) + ((ai[i] & 0xff00) * j2 >> 8 & 0xff00);
+				int intermediateValue2 = alpha;
+				int intermediateValue3 = 256 - alpha;
+				while (--inputValue3 >= 0) {
+					inputValue2 = HSL_TO_RGB[inputValue6 >> 8];
+					inputValue6 += intermediateValue;
+					inputValue2 = ((inputValue2 & 0xff00ff) * intermediateValue3 >> 8 & 0xff00ff)
+							+ ((inputValue2 & 0xff00) * intermediateValue3 >> 8 & 0xff00);
+					values[inputValue++] = inputValue2
+							+ ((values[inputValue] & 0xff00ff) * intermediateValue2 >> 8 & 0xff00ff)
+							+ ((values[inputValue] & 0xff00) * intermediateValue2 >> 8 & 0xff00);
+					values[inputValue++] = inputValue2
+							+ ((values[inputValue] & 0xff00ff) * intermediateValue2 >> 8 & 0xff00ff)
+							+ ((values[inputValue] & 0xff00) * intermediateValue2 >> 8 & 0xff00);
+					values[inputValue++] = inputValue2
+							+ ((values[inputValue] & 0xff00ff) * intermediateValue2 >> 8 & 0xff00ff)
+							+ ((values[inputValue] & 0xff00) * intermediateValue2 >> 8 & 0xff00);
+					values[inputValue++] = inputValue2
+							+ ((values[inputValue] & 0xff00ff) * intermediateValue2 >> 8 & 0xff00ff)
+							+ ((values[inputValue] & 0xff00) * intermediateValue2 >> 8 & 0xff00);
 				}
-				k = i1 - l & 3;
-				if (k > 0) {
-					j = HSL_TO_RGB[j1 >> 8];
-					j = ((j & 0xff00ff) * l2 >> 8 & 0xff00ff) + ((j & 0xff00) * l2 >> 8 & 0xff00);
+				inputValue3 = inputValue5 - inputValue4 & 3;
+				if (inputValue3 > 0) {
+					inputValue2 = HSL_TO_RGB[inputValue6 >> 8];
+					inputValue2 = ((inputValue2 & 0xff00ff) * intermediateValue3 >> 8 & 0xff00ff)
+							+ ((inputValue2 & 0xff00) * intermediateValue3 >> 8 & 0xff00);
 					do
-						ai[i++] = j + ((ai[i] & 0xff00ff) * j2 >> 8 & 0xff00ff) + ((ai[i] & 0xff00) * j2 >> 8 & 0xff00);
-					while (--k > 0);
+						values[inputValue++] = inputValue2
+								+ ((values[inputValue] & 0xff00ff) * intermediateValue2 >> 8 & 0xff00ff)
+								+ ((values[inputValue] & 0xff00) * intermediateValue2 >> 8 & 0xff00);
+					while (--inputValue3 > 0);
 				}
 			}
 			return;
 		}
-		if (l >= i1)
+		if (inputValue4 >= inputValue5)
 			return;
-		int i2 = (k1 - j1) / (i1 - l);
+		int intermediateValue4 = (inputValue7 - inputValue6) / (inputValue5 - inputValue4);
 		if (restrictEdges) {
-			if (i1 > Rasterizer.viewportRx)
-				i1 = Rasterizer.viewportRx;
-			if (l < 0) {
-				j1 -= l * i2;
-				l = 0;
+			if (inputValue5 > Rasterizer.viewportRx)
+				inputValue5 = Rasterizer.viewportRx;
+			if (inputValue4 < 0) {
+				inputValue6 -= inputValue4 * intermediateValue4;
+				inputValue4 = 0;
 			}
-			if (l >= i1)
+			if (inputValue4 >= inputValue5)
 				return;
 		}
-		i += l;
-		k = i1 - l;
+		inputValue += inputValue4;
+		inputValue3 = inputValue5 - inputValue4;
 		if (alpha == 0) {
 			do {
-				ai[i++] = HSL_TO_RGB[j1 >> 8];
-				j1 += i2;
-			} while (--k > 0);
+				values[inputValue++] = HSL_TO_RGB[inputValue6 >> 8];
+				inputValue6 += intermediateValue4;
+			} while (--inputValue3 > 0);
 			return;
 		}
-		int k2 = alpha;
-		int i3 = 256 - alpha;
+		int intermediateValue5 = alpha;
+		int intermediateValue6 = 256 - alpha;
 		do {
-			j = HSL_TO_RGB[j1 >> 8];
-			j1 += i2;
-			j = ((j & 0xff00ff) * i3 >> 8 & 0xff00ff) + ((j & 0xff00) * i3 >> 8 & 0xff00);
-			ai[i++] = j + ((ai[i] & 0xff00ff) * k2 >> 8 & 0xff00ff) + ((ai[i] & 0xff00) * k2 >> 8 & 0xff00);
-		} while (--k > 0);
+			inputValue2 = HSL_TO_RGB[inputValue6 >> 8];
+			inputValue6 += intermediateValue4;
+			inputValue2 = ((inputValue2 & 0xff00ff) * intermediateValue6 >> 8 & 0xff00ff)
+					+ ((inputValue2 & 0xff00) * intermediateValue6 >> 8 & 0xff00);
+			values[inputValue++] = inputValue2 + ((values[inputValue] & 0xff00ff) * intermediateValue5 >> 8 & 0xff00ff)
+					+ ((values[inputValue] & 0xff00) * intermediateValue5 >> 8 & 0xff00);
+		} while (--inputValue3 > 0);
 	}
 
-	private static void drawFlatTriangleInternal(int i, int j, int k, int l, int i1, int j1, int k1) {
-		int l1 = 0;
-		if (j != i)
-			l1 = (i1 - l << 16) / (j - i);
-		int i2 = 0;
-		if (k != j)
-			i2 = (j1 - i1 << 16) / (k - j);
-		int j2 = 0;
-		if (k != i)
-			j2 = (l - j1 << 16) / (i - k);
-		if (i <= j && i <= k) {
-			if (i >= Rasterizer.bottomY)
+	/**
+	 * Draws flat triangle internal.
+	 * 
+	 * @param inputValue  the input value
+	 * @param inputValue2 the input value2
+	 * @param inputValue3 the input value3
+	 * @param inputValue4 the input value4
+	 * @param inputValue5 the input value5
+	 * @param inputValue6 the input value6
+	 * @param inputValue7 the input value7
+	 */
+	private static void drawFlatTriangleInternal(int inputValue, int inputValue2, int inputValue3, int inputValue4,
+			int inputValue5, int inputValue6, int inputValue7) {
+		int intermediateValue = 0;
+		if (inputValue2 != inputValue)
+			intermediateValue = (inputValue5 - inputValue4 << 16) / (inputValue2 - inputValue);
+		int intermediateValue2 = 0;
+		if (inputValue3 != inputValue2)
+			intermediateValue2 = (inputValue6 - inputValue5 << 16) / (inputValue3 - inputValue2);
+		int intermediateValue3 = 0;
+		if (inputValue3 != inputValue)
+			intermediateValue3 = (inputValue4 - inputValue6 << 16) / (inputValue - inputValue3);
+		if (inputValue <= inputValue2 && inputValue <= inputValue3) {
+			if (inputValue >= Rasterizer.bottomY)
 				return;
-			if (j > Rasterizer.bottomY)
-				j = Rasterizer.bottomY;
-			if (k > Rasterizer.bottomY)
-				k = Rasterizer.bottomY;
-			if (j < k) {
-				j1 = l <<= 16;
-				if (i < 0) {
-					j1 -= j2 * i;
-					l -= l1 * i;
-					i = 0;
+			if (inputValue2 > Rasterizer.bottomY)
+				inputValue2 = Rasterizer.bottomY;
+			if (inputValue3 > Rasterizer.bottomY)
+				inputValue3 = Rasterizer.bottomY;
+			if (inputValue2 < inputValue3) {
+				inputValue6 = inputValue4 <<= 16;
+				if (inputValue < 0) {
+					inputValue6 -= intermediateValue3 * inputValue;
+					inputValue4 -= intermediateValue * inputValue;
+					inputValue = 0;
 				}
-				i1 <<= 16;
-				if (j < 0) {
-					i1 -= i2 * j;
-					j = 0;
+				inputValue5 <<= 16;
+				if (inputValue2 < 0) {
+					inputValue5 -= intermediateValue2 * inputValue2;
+					inputValue2 = 0;
 				}
-				if (i != j && j2 < l1 || i == j && j2 > i2) {
-					k -= j;
-					j -= i;
-					for (i = scanlineOffsets[i]; --j >= 0; i += Rasterizer.width) {
-						drawFlatScanline(Rasterizer.pixels, i, k1, 0, j1 >> 16, l >> 16);
-						j1 += j2;
-						l += l1;
+				if (inputValue != inputValue2 && intermediateValue3 < intermediateValue
+						|| inputValue == inputValue2 && intermediateValue3 > intermediateValue2) {
+					inputValue3 -= inputValue2;
+					inputValue2 -= inputValue;
+					for (inputValue = scanlineOffsets[inputValue]; --inputValue2 >= 0; inputValue += Rasterizer.width) {
+						drawFlatScanline(Rasterizer.pixels, inputValue, inputValue7, 0, inputValue6 >> 16,
+								inputValue4 >> 16);
+						inputValue6 += intermediateValue3;
+						inputValue4 += intermediateValue;
 					}
 
-					while (--k >= 0) {
-						drawFlatScanline(Rasterizer.pixels, i, k1, 0, j1 >> 16, i1 >> 16);
-						j1 += j2;
-						i1 += i2;
-						i += Rasterizer.width;
+					while (--inputValue3 >= 0) {
+						drawFlatScanline(Rasterizer.pixels, inputValue, inputValue7, 0, inputValue6 >> 16,
+								inputValue5 >> 16);
+						inputValue6 += intermediateValue3;
+						inputValue5 += intermediateValue2;
+						inputValue += Rasterizer.width;
 					}
 					return;
 				}
-				k -= j;
-				j -= i;
-				for (i = scanlineOffsets[i]; --j >= 0; i += Rasterizer.width) {
-					drawFlatScanline(Rasterizer.pixels, i, k1, 0, l >> 16, j1 >> 16);
-					j1 += j2;
-					l += l1;
+				inputValue3 -= inputValue2;
+				inputValue2 -= inputValue;
+				for (inputValue = scanlineOffsets[inputValue]; --inputValue2 >= 0; inputValue += Rasterizer.width) {
+					drawFlatScanline(Rasterizer.pixels, inputValue, inputValue7, 0, inputValue4 >> 16,
+							inputValue6 >> 16);
+					inputValue6 += intermediateValue3;
+					inputValue4 += intermediateValue;
 				}
 
-				while (--k >= 0) {
-					drawFlatScanline(Rasterizer.pixels, i, k1, 0, i1 >> 16, j1 >> 16);
-					j1 += j2;
-					i1 += i2;
-					i += Rasterizer.width;
+				while (--inputValue3 >= 0) {
+					drawFlatScanline(Rasterizer.pixels, inputValue, inputValue7, 0, inputValue5 >> 16,
+							inputValue6 >> 16);
+					inputValue6 += intermediateValue3;
+					inputValue5 += intermediateValue2;
+					inputValue += Rasterizer.width;
 				}
 				return;
 			}
-			i1 = l <<= 16;
-			if (i < 0) {
-				i1 -= j2 * i;
-				l -= l1 * i;
-				i = 0;
+			inputValue5 = inputValue4 <<= 16;
+			if (inputValue < 0) {
+				inputValue5 -= intermediateValue3 * inputValue;
+				inputValue4 -= intermediateValue * inputValue;
+				inputValue = 0;
 			}
-			j1 <<= 16;
-			if (k < 0) {
-				j1 -= i2 * k;
-				k = 0;
+			inputValue6 <<= 16;
+			if (inputValue3 < 0) {
+				inputValue6 -= intermediateValue2 * inputValue3;
+				inputValue3 = 0;
 			}
-			if (i != k && j2 < l1 || i == k && i2 > l1) {
-				j -= k;
-				k -= i;
-				for (i = scanlineOffsets[i]; --k >= 0; i += Rasterizer.width) {
-					drawFlatScanline(Rasterizer.pixels, i, k1, 0, i1 >> 16, l >> 16);
-					i1 += j2;
-					l += l1;
+			if (inputValue != inputValue3 && intermediateValue3 < intermediateValue
+					|| inputValue == inputValue3 && intermediateValue2 > intermediateValue) {
+				inputValue2 -= inputValue3;
+				inputValue3 -= inputValue;
+				for (inputValue = scanlineOffsets[inputValue]; --inputValue3 >= 0; inputValue += Rasterizer.width) {
+					drawFlatScanline(Rasterizer.pixels, inputValue, inputValue7, 0, inputValue5 >> 16,
+							inputValue4 >> 16);
+					inputValue5 += intermediateValue3;
+					inputValue4 += intermediateValue;
 				}
 
-				while (--j >= 0) {
-					drawFlatScanline(Rasterizer.pixels, i, k1, 0, j1 >> 16, l >> 16);
-					j1 += i2;
-					l += l1;
-					i += Rasterizer.width;
+				while (--inputValue2 >= 0) {
+					drawFlatScanline(Rasterizer.pixels, inputValue, inputValue7, 0, inputValue6 >> 16,
+							inputValue4 >> 16);
+					inputValue6 += intermediateValue2;
+					inputValue4 += intermediateValue;
+					inputValue += Rasterizer.width;
 				}
 				return;
 			}
-			j -= k;
-			k -= i;
-			for (i = scanlineOffsets[i]; --k >= 0; i += Rasterizer.width) {
-				drawFlatScanline(Rasterizer.pixels, i, k1, 0, l >> 16, i1 >> 16);
-				i1 += j2;
-				l += l1;
+			inputValue2 -= inputValue3;
+			inputValue3 -= inputValue;
+			for (inputValue = scanlineOffsets[inputValue]; --inputValue3 >= 0; inputValue += Rasterizer.width) {
+				drawFlatScanline(Rasterizer.pixels, inputValue, inputValue7, 0, inputValue4 >> 16, inputValue5 >> 16);
+				inputValue5 += intermediateValue3;
+				inputValue4 += intermediateValue;
 			}
 
-			while (--j >= 0) {
-				drawFlatScanline(Rasterizer.pixels, i, k1, 0, l >> 16, j1 >> 16);
-				j1 += i2;
-				l += l1;
-				i += Rasterizer.width;
+			while (--inputValue2 >= 0) {
+				drawFlatScanline(Rasterizer.pixels, inputValue, inputValue7, 0, inputValue4 >> 16, inputValue6 >> 16);
+				inputValue6 += intermediateValue2;
+				inputValue4 += intermediateValue;
+				inputValue += Rasterizer.width;
 			}
 			return;
 		}
-		if (j <= k) {
-			if (j >= Rasterizer.bottomY)
+		if (inputValue2 <= inputValue3) {
+			if (inputValue2 >= Rasterizer.bottomY)
 				return;
-			if (k > Rasterizer.bottomY)
-				k = Rasterizer.bottomY;
-			if (i > Rasterizer.bottomY)
-				i = Rasterizer.bottomY;
-			if (k < i) {
-				l = i1 <<= 16;
-				if (j < 0) {
-					l -= l1 * j;
-					i1 -= i2 * j;
-					j = 0;
+			if (inputValue3 > Rasterizer.bottomY)
+				inputValue3 = Rasterizer.bottomY;
+			if (inputValue > Rasterizer.bottomY)
+				inputValue = Rasterizer.bottomY;
+			if (inputValue3 < inputValue) {
+				inputValue4 = inputValue5 <<= 16;
+				if (inputValue2 < 0) {
+					inputValue4 -= intermediateValue * inputValue2;
+					inputValue5 -= intermediateValue2 * inputValue2;
+					inputValue2 = 0;
 				}
-				j1 <<= 16;
-				if (k < 0) {
-					j1 -= j2 * k;
-					k = 0;
+				inputValue6 <<= 16;
+				if (inputValue3 < 0) {
+					inputValue6 -= intermediateValue3 * inputValue3;
+					inputValue3 = 0;
 				}
-				if (j != k && l1 < i2 || j == k && l1 > j2) {
-					i -= k;
-					k -= j;
-					for (j = scanlineOffsets[j]; --k >= 0; j += Rasterizer.width) {
-						drawFlatScanline(Rasterizer.pixels, j, k1, 0, l >> 16, i1 >> 16);
-						l += l1;
-						i1 += i2;
+				if (inputValue2 != inputValue3 && intermediateValue < intermediateValue2
+						|| inputValue2 == inputValue3 && intermediateValue > intermediateValue3) {
+					inputValue -= inputValue3;
+					inputValue3 -= inputValue2;
+					for (inputValue2 = scanlineOffsets[inputValue2]; --inputValue3 >= 0; inputValue2 += Rasterizer.width) {
+						drawFlatScanline(Rasterizer.pixels, inputValue2, inputValue7, 0, inputValue4 >> 16,
+								inputValue5 >> 16);
+						inputValue4 += intermediateValue;
+						inputValue5 += intermediateValue2;
 					}
 
-					while (--i >= 0) {
-						drawFlatScanline(Rasterizer.pixels, j, k1, 0, l >> 16, j1 >> 16);
-						l += l1;
-						j1 += j2;
-						j += Rasterizer.width;
+					while (--inputValue >= 0) {
+						drawFlatScanline(Rasterizer.pixels, inputValue2, inputValue7, 0, inputValue4 >> 16,
+								inputValue6 >> 16);
+						inputValue4 += intermediateValue;
+						inputValue6 += intermediateValue3;
+						inputValue2 += Rasterizer.width;
 					}
 					return;
 				}
-				i -= k;
-				k -= j;
-				for (j = scanlineOffsets[j]; --k >= 0; j += Rasterizer.width) {
-					drawFlatScanline(Rasterizer.pixels, j, k1, 0, i1 >> 16, l >> 16);
-					l += l1;
-					i1 += i2;
+				inputValue -= inputValue3;
+				inputValue3 -= inputValue2;
+				for (inputValue2 = scanlineOffsets[inputValue2]; --inputValue3 >= 0; inputValue2 += Rasterizer.width) {
+					drawFlatScanline(Rasterizer.pixels, inputValue2, inputValue7, 0, inputValue5 >> 16,
+							inputValue4 >> 16);
+					inputValue4 += intermediateValue;
+					inputValue5 += intermediateValue2;
 				}
 
-				while (--i >= 0) {
-					drawFlatScanline(Rasterizer.pixels, j, k1, 0, j1 >> 16, l >> 16);
-					l += l1;
-					j1 += j2;
-					j += Rasterizer.width;
-				}
-				return;
-			}
-			j1 = i1 <<= 16;
-			if (j < 0) {
-				j1 -= l1 * j;
-				i1 -= i2 * j;
-				j = 0;
-			}
-			l <<= 16;
-			if (i < 0) {
-				l -= j2 * i;
-				i = 0;
-			}
-			if (l1 < i2) {
-				k -= i;
-				i -= j;
-				for (j = scanlineOffsets[j]; --i >= 0; j += Rasterizer.width) {
-					drawFlatScanline(Rasterizer.pixels, j, k1, 0, j1 >> 16, i1 >> 16);
-					j1 += l1;
-					i1 += i2;
-				}
-
-				while (--k >= 0) {
-					drawFlatScanline(Rasterizer.pixels, j, k1, 0, l >> 16, i1 >> 16);
-					l += j2;
-					i1 += i2;
-					j += Rasterizer.width;
+				while (--inputValue >= 0) {
+					drawFlatScanline(Rasterizer.pixels, inputValue2, inputValue7, 0, inputValue6 >> 16,
+							inputValue4 >> 16);
+					inputValue4 += intermediateValue;
+					inputValue6 += intermediateValue3;
+					inputValue2 += Rasterizer.width;
 				}
 				return;
 			}
-			k -= i;
-			i -= j;
-			for (j = scanlineOffsets[j]; --i >= 0; j += Rasterizer.width) {
-				drawFlatScanline(Rasterizer.pixels, j, k1, 0, i1 >> 16, j1 >> 16);
-				j1 += l1;
-				i1 += i2;
+			inputValue6 = inputValue5 <<= 16;
+			if (inputValue2 < 0) {
+				inputValue6 -= intermediateValue * inputValue2;
+				inputValue5 -= intermediateValue2 * inputValue2;
+				inputValue2 = 0;
 			}
-
-			while (--k >= 0) {
-				drawFlatScanline(Rasterizer.pixels, j, k1, 0, i1 >> 16, l >> 16);
-				l += j2;
-				i1 += i2;
-				j += Rasterizer.width;
+			inputValue4 <<= 16;
+			if (inputValue < 0) {
+				inputValue4 -= intermediateValue3 * inputValue;
+				inputValue = 0;
 			}
-			return;
-		}
-		if (k >= Rasterizer.bottomY)
-			return;
-		if (i > Rasterizer.bottomY)
-			i = Rasterizer.bottomY;
-		if (j > Rasterizer.bottomY)
-			j = Rasterizer.bottomY;
-		if (i < j) {
-			i1 = j1 <<= 16;
-			if (k < 0) {
-				i1 -= i2 * k;
-				j1 -= j2 * k;
-				k = 0;
-			}
-			l <<= 16;
-			if (i < 0) {
-				l -= l1 * i;
-				i = 0;
-			}
-			if (i2 < j2) {
-				j -= i;
-				i -= k;
-				for (k = scanlineOffsets[k]; --i >= 0; k += Rasterizer.width) {
-					drawFlatScanline(Rasterizer.pixels, k, k1, 0, i1 >> 16, j1 >> 16);
-					i1 += i2;
-					j1 += j2;
+			if (intermediateValue < intermediateValue2) {
+				inputValue3 -= inputValue;
+				inputValue -= inputValue2;
+				for (inputValue2 = scanlineOffsets[inputValue2]; --inputValue >= 0; inputValue2 += Rasterizer.width) {
+					drawFlatScanline(Rasterizer.pixels, inputValue2, inputValue7, 0, inputValue6 >> 16,
+							inputValue5 >> 16);
+					inputValue6 += intermediateValue;
+					inputValue5 += intermediateValue2;
 				}
 
-				while (--j >= 0) {
-					drawFlatScanline(Rasterizer.pixels, k, k1, 0, i1 >> 16, l >> 16);
-					i1 += i2;
-					l += l1;
-					k += Rasterizer.width;
+				while (--inputValue3 >= 0) {
+					drawFlatScanline(Rasterizer.pixels, inputValue2, inputValue7, 0, inputValue4 >> 16,
+							inputValue5 >> 16);
+					inputValue4 += intermediateValue3;
+					inputValue5 += intermediateValue2;
+					inputValue2 += Rasterizer.width;
 				}
 				return;
 			}
-			j -= i;
-			i -= k;
-			for (k = scanlineOffsets[k]; --i >= 0; k += Rasterizer.width) {
-				drawFlatScanline(Rasterizer.pixels, k, k1, 0, j1 >> 16, i1 >> 16);
-				i1 += i2;
-				j1 += j2;
+			inputValue3 -= inputValue;
+			inputValue -= inputValue2;
+			for (inputValue2 = scanlineOffsets[inputValue2]; --inputValue >= 0; inputValue2 += Rasterizer.width) {
+				drawFlatScanline(Rasterizer.pixels, inputValue2, inputValue7, 0, inputValue5 >> 16, inputValue6 >> 16);
+				inputValue6 += intermediateValue;
+				inputValue5 += intermediateValue2;
 			}
 
-			while (--j >= 0) {
-				drawFlatScanline(Rasterizer.pixels, k, k1, 0, l >> 16, i1 >> 16);
-				i1 += i2;
-				l += l1;
-				k += Rasterizer.width;
+			while (--inputValue3 >= 0) {
+				drawFlatScanline(Rasterizer.pixels, inputValue2, inputValue7, 0, inputValue5 >> 16, inputValue4 >> 16);
+				inputValue4 += intermediateValue3;
+				inputValue5 += intermediateValue2;
+				inputValue2 += Rasterizer.width;
 			}
 			return;
 		}
-		l = j1 <<= 16;
-		if (k < 0) {
-			l -= i2 * k;
-			j1 -= j2 * k;
-			k = 0;
-		}
-		i1 <<= 16;
-		if (j < 0) {
-			i1 -= l1 * j;
-			j = 0;
-		}
-		if (i2 < j2) {
-			i -= j;
-			j -= k;
-			for (k = scanlineOffsets[k]; --j >= 0; k += Rasterizer.width) {
-				drawFlatScanline(Rasterizer.pixels, k, k1, 0, l >> 16, j1 >> 16);
-				l += i2;
-				j1 += j2;
+		if (inputValue3 >= Rasterizer.bottomY)
+			return;
+		if (inputValue > Rasterizer.bottomY)
+			inputValue = Rasterizer.bottomY;
+		if (inputValue2 > Rasterizer.bottomY)
+			inputValue2 = Rasterizer.bottomY;
+		if (inputValue < inputValue2) {
+			inputValue5 = inputValue6 <<= 16;
+			if (inputValue3 < 0) {
+				inputValue5 -= intermediateValue2 * inputValue3;
+				inputValue6 -= intermediateValue3 * inputValue3;
+				inputValue3 = 0;
+			}
+			inputValue4 <<= 16;
+			if (inputValue < 0) {
+				inputValue4 -= intermediateValue * inputValue;
+				inputValue = 0;
+			}
+			if (intermediateValue2 < intermediateValue3) {
+				inputValue2 -= inputValue;
+				inputValue -= inputValue3;
+				for (inputValue3 = scanlineOffsets[inputValue3]; --inputValue >= 0; inputValue3 += Rasterizer.width) {
+					drawFlatScanline(Rasterizer.pixels, inputValue3, inputValue7, 0, inputValue5 >> 16,
+							inputValue6 >> 16);
+					inputValue5 += intermediateValue2;
+					inputValue6 += intermediateValue3;
+				}
+
+				while (--inputValue2 >= 0) {
+					drawFlatScanline(Rasterizer.pixels, inputValue3, inputValue7, 0, inputValue5 >> 16,
+							inputValue4 >> 16);
+					inputValue5 += intermediateValue2;
+					inputValue4 += intermediateValue;
+					inputValue3 += Rasterizer.width;
+				}
+				return;
+			}
+			inputValue2 -= inputValue;
+			inputValue -= inputValue3;
+			for (inputValue3 = scanlineOffsets[inputValue3]; --inputValue >= 0; inputValue3 += Rasterizer.width) {
+				drawFlatScanline(Rasterizer.pixels, inputValue3, inputValue7, 0, inputValue6 >> 16, inputValue5 >> 16);
+				inputValue5 += intermediateValue2;
+				inputValue6 += intermediateValue3;
 			}
 
-			while (--i >= 0) {
-				drawFlatScanline(Rasterizer.pixels, k, k1, 0, i1 >> 16, j1 >> 16);
-				i1 += l1;
-				j1 += j2;
-				k += Rasterizer.width;
+			while (--inputValue2 >= 0) {
+				drawFlatScanline(Rasterizer.pixels, inputValue3, inputValue7, 0, inputValue4 >> 16, inputValue5 >> 16);
+				inputValue5 += intermediateValue2;
+				inputValue4 += intermediateValue;
+				inputValue3 += Rasterizer.width;
 			}
 			return;
 		}
-		i -= j;
-		j -= k;
-		for (k = scanlineOffsets[k]; --j >= 0; k += Rasterizer.width) {
-			drawFlatScanline(Rasterizer.pixels, k, k1, 0, j1 >> 16, l >> 16);
-			l += i2;
-			j1 += j2;
+		inputValue4 = inputValue6 <<= 16;
+		if (inputValue3 < 0) {
+			inputValue4 -= intermediateValue2 * inputValue3;
+			inputValue6 -= intermediateValue3 * inputValue3;
+			inputValue3 = 0;
+		}
+		inputValue5 <<= 16;
+		if (inputValue2 < 0) {
+			inputValue5 -= intermediateValue * inputValue2;
+			inputValue2 = 0;
+		}
+		if (intermediateValue2 < intermediateValue3) {
+			inputValue -= inputValue2;
+			inputValue2 -= inputValue3;
+			for (inputValue3 = scanlineOffsets[inputValue3]; --inputValue2 >= 0; inputValue3 += Rasterizer.width) {
+				drawFlatScanline(Rasterizer.pixels, inputValue3, inputValue7, 0, inputValue4 >> 16, inputValue6 >> 16);
+				inputValue4 += intermediateValue2;
+				inputValue6 += intermediateValue3;
+			}
+
+			while (--inputValue >= 0) {
+				drawFlatScanline(Rasterizer.pixels, inputValue3, inputValue7, 0, inputValue5 >> 16, inputValue6 >> 16);
+				inputValue5 += intermediateValue;
+				inputValue6 += intermediateValue3;
+				inputValue3 += Rasterizer.width;
+			}
+			return;
+		}
+		inputValue -= inputValue2;
+		inputValue2 -= inputValue3;
+		for (inputValue3 = scanlineOffsets[inputValue3]; --inputValue2 >= 0; inputValue3 += Rasterizer.width) {
+			drawFlatScanline(Rasterizer.pixels, inputValue3, inputValue7, 0, inputValue6 >> 16, inputValue4 >> 16);
+			inputValue4 += intermediateValue2;
+			inputValue6 += intermediateValue3;
 		}
 
-		while (--i >= 0) {
-			drawFlatScanline(Rasterizer.pixels, k, k1, 0, j1 >> 16, i1 >> 16);
-			i1 += l1;
-			j1 += j2;
-			k += Rasterizer.width;
+		while (--inputValue >= 0) {
+			drawFlatScanline(Rasterizer.pixels, inputValue3, inputValue7, 0, inputValue6 >> 16, inputValue5 >> 16);
+			inputValue5 += intermediateValue;
+			inputValue6 += intermediateValue3;
+			inputValue3 += Rasterizer.width;
 		}
 	}
 
-	private static void drawFlatScanline(int ai[], int i, int j, int k, int l, int i1) {
+	/**
+	 * Draws flat scanline.
+	 * 
+	 * @param values      the values
+	 * @param inputValue  the input value
+	 * @param inputValue2 the input value2
+	 * @param inputValue3 the input value3
+	 * @param inputValue4 the input value4
+	 * @param inputValue5 the input value5
+	 */
+	private static void drawFlatScanline(int values[], int inputValue, int inputValue2, int inputValue3,
+			int inputValue4, int inputValue5) {
 		if (restrictEdges) {
-			if (i1 > Rasterizer.viewportRx)
-				i1 = Rasterizer.viewportRx;
-			if (l < 0)
-				l = 0;
+			if (inputValue5 > Rasterizer.viewportRx)
+				inputValue5 = Rasterizer.viewportRx;
+			if (inputValue4 < 0)
+				inputValue4 = 0;
 		}
-		if (l >= i1)
+		if (inputValue4 >= inputValue5)
 			return;
-		i += l;
-		k = i1 - l >> 2;
+		inputValue += inputValue4;
+		inputValue3 = inputValue5 - inputValue4 >> 2;
 		if (alpha == 0) {
-			while (--k >= 0) {
-				ai[i++] = j;
-				ai[i++] = j;
-				ai[i++] = j;
-				ai[i++] = j;
+			while (--inputValue3 >= 0) {
+				values[inputValue++] = inputValue2;
+				values[inputValue++] = inputValue2;
+				values[inputValue++] = inputValue2;
+				values[inputValue++] = inputValue2;
 			}
-			for (k = i1 - l & 3; --k >= 0;)
-				ai[i++] = j;
+			for (inputValue3 = inputValue5 - inputValue4 & 3; --inputValue3 >= 0;)
+				values[inputValue++] = inputValue2;
 
 			return;
 		}
-		int j1 = alpha;
-		int k1 = 256 - alpha;
-		j = ((j & 0xff00ff) * k1 >> 8 & 0xff00ff) + ((j & 0xff00) * k1 >> 8 & 0xff00);
-		while (--k >= 0) {
-			ai[i++] = j + ((ai[i] & 0xff00ff) * j1 >> 8 & 0xff00ff) + ((ai[i] & 0xff00) * j1 >> 8 & 0xff00);
-			ai[i++] = j + ((ai[i] & 0xff00ff) * j1 >> 8 & 0xff00ff) + ((ai[i] & 0xff00) * j1 >> 8 & 0xff00);
-			ai[i++] = j + ((ai[i] & 0xff00ff) * j1 >> 8 & 0xff00ff) + ((ai[i] & 0xff00) * j1 >> 8 & 0xff00);
-			ai[i++] = j + ((ai[i] & 0xff00ff) * j1 >> 8 & 0xff00ff) + ((ai[i] & 0xff00) * j1 >> 8 & 0xff00);
+		int intermediateValue = alpha;
+		int intermediateValue2 = 256 - alpha;
+		inputValue2 = ((inputValue2 & 0xff00ff) * intermediateValue2 >> 8 & 0xff00ff)
+				+ ((inputValue2 & 0xff00) * intermediateValue2 >> 8 & 0xff00);
+		while (--inputValue3 >= 0) {
+			values[inputValue++] = inputValue2 + ((values[inputValue] & 0xff00ff) * intermediateValue >> 8 & 0xff00ff)
+					+ ((values[inputValue] & 0xff00) * intermediateValue >> 8 & 0xff00);
+			values[inputValue++] = inputValue2 + ((values[inputValue] & 0xff00ff) * intermediateValue >> 8 & 0xff00ff)
+					+ ((values[inputValue] & 0xff00) * intermediateValue >> 8 & 0xff00);
+			values[inputValue++] = inputValue2 + ((values[inputValue] & 0xff00ff) * intermediateValue >> 8 & 0xff00ff)
+					+ ((values[inputValue] & 0xff00) * intermediateValue >> 8 & 0xff00);
+			values[inputValue++] = inputValue2 + ((values[inputValue] & 0xff00ff) * intermediateValue >> 8 & 0xff00ff)
+					+ ((values[inputValue] & 0xff00) * intermediateValue >> 8 & 0xff00);
 		}
-		for (k = i1 - l & 3; --k >= 0;)
-			ai[i++] = j + ((ai[i] & 0xff00ff) * j1 >> 8 & 0xff00ff) + ((ai[i] & 0xff00) * j1 >> 8 & 0xff00);
+		for (inputValue3 = inputValue5 - inputValue4 & 3; --inputValue3 >= 0;)
+			values[inputValue++] = inputValue2 + ((values[inputValue] & 0xff00ff) * intermediateValue >> 8 & 0xff00ff)
+					+ ((values[inputValue] & 0xff00) * intermediateValue >> 8 & 0xff00);
 
 	}
 
-	private static void drawTexturedTriangleInternal(int i, int j, int k, int l, int i1, int j1, int k1, int l1, int i2,
-			int j2, int k2, int l2, int i3, int j3, int k3, int l3, int i4, int j4, int k4) {
-		int ai[] = getTexturePixels(k4);
-		opaqueTexture = !textureHasTransparency[k4];
-		k2 = j2 - k2;
-		j3 = i3 - j3;
-		i4 = l3 - i4;
-		l2 -= j2;
-		k3 -= i3;
-		j4 -= l3;
-		int l4 = l2 * i3 - k3 * j2 << 14;
-		int i5 = k3 * l3 - j4 * i3 << 8;
-		int j5 = j4 * j2 - l2 * l3 << 5;
-		int k5 = k2 * i3 - j3 * j2 << 14;
-		int l5 = j3 * l3 - i4 * i3 << 8;
-		int i6 = i4 * j2 - k2 * l3 << 5;
-		int j6 = j3 * l2 - k2 * k3 << 14;
-		int k6 = i4 * k3 - j3 * j4 << 8;
-		int l6 = k2 * j4 - i4 * l2 << 5;
-		int i7 = 0;
-		int j7 = 0;
-		if (j != i) {
-			i7 = (i1 - l << 16) / (j - i);
-			j7 = (l1 - k1 << 16) / (j - i);
+	/**
+	 * Draws textured triangle internal.
+	 * 
+	 * @param inputValue   the input value
+	 * @param inputValue2  the input value2
+	 * @param inputValue3  the input value3
+	 * @param inputValue4  the input value4
+	 * @param inputValue5  the input value5
+	 * @param inputValue6  the input value6
+	 * @param inputValue7  the input value7
+	 * @param inputValue8  the input value8
+	 * @param inputValue9  the input value9
+	 * @param inputValue10 the input value10
+	 * @param inputValue11 the input value11
+	 * @param inputValue12 the input value12
+	 * @param inputValue13 the input value13
+	 * @param inputValue14 the input value14
+	 * @param inputValue15 the input value15
+	 * @param inputValue16 the input value16
+	 * @param inputValue17 the input value17
+	 * @param inputValue18 the input value18
+	 * @param inputValue19 the input value19
+	 */
+	private static void drawTexturedTriangleInternal(int inputValue, int inputValue2, int inputValue3, int inputValue4,
+			int inputValue5, int inputValue6, int inputValue7, int inputValue8, int inputValue9, int inputValue10,
+			int inputValue11, int inputValue12, int inputValue13, int inputValue14, int inputValue15, int inputValue16,
+			int inputValue17, int inputValue18, int inputValue19) {
+		int values[] = getTexturePixels(inputValue19);
+		opaqueTexture = !textureHasTransparency[inputValue19];
+		inputValue11 = inputValue10 - inputValue11;
+		inputValue14 = inputValue13 - inputValue14;
+		inputValue17 = inputValue16 - inputValue17;
+		inputValue12 -= inputValue10;
+		inputValue15 -= inputValue13;
+		inputValue18 -= inputValue16;
+		int intermediateValue = inputValue12 * inputValue13 - inputValue15 * inputValue10 << 14;
+		int intermediateValue2 = inputValue15 * inputValue16 - inputValue18 * inputValue13 << 8;
+		int intermediateValue3 = inputValue18 * inputValue10 - inputValue12 * inputValue16 << 5;
+		int intermediateValue4 = inputValue11 * inputValue13 - inputValue14 * inputValue10 << 14;
+		int intermediateValue5 = inputValue14 * inputValue16 - inputValue17 * inputValue13 << 8;
+		int intermediateValue6 = inputValue17 * inputValue10 - inputValue11 * inputValue16 << 5;
+		int intermediateValue7 = inputValue14 * inputValue12 - inputValue11 * inputValue15 << 14;
+		int intermediateValue8 = inputValue17 * inputValue15 - inputValue14 * inputValue18 << 8;
+		int intermediateValue9 = inputValue11 * inputValue18 - inputValue17 * inputValue12 << 5;
+		int intermediateValue10 = 0;
+		int intermediateValue11 = 0;
+		if (inputValue2 != inputValue) {
+			intermediateValue10 = (inputValue5 - inputValue4 << 16) / (inputValue2 - inputValue);
+			intermediateValue11 = (inputValue8 - inputValue7 << 16) / (inputValue2 - inputValue);
 		}
-		int k7 = 0;
-		int l7 = 0;
-		if (k != j) {
-			k7 = (j1 - i1 << 16) / (k - j);
-			l7 = (i2 - l1 << 16) / (k - j);
+		int intermediateValue12 = 0;
+		int intermediateValue13 = 0;
+		if (inputValue3 != inputValue2) {
+			intermediateValue12 = (inputValue6 - inputValue5 << 16) / (inputValue3 - inputValue2);
+			intermediateValue13 = (inputValue9 - inputValue8 << 16) / (inputValue3 - inputValue2);
 		}
-		int i8 = 0;
-		int j8 = 0;
-		if (k != i) {
-			i8 = (l - j1 << 16) / (i - k);
-			j8 = (k1 - i2 << 16) / (i - k);
+		int intermediateValue14 = 0;
+		int intermediateValue15 = 0;
+		if (inputValue3 != inputValue) {
+			intermediateValue14 = (inputValue4 - inputValue6 << 16) / (inputValue - inputValue3);
+			intermediateValue15 = (inputValue7 - inputValue9 << 16) / (inputValue - inputValue3);
 		}
-		if (i <= j && i <= k) {
-			if (i >= Rasterizer.bottomY)
+		if (inputValue <= inputValue2 && inputValue <= inputValue3) {
+			if (inputValue >= Rasterizer.bottomY)
 				return;
-			if (j > Rasterizer.bottomY)
-				j = Rasterizer.bottomY;
-			if (k > Rasterizer.bottomY)
-				k = Rasterizer.bottomY;
-			if (j < k) {
-				j1 = l <<= 16;
-				i2 = k1 <<= 16;
-				if (i < 0) {
-					j1 -= i8 * i;
-					l -= i7 * i;
-					i2 -= j8 * i;
-					k1 -= j7 * i;
-					i = 0;
+			if (inputValue2 > Rasterizer.bottomY)
+				inputValue2 = Rasterizer.bottomY;
+			if (inputValue3 > Rasterizer.bottomY)
+				inputValue3 = Rasterizer.bottomY;
+			if (inputValue2 < inputValue3) {
+				inputValue6 = inputValue4 <<= 16;
+				inputValue9 = inputValue7 <<= 16;
+				if (inputValue < 0) {
+					inputValue6 -= intermediateValue14 * inputValue;
+					inputValue4 -= intermediateValue10 * inputValue;
+					inputValue9 -= intermediateValue15 * inputValue;
+					inputValue7 -= intermediateValue11 * inputValue;
+					inputValue = 0;
 				}
-				i1 <<= 16;
-				l1 <<= 16;
-				if (j < 0) {
-					i1 -= k7 * j;
-					l1 -= l7 * j;
-					j = 0;
+				inputValue5 <<= 16;
+				inputValue8 <<= 16;
+				if (inputValue2 < 0) {
+					inputValue5 -= intermediateValue12 * inputValue2;
+					inputValue8 -= intermediateValue13 * inputValue2;
+					inputValue2 = 0;
 				}
-				int k8 = i - centerY;
-				l4 += j5 * k8;
-				k5 += i6 * k8;
-				j6 += l6 * k8;
-				if (i != j && i8 < i7 || i == j && i8 > k7) {
-					k -= j;
-					j -= i;
-					i = scanlineOffsets[i];
-					while (--j >= 0) {
-						drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, i, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8, l4,
-								k5, j6, i5, l5, k6);
-						j1 += i8;
-						l += i7;
-						i2 += j8;
-						k1 += j7;
-						i += Rasterizer.width;
-						l4 += j5;
-						k5 += i6;
-						j6 += l6;
+				int intermediateValue16 = inputValue - centerY;
+				intermediateValue += intermediateValue3 * intermediateValue16;
+				intermediateValue4 += intermediateValue6 * intermediateValue16;
+				intermediateValue7 += intermediateValue9 * intermediateValue16;
+				if (inputValue != inputValue2 && intermediateValue14 < intermediateValue10
+						|| inputValue == inputValue2 && intermediateValue14 > intermediateValue12) {
+					inputValue3 -= inputValue2;
+					inputValue2 -= inputValue;
+					inputValue = scanlineOffsets[inputValue];
+					while (--inputValue2 >= 0) {
+						drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue, inputValue6 >> 16,
+								inputValue4 >> 16, inputValue9 >> 8, inputValue7 >> 8, intermediateValue,
+								intermediateValue4, intermediateValue7, intermediateValue2, intermediateValue5,
+								intermediateValue8);
+						inputValue6 += intermediateValue14;
+						inputValue4 += intermediateValue10;
+						inputValue9 += intermediateValue15;
+						inputValue7 += intermediateValue11;
+						inputValue += Rasterizer.width;
+						intermediateValue += intermediateValue3;
+						intermediateValue4 += intermediateValue6;
+						intermediateValue7 += intermediateValue9;
 					}
-					while (--k >= 0) {
-						drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, i, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8, l4,
-								k5, j6, i5, l5, k6);
-						j1 += i8;
-						i1 += k7;
-						i2 += j8;
-						l1 += l7;
-						i += Rasterizer.width;
-						l4 += j5;
-						k5 += i6;
-						j6 += l6;
-					}
-					return;
-				}
-				k -= j;
-				j -= i;
-				i = scanlineOffsets[i];
-				while (--j >= 0) {
-					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, i, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8, l4, k5,
-							j6, i5, l5, k6);
-					j1 += i8;
-					l += i7;
-					i2 += j8;
-					k1 += j7;
-					i += Rasterizer.width;
-					l4 += j5;
-					k5 += i6;
-					j6 += l6;
-				}
-				while (--k >= 0) {
-					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, i, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4, k5,
-							j6, i5, l5, k6);
-					j1 += i8;
-					i1 += k7;
-					i2 += j8;
-					l1 += l7;
-					i += Rasterizer.width;
-					l4 += j5;
-					k5 += i6;
-					j6 += l6;
-				}
-				return;
-			}
-			i1 = l <<= 16;
-			l1 = k1 <<= 16;
-			if (i < 0) {
-				i1 -= i8 * i;
-				l -= i7 * i;
-				l1 -= j8 * i;
-				k1 -= j7 * i;
-				i = 0;
-			}
-			j1 <<= 16;
-			i2 <<= 16;
-			if (k < 0) {
-				j1 -= k7 * k;
-				i2 -= l7 * k;
-				k = 0;
-			}
-			int l8 = i - centerY;
-			l4 += j5 * l8;
-			k5 += i6 * l8;
-			j6 += l6 * l8;
-			if (i != k && i8 < i7 || i == k && k7 > i7) {
-				j -= k;
-				k -= i;
-				i = scanlineOffsets[i];
-				while (--k >= 0) {
-					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, i, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4, k5,
-							j6, i5, l5, k6);
-					i1 += i8;
-					l += i7;
-					l1 += j8;
-					k1 += j7;
-					i += Rasterizer.width;
-					l4 += j5;
-					k5 += i6;
-					j6 += l6;
-				}
-				while (--j >= 0) {
-					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, i, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8, l4, k5,
-							j6, i5, l5, k6);
-					j1 += k7;
-					l += i7;
-					i2 += l7;
-					k1 += j7;
-					i += Rasterizer.width;
-					l4 += j5;
-					k5 += i6;
-					j6 += l6;
-				}
-				return;
-			}
-			j -= k;
-			k -= i;
-			i = scanlineOffsets[i];
-			while (--k >= 0) {
-				drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, i, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8, l4, k5, j6,
-						i5, l5, k6);
-				i1 += i8;
-				l += i7;
-				l1 += j8;
-				k1 += j7;
-				i += Rasterizer.width;
-				l4 += j5;
-				k5 += i6;
-				j6 += l6;
-			}
-			while (--j >= 0) {
-				drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, i, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8, l4, k5, j6,
-						i5, l5, k6);
-				j1 += k7;
-				l += i7;
-				i2 += l7;
-				k1 += j7;
-				i += Rasterizer.width;
-				l4 += j5;
-				k5 += i6;
-				j6 += l6;
-			}
-			return;
-		}
-		if (j <= k) {
-			if (j >= Rasterizer.bottomY)
-				return;
-			if (k > Rasterizer.bottomY)
-				k = Rasterizer.bottomY;
-			if (i > Rasterizer.bottomY)
-				i = Rasterizer.bottomY;
-			if (k < i) {
-				l = i1 <<= 16;
-				k1 = l1 <<= 16;
-				if (j < 0) {
-					l -= i7 * j;
-					i1 -= k7 * j;
-					k1 -= j7 * j;
-					l1 -= l7 * j;
-					j = 0;
-				}
-				j1 <<= 16;
-				i2 <<= 16;
-				if (k < 0) {
-					j1 -= i8 * k;
-					i2 -= j8 * k;
-					k = 0;
-				}
-				int i9 = j - centerY;
-				l4 += j5 * i9;
-				k5 += i6 * i9;
-				j6 += l6 * i9;
-				if (j != k && i7 < k7 || j == k && i7 > i8) {
-					i -= k;
-					k -= j;
-					j = scanlineOffsets[j];
-					while (--k >= 0) {
-						drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, j, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8, l4,
-								k5, j6, i5, l5, k6);
-						l += i7;
-						i1 += k7;
-						k1 += j7;
-						l1 += l7;
-						j += Rasterizer.width;
-						l4 += j5;
-						k5 += i6;
-						j6 += l6;
-					}
-					while (--i >= 0) {
-						drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, j, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8, l4,
-								k5, j6, i5, l5, k6);
-						l += i7;
-						j1 += i8;
-						k1 += j7;
-						i2 += j8;
-						j += Rasterizer.width;
-						l4 += j5;
-						k5 += i6;
-						j6 += l6;
+					while (--inputValue3 >= 0) {
+						drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue, inputValue6 >> 16,
+								inputValue5 >> 16, inputValue9 >> 8, inputValue8 >> 8, intermediateValue,
+								intermediateValue4, intermediateValue7, intermediateValue2, intermediateValue5,
+								intermediateValue8);
+						inputValue6 += intermediateValue14;
+						inputValue5 += intermediateValue12;
+						inputValue9 += intermediateValue15;
+						inputValue8 += intermediateValue13;
+						inputValue += Rasterizer.width;
+						intermediateValue += intermediateValue3;
+						intermediateValue4 += intermediateValue6;
+						intermediateValue7 += intermediateValue9;
 					}
 					return;
 				}
-				i -= k;
-				k -= j;
-				j = scanlineOffsets[j];
-				while (--k >= 0) {
-					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, j, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4, k5,
-							j6, i5, l5, k6);
-					l += i7;
-					i1 += k7;
-					k1 += j7;
-					l1 += l7;
-					j += Rasterizer.width;
-					l4 += j5;
-					k5 += i6;
-					j6 += l6;
+				inputValue3 -= inputValue2;
+				inputValue2 -= inputValue;
+				inputValue = scanlineOffsets[inputValue];
+				while (--inputValue2 >= 0) {
+					drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue, inputValue4 >> 16,
+							inputValue6 >> 16, inputValue7 >> 8, inputValue9 >> 8, intermediateValue,
+							intermediateValue4, intermediateValue7, intermediateValue2, intermediateValue5,
+							intermediateValue8);
+					inputValue6 += intermediateValue14;
+					inputValue4 += intermediateValue10;
+					inputValue9 += intermediateValue15;
+					inputValue7 += intermediateValue11;
+					inputValue += Rasterizer.width;
+					intermediateValue += intermediateValue3;
+					intermediateValue4 += intermediateValue6;
+					intermediateValue7 += intermediateValue9;
 				}
-				while (--i >= 0) {
-					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, j, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8, l4, k5,
-							j6, i5, l5, k6);
-					l += i7;
-					j1 += i8;
-					k1 += j7;
-					i2 += j8;
-					j += Rasterizer.width;
-					l4 += j5;
-					k5 += i6;
-					j6 += l6;
-				}
-				return;
-			}
-			j1 = i1 <<= 16;
-			i2 = l1 <<= 16;
-			if (j < 0) {
-				j1 -= i7 * j;
-				i1 -= k7 * j;
-				i2 -= j7 * j;
-				l1 -= l7 * j;
-				j = 0;
-			}
-			l <<= 16;
-			k1 <<= 16;
-			if (i < 0) {
-				l -= i8 * i;
-				k1 -= j8 * i;
-				i = 0;
-			}
-			int j9 = j - centerY;
-			l4 += j5 * j9;
-			k5 += i6 * j9;
-			j6 += l6 * j9;
-			if (i7 < k7) {
-				k -= i;
-				i -= j;
-				j = scanlineOffsets[j];
-				while (--i >= 0) {
-					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, j, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8, l4, k5,
-							j6, i5, l5, k6);
-					j1 += i7;
-					i1 += k7;
-					i2 += j7;
-					l1 += l7;
-					j += Rasterizer.width;
-					l4 += j5;
-					k5 += i6;
-					j6 += l6;
-				}
-				while (--k >= 0) {
-					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, j, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8, l4, k5,
-							j6, i5, l5, k6);
-					l += i8;
-					i1 += k7;
-					k1 += j8;
-					l1 += l7;
-					j += Rasterizer.width;
-					l4 += j5;
-					k5 += i6;
-					j6 += l6;
+				while (--inputValue3 >= 0) {
+					drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue, inputValue5 >> 16,
+							inputValue6 >> 16, inputValue8 >> 8, inputValue9 >> 8, intermediateValue,
+							intermediateValue4, intermediateValue7, intermediateValue2, intermediateValue5,
+							intermediateValue8);
+					inputValue6 += intermediateValue14;
+					inputValue5 += intermediateValue12;
+					inputValue9 += intermediateValue15;
+					inputValue8 += intermediateValue13;
+					inputValue += Rasterizer.width;
+					intermediateValue += intermediateValue3;
+					intermediateValue4 += intermediateValue6;
+					intermediateValue7 += intermediateValue9;
 				}
 				return;
 			}
-			k -= i;
-			i -= j;
-			j = scanlineOffsets[j];
-			while (--i >= 0) {
-				drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, j, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4, k5, j6,
-						i5, l5, k6);
-				j1 += i7;
-				i1 += k7;
-				i2 += j7;
-				l1 += l7;
-				j += Rasterizer.width;
-				l4 += j5;
-				k5 += i6;
-				j6 += l6;
+			inputValue5 = inputValue4 <<= 16;
+			inputValue8 = inputValue7 <<= 16;
+			if (inputValue < 0) {
+				inputValue5 -= intermediateValue14 * inputValue;
+				inputValue4 -= intermediateValue10 * inputValue;
+				inputValue8 -= intermediateValue15 * inputValue;
+				inputValue7 -= intermediateValue11 * inputValue;
+				inputValue = 0;
 			}
-			while (--k >= 0) {
-				drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, j, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4, k5, j6,
-						i5, l5, k6);
-				l += i8;
-				i1 += k7;
-				k1 += j8;
-				l1 += l7;
-				j += Rasterizer.width;
-				l4 += j5;
-				k5 += i6;
-				j6 += l6;
+			inputValue6 <<= 16;
+			inputValue9 <<= 16;
+			if (inputValue3 < 0) {
+				inputValue6 -= intermediateValue12 * inputValue3;
+				inputValue9 -= intermediateValue13 * inputValue3;
+				inputValue3 = 0;
 			}
-			return;
-		}
-		if (k >= Rasterizer.bottomY)
-			return;
-		if (i > Rasterizer.bottomY)
-			i = Rasterizer.bottomY;
-		if (j > Rasterizer.bottomY)
-			j = Rasterizer.bottomY;
-		if (i < j) {
-			i1 = j1 <<= 16;
-			l1 = i2 <<= 16;
-			if (k < 0) {
-				i1 -= k7 * k;
-				j1 -= i8 * k;
-				l1 -= l7 * k;
-				i2 -= j8 * k;
-				k = 0;
-			}
-			l <<= 16;
-			k1 <<= 16;
-			if (i < 0) {
-				l -= i7 * i;
-				k1 -= j7 * i;
-				i = 0;
-			}
-			int k9 = k - centerY;
-			l4 += j5 * k9;
-			k5 += i6 * k9;
-			j6 += l6 * k9;
-			if (k7 < i8) {
-				j -= i;
-				i -= k;
-				k = scanlineOffsets[k];
-				while (--i >= 0) {
-					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, k, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4, k5,
-							j6, i5, l5, k6);
-					i1 += k7;
-					j1 += i8;
-					l1 += l7;
-					i2 += j8;
-					k += Rasterizer.width;
-					l4 += j5;
-					k5 += i6;
-					j6 += l6;
+			int intermediateValue17 = inputValue - centerY;
+			intermediateValue += intermediateValue3 * intermediateValue17;
+			intermediateValue4 += intermediateValue6 * intermediateValue17;
+			intermediateValue7 += intermediateValue9 * intermediateValue17;
+			if (inputValue != inputValue3 && intermediateValue14 < intermediateValue10
+					|| inputValue == inputValue3 && intermediateValue12 > intermediateValue10) {
+				inputValue2 -= inputValue3;
+				inputValue3 -= inputValue;
+				inputValue = scanlineOffsets[inputValue];
+				while (--inputValue3 >= 0) {
+					drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue, inputValue5 >> 16,
+							inputValue4 >> 16, inputValue8 >> 8, inputValue7 >> 8, intermediateValue,
+							intermediateValue4, intermediateValue7, intermediateValue2, intermediateValue5,
+							intermediateValue8);
+					inputValue5 += intermediateValue14;
+					inputValue4 += intermediateValue10;
+					inputValue8 += intermediateValue15;
+					inputValue7 += intermediateValue11;
+					inputValue += Rasterizer.width;
+					intermediateValue += intermediateValue3;
+					intermediateValue4 += intermediateValue6;
+					intermediateValue7 += intermediateValue9;
 				}
-				while (--j >= 0) {
-					drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, k, i1 >> 16, l >> 16, l1 >> 8, k1 >> 8, l4, k5,
-							j6, i5, l5, k6);
-					i1 += k7;
-					l += i7;
-					l1 += l7;
-					k1 += j7;
-					k += Rasterizer.width;
-					l4 += j5;
-					k5 += i6;
-					j6 += l6;
+				while (--inputValue2 >= 0) {
+					drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue, inputValue6 >> 16,
+							inputValue4 >> 16, inputValue9 >> 8, inputValue7 >> 8, intermediateValue,
+							intermediateValue4, intermediateValue7, intermediateValue2, intermediateValue5,
+							intermediateValue8);
+					inputValue6 += intermediateValue12;
+					inputValue4 += intermediateValue10;
+					inputValue9 += intermediateValue13;
+					inputValue7 += intermediateValue11;
+					inputValue += Rasterizer.width;
+					intermediateValue += intermediateValue3;
+					intermediateValue4 += intermediateValue6;
+					intermediateValue7 += intermediateValue9;
 				}
 				return;
 			}
-			j -= i;
-			i -= k;
-			k = scanlineOffsets[k];
-			while (--i >= 0) {
-				drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, k, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8, l4, k5, j6,
-						i5, l5, k6);
-				i1 += k7;
-				j1 += i8;
-				l1 += l7;
-				i2 += j8;
-				k += Rasterizer.width;
-				l4 += j5;
-				k5 += i6;
-				j6 += l6;
+			inputValue2 -= inputValue3;
+			inputValue3 -= inputValue;
+			inputValue = scanlineOffsets[inputValue];
+			while (--inputValue3 >= 0) {
+				drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue, inputValue4 >> 16, inputValue5 >> 16,
+						inputValue7 >> 8, inputValue8 >> 8, intermediateValue, intermediateValue4, intermediateValue7,
+						intermediateValue2, intermediateValue5, intermediateValue8);
+				inputValue5 += intermediateValue14;
+				inputValue4 += intermediateValue10;
+				inputValue8 += intermediateValue15;
+				inputValue7 += intermediateValue11;
+				inputValue += Rasterizer.width;
+				intermediateValue += intermediateValue3;
+				intermediateValue4 += intermediateValue6;
+				intermediateValue7 += intermediateValue9;
 			}
-			while (--j >= 0) {
-				drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, k, l >> 16, i1 >> 16, k1 >> 8, l1 >> 8, l4, k5, j6,
-						i5, l5, k6);
-				i1 += k7;
-				l += i7;
-				l1 += l7;
-				k1 += j7;
-				k += Rasterizer.width;
-				l4 += j5;
-				k5 += i6;
-				j6 += l6;
-			}
-			return;
-		}
-		l = j1 <<= 16;
-		k1 = i2 <<= 16;
-		if (k < 0) {
-			l -= k7 * k;
-			j1 -= i8 * k;
-			k1 -= l7 * k;
-			i2 -= j8 * k;
-			k = 0;
-		}
-		i1 <<= 16;
-		l1 <<= 16;
-		if (j < 0) {
-			i1 -= i7 * j;
-			l1 -= j7 * j;
-			j = 0;
-		}
-		int l9 = k - centerY;
-		l4 += j5 * l9;
-		k5 += i6 * l9;
-		j6 += l6 * l9;
-		if (k7 < i8) {
-			i -= j;
-			j -= k;
-			k = scanlineOffsets[k];
-			while (--j >= 0) {
-				drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, k, l >> 16, j1 >> 16, k1 >> 8, i2 >> 8, l4, k5, j6,
-						i5, l5, k6);
-				l += k7;
-				j1 += i8;
-				k1 += l7;
-				i2 += j8;
-				k += Rasterizer.width;
-				l4 += j5;
-				k5 += i6;
-				j6 += l6;
-			}
-			while (--i >= 0) {
-				drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, k, i1 >> 16, j1 >> 16, l1 >> 8, i2 >> 8, l4, k5, j6,
-						i5, l5, k6);
-				i1 += i7;
-				j1 += i8;
-				l1 += j7;
-				i2 += j8;
-				k += Rasterizer.width;
-				l4 += j5;
-				k5 += i6;
-				j6 += l6;
+			while (--inputValue2 >= 0) {
+				drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue, inputValue4 >> 16, inputValue6 >> 16,
+						inputValue7 >> 8, inputValue9 >> 8, intermediateValue, intermediateValue4, intermediateValue7,
+						intermediateValue2, intermediateValue5, intermediateValue8);
+				inputValue6 += intermediateValue12;
+				inputValue4 += intermediateValue10;
+				inputValue9 += intermediateValue13;
+				inputValue7 += intermediateValue11;
+				inputValue += Rasterizer.width;
+				intermediateValue += intermediateValue3;
+				intermediateValue4 += intermediateValue6;
+				intermediateValue7 += intermediateValue9;
 			}
 			return;
 		}
-		i -= j;
-		j -= k;
-		k = scanlineOffsets[k];
-		while (--j >= 0) {
-			drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, k, j1 >> 16, l >> 16, i2 >> 8, k1 >> 8, l4, k5, j6, i5,
-					l5, k6);
-			l += k7;
-			j1 += i8;
-			k1 += l7;
-			i2 += j8;
-			k += Rasterizer.width;
-			l4 += j5;
-			k5 += i6;
-			j6 += l6;
+		if (inputValue2 <= inputValue3) {
+			if (inputValue2 >= Rasterizer.bottomY)
+				return;
+			if (inputValue3 > Rasterizer.bottomY)
+				inputValue3 = Rasterizer.bottomY;
+			if (inputValue > Rasterizer.bottomY)
+				inputValue = Rasterizer.bottomY;
+			if (inputValue3 < inputValue) {
+				inputValue4 = inputValue5 <<= 16;
+				inputValue7 = inputValue8 <<= 16;
+				if (inputValue2 < 0) {
+					inputValue4 -= intermediateValue10 * inputValue2;
+					inputValue5 -= intermediateValue12 * inputValue2;
+					inputValue7 -= intermediateValue11 * inputValue2;
+					inputValue8 -= intermediateValue13 * inputValue2;
+					inputValue2 = 0;
+				}
+				inputValue6 <<= 16;
+				inputValue9 <<= 16;
+				if (inputValue3 < 0) {
+					inputValue6 -= intermediateValue14 * inputValue3;
+					inputValue9 -= intermediateValue15 * inputValue3;
+					inputValue3 = 0;
+				}
+				int intermediateValue18 = inputValue2 - centerY;
+				intermediateValue += intermediateValue3 * intermediateValue18;
+				intermediateValue4 += intermediateValue6 * intermediateValue18;
+				intermediateValue7 += intermediateValue9 * intermediateValue18;
+				if (inputValue2 != inputValue3 && intermediateValue10 < intermediateValue12
+						|| inputValue2 == inputValue3 && intermediateValue10 > intermediateValue14) {
+					inputValue -= inputValue3;
+					inputValue3 -= inputValue2;
+					inputValue2 = scanlineOffsets[inputValue2];
+					while (--inputValue3 >= 0) {
+						drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue2, inputValue4 >> 16,
+								inputValue5 >> 16, inputValue7 >> 8, inputValue8 >> 8, intermediateValue,
+								intermediateValue4, intermediateValue7, intermediateValue2, intermediateValue5,
+								intermediateValue8);
+						inputValue4 += intermediateValue10;
+						inputValue5 += intermediateValue12;
+						inputValue7 += intermediateValue11;
+						inputValue8 += intermediateValue13;
+						inputValue2 += Rasterizer.width;
+						intermediateValue += intermediateValue3;
+						intermediateValue4 += intermediateValue6;
+						intermediateValue7 += intermediateValue9;
+					}
+					while (--inputValue >= 0) {
+						drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue2, inputValue4 >> 16,
+								inputValue6 >> 16, inputValue7 >> 8, inputValue9 >> 8, intermediateValue,
+								intermediateValue4, intermediateValue7, intermediateValue2, intermediateValue5,
+								intermediateValue8);
+						inputValue4 += intermediateValue10;
+						inputValue6 += intermediateValue14;
+						inputValue7 += intermediateValue11;
+						inputValue9 += intermediateValue15;
+						inputValue2 += Rasterizer.width;
+						intermediateValue += intermediateValue3;
+						intermediateValue4 += intermediateValue6;
+						intermediateValue7 += intermediateValue9;
+					}
+					return;
+				}
+				inputValue -= inputValue3;
+				inputValue3 -= inputValue2;
+				inputValue2 = scanlineOffsets[inputValue2];
+				while (--inputValue3 >= 0) {
+					drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue2, inputValue5 >> 16,
+							inputValue4 >> 16, inputValue8 >> 8, inputValue7 >> 8, intermediateValue,
+							intermediateValue4, intermediateValue7, intermediateValue2, intermediateValue5,
+							intermediateValue8);
+					inputValue4 += intermediateValue10;
+					inputValue5 += intermediateValue12;
+					inputValue7 += intermediateValue11;
+					inputValue8 += intermediateValue13;
+					inputValue2 += Rasterizer.width;
+					intermediateValue += intermediateValue3;
+					intermediateValue4 += intermediateValue6;
+					intermediateValue7 += intermediateValue9;
+				}
+				while (--inputValue >= 0) {
+					drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue2, inputValue6 >> 16,
+							inputValue4 >> 16, inputValue9 >> 8, inputValue7 >> 8, intermediateValue,
+							intermediateValue4, intermediateValue7, intermediateValue2, intermediateValue5,
+							intermediateValue8);
+					inputValue4 += intermediateValue10;
+					inputValue6 += intermediateValue14;
+					inputValue7 += intermediateValue11;
+					inputValue9 += intermediateValue15;
+					inputValue2 += Rasterizer.width;
+					intermediateValue += intermediateValue3;
+					intermediateValue4 += intermediateValue6;
+					intermediateValue7 += intermediateValue9;
+				}
+				return;
+			}
+			inputValue6 = inputValue5 <<= 16;
+			inputValue9 = inputValue8 <<= 16;
+			if (inputValue2 < 0) {
+				inputValue6 -= intermediateValue10 * inputValue2;
+				inputValue5 -= intermediateValue12 * inputValue2;
+				inputValue9 -= intermediateValue11 * inputValue2;
+				inputValue8 -= intermediateValue13 * inputValue2;
+				inputValue2 = 0;
+			}
+			inputValue4 <<= 16;
+			inputValue7 <<= 16;
+			if (inputValue < 0) {
+				inputValue4 -= intermediateValue14 * inputValue;
+				inputValue7 -= intermediateValue15 * inputValue;
+				inputValue = 0;
+			}
+			int intermediateValue19 = inputValue2 - centerY;
+			intermediateValue += intermediateValue3 * intermediateValue19;
+			intermediateValue4 += intermediateValue6 * intermediateValue19;
+			intermediateValue7 += intermediateValue9 * intermediateValue19;
+			if (intermediateValue10 < intermediateValue12) {
+				inputValue3 -= inputValue;
+				inputValue -= inputValue2;
+				inputValue2 = scanlineOffsets[inputValue2];
+				while (--inputValue >= 0) {
+					drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue2, inputValue6 >> 16,
+							inputValue5 >> 16, inputValue9 >> 8, inputValue8 >> 8, intermediateValue,
+							intermediateValue4, intermediateValue7, intermediateValue2, intermediateValue5,
+							intermediateValue8);
+					inputValue6 += intermediateValue10;
+					inputValue5 += intermediateValue12;
+					inputValue9 += intermediateValue11;
+					inputValue8 += intermediateValue13;
+					inputValue2 += Rasterizer.width;
+					intermediateValue += intermediateValue3;
+					intermediateValue4 += intermediateValue6;
+					intermediateValue7 += intermediateValue9;
+				}
+				while (--inputValue3 >= 0) {
+					drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue2, inputValue4 >> 16,
+							inputValue5 >> 16, inputValue7 >> 8, inputValue8 >> 8, intermediateValue,
+							intermediateValue4, intermediateValue7, intermediateValue2, intermediateValue5,
+							intermediateValue8);
+					inputValue4 += intermediateValue14;
+					inputValue5 += intermediateValue12;
+					inputValue7 += intermediateValue15;
+					inputValue8 += intermediateValue13;
+					inputValue2 += Rasterizer.width;
+					intermediateValue += intermediateValue3;
+					intermediateValue4 += intermediateValue6;
+					intermediateValue7 += intermediateValue9;
+				}
+				return;
+			}
+			inputValue3 -= inputValue;
+			inputValue -= inputValue2;
+			inputValue2 = scanlineOffsets[inputValue2];
+			while (--inputValue >= 0) {
+				drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue2, inputValue5 >> 16, inputValue6 >> 16,
+						inputValue8 >> 8, inputValue9 >> 8, intermediateValue, intermediateValue4, intermediateValue7,
+						intermediateValue2, intermediateValue5, intermediateValue8);
+				inputValue6 += intermediateValue10;
+				inputValue5 += intermediateValue12;
+				inputValue9 += intermediateValue11;
+				inputValue8 += intermediateValue13;
+				inputValue2 += Rasterizer.width;
+				intermediateValue += intermediateValue3;
+				intermediateValue4 += intermediateValue6;
+				intermediateValue7 += intermediateValue9;
+			}
+			while (--inputValue3 >= 0) {
+				drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue2, inputValue5 >> 16, inputValue4 >> 16,
+						inputValue8 >> 8, inputValue7 >> 8, intermediateValue, intermediateValue4, intermediateValue7,
+						intermediateValue2, intermediateValue5, intermediateValue8);
+				inputValue4 += intermediateValue14;
+				inputValue5 += intermediateValue12;
+				inputValue7 += intermediateValue15;
+				inputValue8 += intermediateValue13;
+				inputValue2 += Rasterizer.width;
+				intermediateValue += intermediateValue3;
+				intermediateValue4 += intermediateValue6;
+				intermediateValue7 += intermediateValue9;
+			}
+			return;
 		}
-		while (--i >= 0) {
-			drawTexturedScanline(Rasterizer.pixels, ai, 0, 0, k, j1 >> 16, i1 >> 16, i2 >> 8, l1 >> 8, l4, k5, j6, i5,
-					l5, k6);
-			i1 += i7;
-			j1 += i8;
-			l1 += j7;
-			i2 += j8;
-			k += Rasterizer.width;
-			l4 += j5;
-			k5 += i6;
-			j6 += l6;
+		if (inputValue3 >= Rasterizer.bottomY)
+			return;
+		if (inputValue > Rasterizer.bottomY)
+			inputValue = Rasterizer.bottomY;
+		if (inputValue2 > Rasterizer.bottomY)
+			inputValue2 = Rasterizer.bottomY;
+		if (inputValue < inputValue2) {
+			inputValue5 = inputValue6 <<= 16;
+			inputValue8 = inputValue9 <<= 16;
+			if (inputValue3 < 0) {
+				inputValue5 -= intermediateValue12 * inputValue3;
+				inputValue6 -= intermediateValue14 * inputValue3;
+				inputValue8 -= intermediateValue13 * inputValue3;
+				inputValue9 -= intermediateValue15 * inputValue3;
+				inputValue3 = 0;
+			}
+			inputValue4 <<= 16;
+			inputValue7 <<= 16;
+			if (inputValue < 0) {
+				inputValue4 -= intermediateValue10 * inputValue;
+				inputValue7 -= intermediateValue11 * inputValue;
+				inputValue = 0;
+			}
+			int intermediateValue20 = inputValue3 - centerY;
+			intermediateValue += intermediateValue3 * intermediateValue20;
+			intermediateValue4 += intermediateValue6 * intermediateValue20;
+			intermediateValue7 += intermediateValue9 * intermediateValue20;
+			if (intermediateValue12 < intermediateValue14) {
+				inputValue2 -= inputValue;
+				inputValue -= inputValue3;
+				inputValue3 = scanlineOffsets[inputValue3];
+				while (--inputValue >= 0) {
+					drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue3, inputValue5 >> 16,
+							inputValue6 >> 16, inputValue8 >> 8, inputValue9 >> 8, intermediateValue,
+							intermediateValue4, intermediateValue7, intermediateValue2, intermediateValue5,
+							intermediateValue8);
+					inputValue5 += intermediateValue12;
+					inputValue6 += intermediateValue14;
+					inputValue8 += intermediateValue13;
+					inputValue9 += intermediateValue15;
+					inputValue3 += Rasterizer.width;
+					intermediateValue += intermediateValue3;
+					intermediateValue4 += intermediateValue6;
+					intermediateValue7 += intermediateValue9;
+				}
+				while (--inputValue2 >= 0) {
+					drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue3, inputValue5 >> 16,
+							inputValue4 >> 16, inputValue8 >> 8, inputValue7 >> 8, intermediateValue,
+							intermediateValue4, intermediateValue7, intermediateValue2, intermediateValue5,
+							intermediateValue8);
+					inputValue5 += intermediateValue12;
+					inputValue4 += intermediateValue10;
+					inputValue8 += intermediateValue13;
+					inputValue7 += intermediateValue11;
+					inputValue3 += Rasterizer.width;
+					intermediateValue += intermediateValue3;
+					intermediateValue4 += intermediateValue6;
+					intermediateValue7 += intermediateValue9;
+				}
+				return;
+			}
+			inputValue2 -= inputValue;
+			inputValue -= inputValue3;
+			inputValue3 = scanlineOffsets[inputValue3];
+			while (--inputValue >= 0) {
+				drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue3, inputValue6 >> 16, inputValue5 >> 16,
+						inputValue9 >> 8, inputValue8 >> 8, intermediateValue, intermediateValue4, intermediateValue7,
+						intermediateValue2, intermediateValue5, intermediateValue8);
+				inputValue5 += intermediateValue12;
+				inputValue6 += intermediateValue14;
+				inputValue8 += intermediateValue13;
+				inputValue9 += intermediateValue15;
+				inputValue3 += Rasterizer.width;
+				intermediateValue += intermediateValue3;
+				intermediateValue4 += intermediateValue6;
+				intermediateValue7 += intermediateValue9;
+			}
+			while (--inputValue2 >= 0) {
+				drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue3, inputValue4 >> 16, inputValue5 >> 16,
+						inputValue7 >> 8, inputValue8 >> 8, intermediateValue, intermediateValue4, intermediateValue7,
+						intermediateValue2, intermediateValue5, intermediateValue8);
+				inputValue5 += intermediateValue12;
+				inputValue4 += intermediateValue10;
+				inputValue8 += intermediateValue13;
+				inputValue7 += intermediateValue11;
+				inputValue3 += Rasterizer.width;
+				intermediateValue += intermediateValue3;
+				intermediateValue4 += intermediateValue6;
+				intermediateValue7 += intermediateValue9;
+			}
+			return;
+		}
+		inputValue4 = inputValue6 <<= 16;
+		inputValue7 = inputValue9 <<= 16;
+		if (inputValue3 < 0) {
+			inputValue4 -= intermediateValue12 * inputValue3;
+			inputValue6 -= intermediateValue14 * inputValue3;
+			inputValue7 -= intermediateValue13 * inputValue3;
+			inputValue9 -= intermediateValue15 * inputValue3;
+			inputValue3 = 0;
+		}
+		inputValue5 <<= 16;
+		inputValue8 <<= 16;
+		if (inputValue2 < 0) {
+			inputValue5 -= intermediateValue10 * inputValue2;
+			inputValue8 -= intermediateValue11 * inputValue2;
+			inputValue2 = 0;
+		}
+		int intermediateValue21 = inputValue3 - centerY;
+		intermediateValue += intermediateValue3 * intermediateValue21;
+		intermediateValue4 += intermediateValue6 * intermediateValue21;
+		intermediateValue7 += intermediateValue9 * intermediateValue21;
+		if (intermediateValue12 < intermediateValue14) {
+			inputValue -= inputValue2;
+			inputValue2 -= inputValue3;
+			inputValue3 = scanlineOffsets[inputValue3];
+			while (--inputValue2 >= 0) {
+				drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue3, inputValue4 >> 16, inputValue6 >> 16,
+						inputValue7 >> 8, inputValue9 >> 8, intermediateValue, intermediateValue4, intermediateValue7,
+						intermediateValue2, intermediateValue5, intermediateValue8);
+				inputValue4 += intermediateValue12;
+				inputValue6 += intermediateValue14;
+				inputValue7 += intermediateValue13;
+				inputValue9 += intermediateValue15;
+				inputValue3 += Rasterizer.width;
+				intermediateValue += intermediateValue3;
+				intermediateValue4 += intermediateValue6;
+				intermediateValue7 += intermediateValue9;
+			}
+			while (--inputValue >= 0) {
+				drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue3, inputValue5 >> 16, inputValue6 >> 16,
+						inputValue8 >> 8, inputValue9 >> 8, intermediateValue, intermediateValue4, intermediateValue7,
+						intermediateValue2, intermediateValue5, intermediateValue8);
+				inputValue5 += intermediateValue10;
+				inputValue6 += intermediateValue14;
+				inputValue8 += intermediateValue11;
+				inputValue9 += intermediateValue15;
+				inputValue3 += Rasterizer.width;
+				intermediateValue += intermediateValue3;
+				intermediateValue4 += intermediateValue6;
+				intermediateValue7 += intermediateValue9;
+			}
+			return;
+		}
+		inputValue -= inputValue2;
+		inputValue2 -= inputValue3;
+		inputValue3 = scanlineOffsets[inputValue3];
+		while (--inputValue2 >= 0) {
+			drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue3, inputValue6 >> 16, inputValue4 >> 16,
+					inputValue9 >> 8, inputValue7 >> 8, intermediateValue, intermediateValue4, intermediateValue7,
+					intermediateValue2, intermediateValue5, intermediateValue8);
+			inputValue4 += intermediateValue12;
+			inputValue6 += intermediateValue14;
+			inputValue7 += intermediateValue13;
+			inputValue9 += intermediateValue15;
+			inputValue3 += Rasterizer.width;
+			intermediateValue += intermediateValue3;
+			intermediateValue4 += intermediateValue6;
+			intermediateValue7 += intermediateValue9;
+		}
+		while (--inputValue >= 0) {
+			drawTexturedScanline(Rasterizer.pixels, values, 0, 0, inputValue3, inputValue6 >> 16, inputValue5 >> 16,
+					inputValue9 >> 8, inputValue8 >> 8, intermediateValue, intermediateValue4, intermediateValue7,
+					intermediateValue2, intermediateValue5, intermediateValue8);
+			inputValue5 += intermediateValue10;
+			inputValue6 += intermediateValue14;
+			inputValue8 += intermediateValue11;
+			inputValue9 += intermediateValue15;
+			inputValue3 += Rasterizer.width;
+			intermediateValue += intermediateValue3;
+			intermediateValue4 += intermediateValue6;
+			intermediateValue7 += intermediateValue9;
 		}
 	}
 
-	private static void drawTexturedScanline(int ai[], int ai1[], int i, int j, int k, int l, int i1, int j1, int k1,
-			int l1, int i2, int j2, int k2, int l2, int i3) {
-		if (l >= i1)
+	/**
+	 * Draws textured scanline.
+	 * 
+	 * @param values       the values
+	 * @param values2      the values2
+	 * @param inputValue   the input value
+	 * @param inputValue2  the input value2
+	 * @param inputValue3  the input value3
+	 * @param inputValue4  the input value4
+	 * @param inputValue5  the input value5
+	 * @param inputValue6  the input value6
+	 * @param inputValue7  the input value7
+	 * @param inputValue8  the input value8
+	 * @param inputValue9  the input value9
+	 * @param inputValue10 the input value10
+	 * @param inputValue11 the input value11
+	 * @param inputValue12 the input value12
+	 * @param inputValue13 the input value13
+	 */
+	private static void drawTexturedScanline(int values[], int values2[], int inputValue, int inputValue2,
+			int inputValue3, int inputValue4, int inputValue5, int inputValue6, int inputValue7, int inputValue8,
+			int inputValue9, int inputValue10, int inputValue11, int inputValue12, int inputValue13) {
+		if (inputValue4 >= inputValue5)
 			return;
-		int j3;
-		int k3;
+		int intermediateValue;
+		int intermediateValue2;
 		if (restrictEdges) {
-			j3 = (k1 - j1) / (i1 - l);
-			if (i1 > Rasterizer.viewportRx)
-				i1 = Rasterizer.viewportRx;
-			if (l < 0) {
-				j1 -= l * j3;
-				l = 0;
+			intermediateValue = (inputValue7 - inputValue6) / (inputValue5 - inputValue4);
+			if (inputValue5 > Rasterizer.viewportRx)
+				inputValue5 = Rasterizer.viewportRx;
+			if (inputValue4 < 0) {
+				inputValue6 -= inputValue4 * intermediateValue;
+				inputValue4 = 0;
 			}
-			if (l >= i1)
+			if (inputValue4 >= inputValue5)
 				return;
-			k3 = i1 - l >> 3;
-			j3 <<= 12;
-			j1 <<= 9;
+			intermediateValue2 = inputValue5 - inputValue4 >> 3;
+			intermediateValue <<= 12;
+			inputValue6 <<= 9;
 		} else {
-			if (i1 - l > 7) {
-				k3 = i1 - l >> 3;
-				j3 = (k1 - j1) * reciprocal15[k3] >> 6;
+			if (inputValue5 - inputValue4 > 7) {
+				intermediateValue2 = inputValue5 - inputValue4 >> 3;
+				intermediateValue = (inputValue7 - inputValue6) * reciprocal15[intermediateValue2] >> 6;
 			} else {
-				k3 = 0;
-				j3 = 0;
+				intermediateValue2 = 0;
+				intermediateValue = 0;
 			}
-			j1 <<= 9;
+			inputValue6 <<= 9;
 		}
-		k += l;
+		inputValue3 += inputValue4;
 		if (lowMemory) {
-			int i4 = 0;
-			int k4 = 0;
-			int k6 = l - centerX;
-			l1 += (k2 >> 3) * k6;
-			i2 += (l2 >> 3) * k6;
-			j2 += (i3 >> 3) * k6;
-			int i5 = j2 >> 12;
-			if (i5 != 0) {
-				i = l1 / i5;
-				j = i2 / i5;
-				if (i < 0)
-					i = 0;
-				else if (i > 4032)
-					i = 4032;
+			int intermediateValue3 = 0;
+			int intermediateValue4 = 0;
+			int intermediateValue5 = inputValue4 - centerX;
+			inputValue8 += (inputValue11 >> 3) * intermediateValue5;
+			inputValue9 += (inputValue12 >> 3) * intermediateValue5;
+			inputValue10 += (inputValue13 >> 3) * intermediateValue5;
+			int intermediateValue6 = inputValue10 >> 12;
+			if (intermediateValue6 != 0) {
+				inputValue = inputValue8 / intermediateValue6;
+				inputValue2 = inputValue9 / intermediateValue6;
+				if (inputValue < 0)
+					inputValue = 0;
+				else if (inputValue > 4032)
+					inputValue = 4032;
 			}
-			l1 += k2;
-			i2 += l2;
-			j2 += i3;
-			i5 = j2 >> 12;
-			if (i5 != 0) {
-				i4 = l1 / i5;
-				k4 = i2 / i5;
-				if (i4 < 7)
-					i4 = 7;
-				else if (i4 > 4032)
-					i4 = 4032;
+			inputValue8 += inputValue11;
+			inputValue9 += inputValue12;
+			inputValue10 += inputValue13;
+			intermediateValue6 = inputValue10 >> 12;
+			if (intermediateValue6 != 0) {
+				intermediateValue3 = inputValue8 / intermediateValue6;
+				intermediateValue4 = inputValue9 / intermediateValue6;
+				if (intermediateValue3 < 7)
+					intermediateValue3 = 7;
+				else if (intermediateValue3 > 4032)
+					intermediateValue3 = 4032;
 			}
-			int i7 = i4 - i >> 3;
-			int k7 = k4 - j >> 3;
-			i += (j1 & 0x600000) >> 3;
-			int i8 = j1 >> 23;
+			int intermediateValue7 = intermediateValue3 - inputValue >> 3;
+			int intermediateValue8 = intermediateValue4 - inputValue2 >> 3;
+			inputValue += (inputValue6 & 0x600000) >> 3;
+			int intermediateValue9 = inputValue6 >> 23;
 			if (opaqueTexture) {
-				while (k3-- > 0) {
-					ai[k++] = ai1[(j & 0xfc0) + (i >> 6)] >>> i8;
-					i += i7;
-					j += k7;
-					ai[k++] = ai1[(j & 0xfc0) + (i >> 6)] >>> i8;
-					i += i7;
-					j += k7;
-					ai[k++] = ai1[(j & 0xfc0) + (i >> 6)] >>> i8;
-					i += i7;
-					j += k7;
-					ai[k++] = ai1[(j & 0xfc0) + (i >> 6)] >>> i8;
-					i += i7;
-					j += k7;
-					ai[k++] = ai1[(j & 0xfc0) + (i >> 6)] >>> i8;
-					i += i7;
-					j += k7;
-					ai[k++] = ai1[(j & 0xfc0) + (i >> 6)] >>> i8;
-					i += i7;
-					j += k7;
-					ai[k++] = ai1[(j & 0xfc0) + (i >> 6)] >>> i8;
-					i += i7;
-					j += k7;
-					ai[k++] = ai1[(j & 0xfc0) + (i >> 6)] >>> i8;
-					i = i4;
-					j = k4;
-					l1 += k2;
-					i2 += l2;
-					j2 += i3;
-					int j5 = j2 >> 12;
-					if (j5 != 0) {
-						i4 = l1 / j5;
-						k4 = i2 / j5;
-						if (i4 < 7)
-							i4 = 7;
-						else if (i4 > 4032)
-							i4 = 4032;
+				while (intermediateValue2-- > 0) {
+					values[inputValue3++] = values2[(inputValue2 & 0xfc0) + (inputValue >> 6)] >>> intermediateValue9;
+					inputValue += intermediateValue7;
+					inputValue2 += intermediateValue8;
+					values[inputValue3++] = values2[(inputValue2 & 0xfc0) + (inputValue >> 6)] >>> intermediateValue9;
+					inputValue += intermediateValue7;
+					inputValue2 += intermediateValue8;
+					values[inputValue3++] = values2[(inputValue2 & 0xfc0) + (inputValue >> 6)] >>> intermediateValue9;
+					inputValue += intermediateValue7;
+					inputValue2 += intermediateValue8;
+					values[inputValue3++] = values2[(inputValue2 & 0xfc0) + (inputValue >> 6)] >>> intermediateValue9;
+					inputValue += intermediateValue7;
+					inputValue2 += intermediateValue8;
+					values[inputValue3++] = values2[(inputValue2 & 0xfc0) + (inputValue >> 6)] >>> intermediateValue9;
+					inputValue += intermediateValue7;
+					inputValue2 += intermediateValue8;
+					values[inputValue3++] = values2[(inputValue2 & 0xfc0) + (inputValue >> 6)] >>> intermediateValue9;
+					inputValue += intermediateValue7;
+					inputValue2 += intermediateValue8;
+					values[inputValue3++] = values2[(inputValue2 & 0xfc0) + (inputValue >> 6)] >>> intermediateValue9;
+					inputValue += intermediateValue7;
+					inputValue2 += intermediateValue8;
+					values[inputValue3++] = values2[(inputValue2 & 0xfc0) + (inputValue >> 6)] >>> intermediateValue9;
+					inputValue = intermediateValue3;
+					inputValue2 = intermediateValue4;
+					inputValue8 += inputValue11;
+					inputValue9 += inputValue12;
+					inputValue10 += inputValue13;
+					int intermediateValue10 = inputValue10 >> 12;
+					if (intermediateValue10 != 0) {
+						intermediateValue3 = inputValue8 / intermediateValue10;
+						intermediateValue4 = inputValue9 / intermediateValue10;
+						if (intermediateValue3 < 7)
+							intermediateValue3 = 7;
+						else if (intermediateValue3 > 4032)
+							intermediateValue3 = 4032;
 					}
-					i7 = i4 - i >> 3;
-					k7 = k4 - j >> 3;
-					j1 += j3;
-					i += (j1 & 0x600000) >> 3;
-					i8 = j1 >> 23;
+					intermediateValue7 = intermediateValue3 - inputValue >> 3;
+					intermediateValue8 = intermediateValue4 - inputValue2 >> 3;
+					inputValue6 += intermediateValue;
+					inputValue += (inputValue6 & 0x600000) >> 3;
+					intermediateValue9 = inputValue6 >> 23;
 				}
-				for (k3 = i1 - l & 7; k3-- > 0;) {
-					ai[k++] = ai1[(j & 0xfc0) + (i >> 6)] >>> i8;
-					i += i7;
-					j += k7;
+				for (intermediateValue2 = inputValue5 - inputValue4 & 7; intermediateValue2-- > 0;) {
+					values[inputValue3++] = values2[(inputValue2 & 0xfc0) + (inputValue >> 6)] >>> intermediateValue9;
+					inputValue += intermediateValue7;
+					inputValue2 += intermediateValue8;
 				}
 
 				return;
 			}
-			while (k3-- > 0) {
-				int k8;
-				if ((k8 = ai1[(j & 0xfc0) + (i >> 6)] >>> i8) != 0)
-					ai[k] = k8;
-				k++;
-				i += i7;
-				j += k7;
-				if ((k8 = ai1[(j & 0xfc0) + (i >> 6)] >>> i8) != 0)
-					ai[k] = k8;
-				k++;
-				i += i7;
-				j += k7;
-				if ((k8 = ai1[(j & 0xfc0) + (i >> 6)] >>> i8) != 0)
-					ai[k] = k8;
-				k++;
-				i += i7;
-				j += k7;
-				if ((k8 = ai1[(j & 0xfc0) + (i >> 6)] >>> i8) != 0)
-					ai[k] = k8;
-				k++;
-				i += i7;
-				j += k7;
-				if ((k8 = ai1[(j & 0xfc0) + (i >> 6)] >>> i8) != 0)
-					ai[k] = k8;
-				k++;
-				i += i7;
-				j += k7;
-				if ((k8 = ai1[(j & 0xfc0) + (i >> 6)] >>> i8) != 0)
-					ai[k] = k8;
-				k++;
-				i += i7;
-				j += k7;
-				if ((k8 = ai1[(j & 0xfc0) + (i >> 6)] >>> i8) != 0)
-					ai[k] = k8;
-				k++;
-				i += i7;
-				j += k7;
-				if ((k8 = ai1[(j & 0xfc0) + (i >> 6)] >>> i8) != 0)
-					ai[k] = k8;
-				k++;
-				i = i4;
-				j = k4;
-				l1 += k2;
-				i2 += l2;
-				j2 += i3;
-				int k5 = j2 >> 12;
-				if (k5 != 0) {
-					i4 = l1 / k5;
-					k4 = i2 / k5;
-					if (i4 < 7)
-						i4 = 7;
-					else if (i4 > 4032)
-						i4 = 4032;
+			while (intermediateValue2-- > 0) {
+				int intermediateValue11;
+				if ((intermediateValue11 = values2[(inputValue2 & 0xfc0)
+						+ (inputValue >> 6)] >>> intermediateValue9) != 0)
+					values[inputValue3] = intermediateValue11;
+				inputValue3++;
+				inputValue += intermediateValue7;
+				inputValue2 += intermediateValue8;
+				if ((intermediateValue11 = values2[(inputValue2 & 0xfc0)
+						+ (inputValue >> 6)] >>> intermediateValue9) != 0)
+					values[inputValue3] = intermediateValue11;
+				inputValue3++;
+				inputValue += intermediateValue7;
+				inputValue2 += intermediateValue8;
+				if ((intermediateValue11 = values2[(inputValue2 & 0xfc0)
+						+ (inputValue >> 6)] >>> intermediateValue9) != 0)
+					values[inputValue3] = intermediateValue11;
+				inputValue3++;
+				inputValue += intermediateValue7;
+				inputValue2 += intermediateValue8;
+				if ((intermediateValue11 = values2[(inputValue2 & 0xfc0)
+						+ (inputValue >> 6)] >>> intermediateValue9) != 0)
+					values[inputValue3] = intermediateValue11;
+				inputValue3++;
+				inputValue += intermediateValue7;
+				inputValue2 += intermediateValue8;
+				if ((intermediateValue11 = values2[(inputValue2 & 0xfc0)
+						+ (inputValue >> 6)] >>> intermediateValue9) != 0)
+					values[inputValue3] = intermediateValue11;
+				inputValue3++;
+				inputValue += intermediateValue7;
+				inputValue2 += intermediateValue8;
+				if ((intermediateValue11 = values2[(inputValue2 & 0xfc0)
+						+ (inputValue >> 6)] >>> intermediateValue9) != 0)
+					values[inputValue3] = intermediateValue11;
+				inputValue3++;
+				inputValue += intermediateValue7;
+				inputValue2 += intermediateValue8;
+				if ((intermediateValue11 = values2[(inputValue2 & 0xfc0)
+						+ (inputValue >> 6)] >>> intermediateValue9) != 0)
+					values[inputValue3] = intermediateValue11;
+				inputValue3++;
+				inputValue += intermediateValue7;
+				inputValue2 += intermediateValue8;
+				if ((intermediateValue11 = values2[(inputValue2 & 0xfc0)
+						+ (inputValue >> 6)] >>> intermediateValue9) != 0)
+					values[inputValue3] = intermediateValue11;
+				inputValue3++;
+				inputValue = intermediateValue3;
+				inputValue2 = intermediateValue4;
+				inputValue8 += inputValue11;
+				inputValue9 += inputValue12;
+				inputValue10 += inputValue13;
+				int intermediateValue12 = inputValue10 >> 12;
+				if (intermediateValue12 != 0) {
+					intermediateValue3 = inputValue8 / intermediateValue12;
+					intermediateValue4 = inputValue9 / intermediateValue12;
+					if (intermediateValue3 < 7)
+						intermediateValue3 = 7;
+					else if (intermediateValue3 > 4032)
+						intermediateValue3 = 4032;
 				}
-				i7 = i4 - i >> 3;
-				k7 = k4 - j >> 3;
-				j1 += j3;
-				i += (j1 & 0x600000) >> 3;
-				i8 = j1 >> 23;
+				intermediateValue7 = intermediateValue3 - inputValue >> 3;
+				intermediateValue8 = intermediateValue4 - inputValue2 >> 3;
+				inputValue6 += intermediateValue;
+				inputValue += (inputValue6 & 0x600000) >> 3;
+				intermediateValue9 = inputValue6 >> 23;
 			}
-			for (k3 = i1 - l & 7; k3-- > 0;) {
-				int l8;
-				if ((l8 = ai1[(j & 0xfc0) + (i >> 6)] >>> i8) != 0)
-					ai[k] = l8;
-				k++;
-				i += i7;
-				j += k7;
+			for (intermediateValue2 = inputValue5 - inputValue4 & 7; intermediateValue2-- > 0;) {
+				int intermediateValue13;
+				if ((intermediateValue13 = values2[(inputValue2 & 0xfc0)
+						+ (inputValue >> 6)] >>> intermediateValue9) != 0)
+					values[inputValue3] = intermediateValue13;
+				inputValue3++;
+				inputValue += intermediateValue7;
+				inputValue2 += intermediateValue8;
 			}
 
 			return;
 		}
-		int j4 = 0;
-		int l4 = 0;
-		int l6 = l - centerX;
-		l1 += (k2 >> 3) * l6;
-		i2 += (l2 >> 3) * l6;
-		j2 += (i3 >> 3) * l6;
-		int l5 = j2 >> 14;
-		if (l5 != 0) {
-			i = l1 / l5;
-			j = i2 / l5;
-			if (i < 0)
-				i = 0;
-			else if (i > 16256)
-				i = 16256;
+		int intermediateValue14 = 0;
+		int intermediateValue15 = 0;
+		int intermediateValue16 = inputValue4 - centerX;
+		inputValue8 += (inputValue11 >> 3) * intermediateValue16;
+		inputValue9 += (inputValue12 >> 3) * intermediateValue16;
+		inputValue10 += (inputValue13 >> 3) * intermediateValue16;
+		int intermediateValue17 = inputValue10 >> 14;
+		if (intermediateValue17 != 0) {
+			inputValue = inputValue8 / intermediateValue17;
+			inputValue2 = inputValue9 / intermediateValue17;
+			if (inputValue < 0)
+				inputValue = 0;
+			else if (inputValue > 16256)
+				inputValue = 16256;
 		}
-		l1 += k2;
-		i2 += l2;
-		j2 += i3;
-		l5 = j2 >> 14;
-		if (l5 != 0) {
-			j4 = l1 / l5;
-			l4 = i2 / l5;
-			if (j4 < 7)
-				j4 = 7;
-			else if (j4 > 16256)
-				j4 = 16256;
+		inputValue8 += inputValue11;
+		inputValue9 += inputValue12;
+		inputValue10 += inputValue13;
+		intermediateValue17 = inputValue10 >> 14;
+		if (intermediateValue17 != 0) {
+			intermediateValue14 = inputValue8 / intermediateValue17;
+			intermediateValue15 = inputValue9 / intermediateValue17;
+			if (intermediateValue14 < 7)
+				intermediateValue14 = 7;
+			else if (intermediateValue14 > 16256)
+				intermediateValue14 = 16256;
 		}
-		int j7 = j4 - i >> 3;
-		int l7 = l4 - j >> 3;
-		i += j1 & 0x600000;
-		int j8 = j1 >> 23;
+		int intermediateValue18 = intermediateValue14 - inputValue >> 3;
+		int intermediateValue19 = intermediateValue15 - inputValue2 >> 3;
+		inputValue += inputValue6 & 0x600000;
+		int intermediateValue20 = inputValue6 >> 23;
 		if (opaqueTexture) {
-			while (k3-- > 0) {
-				ai[k++] = ai1[(j & 0x3f80) + (i >> 7)] >>> j8;
-				i += j7;
-				j += l7;
-				ai[k++] = ai1[(j & 0x3f80) + (i >> 7)] >>> j8;
-				i += j7;
-				j += l7;
-				ai[k++] = ai1[(j & 0x3f80) + (i >> 7)] >>> j8;
-				i += j7;
-				j += l7;
-				ai[k++] = ai1[(j & 0x3f80) + (i >> 7)] >>> j8;
-				i += j7;
-				j += l7;
-				ai[k++] = ai1[(j & 0x3f80) + (i >> 7)] >>> j8;
-				i += j7;
-				j += l7;
-				ai[k++] = ai1[(j & 0x3f80) + (i >> 7)] >>> j8;
-				i += j7;
-				j += l7;
-				ai[k++] = ai1[(j & 0x3f80) + (i >> 7)] >>> j8;
-				i += j7;
-				j += l7;
-				ai[k++] = ai1[(j & 0x3f80) + (i >> 7)] >>> j8;
-				i = j4;
-				j = l4;
-				l1 += k2;
-				i2 += l2;
-				j2 += i3;
-				int i6 = j2 >> 14;
-				if (i6 != 0) {
-					j4 = l1 / i6;
-					l4 = i2 / i6;
-					if (j4 < 7)
-						j4 = 7;
-					else if (j4 > 16256)
-						j4 = 16256;
+			while (intermediateValue2-- > 0) {
+				values[inputValue3++] = values2[(inputValue2 & 0x3f80) + (inputValue >> 7)] >>> intermediateValue20;
+				inputValue += intermediateValue18;
+				inputValue2 += intermediateValue19;
+				values[inputValue3++] = values2[(inputValue2 & 0x3f80) + (inputValue >> 7)] >>> intermediateValue20;
+				inputValue += intermediateValue18;
+				inputValue2 += intermediateValue19;
+				values[inputValue3++] = values2[(inputValue2 & 0x3f80) + (inputValue >> 7)] >>> intermediateValue20;
+				inputValue += intermediateValue18;
+				inputValue2 += intermediateValue19;
+				values[inputValue3++] = values2[(inputValue2 & 0x3f80) + (inputValue >> 7)] >>> intermediateValue20;
+				inputValue += intermediateValue18;
+				inputValue2 += intermediateValue19;
+				values[inputValue3++] = values2[(inputValue2 & 0x3f80) + (inputValue >> 7)] >>> intermediateValue20;
+				inputValue += intermediateValue18;
+				inputValue2 += intermediateValue19;
+				values[inputValue3++] = values2[(inputValue2 & 0x3f80) + (inputValue >> 7)] >>> intermediateValue20;
+				inputValue += intermediateValue18;
+				inputValue2 += intermediateValue19;
+				values[inputValue3++] = values2[(inputValue2 & 0x3f80) + (inputValue >> 7)] >>> intermediateValue20;
+				inputValue += intermediateValue18;
+				inputValue2 += intermediateValue19;
+				values[inputValue3++] = values2[(inputValue2 & 0x3f80) + (inputValue >> 7)] >>> intermediateValue20;
+				inputValue = intermediateValue14;
+				inputValue2 = intermediateValue15;
+				inputValue8 += inputValue11;
+				inputValue9 += inputValue12;
+				inputValue10 += inputValue13;
+				int intermediateValue21 = inputValue10 >> 14;
+				if (intermediateValue21 != 0) {
+					intermediateValue14 = inputValue8 / intermediateValue21;
+					intermediateValue15 = inputValue9 / intermediateValue21;
+					if (intermediateValue14 < 7)
+						intermediateValue14 = 7;
+					else if (intermediateValue14 > 16256)
+						intermediateValue14 = 16256;
 				}
-				j7 = j4 - i >> 3;
-				l7 = l4 - j >> 3;
-				j1 += j3;
-				i += j1 & 0x600000;
-				j8 = j1 >> 23;
+				intermediateValue18 = intermediateValue14 - inputValue >> 3;
+				intermediateValue19 = intermediateValue15 - inputValue2 >> 3;
+				inputValue6 += intermediateValue;
+				inputValue += inputValue6 & 0x600000;
+				intermediateValue20 = inputValue6 >> 23;
 			}
-			for (k3 = i1 - l & 7; k3-- > 0;) {
-				ai[k++] = ai1[(j & 0x3f80) + (i >> 7)] >>> j8;
-				i += j7;
-				j += l7;
+			for (intermediateValue2 = inputValue5 - inputValue4 & 7; intermediateValue2-- > 0;) {
+				values[inputValue3++] = values2[(inputValue2 & 0x3f80) + (inputValue >> 7)] >>> intermediateValue20;
+				inputValue += intermediateValue18;
+				inputValue2 += intermediateValue19;
 			}
 
 			return;
 		}
-		while (k3-- > 0) {
-			int i9;
-			if ((i9 = ai1[(j & 0x3f80) + (i >> 7)] >>> j8) != 0)
-				ai[k] = i9;
-			k++;
-			i += j7;
-			j += l7;
-			if ((i9 = ai1[(j & 0x3f80) + (i >> 7)] >>> j8) != 0)
-				ai[k] = i9;
-			k++;
-			i += j7;
-			j += l7;
-			if ((i9 = ai1[(j & 0x3f80) + (i >> 7)] >>> j8) != 0)
-				ai[k] = i9;
-			k++;
-			i += j7;
-			j += l7;
-			if ((i9 = ai1[(j & 0x3f80) + (i >> 7)] >>> j8) != 0)
-				ai[k] = i9;
-			k++;
-			i += j7;
-			j += l7;
-			if ((i9 = ai1[(j & 0x3f80) + (i >> 7)] >>> j8) != 0)
-				ai[k] = i9;
-			k++;
-			i += j7;
-			j += l7;
-			if ((i9 = ai1[(j & 0x3f80) + (i >> 7)] >>> j8) != 0)
-				ai[k] = i9;
-			k++;
-			i += j7;
-			j += l7;
-			if ((i9 = ai1[(j & 0x3f80) + (i >> 7)] >>> j8) != 0)
-				ai[k] = i9;
-			k++;
-			i += j7;
-			j += l7;
-			if ((i9 = ai1[(j & 0x3f80) + (i >> 7)] >>> j8) != 0)
-				ai[k] = i9;
-			k++;
-			i = j4;
-			j = l4;
-			l1 += k2;
-			i2 += l2;
-			j2 += i3;
-			int j6 = j2 >> 14;
-			if (j6 != 0) {
-				j4 = l1 / j6;
-				l4 = i2 / j6;
-				if (j4 < 7)
-					j4 = 7;
-				else if (j4 > 16256)
-					j4 = 16256;
+		while (intermediateValue2-- > 0) {
+			int intermediateValue22;
+			if ((intermediateValue22 = values2[(inputValue2 & 0x3f80)
+					+ (inputValue >> 7)] >>> intermediateValue20) != 0)
+				values[inputValue3] = intermediateValue22;
+			inputValue3++;
+			inputValue += intermediateValue18;
+			inputValue2 += intermediateValue19;
+			if ((intermediateValue22 = values2[(inputValue2 & 0x3f80)
+					+ (inputValue >> 7)] >>> intermediateValue20) != 0)
+				values[inputValue3] = intermediateValue22;
+			inputValue3++;
+			inputValue += intermediateValue18;
+			inputValue2 += intermediateValue19;
+			if ((intermediateValue22 = values2[(inputValue2 & 0x3f80)
+					+ (inputValue >> 7)] >>> intermediateValue20) != 0)
+				values[inputValue3] = intermediateValue22;
+			inputValue3++;
+			inputValue += intermediateValue18;
+			inputValue2 += intermediateValue19;
+			if ((intermediateValue22 = values2[(inputValue2 & 0x3f80)
+					+ (inputValue >> 7)] >>> intermediateValue20) != 0)
+				values[inputValue3] = intermediateValue22;
+			inputValue3++;
+			inputValue += intermediateValue18;
+			inputValue2 += intermediateValue19;
+			if ((intermediateValue22 = values2[(inputValue2 & 0x3f80)
+					+ (inputValue >> 7)] >>> intermediateValue20) != 0)
+				values[inputValue3] = intermediateValue22;
+			inputValue3++;
+			inputValue += intermediateValue18;
+			inputValue2 += intermediateValue19;
+			if ((intermediateValue22 = values2[(inputValue2 & 0x3f80)
+					+ (inputValue >> 7)] >>> intermediateValue20) != 0)
+				values[inputValue3] = intermediateValue22;
+			inputValue3++;
+			inputValue += intermediateValue18;
+			inputValue2 += intermediateValue19;
+			if ((intermediateValue22 = values2[(inputValue2 & 0x3f80)
+					+ (inputValue >> 7)] >>> intermediateValue20) != 0)
+				values[inputValue3] = intermediateValue22;
+			inputValue3++;
+			inputValue += intermediateValue18;
+			inputValue2 += intermediateValue19;
+			if ((intermediateValue22 = values2[(inputValue2 & 0x3f80)
+					+ (inputValue >> 7)] >>> intermediateValue20) != 0)
+				values[inputValue3] = intermediateValue22;
+			inputValue3++;
+			inputValue = intermediateValue14;
+			inputValue2 = intermediateValue15;
+			inputValue8 += inputValue11;
+			inputValue9 += inputValue12;
+			inputValue10 += inputValue13;
+			int intermediateValue23 = inputValue10 >> 14;
+			if (intermediateValue23 != 0) {
+				intermediateValue14 = inputValue8 / intermediateValue23;
+				intermediateValue15 = inputValue9 / intermediateValue23;
+				if (intermediateValue14 < 7)
+					intermediateValue14 = 7;
+				else if (intermediateValue14 > 16256)
+					intermediateValue14 = 16256;
 			}
-			j7 = j4 - i >> 3;
-			l7 = l4 - j >> 3;
-			j1 += j3;
-			i += j1 & 0x600000;
-			j8 = j1 >> 23;
+			intermediateValue18 = intermediateValue14 - inputValue >> 3;
+			intermediateValue19 = intermediateValue15 - inputValue2 >> 3;
+			inputValue6 += intermediateValue;
+			inputValue += inputValue6 & 0x600000;
+			intermediateValue20 = inputValue6 >> 23;
 		}
-		for (int l3 = i1 - l & 7; l3-- > 0;) {
-			int j9;
-			if ((j9 = ai1[(j & 0x3f80) + (i >> 7)] >>> j8) != 0)
-				ai[k] = j9;
-			k++;
-			i += j7;
-			j += l7;
+		for (int loopIndex = inputValue5 - inputValue4 & 7; loopIndex-- > 0;) {
+			int intermediateValue24;
+			if ((intermediateValue24 = values2[(inputValue2 & 0x3f80)
+					+ (inputValue >> 7)] >>> intermediateValue20) != 0)
+				values[inputValue3] = intermediateValue24;
+			inputValue3++;
+			inputValue += intermediateValue18;
+			inputValue2 += intermediateValue19;
 		}
 
 	}

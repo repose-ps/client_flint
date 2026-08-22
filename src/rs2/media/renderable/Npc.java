@@ -6,11 +6,19 @@ import rs2.cache.media.SpotAnimation;
 import rs2.media.AnimationFrame;
 
 /** Runtime non-player actor backed by an {@link NpcDefinition}. */
-public class Npc extends Actor {
+public /**
+		 * Initializes this instance.
+		 */
+class Npc extends Actor {
 
+	/**
+	 * Stores definition.
+	 */
 	public NpcDefinition definition;
 
-	/** Builds the NPC body with its current movement/action animation frames. */
+	/**
+	 * Builds the NPC body with its current movement/action animation frames.
+	 */
 	public Model getBaseModel() {
 		if (sequence >= 0 && sequenceDelay == 0) {
 			int primaryFrameId = AnimationSequence.sequences[sequence].primaryFrameIds[sequenceFrame];
@@ -29,6 +37,11 @@ public class Npc extends Actor {
 		return definition.getAnimatedModel(movementFrameId, -1, null);
 	}
 
+	/**
+	 * Returns model.
+	 * 
+	 * @return the resulting model
+	 */
 	@Override
 	protected Model getModel() {
 		if (definition == null) {
@@ -65,6 +78,11 @@ public class Npc extends Actor {
 		return model;
 	}
 
+	/**
+	 * Returns whether visible.
+	 * 
+	 * @return the resulting boolean
+	 */
 	@Override
 	public boolean isVisible() {
 		return definition != null;

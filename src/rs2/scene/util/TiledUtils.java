@@ -11,8 +11,14 @@ package rs2.scene.util;
  */
 public final class TiledUtils {
 
+	/**
+	 * Stores chunk max coordinate.
+	 */
 	private static final int CHUNK_MAX_COORDINATE = 7;
 
+	/**
+	 * Initializes this instance.
+	 */
 	private TiledUtils() {
 		// Utility class.
 	}
@@ -20,10 +26,10 @@ public final class TiledUtils {
 	/**
 	 * Rotates a terrain tile's local X coordinate within an 8-by-8 chunk.
 	 *
-	 * @param x        local X coordinate in the range {@code 0-7}
-	 * @param y        local Y coordinate in the range {@code 0-7}
-	 * @param rotation quarter-turn count; only the low two bits apply
 	 * @return rotated local X coordinate
+	 * @param x        the x
+	 * @param y        the y
+	 * @param rotation the rotation
 	 */
 	public static int getRotatedMapChunkX(int x, int y, int rotation) {
 		switch (rotation & 3) {
@@ -41,10 +47,10 @@ public final class TiledUtils {
 	/**
 	 * Rotates a terrain tile's local Y coordinate within an 8-by-8 chunk.
 	 *
-	 * @param x        local X coordinate in the range {@code 0-7}
-	 * @param y        local Y coordinate in the range {@code 0-7}
-	 * @param rotation quarter-turn count; only the low two bits apply
 	 * @return rotated local Y coordinate
+	 * @param x        the x
+	 * @param y        the y
+	 * @param rotation the rotation
 	 */
 	public static int getRotatedMapChunkY(int x, int y, int rotation) {
 		switch (rotation & 3) {
@@ -67,6 +73,13 @@ public final class TiledUtils {
 	 * chunk rotation is applied. This preserves the occupied south-west corner
 	 * rather than merely rotating a single point.
 	 * </p>
+	 * 
+	 * @param x                 the x
+	 * @param y                 the y
+	 * @param sizeX             the size x
+	 * @param sizeY             the size y
+	 * @param objectOrientation the object orientation
+	 * @param chunkRotation     the chunk rotation
 	 */
 	public static int getRotatedLandscapeChunkX(int x, int y, int sizeX, int sizeY, int objectOrientation,
 			int chunkRotation) {
@@ -92,6 +105,12 @@ public final class TiledUtils {
 	 * Rotates the local Y coordinate of a multi-tile landscape object.
 	 *
 	 * @see #getRotatedLandscapeChunkX(int, int, int, int, int, int)
+	 * @param x                 the x
+	 * @param y                 the y
+	 * @param sizeX             the size x
+	 * @param sizeY             the size y
+	 * @param objectOrientation the object orientation
+	 * @param chunkRotation     the chunk rotation
 	 */
 	public static int getRotatedLandscapeChunkY(int x, int y, int sizeX, int sizeY, int objectOrientation,
 			int chunkRotation) {

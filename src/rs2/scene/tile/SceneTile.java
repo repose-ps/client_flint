@@ -100,10 +100,11 @@ public class SceneTile extends Node {
 	/**
 	 * Creates an empty tile at the supplied scene-grid position.
 	 *
-	 * @param plane scene plane; retained as the first parameter for source
-	 *              compatibility with the original client
-	 * @param x     tile-space X coordinate
-	 * @param y     tile-space Y coordinate
+	 * compatibility with the original client
+	 * 
+	 * @param plane the plane
+	 * @param x     the x
+	 * @param y     the y
 	 */
 	public SceneTile(int plane, int x, int y) {
 		this.interactiveObjects = new InteractiveObject[5];

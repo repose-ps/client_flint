@@ -20,40 +20,127 @@ import rs2.scene.Region;
 /**
  * Owns revision-377 map-square/instance loading state and local-base shifts.
  */
-public final class RegionManager {
+public final /**
+				 * Initializes this instance.
+				 */
+class RegionManager {
 
+	/**
+	 * Stores stage unloaded.
+	 */
 	public static final int STAGE_UNLOADED = 0;
+	/**
+	 * Stores stage loading.
+	 */
 	public static final int STAGE_LOADING = 1;
+	/**
+	 * Stores stage loaded.
+	 */
 	public static final int STAGE_LOADED = 2;
 
+	/**
+	 * Stores instance templates.
+	 */
 	public final int[][][] instanceTemplates = new int[4][13][13];
 
+	/**
+	 * Stores terrain data.
+	 */
 	public byte[][] terrainData;
+	/**
+	 * Stores landscape data.
+	 */
 	public byte[][] landscapeData;
+	/**
+	 * Stores region ids.
+	 */
 	public int[] regionIds;
+	/**
+	 * Stores terrain archive ids.
+	 */
 	public int[] terrainArchiveIds;
+	/**
+	 * Stores landscape archive ids.
+	 */
 	public int[] landscapeArchiveIds;
 
+	/**
+	 * Stores region x.
+	 */
 	public int regionX;
+	/**
+	 * Stores region y.
+	 */
 	public int regionY;
+	/**
+	 * Stores base x.
+	 */
 	public int baseX;
+	/**
+	 * Stores base y.
+	 */
 	public int baseY;
+	/**
+	 * Whether instanced.
+	 */
 	public boolean instanced;
+	/**
+	 * Whether special region.
+	 */
 	public boolean specialRegion;
+	/**
+	 * Stores loading stage.
+	 */
 	public int loadingStage;
+	/**
+	 * Stores loading start time.
+	 */
 	public long loadingStartTime;
+	/**
+	 * Whether awaiting player update.
+	 */
 	public boolean awaitingPlayerUpdate;
 
+	/**
+	 * Stores previous base x.
+	 */
 	private int previousBaseX;
+	/**
+	 * Stores previous base y.
+	 */
 	private int previousBaseY;
 
 	public static final class RegionShift {
+		/**
+		 * Whether changed.
+		 */
 		public final boolean changed;
+		/**
+		 * Stores delta x.
+		 */
 		public final int deltaX;
+		/**
+		 * Stores delta y.
+		 */
 		public final int deltaY;
+		/**
+		 * Stores destination x.
+		 */
 		public final int destinationX;
+		/**
+		 * Stores destination y.
+		 */
 		public final int destinationY;
 
+		/**
+		 * Initializes this instance.
+		 * 
+		 * @param changed      the changed
+		 * @param deltaX       the delta x
+		 * @param deltaY       the delta y
+		 * @param destinationX the destination x
+		 * @param destinationY the destination y
+		 */
 		private RegionShift(boolean changed, int deltaX, int deltaY, int destinationX, int destinationY) {
 			this.changed = changed;
 			this.deltaX = deltaX;
@@ -66,6 +153,14 @@ public final class RegionManager {
 	/**
 	 * Extracted from the revision-377 incoming packet branches 222 (normal) and 53
 	 * (constructed/instanced).
+	 * 
+	 * @param buffer       the buffer
+	 * @param opcode       the opcode
+	 * @param fetcher      the fetcher
+	 * @param actors       the actors
+	 * @param world        the world
+	 * @param destinationX the destination x
+	 * @param destinationY the destination y
 	 */
 	public RegionShift decodeRebuild(Buffer buffer, int opcode, OnDemandFetcher fetcher, ActorSynchronizer actors,
 			WorldState world, int destinationX, int destinationY) {
@@ -141,6 +236,11 @@ public final class RegionManager {
 		return new RegionShift(true, deltaX, deltaY, shiftedDestinationX, shiftedDestinationY);
 	}
 
+	/**
+	 * Performs prepare normal regions.
+	 * 
+	 * @param fetcher the fetcher
+	 */
 	private void prepareNormalRegions(OnDemandFetcher fetcher) {
 		int count = 0;
 		for (int mapX = (regionX - 6) / 8; mapX <= (regionX + 6) / 8; mapX++) {
@@ -180,6 +280,11 @@ public final class RegionManager {
 		}
 	}
 
+	/**
+	 * Performs prepare instanced regions.
+	 * 
+	 * @param fetcher the fetcher
+	 */
 	private void prepareInstancedRegions(OnDemandFetcher fetcher) {
 		int[] uniqueRegions = new int[676];
 		int count = 0;
@@ -227,6 +332,13 @@ public final class RegionManager {
 		}
 	}
 
+	/**
+	 * Performs shift actors.
+	 * 
+	 * @param actors the actors
+	 * @param deltaX the delta x
+	 * @param deltaY the delta y
+	 */
 	private static void shiftActors(ActorSynchronizer actors, int deltaX, int deltaY) {
 		for (int index = 0; index < 16384; index++) {
 			Npc npc = actors.npcs[index];
@@ -242,6 +354,13 @@ public final class RegionManager {
 		}
 	}
 
+	/**
+	 * Performs shift actor.
+	 * 
+	 * @param actor  the actor
+	 * @param deltaX the delta x
+	 * @param deltaY the delta y
+	 */
 	private static void shiftActor(Actor actor, int deltaX, int deltaY) {
 		for (int pathIndex = 0; pathIndex < 10; pathIndex++) {
 			actor.pathX[pathIndex] -= deltaX;
@@ -251,6 +370,11 @@ public final class RegionManager {
 		actor.y -= deltaY * 128;
 	}
 
+	/**
+	 * Performs accept map file.
+	 * 
+	 * @param request the request
+	 */
 	public void acceptMapFile(OnDemandRequest request) {
 		if (request.type != 3 || loadingStage != STAGE_LOADING || regionIds == null) {
 			return;
@@ -273,6 +397,9 @@ public final class RegionManager {
 		}
 	}
 
+	/**
+	 * Clears value state.
+	 */
 	public void clear() {
 		terrainData = null;
 		landscapeData = null;
@@ -281,6 +408,9 @@ public final class RegionManager {
 		landscapeArchiveIds = null;
 	}
 
+	/**
+	 * Performs player update received.
+	 */
 	public void playerUpdateReceived() {
 		awaitingPlayerUpdate = false;
 	}
@@ -326,6 +456,14 @@ public final class RegionManager {
 	/**
 	 * Legacy client.method93(int 175), with UI-specific raster rebinding supplied
 	 * as a callback.
+	 * 
+	 * @param world             the world
+	 * @param currentPlane      the current plane
+	 * @param lowMemory         the low memory
+	 * @param outgoing          the outgoing
+	 * @param fetcher           the fetcher
+	 * @param standaloneFrame   the standalone frame
+	 * @param rebindSceneRaster the rebind scene raster
 	 */
 	public void buildRegion(WorldState world, int currentPlane, boolean lowMemory, Buffer outgoing,
 			OnDemandFetcher fetcher, boolean standaloneFrame, Runnable rebindSceneRaster) {
@@ -493,6 +631,9 @@ public final class RegionManager {
 		queueBorderRegions(fetcher);
 	}
 
+	/**
+	 * Clears world model caches state.
+	 */
 	private static void clearWorldModelCaches() {
 		GameObjectDefinition.clearModelCaches();
 		NpcDefinition.modelCache.clear();
@@ -502,6 +643,11 @@ public final class RegionManager {
 		SpotAnimation.modelCache.clear();
 	}
 
+	/**
+	 * Performs queue border regions.
+	 * 
+	 * @param fetcher the fetcher
+	 */
 	private void queueBorderRegions(OnDemandFetcher fetcher) {
 		int minMapX = (regionX - 6) / 8 - 1;
 		int maxMapX = (regionX + 6) / 8 + 1;

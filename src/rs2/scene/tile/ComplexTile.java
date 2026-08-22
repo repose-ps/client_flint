@@ -93,20 +93,33 @@ public class ComplexTile {
 			{ 1, 0, 1, 5, 1, 1, 4, 5, 1, 1, 2, 4, 0, 0, 5, 3, 0, 5, 4, 3, 0, 4, 2, 3 },
 			{ 1, 0, 5, 4, 1, 0, 1, 5, 0, 0, 4, 3, 0, 4, 5, 3, 0, 5, 2, 3, 0, 1, 2, 5 } };
 
+	/**
+	 * Stores tile size.
+	 */
 	private static final int TILE_SIZE = 128;
 
 	/**
 	 * Builds a shaped tile from its corner heights and two colour sets.
 	 *
-	 * @param tileX    tile x-coordinate
-	 * @param heightA  height at the first corner
-	 * @param heightB  height at the second corner
-	 * @param heightC  height at the third corner
-	 * @param heightD  height at the fourth corner
-	 * @param tileY    tile y-coordinate
-	 * @param rotation clockwise rotation in quarter turns
-	 * @param texture  texture id, or {@code -1} for an untextured tile
-	 * @param shape    index into the shape-template tables
+	 * @param tileX           the tile x
+	 * @param heightA         the height a
+	 * @param heightB         the height b
+	 * @param heightC         the height c
+	 * @param heightD         the height d
+	 * @param tileY           the tile y
+	 * @param rotation        the rotation
+	 * @param texture         the texture
+	 * @param shape           the shape
+	 * @param overlayColourA  the overlay colour a
+	 * @param underlayColourA the underlay colour a
+	 * @param overlayColourB  the overlay colour b
+	 * @param underlayColourB the underlay colour b
+	 * @param overlayColourC  the overlay colour c
+	 * @param underlayColourC the underlay colour c
+	 * @param overlayColourD  the overlay colour d
+	 * @param underlayColourD the underlay colour d
+	 * @param overlayRgb      the overlay rgb
+	 * @param underlayRgb     the underlay rgb
 	 */
 	public ComplexTile(int tileX, int heightA, int heightB, int heightC, int heightD, int tileY, int rotation,
 			int texture, int shape, int overlayColourA, int underlayColourA, int overlayColourB, int underlayColourB,

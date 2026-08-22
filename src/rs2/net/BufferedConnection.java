@@ -23,7 +23,13 @@ import java.net.Socket;
  */
 public class BufferedConnection implements Runnable, Closeable {
 
+	/**
+	 * Stores read timeout millis.
+	 */
 	private static final int READ_TIMEOUT_MILLIS = 30_000;
+	/**
+	 * Stores write buffer capacity.
+	 */
 	private static final int WRITE_BUFFER_CAPACITY = 5_000;
 
 	/**
@@ -31,12 +37,30 @@ public class BufferedConnection implements Runnable, Closeable {
 	 * client.
 	 */
 	private static final int MAX_PENDING_BYTES = 4_900;
+	/**
+	 * Stores writer thread priority.
+	 */
 	private static final int WRITER_THREAD_PRIORITY = 3;
 
+	/**
+	 * Stores input.
+	 */
 	public InputStream input;
+	/**
+	 * Stores output.
+	 */
 	public OutputStream output;
+	/**
+	 * Stores socket.
+	 */
 	public Socket socket;
+	/**
+	 * Whether closed.
+	 */
 	private boolean closed;
+	/**
+	 * Stores write buffer.
+	 */
 	public byte[] writeBuffer = new byte[WRITE_BUFFER_CAPACITY];
 
 	/**
@@ -48,9 +72,18 @@ public class BufferedConnection implements Runnable, Closeable {
 	 * Index at which the producer will append the next outgoing byte.
 	 */
 	public int writePosition;
+	/**
+	 * Whether write thread started.
+	 */
 	public boolean writeThreadStarted;
 
+	/**
+	 * Stores writer thread.
+	 */
 	private Thread writerThread;
+	/**
+	 * Stores writer failure.
+	 */
 	private IOException writerFailure;
 
 	/**
@@ -60,6 +93,8 @@ public class BufferedConnection implements Runnable, Closeable {
 	 * TCP_NODELAY prevents small game packets from being delayed by Nagle's
 	 * algorithm. The read timeout preserves the original 30-second timeout.
 	 * </p>
+	 * 
+	 * @param socket the socket
 	 */
 	public BufferedConnection(Socket socket) throws IOException {
 		this.socket = socket;
@@ -125,6 +160,9 @@ public class BufferedConnection implements Runnable, Closeable {
 	 *
 	 * @throws EOFException if the peer closes the stream before all requested bytes
 	 *                      arrive
+	 * @param destination       the destination
+	 * @param destinationOffset the destination offset
+	 * @param length            the length
 	 */
 	public void readFully(byte[] destination, int destinationOffset, int length) throws IOException {
 		checkRange(destination, destinationOffset, length);
@@ -165,6 +203,9 @@ public class BufferedConnection implements Runnable, Closeable {
 	 *
 	 * @throws IOException if the connection is closed, the writer previously
 	 *                     failed, or the bounded output queue lacks space
+	 * @param source       the source
+	 * @param sourceOffset the source offset
+	 * @param length       the length
 	 */
 	public synchronized void write(byte[] source, int sourceOffset, int length) throws IOException {
 		checkRange(source, sourceOffset, length);
@@ -279,6 +320,11 @@ public class BufferedConnection implements Runnable, Closeable {
 		}
 	}
 
+	/**
+	 * Returns whether closed.
+	 * 
+	 * @return the resulting boolean
+	 */
 	public synchronized boolean isClosed() {
 		return closed;
 	}
@@ -329,6 +375,8 @@ public class BufferedConnection implements Runnable, Closeable {
 	 * Records the first asynchronous writer error.
 	 *
 	 * The game thread receives this failure on its next call to write().
+	 * 
+	 * @param failure the failure
 	 */
 	private synchronized void recordWriterFailure(IOException failure) {
 		if (writerFailure == null) {
@@ -338,12 +386,18 @@ public class BufferedConnection implements Runnable, Closeable {
 		notifyAll();
 	}
 
+	/**
+	 * Performs ensure open.
+	 */
 	private void ensureOpen() throws IOException {
 		if (closed) {
 			throw new IOException("Connection is closed");
 		}
 	}
 
+	/**
+	 * Performs check writer failure.
+	 */
 	private void checkWriterFailure() throws IOException {
 		if (writerFailure != null) {
 			throw new IOException("Asynchronous socket writer failed", writerFailure);
@@ -359,6 +413,10 @@ public class BufferedConnection implements Runnable, Closeable {
 
 	/**
 	 * Performs the same bounds checks expected from standard Java array APIs.
+	 * 
+	 * @param bytes  the bytes
+	 * @param offset the offset
+	 * @param length the length
 	 */
 	private static void checkRange(byte[] bytes, int offset, int length) {
 		if (bytes == null) {

@@ -13,12 +13,18 @@ import rs2.media.Rasterizer3D;
  */
 public final class TerrainNoise {
 
+	/**
+	 * Initializes this instance.
+	 */
 	private TerrainNoise() {
 	}
 
 	/**
 	 * Returns the client's deterministic 0..255 pseudo-random value for a lattice
 	 * point.
+	 * 
+	 * @param x the x
+	 * @param y the y
 	 */
 	public static int randomNoise(int x, int y) {
 		int seed = x + y * 57;
@@ -27,7 +33,12 @@ public final class TerrainNoise {
 		return value >> 19 & 0xff;
 	}
 
-	/** Applies the original corner/edge/center weighting around a lattice point. */
+	/**
+	 * Applies the original corner/edge/center weighting around a lattice point.
+	 * 
+	 * @param x the x
+	 * @param y the y
+	 */
 	public static int smoothNoise(int x, int y) {
 		int corners = randomNoise(x - 1, y - 1) + randomNoise(x + 1, y - 1) + randomNoise(x - 1, y + 1)
 				+ randomNoise(x + 1, y + 1);
@@ -39,6 +50,11 @@ public final class TerrainNoise {
 	/**
 	 * Cosine-interpolates two samples using the renderer's 16-bit fixed-point
 	 * cosine table.
+	 * 
+	 * @param from     the from
+	 * @param to       the to
+	 * @param position the position
+	 * @param scale    the scale
 	 */
 	public static int cosineInterpolate(int from, int to, int position, int scale) {
 		int weight = 65536 - Rasterizer3D.COSINE[position * 1024 / scale] >> 1;
@@ -47,6 +63,10 @@ public final class TerrainNoise {
 
 	/**
 	 * Bilinearly samples the smoothed lattice at the requested power-of-two scale.
+	 * 
+	 * @param x     the x
+	 * @param y     the y
+	 * @param scale the scale
 	 */
 	public static int interpolatedNoise(int x, int y, int scale) {
 		int cellX = x / scale;
@@ -65,6 +85,9 @@ public final class TerrainNoise {
 	/**
 	 * Produces the default plane-0 tile height before the map stream's
 	 * factor-of-eight conversion.
+	 * 
+	 * @param x the x
+	 * @param y the y
 	 */
 	public static int calculateHeight(int x, int y) {
 		int value = interpolatedNoise(x + 45365, y + 91923, 4) - 128

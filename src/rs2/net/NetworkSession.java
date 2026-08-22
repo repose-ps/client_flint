@@ -20,8 +20,14 @@ import java.net.Socket;
  * systems are refactored.
  * </p>
  */
-public final class NetworkSession {
+public final /**
+				 * Initializes this instance.
+				 */
+class NetworkSession {
 
+	/**
+	 * Stores buffer capacity.
+	 */
 	public static final int BUFFER_CAPACITY = 5_000;
 
 	/** Shared buffer used by all outgoing game packets. */
@@ -51,11 +57,19 @@ public final class NetworkSession {
 	/** Opcode completed immediately before {@link #secondLastOpcode}. */
 	public int thirdLastOpcode = -1;
 
+	/**
+	 * Stores connection.
+	 */
 	private BufferedConnection connection;
+	/**
+	 * Stores incoming opcode cipher.
+	 */
 	private IsaacCipher incomingOpcodeCipher;
 
 	/**
 	 * Replaces the live game connection with a connection around {@code socket}.
+	 * 
+	 * @param socket the socket
 	 */
 	public void connect(Socket socket) throws IOException {
 		connection = new BufferedConnection(socket);
@@ -68,11 +82,18 @@ public final class NetworkSession {
 		return connection;
 	}
 
+	/**
+	 * Returns whether connected.
+	 * 
+	 * @return the resulting boolean
+	 */
 	public boolean isConnected() {
 		return connection != null;
 	}
 
-	/** Closes and forgets the current connection. */
+	/**
+	 * Closes and forgets the current connection.
+	 */
 	public void closeConnection() {
 		if (connection == null) {
 			return;
@@ -85,7 +106,9 @@ public final class NetworkSession {
 		connection = null;
 	}
 
-	/** Raw login-handshake read. */
+	/**
+	 * Raw login-handshake read.
+	 */
 	public int read() throws IOException {
 		if (connection == null) {
 			return -1;
@@ -93,12 +116,24 @@ public final class NetworkSession {
 		return connection.read();
 	}
 
-	/** Raw login-handshake block read. */
+	/**
+	 * Raw login-handshake block read.
+	 * 
+	 * @param destination the destination
+	 * @param offset      the offset
+	 * @param length      the length
+	 */
 	public void readFully(byte[] destination, int offset, int length) throws IOException {
 		requireConnection().readFully(destination, offset, length);
 	}
 
-	/** Raw login-handshake write. */
+	/**
+	 * Raw login-handshake write.
+	 * 
+	 * @param source the source
+	 * @param offset the offset
+	 * @param length the length
+	 */
 	public void write(byte[] source, int offset, int length) throws IOException {
 		requireConnection().write(source, offset, length);
 	}
@@ -111,6 +146,8 @@ public final class NetworkSession {
 	 * the revision-377 server convention of adding 50 to each of the four seed
 	 * words.
 	 * </p>
+	 * 
+	 * @param seed the seed
 	 */
 	public void initializeOpcodeCiphers(int[] seed) {
 		outgoing.opcodeCipher = new IsaacCipher(seed);
@@ -190,7 +227,9 @@ public final class NetworkSession {
 		return true;
 	}
 
-	/** Marks the current packet consumed so the next call reads a new opcode. */
+	/**
+	 * Marks the current packet consumed so the next call reads a new opcode.
+	 */
 	public void finishIncomingPacket() {
 		incomingOpcode = -1;
 	}
@@ -210,14 +249,18 @@ public final class NetworkSession {
 		incomingIdleCycles = 0;
 	}
 
-	/** Prints the underlying connection's legacy diagnostic counters. */
+	/**
+	 * Prints the underlying connection's legacy diagnostic counters.
+	 */
 	public void printDebugInformation() {
 		if (connection != null) {
 			connection.printDebugInformation();
 		}
 	}
 
-	/** Flushes all queued client packet bytes to the connection, if any. */
+	/**
+	 * Flushes all queued client packet bytes to the connection, if any.
+	 */
 	public void flushOutgoing() throws IOException {
 		if (connection != null && outgoing.position > 0) {
 			connection.write(outgoing.payload, 0, outgoing.position);
@@ -226,6 +269,11 @@ public final class NetworkSession {
 		}
 	}
 
+	/**
+	 * Performs require connection.
+	 * 
+	 * @return the resulting buffered connection
+	 */
 	private BufferedConnection requireConnection() throws IOException {
 		if (connection == null) {
 			throw new IOException("No active game connection");

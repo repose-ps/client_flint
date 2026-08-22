@@ -27,34 +27,112 @@ public class CollisionMap {
 	/** Collision bitfield indexed as {@code flags[x][y]}. */
 	public int[][] flags;
 
+	/**
+	 * Stores block north west.
+	 */
 	public static final int BLOCK_NORTH_WEST = 0x1;
+	/**
+	 * Stores block north.
+	 */
 	public static final int BLOCK_NORTH = 0x2;
+	/**
+	 * Stores block north east.
+	 */
 	public static final int BLOCK_NORTH_EAST = 0x4;
+	/**
+	 * Stores block east.
+	 */
 	public static final int BLOCK_EAST = 0x8;
+	/**
+	 * Stores block south east.
+	 */
 	public static final int BLOCK_SOUTH_EAST = 0x10;
+	/**
+	 * Stores block south.
+	 */
 	public static final int BLOCK_SOUTH = 0x20;
+	/**
+	 * Stores block south west.
+	 */
 	public static final int BLOCK_SOUTH_WEST = 0x40;
+	/**
+	 * Stores block west.
+	 */
 	public static final int BLOCK_WEST = 0x80;
+	/**
+	 * Stores block object.
+	 */
 	public static final int BLOCK_OBJECT = 0x100;
 
+	/**
+	 * Stores block projectile north west.
+	 */
 	public static final int BLOCK_PROJECTILE_NORTH_WEST = 0x200;
+	/**
+	 * Stores block projectile north.
+	 */
 	public static final int BLOCK_PROJECTILE_NORTH = 0x400;
+	/**
+	 * Stores block projectile north east.
+	 */
 	public static final int BLOCK_PROJECTILE_NORTH_EAST = 0x800;
+	/**
+	 * Stores block projectile east.
+	 */
 	public static final int BLOCK_PROJECTILE_EAST = 0x1000;
+	/**
+	 * Stores block projectile south east.
+	 */
 	public static final int BLOCK_PROJECTILE_SOUTH_EAST = 0x2000;
+	/**
+	 * Stores block projectile south.
+	 */
 	public static final int BLOCK_PROJECTILE_SOUTH = 0x4000;
+	/**
+	 * Stores block projectile south west.
+	 */
 	public static final int BLOCK_PROJECTILE_SOUTH_WEST = 0x8000;
+	/**
+	 * Stores block projectile west.
+	 */
 	public static final int BLOCK_PROJECTILE_WEST = 0x10000;
+	/**
+	 * Stores block projectile object.
+	 */
 	public static final int BLOCK_PROJECTILE_OBJECT = 0x20000;
 
+	/**
+	 * Stores block floor decoration.
+	 */
 	public static final int BLOCK_FLOOR_DECORATION = 0x200000;
+	/**
+	 * Stores unloaded.
+	 */
 	public static final int UNLOADED = 0x1000000;
 
+	/**
+	 * Stores border blocked.
+	 */
 	private static final int BORDER_BLOCKED = 0x00ffffff;
+	/**
+	 * Stores projectile flag shift.
+	 */
 	private static final int PROJECTILE_FLAG_SHIFT = 9;
+	/**
+	 * Stores access from west blocked.
+	 */
 	private static final int ACCESS_FROM_WEST_BLOCKED = 0x1280108;
+	/**
+	 * Stores access from east blocked.
+	 */
 	private static final int ACCESS_FROM_EAST_BLOCKED = 0x1280180;
+	/**
+	 * Stores access from south blocked.
+	 */
 	private static final int ACCESS_FROM_SOUTH_BLOCKED = 0x1280102;
+	/**
+	 * Stores access from north blocked.
+	 */
 	private static final int ACCESS_FROM_NORTH_BLOCKED = 0x1280120;
 
 	/**
@@ -64,6 +142,9 @@ public class CollisionMap {
 	 * The parameter order remains {@code (height, width)} to preserve the original
 	 * client's constructor contract.
 	 * </p>
+	 * 
+	 * @param height the height
+	 * @param width  the width
 	 */
 	public CollisionMap(int height, int width) {
 		this.insetX = 0;
@@ -74,7 +155,9 @@ public class CollisionMap {
 		reset();
 	}
 
-	/** Resets border tiles to fully blocked and interior tiles to unloaded. */
+	/**
+	 * Resets border tiles to fully blocked and interior tiles to unloaded.
+	 */
 	public void reset() {
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
@@ -90,12 +173,13 @@ public class CollisionMap {
 	/**
 	 * Adds collision for a wall and the matching boundary on its neighbour.
 	 *
-	 * @param x                 world or scene X coordinate
-	 * @param y                 world or scene Y coordinate
-	 * @param type              wall shape: {@code 0} straight, {@code 1} or
-	 *                          {@code 3} diagonal, and {@code 2} corner
-	 * @param orientation       wall orientation in the range {@code 0-3}
-	 * @param blocksProjectiles whether to add the parallel projectile flags
+	 * {@code 3} diagonal, and {@code 2} corner
+	 * 
+	 * @param x                 the x
+	 * @param y                 the y
+	 * @param type              the type
+	 * @param orientation       the orientation
+	 * @param blocksProjectiles the blocks projectiles
 	 */
 	public void markWall(int x, int y, int type, int orientation, boolean blocksProjectiles) {
 		x -= insetX;
@@ -113,6 +197,13 @@ public class CollisionMap {
 	 * Width and height are exchanged for odd orientations because the object's
 	 * footprint has been rotated by a quarter turn.
 	 * </p>
+	 * 
+	 * @param x                 the x
+	 * @param y                 the y
+	 * @param sizeX             the size x
+	 * @param sizeY             the size y
+	 * @param orientation       the orientation
+	 * @param blocksProjectiles the blocks projectiles
 	 */
 	public void markSolidOccupant(int x, int y, int sizeX, int sizeY, int orientation, boolean blocksProjectiles) {
 		int occupiedFlag = BLOCK_OBJECT;
@@ -131,19 +222,38 @@ public class CollisionMap {
 		updateRectangle(x, y, sizeX, sizeY, occupiedFlag, true);
 	}
 
-	/** Marks a tile as blocked by a floor decoration. */
+	/**
+	 * Marks a tile as blocked by a floor decoration.
+	 * 
+	 * @param x the x
+	 * @param y the y
+	 */
 	public void markBlocked(int x, int y) {
 		x -= insetX;
 		y -= insetY;
 		addFlag(x, y, BLOCK_FLOOR_DECORATION);
 	}
 
-	/** Adds one or more collision bits to a local tile. */
-	public void addFlag(int x, int y, int flag) {
-		flags[x][y] |= flag;
+	/**
+	 * Adds one or more collision bits to a local tile.
+	 * 
+	 * @param x             the x
+	 * @param y             the y
+	 * @param conditionFlag the condition flag
+	 */
+	public void addFlag(int x, int y, int conditionFlag) {
+		flags[x][y] |= conditionFlag;
 	}
 
-	/** Removes collision for a wall and its mirrored neighbouring boundary. */
+	/**
+	 * Removes collision for a wall and its mirrored neighbouring boundary.
+	 * 
+	 * @param x                 the x
+	 * @param y                 the y
+	 * @param type              the type
+	 * @param orientation       the orientation
+	 * @param blocksProjectiles the blocks projectiles
+	 */
 	public void unmarkWall(int x, int y, int type, int orientation, boolean blocksProjectiles) {
 		x -= insetX;
 		y -= insetY;
@@ -153,7 +263,16 @@ public class CollisionMap {
 		}
 	}
 
-	/** Removes the occupant flags from a rotated rectangular footprint. */
+	/**
+	 * Removes the occupant flags from a rotated rectangular footprint.
+	 * 
+	 * @param x                 the x
+	 * @param y                 the y
+	 * @param sizeX             the size x
+	 * @param sizeY             the size y
+	 * @param orientation       the orientation
+	 * @param blocksProjectiles the blocks projectiles
+	 */
 	public void unmarkSolidOccupant(int x, int y, int sizeX, int sizeY, int orientation, boolean blocksProjectiles) {
 		int occupiedFlag = BLOCK_OBJECT;
 		if (blocksProjectiles) {
@@ -178,12 +297,21 @@ public class CollisionMap {
 	 * The 24-bit mask intentionally also clears {@link #UNLOADED}, matching the
 	 * original map-loading behavior.
 	 * </p>
+	 * 
+	 * @param x             the x
+	 * @param y             the y
+	 * @param conditionFlag the condition flag
 	 */
-	public void removeFlag(int x, int y, int flag) {
-		flags[x][y] &= BORDER_BLOCKED - flag;
+	public void removeFlag(int x, int y, int conditionFlag) {
+		flags[x][y] &= BORDER_BLOCKED - conditionFlag;
 	}
 
-	/** Removes the floor-decoration blocking flag from a tile. */
+	/**
+	 * Removes the floor-decoration blocking flag from a tile.
+	 * 
+	 * @param x the x
+	 * @param y the y
+	 */
 	public void unmarkBlocked(int x, int y) {
 		x -= insetX;
 		y -= insetY;
@@ -193,12 +321,12 @@ public class CollisionMap {
 	/**
 	 * Tests whether a mover has reached an interactable wall position.
 	 *
-	 * @param currentX    mover X coordinate
-	 * @param currentY    mover Y coordinate
-	 * @param goalX       wall X coordinate
-	 * @param goalY       wall Y coordinate
-	 * @param wallType    wall shape, normally {@code 0}, {@code 2}, or {@code 9}
-	 * @param orientation wall orientation in the range {@code 0-3}
+	 * @param currentX    the current x
+	 * @param currentY    the current y
+	 * @param goalX       the goal x
+	 * @param goalY       the goal y
+	 * @param wallType    the wall type
+	 * @param orientation the orientation
 	 */
 	public boolean reachedWall(int currentX, int currentY, int goalX, int goalY, int wallType, int orientation) {
 		if (currentX == goalX && currentY == goalY) {
@@ -342,7 +470,16 @@ public class CollisionMap {
 		return false;
 	}
 
-	/** Tests whether a mover has reached a wall-decoration interaction tile. */
+	/**
+	 * Tests whether a mover has reached a wall-decoration interaction tile.
+	 * 
+	 * @param currentX       the current x
+	 * @param currentY       the current y
+	 * @param goalX          the goal x
+	 * @param goalY          the goal y
+	 * @param decorationType the decoration type
+	 * @param orientation    the orientation
+	 */
 	public boolean reachedWallDecoration(int currentX, int currentY, int goalX, int goalY, int decorationType,
 			int orientation) {
 		if (currentX == goalX && currentY == goalY) {
@@ -408,8 +545,15 @@ public class CollisionMap {
 	/**
 	 * Tests whether a mover occupies or can approach a rectangular object.
 	 *
-	 * @param accessMask side restrictions: north {@code 1}, east {@code 2}, south
-	 *                   {@code 4}, and west {@code 8}
+	 * {@code 4}, and west {@code 8}
+	 * 
+	 * @param currentX   the current x
+	 * @param currentY   the current y
+	 * @param goalX      the goal x
+	 * @param goalY      the goal y
+	 * @param sizeX      the size x
+	 * @param sizeY      the size y
+	 * @param accessMask the access mask
 	 */
 	public boolean reachedObject(int currentX, int currentY, int goalX, int goalY, int sizeX, int sizeY,
 			int accessMask) {
@@ -435,19 +579,39 @@ public class CollisionMap {
 				&& (flags[currentX - insetX][currentY - insetY] & BLOCK_SOUTH) == 0 && (accessMask & 1) == 0;
 	}
 
-	private void updateRectangle(int x, int y, int sizeX, int sizeY, int flag, boolean add) {
+	/**
+	 * Updates rectangle.
+	 * 
+	 * @param x             the x
+	 * @param y             the y
+	 * @param sizeX         the size x
+	 * @param sizeY         the size y
+	 * @param conditionFlag the condition flag
+	 * @param add           the add
+	 */
+	private void updateRectangle(int x, int y, int sizeX, int sizeY, int conditionFlag, boolean add) {
 		for (int currentX = x; currentX < x + sizeX; currentX++) {
 			if (currentX < 0 || currentX >= width) {
 				continue;
 			}
 			for (int currentY = y; currentY < y + sizeY; currentY++) {
 				if (currentY >= 0 && currentY < height) {
-					updateFlag(currentX, currentY, flag, add);
+					updateFlag(currentX, currentY, conditionFlag, add);
 				}
 			}
 		}
 	}
 
+	/**
+	 * Updates wall flags.
+	 * 
+	 * @param x           the x
+	 * @param y           the y
+	 * @param type        the type
+	 * @param orientation the orientation
+	 * @param shift       the shift
+	 * @param add         the add
+	 */
 	private void updateWallFlags(int x, int y, int type, int orientation, int shift, boolean add) {
 		if (type == 0) {
 			if (orientation == 0) {
@@ -498,11 +662,19 @@ public class CollisionMap {
 		}
 	}
 
-	private void updateFlag(int x, int y, int flag, boolean add) {
+	/**
+	 * Updates flag.
+	 * 
+	 * @param x             the x
+	 * @param y             the y
+	 * @param conditionFlag the condition flag
+	 * @param add           the add
+	 */
+	private void updateFlag(int x, int y, int conditionFlag, boolean add) {
 		if (add) {
-			addFlag(x, y, flag);
+			addFlag(x, y, conditionFlag);
 		} else {
-			removeFlag(x, y, flag);
+			removeFlag(x, y, conditionFlag);
 		}
 	}
 }

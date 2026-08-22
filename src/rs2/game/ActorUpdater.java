@@ -17,7 +17,10 @@ import rs2.media.renderable.Player;
  * and angle arithmetic.
  * </p>
  */
-public final class ActorUpdater {
+public final /**
+				 * Initializes this instance.
+				 */
+class ActorUpdater {
 
 	/**
 	 * Updates one player or NPC for the current client cycle.
@@ -27,6 +30,16 @@ public final class ActorUpdater {
 	 * {@code method68(int unusedSize, byte sentinel, Actor actor)}. The supplied
 	 * size argument was never read and the valid byte was -97.
 	 * </p>
+	 * 
+	 * @param actor                  the actor
+	 * @param cycle                  the cycle
+	 * @param localPlayer            the local player
+	 * @param players                the players
+	 * @param npcs                   the npcs
+	 * @param localPlayerServerIndex the local player server index
+	 * @param localPlayerArrayIndex  the local player array index
+	 * @param regionBaseX            the region base x
+	 * @param regionBaseY            the region base y
 	 */
 	public void update(Actor actor, int cycle, Player localPlayer, Player[] players, Npc[] npcs,
 			int localPlayerServerIndex, int localPlayerArrayIndex, int regionBaseX, int regionBaseY) {
@@ -49,6 +62,11 @@ public final class ActorUpdater {
 		updateAnimations(actor, cycle);
 	}
 
+	/**
+	 * Resets to path start.
+	 * 
+	 * @param actor the actor
+	 */
 	private static void resetToPathStart(Actor actor) {
 		actor.sequence = -1;
 		actor.spotAnimation = -1;
@@ -59,7 +77,12 @@ public final class ActorUpdater {
 		actor.resetPath();
 	}
 
-	/** Legacy {@code method69(Actor actor)}. */
+	/**
+	 * Legacy {@code method69(Actor actor)}.
+	 * 
+	 * @param actor the actor
+	 * @param cycle the cycle
+	 */
 	private static void updatePreForcedMovement(Actor actor, int cycle) {
 		int remaining = actor.forceMoveStartCycle - cycle;
 		int targetX = actor.forceMoveStartX * 128 + actor.size * 64;
@@ -73,6 +96,9 @@ public final class ActorUpdater {
 	/**
 	 * Legacy {@code method70(Actor actor, int sentinel)}; valid sentinel -31135
 	 * removed.
+	 * 
+	 * @param actor the actor
+	 * @param cycle the cycle
 	 */
 	private static void updateForcedMovement(Actor actor, int cycle) {
 		if (actor.forceMoveEndCycle == cycle || actor.sequence == -1 || actor.sequenceDelay != 0
@@ -92,6 +118,11 @@ public final class ActorUpdater {
 		actor.rotation = actor.orientation;
 	}
 
+	/**
+	 * Sets forced movement orientation.
+	 * 
+	 * @param actor the actor
+	 */
 	private static void setForcedMovementOrientation(Actor actor) {
 		if (actor.forceMoveDirection == 0) {
 			actor.orientation = 1024;
@@ -109,6 +140,8 @@ public final class ActorUpdater {
 
 	/**
 	 * Legacy {@code method71(Actor actor, int sentinel)}; valid sentinel 0 removed.
+	 * 
+	 * @param actor the actor
 	 */
 	private static void updatePathMovement(Actor actor) {
 		actor.movementSequence = actor.idleSequence;
@@ -232,6 +265,14 @@ public final class ActorUpdater {
 	/**
 	 * Legacy {@code method72(byte sentinel, Actor actor)}; valid sentinel 8
 	 * removed.
+	 * 
+	 * @param actor                  the actor
+	 * @param players                the players
+	 * @param npcs                   the npcs
+	 * @param localPlayerServerIndex the local player server index
+	 * @param localPlayerArrayIndex  the local player array index
+	 * @param regionBaseX            the region base x
+	 * @param regionBaseY            the region base y
 	 */
 	private static void updateFacing(Actor actor, Player[] players, Npc[] npcs, int localPlayerServerIndex,
 			int localPlayerArrayIndex, int regionBaseX, int regionBaseY) {
@@ -296,6 +337,9 @@ public final class ActorUpdater {
 	/**
 	 * Legacy {@code method73(Actor actor, int negativeSentinel)}; negative sentinel
 	 * removed.
+	 * 
+	 * @param actor the actor
+	 * @param cycle the cycle
 	 */
 	private static void updateAnimations(Actor actor, int cycle) {
 		actor.animationStretches = false;

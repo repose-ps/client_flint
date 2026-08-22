@@ -10,7 +10,10 @@ import rs2.media.renderable.Renderable;
  * places decorations against a particular wall face.
  * </p>
  */
-public class WallDecoration {
+public /**
+		 * Initializes this instance.
+		 */
+class WallDecoration {
 
 	/** World-space elevation of the decoration. */
 	public int z;

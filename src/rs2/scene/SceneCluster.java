@@ -10,7 +10,10 @@ package rs2.scene;
  * tested against the occluded volume using integer arithmetic.
  * </p>
  */
-public class SceneCluster {
+public /**
+		 * Initializes this instance.
+		 */
+class SceneCluster {
 
 	/** Minimum tile-space X coordinate covered by this cluster. */
 	public int minTileX;

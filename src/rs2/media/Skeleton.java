@@ -19,7 +19,11 @@ public class Skeleton {
 	/** Vertex or face group labels affected by each transform entry. */
 	public int[][] labels;
 
-	/** Decodes a skeleton from the trailing segment of an animation archive. */
+	/**
+	 * Decodes a skeleton from the trailing segment of an animation archive.
+	 * 
+	 * @param buffer the buffer
+	 */
 	public Skeleton(Buffer buffer) {
 		transformCount = buffer.readUnsignedByte();
 		transformTypes = new int[transformCount];

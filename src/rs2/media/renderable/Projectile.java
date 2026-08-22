@@ -16,31 +16,118 @@ import rs2.media.AnimationFrame;
  */
 public class Projectile extends Renderable {
 
+	/**
+	 * Stores spot animation.
+	 */
 	public SpotAnimation spotAnimation;
+	/**
+	 * Stores plane.
+	 */
 	public int plane;
+	/**
+	 * Stores x.
+	 */
 	public double x;
+	/**
+	 * Stores y.
+	 */
 	public double y;
+	/**
+	 * Stores z.
+	 */
 	public double z;
+	/**
+	 * Stores slope.
+	 */
 	public int slope;
+	/**
+	 * Stores start height.
+	 */
 	public int startHeight;
+	/**
+	 * Index used for target.
+	 */
 	public int targetIndex;
+	/**
+	 * Stores yaw.
+	 */
 	public int yaw;
+	/**
+	 * Stores pitch.
+	 */
 	public int pitch;
+	/**
+	 * Stores cycle start.
+	 */
 	public int cycleStart;
+	/**
+	 * Stores cycle end.
+	 */
 	public int cycleEnd;
+	/**
+	 * Stores frame.
+	 */
 	public int frame;
+	/**
+	 * Stores frame cycle.
+	 */
 	public int frameCycle;
+	/**
+	 * Stores speed x.
+	 */
 	public double speedX;
+	/**
+	 * Stores speed y.
+	 */
 	public double speedY;
+	/**
+	 * Stores speed.
+	 */
 	public double speed;
+	/**
+	 * Stores speed z.
+	 */
 	public double speedZ;
+	/**
+	 * Stores acceleration z.
+	 */
 	public double accelerationZ;
+	/**
+	 * Whether is moving.
+	 */
 	public boolean isMoving;
+	/**
+	 * Stores source x.
+	 */
 	public int sourceX;
+	/**
+	 * Stores source y.
+	 */
 	public int sourceY;
+	/**
+	 * Stores source z.
+	 */
 	public int sourceZ;
+	/**
+	 * Stores end height.
+	 */
 	public int endHeight;
 
+	/**
+	 * Initializes this instance.
+	 * 
+	 * @param spotAnimationId the spot animation id
+	 * @param plane           the plane
+	 * @param sourceX         the source x
+	 * @param sourceY         the source y
+	 * @param sourceZ         the source z
+	 * @param cycleStart      the cycle start
+	 * @param cycleEnd        the cycle end
+	 * @param slope           the slope
+	 * @param startHeight     the start height
+	 * @param targetIndex     the target index
+	 * @param endHeight       the end height
+	 */
 	public Projectile(int spotAnimationId, int plane, int sourceX, int sourceY, int sourceZ, int cycleStart,
 			int cycleEnd, int slope, int startHeight, int targetIndex, int endHeight) {
 		this.spotAnimation = SpotAnimation.definitions[spotAnimationId];
@@ -60,6 +147,11 @@ public class Projectile extends Renderable {
 	/**
 	 * Recomputes the trajectory so it reaches the supplied destination at
 	 * {@link #cycleEnd}.
+	 * 
+	 * @param destinationX the destination x
+	 * @param destinationY the destination y
+	 * @param destinationZ the destination z
+	 * @param cycle        the cycle
 	 */
 	public void setDestination(int destinationX, int destinationY, int destinationZ, int cycle) {
 		if (!isMoving) {
@@ -84,6 +176,8 @@ public class Projectile extends Renderable {
 	/**
 	 * Advances position, orientation, and spot-animation frame state by client
 	 * cycles.
+	 * 
+	 * @param cycles the cycles
 	 */
 	public void advance(int cycles) {
 		isMoving = true;
@@ -105,6 +199,11 @@ public class Projectile extends Renderable {
 		}
 	}
 
+	/**
+	 * Returns model.
+	 * 
+	 * @return the resulting model
+	 */
 	@Override
 	protected Model getModel() {
 		Model baseModel = spotAnimation.getModel();

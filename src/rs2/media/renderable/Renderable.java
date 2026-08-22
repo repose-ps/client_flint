@@ -12,7 +12,10 @@ import rs2.media.VertexNormal;
  * before rendering, matching the revision-377 client.
  * </p>
  */
-public class Renderable extends DualNode {
+public /**
+		 * Initializes this instance.
+		 */
+class Renderable extends DualNode {
 
 	/** Per-vertex normals used by scene lighting/normal merging. */
 	public VertexNormal[] vertexNormals;
@@ -20,6 +23,19 @@ public class Renderable extends DualNode {
 	/** Vertical extent of the most recently rendered model. */
 	public int modelHeight = 1000;
 
+	/**
+	 * Draws value.
+	 * 
+	 * @param orientation the orientation
+	 * @param pitchSine   the pitch sine
+	 * @param pitchCosine the pitch cosine
+	 * @param yawSine     the yaw sine
+	 * @param yawCosine   the yaw cosine
+	 * @param x           the x
+	 * @param y           the y
+	 * @param z           the z
+	 * @param uid         the uid
+	 */
 	public void draw(int orientation, int pitchSine, int pitchCosine, int yawSine, int yawCosine, int x, int y, int z,
 			int uid) {
 		Model model = getModel();

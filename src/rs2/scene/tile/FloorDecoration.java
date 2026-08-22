@@ -10,7 +10,10 @@ import rs2.media.renderable.Renderable;
  * not maintain a multi-tile footprint.
  * </p>
  */
-public class FloorDecoration {
+public /**
+		 * Initializes this instance.
+		 */
+class FloorDecoration {
 
 	/** World-space elevation of the decoration. */
 	public int z;

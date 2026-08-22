@@ -23,7 +23,9 @@ import rs2.net.Buffer;
  */
 public class Model extends Renderable {
 
-	/** Releases the model-header table and shared projection work arrays. */
+	/**
+	 * Releases the model-header table and shared projection work arrays.
+	 */
 	public static void clearModelLoader() {
 		modelHeaders = null;
 		faceOutOfBounds = null;
@@ -47,6 +49,12 @@ public class Model extends Renderable {
 		RECIPROCAL_16 = null;
 	}
 
+	/**
+	 * Performs initialize model headers.
+	 * 
+	 * @param modelCount the model count
+	 * @param provider   the provider
+	 */
 	public static void initializeModelHeaders(int modelCount, OnDemandProvider provider) {
 		modelHeaders = new ModelHeader[modelCount];
 		modelProvider = provider;
@@ -55,6 +63,9 @@ public class Model extends Renderable {
 	/**
 	 * Parses the 18-byte legacy model footer into stream offsets without decoding
 	 * geometry.
+	 * 
+	 * @param modelData the model data
+	 * @param modelId   the model id
 	 */
 	public static void loadModelHeader(byte[] modelData, int modelId) {
 		if (modelData == null) {
@@ -125,15 +136,26 @@ public class Model extends Renderable {
 		header.zDataOffset = offset;
 	}
 
+	/**
+	 * Clears model header state.
+	 * 
+	 * @param modelId the model id
+	 */
 	public static void clearModelHeader(int modelId) {
 		modelHeaders[modelId] = null;
 	}
 
+	/**
+	 * Returns model.
+	 * 
+	 * @return the resulting model
+	 * @param modelId the model id
+	 */
 	public static Model getModel(int modelId) {
 		if (modelHeaders == null)
 			return null;
-		ModelHeader class26 = modelHeaders[modelId];
-		if (class26 == null) {
+		ModelHeader modelHeader = modelHeaders[modelId];
+		if (modelHeader == null) {
 			modelProvider.requestModel(modelId);
 			return null;
 		} else {
@@ -141,11 +163,17 @@ public class Model extends Renderable {
 		}
 	}
 
+	/**
+	 * Returns whether loaded.
+	 * 
+	 * @return the resulting boolean
+	 * @param modelId the model id
+	 */
 	public static boolean isLoaded(int modelId) {
 		if (modelHeaders == null)
 			return false;
-		ModelHeader class26 = modelHeaders[modelId];
-		if (class26 == null) {
+		ModelHeader modelHeader = modelHeaders[modelId];
+		if (modelHeader == null) {
 			modelProvider.requestModel(modelId);
 			return false;
 		} else {
@@ -153,10 +181,18 @@ public class Model extends Renderable {
 		}
 	}
 
+	/**
+	 * Initializes this instance.
+	 */
 	private Model() {
 		singleTile = false;
 	}
 
+	/**
+	 * Initializes this instance.
+	 * 
+	 * @param modelId the model id
+	 */
 	private Model(int modelId) {
 		singleTile = false;
 		ModelHeader header = modelHeaders[modelId];
@@ -240,37 +276,37 @@ public class Model extends Renderable {
 		triangleData.position = header.triangleDataOffset;
 		Buffer triangleTypes = new Buffer(header.modelData);
 		triangleTypes.position = header.triangleTypeOffset;
-		int a = 0;
-		int b = 0;
-		int c = 0;
-		int last = 0;
+		int vertexA = 0;
+		int vertexB = 0;
+		int vertexC = 0;
+		int lastVertex = 0;
 		for (int triangle = 0; triangle < triangleCount; triangle++) {
 			int type = triangleTypes.readUnsignedByte();
 			if (type == 1) {
-				a = triangleData.readSignedSmart() + last;
-				last = a;
-				b = triangleData.readSignedSmart() + last;
-				last = b;
-				c = triangleData.readSignedSmart() + last;
-				last = c;
+				vertexA = triangleData.readSignedSmart() + lastVertex;
+				lastVertex = vertexA;
+				vertexB = triangleData.readSignedSmart() + lastVertex;
+				lastVertex = vertexB;
+				vertexC = triangleData.readSignedSmart() + lastVertex;
+				lastVertex = vertexC;
 			} else if (type == 2) {
-				b = c;
-				c = triangleData.readSignedSmart() + last;
-				last = c;
+				vertexB = vertexC;
+				vertexC = triangleData.readSignedSmart() + lastVertex;
+				lastVertex = vertexC;
 			} else if (type == 3) {
-				a = c;
-				c = triangleData.readSignedSmart() + last;
-				last = c;
+				vertexA = vertexC;
+				vertexC = triangleData.readSignedSmart() + lastVertex;
+				lastVertex = vertexC;
 			} else if (type == 4) {
-				int swap = a;
-				a = b;
-				b = swap;
-				c = triangleData.readSignedSmart() + last;
-				last = c;
+				int swap = vertexA;
+				vertexA = vertexB;
+				vertexB = swap;
+				vertexC = triangleData.readSignedSmart() + lastVertex;
+				lastVertex = vertexC;
 			}
-			triangleVertexA[triangle] = a;
-			triangleVertexB[triangle] = b;
-			triangleVertexC[triangle] = c;
+			triangleVertexA[triangle] = vertexA;
+			triangleVertexB[triangle] = vertexB;
+			triangleVertexC[triangle] = vertexC;
 		}
 
 		Buffer texturedTriangles = new Buffer(header.modelData);
@@ -282,33 +318,39 @@ public class Model extends Renderable {
 		}
 	}
 
+	/**
+	 * Initializes this instance.
+	 * 
+	 * @param modelCount the model count
+	 * @param models     the models
+	 */
 	public Model(int modelCount, Model[] models) {
 		singleTile = false;
-		boolean flag = false;
-		boolean flag1 = false;
-		boolean flag2 = false;
-		boolean flag3 = false;
+		boolean conditionFlag = false;
+		boolean conditionFlag2 = false;
+		boolean conditionFlag3 = false;
+		boolean conditionFlag4 = false;
 		vertexCount = 0;
 		triangleCount = 0;
 		texturedTriangleCount = 0;
 		defaultTrianglePriority = -1;
-		for (int j = 0; j < modelCount; j++) {
-			Model class50_sub1_sub4_sub4 = models[j];
-			if (class50_sub1_sub4_sub4 != null) {
-				vertexCount += class50_sub1_sub4_sub4.vertexCount;
-				triangleCount += class50_sub1_sub4_sub4.triangleCount;
-				texturedTriangleCount += class50_sub1_sub4_sub4.texturedTriangleCount;
-				flag |= class50_sub1_sub4_sub4.triangleDrawType != null;
-				if (class50_sub1_sub4_sub4.trianglePriorities != null) {
-					flag1 = true;
+		for (int loopIndex = 0; loopIndex < modelCount; loopIndex++) {
+			Model model = models[loopIndex];
+			if (model != null) {
+				vertexCount += model.vertexCount;
+				triangleCount += model.triangleCount;
+				texturedTriangleCount += model.texturedTriangleCount;
+				conditionFlag |= model.triangleDrawType != null;
+				if (model.trianglePriorities != null) {
+					conditionFlag2 = true;
 				} else {
 					if (defaultTrianglePriority == -1)
-						defaultTrianglePriority = class50_sub1_sub4_sub4.defaultTrianglePriority;
-					if (defaultTrianglePriority != class50_sub1_sub4_sub4.defaultTrianglePriority)
-						flag1 = true;
+						defaultTrianglePriority = model.defaultTrianglePriority;
+					if (defaultTrianglePriority != model.defaultTrianglePriority)
+						conditionFlag2 = true;
 				}
-				flag2 |= class50_sub1_sub4_sub4.triangleAlpha != null;
-				flag3 |= class50_sub1_sub4_sub4.triangleSkins != null;
+				conditionFlag3 |= model.triangleAlpha != null;
+				conditionFlag4 |= model.triangleSkins != null;
 			}
 		}
 
@@ -322,97 +364,103 @@ public class Model extends Renderable {
 		texturedTriangleA = new int[texturedTriangleCount];
 		texturedTriangleB = new int[texturedTriangleCount];
 		texturedTriangleC = new int[texturedTriangleCount];
-		if (flag)
+		if (conditionFlag)
 			triangleDrawType = new int[triangleCount];
-		if (flag1)
+		if (conditionFlag2)
 			trianglePriorities = new int[triangleCount];
-		if (flag2)
+		if (conditionFlag3)
 			triangleAlpha = new int[triangleCount];
-		if (flag3)
+		if (conditionFlag4)
 			triangleSkins = new int[triangleCount];
 		triangleColors = new int[triangleCount];
 		vertexCount = 0;
 		triangleCount = 0;
 		texturedTriangleCount = 0;
-		int k = 0;
-		for (int l = 0; l < modelCount; l++) {
-			Model class50_sub1_sub4_sub4_1 = models[l];
-			if (class50_sub1_sub4_sub4_1 != null) {
-				for (int i1 = 0; i1 < class50_sub1_sub4_sub4_1.triangleCount; i1++) {
-					if (flag)
-						if (class50_sub1_sub4_sub4_1.triangleDrawType == null) {
+		int intermediateValue = 0;
+		for (int loopIndex2 = 0; loopIndex2 < modelCount; loopIndex2++) {
+			Model model2 = models[loopIndex2];
+			if (model2 != null) {
+				for (int loopIndex3 = 0; loopIndex3 < model2.triangleCount; loopIndex3++) {
+					if (conditionFlag)
+						if (model2.triangleDrawType == null) {
 							triangleDrawType[triangleCount] = 0;
 						} else {
-							int j1 = class50_sub1_sub4_sub4_1.triangleDrawType[i1];
-							if ((j1 & 2) == 2)
-								j1 += k << 2;
-							triangleDrawType[triangleCount] = j1;
+							int intermediateValue2 = model2.triangleDrawType[loopIndex3];
+							if ((intermediateValue2 & 2) == 2)
+								intermediateValue2 += intermediateValue << 2;
+							triangleDrawType[triangleCount] = intermediateValue2;
 						}
-					if (flag1)
-						if (class50_sub1_sub4_sub4_1.trianglePriorities == null)
-							trianglePriorities[triangleCount] = class50_sub1_sub4_sub4_1.defaultTrianglePriority;
+					if (conditionFlag2)
+						if (model2.trianglePriorities == null)
+							trianglePriorities[triangleCount] = model2.defaultTrianglePriority;
 						else
-							trianglePriorities[triangleCount] = class50_sub1_sub4_sub4_1.trianglePriorities[i1];
-					if (flag2)
-						if (class50_sub1_sub4_sub4_1.triangleAlpha == null)
+							trianglePriorities[triangleCount] = model2.trianglePriorities[loopIndex3];
+					if (conditionFlag3)
+						if (model2.triangleAlpha == null)
 							triangleAlpha[triangleCount] = 0;
 						else
-							triangleAlpha[triangleCount] = class50_sub1_sub4_sub4_1.triangleAlpha[i1];
-					if (flag3 && class50_sub1_sub4_sub4_1.triangleSkins != null)
-						triangleSkins[triangleCount] = class50_sub1_sub4_sub4_1.triangleSkins[i1];
-					triangleColors[triangleCount] = class50_sub1_sub4_sub4_1.triangleColors[i1];
-					triangleVertexA[triangleCount] = getFirstIdenticalVertexId(class50_sub1_sub4_sub4_1,
-							class50_sub1_sub4_sub4_1.triangleVertexA[i1]);
-					triangleVertexB[triangleCount] = getFirstIdenticalVertexId(class50_sub1_sub4_sub4_1,
-							class50_sub1_sub4_sub4_1.triangleVertexB[i1]);
-					triangleVertexC[triangleCount] = getFirstIdenticalVertexId(class50_sub1_sub4_sub4_1,
-							class50_sub1_sub4_sub4_1.triangleVertexC[i1]);
+							triangleAlpha[triangleCount] = model2.triangleAlpha[loopIndex3];
+					if (conditionFlag4 && model2.triangleSkins != null)
+						triangleSkins[triangleCount] = model2.triangleSkins[loopIndex3];
+					triangleColors[triangleCount] = model2.triangleColors[loopIndex3];
+					triangleVertexA[triangleCount] = getFirstIdenticalVertexId(model2,
+							model2.triangleVertexA[loopIndex3]);
+					triangleVertexB[triangleCount] = getFirstIdenticalVertexId(model2,
+							model2.triangleVertexB[loopIndex3]);
+					triangleVertexC[triangleCount] = getFirstIdenticalVertexId(model2,
+							model2.triangleVertexC[loopIndex3]);
 					triangleCount++;
 				}
 
-				for (int k1 = 0; k1 < class50_sub1_sub4_sub4_1.texturedTriangleCount; k1++) {
-					texturedTriangleA[texturedTriangleCount] = getFirstIdenticalVertexId(class50_sub1_sub4_sub4_1,
-							class50_sub1_sub4_sub4_1.texturedTriangleA[k1]);
-					texturedTriangleB[texturedTriangleCount] = getFirstIdenticalVertexId(class50_sub1_sub4_sub4_1,
-							class50_sub1_sub4_sub4_1.texturedTriangleB[k1]);
-					texturedTriangleC[texturedTriangleCount] = getFirstIdenticalVertexId(class50_sub1_sub4_sub4_1,
-							class50_sub1_sub4_sub4_1.texturedTriangleC[k1]);
+				for (int loopIndex4 = 0; loopIndex4 < model2.texturedTriangleCount; loopIndex4++) {
+					texturedTriangleA[texturedTriangleCount] = getFirstIdenticalVertexId(model2,
+							model2.texturedTriangleA[loopIndex4]);
+					texturedTriangleB[texturedTriangleCount] = getFirstIdenticalVertexId(model2,
+							model2.texturedTriangleB[loopIndex4]);
+					texturedTriangleC[texturedTriangleCount] = getFirstIdenticalVertexId(model2,
+							model2.texturedTriangleC[loopIndex4]);
 					texturedTriangleCount++;
 				}
 
-				k += class50_sub1_sub4_sub4_1.texturedTriangleCount;
+				intermediateValue += model2.texturedTriangleCount;
 			}
 		}
 
 	}
 
+	/**
+	 * Initializes this instance.
+	 * 
+	 * @param models     the models
+	 * @param modelCount the model count
+	 */
 	public Model(Model[] models, int modelCount) {
 		singleTile = false;
-		boolean flag1 = false;
-		boolean flag2 = false;
-		boolean flag3 = false;
-		boolean flag4 = false;
+		boolean conditionFlag = false;
+		boolean conditionFlag2 = false;
+		boolean conditionFlag3 = false;
+		boolean conditionFlag4 = false;
 		vertexCount = 0;
 		triangleCount = 0;
 		texturedTriangleCount = 0;
 		defaultTrianglePriority = -1;
-		for (int k = 0; k < modelCount; k++) {
-			Model class50_sub1_sub4_sub4 = models[k];
-			if (class50_sub1_sub4_sub4 != null) {
-				vertexCount += class50_sub1_sub4_sub4.vertexCount;
-				triangleCount += class50_sub1_sub4_sub4.triangleCount;
-				texturedTriangleCount += class50_sub1_sub4_sub4.texturedTriangleCount;
-				flag1 |= class50_sub1_sub4_sub4.triangleDrawType != null;
-				if (class50_sub1_sub4_sub4.trianglePriorities != null) {
-					flag2 = true;
+		for (int loopIndex = 0; loopIndex < modelCount; loopIndex++) {
+			Model model = models[loopIndex];
+			if (model != null) {
+				vertexCount += model.vertexCount;
+				triangleCount += model.triangleCount;
+				texturedTriangleCount += model.texturedTriangleCount;
+				conditionFlag |= model.triangleDrawType != null;
+				if (model.trianglePriorities != null) {
+					conditionFlag2 = true;
 				} else {
 					if (defaultTrianglePriority == -1)
-						defaultTrianglePriority = class50_sub1_sub4_sub4.defaultTrianglePriority;
-					if (defaultTrianglePriority != class50_sub1_sub4_sub4.defaultTrianglePriority)
-						flag2 = true;
+						defaultTrianglePriority = model.defaultTrianglePriority;
+					if (defaultTrianglePriority != model.defaultTrianglePriority)
+						conditionFlag2 = true;
 				}
-				flag3 |= class50_sub1_sub4_sub4.triangleAlpha != null;
-				flag4 |= class50_sub1_sub4_sub4.triangleColors != null;
+				conditionFlag3 |= model.triangleAlpha != null;
+				conditionFlag4 |= model.triangleColors != null;
 			}
 		}
 
@@ -428,74 +476,85 @@ public class Model extends Renderable {
 		texturedTriangleA = new int[texturedTriangleCount];
 		texturedTriangleB = new int[texturedTriangleCount];
 		texturedTriangleC = new int[texturedTriangleCount];
-		if (flag1)
+		if (conditionFlag)
 			triangleDrawType = new int[triangleCount];
-		if (flag2)
+		if (conditionFlag2)
 			trianglePriorities = new int[triangleCount];
-		if (flag3)
+		if (conditionFlag3)
 			triangleAlpha = new int[triangleCount];
-		if (flag4)
+		if (conditionFlag4)
 			triangleColors = new int[triangleCount];
 		vertexCount = 0;
 		triangleCount = 0;
 		texturedTriangleCount = 0;
-		int l = 0;
-		for (int i1 = 0; i1 < modelCount; i1++) {
-			Model class50_sub1_sub4_sub4_1 = models[i1];
-			if (class50_sub1_sub4_sub4_1 != null) {
-				int j1 = vertexCount;
-				for (int k1 = 0; k1 < class50_sub1_sub4_sub4_1.vertexCount; k1++) {
-					verticesX[vertexCount] = class50_sub1_sub4_sub4_1.verticesX[k1];
-					verticesY[vertexCount] = class50_sub1_sub4_sub4_1.verticesY[k1];
-					verticesZ[vertexCount] = class50_sub1_sub4_sub4_1.verticesZ[k1];
+		int intermediateValue = 0;
+		for (int loopIndex2 = 0; loopIndex2 < modelCount; loopIndex2++) {
+			Model model2 = models[loopIndex2];
+			if (model2 != null) {
+				int intermediateValue2 = vertexCount;
+				for (int loopIndex3 = 0; loopIndex3 < model2.vertexCount; loopIndex3++) {
+					verticesX[vertexCount] = model2.verticesX[loopIndex3];
+					verticesY[vertexCount] = model2.verticesY[loopIndex3];
+					verticesZ[vertexCount] = model2.verticesZ[loopIndex3];
 					vertexCount++;
 				}
 
-				for (int l1 = 0; l1 < class50_sub1_sub4_sub4_1.triangleCount; l1++) {
-					triangleVertexA[triangleCount] = class50_sub1_sub4_sub4_1.triangleVertexA[l1] + j1;
-					triangleVertexB[triangleCount] = class50_sub1_sub4_sub4_1.triangleVertexB[l1] + j1;
-					triangleVertexC[triangleCount] = class50_sub1_sub4_sub4_1.triangleVertexC[l1] + j1;
-					triangleShadeA[triangleCount] = class50_sub1_sub4_sub4_1.triangleShadeA[l1];
-					triangleShadeB[triangleCount] = class50_sub1_sub4_sub4_1.triangleShadeB[l1];
-					triangleShadeC[triangleCount] = class50_sub1_sub4_sub4_1.triangleShadeC[l1];
-					if (flag1)
-						if (class50_sub1_sub4_sub4_1.triangleDrawType == null) {
+				for (int loopIndex4 = 0; loopIndex4 < model2.triangleCount; loopIndex4++) {
+					triangleVertexA[triangleCount] = model2.triangleVertexA[loopIndex4] + intermediateValue2;
+					triangleVertexB[triangleCount] = model2.triangleVertexB[loopIndex4] + intermediateValue2;
+					triangleVertexC[triangleCount] = model2.triangleVertexC[loopIndex4] + intermediateValue2;
+					triangleShadeA[triangleCount] = model2.triangleShadeA[loopIndex4];
+					triangleShadeB[triangleCount] = model2.triangleShadeB[loopIndex4];
+					triangleShadeC[triangleCount] = model2.triangleShadeC[loopIndex4];
+					if (conditionFlag)
+						if (model2.triangleDrawType == null) {
 							triangleDrawType[triangleCount] = 0;
 						} else {
-							int i2 = class50_sub1_sub4_sub4_1.triangleDrawType[l1];
-							if ((i2 & 2) == 2)
-								i2 += l << 2;
-							triangleDrawType[triangleCount] = i2;
+							int intermediateValue3 = model2.triangleDrawType[loopIndex4];
+							if ((intermediateValue3 & 2) == 2)
+								intermediateValue3 += intermediateValue << 2;
+							triangleDrawType[triangleCount] = intermediateValue3;
 						}
-					if (flag2)
-						if (class50_sub1_sub4_sub4_1.trianglePriorities == null)
-							trianglePriorities[triangleCount] = class50_sub1_sub4_sub4_1.defaultTrianglePriority;
+					if (conditionFlag2)
+						if (model2.trianglePriorities == null)
+							trianglePriorities[triangleCount] = model2.defaultTrianglePriority;
 						else
-							trianglePriorities[triangleCount] = class50_sub1_sub4_sub4_1.trianglePriorities[l1];
-					if (flag3)
-						if (class50_sub1_sub4_sub4_1.triangleAlpha == null)
+							trianglePriorities[triangleCount] = model2.trianglePriorities[loopIndex4];
+					if (conditionFlag3)
+						if (model2.triangleAlpha == null)
 							triangleAlpha[triangleCount] = 0;
 						else
-							triangleAlpha[triangleCount] = class50_sub1_sub4_sub4_1.triangleAlpha[l1];
-					if (flag4 && class50_sub1_sub4_sub4_1.triangleColors != null)
-						triangleColors[triangleCount] = class50_sub1_sub4_sub4_1.triangleColors[l1];
+							triangleAlpha[triangleCount] = model2.triangleAlpha[loopIndex4];
+					if (conditionFlag4 && model2.triangleColors != null)
+						triangleColors[triangleCount] = model2.triangleColors[loopIndex4];
 					triangleCount++;
 				}
 
-				for (int j2 = 0; j2 < class50_sub1_sub4_sub4_1.texturedTriangleCount; j2++) {
-					texturedTriangleA[texturedTriangleCount] = class50_sub1_sub4_sub4_1.texturedTriangleA[j2] + j1;
-					texturedTriangleB[texturedTriangleCount] = class50_sub1_sub4_sub4_1.texturedTriangleB[j2] + j1;
-					texturedTriangleC[texturedTriangleCount] = class50_sub1_sub4_sub4_1.texturedTriangleC[j2] + j1;
+				for (int loopIndex5 = 0; loopIndex5 < model2.texturedTriangleCount; loopIndex5++) {
+					texturedTriangleA[texturedTriangleCount] = model2.texturedTriangleA[loopIndex5]
+							+ intermediateValue2;
+					texturedTriangleB[texturedTriangleCount] = model2.texturedTriangleB[loopIndex5]
+							+ intermediateValue2;
+					texturedTriangleC[texturedTriangleCount] = model2.texturedTriangleC[loopIndex5]
+							+ intermediateValue2;
 					texturedTriangleCount++;
 				}
 
-				l += class50_sub1_sub4_sub4_1.texturedTriangleCount;
+				intermediateValue += model2.texturedTriangleCount;
 			}
 		}
 
 		calculateDiagonals();
 	}
 
+	/**
+	 * Initializes this instance.
+	 * 
+	 * @param source        the source
+	 * @param shareVertices the share vertices
+	 * @param shareColors   the share colors
+	 * @param shareAlpha    the share alpha
+	 */
 	public Model(Model source, boolean shareVertices, boolean shareColors, boolean shareAlpha) {
 		singleTile = false;
 		vertexCount = source.vertexCount;
@@ -509,10 +568,10 @@ public class Model extends Renderable {
 			verticesX = new int[vertexCount];
 			verticesY = new int[vertexCount];
 			verticesZ = new int[vertexCount];
-			for (int i = 0; i < vertexCount; i++) {
-				verticesX[i] = source.verticesX[i];
-				verticesY[i] = source.verticesY[i];
-				verticesZ[i] = source.verticesZ[i];
+			for (int loopIndex = 0; loopIndex < vertexCount; loopIndex++) {
+				verticesX[loopIndex] = source.verticesX[loopIndex];
+				verticesY[loopIndex] = source.verticesY[loopIndex];
+				verticesZ[loopIndex] = source.verticesZ[loopIndex];
 			}
 
 		}
@@ -520,8 +579,8 @@ public class Model extends Renderable {
 			triangleColors = source.triangleColors;
 		} else {
 			triangleColors = new int[triangleCount];
-			for (int j = 0; j < triangleCount; j++)
-				triangleColors[j] = source.triangleColors[j];
+			for (int loopIndex2 = 0; loopIndex2 < triangleCount; loopIndex2++)
+				triangleColors[loopIndex2] = source.triangleColors[loopIndex2];
 
 		}
 		if (shareAlpha) {
@@ -529,12 +588,12 @@ public class Model extends Renderable {
 		} else {
 			triangleAlpha = new int[triangleCount];
 			if (source.triangleAlpha == null) {
-				for (int k = 0; k < triangleCount; k++)
-					triangleAlpha[k] = 0;
+				for (int loopIndex3 = 0; loopIndex3 < triangleCount; loopIndex3++)
+					triangleAlpha[loopIndex3] = 0;
 
 			} else {
-				for (int l = 0; l < triangleCount; l++)
-					triangleAlpha[l] = source.triangleAlpha[l];
+				for (int loopIndex4 = 0; loopIndex4 < triangleCount; loopIndex4++)
+					triangleAlpha[loopIndex4] = source.triangleAlpha[loopIndex4];
 
 			}
 		}
@@ -551,6 +610,13 @@ public class Model extends Renderable {
 		texturedTriangleC = source.texturedTriangleC;
 	}
 
+	/**
+	 * Initializes this instance.
+	 * 
+	 * @param source        the source
+	 * @param copyVerticesY the copy vertices y
+	 * @param copyLighting  the copy lighting
+	 */
 	public Model(Model source, boolean copyVerticesY, boolean copyLighting) {
 		singleTile = false;
 		vertexCount = source.vertexCount;
@@ -558,8 +624,8 @@ public class Model extends Renderable {
 		texturedTriangleCount = source.texturedTriangleCount;
 		if (copyVerticesY) {
 			verticesY = new int[vertexCount];
-			for (int j = 0; j < vertexCount; j++)
-				verticesY[j] = source.verticesY[j];
+			for (int loopIndex = 0; loopIndex < vertexCount; loopIndex++)
+				verticesY[loopIndex] = source.verticesY[loopIndex];
 
 		} else {
 			verticesY = source.verticesY;
@@ -568,30 +634,30 @@ public class Model extends Renderable {
 			triangleShadeA = new int[triangleCount];
 			triangleShadeB = new int[triangleCount];
 			triangleShadeC = new int[triangleCount];
-			for (int k = 0; k < triangleCount; k++) {
-				triangleShadeA[k] = source.triangleShadeA[k];
-				triangleShadeB[k] = source.triangleShadeB[k];
-				triangleShadeC[k] = source.triangleShadeC[k];
+			for (int loopIndex2 = 0; loopIndex2 < triangleCount; loopIndex2++) {
+				triangleShadeA[loopIndex2] = source.triangleShadeA[loopIndex2];
+				triangleShadeB[loopIndex2] = source.triangleShadeB[loopIndex2];
+				triangleShadeC[loopIndex2] = source.triangleShadeC[loopIndex2];
 			}
 
 			triangleDrawType = new int[triangleCount];
 			if (source.triangleDrawType == null) {
-				for (int l = 0; l < triangleCount; l++)
-					triangleDrawType[l] = 0;
+				for (int loopIndex3 = 0; loopIndex3 < triangleCount; loopIndex3++)
+					triangleDrawType[loopIndex3] = 0;
 
 			} else {
-				for (int i1 = 0; i1 < triangleCount; i1++)
-					triangleDrawType[i1] = source.triangleDrawType[i1];
+				for (int loopIndex4 = 0; loopIndex4 < triangleCount; loopIndex4++)
+					triangleDrawType[loopIndex4] = source.triangleDrawType[loopIndex4];
 
 			}
 			super.vertexNormals = new VertexNormal[vertexCount];
-			for (int j1 = 0; j1 < vertexCount; j1++) {
-				VertexNormal class40 = super.vertexNormals[j1] = new VertexNormal();
-				VertexNormal class40_1 = ((Renderable) (source)).vertexNormals[j1];
-				class40.x = class40_1.x;
-				class40.y = class40_1.y;
-				class40.z = class40_1.z;
-				class40.magnitude = class40_1.magnitude;
+			for (int loopIndex5 = 0; loopIndex5 < vertexCount; loopIndex5++) {
+				VertexNormal vertexNormal = super.vertexNormals[loopIndex5] = new VertexNormal();
+				VertexNormal vertexNormal2 = ((Renderable) (source)).vertexNormals[loopIndex5];
+				vertexNormal.x = vertexNormal2.x;
+				vertexNormal.y = vertexNormal2.y;
+				vertexNormal.z = vertexNormal2.z;
+				vertexNormal.magnitude = vertexNormal2.magnitude;
 			}
 
 			vertexNormalOffsets = source.vertexNormalOffsets;
@@ -623,6 +689,12 @@ public class Model extends Renderable {
 		lightingState = source.lightingState;
 	}
 
+	/**
+	 * Performs replace with model.
+	 * 
+	 * @param source     the source
+	 * @param shareAlpha the share alpha
+	 */
 	public void replaceWithModel(Model source, boolean shareAlpha) {
 		vertexCount = source.vertexCount;
 		triangleCount = source.triangleCount;
@@ -635,10 +707,10 @@ public class Model extends Renderable {
 		verticesX = sharedVerticesX;
 		verticesY = sharedVerticesY;
 		verticesZ = sharedVerticesZ;
-		for (int j = 0; j < vertexCount; j++) {
-			verticesX[j] = source.verticesX[j];
-			verticesY[j] = source.verticesY[j];
-			verticesZ[j] = source.verticesZ[j];
+		for (int loopIndex = 0; loopIndex < vertexCount; loopIndex++) {
+			verticesX[loopIndex] = source.verticesX[loopIndex];
+			verticesY[loopIndex] = source.verticesY[loopIndex];
+			verticesZ[loopIndex] = source.verticesZ[loopIndex];
 		}
 
 		if (shareAlpha) {
@@ -648,12 +720,12 @@ public class Model extends Renderable {
 				sharedTriangleAlpha = new int[triangleCount + 100];
 			triangleAlpha = sharedTriangleAlpha;
 			if (source.triangleAlpha == null) {
-				for (int k = 0; k < triangleCount; k++)
-					triangleAlpha[k] = 0;
+				for (int loopIndex2 = 0; loopIndex2 < triangleCount; loopIndex2++)
+					triangleAlpha[loopIndex2] = 0;
 
 			} else {
-				for (int l = 0; l < triangleCount; l++)
-					triangleAlpha[l] = source.triangleAlpha[l];
+				for (int loopIndex3 = 0; loopIndex3 < triangleCount; loopIndex3++)
+					triangleAlpha[loopIndex3] = source.triangleAlpha[loopIndex3];
 
 			}
 		}
@@ -674,6 +746,13 @@ public class Model extends Renderable {
 		texturedTriangleC = source.texturedTriangleC;
 	}
 
+	/**
+	 * Returns first identical vertex id.
+	 * 
+	 * @return the resulting int
+	 * @param source      the source
+	 * @param vertexIndex the vertex index
+	 */
 	private int getFirstIdenticalVertexId(Model source, int vertexIndex) {
 		int sourceX = source.verticesX[vertexIndex];
 		int sourceY = source.verticesY[vertexIndex];
@@ -823,26 +902,39 @@ public class Model extends Renderable {
 		}
 	}
 
+	/**
+	 * Applies transformation.
+	 * 
+	 * @param frameId the frame id
+	 */
 	public void applyTransformation(int frameId) {
 		if (vertexGroups == null)
 			return;
 		if (frameId == -1)
 			return;
-		AnimationFrame class21 = AnimationFrame.get(frameId);
-		if (class21 == null)
+		AnimationFrame animationFrame = AnimationFrame.get(frameId);
+		if (animationFrame == null)
 			return;
-		Skeleton class41 = class21.skeleton;
+		Skeleton skeleton = animationFrame.skeleton;
 		transformPivotX = 0;
 		transformPivotY = 0;
 		transformPivotZ = 0;
-		for (int j = 0; j < class21.transformCount; j++) {
-			int k = class21.transformSkeletonLabels[j];
-			transformFrame(class41.transformTypes[k], class41.labels[k], class21.transformXs[j], class21.transformYs[j],
-					class21.transformZs[j]);
+		for (int loopIndex = 0; loopIndex < animationFrame.transformCount; loopIndex++) {
+			int intermediateValue = animationFrame.transformSkeletonLabels[loopIndex];
+			transformFrame(skeleton.transformTypes[intermediateValue], skeleton.labels[intermediateValue],
+					animationFrame.transformXs[loopIndex], animationFrame.transformYs[loopIndex],
+					animationFrame.transformZs[loopIndex]);
 		}
 
 	}
 
+	/**
+	 * Performs mix animation frames.
+	 * 
+	 * @param primaryFrameId   the primary frame id
+	 * @param secondaryFrameId the secondary frame id
+	 * @param interleaveOrder  the interleave order
+	 */
 	public void mixAnimationFrames(int primaryFrameId, int secondaryFrameId, int[] interleaveOrder) {
 		if (primaryFrameId == -1)
 			return;
@@ -850,71 +942,82 @@ public class Model extends Renderable {
 			applyTransformation(primaryFrameId);
 			return;
 		}
-		AnimationFrame class21 = AnimationFrame.get(primaryFrameId);
-		if (class21 == null)
+		AnimationFrame animationFrame = AnimationFrame.get(primaryFrameId);
+		if (animationFrame == null)
 			return;
-		AnimationFrame class21_1 = AnimationFrame.get(secondaryFrameId);
-		if (class21_1 == null) {
+		AnimationFrame animationFrame2 = AnimationFrame.get(secondaryFrameId);
+		if (animationFrame2 == null) {
 			applyTransformation(primaryFrameId);
 			return;
 		}
-		Skeleton class41 = class21.skeleton;
+		Skeleton skeleton = animationFrame.skeleton;
 		transformPivotX = 0;
 		transformPivotY = 0;
 		transformPivotZ = 0;
-		int l = 0;
-		int i1 = interleaveOrder[l++];
-		for (int j1 = 0; j1 < class21.transformCount; j1++) {
-			int k1;
-			for (k1 = class21.transformSkeletonLabels[j1]; k1 > i1; i1 = interleaveOrder[l++])
+		int intermediateValue = 0;
+		int intermediateValue2 = interleaveOrder[intermediateValue++];
+		for (int loopIndex = 0; loopIndex < animationFrame.transformCount; loopIndex++) {
+			int intermediateValue3;
+			for (intermediateValue3 = animationFrame.transformSkeletonLabels[loopIndex]; intermediateValue3 > intermediateValue2; intermediateValue2 = interleaveOrder[intermediateValue++])
 				;
-			if (k1 != i1 || class41.transformTypes[k1] == 0)
-				transformFrame(class41.transformTypes[k1], class41.labels[k1], class21.transformXs[j1],
-						class21.transformYs[j1], class21.transformZs[j1]);
+			if (intermediateValue3 != intermediateValue2 || skeleton.transformTypes[intermediateValue3] == 0)
+				transformFrame(skeleton.transformTypes[intermediateValue3], skeleton.labels[intermediateValue3],
+						animationFrame.transformXs[loopIndex], animationFrame.transformYs[loopIndex],
+						animationFrame.transformZs[loopIndex]);
 		}
 
 		transformPivotX = 0;
 		transformPivotY = 0;
 		transformPivotZ = 0;
-		l = 0;
-		i1 = interleaveOrder[l++];
-		for (int l1 = 0; l1 < class21_1.transformCount; l1++) {
-			int i2;
-			for (i2 = class21_1.transformSkeletonLabels[l1]; i2 > i1; i1 = interleaveOrder[l++])
+		intermediateValue = 0;
+		intermediateValue2 = interleaveOrder[intermediateValue++];
+		for (int loopIndex2 = 0; loopIndex2 < animationFrame2.transformCount; loopIndex2++) {
+			int intermediateValue4;
+			for (intermediateValue4 = animationFrame2.transformSkeletonLabels[loopIndex2]; intermediateValue4 > intermediateValue2; intermediateValue2 = interleaveOrder[intermediateValue++])
 				;
-			if (i2 == i1 || class41.transformTypes[i2] == 0)
-				transformFrame(class41.transformTypes[i2], class41.labels[i2], class21_1.transformXs[l1],
-						class21_1.transformYs[l1], class21_1.transformZs[l1]);
+			if (intermediateValue4 == intermediateValue2 || skeleton.transformTypes[intermediateValue4] == 0)
+				transformFrame(skeleton.transformTypes[intermediateValue4], skeleton.labels[intermediateValue4],
+						animationFrame2.transformXs[loopIndex2], animationFrame2.transformYs[loopIndex2],
+						animationFrame2.transformZs[loopIndex2]);
 		}
 
 	}
 
+	/**
+	 * Performs transform frame.
+	 * 
+	 * @param transformType the transform type
+	 * @param groups        the groups
+	 * @param x             the x
+	 * @param y             the y
+	 * @param z             the z
+	 */
 	private void transformFrame(int transformType, int[] groups, int x, int y, int z) {
-		int i1 = groups.length;
+		int intermediateValue = groups.length;
 		if (transformType == 0) {
-			int j1 = 0;
+			int intermediateValue2 = 0;
 			transformPivotX = 0;
 			transformPivotY = 0;
 			transformPivotZ = 0;
-			for (int k2 = 0; k2 < i1; k2++) {
-				int l3 = groups[k2];
-				if (l3 < vertexGroups.length) {
-					int ai5[] = vertexGroups[l3];
-					for (int i5 = 0; i5 < ai5.length; i5++) {
-						int j6 = ai5[i5];
-						transformPivotX += verticesX[j6];
-						transformPivotY += verticesY[j6];
-						transformPivotZ += verticesZ[j6];
-						j1++;
+			for (int loopIndex = 0; loopIndex < intermediateValue; loopIndex++) {
+				int intermediateValue3 = groups[loopIndex];
+				if (intermediateValue3 < vertexGroups.length) {
+					int values[] = vertexGroups[intermediateValue3];
+					for (int loopIndex2 = 0; loopIndex2 < values.length; loopIndex2++) {
+						int intermediateValue4 = values[loopIndex2];
+						transformPivotX += verticesX[intermediateValue4];
+						transformPivotY += verticesY[intermediateValue4];
+						transformPivotZ += verticesZ[intermediateValue4];
+						intermediateValue2++;
 					}
 
 				}
 			}
 
-			if (j1 > 0) {
-				transformPivotX = transformPivotX / j1 + x;
-				transformPivotY = transformPivotY / j1 + y;
-				transformPivotZ = transformPivotZ / j1 + z;
+			if (intermediateValue2 > 0) {
+				transformPivotX = transformPivotX / intermediateValue2 + x;
+				transformPivotY = transformPivotY / intermediateValue2 + y;
+				transformPivotZ = transformPivotZ / intermediateValue2 + z;
 				return;
 			} else {
 				transformPivotX = x;
@@ -924,15 +1027,15 @@ public class Model extends Renderable {
 			}
 		}
 		if (transformType == 1) {
-			for (int k1 = 0; k1 < i1; k1++) {
-				int l2 = groups[k1];
-				if (l2 < vertexGroups.length) {
-					int ai1[] = vertexGroups[l2];
-					for (int i4 = 0; i4 < ai1.length; i4++) {
-						int j5 = ai1[i4];
-						verticesX[j5] += x;
-						verticesY[j5] += y;
-						verticesZ[j5] += z;
+			for (int loopIndex3 = 0; loopIndex3 < intermediateValue; loopIndex3++) {
+				int intermediateValue5 = groups[loopIndex3];
+				if (intermediateValue5 < vertexGroups.length) {
+					int values2[] = vertexGroups[intermediateValue5];
+					for (int loopIndex4 = 0; loopIndex4 < values2.length; loopIndex4++) {
+						int intermediateValue6 = values2[loopIndex4];
+						verticesX[intermediateValue6] += x;
+						verticesY[intermediateValue6] += y;
+						verticesZ[intermediateValue6] += z;
 					}
 
 				}
@@ -941,42 +1044,48 @@ public class Model extends Renderable {
 			return;
 		}
 		if (transformType == 2) {
-			for (int l1 = 0; l1 < i1; l1++) {
-				int i3 = groups[l1];
-				if (i3 < vertexGroups.length) {
-					int ai2[] = vertexGroups[i3];
-					for (int j4 = 0; j4 < ai2.length; j4++) {
-						int k5 = ai2[j4];
-						verticesX[k5] -= transformPivotX;
-						verticesY[k5] -= transformPivotY;
-						verticesZ[k5] -= transformPivotZ;
-						int k6 = (x & 0xff) * 8;
-						int l6 = (y & 0xff) * 8;
-						int i7 = (z & 0xff) * 8;
-						if (i7 != 0) {
-							int j7 = SINE[i7];
-							int i8 = COSINE[i7];
-							int l8 = verticesY[k5] * j7 + verticesX[k5] * i8 >> 16;
-							verticesY[k5] = verticesY[k5] * i8 - verticesX[k5] * j7 >> 16;
-							verticesX[k5] = l8;
+			for (int loopIndex5 = 0; loopIndex5 < intermediateValue; loopIndex5++) {
+				int intermediateValue7 = groups[loopIndex5];
+				if (intermediateValue7 < vertexGroups.length) {
+					int values3[] = vertexGroups[intermediateValue7];
+					for (int loopIndex6 = 0; loopIndex6 < values3.length; loopIndex6++) {
+						int intermediateValue8 = values3[loopIndex6];
+						verticesX[intermediateValue8] -= transformPivotX;
+						verticesY[intermediateValue8] -= transformPivotY;
+						verticesZ[intermediateValue8] -= transformPivotZ;
+						int intermediateValue9 = (x & 0xff) * 8;
+						int intermediateValue10 = (y & 0xff) * 8;
+						int intermediateValue11 = (z & 0xff) * 8;
+						if (intermediateValue11 != 0) {
+							int intermediateValue12 = SINE[intermediateValue11];
+							int intermediateValue13 = COSINE[intermediateValue11];
+							int intermediateValue14 = verticesY[intermediateValue8] * intermediateValue12
+									+ verticesX[intermediateValue8] * intermediateValue13 >> 16;
+							verticesY[intermediateValue8] = verticesY[intermediateValue8] * intermediateValue13
+									- verticesX[intermediateValue8] * intermediateValue12 >> 16;
+							verticesX[intermediateValue8] = intermediateValue14;
 						}
-						if (k6 != 0) {
-							int k7 = SINE[k6];
-							int j8 = COSINE[k6];
-							int i9 = verticesY[k5] * j8 - verticesZ[k5] * k7 >> 16;
-							verticesZ[k5] = verticesY[k5] * k7 + verticesZ[k5] * j8 >> 16;
-							verticesY[k5] = i9;
+						if (intermediateValue9 != 0) {
+							int intermediateValue15 = SINE[intermediateValue9];
+							int intermediateValue16 = COSINE[intermediateValue9];
+							int intermediateValue17 = verticesY[intermediateValue8] * intermediateValue16
+									- verticesZ[intermediateValue8] * intermediateValue15 >> 16;
+							verticesZ[intermediateValue8] = verticesY[intermediateValue8] * intermediateValue15
+									+ verticesZ[intermediateValue8] * intermediateValue16 >> 16;
+							verticesY[intermediateValue8] = intermediateValue17;
 						}
-						if (l6 != 0) {
-							int l7 = SINE[l6];
-							int k8 = COSINE[l6];
-							int j9 = verticesZ[k5] * l7 + verticesX[k5] * k8 >> 16;
-							verticesZ[k5] = verticesZ[k5] * k8 - verticesX[k5] * l7 >> 16;
-							verticesX[k5] = j9;
+						if (intermediateValue10 != 0) {
+							int intermediateValue18 = SINE[intermediateValue10];
+							int intermediateValue19 = COSINE[intermediateValue10];
+							int intermediateValue20 = verticesZ[intermediateValue8] * intermediateValue18
+									+ verticesX[intermediateValue8] * intermediateValue19 >> 16;
+							verticesZ[intermediateValue8] = verticesZ[intermediateValue8] * intermediateValue19
+									- verticesX[intermediateValue8] * intermediateValue18 >> 16;
+							verticesX[intermediateValue8] = intermediateValue20;
 						}
-						verticesX[k5] += transformPivotX;
-						verticesY[k5] += transformPivotY;
-						verticesZ[k5] += transformPivotZ;
+						verticesX[intermediateValue8] += transformPivotX;
+						verticesY[intermediateValue8] += transformPivotY;
+						verticesZ[intermediateValue8] += transformPivotZ;
 					}
 
 				}
@@ -985,21 +1094,21 @@ public class Model extends Renderable {
 			return;
 		}
 		if (transformType == 3) {
-			for (int i2 = 0; i2 < i1; i2++) {
-				int j3 = groups[i2];
-				if (j3 < vertexGroups.length) {
-					int ai3[] = vertexGroups[j3];
-					for (int k4 = 0; k4 < ai3.length; k4++) {
-						int l5 = ai3[k4];
-						verticesX[l5] -= transformPivotX;
-						verticesY[l5] -= transformPivotY;
-						verticesZ[l5] -= transformPivotZ;
-						verticesX[l5] = (verticesX[l5] * x) / 128;
-						verticesY[l5] = (verticesY[l5] * y) / 128;
-						verticesZ[l5] = (verticesZ[l5] * z) / 128;
-						verticesX[l5] += transformPivotX;
-						verticesY[l5] += transformPivotY;
-						verticesZ[l5] += transformPivotZ;
+			for (int loopIndex7 = 0; loopIndex7 < intermediateValue; loopIndex7++) {
+				int intermediateValue21 = groups[loopIndex7];
+				if (intermediateValue21 < vertexGroups.length) {
+					int values4[] = vertexGroups[intermediateValue21];
+					for (int loopIndex8 = 0; loopIndex8 < values4.length; loopIndex8++) {
+						int intermediateValue22 = values4[loopIndex8];
+						verticesX[intermediateValue22] -= transformPivotX;
+						verticesY[intermediateValue22] -= transformPivotY;
+						verticesZ[intermediateValue22] -= transformPivotZ;
+						verticesX[intermediateValue22] = (verticesX[intermediateValue22] * x) / 128;
+						verticesY[intermediateValue22] = (verticesY[intermediateValue22] * y) / 128;
+						verticesZ[intermediateValue22] = (verticesZ[intermediateValue22] * z) / 128;
+						verticesX[intermediateValue22] += transformPivotX;
+						verticesY[intermediateValue22] += transformPivotY;
+						verticesZ[intermediateValue22] += transformPivotZ;
 					}
 
 				}
@@ -1008,17 +1117,17 @@ public class Model extends Renderable {
 			return;
 		}
 		if (transformType == 5 && triangleGroups != null && triangleAlpha != null) {
-			for (int j2 = 0; j2 < i1; j2++) {
-				int k3 = groups[j2];
-				if (k3 < triangleGroups.length) {
-					int ai4[] = triangleGroups[k3];
-					for (int l4 = 0; l4 < ai4.length; l4++) {
-						int i6 = ai4[l4];
-						triangleAlpha[i6] += x * 8;
-						if (triangleAlpha[i6] < 0)
-							triangleAlpha[i6] = 0;
-						if (triangleAlpha[i6] > 255)
-							triangleAlpha[i6] = 255;
+			for (int loopIndex9 = 0; loopIndex9 < intermediateValue; loopIndex9++) {
+				int intermediateValue23 = groups[loopIndex9];
+				if (intermediateValue23 < triangleGroups.length) {
+					int values5[] = triangleGroups[intermediateValue23];
+					for (int loopIndex10 = 0; loopIndex10 < values5.length; loopIndex10++) {
+						int intermediateValue24 = values5[loopIndex10];
+						triangleAlpha[intermediateValue24] += x * 8;
+						if (triangleAlpha[intermediateValue24] < 0)
+							triangleAlpha[intermediateValue24] = 0;
+						if (triangleAlpha[intermediateValue24] > 255)
+							triangleAlpha[intermediateValue24] = 255;
 					}
 
 				}
@@ -1027,64 +1136,104 @@ public class Model extends Renderable {
 		}
 	}
 
+	/**
+	 * Performs rotate y90 ccw.
+	 */
 	public void rotateY90Ccw() {
-		for (int i = 0; i < vertexCount; i++) {
-			int j = verticesX[i];
-			verticesX[i] = verticesZ[i];
-			verticesZ[i] = -j;
+		for (int loopIndex = 0; loopIndex < vertexCount; loopIndex++) {
+			int intermediateValue = verticesX[loopIndex];
+			verticesX[loopIndex] = verticesZ[loopIndex];
+			verticesZ[loopIndex] = -intermediateValue;
 		}
 
 	}
 
+	/**
+	 * Performs rotate x.
+	 * 
+	 * @param angle the angle
+	 */
 	public void rotateX(int angle) {
-		int k = SINE[angle];
-		int l = COSINE[angle];
-		for (int i1 = 0; i1 < vertexCount; i1++) {
-			int j1 = verticesY[i1] * l - verticesZ[i1] * k >> 16;
-			verticesZ[i1] = verticesY[i1] * k + verticesZ[i1] * l >> 16;
-			verticesY[i1] = j1;
+		int intermediateValue = SINE[angle];
+		int intermediateValue2 = COSINE[angle];
+		for (int loopIndex = 0; loopIndex < vertexCount; loopIndex++) {
+			int intermediateValue3 = verticesY[loopIndex] * intermediateValue2
+					- verticesZ[loopIndex] * intermediateValue >> 16;
+			verticesZ[loopIndex] = verticesY[loopIndex] * intermediateValue
+					+ verticesZ[loopIndex] * intermediateValue2 >> 16;
+			verticesY[loopIndex] = intermediateValue3;
 		}
 	}
 
+	/**
+	 * Performs translate.
+	 * 
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 */
 	public void translate(int x, int y, int z) {
-		for (int l = 0; l < vertexCount; l++) {
-			verticesX[l] += x;
-			verticesY[l] += y;
-			verticesZ[l] += z;
+		for (int loopIndex = 0; loopIndex < vertexCount; loopIndex++) {
+			verticesX[loopIndex] += x;
+			verticesY[loopIndex] += y;
+			verticesZ[loopIndex] += z;
 		}
 
 	}
 
+	/**
+	 * Performs recolor.
+	 * 
+	 * @param fromColor the from color
+	 * @param toColor   the to color
+	 */
 	public void recolor(int fromColor, int toColor) {
-		for (int k = 0; k < triangleCount; k++)
-			if (triangleColors[k] == fromColor)
-				triangleColors[k] = toColor;
+		for (int loopIndex = 0; loopIndex < triangleCount; loopIndex++)
+			if (triangleColors[loopIndex] == fromColor)
+				triangleColors[loopIndex] = toColor;
 
 	}
 
+	/**
+	 * Performs mirror.
+	 */
 	public void mirror() {
-		for (int k = 0; k < vertexCount; k++)
-			verticesZ[k] = -verticesZ[k];
+		for (int loopIndex = 0; loopIndex < vertexCount; loopIndex++)
+			verticesZ[loopIndex] = -verticesZ[loopIndex];
 
-		for (int l = 0; l < triangleCount; l++) {
-			int i1 = triangleVertexA[l];
-			triangleVertexA[l] = triangleVertexC[l];
-			triangleVertexC[l] = i1;
+		for (int loopIndex2 = 0; loopIndex2 < triangleCount; loopIndex2++) {
+			int intermediateValue = triangleVertexA[loopIndex2];
+			triangleVertexA[loopIndex2] = triangleVertexC[loopIndex2];
+			triangleVertexC[loopIndex2] = intermediateValue;
 		}
 
 	}
 
+	/**
+	 * Performs scale.
+	 * 
+	 * @param xScale the x scale
+	 * @param yScale the y scale
+	 * @param zScale the z scale
+	 */
 	public void scale(int xScale, int yScale, int zScale) {
-		for (int i1 = 0; i1 < vertexCount; i1++) {
-			verticesX[i1] = (verticesX[i1] * xScale) / 128;
-			verticesY[i1] = (verticesY[i1] * yScale) / 128;
-			verticesZ[i1] = (verticesZ[i1] * zScale) / 128;
+		for (int loopIndex = 0; loopIndex < vertexCount; loopIndex++) {
+			verticesX[loopIndex] = (verticesX[loopIndex] * xScale) / 128;
+			verticesY[loopIndex] = (verticesY[loopIndex] * yScale) / 128;
+			verticesZ[loopIndex] = (verticesZ[loopIndex] * zScale) / 128;
 		}
 	}
 
 	/**
 	 * Accumulates face normals and either shades immediately or retains normals for
 	 * scene merging.
+	 * 
+	 * @param ambient          the ambient
+	 * @param contrast         the contrast
+	 * @param lightX           the light x
+	 * @param lightY           the light y
+	 * @param lightZ           the light z
+	 * @param shadeImmediately the shade immediately
 	 */
 	public void light(int ambient, int contrast, int lightX, int lightY, int lightZ, boolean shadeImmediately) {
 		int lightMagnitude = (int) Math.sqrt(lightX * lightX + lightY * lightY + lightZ * lightZ);
@@ -1100,15 +1249,15 @@ public class Model extends Renderable {
 				super.vertexNormals[vertex] = new VertexNormal();
 		}
 		for (int triangle = 0; triangle < triangleCount; triangle++) {
-			int a = triangleVertexA[triangle];
-			int b = triangleVertexB[triangle];
-			int c = triangleVertexC[triangle];
-			int abX = verticesX[b] - verticesX[a];
-			int abY = verticesY[b] - verticesY[a];
-			int abZ = verticesZ[b] - verticesZ[a];
-			int acX = verticesX[c] - verticesX[a];
-			int acY = verticesY[c] - verticesY[a];
-			int acZ = verticesZ[c] - verticesZ[a];
+			int vertexA = triangleVertexA[triangle];
+			int vertexB = triangleVertexB[triangle];
+			int vertexC = triangleVertexC[triangle];
+			int abX = verticesX[vertexB] - verticesX[vertexA];
+			int abY = verticesY[vertexB] - verticesY[vertexA];
+			int abZ = verticesZ[vertexB] - verticesZ[vertexA];
+			int acX = verticesX[vertexC] - verticesX[vertexA];
+			int acY = verticesY[vertexC] - verticesY[vertexA];
+			int acZ = verticesZ[vertexC] - verticesZ[vertexA];
 			int normalX = abY * acZ - acY * abZ;
 			int normalY = abZ * acX - acZ * abX;
 			int normalZ;
@@ -1124,17 +1273,17 @@ public class Model extends Renderable {
 			normalY = normalY * 256 / normalLength;
 			normalZ = normalZ * 256 / normalLength;
 			if (triangleDrawType == null || (triangleDrawType[triangle] & 1) == 0) {
-				VertexNormal normal = super.vertexNormals[a];
+				VertexNormal normal = super.vertexNormals[vertexA];
 				normal.x += normalX;
 				normal.y += normalY;
 				normal.z += normalZ;
 				normal.magnitude++;
-				normal = super.vertexNormals[b];
+				normal = super.vertexNormals[vertexB];
 				normal.x += normalX;
 				normal.y += normalY;
 				normal.z += normalZ;
 				normal.magnitude++;
-				normal = super.vertexNormals[c];
+				normal = super.vertexNormals[vertexC];
 				normal.x += normalX;
 				normal.y += normalY;
 				normal.z += normalZ;
@@ -1166,7 +1315,13 @@ public class Model extends Renderable {
 			calculateDiagonalsAndBounds();
 	}
 
-	/** Applies the stored ambient/contrast after scene normal merging. */
+	/**
+	 * Applies the stored ambient/contrast after scene normal merging.
+	 * 
+	 * @param lightX the light x
+	 * @param lightY the light y
+	 * @param lightZ the light z
+	 */
 	public void applyDeferredLighting(int lightX, int lightY, int lightZ) {
 		int ambient = lightingState >> 16;
 		int contrast = (lightingState << 16) >> 16;
@@ -1175,38 +1330,44 @@ public class Model extends Renderable {
 
 	/**
 	 * Finalizes Gouraud/flat face lightness values from the current vertex normals.
+	 * 
+	 * @param ambient  the ambient
+	 * @param contrast the contrast
+	 * @param lightX   the light x
+	 * @param lightY   the light y
+	 * @param lightZ   the light z
 	 */
 	public void handleShading(int ambient, int contrast, int lightX, int lightY, int lightZ) {
 		for (int triangle = 0; triangle < triangleCount; triangle++) {
-			int a = triangleVertexA[triangle];
-			int b = triangleVertexB[triangle];
-			int c = triangleVertexC[triangle];
+			int vertexA = triangleVertexA[triangle];
+			int vertexB = triangleVertexB[triangle];
+			int vertexC = triangleVertexC[triangle];
 			if (triangleDrawType == null) {
 				int color = triangleColors[triangle];
-				VertexNormal normal = super.vertexNormals[a];
+				VertexNormal normal = super.vertexNormals[vertexA];
 				int lightness = ambient
 						+ (lightX * normal.x + lightY * normal.y + lightZ * normal.z) / (contrast * normal.magnitude);
 				triangleShadeA[triangle] = adjustLightness(color, lightness, 0);
-				normal = super.vertexNormals[b];
+				normal = super.vertexNormals[vertexB];
 				lightness = ambient
 						+ (lightX * normal.x + lightY * normal.y + lightZ * normal.z) / (contrast * normal.magnitude);
 				triangleShadeB[triangle] = adjustLightness(color, lightness, 0);
-				normal = super.vertexNormals[c];
+				normal = super.vertexNormals[vertexC];
 				lightness = ambient
 						+ (lightX * normal.x + lightY * normal.y + lightZ * normal.z) / (contrast * normal.magnitude);
 				triangleShadeC[triangle] = adjustLightness(color, lightness, 0);
 			} else if ((triangleDrawType[triangle] & 1) == 0) {
 				int color = triangleColors[triangle];
 				int drawType = triangleDrawType[triangle];
-				VertexNormal normal = super.vertexNormals[a];
+				VertexNormal normal = super.vertexNormals[vertexA];
 				int lightness = ambient
 						+ (lightX * normal.x + lightY * normal.y + lightZ * normal.z) / (contrast * normal.magnitude);
 				triangleShadeA[triangle] = adjustLightness(color, lightness, drawType);
-				normal = super.vertexNormals[b];
+				normal = super.vertexNormals[vertexB];
 				lightness = ambient
 						+ (lightX * normal.x + lightY * normal.y + lightZ * normal.z) / (contrast * normal.magnitude);
 				triangleShadeB[triangle] = adjustLightness(color, lightness, drawType);
-				normal = super.vertexNormals[c];
+				normal = super.vertexNormals[vertexC];
 				lightness = ambient
 						+ (lightX * normal.x + lightY * normal.y + lightZ * normal.z) / (contrast * normal.magnitude);
 				triangleShadeC[triangle] = adjustLightness(color, lightness, drawType);
@@ -1224,6 +1385,14 @@ public class Model extends Renderable {
 		triangleColors = null;
 	}
 
+	/**
+	 * Performs adjust lightness.
+	 * 
+	 * @return the resulting int
+	 * @param color     the color
+	 * @param lightness the lightness
+	 * @param drawType  the draw type
+	 */
 	private static int adjustLightness(int color, int lightness, int drawType) {
 		if ((drawType & 2) == 2) {
 			if (lightness < 0)
@@ -1241,51 +1410,70 @@ public class Model extends Renderable {
 		return (color & 0xff80) + lightness;
 	}
 
+	/**
+	 * Renders simple.
+	 * 
+	 * @param rotationX    the rotation x
+	 * @param rotationY    the rotation y
+	 * @param rotationZ    the rotation z
+	 * @param cameraPitch  the camera pitch
+	 * @param translationX the translation x
+	 * @param translationY the translation y
+	 * @param translationZ the translation z
+	 */
 	public void renderSimple(int rotationX, int rotationY, int rotationZ, int cameraPitch, int translationX,
 			int translationY, int translationZ) {
-		int l1 = Rasterizer3D.centerX;
-		int i2 = Rasterizer3D.centerY;
-		int j2 = SINE[rotationX];
-		int k2 = COSINE[rotationX];
-		int l2 = SINE[rotationY];
-		int i3 = COSINE[rotationY];
-		int j3 = SINE[rotationZ];
-		int k3 = COSINE[rotationZ];
-		int l3 = SINE[cameraPitch];
-		int i4 = COSINE[cameraPitch];
-		int j4 = translationY * l3 + translationZ * i4 >> 16;
-		for (int k4 = 0; k4 < vertexCount; k4++) {
-			int l4 = verticesX[k4];
-			int i5 = verticesY[k4];
-			int j5 = verticesZ[k4];
+		int intermediateValue = Rasterizer3D.centerX;
+		int intermediateValue2 = Rasterizer3D.centerY;
+		int intermediateValue3 = SINE[rotationX];
+		int intermediateValue4 = COSINE[rotationX];
+		int intermediateValue5 = SINE[rotationY];
+		int intermediateValue6 = COSINE[rotationY];
+		int intermediateValue7 = SINE[rotationZ];
+		int intermediateValue8 = COSINE[rotationZ];
+		int intermediateValue9 = SINE[cameraPitch];
+		int intermediateValue10 = COSINE[cameraPitch];
+		int intermediateValue11 = translationY * intermediateValue9 + translationZ * intermediateValue10 >> 16;
+		for (int loopIndex = 0; loopIndex < vertexCount; loopIndex++) {
+			int intermediateValue12 = verticesX[loopIndex];
+			int intermediateValue13 = verticesY[loopIndex];
+			int intermediateValue14 = verticesZ[loopIndex];
 			if (rotationZ != 0) {
-				int k5 = i5 * j3 + l4 * k3 >> 16;
-				i5 = i5 * k3 - l4 * j3 >> 16;
-				l4 = k5;
+				int intermediateValue15 = intermediateValue13 * intermediateValue7
+						+ intermediateValue12 * intermediateValue8 >> 16;
+				intermediateValue13 = intermediateValue13 * intermediateValue8
+						- intermediateValue12 * intermediateValue7 >> 16;
+				intermediateValue12 = intermediateValue15;
 			}
 			if (rotationX != 0) {
-				int l5 = i5 * k2 - j5 * j2 >> 16;
-				j5 = i5 * j2 + j5 * k2 >> 16;
-				i5 = l5;
+				int intermediateValue16 = intermediateValue13 * intermediateValue4
+						- intermediateValue14 * intermediateValue3 >> 16;
+				intermediateValue14 = intermediateValue13 * intermediateValue3
+						+ intermediateValue14 * intermediateValue4 >> 16;
+				intermediateValue13 = intermediateValue16;
 			}
 			if (rotationY != 0) {
-				int i6 = j5 * l2 + l4 * i3 >> 16;
-				j5 = j5 * i3 - l4 * l2 >> 16;
-				l4 = i6;
+				int intermediateValue17 = intermediateValue14 * intermediateValue5
+						+ intermediateValue12 * intermediateValue6 >> 16;
+				intermediateValue14 = intermediateValue14 * intermediateValue6
+						- intermediateValue12 * intermediateValue5 >> 16;
+				intermediateValue12 = intermediateValue17;
 			}
-			l4 += translationX;
-			i5 += translationY;
-			j5 += translationZ;
-			int j6 = i5 * i4 - j5 * l3 >> 16;
-			j5 = i5 * l3 + j5 * i4 >> 16;
-			i5 = j6;
-			projectedDepth[k4] = j5 - j4;
-			projectedX[k4] = l1 + (l4 << 9) / j5;
-			projectedY[k4] = i2 + (i5 << 9) / j5;
+			intermediateValue12 += translationX;
+			intermediateValue13 += translationY;
+			intermediateValue14 += translationZ;
+			int intermediateValue18 = intermediateValue13 * intermediateValue10
+					- intermediateValue14 * intermediateValue9 >> 16;
+			intermediateValue14 = intermediateValue13 * intermediateValue9
+					+ intermediateValue14 * intermediateValue10 >> 16;
+			intermediateValue13 = intermediateValue18;
+			projectedDepth[loopIndex] = intermediateValue14 - intermediateValue11;
+			projectedX[loopIndex] = intermediateValue + (intermediateValue12 << 9) / intermediateValue14;
+			projectedY[loopIndex] = intermediateValue2 + (intermediateValue13 << 9) / intermediateValue14;
 			if (texturedTriangleCount > 0) {
-				cameraX[k4] = l4;
-				cameraY[k4] = i5;
-				cameraZ[k4] = j5;
+				cameraX[loopIndex] = intermediateValue12;
+				cameraY[loopIndex] = intermediateValue13;
+				cameraZ[loopIndex] = intermediateValue14;
 			}
 		}
 
@@ -1297,525 +1485,733 @@ public class Model extends Renderable {
 		}
 	}
 
+	/**
+	 * Draws value.
+	 * 
+	 * @param orientation the orientation
+	 * @param pitchSine   the pitch sine
+	 * @param pitchCosine the pitch cosine
+	 * @param yawSine     the yaw sine
+	 * @param yawCosine   the yaw cosine
+	 * @param x           the x
+	 * @param y           the y
+	 * @param z           the z
+	 * @param uid         the uid
+	 */
 	@Override
 	public void draw(int orientation, int pitchSine, int pitchCosine, int yawSine, int yawCosine, int x, int y, int z,
 			int uid) {
 		drawInternal(orientation, pitchSine, pitchCosine, yawSine, yawCosine, x, y, z, uid);
 	}
 
-	private void drawInternal(int i, int j, int k, int l, int i1, int j1, int k1, int l1, int i2) {
-		int j2 = l1 * i1 - j1 * l >> 16;
-		int k2 = k1 * j + j2 * k >> 16;
-		int l2 = horizontalRadius * k >> 16;
-		int i3 = k2 + l2;
-		if (i3 <= 50 || k2 >= 3500)
+	/**
+	 * Draws internal.
+	 * 
+	 * @param inputValue  the input value
+	 * @param inputValue2 the input value2
+	 * @param inputValue3 the input value3
+	 * @param inputValue4 the input value4
+	 * @param inputValue5 the input value5
+	 * @param inputValue6 the input value6
+	 * @param inputValue7 the input value7
+	 * @param inputValue8 the input value8
+	 * @param inputValue9 the input value9
+	 */
+	private void drawInternal(int inputValue, int inputValue2, int inputValue3, int inputValue4, int inputValue5,
+			int inputValue6, int inputValue7, int inputValue8, int inputValue9) {
+		int intermediateValue = inputValue8 * inputValue5 - inputValue6 * inputValue4 >> 16;
+		int intermediateValue2 = inputValue7 * inputValue2 + intermediateValue * inputValue3 >> 16;
+		int intermediateValue3 = horizontalRadius * inputValue3 >> 16;
+		int intermediateValue4 = intermediateValue2 + intermediateValue3;
+		if (intermediateValue4 <= 50 || intermediateValue2 >= 3500)
 			return;
-		int j3 = l1 * l + j1 * i1 >> 16;
-		int k3 = j3 - horizontalRadius << 9;
-		if (k3 / i3 >= Rasterizer.centerX)
+		int intermediateValue5 = inputValue8 * inputValue4 + inputValue6 * inputValue5 >> 16;
+		int intermediateValue6 = intermediateValue5 - horizontalRadius << 9;
+		if (intermediateValue6 / intermediateValue4 >= Rasterizer.centerX)
 			return;
-		int l3 = j3 + horizontalRadius << 9;
-		if (l3 / i3 <= -Rasterizer.centerX)
+		int intermediateValue7 = intermediateValue5 + horizontalRadius << 9;
+		if (intermediateValue7 / intermediateValue4 <= -Rasterizer.centerX)
 			return;
-		int i4 = k1 * k - j2 * j >> 16;
-		int j4 = horizontalRadius * j >> 16;
-		int k4 = i4 + j4 << 9;
-		if (k4 / i3 <= -Rasterizer.centerY)
+		int intermediateValue8 = inputValue7 * inputValue3 - intermediateValue * inputValue2 >> 16;
+		int intermediateValue9 = horizontalRadius * inputValue2 >> 16;
+		int intermediateValue10 = intermediateValue8 + intermediateValue9 << 9;
+		if (intermediateValue10 / intermediateValue4 <= -Rasterizer.centerY)
 			return;
-		int l4 = j4 + (super.modelHeight * k >> 16);
-		int i5 = i4 - l4 << 9;
-		if (i5 / i3 >= Rasterizer.centerY)
+		int intermediateValue11 = intermediateValue9 + (super.modelHeight * inputValue3 >> 16);
+		int intermediateValue12 = intermediateValue8 - intermediateValue11 << 9;
+		if (intermediateValue12 / intermediateValue4 >= Rasterizer.centerY)
 			return;
-		int j5 = l2 + (super.modelHeight * j >> 16);
-		boolean flag = false;
-		if (k2 - j5 <= 50)
-			flag = true;
-		boolean flag1 = false;
-		if (i2 > 0 && pickingEnabled) {
-			int k5 = k2 - l2;
-			if (k5 <= 50)
-				k5 = 50;
-			if (j3 > 0) {
-				k3 /= i3;
-				l3 /= k5;
+		int intermediateValue13 = intermediateValue3 + (super.modelHeight * inputValue2 >> 16);
+		boolean conditionFlag = false;
+		if (intermediateValue2 - intermediateValue13 <= 50)
+			conditionFlag = true;
+		boolean conditionFlag2 = false;
+		if (inputValue9 > 0 && pickingEnabled) {
+			int intermediateValue14 = intermediateValue2 - intermediateValue3;
+			if (intermediateValue14 <= 50)
+				intermediateValue14 = 50;
+			if (intermediateValue5 > 0) {
+				intermediateValue6 /= intermediateValue4;
+				intermediateValue7 /= intermediateValue14;
 			} else {
-				l3 /= i3;
-				k3 /= k5;
+				intermediateValue7 /= intermediateValue4;
+				intermediateValue6 /= intermediateValue14;
 			}
-			if (i4 > 0) {
-				i5 /= i3;
-				k4 /= k5;
+			if (intermediateValue8 > 0) {
+				intermediateValue12 /= intermediateValue4;
+				intermediateValue10 /= intermediateValue14;
 			} else {
-				k4 /= i3;
-				i5 /= k5;
+				intermediateValue10 /= intermediateValue4;
+				intermediateValue12 /= intermediateValue14;
 			}
-			int i6 = mouseX - Rasterizer3D.centerX;
-			int k6 = mouseY - Rasterizer3D.centerY;
-			if (i6 > k3 && i6 < l3 && k6 > i5 && k6 < k4)
+			int intermediateValue15 = mouseX - Rasterizer3D.centerX;
+			int intermediateValue16 = mouseY - Rasterizer3D.centerY;
+			if (intermediateValue15 > intermediateValue6 && intermediateValue15 < intermediateValue7
+					&& intermediateValue16 > intermediateValue12 && intermediateValue16 < intermediateValue10)
 				if (singleTile)
-					pickedUids[pickedCount++] = i2;
+					pickedUids[pickedCount++] = inputValue9;
 				else
-					flag1 = true;
+					conditionFlag2 = true;
 		}
-		int l5 = Rasterizer3D.centerX;
-		int j6 = Rasterizer3D.centerY;
-		int l6 = 0;
-		int i7 = 0;
-		if (i != 0) {
-			l6 = SINE[i];
-			i7 = COSINE[i];
+		int intermediateValue17 = Rasterizer3D.centerX;
+		int intermediateValue18 = Rasterizer3D.centerY;
+		int intermediateValue19 = 0;
+		int intermediateValue20 = 0;
+		if (inputValue != 0) {
+			intermediateValue19 = SINE[inputValue];
+			intermediateValue20 = COSINE[inputValue];
 		}
-		for (int j7 = 0; j7 < vertexCount; j7++) {
-			int k7 = verticesX[j7];
-			int l7 = verticesY[j7];
-			int i8 = verticesZ[j7];
-			if (i != 0) {
-				int j8 = i8 * l6 + k7 * i7 >> 16;
-				i8 = i8 * i7 - k7 * l6 >> 16;
-				k7 = j8;
+		for (int loopIndex = 0; loopIndex < vertexCount; loopIndex++) {
+			int intermediateValue21 = verticesX[loopIndex];
+			int intermediateValue22 = verticesY[loopIndex];
+			int intermediateValue23 = verticesZ[loopIndex];
+			if (inputValue != 0) {
+				int intermediateValue24 = intermediateValue23 * intermediateValue19
+						+ intermediateValue21 * intermediateValue20 >> 16;
+				intermediateValue23 = intermediateValue23 * intermediateValue20
+						- intermediateValue21 * intermediateValue19 >> 16;
+				intermediateValue21 = intermediateValue24;
 			}
-			k7 += j1;
-			l7 += k1;
-			i8 += l1;
-			int k8 = i8 * l + k7 * i1 >> 16;
-			i8 = i8 * i1 - k7 * l >> 16;
-			k7 = k8;
-			k8 = l7 * k - i8 * j >> 16;
-			i8 = l7 * j + i8 * k >> 16;
-			l7 = k8;
-			projectedDepth[j7] = i8 - k2;
-			if (i8 >= 50) {
-				projectedX[j7] = l5 + (k7 << 9) / i8;
-				projectedY[j7] = j6 + (l7 << 9) / i8;
+			intermediateValue21 += inputValue6;
+			intermediateValue22 += inputValue7;
+			intermediateValue23 += inputValue8;
+			int intermediateValue25 = intermediateValue23 * inputValue4 + intermediateValue21 * inputValue5 >> 16;
+			intermediateValue23 = intermediateValue23 * inputValue5 - intermediateValue21 * inputValue4 >> 16;
+			intermediateValue21 = intermediateValue25;
+			intermediateValue25 = intermediateValue22 * inputValue3 - intermediateValue23 * inputValue2 >> 16;
+			intermediateValue23 = intermediateValue22 * inputValue2 + intermediateValue23 * inputValue3 >> 16;
+			intermediateValue22 = intermediateValue25;
+			projectedDepth[loopIndex] = intermediateValue23 - intermediateValue2;
+			if (intermediateValue23 >= 50) {
+				projectedX[loopIndex] = intermediateValue17 + (intermediateValue21 << 9) / intermediateValue23;
+				projectedY[loopIndex] = intermediateValue18 + (intermediateValue22 << 9) / intermediateValue23;
 			} else {
-				projectedX[j7] = -5000;
-				flag = true;
+				projectedX[loopIndex] = -5000;
+				conditionFlag = true;
 			}
-			if (flag || texturedTriangleCount > 0) {
-				cameraX[j7] = k7;
-				cameraY[j7] = l7;
-				cameraZ[j7] = i8;
+			if (conditionFlag || texturedTriangleCount > 0) {
+				cameraX[loopIndex] = intermediateValue21;
+				cameraY[loopIndex] = intermediateValue22;
+				cameraZ[loopIndex] = intermediateValue23;
 			}
 		}
 
 		try {
-			drawFaces(flag, flag1, i2);
+			drawFaces(conditionFlag, conditionFlag2, inputValue9);
 			return;
 		} catch (Exception _ex) {
 			return;
 		}
 	}
 
-	private void drawFaces(boolean flag, boolean flag1, int i) {
-		for (int j = 0; j < depthSpan; j++)
-			depthBucketCounts[j] = 0;
+	/**
+	 * Draws faces.
+	 * 
+	 * @param conditionFlag  the condition flag
+	 * @param conditionFlag2 the condition flag2
+	 * @param inputValue     the input value
+	 */
+	private void drawFaces(boolean conditionFlag, boolean conditionFlag2, int inputValue) {
+		for (int loopIndex = 0; loopIndex < depthSpan; loopIndex++)
+			depthBucketCounts[loopIndex] = 0;
 
-		for (int k = 0; k < triangleCount; k++)
-			if (triangleDrawType == null || triangleDrawType[k] != -1) {
-				int l = triangleVertexA[k];
-				int k1 = triangleVertexB[k];
-				int j2 = triangleVertexC[k];
-				int i3 = projectedX[l];
-				int l3 = projectedX[k1];
-				int k4 = projectedX[j2];
-				if (flag && (i3 == -5000 || l3 == -5000 || k4 == -5000)) {
-					faceNearClipped[k] = true;
-					int j5 = (projectedDepth[l] + projectedDepth[k1] + projectedDepth[j2]) / 3 + radius;
-					depthBuckets[j5][depthBucketCounts[j5]++] = k;
+		for (int loopIndex2 = 0; loopIndex2 < triangleCount; loopIndex2++)
+			if (triangleDrawType == null || triangleDrawType[loopIndex2] != -1) {
+				int intermediateValue = triangleVertexA[loopIndex2];
+				int intermediateValue2 = triangleVertexB[loopIndex2];
+				int intermediateValue3 = triangleVertexC[loopIndex2];
+				int intermediateValue4 = projectedX[intermediateValue];
+				int intermediateValue5 = projectedX[intermediateValue2];
+				int intermediateValue6 = projectedX[intermediateValue3];
+				if (conditionFlag && (intermediateValue4 == -5000 || intermediateValue5 == -5000
+						|| intermediateValue6 == -5000)) {
+					faceNearClipped[loopIndex2] = true;
+					int intermediateValue7 = (projectedDepth[intermediateValue] + projectedDepth[intermediateValue2]
+							+ projectedDepth[intermediateValue3]) / 3 + radius;
+					depthBuckets[intermediateValue7][depthBucketCounts[intermediateValue7]++] = loopIndex2;
 				} else {
-					if (flag1 && containsPoint(mouseX, mouseY, projectedY[l], projectedY[k1], projectedY[j2], i3, l3,
-							k4)) {
-						pickedUids[pickedCount++] = i;
-						flag1 = false;
+					if (conditionFlag2 && containsPoint(mouseX, mouseY, projectedY[intermediateValue],
+							projectedY[intermediateValue2], projectedY[intermediateValue3], intermediateValue4,
+							intermediateValue5, intermediateValue6)) {
+						pickedUids[pickedCount++] = inputValue;
+						conditionFlag2 = false;
 					}
-					if ((i3 - l3) * (projectedY[j2] - projectedY[k1])
-							- (projectedY[l] - projectedY[k1]) * (k4 - l3) > 0) {
-						faceNearClipped[k] = false;
-						if (i3 < 0 || l3 < 0 || k4 < 0 || i3 > Rasterizer.viewportRx || l3 > Rasterizer.viewportRx
-								|| k4 > Rasterizer.viewportRx)
-							faceOutOfBounds[k] = true;
+					if ((intermediateValue4 - intermediateValue5)
+							* (projectedY[intermediateValue3] - projectedY[intermediateValue2])
+							- (projectedY[intermediateValue] - projectedY[intermediateValue2])
+									* (intermediateValue6 - intermediateValue5) > 0) {
+						faceNearClipped[loopIndex2] = false;
+						if (intermediateValue4 < 0 || intermediateValue5 < 0 || intermediateValue6 < 0
+								|| intermediateValue4 > Rasterizer.viewportRx
+								|| intermediateValue5 > Rasterizer.viewportRx
+								|| intermediateValue6 > Rasterizer.viewportRx)
+							faceOutOfBounds[loopIndex2] = true;
 						else
-							faceOutOfBounds[k] = false;
-						int k5 = (projectedDepth[l] + projectedDepth[k1] + projectedDepth[j2]) / 3 + radius;
-						depthBuckets[k5][depthBucketCounts[k5]++] = k;
+							faceOutOfBounds[loopIndex2] = false;
+						int intermediateValue8 = (projectedDepth[intermediateValue] + projectedDepth[intermediateValue2]
+								+ projectedDepth[intermediateValue3]) / 3 + radius;
+						depthBuckets[intermediateValue8][depthBucketCounts[intermediateValue8]++] = loopIndex2;
 					}
 				}
 			}
 
 		if (trianglePriorities == null) {
-			for (int i1 = depthSpan - 1; i1 >= 0; i1--) {
-				int l1 = depthBucketCounts[i1];
-				if (l1 > 0) {
-					int ai[] = depthBuckets[i1];
-					for (int j3 = 0; j3 < l1; j3++)
-						drawFace(ai[j3]);
+			for (int loopIndex3 = depthSpan - 1; loopIndex3 >= 0; loopIndex3--) {
+				int intermediateValue9 = depthBucketCounts[loopIndex3];
+				if (intermediateValue9 > 0) {
+					int values[] = depthBuckets[loopIndex3];
+					for (int loopIndex4 = 0; loopIndex4 < intermediateValue9; loopIndex4++)
+						drawFace(values[loopIndex4]);
 
 				}
 			}
 
 			return;
 		}
-		for (int j1 = 0; j1 < 12; j1++) {
-			priorityBucketCounts[j1] = 0;
-			priorityDepthSums[j1] = 0;
+		for (int loopIndex5 = 0; loopIndex5 < 12; loopIndex5++) {
+			priorityBucketCounts[loopIndex5] = 0;
+			priorityDepthSums[loopIndex5] = 0;
 		}
 
-		for (int i2 = depthSpan - 1; i2 >= 0; i2--) {
-			int k2 = depthBucketCounts[i2];
-			if (k2 > 0) {
-				int ai1[] = depthBuckets[i2];
-				for (int i4 = 0; i4 < k2; i4++) {
-					int l4 = ai1[i4];
-					int l5 = trianglePriorities[l4];
-					int j6 = priorityBucketCounts[l5]++;
-					priorityBuckets[l5][j6] = l4;
-					if (l5 < 10)
-						priorityDepthSums[l5] += i2;
-					else if (l5 == 10)
-						priority10Depths[j6] = i2;
+		for (int loopIndex6 = depthSpan - 1; loopIndex6 >= 0; loopIndex6--) {
+			int intermediateValue10 = depthBucketCounts[loopIndex6];
+			if (intermediateValue10 > 0) {
+				int values2[] = depthBuckets[loopIndex6];
+				for (int loopIndex7 = 0; loopIndex7 < intermediateValue10; loopIndex7++) {
+					int intermediateValue11 = values2[loopIndex7];
+					int intermediateValue12 = trianglePriorities[intermediateValue11];
+					int intermediateValue13 = priorityBucketCounts[intermediateValue12]++;
+					priorityBuckets[intermediateValue12][intermediateValue13] = intermediateValue11;
+					if (intermediateValue12 < 10)
+						priorityDepthSums[intermediateValue12] += loopIndex6;
+					else if (intermediateValue12 == 10)
+						priority10Depths[intermediateValue13] = loopIndex6;
 					else
-						priority11Depths[j6] = i2;
+						priority11Depths[intermediateValue13] = loopIndex6;
 				}
 
 			}
 		}
 
-		int l2 = 0;
+		int intermediateValue14 = 0;
 		if (priorityBucketCounts[1] > 0 || priorityBucketCounts[2] > 0)
-			l2 = (priorityDepthSums[1] + priorityDepthSums[2]) / (priorityBucketCounts[1] + priorityBucketCounts[2]);
-		int k3 = 0;
+			intermediateValue14 = (priorityDepthSums[1] + priorityDepthSums[2])
+					/ (priorityBucketCounts[1] + priorityBucketCounts[2]);
+		int intermediateValue15 = 0;
 		if (priorityBucketCounts[3] > 0 || priorityBucketCounts[4] > 0)
-			k3 = (priorityDepthSums[3] + priorityDepthSums[4]) / (priorityBucketCounts[3] + priorityBucketCounts[4]);
-		int j4 = 0;
+			intermediateValue15 = (priorityDepthSums[3] + priorityDepthSums[4])
+					/ (priorityBucketCounts[3] + priorityBucketCounts[4]);
+		int intermediateValue16 = 0;
 		if (priorityBucketCounts[6] > 0 || priorityBucketCounts[8] > 0)
-			j4 = (priorityDepthSums[6] + priorityDepthSums[8]) / (priorityBucketCounts[6] + priorityBucketCounts[8]);
-		int i6 = 0;
-		int k6 = priorityBucketCounts[10];
-		int ai2[] = priorityBuckets[10];
-		int ai3[] = priority10Depths;
-		if (i6 == k6) {
-			i6 = 0;
-			k6 = priorityBucketCounts[11];
-			ai2 = priorityBuckets[11];
-			ai3 = priority11Depths;
+			intermediateValue16 = (priorityDepthSums[6] + priorityDepthSums[8])
+					/ (priorityBucketCounts[6] + priorityBucketCounts[8]);
+		int intermediateValue17 = 0;
+		int intermediateValue18 = priorityBucketCounts[10];
+		int values3[] = priorityBuckets[10];
+		int values4[] = priority10Depths;
+		if (intermediateValue17 == intermediateValue18) {
+			intermediateValue17 = 0;
+			intermediateValue18 = priorityBucketCounts[11];
+			values3 = priorityBuckets[11];
+			values4 = priority11Depths;
 		}
-		int i5;
-		if (i6 < k6)
-			i5 = ai3[i6];
+		int intermediateValue19;
+		if (intermediateValue17 < intermediateValue18)
+			intermediateValue19 = values4[intermediateValue17];
 		else
-			i5 = -1000;
-		for (int l6 = 0; l6 < 10; l6++) {
-			while (l6 == 0 && i5 > l2) {
-				drawFace(ai2[i6++]);
-				if (i6 == k6 && ai2 != priorityBuckets[11]) {
-					i6 = 0;
-					k6 = priorityBucketCounts[11];
-					ai2 = priorityBuckets[11];
-					ai3 = priority11Depths;
+			intermediateValue19 = -1000;
+		for (int loopIndex8 = 0; loopIndex8 < 10; loopIndex8++) {
+			while (loopIndex8 == 0 && intermediateValue19 > intermediateValue14) {
+				drawFace(values3[intermediateValue17++]);
+				if (intermediateValue17 == intermediateValue18 && values3 != priorityBuckets[11]) {
+					intermediateValue17 = 0;
+					intermediateValue18 = priorityBucketCounts[11];
+					values3 = priorityBuckets[11];
+					values4 = priority11Depths;
 				}
-				if (i6 < k6)
-					i5 = ai3[i6];
+				if (intermediateValue17 < intermediateValue18)
+					intermediateValue19 = values4[intermediateValue17];
 				else
-					i5 = -1000;
+					intermediateValue19 = -1000;
 			}
-			while (l6 == 3 && i5 > k3) {
-				drawFace(ai2[i6++]);
-				if (i6 == k6 && ai2 != priorityBuckets[11]) {
-					i6 = 0;
-					k6 = priorityBucketCounts[11];
-					ai2 = priorityBuckets[11];
-					ai3 = priority11Depths;
+			while (loopIndex8 == 3 && intermediateValue19 > intermediateValue15) {
+				drawFace(values3[intermediateValue17++]);
+				if (intermediateValue17 == intermediateValue18 && values3 != priorityBuckets[11]) {
+					intermediateValue17 = 0;
+					intermediateValue18 = priorityBucketCounts[11];
+					values3 = priorityBuckets[11];
+					values4 = priority11Depths;
 				}
-				if (i6 < k6)
-					i5 = ai3[i6];
+				if (intermediateValue17 < intermediateValue18)
+					intermediateValue19 = values4[intermediateValue17];
 				else
-					i5 = -1000;
+					intermediateValue19 = -1000;
 			}
-			while (l6 == 5 && i5 > j4) {
-				drawFace(ai2[i6++]);
-				if (i6 == k6 && ai2 != priorityBuckets[11]) {
-					i6 = 0;
-					k6 = priorityBucketCounts[11];
-					ai2 = priorityBuckets[11];
-					ai3 = priority11Depths;
+			while (loopIndex8 == 5 && intermediateValue19 > intermediateValue16) {
+				drawFace(values3[intermediateValue17++]);
+				if (intermediateValue17 == intermediateValue18 && values3 != priorityBuckets[11]) {
+					intermediateValue17 = 0;
+					intermediateValue18 = priorityBucketCounts[11];
+					values3 = priorityBuckets[11];
+					values4 = priority11Depths;
 				}
-				if (i6 < k6)
-					i5 = ai3[i6];
+				if (intermediateValue17 < intermediateValue18)
+					intermediateValue19 = values4[intermediateValue17];
 				else
-					i5 = -1000;
+					intermediateValue19 = -1000;
 			}
-			int i7 = priorityBucketCounts[l6];
-			int ai4[] = priorityBuckets[l6];
-			for (int j7 = 0; j7 < i7; j7++)
-				drawFace(ai4[j7]);
+			int intermediateValue20 = priorityBucketCounts[loopIndex8];
+			int values5[] = priorityBuckets[loopIndex8];
+			for (int loopIndex9 = 0; loopIndex9 < intermediateValue20; loopIndex9++)
+				drawFace(values5[loopIndex9]);
 
 		}
 
-		while (i5 != -1000) {
-			drawFace(ai2[i6++]);
-			if (i6 == k6 && ai2 != priorityBuckets[11]) {
-				i6 = 0;
-				ai2 = priorityBuckets[11];
-				k6 = priorityBucketCounts[11];
-				ai3 = priority11Depths;
+		while (intermediateValue19 != -1000) {
+			drawFace(values3[intermediateValue17++]);
+			if (intermediateValue17 == intermediateValue18 && values3 != priorityBuckets[11]) {
+				intermediateValue17 = 0;
+				values3 = priorityBuckets[11];
+				intermediateValue18 = priorityBucketCounts[11];
+				values4 = priority11Depths;
 			}
-			if (i6 < k6)
-				i5 = ai3[i6];
+			if (intermediateValue17 < intermediateValue18)
+				intermediateValue19 = values4[intermediateValue17];
 			else
-				i5 = -1000;
+				intermediateValue19 = -1000;
 		}
 	}
 
-	private void drawFace(int i) {
-		if (faceNearClipped[i]) {
-			drawNearClippedFace(i);
+	/**
+	 * Draws face.
+	 * 
+	 * @param inputValue the input value
+	 */
+	private void drawFace(int inputValue) {
+		if (faceNearClipped[inputValue]) {
+			drawNearClippedFace(inputValue);
 			return;
 		}
-		int j = triangleVertexA[i];
-		int k = triangleVertexB[i];
-		int l = triangleVertexC[i];
-		Rasterizer3D.restrictEdges = faceOutOfBounds[i];
+		int intermediateValue = triangleVertexA[inputValue];
+		int intermediateValue2 = triangleVertexB[inputValue];
+		int intermediateValue3 = triangleVertexC[inputValue];
+		Rasterizer3D.restrictEdges = faceOutOfBounds[inputValue];
 		if (triangleAlpha == null)
 			Rasterizer3D.alpha = 0;
 		else
-			Rasterizer3D.alpha = triangleAlpha[i];
-		int i1;
+			Rasterizer3D.alpha = triangleAlpha[inputValue];
+		int intermediateValue4;
 		if (triangleDrawType == null)
-			i1 = 0;
+			intermediateValue4 = 0;
 		else
-			i1 = triangleDrawType[i] & 3;
-		if (i1 == 0) {
-			Rasterizer3D.drawGouraudTriangle(projectedY[j], projectedY[k], projectedY[l], projectedX[j], projectedX[k],
-					projectedX[l], triangleShadeA[i], triangleShadeB[i], triangleShadeC[i]);
+			intermediateValue4 = triangleDrawType[inputValue] & 3;
+		if (intermediateValue4 == 0) {
+			Rasterizer3D.drawGouraudTriangle(projectedY[intermediateValue], projectedY[intermediateValue2],
+					projectedY[intermediateValue3], projectedX[intermediateValue], projectedX[intermediateValue2],
+					projectedX[intermediateValue3], triangleShadeA[inputValue], triangleShadeB[inputValue],
+					triangleShadeC[inputValue]);
 			return;
 		}
-		if (i1 == 1) {
-			Rasterizer3D.drawFlatTriangle(projectedY[j], projectedY[k], projectedY[l], projectedX[j], projectedX[k],
-					projectedX[l], HSL_TO_RGB[triangleShadeA[i]]);
+		if (intermediateValue4 == 1) {
+			Rasterizer3D.drawFlatTriangle(projectedY[intermediateValue], projectedY[intermediateValue2],
+					projectedY[intermediateValue3], projectedX[intermediateValue], projectedX[intermediateValue2],
+					projectedX[intermediateValue3], HSL_TO_RGB[triangleShadeA[inputValue]]);
 			return;
 		}
-		if (i1 == 2) {
-			int j1 = triangleDrawType[i] >> 2;
-			int l1 = texturedTriangleA[j1];
-			int j2 = texturedTriangleB[j1];
-			int l2 = texturedTriangleC[j1];
-			Rasterizer3D.drawTexturedTriangle(projectedY[j], projectedY[k], projectedY[l], projectedX[j], projectedX[k],
-					projectedX[l], triangleShadeA[i], triangleShadeB[i], triangleShadeC[i], cameraX[l1], cameraX[j2],
-					cameraX[l2], cameraY[l1], cameraY[j2], cameraY[l2], cameraZ[l1], cameraZ[j2], cameraZ[l2],
-					triangleColors[i]);
+		if (intermediateValue4 == 2) {
+			int intermediateValue5 = triangleDrawType[inputValue] >> 2;
+			int intermediateValue6 = texturedTriangleA[intermediateValue5];
+			int intermediateValue7 = texturedTriangleB[intermediateValue5];
+			int intermediateValue8 = texturedTriangleC[intermediateValue5];
+			Rasterizer3D.drawTexturedTriangle(projectedY[intermediateValue], projectedY[intermediateValue2],
+					projectedY[intermediateValue3], projectedX[intermediateValue], projectedX[intermediateValue2],
+					projectedX[intermediateValue3], triangleShadeA[inputValue], triangleShadeB[inputValue],
+					triangleShadeC[inputValue], cameraX[intermediateValue6], cameraX[intermediateValue7],
+					cameraX[intermediateValue8], cameraY[intermediateValue6], cameraY[intermediateValue7],
+					cameraY[intermediateValue8], cameraZ[intermediateValue6], cameraZ[intermediateValue7],
+					cameraZ[intermediateValue8], triangleColors[inputValue]);
 			return;
 		}
-		if (i1 == 3) {
-			int k1 = triangleDrawType[i] >> 2;
-			int i2 = texturedTriangleA[k1];
-			int k2 = texturedTriangleB[k1];
-			int i3 = texturedTriangleC[k1];
-			Rasterizer3D.drawTexturedTriangle(projectedY[j], projectedY[k], projectedY[l], projectedX[j], projectedX[k],
-					projectedX[l], triangleShadeA[i], triangleShadeA[i], triangleShadeA[i], cameraX[i2], cameraX[k2],
-					cameraX[i3], cameraY[i2], cameraY[k2], cameraY[i3], cameraZ[i2], cameraZ[k2], cameraZ[i3],
-					triangleColors[i]);
+		if (intermediateValue4 == 3) {
+			int intermediateValue9 = triangleDrawType[inputValue] >> 2;
+			int intermediateValue10 = texturedTriangleA[intermediateValue9];
+			int intermediateValue11 = texturedTriangleB[intermediateValue9];
+			int intermediateValue12 = texturedTriangleC[intermediateValue9];
+			Rasterizer3D.drawTexturedTriangle(projectedY[intermediateValue], projectedY[intermediateValue2],
+					projectedY[intermediateValue3], projectedX[intermediateValue], projectedX[intermediateValue2],
+					projectedX[intermediateValue3], triangleShadeA[inputValue], triangleShadeA[inputValue],
+					triangleShadeA[inputValue], cameraX[intermediateValue10], cameraX[intermediateValue11],
+					cameraX[intermediateValue12], cameraY[intermediateValue10], cameraY[intermediateValue11],
+					cameraY[intermediateValue12], cameraZ[intermediateValue10], cameraZ[intermediateValue11],
+					cameraZ[intermediateValue12], triangleColors[inputValue]);
 		}
 	}
 
-	private void drawNearClippedFace(int i) {
-		int j = Rasterizer3D.centerX;
-		int k = Rasterizer3D.centerY;
-		int l = 0;
-		int i1 = triangleVertexA[i];
-		int j1 = triangleVertexB[i];
-		int k1 = triangleVertexC[i];
-		int l1 = cameraZ[i1];
-		int i2 = cameraZ[j1];
-		int j2 = cameraZ[k1];
-		if (l1 >= 50) {
-			clippedX[l] = projectedX[i1];
-			clippedY[l] = projectedY[i1];
-			clippedShade[l++] = triangleShadeA[i];
+	/**
+	 * Draws near clipped face.
+	 * 
+	 * @param inputValue the input value
+	 */
+	private void drawNearClippedFace(int inputValue) {
+		int intermediateValue = Rasterizer3D.centerX;
+		int intermediateValue2 = Rasterizer3D.centerY;
+		int intermediateValue3 = 0;
+		int intermediateValue4 = triangleVertexA[inputValue];
+		int intermediateValue5 = triangleVertexB[inputValue];
+		int intermediateValue6 = triangleVertexC[inputValue];
+		int intermediateValue7 = cameraZ[intermediateValue4];
+		int intermediateValue8 = cameraZ[intermediateValue5];
+		int intermediateValue9 = cameraZ[intermediateValue6];
+		if (intermediateValue7 >= 50) {
+			clippedX[intermediateValue3] = projectedX[intermediateValue4];
+			clippedY[intermediateValue3] = projectedY[intermediateValue4];
+			clippedShade[intermediateValue3++] = triangleShadeA[inputValue];
 		} else {
-			int k2 = cameraX[i1];
-			int k3 = cameraY[i1];
-			int k4 = triangleShadeA[i];
-			if (j2 >= 50) {
-				int k5 = (50 - l1) * RECIPROCAL_16[j2 - l1];
-				clippedX[l] = j + (k2 + ((cameraX[k1] - k2) * k5 >> 16) << 9) / 50;
-				clippedY[l] = k + (k3 + ((cameraY[k1] - k3) * k5 >> 16) << 9) / 50;
-				clippedShade[l++] = k4 + ((triangleShadeC[i] - k4) * k5 >> 16);
+			int intermediateValue10 = cameraX[intermediateValue4];
+			int intermediateValue11 = cameraY[intermediateValue4];
+			int intermediateValue12 = triangleShadeA[inputValue];
+			if (intermediateValue9 >= 50) {
+				int intermediateValue13 = (50 - intermediateValue7)
+						* RECIPROCAL_16[intermediateValue9 - intermediateValue7];
+				clippedX[intermediateValue3] = intermediateValue + (intermediateValue10
+						+ ((cameraX[intermediateValue6] - intermediateValue10) * intermediateValue13 >> 16) << 9) / 50;
+				clippedY[intermediateValue3] = intermediateValue2 + (intermediateValue11
+						+ ((cameraY[intermediateValue6] - intermediateValue11) * intermediateValue13 >> 16) << 9) / 50;
+				clippedShade[intermediateValue3++] = intermediateValue12
+						+ ((triangleShadeC[inputValue] - intermediateValue12) * intermediateValue13 >> 16);
 			}
-			if (i2 >= 50) {
-				int l5 = (50 - l1) * RECIPROCAL_16[i2 - l1];
-				clippedX[l] = j + (k2 + ((cameraX[j1] - k2) * l5 >> 16) << 9) / 50;
-				clippedY[l] = k + (k3 + ((cameraY[j1] - k3) * l5 >> 16) << 9) / 50;
-				clippedShade[l++] = k4 + ((triangleShadeB[i] - k4) * l5 >> 16);
+			if (intermediateValue8 >= 50) {
+				int intermediateValue14 = (50 - intermediateValue7)
+						* RECIPROCAL_16[intermediateValue8 - intermediateValue7];
+				clippedX[intermediateValue3] = intermediateValue + (intermediateValue10
+						+ ((cameraX[intermediateValue5] - intermediateValue10) * intermediateValue14 >> 16) << 9) / 50;
+				clippedY[intermediateValue3] = intermediateValue2 + (intermediateValue11
+						+ ((cameraY[intermediateValue5] - intermediateValue11) * intermediateValue14 >> 16) << 9) / 50;
+				clippedShade[intermediateValue3++] = intermediateValue12
+						+ ((triangleShadeB[inputValue] - intermediateValue12) * intermediateValue14 >> 16);
 			}
 		}
-		if (i2 >= 50) {
-			clippedX[l] = projectedX[j1];
-			clippedY[l] = projectedY[j1];
-			clippedShade[l++] = triangleShadeB[i];
+		if (intermediateValue8 >= 50) {
+			clippedX[intermediateValue3] = projectedX[intermediateValue5];
+			clippedY[intermediateValue3] = projectedY[intermediateValue5];
+			clippedShade[intermediateValue3++] = triangleShadeB[inputValue];
 		} else {
-			int l2 = cameraX[j1];
-			int l3 = cameraY[j1];
-			int l4 = triangleShadeB[i];
-			if (l1 >= 50) {
-				int i6 = (50 - i2) * RECIPROCAL_16[l1 - i2];
-				clippedX[l] = j + (l2 + ((cameraX[i1] - l2) * i6 >> 16) << 9) / 50;
-				clippedY[l] = k + (l3 + ((cameraY[i1] - l3) * i6 >> 16) << 9) / 50;
-				clippedShade[l++] = l4 + ((triangleShadeA[i] - l4) * i6 >> 16);
+			int intermediateValue15 = cameraX[intermediateValue5];
+			int intermediateValue16 = cameraY[intermediateValue5];
+			int intermediateValue17 = triangleShadeB[inputValue];
+			if (intermediateValue7 >= 50) {
+				int intermediateValue18 = (50 - intermediateValue8)
+						* RECIPROCAL_16[intermediateValue7 - intermediateValue8];
+				clippedX[intermediateValue3] = intermediateValue + (intermediateValue15
+						+ ((cameraX[intermediateValue4] - intermediateValue15) * intermediateValue18 >> 16) << 9) / 50;
+				clippedY[intermediateValue3] = intermediateValue2 + (intermediateValue16
+						+ ((cameraY[intermediateValue4] - intermediateValue16) * intermediateValue18 >> 16) << 9) / 50;
+				clippedShade[intermediateValue3++] = intermediateValue17
+						+ ((triangleShadeA[inputValue] - intermediateValue17) * intermediateValue18 >> 16);
 			}
-			if (j2 >= 50) {
-				int j6 = (50 - i2) * RECIPROCAL_16[j2 - i2];
-				clippedX[l] = j + (l2 + ((cameraX[k1] - l2) * j6 >> 16) << 9) / 50;
-				clippedY[l] = k + (l3 + ((cameraY[k1] - l3) * j6 >> 16) << 9) / 50;
-				clippedShade[l++] = l4 + ((triangleShadeC[i] - l4) * j6 >> 16);
+			if (intermediateValue9 >= 50) {
+				int intermediateValue19 = (50 - intermediateValue8)
+						* RECIPROCAL_16[intermediateValue9 - intermediateValue8];
+				clippedX[intermediateValue3] = intermediateValue + (intermediateValue15
+						+ ((cameraX[intermediateValue6] - intermediateValue15) * intermediateValue19 >> 16) << 9) / 50;
+				clippedY[intermediateValue3] = intermediateValue2 + (intermediateValue16
+						+ ((cameraY[intermediateValue6] - intermediateValue16) * intermediateValue19 >> 16) << 9) / 50;
+				clippedShade[intermediateValue3++] = intermediateValue17
+						+ ((triangleShadeC[inputValue] - intermediateValue17) * intermediateValue19 >> 16);
 			}
 		}
-		if (j2 >= 50) {
-			clippedX[l] = projectedX[k1];
-			clippedY[l] = projectedY[k1];
-			clippedShade[l++] = triangleShadeC[i];
+		if (intermediateValue9 >= 50) {
+			clippedX[intermediateValue3] = projectedX[intermediateValue6];
+			clippedY[intermediateValue3] = projectedY[intermediateValue6];
+			clippedShade[intermediateValue3++] = triangleShadeC[inputValue];
 		} else {
-			int i3 = cameraX[k1];
-			int i4 = cameraY[k1];
-			int i5 = triangleShadeC[i];
-			if (i2 >= 50) {
-				int k6 = (50 - j2) * RECIPROCAL_16[i2 - j2];
-				clippedX[l] = j + (i3 + ((cameraX[j1] - i3) * k6 >> 16) << 9) / 50;
-				clippedY[l] = k + (i4 + ((cameraY[j1] - i4) * k6 >> 16) << 9) / 50;
-				clippedShade[l++] = i5 + ((triangleShadeB[i] - i5) * k6 >> 16);
+			int intermediateValue20 = cameraX[intermediateValue6];
+			int intermediateValue21 = cameraY[intermediateValue6];
+			int intermediateValue22 = triangleShadeC[inputValue];
+			if (intermediateValue8 >= 50) {
+				int intermediateValue23 = (50 - intermediateValue9)
+						* RECIPROCAL_16[intermediateValue8 - intermediateValue9];
+				clippedX[intermediateValue3] = intermediateValue + (intermediateValue20
+						+ ((cameraX[intermediateValue5] - intermediateValue20) * intermediateValue23 >> 16) << 9) / 50;
+				clippedY[intermediateValue3] = intermediateValue2 + (intermediateValue21
+						+ ((cameraY[intermediateValue5] - intermediateValue21) * intermediateValue23 >> 16) << 9) / 50;
+				clippedShade[intermediateValue3++] = intermediateValue22
+						+ ((triangleShadeB[inputValue] - intermediateValue22) * intermediateValue23 >> 16);
 			}
-			if (l1 >= 50) {
-				int l6 = (50 - j2) * RECIPROCAL_16[l1 - j2];
-				clippedX[l] = j + (i3 + ((cameraX[i1] - i3) * l6 >> 16) << 9) / 50;
-				clippedY[l] = k + (i4 + ((cameraY[i1] - i4) * l6 >> 16) << 9) / 50;
-				clippedShade[l++] = i5 + ((triangleShadeA[i] - i5) * l6 >> 16);
+			if (intermediateValue7 >= 50) {
+				int intermediateValue24 = (50 - intermediateValue9)
+						* RECIPROCAL_16[intermediateValue7 - intermediateValue9];
+				clippedX[intermediateValue3] = intermediateValue + (intermediateValue20
+						+ ((cameraX[intermediateValue4] - intermediateValue20) * intermediateValue24 >> 16) << 9) / 50;
+				clippedY[intermediateValue3] = intermediateValue2 + (intermediateValue21
+						+ ((cameraY[intermediateValue4] - intermediateValue21) * intermediateValue24 >> 16) << 9) / 50;
+				clippedShade[intermediateValue3++] = intermediateValue22
+						+ ((triangleShadeA[inputValue] - intermediateValue22) * intermediateValue24 >> 16);
 			}
 		}
-		int j3 = clippedX[0];
-		int j4 = clippedX[1];
-		int j5 = clippedX[2];
-		int i7 = clippedY[0];
-		int j7 = clippedY[1];
-		int k7 = clippedY[2];
-		if ((j3 - j4) * (k7 - j7) - (i7 - j7) * (j5 - j4) > 0) {
+		int intermediateValue25 = clippedX[0];
+		int intermediateValue26 = clippedX[1];
+		int intermediateValue27 = clippedX[2];
+		int intermediateValue28 = clippedY[0];
+		int intermediateValue29 = clippedY[1];
+		int intermediateValue30 = clippedY[2];
+		if ((intermediateValue25 - intermediateValue26) * (intermediateValue30 - intermediateValue29)
+				- (intermediateValue28 - intermediateValue29) * (intermediateValue27 - intermediateValue26) > 0) {
 			Rasterizer3D.restrictEdges = false;
-			if (l == 3) {
-				if (j3 < 0 || j4 < 0 || j5 < 0 || j3 > Rasterizer.viewportRx || j4 > Rasterizer.viewportRx
-						|| j5 > Rasterizer.viewportRx)
+			if (intermediateValue3 == 3) {
+				if (intermediateValue25 < 0 || intermediateValue26 < 0 || intermediateValue27 < 0
+						|| intermediateValue25 > Rasterizer.viewportRx || intermediateValue26 > Rasterizer.viewportRx
+						|| intermediateValue27 > Rasterizer.viewportRx)
 					Rasterizer3D.restrictEdges = true;
-				int l7;
+				int intermediateValue31;
 				if (triangleDrawType == null)
-					l7 = 0;
+					intermediateValue31 = 0;
 				else
-					l7 = triangleDrawType[i] & 3;
-				if (l7 == 0)
-					Rasterizer3D.drawGouraudTriangle(i7, j7, k7, j3, j4, j5, clippedShade[0], clippedShade[1],
-							clippedShade[2]);
-				else if (l7 == 1)
-					Rasterizer3D.drawFlatTriangle(i7, j7, k7, j3, j4, j5, HSL_TO_RGB[triangleShadeA[i]]);
-				else if (l7 == 2) {
-					int j8 = triangleDrawType[i] >> 2;
-					int k9 = texturedTriangleA[j8];
-					int k10 = texturedTriangleB[j8];
-					int k11 = texturedTriangleC[j8];
-					Rasterizer3D.drawTexturedTriangle(i7, j7, k7, j3, j4, j5, clippedShade[0], clippedShade[1],
-							clippedShade[2], cameraX[k9], cameraX[k10], cameraX[k11], cameraY[k9], cameraY[k10],
-							cameraY[k11], cameraZ[k9], cameraZ[k10], cameraZ[k11], triangleColors[i]);
-				} else if (l7 == 3) {
-					int k8 = triangleDrawType[i] >> 2;
-					int l9 = texturedTriangleA[k8];
-					int l10 = texturedTriangleB[k8];
-					int l11 = texturedTriangleC[k8];
-					Rasterizer3D.drawTexturedTriangle(i7, j7, k7, j3, j4, j5, triangleShadeA[i], triangleShadeA[i],
-							triangleShadeA[i], cameraX[l9], cameraX[l10], cameraX[l11], cameraY[l9], cameraY[l10],
-							cameraY[l11], cameraZ[l9], cameraZ[l10], cameraZ[l11], triangleColors[i]);
+					intermediateValue31 = triangleDrawType[inputValue] & 3;
+				if (intermediateValue31 == 0)
+					Rasterizer3D.drawGouraudTriangle(intermediateValue28, intermediateValue29, intermediateValue30,
+							intermediateValue25, intermediateValue26, intermediateValue27, clippedShade[0],
+							clippedShade[1], clippedShade[2]);
+				else if (intermediateValue31 == 1)
+					Rasterizer3D.drawFlatTriangle(intermediateValue28, intermediateValue29, intermediateValue30,
+							intermediateValue25, intermediateValue26, intermediateValue27,
+							HSL_TO_RGB[triangleShadeA[inputValue]]);
+				else if (intermediateValue31 == 2) {
+					int intermediateValue32 = triangleDrawType[inputValue] >> 2;
+					int intermediateValue33 = texturedTriangleA[intermediateValue32];
+					int intermediateValue34 = texturedTriangleB[intermediateValue32];
+					int intermediateValue35 = texturedTriangleC[intermediateValue32];
+					Rasterizer3D.drawTexturedTriangle(intermediateValue28, intermediateValue29, intermediateValue30,
+							intermediateValue25, intermediateValue26, intermediateValue27, clippedShade[0],
+							clippedShade[1], clippedShade[2], cameraX[intermediateValue33],
+							cameraX[intermediateValue34], cameraX[intermediateValue35], cameraY[intermediateValue33],
+							cameraY[intermediateValue34], cameraY[intermediateValue35], cameraZ[intermediateValue33],
+							cameraZ[intermediateValue34], cameraZ[intermediateValue35], triangleColors[inputValue]);
+				} else if (intermediateValue31 == 3) {
+					int intermediateValue36 = triangleDrawType[inputValue] >> 2;
+					int intermediateValue37 = texturedTriangleA[intermediateValue36];
+					int intermediateValue38 = texturedTriangleB[intermediateValue36];
+					int intermediateValue39 = texturedTriangleC[intermediateValue36];
+					Rasterizer3D.drawTexturedTriangle(intermediateValue28, intermediateValue29, intermediateValue30,
+							intermediateValue25, intermediateValue26, intermediateValue27, triangleShadeA[inputValue],
+							triangleShadeA[inputValue], triangleShadeA[inputValue], cameraX[intermediateValue37],
+							cameraX[intermediateValue38], cameraX[intermediateValue39], cameraY[intermediateValue37],
+							cameraY[intermediateValue38], cameraY[intermediateValue39], cameraZ[intermediateValue37],
+							cameraZ[intermediateValue38], cameraZ[intermediateValue39], triangleColors[inputValue]);
 				}
 			}
-			if (l == 4) {
-				if (j3 < 0 || j4 < 0 || j5 < 0 || j3 > Rasterizer.viewportRx || j4 > Rasterizer.viewportRx
-						|| j5 > Rasterizer.viewportRx || clippedX[3] < 0 || clippedX[3] > Rasterizer.viewportRx)
+			if (intermediateValue3 == 4) {
+				if (intermediateValue25 < 0 || intermediateValue26 < 0 || intermediateValue27 < 0
+						|| intermediateValue25 > Rasterizer.viewportRx || intermediateValue26 > Rasterizer.viewportRx
+						|| intermediateValue27 > Rasterizer.viewportRx || clippedX[3] < 0
+						|| clippedX[3] > Rasterizer.viewportRx)
 					Rasterizer3D.restrictEdges = true;
-				int i8;
+				int intermediateValue40;
 				if (triangleDrawType == null)
-					i8 = 0;
+					intermediateValue40 = 0;
 				else
-					i8 = triangleDrawType[i] & 3;
-				if (i8 == 0) {
-					Rasterizer3D.drawGouraudTriangle(i7, j7, k7, j3, j4, j5, clippedShade[0], clippedShade[1],
-							clippedShade[2]);
-					Rasterizer3D.drawGouraudTriangle(i7, k7, clippedY[3], j3, j5, clippedX[3], clippedShade[0],
-							clippedShade[2], clippedShade[3]);
+					intermediateValue40 = triangleDrawType[inputValue] & 3;
+				if (intermediateValue40 == 0) {
+					Rasterizer3D.drawGouraudTriangle(intermediateValue28, intermediateValue29, intermediateValue30,
+							intermediateValue25, intermediateValue26, intermediateValue27, clippedShade[0],
+							clippedShade[1], clippedShade[2]);
+					Rasterizer3D.drawGouraudTriangle(intermediateValue28, intermediateValue30, clippedY[3],
+							intermediateValue25, intermediateValue27, clippedX[3], clippedShade[0], clippedShade[2],
+							clippedShade[3]);
 					return;
 				}
-				if (i8 == 1) {
-					int l8 = HSL_TO_RGB[triangleShadeA[i]];
-					Rasterizer3D.drawFlatTriangle(i7, j7, k7, j3, j4, j5, l8);
-					Rasterizer3D.drawFlatTriangle(i7, k7, clippedY[3], j3, j5, clippedX[3], l8);
+				if (intermediateValue40 == 1) {
+					int intermediateValue41 = HSL_TO_RGB[triangleShadeA[inputValue]];
+					Rasterizer3D.drawFlatTriangle(intermediateValue28, intermediateValue29, intermediateValue30,
+							intermediateValue25, intermediateValue26, intermediateValue27, intermediateValue41);
+					Rasterizer3D.drawFlatTriangle(intermediateValue28, intermediateValue30, clippedY[3],
+							intermediateValue25, intermediateValue27, clippedX[3], intermediateValue41);
 					return;
 				}
-				if (i8 == 2) {
-					int i9 = triangleDrawType[i] >> 2;
-					int i10 = texturedTriangleA[i9];
-					int i11 = texturedTriangleB[i9];
-					int i12 = texturedTriangleC[i9];
-					Rasterizer3D.drawTexturedTriangle(i7, j7, k7, j3, j4, j5, clippedShade[0], clippedShade[1],
-							clippedShade[2], cameraX[i10], cameraX[i11], cameraX[i12], cameraY[i10], cameraY[i11],
-							cameraY[i12], cameraZ[i10], cameraZ[i11], cameraZ[i12], triangleColors[i]);
-					Rasterizer3D.drawTexturedTriangle(i7, k7, clippedY[3], j3, j5, clippedX[3], clippedShade[0],
-							clippedShade[2], clippedShade[3], cameraX[i10], cameraX[i11], cameraX[i12], cameraY[i10],
-							cameraY[i11], cameraY[i12], cameraZ[i10], cameraZ[i11], cameraZ[i12], triangleColors[i]);
+				if (intermediateValue40 == 2) {
+					int intermediateValue42 = triangleDrawType[inputValue] >> 2;
+					int intermediateValue43 = texturedTriangleA[intermediateValue42];
+					int intermediateValue44 = texturedTriangleB[intermediateValue42];
+					int intermediateValue45 = texturedTriangleC[intermediateValue42];
+					Rasterizer3D.drawTexturedTriangle(intermediateValue28, intermediateValue29, intermediateValue30,
+							intermediateValue25, intermediateValue26, intermediateValue27, clippedShade[0],
+							clippedShade[1], clippedShade[2], cameraX[intermediateValue43],
+							cameraX[intermediateValue44], cameraX[intermediateValue45], cameraY[intermediateValue43],
+							cameraY[intermediateValue44], cameraY[intermediateValue45], cameraZ[intermediateValue43],
+							cameraZ[intermediateValue44], cameraZ[intermediateValue45], triangleColors[inputValue]);
+					Rasterizer3D.drawTexturedTriangle(intermediateValue28, intermediateValue30, clippedY[3],
+							intermediateValue25, intermediateValue27, clippedX[3], clippedShade[0], clippedShade[2],
+							clippedShade[3], cameraX[intermediateValue43], cameraX[intermediateValue44],
+							cameraX[intermediateValue45], cameraY[intermediateValue43], cameraY[intermediateValue44],
+							cameraY[intermediateValue45], cameraZ[intermediateValue43], cameraZ[intermediateValue44],
+							cameraZ[intermediateValue45], triangleColors[inputValue]);
 					return;
 				}
-				if (i8 == 3) {
-					int j9 = triangleDrawType[i] >> 2;
-					int j10 = texturedTriangleA[j9];
-					int j11 = texturedTriangleB[j9];
-					int j12 = texturedTriangleC[j9];
-					Rasterizer3D.drawTexturedTriangle(i7, j7, k7, j3, j4, j5, triangleShadeA[i], triangleShadeA[i],
-							triangleShadeA[i], cameraX[j10], cameraX[j11], cameraX[j12], cameraY[j10], cameraY[j11],
-							cameraY[j12], cameraZ[j10], cameraZ[j11], cameraZ[j12], triangleColors[i]);
-					Rasterizer3D.drawTexturedTriangle(i7, k7, clippedY[3], j3, j5, clippedX[3], triangleShadeA[i],
-							triangleShadeA[i], triangleShadeA[i], cameraX[j10], cameraX[j11], cameraX[j12],
-							cameraY[j10], cameraY[j11], cameraY[j12], cameraZ[j10], cameraZ[j11], cameraZ[j12],
-							triangleColors[i]);
+				if (intermediateValue40 == 3) {
+					int intermediateValue46 = triangleDrawType[inputValue] >> 2;
+					int intermediateValue47 = texturedTriangleA[intermediateValue46];
+					int intermediateValue48 = texturedTriangleB[intermediateValue46];
+					int intermediateValue49 = texturedTriangleC[intermediateValue46];
+					Rasterizer3D.drawTexturedTriangle(intermediateValue28, intermediateValue29, intermediateValue30,
+							intermediateValue25, intermediateValue26, intermediateValue27, triangleShadeA[inputValue],
+							triangleShadeA[inputValue], triangleShadeA[inputValue], cameraX[intermediateValue47],
+							cameraX[intermediateValue48], cameraX[intermediateValue49], cameraY[intermediateValue47],
+							cameraY[intermediateValue48], cameraY[intermediateValue49], cameraZ[intermediateValue47],
+							cameraZ[intermediateValue48], cameraZ[intermediateValue49], triangleColors[inputValue]);
+					Rasterizer3D.drawTexturedTriangle(intermediateValue28, intermediateValue30, clippedY[3],
+							intermediateValue25, intermediateValue27, clippedX[3], triangleShadeA[inputValue],
+							triangleShadeA[inputValue], triangleShadeA[inputValue], cameraX[intermediateValue47],
+							cameraX[intermediateValue48], cameraX[intermediateValue49], cameraY[intermediateValue47],
+							cameraY[intermediateValue48], cameraY[intermediateValue49], cameraZ[intermediateValue47],
+							cameraZ[intermediateValue48], cameraZ[intermediateValue49], triangleColors[inputValue]);
 				}
 			}
 		}
 	}
 
-	private boolean containsPoint(int i, int j, int k, int l, int i1, int j1, int k1, int l1) {
-		if (j < k && j < l && j < i1)
+	/**
+	 * Performs contains point.
+	 * 
+	 * @return the resulting boolean
+	 * @param inputValue  the input value
+	 * @param inputValue2 the input value2
+	 * @param inputValue3 the input value3
+	 * @param inputValue4 the input value4
+	 * @param inputValue5 the input value5
+	 * @param inputValue6 the input value6
+	 * @param inputValue7 the input value7
+	 * @param inputValue8 the input value8
+	 */
+	private boolean containsPoint(int inputValue, int inputValue2, int inputValue3, int inputValue4, int inputValue5,
+			int inputValue6, int inputValue7, int inputValue8) {
+		if (inputValue2 < inputValue3 && inputValue2 < inputValue4 && inputValue2 < inputValue5)
 			return false;
-		if (j > k && j > l && j > i1)
+		if (inputValue2 > inputValue3 && inputValue2 > inputValue4 && inputValue2 > inputValue5)
 			return false;
-		if (i < j1 && i < k1 && i < l1)
+		if (inputValue < inputValue6 && inputValue < inputValue7 && inputValue < inputValue8)
 			return false;
-		return i <= j1 || i <= k1 || i <= l1;
+		return inputValue <= inputValue6 || inputValue <= inputValue7 || inputValue <= inputValue8;
 	}
 
+	/**
+	 * Stores shared model.
+	 */
 	public static final Model sharedModel = new Model();
+	/**
+	 * Stores shared vertices x.
+	 */
 	private static int sharedVerticesX[] = new int[2000];
+	/**
+	 * Stores shared vertices y.
+	 */
 	private static int sharedVerticesY[] = new int[2000];
+	/**
+	 * Stores shared vertices z.
+	 */
 	private static int sharedVerticesZ[] = new int[2000];
+	/**
+	 * Stores shared triangle alpha.
+	 */
 	private static int sharedTriangleAlpha[] = new int[2000];
+	/**
+	 * Number of vertex entries.
+	 */
 	public int vertexCount;
+	/**
+	 * Stores vertices x.
+	 */
 	public int verticesX[];
+	/**
+	 * Stores vertices y.
+	 */
 	public int verticesY[];
+	/**
+	 * Stores vertices z.
+	 */
 	public int verticesZ[];
+	/**
+	 * Number of triangle entries.
+	 */
 	public int triangleCount;
+	/**
+	 * Stores triangle vertex a.
+	 */
 	public int triangleVertexA[];
+	/**
+	 * Stores triangle vertex b.
+	 */
 	public int triangleVertexB[];
+	/**
+	 * Stores triangle vertex c.
+	 */
 	public int triangleVertexC[];
+	/**
+	 * Stores triangle shade a.
+	 */
 	public int triangleShadeA[];
+	/**
+	 * Stores triangle shade b.
+	 */
 	public int triangleShadeB[];
+	/**
+	 * Stores triangle shade c.
+	 */
 	public int triangleShadeC[];
+	/**
+	 * Stores triangle draw type.
+	 */
 	public int triangleDrawType[];
+	/**
+	 * Stores triangle priorities.
+	 */
 	public int trianglePriorities[];
+	/**
+	 * Stores triangle alpha.
+	 */
 	public int triangleAlpha[];
+	/**
+	 * Stores triangle colors.
+	 */
 	public int triangleColors[];
+	/**
+	 * Stores default triangle priority.
+	 */
 	public int defaultTrianglePriority;
+	/**
+	 * Number of textured triangle entries.
+	 */
 	public int texturedTriangleCount;
+	/**
+	 * Stores textured triangle a.
+	 */
 	public int texturedTriangleA[];
+	/**
+	 * Stores textured triangle b.
+	 */
 	public int texturedTriangleB[];
+	/**
+	 * Stores textured triangle c.
+	 */
 	public int texturedTriangleC[];
 	/**
 	 * Packed deferred-lighting state: ambient in the high 16 bits, scaled contrast
@@ -1829,51 +2225,177 @@ public class Model extends Renderable {
 	 * original packing.
 	 */
 	public int packedZBounds;
+	/**
+	 * Stores horizontal radius.
+	 */
 	public int horizontalRadius;
+	/**
+	 * Stores max y.
+	 */
 	public int maxY;
+	/**
+	 * Stores depth span.
+	 */
 	public int depthSpan;
+	/**
+	 * Stores radius.
+	 */
 	public int radius;
 	/**
 	 * Scene support height used when stacking ground-item piles on top of models.
 	 */
 	public int itemDropHeight;
+	/**
+	 * Stores vertex skins.
+	 */
 	public int vertexSkins[];
+	/**
+	 * Stores triangle skins.
+	 */
 	public int triangleSkins[];
+	/**
+	 * Stores vertex groups.
+	 */
 	public int vertexGroups[][];
+	/**
+	 * Stores triangle groups.
+	 */
 	public int triangleGroups[][];
+	/**
+	 * Whether single tile.
+	 */
 	public boolean singleTile;
+	/**
+	 * Stores vertex normal offsets.
+	 */
 	public VertexNormal vertexNormalOffsets[];
+	/**
+	 * Stores model headers.
+	 */
 	private static ModelHeader modelHeaders[];
+	/**
+	 * Stores model provider.
+	 */
 	private static OnDemandProvider modelProvider;
+	/**
+	 * Stores face out of bounds.
+	 */
 	private static boolean faceOutOfBounds[] = new boolean[4096];
+	/**
+	 * Stores face near clipped.
+	 */
 	private static boolean faceNearClipped[] = new boolean[4096];
+	/**
+	 * Stores projected x.
+	 */
 	private static int projectedX[] = new int[4096];
+	/**
+	 * Stores projected y.
+	 */
 	private static int projectedY[] = new int[4096];
+	/**
+	 * Stores projected depth.
+	 */
 	private static int projectedDepth[] = new int[4096];
+	/**
+	 * Stores camera x.
+	 */
 	private static int cameraX[] = new int[4096];
+	/**
+	 * Stores camera y.
+	 */
 	private static int cameraY[] = new int[4096];
+	/**
+	 * Stores camera z.
+	 */
 	private static int cameraZ[] = new int[4096];
+	/**
+	 * Stores depth bucket counts.
+	 */
 	private static int depthBucketCounts[] = new int[1500];
+	/**
+	 * Stores depth buckets.
+	 */
 	private static int depthBuckets[][] = new int[1500][512];
+	/**
+	 * Stores priority bucket counts.
+	 */
 	private static int priorityBucketCounts[] = new int[12];
+	/**
+	 * Stores priority buckets.
+	 */
 	private static int priorityBuckets[][] = new int[12][2000];
+	/**
+	 * Stores priority10 depths.
+	 */
 	private static int priority10Depths[] = new int[2000];
+	/**
+	 * Stores priority11 depths.
+	 */
 	private static int priority11Depths[] = new int[2000];
+	/**
+	 * Stores priority depth sums.
+	 */
 	private static int priorityDepthSums[] = new int[12];
+	/**
+	 * Stores clipped x.
+	 */
 	private static int clippedX[] = new int[10];
+	/**
+	 * Stores clipped y.
+	 */
 	private static int clippedY[] = new int[10];
+	/**
+	 * Stores clipped shade.
+	 */
 	private static int clippedShade[] = new int[10];
+	/**
+	 * Stores transform pivot x.
+	 */
 	private static int transformPivotX;
+	/**
+	 * Stores transform pivot y.
+	 */
 	private static int transformPivotY;
+	/**
+	 * Stores transform pivot z.
+	 */
 	private static int transformPivotZ;
+	/**
+	 * Whether picking enabled.
+	 */
 	public static boolean pickingEnabled;
+	/**
+	 * Stores mouse x.
+	 */
 	public static int mouseX;
+	/**
+	 * Stores mouse y.
+	 */
 	public static int mouseY;
+	/**
+	 * Number of picked entries.
+	 */
 	public static int pickedCount;
+	/**
+	 * Stores picked uids.
+	 */
 	public static int pickedUids[] = new int[1000];
+	/**
+	 * Stores sine.
+	 */
 	public static int SINE[];
+	/**
+	 * Stores cosine.
+	 */
 	public static int COSINE[];
+	/**
+	 * Stores hsl to rgb.
+	 */
 	private static int HSL_TO_RGB[];
+	/**
+	 * Stores reciprocal 16.
+	 */
 	private static int RECIPROCAL_16[];
 
 	static {

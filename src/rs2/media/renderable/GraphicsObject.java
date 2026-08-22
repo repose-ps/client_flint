@@ -6,16 +6,54 @@ import rs2.media.AnimationFrame;
 /** A stationary spot animation placed at a fixed scene position. */
 public class GraphicsObject extends Renderable {
 
+	/**
+	 * Stores plane.
+	 */
 	public int plane;
+	/**
+	 * Stores x.
+	 */
 	public int x;
+	/**
+	 * Stores y.
+	 */
 	public int y;
+	/**
+	 * Stores z.
+	 */
 	public int z;
+	/**
+	 * Whether finished.
+	 */
 	public boolean finished;
+	/**
+	 * Stores frame.
+	 */
 	public int frame;
+	/**
+	 * Stores frame cycle.
+	 */
 	public int frameCycle;
+	/**
+	 * Stores spot animation.
+	 */
 	public SpotAnimation spotAnimation;
+	/**
+	 * Stores cycle start.
+	 */
 	public int cycleStart;
 
+	/**
+	 * Initializes this instance.
+	 * 
+	 * @param spotAnimationId the spot animation id
+	 * @param plane           the plane
+	 * @param x               the x
+	 * @param y               the y
+	 * @param z               the z
+	 * @param delay           the delay
+	 * @param currentCycle    the current cycle
+	 */
 	public GraphicsObject(int spotAnimationId, int plane, int x, int y, int z, int delay, int currentCycle) {
 		this.spotAnimation = SpotAnimation.definitions[spotAnimationId];
 		this.plane = plane;
@@ -29,6 +67,8 @@ public class GraphicsObject extends Renderable {
 	/**
 	 * Advances the animation; completion wraps to frame zero and marks the object
 	 * finished.
+	 * 
+	 * @param cycles the cycles
 	 */
 	public void advance(int cycles) {
 		frameCycle += cycles;
@@ -43,6 +83,11 @@ public class GraphicsObject extends Renderable {
 		}
 	}
 
+	/**
+	 * Returns model.
+	 * 
+	 * @return the resulting model
+	 */
 	@Override
 	protected Model getModel() {
 		Model baseModel = spotAnimation.getModel();

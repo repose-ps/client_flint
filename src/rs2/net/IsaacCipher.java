@@ -104,9 +104,9 @@ public final class IsaacCipher {
 	 * positions are initialized to zero.
 	 * </p>
 	 *
-	 * @param seed initial cipher seed
 	 * @throws NullPointerException     if the seed is null
 	 * @throws IllegalArgumentException if the seed contains more than 256 integers
+	 * @param seed the seed
 	 */
 	public IsaacCipher(int[] seed) {
 		if (seed == null) {
@@ -237,7 +237,7 @@ public final class IsaacCipher {
 	/**
 	 * Performs ISAAC's eight-word avalanche mixing operation.
 	 *
-	 * @param values eight-word working state modified in place
+	 * @param values the values
 	 */
 	private static void mix(int[] values) {
 		values[0] ^= values[1] << 11;
