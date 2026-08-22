@@ -182,7 +182,8 @@ public class Client extends GameShell {
 			else if (args[2].equals("highmem")) {
 				setHighMemory();
 			} else {
-				System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host]");
+				System.out.println(
+						"Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host]");
 				return;
 			}
 			if (args[3].equals("free"))
@@ -190,7 +191,8 @@ public class Client extends GameShell {
 			else if (args[3].equals("members")) {
 				membersWorld = true;
 			} else {
-				System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host]");
+				System.out.println(
+						"Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host]");
 				return;
 			}
 			Signlink.storeId = Integer.parseInt(args[4]);
@@ -2043,7 +2045,9 @@ public class Client extends GameShell {
 		return serverHost;
 	}
 
-	/** Configures the hostname used by all standalone game/update/archive sockets. */
+	/**
+	 * Configures the hostname used by all standalone game/update/archive sockets.
+	 */
 	public static void setServerHost(String host) {
 		if (host == null || host.trim().isEmpty()) {
 			throw new IllegalArgumentException("server host must not be blank");

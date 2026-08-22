@@ -13,10 +13,10 @@ import rs2.sign.Signlink;
  * Owns the revision-377 bootstrap archive checksums and disk-cache indices.
  *
  * <p>
- * The retry timing and JAGGRAB framing deliberately remain source-accurate. In
- * particular, the supplied client returns a disk-cached archive immediately
- * without validating its CRC. That behavior is preserved here rather than
- * silently repaired.
+ * The retry timing and JAGGRAB framing deliberately remain revision-accurate.
+ * Local bootstrap archives are CRC-validated before use; corrupt entries are
+ * treated as cache misses and recovered through the same JAGGRAB path as
+ * missing entries.
  * </p>
  */
 public final class ResourceLoader {
@@ -33,7 +33,19 @@ public final class ResourceLoader {
 	private static final int CACHE_INDEX_COUNT = 5;
 	private static final int REVISION = 377;
 
-	private final int[] archiveCrcs = new int[ARCHIVE_COUNT];
+	/**
+	 * CRC-32 values for bootstrap cache entries 1..8 in the supplied authentic
+	 * revision-377 cache fixture. Entry zero is not present in cache index 0 and
+	 * therefore remains unknown until a server CRC table is fetched.
+	 *
+	 * <p>These defaults preserve standalone startup without a web server while
+	 * still allowing local corruption to be detected. A successfully fetched CRC
+	 * table replaces all nine values.</p>
+	 */
+	private static final int[] REVISION_377_BOOTSTRAP_CRCS = { 0, 0x9509ece5, 0x88dcbfa7, 0x5574bc2e,
+			0xa10e55ac, 0x3b8ed781, 0x982e83fb, 0x84fff872, 0x42fd7584 };
+
+	private final int[] archiveCrcs = REVISION_377_BOOTSTRAP_CRCS.clone();
 	private final CacheIndex[] cacheIndices = new CacheIndex[CACHE_INDEX_COUNT];
 	private final CRC32 crc32 = new CRC32();
 
@@ -64,10 +76,10 @@ public final class ResourceLoader {
 
 	/**
 	 * Returns whether all eight bootstrap archives needed before the on-demand
-	 * system are readable from cache index 0.
+	 * system are readable and match the known revision-377 CRCs.
 	 *
-	 * <p>If any archive is absent or its sector chain cannot be read, startup must
-	 * fetch the revision CRC table before attempting JAGGRAB recovery.</p>
+	 * <p>If any archive is absent, structurally unreadable, or has the wrong CRC,
+	 * startup fetches the server CRC table before attempting JAGGRAB recovery.</p>
 	 */
 	public boolean hasAllBootstrapArchives() {
 		if (cacheIndices[0] == null) {
@@ -75,7 +87,8 @@ public final class ResourceLoader {
 		}
 		try {
 			for (int archiveId = 1; archiveId < ARCHIVE_COUNT; archiveId++) {
-				if (cacheIndices[0].read(archiveId) == null) {
+				byte[] data = cacheIndices[0].read(archiveId);
+				if (data == null || checksum(data) != archiveCrcs[archiveId]) {
 					return false;
 				}
 			}
@@ -98,45 +111,40 @@ public final class ResourceLoader {
 		try {
 			if (cacheIndices[0] != null) {
 				data = cacheIndices[0].read(cacheFileId);
-				return new Archive(data);
+				if (data != null && checksum(data) == expectedCrc) {
+					return new Archive(data);
+				}
+				data = null;
 			}
-		} catch (Exception ignored) {
-		}
-
-		// Retained for source correspondence even though the immediate cache return
-		// above means a successfully read cache entry never reaches this check.
-		if (data != null && checksum(data) != expectedCrc) {
+		} catch (RuntimeException ignored) {
+			/* Treat malformed or otherwise unusable cached bytes as a cache miss. */
 			data = null;
-		}
-		if (data != null) {
-			return new Archive(data);
 		}
 
 		int checksumFailures = 0;
 		while (data == null) {
 			String error = "Unknown error";
 			progress.update(loadingPercent, "Requesting " + displayName);
-			try {
+			try (DataInputStream input = opener.open(archiveName + expectedCrc)) {
 				int lastPercent = 0;
-				DataInputStream input = opener.open(archiveName + expectedCrc);
 				byte[] header = new byte[6];
-				input.readFully(header, 0, 6);
+				input.readFully(header, 0, header.length);
 				Buffer headerBuffer = new Buffer(header);
 				headerBuffer.position = 3;
-				int totalLength = headerBuffer.readMedium() + 6;
-				int position = 6;
+				int totalLength = headerBuffer.readMedium() + header.length;
+				int position = header.length;
 				data = new byte[totalLength];
-				System.arraycopy(header, 0, data, 0, 6);
+				System.arraycopy(header, 0, data, 0, header.length);
 
 				while (position < totalLength) {
-					int blockLength = totalLength - position;
-					if (blockLength > 1000) {
-						blockLength = 1000;
-					}
+					int blockLength = Math.min(1000, totalLength - position);
 					int bytesRead = input.read(data, position, blockLength);
 					if (bytesRead < 0) {
 						error = "Length error: " + position + "/" + totalLength;
-						throw new IOException("EOF");
+						throw new EOFException(error);
+					}
+					if (bytesRead == 0) {
+						continue;
 					}
 					position += bytesRead;
 					int percent = (position * 100) / totalLength;
@@ -145,26 +153,17 @@ public final class ResourceLoader {
 					}
 					lastPercent = percent;
 				}
-				input.close();
 
-				try {
-					if (cacheIndices[0] != null) {
-						cacheIndices[0].write(cacheFileId, data);
-					}
-				} catch (Exception ignored) {
-					cacheIndices[0] = null;
-				}
-
-				if (data != null) {
-					int actualCrc = checksum(data);
-					if (actualCrc != expectedCrc) {
-						data = null;
-						checksumFailures++;
-						error = "Checksum error: " + actualCrc;
-					}
+				int actualCrc = checksum(data);
+				if (actualCrc != expectedCrc) {
+					data = null;
+					checksumFailures++;
+					error = "Checksum error: " + actualCrc;
+				} else if (cacheIndices[0] != null) {
+					/* Cache only bytes that passed the authoritative CRC check. */
+					cacheIndices[0].write(cacheFileId, data);
 				}
 			} catch (IOException exception) {
-				exception.printStackTrace();
 				if (error.equals("Unknown error")) {
 					error = "Connection error";
 				}
@@ -181,7 +180,7 @@ public final class ResourceLoader {
 				if (!Signlink.reportErrors) {
 					return null;
 				}
-			} catch (Exception exception) {
+			} catch (RuntimeException exception) {
 				error = "Unexpected error";
 				data = null;
 				if (!Signlink.reportErrors) {
@@ -199,7 +198,7 @@ public final class ResourceLoader {
 					}
 					try {
 						Thread.sleep(1000L);
-					} catch (Exception ignored) {
+					} catch (InterruptedException ignored) {
 					}
 				}
 				retryDelay *= 2;
@@ -215,49 +214,49 @@ public final class ResourceLoader {
 	 * Legacy client.method86(boolean flag): flag -> removed false sentinel.
 	 *
 	 * <p>
-	 * This method remains available for source correspondence, but the supplied
-	 * post-refactor startup path intentionally does not call it.
+	 * Startup calls this only when the local bootstrap set is missing or fails
+	 * revision-377 CRC validation, preserving offline startup for a complete valid
+	 * cache while retaining authoritative server recovery when needed.
 	 * </p>
 	 */
 	public void fetchArchiveCrcs(JaggrabOpener opener, ProgressListener progress) {
 		int retryDelay = 5;
-		archiveCrcs[8] = 0;
 		int failures = 0;
-		while (archiveCrcs[8] == 0) {
+		boolean loaded = false;
+		while (!loaded) {
 			String error = "Unknown problem";
 			progress.update(20, "Connecting to web server");
-			try {
-				DataInputStream input = opener.open("crc" + (int) (Math.random() * 99999999D) + "-" + REVISION);
+			try (DataInputStream input = opener.open("crc" + (int) (Math.random() * 99999999D) + "-" + REVISION)) {
 				Buffer buffer = new Buffer(new byte[40]);
-				input.readFully(buffer.payload, 0, 40);
-				input.close();
+				input.readFully(buffer.payload, 0, buffer.payload.length);
+
+				int[] fetchedCrcs = new int[ARCHIVE_COUNT];
 				for (int index = 0; index < ARCHIVE_COUNT; index++) {
-					archiveCrcs[index] = buffer.readInt();
+					fetchedCrcs[index] = buffer.readInt();
 				}
 				int expectedChecksum = buffer.readInt();
 				int checksum = 1234;
 				for (int index = 0; index < ARCHIVE_COUNT; index++) {
-					checksum = (checksum << 1) + archiveCrcs[index];
+					checksum = (checksum << 1) + fetchedCrcs[index];
 				}
-				if (expectedChecksum != checksum) {
+				if (expectedChecksum != checksum || fetchedCrcs[ARCHIVE_COUNT - 1] == 0) {
 					error = "checksum problem";
-					archiveCrcs[8] = 0;
+				} else {
+					System.arraycopy(fetchedCrcs, 0, archiveCrcs, 0, ARCHIVE_COUNT);
+					loaded = true;
 				}
 			} catch (EOFException exception) {
 				error = "EOF problem";
-				archiveCrcs[8] = 0;
 			} catch (IOException exception) {
 				error = "connection problem";
-				archiveCrcs[8] = 0;
-			} catch (Exception exception) {
+			} catch (RuntimeException exception) {
 				error = "logic problem";
-				archiveCrcs[8] = 0;
 				if (!Signlink.reportErrors) {
 					return;
 				}
 			}
 
-			if (archiveCrcs[8] == 0) {
+			if (!loaded) {
 				failures++;
 				for (int seconds = retryDelay; seconds > 0; seconds--) {
 					if (failures >= 10) {
@@ -268,7 +267,7 @@ public final class ResourceLoader {
 					}
 					try {
 						Thread.sleep(1000L);
-					} catch (Exception ignored) {
+					} catch (InterruptedException ignored) {
 					}
 				}
 				retryDelay *= 2;

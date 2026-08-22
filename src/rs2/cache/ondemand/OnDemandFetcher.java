@@ -1,6 +1,8 @@
 package rs2.cache.ondemand;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -51,8 +53,8 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	private static final int RESPONSE_HEADER_LENGTH = 6;
 	/** Defines the response chunk length constant. */
 	private static final int RESPONSE_CHUNK_LENGTH = 500;
-	/** Defines the gzip buffer length constant. */
-	private static final int GZIP_BUFFER_LENGTH = 65_000;
+	/** Scratch chunk used while expanding completed GZIP payloads. */
+	private static final int GZIP_READ_BUFFER_LENGTH = 8_192;
 	/** Defines the resend after cycles constant. */
 	private static final int RESEND_AFTER_CYCLES = 50;
 	/** Defines the disconnect after idle cycles constant. */
@@ -74,10 +76,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 			int available = inputStream.available();
 			if (currentChunkLength == 0 && available >= RESPONSE_HEADER_LENGTH) {
 				waiting = true;
-				for (int read = 0; read < RESPONSE_HEADER_LENGTH; read += inputStream.read(ioBuffer, read,
-						RESPONSE_HEADER_LENGTH - read)) {
-					// Preserve the original blocking fill loop after available() admits a header.
-				}
+				readFully(inputStream, ioBuffer, 0, RESPONSE_HEADER_LENGTH);
 
 				int type = ioBuffer[0] & 0xff;
 				int id = ((ioBuffer[1] & 0xff) << 8) + (ioBuffer[2] & 0xff);
@@ -115,16 +114,23 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 						if (currentRequest.buffer == null && chunk == 0) {
 							currentRequest.buffer = new byte[fileLength];
 						}
-						if (currentRequest.buffer == null && chunk != 0) {
+						if (currentRequest.buffer == null) {
 							throw new IOException("missing start of file");
+						}
+						if (currentRequest.buffer.length != fileLength) {
+							throw new IOException("inconsistent file length");
 						}
 					}
 				}
 
 				currentChunkOffset = chunk * RESPONSE_CHUNK_LENGTH;
-				currentChunkLength = RESPONSE_CHUNK_LENGTH;
-				if (currentChunkLength > fileLength - chunk * RESPONSE_CHUNK_LENGTH) {
-					currentChunkLength = fileLength - chunk * RESPONSE_CHUNK_LENGTH;
+				if (fileLength == 0) {
+					currentChunkLength = 0;
+				} else {
+					if (currentChunkOffset >= fileLength) {
+						throw new IOException("invalid response chunk " + chunk + " for length " + fileLength);
+					}
+					currentChunkLength = Math.min(RESPONSE_CHUNK_LENGTH, fileLength - currentChunkOffset);
 				}
 			}
 
@@ -136,12 +142,9 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 					destination = currentRequest.buffer;
 					destinationOffset = currentChunkOffset;
 				}
-				for (int read = 0; read < currentChunkLength; read += inputStream.read(destination,
-						destinationOffset + read, currentChunkLength - read)) {
-					// Preserve the original fill-loop semantics.
-				}
+				readFully(inputStream, destination, destinationOffset, currentChunkLength);
 
-				if (currentChunkLength + currentChunkOffset >= destination.length && currentRequest != null) {
+				if (currentRequest != null && currentChunkLength + currentChunkOffset >= destination.length) {
 					if (resourceLoader.hasCache()) {
 						resourceLoader.getCacheIndex(currentRequest.type + 1).write(currentRequest.id, destination);
 					}
@@ -160,14 +163,25 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 				currentChunkLength = 0;
 			}
 		} catch (IOException exception) {
-			try {
-				socket.close();
-			} catch (Exception ignored) {
+			closeUpdateConnection();
+		}
+	}
+
+	/**
+	 * Fills a requested region or reports peer EOF rather than allowing a
+	 * decrementing/never-completing legacy read loop.
+	 */
+	private static void readFully(InputStream input, byte[] destination, int offset, int length) throws IOException {
+		int read = 0;
+		while (read < length) {
+			int count = input.read(destination, offset + read, length - read);
+			if (count < 0) {
+				throw new EOFException("End of update-server stream after " + read + " of " + length + " bytes");
 			}
-			socket = null;
-			inputStream = null;
-			outputStream = null;
-			currentChunkLength = 0;
+			if (count == 0) {
+				continue;
+			}
+			read += count;
 		}
 	}
 
@@ -332,26 +346,23 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 			return request;
 		}
 
-		int length = 0;
-		try {
-			GZIPInputStream gzip = new GZIPInputStream(new ByteArrayInputStream(request.buffer));
-			do {
-				if (length == gzipBuffer.length) {
-					throw new RuntimeException("buffer overflow!");
-				}
-				int read = gzip.read(gzipBuffer, length, gzipBuffer.length - length);
-				if (read == -1) {
+		try (GZIPInputStream gzip = new GZIPInputStream(new ByteArrayInputStream(request.buffer));
+				ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+			byte[] chunk = new byte[GZIP_READ_BUFFER_LENGTH];
+			for (;;) {
+				int read = gzip.read(chunk);
+				if (read < 0) {
 					break;
 				}
-				length += read;
-			} while (true);
+				if (read > 0) {
+					output.write(chunk, 0, read);
+				}
+			}
+			request.buffer = output.toByteArray();
+			return request;
 		} catch (IOException exception) {
-			throw new RuntimeException("error unzipping");
+			throw new RuntimeException("error unzipping", exception);
 		}
-
-		request.buffer = new byte[length];
-		System.arraycopy(gzipBuffer, 0, request.buffer, 0, length);
-		return request;
 	}
 
 	/**
@@ -368,7 +379,8 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 					sleepMillis = 50;
 				try {
 					Thread.sleep(sleepMillis);
-				} catch (Exception _ex) {
+				} catch (InterruptedException ignored) {
+					/* Stop requests interrupt this sleep so the loop can observe running=false. */
 				}
 				waiting = true;
 				for (int iteration = 0; iteration < 100; iteration++) {
@@ -412,14 +424,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 				if (hasPendingRequests) {
 					idleCycles++;
 					if (idleCycles > DISCONNECT_AFTER_IDLE_CYCLES) {
-						try {
-							socket.close();
-						} catch (Exception _ex) {
-						}
-						socket = null;
-						inputStream = null;
-						outputStream = null;
-						currentChunkLength = 0;
+						closeUpdateConnection();
 					}
 				} else {
 					idleCycles = 0;
@@ -443,9 +448,10 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 				}
 			}
 			return;
-		} catch (Exception exception) {
+		} catch (RuntimeException exception) {
 			Signlink.reportError("od_ex " + exception.getMessage());
 		} finally {
+			closeUpdateConnection();
 			if (workerThread == current) {
 				workerThread = null;
 			}
@@ -773,7 +779,9 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 				outputStream = socket.getOutputStream();
 				outputStream.write(UPDATE_SERVER_HANDSHAKE);
 				for (int index = 0; index < 8; index++) {
-					inputStream.read();
+					if (inputStream.read() < 0) {
+						throw new EOFException("End of update-server handshake");
+					}
 				}
 				idleCycles = 0;
 			}
@@ -795,14 +803,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		} catch (IOException ignored) {
 		}
 
-		try {
-			socket.close();
-		} catch (Exception ignored) {
-		}
-		socket = null;
-		inputStream = null;
-		outputStream = null;
-		currentChunkLength = 0;
+		closeUpdateConnection();
 		requestFailures++;
 	}
 
@@ -849,7 +850,6 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		crc32 = new CRC32();
 		completedQueue = new NodeDeque();
 		extraRequestQueue = new NodeDeque();
-		gzipBuffer = new byte[GZIP_BUFFER_LENGTH];
 		ioBuffer = new byte[RESPONSE_CHUNK_LENGTH];
 		outstandingRequests = new DualNodeDeque();
 		networkRequests = new NodeDeque();
@@ -902,8 +902,6 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	private NodeDeque completedQueue;
 	/** Stores the extra request queue. */
 	private NodeDeque extraRequestQueue;
-	/** Stores the gzip buffer values. */
-	private byte[] gzipBuffer;
 	/** Stores the terrain file ids values. */
 	private int[] terrainFileIds;
 	/** Stores the current chunk offset. */

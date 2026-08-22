@@ -30,6 +30,9 @@ class NetworkSession {
 	 */
 	public static final int BUFFER_CAPACITY = 5_000;
 
+	/** Maximum payload that fits in the revision-377 incoming packet buffer. */
+	private static final int MAX_INCOMING_PAYLOAD_LENGTH = BUFFER_CAPACITY;
+
 	/** Shared buffer used by all outgoing game packets. */
 	public final Buffer outgoing = new Buffer(BUFFER_CAPACITY);
 
@@ -190,6 +193,9 @@ class NetworkSession {
 				incomingOpcode = incomingOpcode - incomingOpcodeCipher.nextInt() & 0xff;
 			}
 			incomingLength = IncomingPacketLengths.LENGTHS[incomingOpcode];
+			if (incomingLength >= 0) {
+				validateIncomingLength();
+			}
 			available--;
 		}
 
@@ -199,6 +205,7 @@ class NetworkSession {
 			}
 			connection.readFully(incoming.payload, 0, 1);
 			incomingLength = incoming.payload[0] & 0xff;
+			validateIncomingLength();
 			available--;
 		}
 
@@ -209,6 +216,7 @@ class NetworkSession {
 			connection.readFully(incoming.payload, 0, 2);
 			incoming.position = 0;
 			incomingLength = incoming.readUnsignedShort();
+			validateIncomingLength();
 			available -= 2;
 		}
 
@@ -225,6 +233,17 @@ class NetworkSession {
 		lastOpcode = incomingOpcode;
 
 		return true;
+	}
+
+	/**
+	 * Rejects a framed payload that cannot fit in the fixed revision-377 receive
+	 * buffer before any payload bytes are copied into it.
+	 */
+	private void validateIncomingLength() throws IOException {
+		if (incomingLength < 0 || incomingLength > MAX_INCOMING_PAYLOAD_LENGTH) {
+			throw new IOException("Incoming packet " + incomingOpcode + " length " + incomingLength
+					+ " exceeds receive buffer capacity " + MAX_INCOMING_PAYLOAD_LENGTH);
+		}
 	}
 
 	/**
