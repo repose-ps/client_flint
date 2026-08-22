@@ -6,7 +6,6 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.io.DataInputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
@@ -15,10 +14,9 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.zip.CRC32;
 
 import rs2.cache.Archive;
-import rs2.cache.CacheIndex;
+import rs2.cache.ResourceLoader;
 import rs2.cache.cfg.Varbit;
 import rs2.cache.cfg.Varp;
 import rs2.cache.def.FloorDefinition;
@@ -88,6 +86,7 @@ import rs2.text.TextFormatter;
 import rs2.ui.InterfaceState;
 import rs2.ui.WidgetRuntime;
 import rs2.ui.menu.MenuState;
+import rs2.ui.login.LoginScreen;
 
 public class client extends GameShell {
 
@@ -166,11 +165,11 @@ public class client extends GameShell {
 				return;
 			}
 			currentWorldId = Integer.parseInt(args[0]);
-			anInt924 = Integer.parseInt(args[1]);
+			portOffset = Integer.parseInt(args[1]);
 			if (args[2].equals("lowmem"))
-				method101(true);
+				setLowMemory();
 			else if (args[2].equals("highmem")) {
-				method27();
+				setHighMemory();
 			} else {
 				System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid");
 				return;
@@ -193,19 +192,18 @@ public class client extends GameShell {
 		}
 	}
 
-	public void method17(byte byte0) {
-		aBoolean1320 = true;
-		if (byte0 != 4)
-			return;
+	/* Legacy client.method17(byte byte0): byte0 -> removed fixed 4 sentinel. */
+	public void runTitleFlameLoop() {
+		titleFlameThreadActive = true;
 		try {
 			long l = System.currentTimeMillis();
 			int i = 0;
 			int j = 20;
-			while (aBoolean1243) {
-				anInt1101++;
-				method81((byte) 1);
-				method81((byte) 1);
-				method98(47);
+			while (titleFlamesRunning) {
+				titleFlameCycle++;
+				updateTitleFlames();
+				updateTitleFlames();
+				drawTitleFlames();
 				if (++i > 10) {
 					long l1 = System.currentTimeMillis();
 					int k = (int) (l1 - l) / 10 - j;
@@ -222,10 +220,11 @@ public class client extends GameShell {
 			}
 		} catch (Exception _ex) {
 		}
-		aBoolean1320 = false;
+		titleFlameThreadActive = false;
 	}
 
-	public void method19(String s) {
+	/* Legacy client.method19(String s): fatal startup/on-demand load halt. */
+	public void haltOnLoadError(String s) {
 		System.out.println(s);
 		do
 			try {
@@ -267,10 +266,10 @@ public class client extends GameShell {
 		aClass18_1110 = null;
 		varpValues = null;
 		regionManager.clear();
-		aClass18_1203 = null;
-		aClass18_1204 = null;
-		aClass18_1205 = null;
-		aClass18_1206 = null;
+		titleLeftBottomBuffer = null;
+		titleRightBottomBuffer = null;
+		titleLeftCenterBuffer = null;
+		titleRightCenterBuffer = null;
 		aClass50_Sub1_Sub1_Sub1_1192 = null;
 		aClass50_Sub1_Sub1_Sub1_1193 = null;
 		aClass50_Sub1_Sub1_Sub1_1194 = null;
@@ -290,11 +289,11 @@ public class client extends GameShell {
 		worldState = null;
 		zoneUpdates = null;
 		minimapRenderer.clear();
-		aClass18_1201 = null;
-		aClass18_1202 = null;
-		aClass18_1198 = null;
-		aClass18_1199 = null;
-		aClass18_1200 = null;
+		titleLeftFlameBuffer = null;
+		titleRightFlameBuffer = null;
+		titleTopBuffer = null;
+		titleBottomBuffer = null;
+		loginBoxBuffer = null;
 		aClass50_Sub1_Sub1_Sub1_1116 = null;
 		aClass50_Sub1_Sub1_Sub1Array1182 = null;
 		aClass50_Sub1_Sub1_Sub1Array1288 = null;
@@ -303,10 +302,10 @@ public class client extends GameShell {
 		aClass50_Sub1_Sub1_Sub1Array896 = null;
 		musicController.stop();
 		loginBuffer = null;
-		aClass18_1156 = null;
-		aClass18_1157 = null;
-		aClass18_1158 = null;
-		aClass18_1159 = null;
+		sidebarBuffer = null;
+		minimapBuffer = null;
+		viewportBuffer = null;
+		chatboxBuffer = null;
 		aClass50_Sub1_Sub1_Sub3_1185 = null;
 		aClass50_Sub1_Sub1_Sub3_1186 = null;
 		aClass50_Sub1_Sub1_Sub3_1187 = null;
@@ -320,11 +319,11 @@ public class client extends GameShell {
 		aClass50_Sub1_Sub1_Sub1Array1031 = null;
 		aClass50_Sub1_Sub1_Sub3Array976 = null;
 		aClass50_Sub1_Sub1_Sub1_1086 = null;
-		if (aClass32_Sub1_1291 != null)
-			aClass32_Sub1_1291.stop();
-		aClass32_Sub1_1291 = null;
+		if (onDemandFetcher != null)
+			onDemandFetcher.stop();
+		onDemandFetcher = null;
 		menuState.clearReferencesForQuit();
-		method141(28614);
+		disposeTitleScreen();
 		GameObjectDefinition.clear();
 		NpcDefinition.clear();
 		ItemDefinition.clear();
@@ -493,10 +492,10 @@ public class client extends GameShell {
 
 	}
 
-	public static void method27() {
+	public static void setHighMemory() {
 		Scene.lowMemory = false;
 		Rasterizer3D.lowMemory = false;
-		aBoolean926 = false;
+		lowMemory = false;
 		Region.lowMemory = false;
 		GameObjectDefinition.lowMemory = false;
 	}
@@ -624,9 +623,9 @@ public class client extends GameShell {
 		}
 		updateRegionLoading();
 		if (regionManager.loadingStage == RegionManager.STAGE_LOADED)
-			worldState.updatePendingSpawns(aBoolean926, currentPlane);
+			worldState.updatePendingSpawns(lowMemory, currentPlane);
 		soundEffectQueue.update(networkSession.outgoing);
-		musicController.updateResumeDelay(aBoolean926, aClass32_Sub1_1291::request);
+		musicController.updateResumeDelay(lowMemory, onDemandFetcher::request);
 		networkSession.incomingIdleCycles++;
 		if (networkSession.incomingIdleCycles > 750)
 			reconnect();
@@ -896,8 +895,8 @@ public class client extends GameShell {
 						if (chatInput.equals("::lag"))
 							method138(false);
 						if (chatInput.equals("::prefetchmusic")) {
-							for (int i1 = 0; i1 < aClass32_Sub1_1291.getFileCount(2); i1++)
-								aClass32_Sub1_1291.setExtraPriority(2, i1, (byte) 1);
+							for (int i1 = 0; i1 < onDemandFetcher.getFileCount(2); i1++)
+								onDemandFetcher.setExtraPriority(2, i1, (byte) 1);
 
 						}
 						if (chatInput.equals("::fpson"))
@@ -1080,7 +1079,7 @@ public class client extends GameShell {
 			int soundId = networkSession.incoming.readUnsignedShort();
 			int loopCount = networkSession.incoming.readUnsignedByte();
 			int delay = networkSession.incoming.readUnsignedShort();
-			soundEffectQueue.queuePacketSound(soundId, loopCount, delay, aBoolean926);
+			soundEffectQueue.queuePacketSound(soundId, loopCount, delay, lowMemory);
 			networkSession.incomingOpcode = -1;
 			return true;
 		}
@@ -1153,7 +1152,7 @@ public class client extends GameShell {
 		/* Opcode 220: select background MIDI track. */
 		if (networkSession.incomingOpcode == 220) {
 			int trackId = networkSession.incoming.readUnsignedShortAddLE();
-			musicController.selectTrack(trackId, aBoolean926, aClass32_Sub1_1291::request);
+			musicController.selectTrack(trackId, lowMemory, onDemandFetcher::request);
 			networkSession.incomingOpcode = -1;
 			return true;
 		}
@@ -1161,7 +1160,7 @@ public class client extends GameShell {
 		if (networkSession.incomingOpcode == 249) {
 			int trackId = networkSession.incoming.readUnsignedShortLE();
 			int resumeDelay = networkSession.incoming.readMediumME();
-			musicController.playTemporaryTrack(trackId, resumeDelay, aBoolean926, aClass32_Sub1_1291::request);
+			musicController.playTemporaryTrack(trackId, resumeDelay, lowMemory, onDemandFetcher::request);
 			networkSession.incomingOpcode = -1;
 			return true;
 		}
@@ -1629,13 +1628,13 @@ public class client extends GameShell {
 		}
 		if (networkSession.incomingOpcode == 222 || networkSession.incomingOpcode == 53) {
 			RegionManager.RegionShift shift = regionManager.decodeRebuild(networkSession.incoming,
-					networkSession.incomingOpcode, aClass32_Sub1_1291, actorSynchronizer, worldState,
+					networkSession.incomingOpcode, onDemandFetcher, actorSynchronizer, worldState,
 					destinationX, destinationY);
 			if (shift.changed) {
 				destinationX = shift.destinationX;
 				destinationY = shift.destinationY;
 				cameraController.cinematic = false;
-				method125(-332, null, "Loading - please wait.");
+				drawGameLoadingMessage(null, "Loading - please wait.");
 			}
 			networkSession.incomingOpcode = -1;
 			return true;
@@ -1706,7 +1705,7 @@ public class client extends GameShell {
 			return true;
 		}
 		if (networkSession.incomingOpcode == 71) {
-			actorSynchronizer.decodeNpcUpdate(networkSession.incoming, networkSession.incomingLength, anInt1325, username);
+			actorSynchronizer.decodeNpcUpdate(networkSession.incoming, networkSession.incomingLength, anInt1325, loginScreen.username);
 			networkSession.incomingOpcode = -1;
 			return true;
 		}
@@ -1812,7 +1811,7 @@ public class client extends GameShell {
 		}
 		if (networkSession.incomingOpcode == 90) {
 			currentPlane = actorSynchronizer.decodePlayerUpdate(networkSession.incoming, networkSession.incomingLength, anInt1325,
-					currentPlane, username, chatBuffer, actorChatHandler);
+					currentPlane, loginScreen.username, chatBuffer, actorChatHandler);
 			regionManager.playerUpdateReceived();
 			networkSession.incomingOpcode = -1;
 			return true;
@@ -1869,7 +1868,7 @@ public class client extends GameShell {
 			s = menuState.actionNames[menuState.count - 1];
 		if (menuState.count > 2)
 			s = s + "@whi@ / " + (menuState.count - 2) + " more options";
-		aClass50_Sub1_Sub1_Sub2_1061.drawRandomizedTextWithTags(s, 4, 15, 0xffffff, anInt1325 / 1000, true);
+		boldFont.drawRandomizedTextWithTags(s, 4, 15, 0xffffff, anInt1325 / 1000, true);
 	}
 
 	/*
@@ -1909,7 +1908,7 @@ public class client extends GameShell {
 		return true;
 	}
 
-	public String method37() {
+	public String getConfiguredHost() {
 		return "runescape.com";
 	}
 
@@ -2259,72 +2258,74 @@ public class client extends GameShell {
 		SpotAnimation.modelCache.clear();
 	}
 
-	public void method52(boolean flag) {
-		aClass50_Sub1_Sub1_Sub3_1292 = new IndexedImage(aClass2_888, "titlebox", 0);
-		aClass50_Sub1_Sub1_Sub3_1293 = new IndexedImage(aClass2_888, "titlebutton", 0);
-		aClass50_Sub1_Sub1_Sub3Array1117 = new IndexedImage[12];
-		if (flag)
-			startUp();
+	/*
+	 * Legacy client.method52(boolean flag): flag -> removed false sentinel.
+	 * Initializes title sprites, flame palettes/noise and the flame thread.
+	 */
+	public void initializeTitleScreen() {
+		titleBoxImage = new IndexedImage(titleArchive, "titlebox", 0);
+		titleButtonImage = new IndexedImage(titleArchive, "titlebutton", 0);
+		titleRunes = new IndexedImage[12];
 		for (int i = 0; i < 12; i++)
-			aClass50_Sub1_Sub1_Sub3Array1117[i] = new IndexedImage(aClass2_888, "runes", i);
+			titleRunes[i] = new IndexedImage(titleArchive, "runes", i);
 
-		aClass50_Sub1_Sub1_Sub1_1017 = new ImageRGB(128, 265);
-		aClass50_Sub1_Sub1_Sub1_1018 = new ImageRGB(128, 265);
+		titleLeftFlameBackground = new ImageRGB(128, 265);
+		titleRightFlameBackground = new ImageRGB(128, 265);
 		for (int j = 0; j < 33920; j++)
-			aClass50_Sub1_Sub1_Sub1_1017.pixels[j] = aClass18_1201.pixels[j];
+			titleLeftFlameBackground.pixels[j] = titleLeftFlameBuffer.pixels[j];
 
 		for (int k = 0; k < 33920; k++)
-			aClass50_Sub1_Sub1_Sub1_1018.pixels[k] = aClass18_1202.pixels[k];
+			titleRightFlameBackground.pixels[k] = titleRightFlameBuffer.pixels[k];
 
-		anIntArray1311 = new int[256];
+		titleFlameRedPalette = new int[256];
 		for (int l = 0; l < 64; l++)
-			anIntArray1311[l] = l * 0x40000;
+			titleFlameRedPalette[l] = l * 0x40000;
 
 		for (int i1 = 0; i1 < 64; i1++)
-			anIntArray1311[i1 + 64] = 0xff0000 + 1024 * i1;
+			titleFlameRedPalette[i1 + 64] = 0xff0000 + 1024 * i1;
 
 		for (int j1 = 0; j1 < 64; j1++)
-			anIntArray1311[j1 + 128] = 0xffff00 + 4 * j1;
+			titleFlameRedPalette[j1 + 128] = 0xffff00 + 4 * j1;
 
 		for (int k1 = 0; k1 < 64; k1++)
-			anIntArray1311[k1 + 192] = 0xffffff;
+			titleFlameRedPalette[k1 + 192] = 0xffffff;
 
-		anIntArray1312 = new int[256];
+		titleFlameGreenPalette = new int[256];
 		for (int l1 = 0; l1 < 64; l1++)
-			anIntArray1312[l1] = l1 * 1024;
+			titleFlameGreenPalette[l1] = l1 * 1024;
 
 		for (int i2 = 0; i2 < 64; i2++)
-			anIntArray1312[i2 + 64] = 65280 + 4 * i2;
+			titleFlameGreenPalette[i2 + 64] = 65280 + 4 * i2;
 
 		for (int j2 = 0; j2 < 64; j2++)
-			anIntArray1312[j2 + 128] = 65535 + 0x40000 * j2;
+			titleFlameGreenPalette[j2 + 128] = 65535 + 0x40000 * j2;
 
 		for (int k2 = 0; k2 < 64; k2++)
-			anIntArray1312[k2 + 192] = 0xffffff;
+			titleFlameGreenPalette[k2 + 192] = 0xffffff;
 
-		anIntArray1313 = new int[256];
+		titleFlameBluePalette = new int[256];
 		for (int l2 = 0; l2 < 64; l2++)
-			anIntArray1313[l2] = l2 * 4;
+			titleFlameBluePalette[l2] = l2 * 4;
 
 		for (int i3 = 0; i3 < 64; i3++)
-			anIntArray1313[i3 + 64] = 255 + 0x40000 * i3;
+			titleFlameBluePalette[i3 + 64] = 255 + 0x40000 * i3;
 
 		for (int j3 = 0; j3 < 64; j3++)
-			anIntArray1313[j3 + 128] = 0xff00ff + 1024 * j3;
+			titleFlameBluePalette[j3 + 128] = 0xff00ff + 1024 * j3;
 
 		for (int k3 = 0; k3 < 64; k3++)
-			anIntArray1313[k3 + 192] = 0xffffff;
+			titleFlameBluePalette[k3 + 192] = 0xffffff;
 
-		anIntArray1310 = new int[256];
-		anIntArray1176 = new int[32768];
-		anIntArray1177 = new int[32768];
-		method83(null, 0);
-		anIntArray1084 = new int[32768];
-		anIntArray1085 = new int[32768];
+		titleFlamePalette = new int[256];
+		titleFlameNoise = new int[32768];
+		titleFlameNoiseScratch = new int[32768];
+		initializeTitleFlameNoise(null);
+		titleFlameIntensity = new int[32768];
+		titleFlameIntensityScratch = new int[32768];
 		drawLoadingText(10, "Connecting to fileserver");
-		if (!aBoolean1243) {
-			aBoolean1314 = true;
-			aBoolean1243 = true;
+		if (!titleFlamesRunning) {
+			titleFlameThreadMode = true;
+			titleFlamesRunning = true;
 			startThread(this, 2);
 		}
 	}
@@ -2476,13 +2477,13 @@ public class client extends GameShell {
 			logout();
 			return;
 		}
-		method125(-332, "Please wait - attempting to reestablish", "Connection lost");
+		drawGameLoadingMessage("Please wait - attempting to reestablish", "Connection lost");
 		minimapRenderer.state = 0;
 		destinationX = 0;
 		BufferedConnection previousConnection = networkSession.getConnection();
 		loggedIn = false;
 		loginFailures = 0;
-		login(username, password, true);
+		login(loginScreen.username, loginScreen.password, true);
 		if (!loggedIn)
 			logout();
 		try {
@@ -2595,123 +2596,14 @@ public class client extends GameShell {
 		return false;
 	}
 
-	public Archive method61(int i, int j, String s, int k, int l, String s1) {
-		byte abyte0[] = null;
-		int i1 = 5;
-		try {
-			if (aClass23Array1228[0] != null) {
-				abyte0 = aClass23Array1228[0].read(l);
-				return new Archive(abyte0); // TODO debug
-			}
-
-		} catch (Exception _ex) {
-		}
-		if (abyte0 != null) {
-			aCRC32_1088.reset();
-			aCRC32_1088.update(abyte0);
-			int j1 = (int) aCRC32_1088.getValue();
-			if (j1 != j)
-				abyte0 = null;
-		}
-		if (abyte0 != null) {
-			Archive class2 = new Archive(abyte0);
-			return class2;
-		}
-		int k1 = 0;
-		if (i != 14076)
-			anInt1281 = -343;
-		while (abyte0 == null) {
-			String s2 = "Unknown error";
-			drawLoadingText(k, "Requesting " + s1);
-			Object obj = null;
-			try {
-				int l1 = 0;
-				DataInputStream datainputstream = openJaggrabStream(s + j);
-				byte abyte1[] = new byte[6];
-				datainputstream.readFully(abyte1, 0, 6);
-				Buffer class50_sub1_sub2 = new Buffer(abyte1);
-				class50_sub1_sub2.position = 3;
-				int j2 = class50_sub1_sub2.readMedium() + 6;
-				int k2 = 6;
-				abyte0 = new byte[j2];
-				for (int l2 = 0; l2 < 6; l2++)
-					abyte0[l2] = abyte1[l2];
-
-				while (k2 < j2) {
-					int i3 = j2 - k2;
-					if (i3 > 1000)
-						i3 = 1000;
-					int k3 = datainputstream.read(abyte0, k2, i3);
-					if (k3 < 0) {
-						s2 = "Length error: " + k2 + "/" + j2;
-						throw new IOException("EOF");
-					}
-					k2 += k3;
-					int l3 = (k2 * 100) / j2;
-					if (l3 != l1)
-						drawLoadingText(k, "Loading " + s1 + " - " + l3 + "%");
-					l1 = l3;
-				}
-				datainputstream.close();
-				try {
-					if (aClass23Array1228[0] != null)
-						aClass23Array1228[0].write(l, abyte0);
-				} catch (Exception _ex) {
-					aClass23Array1228[0] = null;
-				}
-				if (abyte0 != null) {
-					aCRC32_1088.reset();
-					aCRC32_1088.update(abyte0);
-					int j3 = (int) aCRC32_1088.getValue();
-					if (j3 != j) {
-						abyte0 = null;
-						k1++;
-						s2 = "Checksum error: " + j3;
-					}
-				}
-			} catch (IOException ioexception) {
-				ioexception.printStackTrace();
-				if (s2.equals("Unknown error"))
-					s2 = "Connection error";
-				abyte0 = null;
-			} catch (NullPointerException _ex) {
-				s2 = "Null error";
-				abyte0 = null;
-				if (!Signlink.reportErrors)
-					return null;
-			} catch (ArrayIndexOutOfBoundsException _ex) {
-				s2 = "Bounds error";
-				abyte0 = null;
-				if (!Signlink.reportErrors)
-					return null;
-			} catch (Exception _ex) {
-				s2 = "Unexpected error";
-				abyte0 = null;
-				if (!Signlink.reportErrors)
-					return null;
-			}
-			if (abyte0 == null) {
-				for (int i2 = i1; i2 > 0; i2--) {
-					if (k1 >= 3) {
-						drawLoadingText(k, "Game updated - please reload page");
-						i2 = 10;
-					} else {
-						drawLoadingText(k, s2 + " - Retrying in " + i2);
-					}
-					try {
-						Thread.sleep(1000L);
-					} catch (Exception _ex) {
-					}
-				}
-
-				i1 *= 2;
-				if (i1 > 60)
-					i1 = 60;
-				aBoolean900 = !aBoolean900;
-			}
-		}
-		Archive class2_1 = new Archive(abyte0);
-		return class2_1;
+	/*
+	 * Legacy client.method61(int i, int j, String s, int k, int l, String s1):
+	 *   i -> removed fixed 14076 sentinel, j -> expectedCrc, s -> archiveName,
+	 *   k -> loadingPercent, l -> cacheFileId, s1 -> displayName.
+	 */
+	private Archive loadArchive(int expectedCrc, String archiveName, int loadingPercent, int cacheFileId, String displayName) {
+		return resourceLoader.loadArchive(expectedCrc, archiveName, loadingPercent, cacheFileId, displayName,
+				this::openJaggrabStream, this::drawLoadingText);
 	}
 
 	public void method10(byte byte0) {
@@ -2722,53 +2614,53 @@ public class client extends GameShell {
 
 
 
-	public void method64(int i) {
-		if (aClass18_1198 != null)
+	/* Legacy client.method64(int i): i -> removed negative sentinel. */
+	public void createTitleScreenBuffers() {
+		if (titleTopBuffer != null)
 			return;
 		super.gameBuffer = null;
-		aClass18_1159 = null;
-		aClass18_1157 = null;
-		aClass18_1156 = null;
-		aClass18_1158 = null;
+		chatboxBuffer = null;
+		minimapBuffer = null;
+		sidebarBuffer = null;
+		viewportBuffer = null;
 		aClass18_1108 = null;
 		aClass18_1109 = null;
-		for (aClass18_1110 = null; i >= 0;)
-			return;
+		aClass18_1110 = null;
 
-		aClass18_1201 = new GraphicsBuffer(getGameComponent(), 128, 265);
+		titleLeftFlameBuffer = new GraphicsBuffer(getGameComponent(), 128, 265);
 		Rasterizer.resetPixels();
-		aClass18_1202 = new GraphicsBuffer(getGameComponent(), 128, 265);
+		titleRightFlameBuffer = new GraphicsBuffer(getGameComponent(), 128, 265);
 		Rasterizer.resetPixels();
-		aClass18_1198 = new GraphicsBuffer(getGameComponent(), 509, 171);
+		titleTopBuffer = new GraphicsBuffer(getGameComponent(), 509, 171);
 		Rasterizer.resetPixels();
-		aClass18_1199 = new GraphicsBuffer(getGameComponent(), 360, 132);
+		titleBottomBuffer = new GraphicsBuffer(getGameComponent(), 360, 132);
 		Rasterizer.resetPixels();
-		aClass18_1200 = new GraphicsBuffer(getGameComponent(), 360, 200);
+		loginBoxBuffer = new GraphicsBuffer(getGameComponent(), 360, 200);
 		Rasterizer.resetPixels();
-		aClass18_1203 = new GraphicsBuffer(getGameComponent(), 202, 238);
+		titleLeftBottomBuffer = new GraphicsBuffer(getGameComponent(), 202, 238);
 		Rasterizer.resetPixels();
-		aClass18_1204 = new GraphicsBuffer(getGameComponent(), 203, 238);
+		titleRightBottomBuffer = new GraphicsBuffer(getGameComponent(), 203, 238);
 		Rasterizer.resetPixels();
-		aClass18_1205 = new GraphicsBuffer(getGameComponent(), 74, 94);
+		titleLeftCenterBuffer = new GraphicsBuffer(getGameComponent(), 74, 94);
 		Rasterizer.resetPixels();
-		aClass18_1206 = new GraphicsBuffer(getGameComponent(), 75, 94);
+		titleRightCenterBuffer = new GraphicsBuffer(getGameComponent(), 75, 94);
 		Rasterizer.resetPixels();
-		if (aClass2_888 != null) {
-			method139(aBoolean1207);
-			method52(false);
+		if (titleArchive != null) {
+			drawTitleBackground();
+			initializeTitleScreen();
 		}
 		aBoolean1046 = true;
 	}
 
 	public void startUp() {
 		drawLoadingText(20, "Starting up");
-		if (aBoolean999) {
-			aBoolean1016 = true;
+		if (startupStarted) {
+			duplicateClientError = true;
 			return;
 		}
-		aBoolean999 = true;
+		startupStarted = true;
 		boolean flag = false;
-		String s = method37();
+		String s = getConfiguredHost();
 		if (s.endsWith("jagex.com"))
 			flag = true;
 		if (s.endsWith("runescape.com"))
@@ -2794,60 +2686,59 @@ public class client extends GameShell {
 		if (s.endsWith("127.0.0.1"))
 			flag = true;
 		if (!flag) {
-			aBoolean1097 = true;
+			invalidHostError = true;
 			return;
 		}
 		if (Signlink.cacheData != null) {
-			for (int i = 0; i < 5; i++)
-				aClass23Array1228[i] = new CacheIndex(i + 1, 0x927c0, Signlink.cacheData, Signlink.cacheIndexes[i]);
+			resourceLoader.initializeCacheIndices(Signlink.cacheData, Signlink.cacheIndexes);
 
 		}
 		try {
-//			method86(false); TODO debug
-			aClass2_888 = method61(14076, anIntArray837[1], "title", 25, 1, "title screen");
-			aClass50_Sub1_Sub1_Sub2_1059 = new TypeFace(false, aClass2_888, "p11_full");
-			aClass50_Sub1_Sub1_Sub2_1060 = new TypeFace(false, aClass2_888, "p12_full");
-			aClass50_Sub1_Sub1_Sub2_1061 = new TypeFace(false, aClass2_888, "b12_full");
-			aClass50_Sub1_Sub1_Sub2_1062 = new TypeFace(true, aClass2_888, "q8_full");
-			method139(aBoolean1207);
-			method52(false);
-			Archive class2 = method61(14076, anIntArray837[2], "config", 30, 2, "config");
-			Archive class2_1 = method61(14076, anIntArray837[3], "interface", 35, 3, "interface");
-			Archive class2_2 = method61(14076, anIntArray837[4], "media", 40, 4, "2d graphics");
-			Archive class2_3 = method61(14076, anIntArray837[6], "textures", 45, 6, "textures");
-			Archive class2_4 = method61(14076, anIntArray837[7], "wordenc", 50, 7, "chat system");
-			Archive class2_5 = method61(14076, anIntArray837[8], "sounds", 55, 8, "sound effects");
+//			loadArchiveCrcs(); TODO debug - intentionally disabled in supplied source
+			titleArchive = loadArchive(resourceLoader.getArchiveCrc(1), "title", 25, 1, "title screen");
+			smallFont = new TypeFace(false, titleArchive, "p11_full");
+			plainFont = new TypeFace(false, titleArchive, "p12_full");
+			boldFont = new TypeFace(false, titleArchive, "b12_full");
+			fancyFont = new TypeFace(true, titleArchive, "q8_full");
+			drawTitleBackground();
+			initializeTitleScreen();
+			Archive configArchive = loadArchive(resourceLoader.getArchiveCrc(2), "config", 30, 2, "config");
+			Archive interfaceArchive = loadArchive(resourceLoader.getArchiveCrc(3), "interface", 35, 3, "interface");
+			Archive mediaArchive = loadArchive(resourceLoader.getArchiveCrc(4), "media", 40, 4, "2d graphics");
+			Archive textureArchive = loadArchive(resourceLoader.getArchiveCrc(6), "textures", 45, 6, "textures");
+			Archive wordEncodingArchive = loadArchive(resourceLoader.getArchiveCrc(7), "wordenc", 50, 7, "chat system");
+			Archive soundArchive = loadArchive(resourceLoader.getArchiveCrc(8), "sounds", 55, 8, "sound effects");
 			worldState = new WorldState();
 			zoneUpdates = new ZoneUpdateHandler(worldState);
 
 			minimapRenderer.initializeMapImage();
-			Archive class2_6 = method61(14076, anIntArray837[5], "versionlist", 60, 5, "update list");
+			Archive versionListArchive = loadArchive(resourceLoader.getArchiveCrc(5), "versionlist", 60, 5, "update list");
 			drawLoadingText(60, "Connecting to update server");
-			aClass32_Sub1_1291 = new OnDemandFetcher();
-			aClass32_Sub1_1291.start(class2_6, this);
-			AnimationFrame.initialize(aClass32_Sub1_1291.getAnimationCount());
-			Model.initializeModelHeaders(aClass32_Sub1_1291.getFileCount(0), aClass32_Sub1_1291);
-			if (!aBoolean926) {
-				musicController.requestStartupTrack(aClass32_Sub1_1291::request, aBoolean926);
-				while (aClass32_Sub1_1291.getOutstandingRequestCount() > 0) {
+			onDemandFetcher = new OnDemandFetcher();
+			onDemandFetcher.start(versionListArchive, this, resourceLoader);
+			AnimationFrame.initialize(onDemandFetcher.getAnimationCount());
+			Model.initializeModelHeaders(onDemandFetcher.getFileCount(0), onDemandFetcher);
+			if (!lowMemory) {
+				musicController.requestStartupTrack(onDemandFetcher::request, lowMemory);
+				while (onDemandFetcher.getOutstandingRequestCount() > 0) {
 					method77(false);
 					try {
 						Thread.sleep(100L);
 					} catch (Exception _ex) {
 					}
-					if (aClass32_Sub1_1291.requestFailures > 3) {
-						method19("ondemand");
+					if (onDemandFetcher.requestFailures > 3) {
+						haltOnLoadError("ondemand");
 						return;
 					}
 				}
 			}
 			drawLoadingText(65, "Requesting animations");
-			int k = aClass32_Sub1_1291.getFileCount(1);
+			int k = onDemandFetcher.getFileCount(1);
 			for (int l = 0; l < k; l++)
-				aClass32_Sub1_1291.request(1, l);
+				onDemandFetcher.request(1, l);
 
-			while (aClass32_Sub1_1291.getOutstandingRequestCount() > 0) {
-				int i1 = k - aClass32_Sub1_1291.getOutstandingRequestCount();
+			while (onDemandFetcher.getOutstandingRequestCount() > 0) {
+				int i1 = k - onDemandFetcher.getOutstandingRequestCount();
 				if (i1 > 0)
 					drawLoadingText(65, "Loading animations - " + (i1 * 100) / k + "%");
 				method77(false);
@@ -2855,22 +2746,22 @@ public class client extends GameShell {
 					Thread.sleep(100L);
 				} catch (Exception _ex) {
 				}
-				if (aClass32_Sub1_1291.requestFailures > 3) {
-					method19("ondemand");
+				if (onDemandFetcher.requestFailures > 3) {
+					haltOnLoadError("ondemand");
 					return;
 				}
 			}
 			drawLoadingText(70, "Requesting models");
-			k = aClass32_Sub1_1291.getFileCount(0);
+			k = onDemandFetcher.getFileCount(0);
 			for (int j1 = 0; j1 < k; j1++) {
-				int k1 = aClass32_Sub1_1291.getModelIndex(j1);
+				int k1 = onDemandFetcher.getModelIndex(j1);
 				if ((k1 & 1) != 0)
-					aClass32_Sub1_1291.request(0, j1);
+					onDemandFetcher.request(0, j1);
 			}
 
-			k = aClass32_Sub1_1291.getOutstandingRequestCount();
-			while (aClass32_Sub1_1291.getOutstandingRequestCount() > 0) {
-				int l1 = k - aClass32_Sub1_1291.getOutstandingRequestCount();
+			k = onDemandFetcher.getOutstandingRequestCount();
+			while (onDemandFetcher.getOutstandingRequestCount() > 0) {
+				int l1 = k - onDemandFetcher.getOutstandingRequestCount();
 				if (l1 > 0)
 					drawLoadingText(70, "Loading models - " + (l1 * 100) / k + "%");
 				method77(false);
@@ -2879,23 +2770,23 @@ public class client extends GameShell {
 				} catch (Exception _ex) {
 				}
 			}
-			if (aClass23Array1228[0] != null) {
+			if (resourceLoader.hasCache()) {
 				drawLoadingText(75, "Requesting maps");
-				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(47, 48, 0));
-				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(47, 48, 1));
-				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(48, 48, 0));
-				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(48, 48, 1));
-				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(49, 48, 0));
-				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(49, 48, 1));
-				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(47, 47, 0));
-				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(47, 47, 1));
-				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(48, 47, 0));
-				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(48, 47, 1));
-				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(48, 148, 0));
-				aClass32_Sub1_1291.request(3, aClass32_Sub1_1291.getMapFileId(48, 148, 1));
-				k = aClass32_Sub1_1291.getOutstandingRequestCount();
-				while (aClass32_Sub1_1291.getOutstandingRequestCount() > 0) {
-					int i2 = k - aClass32_Sub1_1291.getOutstandingRequestCount();
+				onDemandFetcher.request(3, onDemandFetcher.getMapFileId(47, 48, 0));
+				onDemandFetcher.request(3, onDemandFetcher.getMapFileId(47, 48, 1));
+				onDemandFetcher.request(3, onDemandFetcher.getMapFileId(48, 48, 0));
+				onDemandFetcher.request(3, onDemandFetcher.getMapFileId(48, 48, 1));
+				onDemandFetcher.request(3, onDemandFetcher.getMapFileId(49, 48, 0));
+				onDemandFetcher.request(3, onDemandFetcher.getMapFileId(49, 48, 1));
+				onDemandFetcher.request(3, onDemandFetcher.getMapFileId(47, 47, 0));
+				onDemandFetcher.request(3, onDemandFetcher.getMapFileId(47, 47, 1));
+				onDemandFetcher.request(3, onDemandFetcher.getMapFileId(48, 47, 0));
+				onDemandFetcher.request(3, onDemandFetcher.getMapFileId(48, 47, 1));
+				onDemandFetcher.request(3, onDemandFetcher.getMapFileId(48, 148, 0));
+				onDemandFetcher.request(3, onDemandFetcher.getMapFileId(48, 148, 1));
+				k = onDemandFetcher.getOutstandingRequestCount();
+				while (onDemandFetcher.getOutstandingRequestCount() > 0) {
+					int i2 = k - onDemandFetcher.getOutstandingRequestCount();
 					if (i2 > 0)
 						drawLoadingText(75, "Loading maps - " + (i2 * 100) / k + "%");
 					method77(false);
@@ -2905,9 +2796,9 @@ public class client extends GameShell {
 					}
 				}
 			}
-			k = aClass32_Sub1_1291.getFileCount(0);
+			k = onDemandFetcher.getFileCount(0);
 			for (int j2 = 0; j2 < k; j2++) {
-				int k2 = aClass32_Sub1_1291.getModelIndex(j2);
+				int k2 = onDemandFetcher.getModelIndex(j2);
 				byte byte0 = 0;
 				if ((k2 & 8) != 0)
 					byte0 = 10;
@@ -2926,123 +2817,123 @@ public class client extends GameShell {
 				if ((k2 & 1) != 0)
 					byte0 = 3;
 				if (byte0 != 0)
-					aClass32_Sub1_1291.setExtraPriority(0, j2, byte0);
+					onDemandFetcher.setExtraPriority(0, j2, byte0);
 			}
 
-			aClass32_Sub1_1291.preloadMaps(membersWorld);
-			if (!aBoolean926) {
-				k = aClass32_Sub1_1291.getFileCount(2);
+			onDemandFetcher.preloadMaps(membersWorld);
+			if (!lowMemory) {
+				k = onDemandFetcher.getFileCount(2);
 				for (int l2 = 1; l2 < k; l2++)
-					if (aClass32_Sub1_1291.isMidiPreload(l2))
-						aClass32_Sub1_1291.setExtraPriority(2, l2, (byte) 1);
+					if (onDemandFetcher.isMidiPreload(l2))
+						onDemandFetcher.setExtraPriority(2, l2, (byte) 1);
 
 			}
-			k = aClass32_Sub1_1291.getFileCount(0);
+			k = onDemandFetcher.getFileCount(0);
 			for (int i3 = 0; i3 < k; i3++) {
-				int j3 = aClass32_Sub1_1291.getModelIndex(i3);
-				if (j3 == 0 && aClass32_Sub1_1291.totalFiles < 200)
-					aClass32_Sub1_1291.setExtraPriority(0, i3, (byte) 1);
+				int j3 = onDemandFetcher.getModelIndex(i3);
+				if (j3 == 0 && onDemandFetcher.totalFiles < 200)
+					onDemandFetcher.setExtraPriority(0, i3, (byte) 1);
 			}
 
 			drawLoadingText(80, "Unpacking media");
-			aClass50_Sub1_Sub1_Sub3_1185 = new IndexedImage(class2_2, "invback", 0);
-			aClass50_Sub1_Sub1_Sub3_1187 = new IndexedImage(class2_2, "chatback", 0);
-			aClass50_Sub1_Sub1_Sub3_1186 = new IndexedImage(class2_2, "mapback", 0);
-			aClass50_Sub1_Sub1_Sub3_965 = new IndexedImage(class2_2, "backbase1", 0);
-			aClass50_Sub1_Sub1_Sub3_966 = new IndexedImage(class2_2, "backbase2", 0);
-			aClass50_Sub1_Sub1_Sub3_967 = new IndexedImage(class2_2, "backhmid1", 0);
+			aClass50_Sub1_Sub1_Sub3_1185 = new IndexedImage(mediaArchive, "invback", 0);
+			aClass50_Sub1_Sub1_Sub3_1187 = new IndexedImage(mediaArchive, "chatback", 0);
+			aClass50_Sub1_Sub1_Sub3_1186 = new IndexedImage(mediaArchive, "mapback", 0);
+			aClass50_Sub1_Sub1_Sub3_965 = new IndexedImage(mediaArchive, "backbase1", 0);
+			aClass50_Sub1_Sub1_Sub3_966 = new IndexedImage(mediaArchive, "backbase2", 0);
+			aClass50_Sub1_Sub1_Sub3_967 = new IndexedImage(mediaArchive, "backhmid1", 0);
 			for (int k3 = 0; k3 < 13; k3++)
-				aClass50_Sub1_Sub1_Sub3Array976[k3] = new IndexedImage(class2_2, "sideicons", k3);
+				aClass50_Sub1_Sub1_Sub3Array976[k3] = new IndexedImage(mediaArchive, "sideicons", k3);
 
-			aClass50_Sub1_Sub1_Sub1_1116 = new ImageRGB(class2_2, "compass", 0);
-			aClass50_Sub1_Sub1_Sub1_1247 = new ImageRGB(class2_2, "mapedge", 0);
+			aClass50_Sub1_Sub1_Sub1_1116 = new ImageRGB(mediaArchive, "compass", 0);
+			aClass50_Sub1_Sub1_Sub1_1247 = new ImageRGB(mediaArchive, "mapedge", 0);
 			aClass50_Sub1_Sub1_Sub1_1247.trim();
 			for (int l3 = 0; l3 < 72; l3++)
-				aClass50_Sub1_Sub1_Sub3Array1153[l3] = new IndexedImage(class2_2, "mapscene", l3);
+				aClass50_Sub1_Sub1_Sub3Array1153[l3] = new IndexedImage(mediaArchive, "mapscene", l3);
 
 			for (int i4 = 0; i4 < 70; i4++)
-				aClass50_Sub1_Sub1_Sub1Array1031[i4] = new ImageRGB(class2_2, "mapfunction", i4);
+				aClass50_Sub1_Sub1_Sub1Array1031[i4] = new ImageRGB(mediaArchive, "mapfunction", i4);
 
 			for (int j4 = 0; j4 < 5; j4++)
-				aClass50_Sub1_Sub1_Sub1Array1182[j4] = new ImageRGB(class2_2, "hitmarks", j4);
+				aClass50_Sub1_Sub1_Sub1Array1182[j4] = new ImageRGB(mediaArchive, "hitmarks", j4);
 
 			for (int k4 = 0; k4 < 6; k4++)
-				aClass50_Sub1_Sub1_Sub1Array1288[k4] = new ImageRGB(class2_2, "headicons_pk", k4);
+				aClass50_Sub1_Sub1_Sub1Array1288[k4] = new ImageRGB(mediaArchive, "headicons_pk", k4);
 
 			for (int l4 = 0; l4 < 9; l4++)
-				aClass50_Sub1_Sub1_Sub1Array1079[l4] = new ImageRGB(class2_2, "headicons_prayer", l4);
+				aClass50_Sub1_Sub1_Sub1Array1079[l4] = new ImageRGB(mediaArchive, "headicons_prayer", l4);
 
 			for (int i5 = 0; i5 < 6; i5++)
-				aClass50_Sub1_Sub1_Sub1Array954[i5] = new ImageRGB(class2_2, "headicons_hint", i5);
+				aClass50_Sub1_Sub1_Sub1Array954[i5] = new ImageRGB(mediaArchive, "headicons_hint", i5);
 
-			aClass50_Sub1_Sub1_Sub1_1086 = new ImageRGB(class2_2, "overlay_multiway", 0);
-			aClass50_Sub1_Sub1_Sub1_1036 = new ImageRGB(class2_2, "mapmarker", 0);
-			aClass50_Sub1_Sub1_Sub1_1037 = new ImageRGB(class2_2, "mapmarker", 1);
+			aClass50_Sub1_Sub1_Sub1_1086 = new ImageRGB(mediaArchive, "overlay_multiway", 0);
+			aClass50_Sub1_Sub1_Sub1_1036 = new ImageRGB(mediaArchive, "mapmarker", 0);
+			aClass50_Sub1_Sub1_Sub1_1037 = new ImageRGB(mediaArchive, "mapmarker", 1);
 			for (int j5 = 0; j5 < 8; j5++)
-				aClass50_Sub1_Sub1_Sub1Array896[j5] = new ImageRGB(class2_2, "cross", j5);
+				aClass50_Sub1_Sub1_Sub1Array896[j5] = new ImageRGB(mediaArchive, "cross", j5);
 
-			aClass50_Sub1_Sub1_Sub1_1192 = new ImageRGB(class2_2, "mapdots", 0);
-			aClass50_Sub1_Sub1_Sub1_1193 = new ImageRGB(class2_2, "mapdots", 1);
-			aClass50_Sub1_Sub1_Sub1_1194 = new ImageRGB(class2_2, "mapdots", 2);
-			aClass50_Sub1_Sub1_Sub1_1195 = new ImageRGB(class2_2, "mapdots", 3);
-			aClass50_Sub1_Sub1_Sub1_1196 = new ImageRGB(class2_2, "mapdots", 4);
-			aClass50_Sub1_Sub1_Sub3_1095 = new IndexedImage(class2_2, "scrollbar", 0);
-			aClass50_Sub1_Sub1_Sub3_1096 = new IndexedImage(class2_2, "scrollbar", 1);
-			aClass50_Sub1_Sub1_Sub3_880 = new IndexedImage(class2_2, "redstone1", 0);
-			aClass50_Sub1_Sub1_Sub3_881 = new IndexedImage(class2_2, "redstone2", 0);
-			aClass50_Sub1_Sub1_Sub3_882 = new IndexedImage(class2_2, "redstone3", 0);
-			aClass50_Sub1_Sub1_Sub3_883 = new IndexedImage(class2_2, "redstone1", 0);
+			aClass50_Sub1_Sub1_Sub1_1192 = new ImageRGB(mediaArchive, "mapdots", 0);
+			aClass50_Sub1_Sub1_Sub1_1193 = new ImageRGB(mediaArchive, "mapdots", 1);
+			aClass50_Sub1_Sub1_Sub1_1194 = new ImageRGB(mediaArchive, "mapdots", 2);
+			aClass50_Sub1_Sub1_Sub1_1195 = new ImageRGB(mediaArchive, "mapdots", 3);
+			aClass50_Sub1_Sub1_Sub1_1196 = new ImageRGB(mediaArchive, "mapdots", 4);
+			aClass50_Sub1_Sub1_Sub3_1095 = new IndexedImage(mediaArchive, "scrollbar", 0);
+			aClass50_Sub1_Sub1_Sub3_1096 = new IndexedImage(mediaArchive, "scrollbar", 1);
+			aClass50_Sub1_Sub1_Sub3_880 = new IndexedImage(mediaArchive, "redstone1", 0);
+			aClass50_Sub1_Sub1_Sub3_881 = new IndexedImage(mediaArchive, "redstone2", 0);
+			aClass50_Sub1_Sub1_Sub3_882 = new IndexedImage(mediaArchive, "redstone3", 0);
+			aClass50_Sub1_Sub1_Sub3_883 = new IndexedImage(mediaArchive, "redstone1", 0);
 			aClass50_Sub1_Sub1_Sub3_883.flipHorizontal();
-			aClass50_Sub1_Sub1_Sub3_884 = new IndexedImage(class2_2, "redstone2", 0);
+			aClass50_Sub1_Sub1_Sub3_884 = new IndexedImage(mediaArchive, "redstone2", 0);
 			aClass50_Sub1_Sub1_Sub3_884.flipHorizontal();
-			aClass50_Sub1_Sub1_Sub3_983 = new IndexedImage(class2_2, "redstone1", 0);
+			aClass50_Sub1_Sub1_Sub3_983 = new IndexedImage(mediaArchive, "redstone1", 0);
 			aClass50_Sub1_Sub1_Sub3_983.flipVertical();
-			aClass50_Sub1_Sub1_Sub3_984 = new IndexedImage(class2_2, "redstone2", 0);
+			aClass50_Sub1_Sub1_Sub3_984 = new IndexedImage(mediaArchive, "redstone2", 0);
 			aClass50_Sub1_Sub1_Sub3_984.flipVertical();
-			aClass50_Sub1_Sub1_Sub3_985 = new IndexedImage(class2_2, "redstone3", 0);
+			aClass50_Sub1_Sub1_Sub3_985 = new IndexedImage(mediaArchive, "redstone3", 0);
 			aClass50_Sub1_Sub1_Sub3_985.flipVertical();
-			aClass50_Sub1_Sub1_Sub3_986 = new IndexedImage(class2_2, "redstone1", 0);
+			aClass50_Sub1_Sub1_Sub3_986 = new IndexedImage(mediaArchive, "redstone1", 0);
 			aClass50_Sub1_Sub1_Sub3_986.flipHorizontal();
 			aClass50_Sub1_Sub1_Sub3_986.flipVertical();
-			aClass50_Sub1_Sub1_Sub3_987 = new IndexedImage(class2_2, "redstone2", 0);
+			aClass50_Sub1_Sub1_Sub3_987 = new IndexedImage(mediaArchive, "redstone2", 0);
 			aClass50_Sub1_Sub1_Sub3_987.flipHorizontal();
 			aClass50_Sub1_Sub1_Sub3_987.flipVertical();
 			for (int k5 = 0; k5 < 2; k5++)
-				aClass50_Sub1_Sub1_Sub3Array1142[k5] = new IndexedImage(class2_2, "mod_icons", k5);
+				aClass50_Sub1_Sub1_Sub3Array1142[k5] = new IndexedImage(mediaArchive, "mod_icons", k5);
 
-			ImageRGB class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backleft1", 0);
+			ImageRGB class50_sub1_sub1_sub1 = new ImageRGB(mediaArchive, "backleft1", 0);
 			aClass18_906 = new GraphicsBuffer(getGameComponent(), class50_sub1_sub1_sub1.width,
 					class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
-			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backleft2", 0);
+			class50_sub1_sub1_sub1 = new ImageRGB(mediaArchive, "backleft2", 0);
 			aClass18_907 = new GraphicsBuffer(getGameComponent(), class50_sub1_sub1_sub1.width,
 					class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
-			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backright1", 0);
+			class50_sub1_sub1_sub1 = new ImageRGB(mediaArchive, "backright1", 0);
 			aClass18_908 = new GraphicsBuffer(getGameComponent(), class50_sub1_sub1_sub1.width,
 					class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
-			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backright2", 0);
+			class50_sub1_sub1_sub1 = new ImageRGB(mediaArchive, "backright2", 0);
 			aClass18_909 = new GraphicsBuffer(getGameComponent(), class50_sub1_sub1_sub1.width,
 					class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
-			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backtop1", 0);
+			class50_sub1_sub1_sub1 = new ImageRGB(mediaArchive, "backtop1", 0);
 			aClass18_910 = new GraphicsBuffer(getGameComponent(), class50_sub1_sub1_sub1.width,
 					class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
-			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backvmid1", 0);
+			class50_sub1_sub1_sub1 = new ImageRGB(mediaArchive, "backvmid1", 0);
 			aClass18_911 = new GraphicsBuffer(getGameComponent(), class50_sub1_sub1_sub1.width,
 					class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
-			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backvmid2", 0);
+			class50_sub1_sub1_sub1 = new ImageRGB(mediaArchive, "backvmid2", 0);
 			aClass18_912 = new GraphicsBuffer(getGameComponent(), class50_sub1_sub1_sub1.width,
 					class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
-			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backvmid3", 0);
+			class50_sub1_sub1_sub1 = new ImageRGB(mediaArchive, "backvmid3", 0);
 			aClass18_913 = new GraphicsBuffer(getGameComponent(), class50_sub1_sub1_sub1.width,
 					class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
-			class50_sub1_sub1_sub1 = new ImageRGB(class2_2, "backhmid2", 0);
+			class50_sub1_sub1_sub1 = new ImageRGB(mediaArchive, "backhmid2", 0);
 			aClass18_914 = new GraphicsBuffer(getGameComponent(), class50_sub1_sub1_sub1.width,
 					class50_sub1_sub1_sub1.height);
 			class50_sub1_sub1_sub1.drawInverse(0, 0);
@@ -3058,30 +2949,30 @@ public class client extends GameShell {
 			}
 
 			drawLoadingText(83, "Unpacking textures");
-			Rasterizer3D.loadTextures(class2_3);
+			Rasterizer3D.loadTextures(textureArchive);
 			Rasterizer3D.setBrightness(0.80000000000000004D);
 			Rasterizer3D.initializeTexturePool(20);
 			drawLoadingText(86, "Unpacking config");
-			AnimationSequence.load(class2);
-			GameObjectDefinition.load(class2);
-			FloorDefinition.load(class2);
-			ItemDefinition.load(class2);
-			NpcDefinition.load(class2);
-			IdentityKit.load(class2);
-			SpotAnimation.load(class2);
-			Varp.load(class2);
-			Varbit.load(class2);
+			AnimationSequence.load(configArchive);
+			GameObjectDefinition.load(configArchive);
+			FloorDefinition.load(configArchive);
+			ItemDefinition.load(configArchive);
+			NpcDefinition.load(configArchive);
+			IdentityKit.load(configArchive);
+			SpotAnimation.load(configArchive);
+			Varp.load(configArchive);
+			Varbit.load(configArchive);
 			ItemDefinition.membersWorld = membersWorld;
-			if (!aBoolean926) {
+			if (!lowMemory) {
 				drawLoadingText(90, "Unpacking sounds");
-				byte abyte0[] = class2_5.read("sounds.dat");
+				byte abyte0[] = soundArchive.read("sounds.dat");
 				Buffer class50_sub1_sub2 = new Buffer(abyte0);
 				SoundTrack.load(class50_sub1_sub2);
 			}
 			drawLoadingText(95, "Unpacking interfaces");
-			TypeFace aclass50_sub1_sub1_sub2[] = { aClass50_Sub1_Sub1_Sub2_1059, aClass50_Sub1_Sub1_Sub2_1060,
-					aClass50_Sub1_Sub1_Sub2_1061, aClass50_Sub1_Sub1_Sub2_1062 };
-			Widget.load(class2_1, class2_2, aclass50_sub1_sub1_sub2);
+			TypeFace aclass50_sub1_sub1_sub2[] = { smallFont, plainFont,
+					boldFont, fancyFont };
+			Widget.load(interfaceArchive, mediaArchive, aclass50_sub1_sub1_sub2);
 			drawLoadingText(100, "Preparing game engine");
 			for (int i7 = 0; i7 < 33; i7++) {
 				int j7 = 999;
@@ -3123,13 +3014,13 @@ public class client extends GameShell {
 			}
 
 			Rasterizer3D.setBounds(765, 503);
-			anIntArray1003 = Rasterizer3D.scanlineOffsets;
+			fullScreenScanlineOffsets = Rasterizer3D.scanlineOffsets;
 			Rasterizer3D.setBounds(479, 96);
-			anIntArray1000 = Rasterizer3D.scanlineOffsets;
+			chatboxScanlineOffsets = Rasterizer3D.scanlineOffsets;
 			Rasterizer3D.setBounds(190, 261);
-			anIntArray1001 = Rasterizer3D.scanlineOffsets;
+			sidebarScanlineOffsets = Rasterizer3D.scanlineOffsets;
 			Rasterizer3D.setBounds(512, 334);
-			anIntArray1002 = Rasterizer3D.scanlineOffsets;
+			viewportScanlineOffsets = Rasterizer3D.scanlineOffsets;
 			int ai[] = new int[9];
 			for (int l8 = 0; l8 < 9; l8++) {
 				int j9 = 128 + l8 * 32 + 15;
@@ -3139,7 +3030,7 @@ public class client extends GameShell {
 			}
 
 			Scene.buildVisibilityMaps(500, 800, 512, 334, ai);
-			Censor.load(class2_4);
+			Censor.load(wordEncodingArchive);
 			aClass7_1248 = new MouseRecorder(this);
 			startThread(aClass7_1248, 10);
 			DynamicObject.clientInstance = this;
@@ -3147,27 +3038,27 @@ public class client extends GameShell {
 			NpcDefinition.clientInstance = this;
 			return;
 		} catch (Exception exception) {
-			Signlink.reportError("loaderror " + aString1027 + " " + anInt1322);
+			Signlink.reportError("loaderror " + loadingMessage + " " + loadingPercent);
 		}
-		aBoolean1283 = true;
+		loadingError = true;
 	}
 
 	public void method65(int i, int j) {
 		while (j >= 0)
 			return;
-		if (!aBoolean926) {
+		if (!lowMemory) {
 			for (int k = 0; k < anIntArray1290.length; k++) {
 				int l = anIntArray1290[k];
 				if (Rasterizer3D.textureLastUsed[l] >= i) {
-					IndexedImage class50_sub1_sub1_sub3 = Rasterizer3D.textures[l];
-					int i1 = class50_sub1_sub1_sub3.width * class50_sub1_sub1_sub3.height - 1;
-					int j1 = class50_sub1_sub1_sub3.width * anInt951 * 2;
-					byte abyte0[] = class50_sub1_sub1_sub3.pixels;
+					IndexedImage rune = Rasterizer3D.textures[l];
+					int i1 = rune.width * rune.height - 1;
+					int j1 = rune.width * anInt951 * 2;
+					byte abyte0[] = rune.pixels;
 					byte abyte1[] = aByteArray1245;
 					for (int k1 = 0; k1 <= i1; k1++)
 						abyte1[k1] = abyte0[k1 - j1 & i1];
 
-					class50_sub1_sub1_sub3.pixels = abyte1;
+					rune.pixels = abyte1;
 					aByteArray1245 = abyte0;
 					Rasterizer3D.releaseTexture(l);
 				}
@@ -3401,9 +3292,9 @@ public class client extends GameShell {
 				if (interfaceState.fullscreenOverlayInterfaceId != -1)
 					widgetRuntime.updateAnimations(anInt951, interfaceState.fullscreenOverlayInterfaceId);
 				anInt951 = 0;
-				method147();
+				createGameBuffer();
 				super.gameBuffer.bindRaster();
-				Rasterizer3D.scanlineOffsets = anIntArray1003;
+				Rasterizer3D.scanlineOffsets = fullScreenScanlineOffsets;
 				Rasterizer.resetPixels();
 				aBoolean1046 = true;
 				Widget class13 = Widget.get(interfaceState.fullscreenInterfaceId);
@@ -3431,7 +3322,7 @@ public class client extends GameShell {
 			return;
 		}
 		if (aBoolean1046) {
-			method122(-906);
+			createGameScreenBuffers();
 			aBoolean1046 = false;
 			aClass18_906.draw(super.graphics, 0, 4);
 			aClass18_907.draw(super.graphics, 0, 357);
@@ -3447,8 +3338,8 @@ public class client extends GameShell {
 			aBoolean950 = true;
 			chatModesRedraw = true;
 			if (regionManager.loadingStage != RegionManager.STAGE_LOADED) {
-				aClass18_1158.draw(super.graphics, 4, 4);
-				aClass18_1157.draw(super.graphics, 550, 4);
+				viewportBuffer.draw(super.graphics, 4, 4);
+				minimapBuffer.draw(super.graphics, 550, 4);
 			}
 			anInt1237++;
 			if (anInt1237 > 85) {
@@ -3521,7 +3412,7 @@ public class client extends GameShell {
 		}
 		if (regionManager.loadingStage == RegionManager.STAGE_LOADED) {
 			drawMinimap();
-			aClass18_1157.draw(super.graphics, 550, 4);
+			minimapBuffer.draw(super.graphics, 550, 4);
 		}
 		if (interfaceState.flashingTab != -1)
 			aBoolean950 = true;
@@ -3599,40 +3490,40 @@ public class client extends GameShell {
 					aClass50_Sub1_Sub1_Sub3Array976[12].draw(226, 2);
 			}
 			aClass18_1109.draw(super.graphics, 496, 466);
-			aClass18_1158.bindRaster();
-			Rasterizer3D.scanlineOffsets = anIntArray1002;
+			viewportBuffer.bindRaster();
+			Rasterizer3D.scanlineOffsets = viewportScanlineOffsets;
 		}
 		if (chatModesRedraw) {
 			chatModesRedraw = false;
 			aClass18_1108.bindRaster();
 			aClass50_Sub1_Sub1_Sub3_965.draw(0, 0);
-			aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Public chat", 55, 28, 0xffffff, true);
+			plainFont.drawCenteredTextWithTags("Public chat", 55, 28, 0xffffff, true);
 			if (publicChatMode == 0)
-				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("On", 55, 41, 65280, true);
+				plainFont.drawCenteredTextWithTags("On", 55, 41, 65280, true);
 			if (publicChatMode == 1)
-				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Friends", 55, 41, 0xffff00, true);
+				plainFont.drawCenteredTextWithTags("Friends", 55, 41, 0xffff00, true);
 			if (publicChatMode == 2)
-				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Off", 55, 41, 0xff0000, true);
+				plainFont.drawCenteredTextWithTags("Off", 55, 41, 0xff0000, true);
 			if (publicChatMode == 3)
-				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Hide", 55, 41, 65535, true);
-			aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Private chat", 184, 28, 0xffffff, true);
+				plainFont.drawCenteredTextWithTags("Hide", 55, 41, 65535, true);
+			plainFont.drawCenteredTextWithTags("Private chat", 184, 28, 0xffffff, true);
 			if (privateChatMode == 0)
-				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("On", 184, 41, 65280, true);
+				plainFont.drawCenteredTextWithTags("On", 184, 41, 65280, true);
 			if (privateChatMode == 1)
-				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Friends", 184, 41, 0xffff00, true);
+				plainFont.drawCenteredTextWithTags("Friends", 184, 41, 0xffff00, true);
 			if (privateChatMode == 2)
-				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Off", 184, 41, 0xff0000, true);
-			aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Trade/compete", 324, 28, 0xffffff, true);
+				plainFont.drawCenteredTextWithTags("Off", 184, 41, 0xff0000, true);
+			plainFont.drawCenteredTextWithTags("Trade/compete", 324, 28, 0xffffff, true);
 			if (tradeMode == 0)
-				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("On", 324, 41, 65280, true);
+				plainFont.drawCenteredTextWithTags("On", 324, 41, 65280, true);
 			if (tradeMode == 1)
-				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Friends", 324, 41, 0xffff00, true);
+				plainFont.drawCenteredTextWithTags("Friends", 324, 41, 0xffff00, true);
 			if (tradeMode == 2)
-				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Off", 324, 41, 0xff0000, true);
-			aClass50_Sub1_Sub1_Sub2_1060.drawCenteredTextWithTags("Report abuse", 458, 33, 0xffffff, true);
+				plainFont.drawCenteredTextWithTags("Off", 324, 41, 0xff0000, true);
+			plainFont.drawCenteredTextWithTags("Report abuse", 458, 33, 0xffffff, true);
 			aClass18_1108.draw(super.graphics, 0, 453);
-			aClass18_1158.bindRaster();
-			Rasterizer3D.scanlineOffsets = anIntArray1002;
+			viewportBuffer.bindRaster();
+			Rasterizer3D.scanlineOffsets = viewportScanlineOffsets;
 		}
 		anInt951 = 0;
 		if (i != 7) {
@@ -3645,7 +3536,7 @@ public class client extends GameShell {
 	public void drawSplitPrivateChat() {
 		if (splitPrivateChat == 0)
 			return;
-		TypeFace class50_sub1_sub1_sub2 = aClass50_Sub1_Sub1_Sub2_1060;
+		TypeFace class50_sub1_sub1_sub2 = plainFont;
 		int j = 0;
 		if (anInt1057 != 0)
 			j = 1;
@@ -3705,12 +3596,12 @@ public class client extends GameShell {
 		do {
 			OnDemandRequest class50_sub1_sub3;
 			do {
-				class50_sub1_sub3 = aClass32_Sub1_1291.poll();
+				class50_sub1_sub3 = onDemandFetcher.poll();
 				if (class50_sub1_sub3 == null)
 					return;
 				if (class50_sub1_sub3.type == 0) {
 					Model.loadModelHeader(class50_sub1_sub3.buffer, class50_sub1_sub3.id);
-					if ((aClass32_Sub1_1291.getModelIndex(class50_sub1_sub3.id) & 0x62) != 0) {
+					if ((onDemandFetcher.getModelIndex(class50_sub1_sub3.id) & 0x62) != 0) {
 						aBoolean1181 = true;
 						if (interfaceState.chatboxInterfaceId != -1 || interfaceState.dialogueInterfaceId != -1)
 							aBoolean1240 = true;
@@ -3721,19 +3612,19 @@ public class client extends GameShell {
 				musicController.acceptOnDemandRequest(class50_sub1_sub3);
 				if (class50_sub1_sub3.type == 3 && regionManager.loadingStage == RegionManager.STAGE_LOADING)
 					regionManager.acceptMapFile(class50_sub1_sub3);
-			} while (class50_sub1_sub3.type != 93 || !aClass32_Sub1_1291.isLandscapeFile(class50_sub1_sub3.id));
-			Region.requestGameObjectModels(new Buffer(class50_sub1_sub3.buffer), aClass32_Sub1_1291);
+			} while (class50_sub1_sub3.type != 93 || !onDemandFetcher.isLandscapeFile(class50_sub1_sub3.id));
+			Region.requestGameObjectModels(new Buffer(class50_sub1_sub3.buffer), onDemandFetcher);
 		} while (true);
 	}
 
 	public void login(String loginUsername, String loginPassword, boolean reconnecting) {
 		try {
 			if (!reconnecting) {
-				loginMessage1 = "";
-				loginMessage2 = "Connecting to server...";
-				method131((byte) -50, true);
+			loginScreen.message1 = "";
+			loginScreen.message2 = "Connecting to server...";
+				drawLoginScreen(true);
 			}
-			networkSession.connect(openSocket(43594 + anInt924));
+			networkSession.connect(openSocket(43594 + portOffset));
 			long l = Base37.encode(loginUsername);
 			int i = (int) (l >> 16 & 31L);
 			networkSession.outgoing.position = 0;
@@ -3772,9 +3663,9 @@ public class client extends GameShell {
 				loginBuffer.writeByte(networkSession.outgoing.position + 36 + 1 + 1 + 2);
 				loginBuffer.writeByte(255);
 				loginBuffer.writeShort(377);
-				loginBuffer.writeByte(aBoolean926 ? 1 : 0);
+				loginBuffer.writeByte(lowMemory ? 1 : 0);
 				for (int l1 = 0; l1 < 9; l1++)
-					loginBuffer.writeInt(anIntArray837[l1]);
+					loginBuffer.writeInt(resourceLoader.getArchiveCrc(l1));
 
 				loginBuffer.writeBytes(networkSession.outgoing.payload, 0, networkSession.outgoing.position);
 				networkSession.initializeOpcodeCiphers(ai);
@@ -3851,62 +3742,62 @@ public class client extends GameShell {
 				anInt1013 = 0;
 				anInt1049 = 0;
 				anInt1162 = 0;
-				method122(-906);
+				createGameScreenBuffers();
 				return;
 			}
 			if (k == 3) {
-				loginMessage1 = "";
-				loginMessage2 = "Invalid username or password.";
+				loginScreen.message1 = "";
+				loginScreen.message2 = "Invalid username or password.";
 				return;
 			}
 			if (k == 4) {
-				loginMessage1 = "Your account has been disabled.";
-				loginMessage2 = "Please check your message-centre for details.";
+				loginScreen.message1 = "Your account has been disabled.";
+				loginScreen.message2 = "Please check your message-centre for details.";
 				return;
 			}
 			if (k == 5) {
-				loginMessage1 = "Your account is already logged in.";
-				loginMessage2 = "Try again in 60 secs...";
+				loginScreen.message1 = "Your account is already logged in.";
+				loginScreen.message2 = "Try again in 60 secs...";
 				return;
 			}
 			if (k == 6) {
-				loginMessage1 = "RuneScape has been updated!";
-				loginMessage2 = "Please reload this page.";
+				loginScreen.message1 = "RuneScape has been updated!";
+				loginScreen.message2 = "Please reload this page.";
 				return;
 			}
 			if (k == 7) {
-				loginMessage1 = "This world is full.";
-				loginMessage2 = "Please use a different world.";
+				loginScreen.message1 = "This world is full.";
+				loginScreen.message2 = "Please use a different world.";
 				return;
 			}
 			if (k == 8) {
-				loginMessage1 = "Unable to connect.";
-				loginMessage2 = "Login server offline.";
+				loginScreen.message1 = "Unable to connect.";
+				loginScreen.message2 = "Login server offline.";
 				return;
 			}
 			if (k == 9) {
-				loginMessage1 = "Login limit exceeded.";
-				loginMessage2 = "Too many connections from your address.";
+				loginScreen.message1 = "Login limit exceeded.";
+				loginScreen.message2 = "Too many connections from your address.";
 				return;
 			}
 			if (k == 10) {
-				loginMessage1 = "Unable to connect.";
-				loginMessage2 = "Bad session id.";
+				loginScreen.message1 = "Unable to connect.";
+				loginScreen.message2 = "Bad session id.";
 				return;
 			}
 			if (k == 12) {
-				loginMessage1 = "You need a members account to login to this world.";
-				loginMessage2 = "Please subscribe, or use a different world.";
+				loginScreen.message1 = "You need a members account to login to this world.";
+				loginScreen.message2 = "Please subscribe, or use a different world.";
 				return;
 			}
 			if (k == 13) {
-				loginMessage1 = "Could not complete login.";
-				loginMessage2 = "Please try using a different world.";
+				loginScreen.message1 = "Could not complete login.";
+				loginScreen.message2 = "Please try using a different world.";
 				return;
 			}
 			if (k == 14) {
-				loginMessage1 = "The server is being updated.";
-				loginMessage2 = "Please wait 1 minute and try again.";
+				loginScreen.message1 = "The server is being updated.";
+				loginScreen.message2 = "Please wait 1 minute and try again.";
 				return;
 			}
 			if (k == 15) {
@@ -3918,31 +3809,31 @@ public class client extends GameShell {
 				return;
 			}
 			if (k == 16) {
-				loginMessage1 = "Login attempts exceeded.";
-				loginMessage2 = "Please wait 1 minute and try again.";
+				loginScreen.message1 = "Login attempts exceeded.";
+				loginScreen.message2 = "Please wait 1 minute and try again.";
 				return;
 			}
 			if (k == 17) {
-				loginMessage1 = "You are standing in a members-only area.";
-				loginMessage2 = "To play on this world move to a free area first";
+				loginScreen.message1 = "You are standing in a members-only area.";
+				loginScreen.message2 = "To play on this world move to a free area first";
 				return;
 			}
 			if (k == 18) {
-				loginMessage1 = "Account locked as we suspect it has been stolen.";
-				loginMessage2 = "Press 'recover a locked account' on front page.";
+				loginScreen.message1 = "Account locked as we suspect it has been stolen.";
+				loginScreen.message2 = "Press 'recover a locked account' on front page.";
 				return;
 			}
 			if (k == 20) {
-				loginMessage1 = "Invalid loginserver requested";
-				loginMessage2 = "Please try using a different world.";
+				loginScreen.message1 = "Invalid loginserver requested";
+				loginScreen.message2 = "Please try using a different world.";
 				return;
 			}
 			if (k == 21) {
 				int k1 = networkSession.read();
 				for (k1 += 3; k1 >= 0; k1--) {
-					loginMessage1 = "You have only just left another world";
-					loginMessage2 = "Your profile will be transferred in: " + k1;
-					method131((byte) -50, true);
+					loginScreen.message1 = "You have only just left another world";
+					loginScreen.message2 = "Your profile will be transferred in: " + k1;
+					drawLoginScreen(true);
 					try {
 						Thread.sleep(1200L);
 					} catch (Exception _ex) {
@@ -3953,28 +3844,28 @@ public class client extends GameShell {
 				return;
 			}
 			if (k == 22) {
-				loginMessage1 = "Malformed login packet.";
-				loginMessage2 = "Please try again.";
+				loginScreen.message1 = "Malformed login packet.";
+				loginScreen.message2 = "Please try again.";
 				return;
 			}
 			if (k == 23) {
-				loginMessage1 = "No reply from loginserver.";
-				loginMessage2 = "Please try again.";
+				loginScreen.message1 = "No reply from loginserver.";
+				loginScreen.message2 = "Please try again.";
 				return;
 			}
 			if (k == 24) {
-				loginMessage1 = "Error loading your profile.";
-				loginMessage2 = "Please contact customer support.";
+				loginScreen.message1 = "Error loading your profile.";
+				loginScreen.message2 = "Please contact customer support.";
 				return;
 			}
 			if (k == 25) {
-				loginMessage1 = "Unexpected loginserver response.";
-				loginMessage2 = "Please try using a different world.";
+				loginScreen.message1 = "Unexpected loginserver response.";
+				loginScreen.message2 = "Please try using a different world.";
 				return;
 			}
 			if (k == 26) {
-				loginMessage1 = "This computers address has been blocked";
-				loginMessage2 = "as it was used to break our rules";
+				loginScreen.message1 = "This computers address has been blocked";
+				loginScreen.message2 = "as it was used to break our rules";
 				return;
 			}
 			if (k == -1) {
@@ -3988,25 +3879,25 @@ public class client extends GameShell {
 						login(loginUsername, loginPassword, reconnecting);
 						return;
 					} else {
-						loginMessage1 = "No response from loginserver";
-						loginMessage2 = "Please wait 1 minute and try again.";
+						loginScreen.message1 = "No response from loginserver";
+						loginScreen.message2 = "Please wait 1 minute and try again.";
 						return;
 					}
 				} else {
-					loginMessage1 = "No response from server";
-					loginMessage2 = "Please try using a different world.";
+					loginScreen.message1 = "No response from server";
+					loginScreen.message2 = "Please try using a different world.";
 					return;
 				}
 			} else {
 				System.out.println("response:" + k);
-				loginMessage1 = "Unexpected server response";
-				loginMessage2 = "Please try using a different world.";
+				loginScreen.message1 = "Unexpected server response";
+				loginScreen.message2 = "Please try using a different world.";
 				return;
 			}
 		} catch (IOException _ex) {
-			loginMessage1 = "";
+			loginScreen.message1 = "";
 		}
-		loginMessage2 = "Error connecting to server.";
+		loginScreen.message2 = "Error connecting to server.";
 	}
 
 	/*
@@ -4048,68 +3939,63 @@ public class client extends GameShell {
 		return true;
 	}
 
-	public void method81(byte byte0) {
+	/* Legacy client.method81(byte byte0): byte0 -> removed fixed 1 sentinel. */
+	public void updateTitleFlames() {
 		char c = '\u0100';
 		for (int i = 10; i < 117; i++) {
 			int j = (int) (Math.random() * 100D);
 			if (j < 50)
-				anIntArray1084[i + (c - 2 << 7)] = 255;
+				titleFlameIntensity[i + (c - 2 << 7)] = 255;
 		}
 
 		for (int k = 0; k < 100; k++) {
 			int l = (int) (Math.random() * 124D) + 2;
 			int j1 = (int) (Math.random() * 128D) + 128;
 			int j2 = l + (j1 << 7);
-			anIntArray1084[j2] = 192;
+			titleFlameIntensity[j2] = 192;
 		}
 
 		for (int i1 = 1; i1 < c - 1; i1++) {
 			for (int k1 = 1; k1 < 127; k1++) {
 				int k2 = k1 + (i1 << 7);
-				anIntArray1085[k2] = (anIntArray1084[k2 - 1] + anIntArray1084[k2 + 1] + anIntArray1084[k2 - 128]
-						+ anIntArray1084[k2 + 128]) / 4;
+				titleFlameIntensityScratch[k2] = (titleFlameIntensity[k2 - 1] + titleFlameIntensity[k2 + 1] + titleFlameIntensity[k2 - 128]
+						+ titleFlameIntensity[k2 + 128]) / 4;
 			}
 
 		}
 
-		anInt1238 += 128;
-		if (anInt1238 > anIntArray1176.length) {
-			anInt1238 -= anIntArray1176.length;
+		titleFlameNoiseOffset += 128;
+		if (titleFlameNoiseOffset > titleFlameNoise.length) {
+			titleFlameNoiseOffset -= titleFlameNoise.length;
 			int l1 = (int) (Math.random() * 12D);
-			method83(aClass50_Sub1_Sub1_Sub3Array1117[l1], 0);
+			initializeTitleFlameNoise(titleRunes[l1]);
 		}
 		for (int i2 = 1; i2 < c - 1; i2++) {
 			for (int l2 = 1; l2 < 127; l2++) {
 				int k3 = l2 + (i2 << 7);
-				int i4 = anIntArray1085[k3 + 128] - anIntArray1176[k3 + anInt1238 & anIntArray1176.length - 1] / 5;
+				int i4 = titleFlameIntensityScratch[k3 + 128] - titleFlameNoise[k3 + titleFlameNoiseOffset & titleFlameNoise.length - 1] / 5;
 				if (i4 < 0)
 					i4 = 0;
-				anIntArray1084[k3] = i4;
+				titleFlameIntensity[k3] = i4;
 			}
 
 		}
 
-		if (byte0 == 1) {
-			byte0 = 0;
-		} else {
-			for (int i3 = 1; i3 > 0; i3++)
-				;
-		}
 		for (int j3 = 0; j3 < c - 1; j3++)
-			anIntArray1166[j3] = anIntArray1166[j3 + 1];
+			titleFlameLineOffsets[j3] = titleFlameLineOffsets[j3 + 1];
 
-		anIntArray1166[c - 1] = (int) (Math.sin((double) anInt1325 / 14D) * 16D
+		titleFlameLineOffsets[c - 1] = (int) (Math.sin((double) anInt1325 / 14D) * 16D
 				+ Math.sin((double) anInt1325 / 15D) * 14D + Math.sin((double) anInt1325 / 16D) * 12D);
-		if (anInt1047 > 0)
-			anInt1047 -= 4;
-		if (anInt1048 > 0)
-			anInt1048 -= 4;
-		if (anInt1047 == 0 && anInt1048 == 0) {
+		if (greenFlameTransition > 0)
+			greenFlameTransition -= 4;
+		if (blueFlameTransition > 0)
+			blueFlameTransition -= 4;
+		if (greenFlameTransition == 0 && blueFlameTransition == 0) {
 			int l3 = (int) (Math.random() * 2000D);
 			if (l3 == 0)
-				anInt1047 = 1024;
+				greenFlameTransition = 1024;
 			if (l3 == 1)
-				anInt1048 = 1024;
+				blueFlameTransition = 1024;
 		}
 	}
 
@@ -4205,41 +4091,44 @@ public class client extends GameShell {
 		}
 	}
 
-	public void method83(IndexedImage class50_sub1_sub1_sub3, int i) {
-		networkSession.incomingLength += i;
+	/*
+	 * Legacy client.method83(IndexedImage class50_sub1_sub1_sub3, int i):
+	 *   class50_sub1_sub1_sub3 -> rune, i -> removed zero packet-length mutation sentinel.
+	 */
+	public void initializeTitleFlameNoise(IndexedImage rune) {
 		int j = 256;
-		for (int k = 0; k < anIntArray1176.length; k++)
-			anIntArray1176[k] = 0;
+		for (int k = 0; k < titleFlameNoise.length; k++)
+			titleFlameNoise[k] = 0;
 
 		for (int l = 0; l < 5000; l++) {
 			int i1 = (int) (Math.random() * 128D * (double) j);
-			anIntArray1176[i1] = (int) (Math.random() * 256D);
+			titleFlameNoise[i1] = (int) (Math.random() * 256D);
 		}
 
 		for (int j1 = 0; j1 < 20; j1++) {
 			for (int k1 = 1; k1 < j - 1; k1++) {
 				for (int i2 = 1; i2 < 127; i2++) {
 					int k2 = i2 + (k1 << 7);
-					anIntArray1177[k2] = (anIntArray1176[k2 - 1] + anIntArray1176[k2 + 1] + anIntArray1176[k2 - 128]
-							+ anIntArray1176[k2 + 128]) / 4;
+					titleFlameNoiseScratch[k2] = (titleFlameNoise[k2 - 1] + titleFlameNoise[k2 + 1] + titleFlameNoise[k2 - 128]
+							+ titleFlameNoise[k2 + 128]) / 4;
 				}
 
 			}
 
-			int ai[] = anIntArray1176;
-			anIntArray1176 = anIntArray1177;
-			anIntArray1177 = ai;
+			int ai[] = titleFlameNoise;
+			titleFlameNoise = titleFlameNoiseScratch;
+			titleFlameNoiseScratch = ai;
 		}
 
-		if (class50_sub1_sub1_sub3 != null) {
+		if (rune != null) {
 			int l1 = 0;
-			for (int j2 = 0; j2 < class50_sub1_sub1_sub3.height; j2++) {
-				for (int l2 = 0; l2 < class50_sub1_sub1_sub3.width; l2++)
-					if (class50_sub1_sub1_sub3.pixels[l1++] != 0) {
-						int i3 = l2 + 16 + class50_sub1_sub1_sub3.offsetX;
-						int j3 = j2 + 16 + class50_sub1_sub1_sub3.offsetY;
+			for (int j2 = 0; j2 < rune.height; j2++) {
+				for (int l2 = 0; l2 < rune.width; l2++)
+					if (rune.pixels[l1++] != 0) {
+						int i3 = l2 + 16 + rune.offsetX;
+						int j3 = j2 + 16 + rune.offsetY;
 						int k3 = i3 + (j3 << 7);
-						anIntArray1176[k3] = 0;
+						titleFlameNoise[k3] = 0;
 					}
 
 			}
@@ -4248,24 +4137,24 @@ public class client extends GameShell {
 	}
 
 	public void method84(int i) {
-		aClass18_1159.bindRaster();
-		Rasterizer3D.scanlineOffsets = anIntArray1000;
+		chatboxBuffer.bindRaster();
+		Rasterizer3D.scanlineOffsets = chatboxScanlineOffsets;
 		aClass50_Sub1_Sub1_Sub3_1187.draw(0, 0);
 		if (messagePromptRaised) {
-			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(promptMessage, 239, 40, 0);
-			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(promptInput + "*", 239, 60, 128);
+			boldFont.drawCenteredText(promptMessage, 239, 40, 0);
+			boldFont.drawCenteredText(promptInput + "*", 239, 60, 128);
 		} else if (anInt1244 == 1) {
-			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText("Enter amount:", 239, 40, 0);
-			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(aString949 + "*", 239, 60, 128);
+			boldFont.drawCenteredText("Enter amount:", 239, 40, 0);
+			boldFont.drawCenteredText(aString949 + "*", 239, 60, 128);
 		} else if (anInt1244 == 2) {
-			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText("Enter name:", 239, 40, 0);
-			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(aString949 + "*", 239, 60, 128);
+			boldFont.drawCenteredText("Enter name:", 239, 40, 0);
+			boldFont.drawCenteredText(aString949 + "*", 239, 60, 128);
 		} else if (anInt1244 == 3) {
 			if (aString949 != aString861) {
 				method14(aString949, 2);
 				aString861 = aString949;
 			}
-			TypeFace class50_sub1_sub1_sub2 = aClass50_Sub1_Sub1_Sub2_1060;
+			TypeFace class50_sub1_sub1_sub2 = plainFont;
 			Rasterizer.setCoordinates(0, 0, 463, 77);
 			for (int j = 0; j < anInt862; j++) {
 				int l = (18 + j * 14) - anInt865;
@@ -4277,21 +4166,21 @@ public class client extends GameShell {
 			if (anInt862 > 5)
 				drawScrollbar(anInt865, 463, 77, anInt862 * 14 + 7, 0);
 			if (aString949.length() == 0)
-				aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText("Enter object name", 239, 40, 255);
+				boldFont.drawCenteredText("Enter object name", 239, 40, 255);
 			else if (anInt862 == 0)
-				aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText("No matching objects found, please shorten search", 239,
+				boldFont.drawCenteredText("No matching objects found, please shorten search", 239,
 						40, 0);
 			class50_sub1_sub1_sub2.drawCenteredText(aString949 + "*", 239, 90, 0);
 			Rasterizer.drawHorizontalLine(0, 77, 479, 0);
 		} else if (aString1058 != null) {
-			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(aString1058, 239, 40, 0);
-			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText("Click to continue", 239, 60, 128);
+			boldFont.drawCenteredText(aString1058, 239, 40, 0);
+			boldFont.drawCenteredText("Click to continue", 239, 60, 128);
 		} else if (interfaceState.chatboxInterfaceId != -1)
 			drawInterface(0, 0, Widget.get(interfaceState.chatboxInterfaceId), 0);
 		else if (interfaceState.dialogueInterfaceId != -1) {
 			drawInterface(0, 0, Widget.get(interfaceState.dialogueInterfaceId), 0);
 		} else {
-			TypeFace class50_sub1_sub1_sub2_1 = aClass50_Sub1_Sub1_Sub2_1060;
+			TypeFace class50_sub1_sub1_sub2_1 = plainFont;
 			int k = 0;
 			Rasterizer.setCoordinates(0, 0, 463, 77);
 			for (int i1 = 0; i1 < 100; i1++)
@@ -4384,7 +4273,7 @@ public class client extends GameShell {
 			if (localPlayer != null && localPlayer.name != null)
 				s = localPlayer.name;
 			else
-				s = TextFormatter.formatDisplayName(username);
+				s = TextFormatter.formatDisplayName(loginScreen.username);
 			class50_sub1_sub1_sub2_1.drawText(s + ":", 4, 90, 0);
 			class50_sub1_sub1_sub2_1.drawText(chatInput + "*",
 					6 + class50_sub1_sub1_sub2_1.getFormattedTextWidth(s + ": "), 90, 255);
@@ -4392,9 +4281,9 @@ public class client extends GameShell {
 		}
 		if (menuState.open && menuState.screenArea == 2)
 			drawContextMenu();
-		aClass18_1159.draw(super.graphics, 17, 357);
-		aClass18_1158.bindRaster();
-		Rasterizer3D.scanlineOffsets = anIntArray1002;
+		chatboxBuffer.draw(super.graphics, 17, 357);
+		viewportBuffer.bindRaster();
+		Rasterizer3D.scanlineOffsets = viewportScanlineOffsets;
 		}
 
 	public void method85(int i) {
@@ -4413,7 +4302,6 @@ public class client extends GameShell {
 			}
 		}
 
-		networkSession.incomingLength += i;
 		for (int l = 0; l < actorSynchronizer.npcCount; l++) {
 			int i1 = actorSynchronizer.npcIndices[l];
 			Npc class50_sub1_sub4_sub3_sub1 = actorSynchronizer.npcs[i1];
@@ -4427,81 +4315,26 @@ public class client extends GameShell {
 
 	}
 
-	public void method86(boolean flag) {
-		int i = 5;
-		anIntArray837[8] = 0;
-		if (flag) {
-			for (int j = 1; j > 0; j++)
-				;
-		}
-		int k = 0;
-		while (anIntArray837[8] == 0) {
-			String s = "Unknown problem";
-			drawLoadingText(20, "Connecting to web server");
-			try {
-				DataInputStream datainputstream = openJaggrabStream("crc" + (int) (Math.random() * 99999999D) + "-" + 377);
-				Buffer class50_sub1_sub2 = new Buffer(new byte[40]);
-				datainputstream.readFully(class50_sub1_sub2.payload, 0, 40);
-				datainputstream.close();
-				for (int i1 = 0; i1 < 9; i1++)
-					anIntArray837[i1] = class50_sub1_sub2.readInt();
-
-				int j1 = class50_sub1_sub2.readInt();
-				int k1 = 1234;
-				for (int l1 = 0; l1 < 9; l1++)
-					k1 = (k1 << 1) + anIntArray837[l1];
-
-				if (j1 != k1) {
-					s = "checksum problem";
-					anIntArray837[8] = 0;
-				}
-			} catch (EOFException _ex) {
-				s = "EOF problem";
-				anIntArray837[8] = 0;
-			} catch (IOException _ex) {
-				s = "connection problem";
-				anIntArray837[8] = 0;
-			} catch (Exception _ex) {
-				s = "logic problem";
-				anIntArray837[8] = 0;
-				if (!Signlink.reportErrors)
-					return;
-			}
-			if (anIntArray837[8] == 0) {
-				k++;
-				for (int l = i; l > 0; l--) {
-					if (k >= 10) {
-						drawLoadingText(10, "Game updated - please reload page");
-						l = 10;
-					} else {
-						drawLoadingText(10, s + " - Will retry in " + l + " secs.");
-					}
-					try {
-						Thread.sleep(1000L);
-					} catch (Exception _ex) {
-					}
-				}
-
-				i *= 2;
-				if (i > 60)
-					i = 60;
-				aBoolean900 = !aBoolean900;
-			}
-		}
+	/*
+	 * Legacy client.method86(boolean flag): flag -> removed false sentinel.
+	 * The supplied startup path intentionally leaves this CRC refresh disabled.
+	 */
+	private void loadArchiveCrcs() {
+		resourceLoader.fetchArchiveCrcs(this::openJaggrabStream, this::drawLoadingText);
 	}
 
 	/* Legacy client.method87(int i): i -> removed nonzero division sentinel. */
 	private void drawMinimap() {
 		MinimapRenderer.Assets assets = new MinimapRenderer.Assets();
-		assets.minimapBuffer = aClass18_1157;
-		assets.sceneBuffer = aClass18_1158;
+		assets.minimapBuffer = minimapBuffer;
+		assets.sceneBuffer = viewportBuffer;
 		assets.minimapMask = aClass50_Sub1_Sub1_Sub3_1186;
 		assets.compass = aClass50_Sub1_Sub1_Sub1_1116;
 		assets.compassXOffsets = anIntArray1286;
 		assets.compassWidths = anIntArray1180;
 		assets.minimapXOffsets = anIntArray920;
 		assets.minimapWidths = anIntArray1019;
-		assets.sceneScanlineOffsets = anIntArray1002;
+		assets.sceneScanlineOffsets = viewportScanlineOffsets;
 		assets.groundItemDot = aClass50_Sub1_Sub1_Sub1_1192;
 		assets.npcDot = aClass50_Sub1_Sub1_Sub1_1193;
 		assets.playerDot = aClass50_Sub1_Sub1_Sub1_1194;
@@ -4538,11 +4371,11 @@ public class client extends GameShell {
 
 
 	public void processGameLoop() {
-		if (aBoolean1016 || aBoolean1283 || aBoolean1097)
+		if (duplicateClientError || loadingError || invalidHostError)
 			return;
 		anInt1325++;
 		if (!loggedIn)
-			method149(-724);
+			processLoginScreenInput();
 		else
 			method28((byte) 4);
 		method77(false);
@@ -4656,50 +4489,51 @@ public class client extends GameShell {
 	}
 
 
-	public void method98(int i) {
+	/* Legacy client.method98(int i): i -> removed fixed 47 division sentinel. */
+	public void drawTitleFlames() {
 		char c = '\u0100';
-		if (anInt1047 > 0) {
+		if (greenFlameTransition > 0) {
 			for (int j = 0; j < 256; j++)
-				if (anInt1047 > 768)
-					anIntArray1310[j] = method106(anIntArray1311[j], anIntArray1312[j], 1024 - anInt1047, 8);
-				else if (anInt1047 > 256)
-					anIntArray1310[j] = anIntArray1312[j];
+				if (greenFlameTransition > 768)
+					titleFlamePalette[j] = blendTitleFlameColors(titleFlameRedPalette[j], titleFlameGreenPalette[j], 1024 - greenFlameTransition);
+				else if (greenFlameTransition > 256)
+					titleFlamePalette[j] = titleFlameGreenPalette[j];
 				else
-					anIntArray1310[j] = method106(anIntArray1312[j], anIntArray1311[j], 256 - anInt1047, 8);
+					titleFlamePalette[j] = blendTitleFlameColors(titleFlameGreenPalette[j], titleFlameRedPalette[j], 256 - greenFlameTransition);
 
-		} else if (anInt1048 > 0) {
+		} else if (blueFlameTransition > 0) {
 			for (int k = 0; k < 256; k++)
-				if (anInt1048 > 768)
-					anIntArray1310[k] = method106(anIntArray1311[k], anIntArray1313[k], 1024 - anInt1048, 8);
-				else if (anInt1048 > 256)
-					anIntArray1310[k] = anIntArray1313[k];
+				if (blueFlameTransition > 768)
+					titleFlamePalette[k] = blendTitleFlameColors(titleFlameRedPalette[k], titleFlameBluePalette[k], 1024 - blueFlameTransition);
+				else if (blueFlameTransition > 256)
+					titleFlamePalette[k] = titleFlameBluePalette[k];
 				else
-					anIntArray1310[k] = method106(anIntArray1313[k], anIntArray1311[k], 256 - anInt1048, 8);
+					titleFlamePalette[k] = blendTitleFlameColors(titleFlameBluePalette[k], titleFlameRedPalette[k], 256 - blueFlameTransition);
 
 		} else {
 			for (int l = 0; l < 256; l++)
-				anIntArray1310[l] = anIntArray1311[l];
+				titleFlamePalette[l] = titleFlameRedPalette[l];
 
 		}
 		for (int i1 = 0; i1 < 33920; i1++)
-			aClass18_1201.pixels[i1] = aClass50_Sub1_Sub1_Sub1_1017.pixels[i1];
+			titleLeftFlameBuffer.pixels[i1] = titleLeftFlameBackground.pixels[i1];
 
 		int j1 = 0;
 		int k1 = 1152;
 		for (int l1 = 1; l1 < c - 1; l1++) {
-			int i2 = (anIntArray1166[l1] * (c - l1)) / c;
+			int i2 = (titleFlameLineOffsets[l1] * (c - l1)) / c;
 			int k2 = 22 + i2;
 			if (k2 < 0)
 				k2 = 0;
 			j1 += k2;
 			for (int i3 = k2; i3 < 128; i3++) {
-				int k3 = anIntArray1084[j1++];
+				int k3 = titleFlameIntensity[j1++];
 				if (k3 != 0) {
 					int i4 = k3;
 					int k4 = 256 - k3;
-					k3 = anIntArray1310[k3];
-					int i5 = aClass18_1201.pixels[k1];
-					aClass18_1201.pixels[k1++] = ((k3 & 0xff00ff) * i4 + (i5 & 0xff00ff) * k4 & 0xff00ff00)
+					k3 = titleFlamePalette[k3];
+					int i5 = titleLeftFlameBuffer.pixels[k1];
+					titleLeftFlameBuffer.pixels[k1++] = ((k3 & 0xff00ff) * i4 + (i5 & 0xff00ff) * k4 & 0xff00ff00)
 							+ ((k3 & 0xff00) * i4 + (i5 & 0xff00) * k4 & 0xff0000) >> 8;
 				} else {
 					k1++;
@@ -4709,25 +4543,24 @@ public class client extends GameShell {
 			k1 += k2;
 		}
 
-		aClass18_1201.draw(super.graphics, 0, 0);
-		i = 66 / i;
+		titleLeftFlameBuffer.draw(super.graphics, 0, 0);
 		for (int j2 = 0; j2 < 33920; j2++)
-			aClass18_1202.pixels[j2] = aClass50_Sub1_Sub1_Sub1_1018.pixels[j2];
+			titleRightFlameBuffer.pixels[j2] = titleRightFlameBackground.pixels[j2];
 
 		j1 = 0;
 		k1 = 1176;
 		for (int l2 = 1; l2 < c - 1; l2++) {
-			int j3 = (anIntArray1166[l2] * (c - l2)) / c;
+			int j3 = (titleFlameLineOffsets[l2] * (c - l2)) / c;
 			int l3 = 103 - j3;
 			k1 += j3;
 			for (int j4 = 0; j4 < l3; j4++) {
-				int l4 = anIntArray1084[j1++];
+				int l4 = titleFlameIntensity[j1++];
 				if (l4 != 0) {
 					int j5 = l4;
 					int k5 = 256 - l4;
-					l4 = anIntArray1310[l4];
-					int l5 = aClass18_1202.pixels[k1];
-					aClass18_1202.pixels[k1++] = ((l4 & 0xff00ff) * j5 + (l5 & 0xff00ff) * k5 & 0xff00ff00)
+					l4 = titleFlamePalette[l4];
+					int l5 = titleRightFlameBuffer.pixels[k1];
+					titleRightFlameBuffer.pixels[k1++] = ((l4 & 0xff00ff) * j5 + (l5 & 0xff00ff) * k5 & 0xff00ff00)
 							+ ((l4 & 0xff00) * j5 + (l5 & 0xff00) * k5 & 0xff0000) >> 8;
 				} else {
 					k1++;
@@ -4738,16 +4571,14 @@ public class client extends GameShell {
 			k1 += 128 - l3 - j3;
 		}
 
-		aClass18_1202.draw(super.graphics, 637, 0);
+		titleRightFlameBuffer.draw(super.graphics, 637, 0);
 	}
 
 
-	public static void method101(boolean flag) {
+	public static void setLowMemory() {
 		Scene.lowMemory = true;
-		if (!flag)
-			aBoolean1242 = !aBoolean1242;
 		Rasterizer3D.lowMemory = true;
-		aBoolean926 = true;
+		lowMemory = true;
 		Region.lowMemory = true;
 		GameObjectDefinition.lowMemory = true;
 	}
@@ -5041,7 +4872,6 @@ public class client extends GameShell {
 	}
 
 	public void method105(int i, int j) {
-		networkSession.incomingLength += i;
 		int k = Varp.definitions[j].clientCode;
 		if (k == 0)
 			return;
@@ -5059,7 +4889,7 @@ public class client extends GameShell {
 			aBoolean1046 = true;
 		}
 		if (k == 3)
-			musicController.applySetting(l, aBoolean926, aClass32_Sub1_1291::request);
+			musicController.applySetting(l, lowMemory, onDemandFetcher::request);
 		if (k == 4)
 			soundEffectQueue.applySetting(l);
 		if (k == 5)
@@ -5074,9 +4904,7 @@ public class client extends GameShell {
 			anInt955 = l;
 	}
 
-	public int method106(int i, int j, int k, int l) {
-		if (l < 8 || l > 8)
-			networkSession.outgoing.writeByte(235);
+	public int blendTitleFlameColors(int i, int j, int k) {
 		int i1 = 256 - k;
 		return ((i & 0xff00ff) * i1 + (j & 0xff00ff) * k & 0xff00ff00)
 				+ ((i & 0xff00) * i1 + (j & 0xff00) * k & 0xff0000) >> 8;
@@ -5098,9 +4926,9 @@ public class client extends GameShell {
 
 	/* Legacy client.method108(): compute and open the context-menu rectangle. */
 	public void openContextMenu() {
-		int j = aClass50_Sub1_Sub1_Sub2_1061.getFormattedTextWidth("Choose Option");
+		int j = boldFont.getFormattedTextWidth("Choose Option");
 		for (int k = 0; k < menuState.count; k++) {
-			int l = aClass50_Sub1_Sub1_Sub2_1061.getFormattedTextWidth(menuState.actionNames[k]);
+			int l = boldFont.getFormattedTextWidth(menuState.actionNames[k]);
 			if (l > j)
 				j = l;
 		}
@@ -5189,20 +5017,20 @@ public class client extends GameShell {
 			char c = '\u01FB';
 			int k = 20;
 			int i1 = 0xffff00;
-			if (super.fps < 30 && aBoolean926)
+			if (super.fps < 30 && lowMemory)
 				i1 = 0xff0000;
-			if (super.fps < 20 && !aBoolean926)
+			if (super.fps < 20 && !lowMemory)
 				i1 = 0xff0000;
-			aClass50_Sub1_Sub1_Sub2_1060.drawRightAlignedText("Fps:" + super.fps, c, k, i1);
+			plainFont.drawRightAlignedText("Fps:" + super.fps, c, k, i1);
 			k += 15;
 			Runtime runtime = Runtime.getRuntime();
 			int j1 = (int) ((runtime.totalMemory() - runtime.freeMemory()) / 1024L);
 			i1 = 0xffff00;
-			if (j1 > 0x2000000 && aBoolean926)
+			if (j1 > 0x2000000 && lowMemory)
 				i1 = 0xff0000;
-			if (j1 > 0x4000000 && !aBoolean926)
+			if (j1 > 0x4000000 && !lowMemory)
 				i1 = 0xff0000;
-			aClass50_Sub1_Sub1_Sub2_1060.drawRightAlignedText("Mem:" + j1 + "k", c, k, 0xffff00);
+			plainFont.drawRightAlignedText("Mem:" + j1 + "k", c, k, 0xffff00);
 			k += 15;
 		}
 		if (anInt1057 != 0) {
@@ -5210,9 +5038,9 @@ public class client extends GameShell {
 			int l = j / 60;
 			j %= 60;
 			if (j < 10)
-				aClass50_Sub1_Sub1_Sub2_1060.drawText("System update in: " + l + ":0" + j, 4, 329, 0xffff00);
+				plainFont.drawText("System update in: " + l + ":0" + j, 4, 329, 0xffff00);
 			else
-				aClass50_Sub1_Sub1_Sub2_1060.drawText("System update in: " + l + ":" + j, 4, 329, 0xffff00);
+				plainFont.drawText("System update in: " + l + ":" + j, 4, 329, 0xffff00);
 			anInt895++;
 			if (anInt895 > 112) {
 				anInt895 = 0;
@@ -5223,8 +5051,8 @@ public class client extends GameShell {
 	}
 
 	public void run() {
-		if (aBoolean1314) {
-			method17((byte) 4);
+		if (titleFlameThreadMode) {
+			runTitleFlameLoop();
 			return;
 		} else {
 			super.run();
@@ -5255,7 +5083,7 @@ public class client extends GameShell {
 				if ((l == 3 || l == 7) && (l == 7 || privateChatMode == 0 || privateChatMode == 1 && isFriendOrSelf(s))) {
 					int i1 = 329 - j * 13;
 					if (super.mouseX > 4 && super.mouseY - 4 > i1 - 10 && super.mouseY - 4 <= i1 + 3) {
-						int j1 = aClass50_Sub1_Sub1_Sub2_1060.getFormattedTextWidth("From:  " + s + chatHistory.messages[k])
+						int j1 = plainFont.getFormattedTextWidth("From:  " + s + chatHistory.messages[k])
 								+ 25;
 						if (j1 > 450)
 							j1 = 450;
@@ -5368,7 +5196,7 @@ public class client extends GameShell {
 	/* Legacy client.method115(int i, int j): i -> plane; j -> removed zero sentinel. */
 	private void rebuildMinimap(int plane) {
 		minimapRenderer.rebuild(worldState, plane, aClass50_Sub1_Sub1_Sub3Array1153,
-				aClass50_Sub1_Sub1_Sub1Array1031, aClass18_1158, anIntArray1002, networkSession.outgoing);
+				aClass50_Sub1_Sub1_Sub1Array1031, viewportBuffer, viewportScanlineOffsets, networkSession.outgoing);
 	}
 
 
@@ -5393,7 +5221,7 @@ public class client extends GameShell {
 	/* Legacy client.method119(int i, boolean flag): i -> removed zero sentinel; flag -> localOnly. */
 	private void addPlayersToScene(boolean localOnly) {
 		sceneEntityRenderer.addPlayers(worldState, actorSynchronizer, localPlayer, currentPlane,
-				anInt1325, aBoolean926, localOnly);
+				anInt1325, lowMemory, localOnly);
 	}
 
 
@@ -6186,9 +6014,9 @@ public class client extends GameShell {
 					|| publicChatMode == 1 && isFriendOrSelf(((Player) obj).name))) {
 				projectActorToScreen((Actor) obj, ((Actor) obj).height);
 				if (projectedX > -1 && anInt939 < anInt940) {
-					anIntArray944[anInt939] = aClass50_Sub1_Sub1_Sub2_1061.getTextWidth(((Actor) (obj)).overheadText)
+					anIntArray944[anInt939] = boldFont.getTextWidth(((Actor) (obj)).overheadText)
 							/ 2;
-					anIntArray943[anInt939] = aClass50_Sub1_Sub1_Sub2_1061.lineHeight;
+					anIntArray943[anInt939] = boldFont.lineHeight;
 					anIntArray941[anInt939] = projectedX;
 					anIntArray942[anInt939] = projectedY;
 					anIntArray945[anInt939] = ((Actor) (obj)).overheadTextColor;
@@ -6232,9 +6060,9 @@ public class client extends GameShell {
 						}
 						aClass50_Sub1_Sub1_Sub1Array1182[((Actor) (obj)).hitTypes[i1]].drawImage(projectedX - 12,
 								projectedY - 12);
-						aClass50_Sub1_Sub1_Sub2_1059.drawCenteredText(String.valueOf(((Actor) (obj)).hitDamages[i1]),
+						smallFont.drawCenteredText(String.valueOf(((Actor) (obj)).hitDamages[i1]),
 								projectedX, projectedY + 4, 0);
-						aClass50_Sub1_Sub1_Sub2_1059.drawCenteredText(String.valueOf(((Actor) (obj)).hitDamages[i1]),
+						smallFont.drawCenteredText(String.valueOf(((Actor) (obj)).hitDamages[i1]),
 								projectedX - 1, projectedY + 3, 0xffffff);
 					}
 				}
@@ -6300,29 +6128,29 @@ public class client extends GameShell {
 						k2 = 0xffffff - 0x50000 * (j3 - 100);
 				}
 				if (anIntArray946[j] == 0) {
-					aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(s, projectedX, projectedY + 1, 0);
-					aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(s, projectedX, projectedY, k2);
+					boldFont.drawCenteredText(s, projectedX, projectedY + 1, 0);
+					boldFont.drawCenteredText(s, projectedX, projectedY, k2);
 				}
 				if (anIntArray946[j] == 1) {
-					aClass50_Sub1_Sub1_Sub2_1061.drawWaveText(s, projectedX, projectedY + 1, 0, sceneEntityRenderer.getRenderCycle());
-					aClass50_Sub1_Sub1_Sub2_1061.drawWaveText(s, projectedX, projectedY, k2, sceneEntityRenderer.getRenderCycle());
+					boldFont.drawWaveText(s, projectedX, projectedY + 1, 0, sceneEntityRenderer.getRenderCycle());
+					boldFont.drawWaveText(s, projectedX, projectedY, k2, sceneEntityRenderer.getRenderCycle());
 				}
 				if (anIntArray946[j] == 2) {
-					aClass50_Sub1_Sub1_Sub2_1061.drawWave2Text(s, projectedX, projectedY + 1, 0, sceneEntityRenderer.getRenderCycle());
-					aClass50_Sub1_Sub1_Sub2_1061.drawWave2Text(s, projectedX, projectedY, k2, sceneEntityRenderer.getRenderCycle());
+					boldFont.drawWave2Text(s, projectedX, projectedY + 1, 0, sceneEntityRenderer.getRenderCycle());
+					boldFont.drawWave2Text(s, projectedX, projectedY, k2, sceneEntityRenderer.getRenderCycle());
 				}
 				if (anIntArray946[j] == 3) {
-					aClass50_Sub1_Sub1_Sub2_1061.drawWaveAmplitudeText(s, projectedX, projectedY + 1, 0,
+					boldFont.drawWaveAmplitudeText(s, projectedX, projectedY + 1, 0,
 							150 - anIntArray947[j], sceneEntityRenderer.getRenderCycle());
-					aClass50_Sub1_Sub1_Sub2_1061.drawWaveAmplitudeText(s, projectedX, projectedY, k2,
+					boldFont.drawWaveAmplitudeText(s, projectedX, projectedY, k2,
 							150 - anIntArray947[j], sceneEntityRenderer.getRenderCycle());
 				}
 				if (anIntArray946[j] == 4) {
-					int k3 = aClass50_Sub1_Sub1_Sub2_1061.getTextWidth(s);
+					int k3 = boldFont.getTextWidth(s);
 					int i4 = ((150 - anIntArray947[j]) * (k3 + 100)) / 150;
 					Rasterizer.setCoordinates(projectedX - 50, 0, projectedX + 50, 334);
-					aClass50_Sub1_Sub1_Sub2_1061.drawText(s, (projectedX + 50) - i4, projectedY + 1, 0);
-					aClass50_Sub1_Sub1_Sub2_1061.drawText(s, (projectedX + 50) - i4, projectedY, k2);
+					boldFont.drawText(s, (projectedX + 50) - i4, projectedY + 1, 0);
+					boldFont.drawText(s, (projectedX + 50) - i4, projectedY, k2);
 					Rasterizer.resetCoordinates();
 				}
 				if (anIntArray946[j] == 5) {
@@ -6332,15 +6160,15 @@ public class client extends GameShell {
 						j4 = l3 - 25;
 					else if (l3 > 125)
 						j4 = l3 - 125;
-					Rasterizer.setCoordinates(0, projectedY - aClass50_Sub1_Sub1_Sub2_1061.lineHeight - 1, 512,
+					Rasterizer.setCoordinates(0, projectedY - boldFont.lineHeight - 1, 512,
 							projectedY + 5);
-					aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(s, projectedX, projectedY + 1 + j4, 0);
-					aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(s, projectedX, projectedY + j4, k2);
+					boldFont.drawCenteredText(s, projectedX, projectedY + 1 + j4, 0);
+					boldFont.drawCenteredText(s, projectedX, projectedY + j4, k2);
 					Rasterizer.resetCoordinates();
 				}
 			} else {
-				aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(s, projectedX, projectedY + 1, 0);
-				aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(s, projectedX, projectedY, 0xffff00);
+				boldFont.drawCenteredText(s, projectedX, projectedY + 1, 0);
+				boldFont.drawCenteredText(s, projectedX, projectedY, 0xffff00);
 			}
 		}
 
@@ -6348,48 +6176,47 @@ public class client extends GameShell {
 			networkSession.incomingOpcode = -1;
 	}
 
-	public void method122(int i) {
-		while (i >= 0)
-			aBoolean1242 = !aBoolean1242;
-		if (aClass18_1159 != null) {
+	/* Legacy client.method122(int i): i -> removed negative sentinel. */
+	public void createGameScreenBuffers() {
+		if (chatboxBuffer != null) {
 			return;
 		} else {
-			method141(28614);
+			disposeTitleScreen();
 			super.gameBuffer = null;
-			aClass18_1198 = null;
-			aClass18_1199 = null;
-			aClass18_1200 = null;
-			aClass18_1201 = null;
-			aClass18_1202 = null;
-			aClass18_1203 = null;
-			aClass18_1204 = null;
-			aClass18_1205 = null;
-			aClass18_1206 = null;
-			aClass18_1159 = new GraphicsBuffer(getGameComponent(), 479, 96);
-			aClass18_1157 = new GraphicsBuffer(getGameComponent(), 172, 156);
+			titleTopBuffer = null;
+			titleBottomBuffer = null;
+			loginBoxBuffer = null;
+			titleLeftFlameBuffer = null;
+			titleRightFlameBuffer = null;
+			titleLeftBottomBuffer = null;
+			titleRightBottomBuffer = null;
+			titleLeftCenterBuffer = null;
+			titleRightCenterBuffer = null;
+			chatboxBuffer = new GraphicsBuffer(getGameComponent(), 479, 96);
+			minimapBuffer = new GraphicsBuffer(getGameComponent(), 172, 156);
 			Rasterizer.resetPixels();
 			aClass50_Sub1_Sub1_Sub3_1186.draw(0, 0);
-			aClass18_1156 = new GraphicsBuffer(getGameComponent(), 190, 261);
-			aClass18_1158 = new GraphicsBuffer(getGameComponent(), 512, 334);
+			sidebarBuffer = new GraphicsBuffer(getGameComponent(), 190, 261);
+			viewportBuffer = new GraphicsBuffer(getGameComponent(), 512, 334);
 			Rasterizer.resetPixels();
 			aClass18_1108 = new GraphicsBuffer(getGameComponent(), 496, 50);
 			aClass18_1109 = new GraphicsBuffer(getGameComponent(), 269, 37);
 			aClass18_1110 = new GraphicsBuffer(getGameComponent(), 249, 45);
 			aBoolean1046 = true;
-			aClass18_1158.bindRaster();
-			Rasterizer3D.scanlineOffsets = anIntArray1002;
+			viewportBuffer.bindRaster();
+			Rasterizer3D.scanlineOffsets = viewportScanlineOffsets;
 			return;
 		}
 	}
 
-	public void method123(int i) {
+	/* Legacy client.method123(int i): i -> removed fixed 281 division sentinel. */
+	public void drawStartupErrorScreen() {
 		Graphics g = getGameComponent().getGraphics();
 		g.setColor(Color.black);
-		i = 68 / i;
 		g.fillRect(0, 0, 765, 503);
 		setTargetFps(1);
-		if (aBoolean1283) {
-			aBoolean1243 = false;
+		if (loadingError) {
+			titleFlamesRunning = false;
 			g.setFont(new Font("Helvetica", 1, 16));
 			g.setColor(Color.yellow);
 			int j = 35;
@@ -6410,16 +6237,16 @@ public class client extends GameShell {
 			j += 30;
 			g.drawString("5: Try selecting a different version of Java from the play-game menu", 30, j);
 		}
-		if (aBoolean1097) {
-			aBoolean1243 = false;
+		if (invalidHostError) {
+			titleFlamesRunning = false;
 			g.setFont(new Font("Helvetica", 1, 20));
 			g.setColor(Color.white);
 			g.drawString("Error - unable to load game!", 50, 50);
 			g.drawString("To play RuneScape make sure you play from", 50, 100);
 			g.drawString("http://www.runescape.com", 50, 150);
 		}
-		if (aBoolean1016) {
-			aBoolean1243 = false;
+		if (duplicateClientError) {
+			titleFlamesRunning = false;
 			g.setColor(Color.yellow);
 			int k = 35;
 			g.drawString("Error a copy of RuneScape already appears to be loaded", 30, k);
@@ -6439,9 +6266,7 @@ public class client extends GameShell {
 	public void logout() {
 		networkSession.closeConnection();
 		loggedIn = false;
-		anInt1225 = 0;
-		username = "";
-		password = "";
+		loginScreen.resetForLogout();
 		method49(383);
 		worldState.scene.clear();
 		for (int i = 0; i < 4; i++)
@@ -6451,28 +6276,30 @@ public class client extends GameShell {
 		musicController.resetOnLogout();
 	}
 
-	public void method125(int i, String s, String s1) {
-		while (i >= 0)
-			return;
-		if (aClass18_1158 != null) {
-			aClass18_1158.bindRaster();
-			Rasterizer3D.scanlineOffsets = anIntArray1002;
+	/*
+	 * Legacy client.method125(int i, String s, String s1):
+	 *   i -> removed negative sentinel, s -> secondaryMessage, s1 -> primaryMessage.
+	 */
+	public void drawGameLoadingMessage(String s, String s1) {
+		if (viewportBuffer != null) {
+			viewportBuffer.bindRaster();
+			Rasterizer3D.scanlineOffsets = viewportScanlineOffsets;
 			int j = 151;
 			if (s != null)
 				j -= 7;
-			aClass50_Sub1_Sub1_Sub2_1060.drawCenteredText(s1, 257, j, 0);
-			aClass50_Sub1_Sub1_Sub2_1060.drawCenteredText(s1, 256, j - 1, 0xffffff);
+			plainFont.drawCenteredText(s1, 257, j, 0);
+			plainFont.drawCenteredText(s1, 256, j - 1, 0xffffff);
 			j += 15;
 			if (s != null) {
-				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredText(s, 257, j, 0);
-				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredText(s, 256, j - 1, 0xffffff);
+				plainFont.drawCenteredText(s, 257, j, 0);
+				plainFont.drawCenteredText(s, 256, j - 1, 0xffffff);
 			}
-			aClass18_1158.draw(super.graphics, 4, 4);
+			viewportBuffer.draw(super.graphics, 4, 4);
 			return;
 		}
 		if (super.gameBuffer != null) {
 			super.gameBuffer.bindRaster();
-			Rasterizer3D.scanlineOffsets = anIntArray1003;
+			Rasterizer3D.scanlineOffsets = fullScreenScanlineOffsets;
 			int k = 251;
 			char c = '\u012C';
 			byte byte0 = 50;
@@ -6480,12 +6307,12 @@ public class client extends GameShell {
 			Rasterizer.drawUnfilledRectangle(383 - c / 2, k - 5 - byte0 / 2, c, byte0, 0xffffff);
 			if (s != null)
 				k -= 7;
-			aClass50_Sub1_Sub1_Sub2_1060.drawCenteredText(s1, 383, k, 0);
-			aClass50_Sub1_Sub1_Sub2_1060.drawCenteredText(s1, 382, k - 1, 0xffffff);
+			plainFont.drawCenteredText(s1, 383, k, 0);
+			plainFont.drawCenteredText(s1, 382, k - 1, 0xffffff);
 			k += 15;
 			if (s != null) {
-				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredText(s, 383, k, 0);
-				aClass50_Sub1_Sub1_Sub2_1060.drawCenteredText(s, 382, k - 1, 0xffffff);
+				plainFont.drawCenteredText(s, 383, k, 0);
+				plainFont.drawCenteredText(s, 382, k - 1, 0xffffff);
 			}
 			super.gameBuffer.draw(super.graphics, 0, 0);
 		}
@@ -6505,13 +6332,13 @@ public class client extends GameShell {
 	}
 
 	public void processDrawing() {
-		if (aBoolean1016 || aBoolean1283 || aBoolean1097) {
-			method123(281);
+		if (duplicateClientError || loadingError || invalidHostError) {
+			drawStartupErrorScreen();
 			return;
 		}
 		anInt1309++;
 		if (!loggedIn)
-			method131((byte) -50, false);
+			drawLoginScreen(false);
 		else
 			method74(7);
 		anInt1094 = 0;
@@ -6527,7 +6354,7 @@ public class client extends GameShell {
 		Rasterizer.drawFilledRectangle(i, j, k, l, i1);
 		Rasterizer.drawFilledRectangle(i + 1, j + 1, k - 2, 16, 0);
 		Rasterizer.drawUnfilledRectangle(i + 1, j + 18, k - 2, l - 19, 0);
-		aClass50_Sub1_Sub1_Sub2_1061.drawText("Choose Option", i + 3, j + 14, i1);
+		boldFont.drawText("Choose Option", i + 3, j + 14, i1);
 		int j1 = super.mouseX;
 		int k1 = super.mouseY;
 		if (menuState.screenArea == 0) {
@@ -6547,7 +6374,7 @@ public class client extends GameShell {
 			int j2 = 0xffffff;
 			if (j1 > i && j1 < i + k && k1 > i2 - 13 && k1 < i2 + 3)
 				j2 = 0xffff00;
-			aClass50_Sub1_Sub1_Sub2_1061.drawTextWithTags(menuState.actionNames[l1], i + 3, i2, j2, true);
+			boldFont.drawTextWithTags(menuState.actionNames[l1], i + 3, i2, j2, true);
 		}
 
 	}
@@ -6555,95 +6382,95 @@ public class client extends GameShell {
 	// Legacy method130 moved into MinimapRenderer.drawOnMinimap.
 
 
-	public void method131(byte byte0, boolean flag) {
-		method64(-188);
-		aClass18_1200.bindRaster();
-		aClass50_Sub1_Sub1_Sub3_1292.draw(0, 0);
+	/*
+	 * Legacy client.method131(byte byte0, boolean flag):
+	 *   byte0 -> removed fixed -50 sentinel, flag -> hideButtons.
+	 */
+	public void drawLoginScreen(boolean hideButtons) {
+		createTitleScreenBuffers();
+		loginBoxBuffer.bindRaster();
+		titleBoxImage.draw(0, 0);
 		char c = '\u0168';
 		char c1 = '\310';
-		if (byte0 != -50) {
-			for (int i = 1; i > 0; i++)
-				;
-		}
-		if (anInt1225 == 0) {
+		if (loginScreen.state == LoginScreen.WELCOME) {
 			int j = c1 / 2 + 80;
-			aClass50_Sub1_Sub1_Sub2_1059.drawCenteredTextWithTags(aClass32_Sub1_1291.statusString, c / 2, j, 0x75a9a9,
+			smallFont.drawCenteredTextWithTags(onDemandFetcher.statusString, c / 2, j, 0x75a9a9,
 					true);
 			j = c1 / 2 - 20;
-			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags("Welcome to RuneScape", c / 2, j, 0xffff00, true);
+			boldFont.drawCenteredTextWithTags("Welcome to RuneScape", c / 2, j, 0xffff00, true);
 			j += 30;
 			int i1 = c / 2 - 80;
 			int l1 = c1 / 2 + 20;
-			aClass50_Sub1_Sub1_Sub3_1293.draw(i1 - 73, l1 - 20);
-			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags("New User", i1, l1 + 5, 0xffffff, true);
+			titleButtonImage.draw(i1 - 73, l1 - 20);
+			boldFont.drawCenteredTextWithTags("New User", i1, l1 + 5, 0xffffff, true);
 			i1 = c / 2 + 80;
-			aClass50_Sub1_Sub1_Sub3_1293.draw(i1 - 73, l1 - 20);
-			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags("Existing User", i1, l1 + 5, 0xffffff, true);
+			titleButtonImage.draw(i1 - 73, l1 - 20);
+			boldFont.drawCenteredTextWithTags("Existing User", i1, l1 + 5, 0xffffff, true);
 		}
-		if (anInt1225 == 2) {
+		if (loginScreen.state == LoginScreen.CREDENTIALS) {
 			int k = c1 / 2 - 40;
-			if (loginMessage1.length() > 0) {
-				aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags(loginMessage1, c / 2, k - 15, 0xffff00, true);
-				aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags(loginMessage2, c / 2, k, 0xffff00, true);
+			if (loginScreen.message1.length() > 0) {
+				boldFont.drawCenteredTextWithTags(loginScreen.message1, c / 2, k - 15, 0xffff00, true);
+				boldFont.drawCenteredTextWithTags(loginScreen.message2, c / 2, k, 0xffff00, true);
 				k += 30;
 			} else {
-				aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags(loginMessage2, c / 2, k - 7, 0xffff00, true);
+				boldFont.drawCenteredTextWithTags(loginScreen.message2, c / 2, k - 7, 0xffff00, true);
 				k += 30;
 			}
-			aClass50_Sub1_Sub1_Sub2_1061.drawTextWithTags(
-					"Username: " + username + ((anInt977 == 0) & (anInt1325 % 40 < 20) ? "@yel@|" : ""), c / 2 - 90,
+			boldFont.drawTextWithTags(
+					"Username: " + loginScreen.username + ((loginScreen.focusedField == 0) & (anInt1325 % 40 < 20) ? "@yel@|" : ""), c / 2 - 90,
 					k, 0xffffff, true);
 			k += 15;
-			aClass50_Sub1_Sub1_Sub2_1061.drawTextWithTags("Password: " + TextFormatter.mask(password)
-					+ ((anInt977 == 1) & (anInt1325 % 40 < 20) ? "@yel@|" : ""), c / 2 - 88, k, 0xffffff, true);
+			boldFont.drawTextWithTags("Password: " + TextFormatter.mask(loginScreen.password)
+					+ ((loginScreen.focusedField == 1) & (anInt1325 % 40 < 20) ? "@yel@|" : ""), c / 2 - 88, k, 0xffffff, true);
 			k += 15;
-			if (!flag) {
+			if (!hideButtons) {
 				int j1 = c / 2 - 80;
 				int i2 = c1 / 2 + 50;
-				aClass50_Sub1_Sub1_Sub3_1293.draw(j1 - 73, i2 - 20);
-				aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags("Login", j1, i2 + 5, 0xffffff, true);
+				titleButtonImage.draw(j1 - 73, i2 - 20);
+				boldFont.drawCenteredTextWithTags("Login", j1, i2 + 5, 0xffffff, true);
 				j1 = c / 2 + 80;
-				aClass50_Sub1_Sub1_Sub3_1293.draw(j1 - 73, i2 - 20);
-				aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags("Cancel", j1, i2 + 5, 0xffffff, true);
+				titleButtonImage.draw(j1 - 73, i2 - 20);
+				boldFont.drawCenteredTextWithTags("Cancel", j1, i2 + 5, 0xffffff, true);
 			}
 		}
-		if (anInt1225 == 3) {
-			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags("Create a free account", c / 2, c1 / 2 - 60, 0xffff00,
+		if (loginScreen.state == LoginScreen.CREATE_ACCOUNT) {
+			boldFont.drawCenteredTextWithTags("Create a free account", c / 2, c1 / 2 - 60, 0xffff00,
 					true);
 			int l = c1 / 2 - 35;
-			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags("To create a new account you need to", c / 2, l,
+			boldFont.drawCenteredTextWithTags("To create a new account you need to", c / 2, l,
 					0xffffff, true);
 			l += 15;
-			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags("go back to the main RuneScape webpage", c / 2, l,
+			boldFont.drawCenteredTextWithTags("go back to the main RuneScape webpage", c / 2, l,
 					0xffffff, true);
 			l += 15;
-			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags("and choose the 'create account'", c / 2, l, 0xffffff,
+			boldFont.drawCenteredTextWithTags("and choose the 'create account'", c / 2, l, 0xffffff,
 					true);
 			l += 15;
-			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags("button near the top of that page.", c / 2, l,
+			boldFont.drawCenteredTextWithTags("button near the top of that page.", c / 2, l,
 					0xffffff, true);
 			l += 15;
 			int k1 = c / 2;
 			int j2 = c1 / 2 + 50;
-			aClass50_Sub1_Sub1_Sub3_1293.draw(k1 - 73, j2 - 20);
-			aClass50_Sub1_Sub1_Sub2_1061.drawCenteredTextWithTags("Cancel", k1, j2 + 5, 0xffffff, true);
+			titleButtonImage.draw(k1 - 73, j2 - 20);
+			boldFont.drawCenteredTextWithTags("Cancel", k1, j2 + 5, 0xffffff, true);
 		}
-		aClass18_1200.draw(super.graphics, 202, 171);
+		loginBoxBuffer.draw(super.graphics, 202, 171);
 		if (aBoolean1046) {
 			aBoolean1046 = false;
-			aClass18_1198.draw(super.graphics, 128, 0);
-			aClass18_1199.draw(super.graphics, 202, 371);
-			aClass18_1203.draw(super.graphics, 0, 265);
-			aClass18_1204.draw(super.graphics, 562, 265);
-			aClass18_1205.draw(super.graphics, 128, 171);
-			aClass18_1206.draw(super.graphics, 562, 171);
+			titleTopBuffer.draw(super.graphics, 128, 0);
+			titleBottomBuffer.draw(super.graphics, 202, 371);
+			titleLeftBottomBuffer.draw(super.graphics, 0, 265);
+			titleRightBottomBuffer.draw(super.graphics, 562, 265);
+			titleLeftCenterBuffer.draw(super.graphics, 128, 171);
+			titleRightCenterBuffer.draw(super.graphics, 562, 171);
 		}
 	}
 
 
 	public void method134(byte byte0) {
-		aClass18_1156.bindRaster();
-		Rasterizer3D.scanlineOffsets = anIntArray1001;
+		sidebarBuffer.bindRaster();
+		Rasterizer3D.scanlineOffsets = sidebarScanlineOffsets;
 		aClass50_Sub1_Sub1_Sub3_1185.draw(0, 0);
 		if (interfaceState.sidebarOverlayInterfaceId != -1)
 			drawInterface(0, 0, Widget.get(interfaceState.sidebarOverlayInterfaceId), 0);
@@ -6651,9 +6478,9 @@ public class client extends GameShell {
 			drawInterface(0, 0, Widget.get(interfaceState.tabInterfaceIds[interfaceState.selectedTab]), 0);
 		if (menuState.open && menuState.screenArea == 1)
 			drawContextMenu();
-		aClass18_1156.draw(super.graphics, 553, 205);
-		aClass18_1158.bindRaster();
-		Rasterizer3D.scanlineOffsets = anIntArray1002;
+		sidebarBuffer.draw(super.graphics, 553, 205);
+		viewportBuffer.bindRaster();
+		Rasterizer3D.scanlineOffsets = viewportScanlineOffsets;
 		if (byte0 == 7)
 			;
 	}
@@ -6691,9 +6518,9 @@ public class client extends GameShell {
 
 	public void method138(boolean flag) {
 		System.out.println("============");
-		System.out.println("flame-cycle:" + anInt1101);
-		if (aClass32_Sub1_1291 != null)
-			System.out.println("Od-cycle:" + aClass32_Sub1_1291.onDemandCycle);
+		System.out.println("flame-cycle:" + titleFlameCycle);
+		if (onDemandFetcher != null)
+			System.out.println("Od-cycle:" + onDemandFetcher.onDemandCycle);
 		System.out.println("loop-cycle:" + anInt1325);
 		System.out.println("draw-cycle:" + anInt1309);
 		System.out.println("ptype:" + networkSession.incomingOpcode);
@@ -6713,61 +6540,62 @@ public class client extends GameShell {
 	}
 
 	public void drawLoadingText(int i, String s) {
-		anInt1322 = i;
-		aString1027 = s;
-		method64(-188);
-		if (aClass2_888 == null) {
+		loadingPercent = i;
+		loadingMessage = s;
+		createTitleScreenBuffers();
+		if (titleArchive == null) {
 			super.drawLoadingText(i, s);
 			return;
 		}
-		aClass18_1200.bindRaster();
+		loginBoxBuffer.bindRaster();
 		char c = '\u0168';
 		char c1 = '\310';
 		byte byte0 = 20;
-		aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText("RuneScape is loading - please wait...", c / 2,
+		boldFont.drawCenteredText("RuneScape is loading - please wait...", c / 2,
 				c1 / 2 - 26 - byte0, 0xffffff);
 		int j = c1 / 2 - 18 - byte0;
 		Rasterizer.drawUnfilledRectangle(c / 2 - 152, j, 304, 34, 0x8c1111);
 		Rasterizer.drawUnfilledRectangle(c / 2 - 151, j + 1, 302, 32, 0);
 		Rasterizer.drawFilledRectangle(c / 2 - 150, j + 2, i * 3, 30, 0x8c1111);
 		Rasterizer.drawFilledRectangle((c / 2 - 150) + i * 3, j + 2, 300 - i * 3, 30, 0);
-		aClass50_Sub1_Sub1_Sub2_1061.drawCenteredText(s, c / 2, (c1 / 2 + 5) - byte0, 0xffffff);
-		aClass18_1200.draw(super.graphics, 202, 171);
+		boldFont.drawCenteredText(s, c / 2, (c1 / 2 + 5) - byte0, 0xffffff);
+		loginBoxBuffer.draw(super.graphics, 202, 171);
 		if (aBoolean1046) {
 			aBoolean1046 = false;
-			if (!aBoolean1243) {
-				aClass18_1201.draw(super.graphics, 0, 0);
-				aClass18_1202.draw(super.graphics, 637, 0);
+			if (!titleFlamesRunning) {
+				titleLeftFlameBuffer.draw(super.graphics, 0, 0);
+				titleRightFlameBuffer.draw(super.graphics, 637, 0);
 			}
-			aClass18_1198.draw(super.graphics, 128, 0);
-			aClass18_1199.draw(super.graphics, 202, 371);
-			aClass18_1203.draw(super.graphics, 0, 265);
-			aClass18_1204.draw(super.graphics, 562, 265);
-			aClass18_1205.draw(super.graphics, 128, 171);
-			aClass18_1206.draw(super.graphics, 562, 171);
+			titleTopBuffer.draw(super.graphics, 128, 0);
+			titleBottomBuffer.draw(super.graphics, 202, 371);
+			titleLeftBottomBuffer.draw(super.graphics, 0, 265);
+			titleRightBottomBuffer.draw(super.graphics, 562, 265);
+			titleLeftCenterBuffer.draw(super.graphics, 128, 171);
+			titleRightCenterBuffer.draw(super.graphics, 562, 171);
 		}
 	}
 
-	public void method139(boolean flag) {
-		byte abyte0[] = aClass2_888.read("title.dat");
+	/* Legacy client.method139(boolean flag): flag -> removed false infinite-loop sentinel. */
+	public void drawTitleBackground() {
+		byte abyte0[] = titleArchive.read("title.dat");
 		ImageRGB class50_sub1_sub1_sub1 = new ImageRGB(abyte0, this);
-		aClass18_1201.bindRaster();
+		titleLeftFlameBuffer.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(0, 0);
-		aClass18_1202.bindRaster();
+		titleRightFlameBuffer.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-637, 0);
-		aClass18_1198.bindRaster();
+		titleTopBuffer.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-128, 0);
-		aClass18_1199.bindRaster();
+		titleBottomBuffer.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-202, -371);
-		aClass18_1200.bindRaster();
+		loginBoxBuffer.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-202, -171);
-		aClass18_1203.bindRaster();
+		titleLeftBottomBuffer.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(0, -265);
-		aClass18_1204.bindRaster();
+		titleRightBottomBuffer.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-562, -265);
-		aClass18_1205.bindRaster();
+		titleLeftCenterBuffer.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-128, -171);
-		aClass18_1206.bindRaster();
+		titleRightCenterBuffer.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-562, -171);
 		int ai[] = new int[class50_sub1_sub1_sub1.width];
 		for (int i = 0; i < class50_sub1_sub1_sub1.height; i++) {
@@ -6780,30 +6608,26 @@ public class client extends GameShell {
 
 		}
 
-		aClass18_1201.bindRaster();
+		titleLeftFlameBuffer.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(382, 0);
-		aClass18_1202.bindRaster();
+		titleRightFlameBuffer.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-255, 0);
-		aClass18_1198.bindRaster();
+		titleTopBuffer.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(254, 0);
-		aClass18_1199.bindRaster();
+		titleBottomBuffer.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(180, -371);
-		aClass18_1200.bindRaster();
+		loginBoxBuffer.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(180, -171);
-		aClass18_1203.bindRaster();
-		if (flag) {
-			for (int k = 1; k > 0; k++)
-				;
-		}
+		titleLeftBottomBuffer.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(382, -265);
-		aClass18_1204.bindRaster();
+		titleRightBottomBuffer.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-180, -265);
-		aClass18_1205.bindRaster();
+		titleLeftCenterBuffer.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(254, -171);
-		aClass18_1206.bindRaster();
+		titleRightCenterBuffer.bindRaster();
 		class50_sub1_sub1_sub1.drawInverse(-180, -171);
-		class50_sub1_sub1_sub1 = new ImageRGB(aClass2_888, "logo", 0);
-		aClass18_1198.bindRaster();
+		class50_sub1_sub1_sub1 = new ImageRGB(titleArchive, "logo", 0);
+		titleTopBuffer.bindRaster();
 		class50_sub1_sub1_sub1.drawImage(382 - class50_sub1_sub1_sub1.width / 2 - 128, 18);
 		class50_sub1_sub1_sub1 = null;
 		abyte0 = null;
@@ -6811,30 +6635,29 @@ public class client extends GameShell {
 		System.gc();
 	}
 
-	public void method141(int i) {
-		aBoolean1243 = false;
-		while (aBoolean1320) {
-			aBoolean1243 = false;
+	/* Legacy client.method141(int i): i -> removed fixed 28614 sentinel. */
+	public void disposeTitleScreen() {
+		titleFlamesRunning = false;
+		while (titleFlameThreadActive) {
+			titleFlamesRunning = false;
 			try {
 				Thread.sleep(50L);
 			} catch (Exception _ex) {
 			}
 		}
-		aClass50_Sub1_Sub1_Sub3_1292 = null;
-		aClass50_Sub1_Sub1_Sub3_1293 = null;
-		aClass50_Sub1_Sub1_Sub3Array1117 = null;
-		anIntArray1310 = null;
-		anIntArray1311 = null;
-		if (i != 28614)
-			aBoolean1074 = !aBoolean1074;
-		anIntArray1312 = null;
-		anIntArray1313 = null;
-		anIntArray1176 = null;
-		anIntArray1177 = null;
-		anIntArray1084 = null;
-		anIntArray1085 = null;
-		aClass50_Sub1_Sub1_Sub1_1017 = null;
-		aClass50_Sub1_Sub1_Sub1_1018 = null;
+		titleBoxImage = null;
+		titleButtonImage = null;
+		titleRunes = null;
+		titleFlamePalette = null;
+		titleFlameRedPalette = null;
+		titleFlameGreenPalette = null;
+		titleFlameBluePalette = null;
+		titleFlameNoise = null;
+		titleFlameNoiseScratch = null;
+		titleFlameIntensity = null;
+		titleFlameIntensityScratch = null;
+		titleLeftFlameBackground = null;
+		titleRightFlameBackground = null;
 	}
 
 	/*
@@ -6929,9 +6752,9 @@ public class client extends GameShell {
 											class50_sub1_sub1_sub1_2.drawImage(i6, l6);
 										if (class50_sub1_sub1_sub1_2.maxWidth == 33 || class13_1.itemAmounts[i3] != 1) {
 											int k12 = class13_1.itemAmounts[i3];
-											aClass50_Sub1_Sub1_Sub2_1059.drawText(method20(k12, -243), i6 + 1 + i7,
+											smallFont.drawText(method20(k12, -243), i6 + 1 + i7,
 													l6 + 10 + j8, 0);
-											aClass50_Sub1_Sub1_Sub2_1059.drawText(method20(k12, -243), i6 + i7,
+											smallFont.drawText(method20(k12, -243), i6 + i7,
 													l6 + 9 + j8, 0xffff00);
 										}
 									}
@@ -7114,7 +6937,7 @@ public class client extends GameShell {
 							&& anInt893 == 100) {
 						int l3 = 0;
 						int i5 = 0;
-						TypeFace class50_sub1_sub1_sub2_2 = aClass50_Sub1_Sub1_Sub2_1060;
+						TypeFace class50_sub1_sub1_sub2_2 = plainFont;
 						for (String s1 = class13_1.text; s1.length() > 0;) {
 							int l7 = s1.indexOf("\\n");
 							String s4;
@@ -7171,13 +6994,13 @@ public class client extends GameShell {
 
 	private void queueAreaSound(int soundId, int loops, int radius, int tileX, int tileY) {
 		soundEffectQueue.queueAreaSound(soundId, loops, radius, tileX, tileY,
-				localPlayer.pathX[0], localPlayer.pathY[0], aBoolean926);
+				localPlayer.pathX[0], localPlayer.pathY[0], lowMemory);
 	}
 
 	private void updateRegionLoading() {
-		if (aBoolean926 && regionManager.loadingStage == RegionManager.STAGE_LOADED
+		if (lowMemory && regionManager.loadingStage == RegionManager.STAGE_LOADED
 				&& Region.currentPlane != currentPlane) {
-			method125(-332, null, "Loading - please wait.");
+			drawGameLoadingMessage(null, "Loading - please wait.");
 			regionManager.loadingStage = RegionManager.STAGE_LOADING;
 			regionManager.loadingStartTime = System.currentTimeMillis();
 		}
@@ -7187,17 +7010,17 @@ public class client extends GameShell {
 				regionManager.loadingStage = RegionManager.STAGE_LOADED;
 				Region.currentPlane = currentPlane;
 				lastMinimapPlane = -1;
-				regionManager.buildRegion(worldState, currentPlane, aBoolean926, networkSession.outgoing,
-						aClass32_Sub1_1291, super.gameFrame != null, () -> {
-							if (aClass18_1158 != null) {
-								aClass18_1158.bindRaster();
-								Rasterizer3D.scanlineOffsets = anIntArray1002;
+				regionManager.buildRegion(worldState, currentPlane, lowMemory, networkSession.outgoing,
+						onDemandFetcher, super.gameFrame != null, () -> {
+							if (viewportBuffer != null) {
+								viewportBuffer.bindRaster();
+								Rasterizer3D.scanlineOffsets = viewportScanlineOffsets;
 							}
 						});
 				networkSession.outgoing.writeOpcode(6);
 			} else if (System.currentTimeMillis() - regionManager.loadingStartTime > 0x57e40L) {
-				Signlink.reportError(username + " glcfb " + serverSessionKey + "," + status + "," + aBoolean926 + ","
-						+ aClass23Array1228[0] + "," + aClass32_Sub1_1291.getOutstandingRequestCount() + ","
+				Signlink.reportError(loginScreen.username + " glcfb " + serverSessionKey + "," + status + "," + lowMemory + ","
+						+ resourceLoader.getCacheIndex(0) + "," + onDemandFetcher.getOutstandingRequestCount() + ","
 						+ currentPlane + "," + regionManager.regionX + "," + regionManager.regionY);
 				regionManager.loadingStartTime = System.currentTimeMillis();
 			}
@@ -7234,23 +7057,23 @@ public class client extends GameShell {
 	}
 
 
-	public void method147() {
+	public void createGameBuffer() {
 		if (super.gameBuffer != null)
 			return;
-		method141(28614);
-		aClass18_1198 = null;
-		aClass18_1199 = null;
-		aClass18_1200 = null;
-		aClass18_1201 = null;
-		aClass18_1202 = null;
-		aClass18_1203 = null;
-		aClass18_1204 = null;
-		aClass18_1205 = null;
-		aClass18_1206 = null;
-		aClass18_1159 = null;
-		aClass18_1157 = null;
-		aClass18_1156 = null;
-		aClass18_1158 = null;
+		disposeTitleScreen();
+		titleTopBuffer = null;
+		titleBottomBuffer = null;
+		loginBoxBuffer = null;
+		titleLeftFlameBuffer = null;
+		titleRightFlameBuffer = null;
+		titleLeftBottomBuffer = null;
+		titleRightBottomBuffer = null;
+		titleLeftCenterBuffer = null;
+		titleRightCenterBuffer = null;
+		chatboxBuffer = null;
+		minimapBuffer = null;
+		sidebarBuffer = null;
+		viewportBuffer = null;
 		aClass18_1108 = null;
 		aClass18_1109 = null;
 		aClass18_1110 = null;
@@ -7268,37 +7091,32 @@ public class client extends GameShell {
 	}
 
 
-	public void method149(int i) {
-		while (i >= 0)
-			networkSession.incomingOpcode = networkSession.incoming.readUnsignedByte();
-		if (anInt1225 == 0) {
+	/* Legacy client.method149(int i): i -> removed negative packet-read sentinel. */
+	public void processLoginScreenInput() {
+		if (loginScreen.state == LoginScreen.WELCOME) {
 			int j = super.canvasWidth / 2 - 80;
 			int i1 = super.canvasHeight / 2 + 20;
 			i1 += 20;
 			if (super.clickButton == 1 && super.clickX >= j - 75 && super.clickX <= j + 75 && super.clickY >= i1 - 20
 					&& super.clickY <= i1 + 20) {
-				anInt1225 = 3;
-				anInt977 = 0;
+				loginScreen.showCreateAccount();
 			}
 			j = super.canvasWidth / 2 + 80;
 			if (super.clickButton == 1 && super.clickX >= j - 75 && super.clickX <= j + 75 && super.clickY >= i1 - 20
 					&& super.clickY <= i1 + 20) {
-				loginMessage1 = "";
-				loginMessage2 = "Enter your username & password.";
-				anInt1225 = 2;
-				anInt977 = 0;
+				loginScreen.showCredentials();
 				return;
 			}
 		} else {
-			if (anInt1225 == 2) {
+			if (loginScreen.state == LoginScreen.CREDENTIALS) {
 				int k = super.canvasHeight / 2 - 40;
 				k += 30;
 				k += 25;
 				if (super.clickButton == 1 && super.clickY >= k - 15 && super.clickY < k)
-					anInt977 = 0;
+					loginScreen.focusedField = 0;
 				k += 15;
 				if (super.clickButton == 1 && super.clickY >= k - 15 && super.clickY < k)
-					anInt977 = 1;
+					loginScreen.focusedField = 1;
 				k += 15;
 				int j1 = super.canvasWidth / 2 - 80;
 				int l1 = super.canvasHeight / 2 + 50;
@@ -7306,58 +7124,30 @@ public class client extends GameShell {
 				if (super.clickButton == 1 && super.clickX >= j1 - 75 && super.clickX <= j1 + 75
 						&& super.clickY >= l1 - 20 && super.clickY <= l1 + 20) {
 					loginFailures = 0;
-					login(username, password, false);
+					login(loginScreen.username, loginScreen.password, false);
 					if (loggedIn)
 						return;
 				}
 				j1 = super.canvasWidth / 2 + 80;
 				if (super.clickButton == 1 && super.clickX >= j1 - 75 && super.clickX <= j1 + 75
 						&& super.clickY >= l1 - 20 && super.clickY <= l1 + 20) {
-					anInt1225 = 0;
-					username = "";
-					password = "";
+					loginScreen.cancelCredentials();
 				}
 				do {
-					int i2 = pollKey();
-					if (i2 == -1)
+					int key = pollKey();
+					if (key == -1)
 						break;
-					boolean flag = false;
-					for (int j2 = 0; j2 < aString1007.length(); j2++) {
-						if (i2 != aString1007.charAt(j2))
-							continue;
-						flag = true;
-						break;
-					}
-
-					if (anInt977 == 0) {
-						if (i2 == 8 && username.length() > 0)
-							username = username.substring(0, username.length() - 1);
-						if (i2 == 9 || i2 == 10 || i2 == 13)
-							anInt977 = 1;
-						if (flag)
-							username += (char) i2;
-						if (username.length() > 12)
-							username = username.substring(0, 12);
-					} else if (anInt977 == 1) {
-						if (i2 == 8 && password.length() > 0)
-							password = password.substring(0, password.length() - 1);
-						if (i2 == 9 || i2 == 10 || i2 == 13)
-							anInt977 = 0;
-						if (flag)
-							password += (char) i2;
-						if (password.length() > 20)
-							password = password.substring(0, 20);
-					}
+					loginScreen.processKey(key);
 				} while (true);
 				return;
 			}
-			if (anInt1225 == 3) {
+			if (loginScreen.state == LoginScreen.CREATE_ACCOUNT) {
 				int l = super.canvasWidth / 2;
 				int k1 = super.canvasHeight / 2 + 50;
 				k1 += 20;
 				if (super.clickButton == 1 && super.clickX >= l - 75 && super.clickX <= l + 75
 						&& super.clickY >= k1 - 20 && super.clickY <= k1 + 20)
-					anInt1225 = 0;
+					loginScreen.cancelCreateAccount();
 			}
 		}
 	}
@@ -7399,13 +7189,12 @@ public class client extends GameShell {
 		method127();
 		method65(textureCycle, -927);
 		method109();
-		aClass18_1158.draw(super.graphics, 4, 4);
+		viewportBuffer.draw(super.graphics, 4, 4);
 		cameraController.restore(cameraSnapshot);
 	}
 
 
 	public client() {
-		anIntArray837 = new int[9];
 		reportAbuseName = "";
 		skillExperiences = new int[Skills.COUNT];
 		aString861 = "";
@@ -7415,7 +7204,6 @@ public class client extends GameShell {
 		aBoolean892 = false;
 		anInt894 = -992;
 		aClass50_Sub1_Sub1_Sub1Array896 = new ImageRGB[8];
-		aBoolean900 = false;
 		aBoolean918 = true;
 		aBoolean919 = true;
 		anIntArray920 = new int[151];
@@ -7424,6 +7212,8 @@ public class client extends GameShell {
 		chatHistory = new ChatHistory();
 		interfaceState = new InterfaceState();
 		menuState = new MenuState();
+		loginScreen = new LoginScreen();
+		resourceLoader = new ResourceLoader();
 		soundEffectQueue = new SoundEffectQueue();
 		musicController = new MusicController();
 		pathfinder = new Pathfinder();
@@ -7466,13 +7256,11 @@ public class client extends GameShell {
 		aBoolean950 = false;
 		aBoolean953 = false;
 		aClass50_Sub1_Sub1_Sub1Array954 = new ImageRGB[32];
-		loginMessage1 = "";
-		loginMessage2 = "";
 		aBoolean959 = true;
 		localPlayerServerIndex = -1;
 		aClass50_Sub1_Sub1_Sub3Array976 = new IndexedImage[13];
 		anIntArray1005 = new int[2000];
-		aBoolean1016 = false;
+		duplicateClientError = false;
 		anIntArray1019 = new int[151];
 		promptInput = "";
 		aBoolean1028 = false;
@@ -7487,13 +7275,9 @@ public class client extends GameShell {
 		aStringArray1069 = new String[5];
 		aBooleanArray1070 = new boolean[5];
 		anInt1072 = 20411;
-		aBoolean1074 = false;
 		aClass50_Sub1_Sub1_Sub1Array1079 = new ImageRGB[32];
 		anInt1080 = 0x4d4233;
-		aCRC32_1088 = new CRC32();
-		username = "";
-		password = "";
-		aBoolean1097 = false;
+		invalidHostError = false;
 		reportAbuseMutePlayer = false;
 		anIntArray1099 = new int[5];
 		chatInput = "";
@@ -7509,35 +7293,32 @@ public class client extends GameShell {
 		aClass50_Sub1_Sub1_Sub3Array1153 = new IndexedImage[100];
 		aBoolean1155 = false;
 		regionManager.instanced = false;
-		anIntArray1166 = new int[256];
+		titleFlameLineOffsets = new int[256];
 		anIntArray1180 = new int[33];
 		aBoolean1181 = false;
 		aClass50_Sub1_Sub1_Sub1Array1182 = new ImageRGB[20];
 		regionManager.awaitingPlayerUpdate = false;
 		chatModesRedraw = false;
-		aClass23Array1228 = new CacheIndex[5];
 		aBoolean1239 = false;
 		aBoolean1240 = false;
-		aBoolean1243 = false;
+		titleFlamesRunning = false;
 		aByteArray1245 = new byte[16384];
 		aClass13_1249 = new Widget();
 		cameraOrientationChanged = false;
 		aBoolean1275 = true;
 		lastMinimapPlane = -1;
 		aBoolean1277 = false;
-		anInt1281 = -939;
-		aBoolean1283 = false;
+		loadingError = false;
 		anIntArray1286 = new int[33];
 		anInt1287 = 0x332d25;
 		aClass50_Sub1_Sub1_Sub1Array1288 = new ImageRGB[32];
-		aBoolean1314 = false;
+		titleFlameThreadMode = false;
 		anInt1318 = 416;
-		aBoolean1320 = false;
+		titleFlameThreadActive = false;
 		anIntArray1326 = new int[7];
 		anInt1328 = 409;
 	}
 
-	public int anIntArray837[];
 	public String reportAbuseName;
 	public static BigInteger aBigInteger840 = new BigInteger(
 			"7162900525229798032761816791230527296329313291232324290237849263501208207972894053929065636522363163621000728841182238772712427862772219676577293600221789");
@@ -7566,13 +7347,12 @@ public class client extends GameShell {
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_883;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_884;
 	public int privateChatMode;
-	public Archive aClass2_888;
+	public Archive titleArchive;
 	public boolean aBoolean892;
 	public int anInt893;
 	public int anInt894;
 	public static int anInt895;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1Array896[];
-	public boolean aBoolean900;
 	public long aLong902;
 	public GraphicsBuffer aClass18_906;
 	public GraphicsBuffer aClass18_907;
@@ -7588,9 +7368,9 @@ public class client extends GameShell {
 	public boolean aBoolean919;
 	public int anIntArray920[];
 	public static int currentWorldId = 10;
-	public static int anInt924;
+	public static int portOffset;
 	public static boolean membersWorld = true;
-	public static boolean aBoolean926;
+	public static boolean lowMemory;
 	public Buffer loginBuffer;
 	public long serverSessionKey;
 	public int anInt931;
@@ -7615,8 +7395,6 @@ public class client extends GameShell {
 	public boolean aBoolean953;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1Array954[];
 	public int anInt955;
-	public String loginMessage1;
-	public String loginMessage2;
 	public boolean aBoolean959;
 	public static boolean accountFlagged;
 	public NetworkSession networkSession;
@@ -7624,6 +7402,8 @@ public class client extends GameShell {
 	private final ChatHistory chatHistory;
 	private final InterfaceState interfaceState;
 	private final MenuState menuState;
+	private final LoginScreen loginScreen;
+	private final ResourceLoader resourceLoader;
 	private final SoundEffectQueue soundEffectQueue;
 	private final MusicController musicController;
 	private final WidgetRuntime widgetRuntime;
@@ -7658,7 +7438,6 @@ public class client extends GameShell {
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_966;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_967;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3Array976[];
-	public int anInt977;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_983;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_984;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_985;
@@ -7666,14 +7445,13 @@ public class client extends GameShell {
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_987;
 	public int anInt992;
 	public int anInt998;
-	public static boolean aBoolean999;
-	public int anIntArray1000[];
-	public int anIntArray1001[];
-	public int anIntArray1002[];
-	public int anIntArray1003[];
+	public static boolean startupStarted;
+	public int chatboxScanlineOffsets[];
+	public int sidebarScanlineOffsets[];
+	public int viewportScanlineOffsets[];
+	public int fullScreenScanlineOffsets[];
 	public int anIntArray1005[];
 	public int publicChatMode;
-	public static String aString1007 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!\"\243$%^&*()-_=+[{]};:'@#~,<.>/?\\| ";
 	public static final int anIntArrayArray1008[][] = {
 			{ 6798, 107, 10283, 16, 4797, 7744, 5799, 4634, 33697, 22433, 2983, 54193 },
 			{ 8741, 12, 64030, 43162, 7735, 8404, 1701, 38430, 24094, 10153, 56621, 4783, 1341, 16578, 35003, 25239 },
@@ -7683,16 +7461,16 @@ public class client extends GameShell {
 	public int anInt1012;
 	public static int anInt1013;
 	public int anInt1015;
-	public boolean aBoolean1016;
-	public ImageRGB aClass50_Sub1_Sub1_Sub1_1017;
-	public ImageRGB aClass50_Sub1_Sub1_Sub1_1018;
+	public boolean duplicateClientError;
+	public ImageRGB titleLeftFlameBackground;
+	public ImageRGB titleRightFlameBackground;
 	public int anIntArray1019[];
 	public int anInt1020;
 	public int anInt1021;
 	public int anInt1022;
 	public int anInt1023;
 	public String promptInput;
-	public String aString1027;
+	public String loadingMessage;
 	public boolean aBoolean1028;
 	public int currentSkillLevels[];
 	public int weight;
@@ -7704,42 +7482,38 @@ public class client extends GameShell {
 	public int varpValues[];
 	public int anInt1044;
 	public boolean aBoolean1046;
-	public int anInt1047;
-	public int anInt1048;
+	public int greenFlameTransition;
+	public int blueFlameTransition;
 	public static int anInt1049;
 	public int anInt1051;
 	public static int anInt1052;
 	public int baseSkillLevels[];
 	public int anInt1057;
 	public String aString1058;
-	public TypeFace aClass50_Sub1_Sub1_Sub2_1059;
-	public TypeFace aClass50_Sub1_Sub1_Sub2_1060;
-	public TypeFace aClass50_Sub1_Sub1_Sub2_1061;
-	public TypeFace aClass50_Sub1_Sub1_Sub2_1062;
+	public TypeFace smallFont;
+	public TypeFace plainFont;
+	public TypeFace boldFont;
+	public TypeFace fancyFont;
 	public int anInt1068;
 	public String aStringArray1069[];
 	public boolean aBooleanArray1070[];
 	public int anInt1072;
-	public boolean aBoolean1074;
 	public int anInt1075;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1Array1079[];
 	public int anInt1080;
 	public int anInt1083;
-	public int anIntArray1084[];
-	public int anIntArray1085[];
+	public int titleFlameIntensity[];
+	public int titleFlameIntensityScratch[];
 	public ImageRGB aClass50_Sub1_Sub1_Sub1_1086;
-	public CRC32 aCRC32_1088;
 	public int currentPlane;
-	public String username;
-	public String password;
 	public int anInt1094;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_1095;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3_1096;
-	public boolean aBoolean1097;
+	public boolean invalidHostError;
 	public boolean reportAbuseMutePlayer;
 	public int anIntArray1099[];
 	public static int anInt1100;
-	public int anInt1101;
+	public int titleFlameCycle;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1_1102;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1_1103;
 	public String chatInput;
@@ -7749,7 +7523,7 @@ public class client extends GameShell {
 	public GraphicsBuffer aClass18_1109;
 	public GraphicsBuffer aClass18_1110;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1_1116;
-	public IndexedImage aClass50_Sub1_Sub1_Sub3Array1117[];
+	public IndexedImage titleRunes[];
 	public int destinationX;
 	public int destinationY;
 	public int alternativeRoute;
@@ -7768,17 +7542,17 @@ public class client extends GameShell {
 	public int anInt1151;
 	public IndexedImage aClass50_Sub1_Sub1_Sub3Array1153[];
 	public boolean aBoolean1155;
-	public GraphicsBuffer aClass18_1156;
-	public GraphicsBuffer aClass18_1157;
-	public GraphicsBuffer aClass18_1158;
-	public GraphicsBuffer aClass18_1159;
+	public GraphicsBuffer sidebarBuffer;
+	public GraphicsBuffer minimapBuffer;
+	public GraphicsBuffer viewportBuffer;
+	public GraphicsBuffer chatboxBuffer;
 	public static int anInt1162;
 	public static int anInt1165;
-	public int anIntArray1166[];
+	public int titleFlameLineOffsets[];
 	public int anInt1170;
 	public int anInt1172;
-	public int anIntArray1176[];
-	public int anIntArray1177[];
+	public int titleFlameNoise[];
+	public int titleFlameNoiseScratch[];
 	public int anIntArray1180[];
 	public boolean aBoolean1181;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1Array1182[];
@@ -7791,16 +7565,15 @@ public class client extends GameShell {
 	public ImageRGB aClass50_Sub1_Sub1_Sub1_1195;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1_1196;
 	public int anInt1197;
-	public GraphicsBuffer aClass18_1198;
-	public GraphicsBuffer aClass18_1199;
-	public GraphicsBuffer aClass18_1200;
-	public GraphicsBuffer aClass18_1201;
-	public GraphicsBuffer aClass18_1202;
-	public GraphicsBuffer aClass18_1203;
-	public GraphicsBuffer aClass18_1204;
-	public GraphicsBuffer aClass18_1205;
-	public GraphicsBuffer aClass18_1206;
-	public static boolean aBoolean1207;
+	public GraphicsBuffer titleTopBuffer;
+	public GraphicsBuffer titleBottomBuffer;
+	public GraphicsBuffer loginBoxBuffer;
+	public GraphicsBuffer titleLeftFlameBuffer;
+	public GraphicsBuffer titleRightFlameBuffer;
+	public GraphicsBuffer titleLeftBottomBuffer;
+	public GraphicsBuffer titleRightBottomBuffer;
+	public GraphicsBuffer titleLeftCenterBuffer;
+	public GraphicsBuffer titleRightCenterBuffer;
 	public int anInt1208;
 	public boolean chatModesRedraw;
 	public static int bitMasks[];
@@ -7809,19 +7582,17 @@ public class client extends GameShell {
 	public int anInt1222;
 	public int splitPrivateChat;
 	public Socket jaggrabSocket;
-	public int anInt1225;
 	public int anInt1226;
 	public int tradeMode;
-	public CacheIndex aClass23Array1228[];
 	public static int anInt1230;
 	public static int anInt1235;
 	public static int anInt1237;
-	public int anInt1238;
+	public int titleFlameNoiseOffset;
 	public boolean aBoolean1239;
 	public boolean aBoolean1240;
 	public int anInt1241;
 	public static boolean aBoolean1242 = true;
-	public volatile boolean aBoolean1243;
+	public volatile boolean titleFlamesRunning;
 	public int anInt1244;
 	public byte aByteArray1245[];
 	public int tutorialIslandFlag;
@@ -7838,33 +7609,32 @@ public class client extends GameShell {
 	public int lastMinimapPlane;
 	public boolean aBoolean1277;
 	public int anInt1280;
-	public int anInt1281;
-	public boolean aBoolean1283;
+	public boolean loadingError;
 	public int anInt1284;
 	public int anIntArray1286[];
 	public int anInt1287;
 	public ImageRGB aClass50_Sub1_Sub1_Sub1Array1288[];
 	public int anIntArray1290[] = { 17, 24, 34, 40 };
-	public OnDemandFetcher aClass32_Sub1_1291;
-	public IndexedImage aClass50_Sub1_Sub1_Sub3_1292;
-	public IndexedImage aClass50_Sub1_Sub1_Sub3_1293;
+	public OnDemandFetcher onDemandFetcher;
+	public IndexedImage titleBoxImage;
+	public IndexedImage titleButtonImage;
 	public int anInt1299;
 	public int oneButtonMouseMode;
 	public int anInt1302;
 	public int anInt1303;
 	public static int anInt1309;
-	public int anIntArray1310[];
-	public int anIntArray1311[];
-	public int anIntArray1312[];
-	public int anIntArray1313[];
-	public volatile boolean aBoolean1314;
+	public int titleFlamePalette[];
+	public int titleFlameRedPalette[];
+	public int titleFlameGreenPalette[];
+	public int titleFlameBluePalette[];
+	public volatile boolean titleFlameThreadMode;
 	public int anInt1315;
 	public static BigInteger aBigInteger1316 = new BigInteger(
 			"58778699976184461502525193738213253649000149147835990136706041084440742975821");
 	public int anInt1318;
 	public int anInt1319;
-	public volatile boolean aBoolean1320;
-	public int anInt1322;
+	public volatile boolean titleFlameThreadActive;
+	public int loadingPercent;
 	public int runEnergy;
 	public static int anInt1325;
 	public int anIntArray1326[];

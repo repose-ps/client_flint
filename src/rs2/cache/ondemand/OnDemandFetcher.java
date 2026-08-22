@@ -10,6 +10,7 @@ import java.util.zip.GZIPInputStream;
 
 import rs2.client;
 import rs2.cache.Archive;
+import rs2.cache.ResourceLoader;
 import rs2.collection.DualNodeDeque;
 import rs2.collection.NodeDeque;
 import rs2.net.Buffer;
@@ -123,8 +124,8 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 				}
 
 				if (currentChunkLength + currentChunkOffset >= destination.length && currentRequest != null) {
-					if (clientInstance.aClass23Array1228[0] != null) {
-						clientInstance.aClass23Array1228[currentRequest.type + 1].write(currentRequest.id, destination);
+					if (resourceLoader.hasCache()) {
+						resourceLoader.getCacheIndex(currentRequest.type + 1).write(currentRequest.id, destination);
 					}
 					if (!currentRequest.incomplete && currentRequest.type == MAP) {
 						currentRequest.incomplete = true;
@@ -219,11 +220,11 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	}
 
 	public void setExtraPriority(int type, int id, byte priority) {
-		if (clientInstance.aClass23Array1228[0] == null)
+		if (!resourceLoader.hasCache())
 			return;
 		if (versions[type][id] == 0)
 			return;
-		byte[] bytes = clientInstance.aClass23Array1228[type + 1].read(id);
+		byte[] bytes = resourceLoader.getCacheIndex(type + 1).read(id);
 		if (crcMatches(bytes, versions[type][id], crcs[type][id]))
 			return;
 		fileStatus[type][id] = priority;
@@ -302,7 +303,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 			while (running) {
 				onDemandCycle++;
 				int sleepMillis = 20;
-				if (highestPriority == 0 && clientInstance.aClass23Array1228[0] != null)
+				if (highestPriority == 0 && resourceLoader.hasCache())
 					sleepMillis = 50;
 				try {
 					Thread.sleep(sleepMillis);
@@ -364,7 +365,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 					statusString = "";
 				}
 				if (clientInstance.loggedIn && socket != null && outputStream != null
-						&& (highestPriority > 0 || clientInstance.aClass23Array1228[0] == null)) {
+						&& (highestPriority > 0 || !resourceLoader.hasCache())) {
 					keepAliveCycles++;
 					if (keepAliveCycles > KEEP_ALIVE_AFTER_CYCLES) {
 						keepAliveCycles = 0;
@@ -448,7 +449,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	 * {@code anim_index}, and {@code midi_index}.
 	 * </p>
 	 */
-	public void start(Archive archive, client clientInstance) {
+	public void start(Archive archive, client clientInstance, ResourceLoader resourceLoader) {
 		String[] versionNames = { "model_version", "anim_version", "midi_version", "map_version" };
 		for (int type = 0; type < ARCHIVE_TYPE_COUNT; type++) {
 			byte[] bytes = archive.read(versionNames[type]);
@@ -505,6 +506,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		}
 
 		this.clientInstance = clientInstance;
+		this.resourceLoader = resourceLoader;
 		running = true;
 		this.clientInstance.startThread(this, 2);
 	}
@@ -516,7 +518,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	}
 
 	public void queueExtraRequest(int type, int id) {
-		if (clientInstance.aClass23Array1228[0] == null)
+		if (!resourceLoader.hasCache())
 			return;
 		if (versions[type][id] == 0)
 			return;
@@ -541,8 +543,8 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		while (request != null) {
 			waiting = true;
 			byte[] bytes = null;
-			if (clientInstance.aClass23Array1228[0] != null) {
-				bytes = clientInstance.aClass23Array1228[request.type + 1].read(request.id);
+			if (resourceLoader.hasCache()) {
+				bytes = resourceLoader.getCacheIndex(request.type + 1).read(request.id);
 			}
 			if (!crcMatches(bytes, versions[request.type][request.id], crcs[request.type][request.id])) {
 				bytes = null;
@@ -591,7 +593,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 					return;
 				}
 				lastSocketOpenTime = now;
-				socket = clientInstance.openSocket(43594 + client.anInt924);
+				socket = clientInstance.openSocket(43594 + client.portOffset);
 				inputStream = socket.getInputStream();
 				outputStream = socket.getOutputStream();
 				outputStream.write(UPDATE_SERVER_HANDSHAKE);
@@ -696,6 +698,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	private InputStream inputStream;
 	private OnDemandRequest currentRequest;
 	private client clientInstance;
+	private ResourceLoader resourceLoader;
 	private NodeDeque networkRequests;
 	private int keepAliveCycles;
 	private int[] animationIndex;
