@@ -11,10 +11,7 @@ import rs2.media.renderable.Renderable;
  * rather than being exposed as an unordered collection.
  * </p>
  */
-public /**
-		 * Initializes this instance.
-		 */
-class GroundItemTile {
+public class GroundItemTile {
 
 	/** World-space height at which the pile is based. */
 	public int z;

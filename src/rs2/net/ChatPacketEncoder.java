@@ -7,15 +7,13 @@ import rs2.chat.ChatCodec;
  * order.
  */
 public final class ChatPacketEncoder {
-	/**
-	 * Initializes this instance.
-	 */
+
 	private ChatPacketEncoder() {
 	}
 
 	/**
 	 * Opcode 176: public/private/trade chat mode settings.
-	 * 
+	 *
 	 * @param outgoing    the outgoing
 	 * @param publicMode  the public mode
 	 * @param privateMode the private mode
@@ -30,7 +28,7 @@ public final class ChatPacketEncoder {
 
 	/**
 	 * Opcode 227: private message with one-byte payload length backfill.
-	 * 
+	 *
 	 * @param outgoing  the outgoing
 	 * @param recipient the recipient
 	 * @param message   the message
@@ -46,7 +44,7 @@ public final class ChatPacketEncoder {
 
 	/**
 	 * Opcode 49: public chat with transformed color/effect bytes.
-	 * 
+	 *
 	 * @param outgoing the outgoing
 	 * @param color    the color
 	 * @param effect   the effect
@@ -67,7 +65,7 @@ public final class ChatPacketEncoder {
 
 	/**
 	 * Opcode 56: command text after the leading "::" marker.
-	 * 
+	 *
 	 * @param outgoing     the outgoing
 	 * @param commandInput the command input
 	 */

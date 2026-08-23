@@ -23,13 +23,8 @@ import java.net.Socket;
  */
 public class BufferedConnection implements Runnable, Closeable {
 
-	/**
-	 * Stores read timeout millis.
-	 */
 	private static final int READ_TIMEOUT_MILLIS = 30_000;
-	/**
-	 * Stores write buffer capacity.
-	 */
+
 	private static final int WRITE_BUFFER_CAPACITY = 5_000;
 
 	/**
@@ -37,30 +32,19 @@ public class BufferedConnection implements Runnable, Closeable {
 	 * client.
 	 */
 	private static final int MAX_PENDING_BYTES = 4_900;
-	/**
-	 * Stores writer thread priority.
-	 */
+
 	private static final int WRITER_THREAD_PRIORITY = 3;
 
-	/**
-	 * Stores input.
-	 */
 	public InputStream input;
-	/**
-	 * Stores output.
-	 */
+
 	public OutputStream output;
-	/**
-	 * Stores socket.
-	 */
+
 	public Socket socket;
 	/**
 	 * Whether closed.
 	 */
 	private boolean closed;
-	/**
-	 * Stores write buffer.
-	 */
+
 	public byte[] writeBuffer = new byte[WRITE_BUFFER_CAPACITY];
 
 	/**
@@ -77,13 +61,8 @@ public class BufferedConnection implements Runnable, Closeable {
 	 */
 	public boolean writeThreadStarted;
 
-	/**
-	 * Stores writer thread.
-	 */
 	private Thread writerThread;
-	/**
-	 * Stores writer failure.
-	 */
+
 	private IOException writerFailure;
 
 	/**
@@ -93,7 +72,7 @@ public class BufferedConnection implements Runnable, Closeable {
 	 * TCP_NODELAY prevents small game packets from being delayed by Nagle's
 	 * algorithm. The read timeout preserves the original 30-second timeout.
 	 * </p>
-	 * 
+	 *
 	 * @param socket the socket
 	 */
 	public BufferedConnection(Socket socket) throws IOException {
@@ -358,7 +337,7 @@ public class BufferedConnection implements Runnable, Closeable {
 
 	/**
 	 * Returns whether closed.
-	 * 
+	 *
 	 * @return the resulting boolean
 	 */
 	public synchronized boolean isClosed() {
@@ -412,7 +391,7 @@ public class BufferedConnection implements Runnable, Closeable {
 	 * Records the first asynchronous writer error.
 	 *
 	 * The game thread receives this failure on its next call to write().
-	 * 
+	 *
 	 * @param failure the failure
 	 */
 	private synchronized void recordWriterFailure(IOException failure) {
@@ -450,7 +429,7 @@ public class BufferedConnection implements Runnable, Closeable {
 
 	/**
 	 * Performs the same bounds checks expected from standard Java array APIs.
-	 * 
+	 *
 	 * @param bytes  the bytes
 	 * @param offset the offset
 	 * @param length the length

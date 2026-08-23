@@ -20,65 +20,32 @@ import rs2.scene.Region;
 /**
  * Owns revision-377 map-square/instance loading state and local-base shifts.
  */
-public final /**
-				 * Initializes this instance.
-				 */
-class RegionManager {
+public final class RegionManager {
 
-	/**
-	 * Stores stage unloaded.
-	 */
 	public static final int STAGE_UNLOADED = 0;
-	/**
-	 * Stores stage loading.
-	 */
+
 	public static final int STAGE_LOADING = 1;
-	/**
-	 * Stores stage loaded.
-	 */
+
 	public static final int STAGE_LOADED = 2;
 
-	/**
-	 * Stores instance templates.
-	 */
 	public final int[][][] instanceTemplates = new int[4][13][13];
 
-	/**
-	 * Stores terrain data.
-	 */
 	public byte[][] terrainData;
-	/**
-	 * Stores landscape data.
-	 */
+
 	public byte[][] landscapeData;
-	/**
-	 * Stores region ids.
-	 */
+
 	public int[] regionIds;
-	/**
-	 * Stores terrain archive ids.
-	 */
+
 	public int[] terrainArchiveIds;
-	/**
-	 * Stores landscape archive ids.
-	 */
+
 	public int[] landscapeArchiveIds;
 
-	/**
-	 * Stores region x.
-	 */
 	public int regionX;
-	/**
-	 * Stores region y.
-	 */
+
 	public int regionY;
-	/**
-	 * Stores base x.
-	 */
+
 	public int baseX;
-	/**
-	 * Stores base y.
-	 */
+
 	public int baseY;
 	/**
 	 * Whether instanced.
@@ -88,26 +55,17 @@ class RegionManager {
 	 * Whether special region.
 	 */
 	public boolean specialRegion;
-	/**
-	 * Stores loading stage.
-	 */
+
 	public int loadingStage;
-	/**
-	 * Stores loading start time.
-	 */
+
 	public long loadingStartTime;
 	/**
 	 * Whether awaiting player update.
 	 */
 	public boolean awaitingPlayerUpdate;
 
-	/**
-	 * Stores previous base x.
-	 */
 	private int previousBaseX;
-	/**
-	 * Stores previous base y.
-	 */
+
 	private int previousBaseY;
 
 	public static final class RegionShift {
@@ -115,32 +73,15 @@ class RegionManager {
 		 * Whether changed.
 		 */
 		public final boolean changed;
-		/**
-		 * Stores delta x.
-		 */
+
 		public final int deltaX;
-		/**
-		 * Stores delta y.
-		 */
+
 		public final int deltaY;
-		/**
-		 * Stores destination x.
-		 */
+
 		public final int destinationX;
-		/**
-		 * Stores destination y.
-		 */
+
 		public final int destinationY;
 
-		/**
-		 * Initializes this instance.
-		 * 
-		 * @param changed      the changed
-		 * @param deltaX       the delta x
-		 * @param deltaY       the delta y
-		 * @param destinationX the destination x
-		 * @param destinationY the destination y
-		 */
 		private RegionShift(boolean changed, int deltaX, int deltaY, int destinationX, int destinationY) {
 			this.changed = changed;
 			this.deltaX = deltaX;
@@ -153,7 +94,7 @@ class RegionManager {
 	/**
 	 * Extracted from the revision-377 incoming packet branches 222 (normal) and 53
 	 * (constructed/instanced).
-	 * 
+	 *
 	 * @param buffer       the buffer
 	 * @param opcode       the opcode
 	 * @param fetcher      the fetcher
@@ -238,7 +179,7 @@ class RegionManager {
 
 	/**
 	 * Performs prepare normal regions.
-	 * 
+	 *
 	 * @param fetcher the fetcher
 	 */
 	private void prepareNormalRegions(OnDemandFetcher fetcher) {
@@ -282,7 +223,7 @@ class RegionManager {
 
 	/**
 	 * Performs prepare instanced regions.
-	 * 
+	 *
 	 * @param fetcher the fetcher
 	 */
 	private void prepareInstancedRegions(OnDemandFetcher fetcher) {
@@ -334,7 +275,7 @@ class RegionManager {
 
 	/**
 	 * Performs shift actors.
-	 * 
+	 *
 	 * @param actors the actors
 	 * @param deltaX the delta x
 	 * @param deltaY the delta y
@@ -356,7 +297,7 @@ class RegionManager {
 
 	/**
 	 * Performs shift actor.
-	 * 
+	 *
 	 * @param actor  the actor
 	 * @param deltaX the delta x
 	 * @param deltaY the delta y
@@ -372,7 +313,7 @@ class RegionManager {
 
 	/**
 	 * Performs accept map file.
-	 * 
+	 *
 	 * @param request the request
 	 */
 	public void acceptMapFile(OnDemandRequest request) {
@@ -415,12 +356,7 @@ class RegionManager {
 		awaitingPlayerUpdate = false;
 	}
 
-	/**
-	 * Legacy client.method144(int 5), without the final build side effects.
-	 *
-	 * @return 0 ready, -1 missing terrain, -2 missing landscape, -3 missing
-	 *         location models, -4 waiting for the first player update after shift
-	 */
+	/** Returns the current region-loading readiness code without building the scene. */
 	public int getLoadingStatus() {
 		for (int index = 0; index < terrainData.length; index++) {
 			if (terrainData[index] == null && terrainArchiveIds[index] != -1) {
@@ -453,18 +389,7 @@ class RegionManager {
 		return 0;
 	}
 
-	/**
-	 * Legacy client.method93(int 175), with UI-specific raster rebinding supplied
-	 * as a callback.
-	 * 
-	 * @param world             the world
-	 * @param currentPlane      the current plane
-	 * @param lowMemory         the low memory
-	 * @param outgoing          the outgoing
-	 * @param fetcher           the fetcher
-	 * @param standaloneFrame   the standalone frame
-	 * @param rebindSceneRaster the rebind scene raster
-	 */
+	/** Builds terrain, objects, collision, and scene state for the loaded region set. */
 	public void buildRegion(WorldState world, int currentPlane, boolean lowMemory, Buffer outgoing,
 			OnDemandFetcher fetcher, boolean standaloneFrame, Runnable rebindSceneRaster) {
 		try {
@@ -645,7 +570,7 @@ class RegionManager {
 
 	/**
 	 * Performs queue border regions.
-	 * 
+	 *
 	 * @param fetcher the fetcher
 	 */
 	private void queueBorderRegions(OnDemandFetcher fetcher) {

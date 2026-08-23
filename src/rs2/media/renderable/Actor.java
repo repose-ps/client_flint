@@ -13,232 +13,128 @@ import rs2.cache.media.AnimationSequence;
  * {@link #size}.
  * </p>
  */
-public abstract /**
-				 * Initializes this instance.
-				 */
-class Actor extends Renderable {
+public abstract class Actor extends Renderable {
 
-	/**
-	 * Stores overhead text.
-	 */
 	public String overheadText;
-	/**
-	 * Stores overhead text cycles remaining.
-	 */
+
 	public int overheadTextCyclesRemaining = 100;
-	/**
-	 * Stores overhead text color.
-	 */
+
 	public int overheadTextColor;
-	/**
-	 * Stores orientation.
-	 */
+
 	public int orientation;
-	/**
-	 * Stores last update cycle.
-	 */
+
 	public int lastUpdateCycle;
-	/**
-	 * Stores path x.
-	 */
+
 	public final int[] pathX = new int[10];
-	/**
-	 * Stores path y.
-	 */
+
 	public final int[] pathY = new int[10];
-	/**
-	 * Stores movement sequence.
-	 */
+
 	public int movementSequence = -1;
-	/**
-	 * Stores movement frame.
-	 */
+
 	public int movementFrame;
-	/**
-	 * Stores movement frame cycle.
-	 */
+
 	public int movementFrameCycle;
-	/**
-	 * Stores path running.
-	 */
+
 	public final boolean[] pathRunning = new boolean[10];
 	/**
 	 * Whether animation stretches.
 	 */
 	public boolean animationStretches;
-	/**
-	 * Stores overhead text effect.
-	 */
+
 	public int overheadTextEffect;
-	/**
-	 * Stores height.
-	 */
+
 	public int height = 200;
-	/**
-	 * Stores health bar cycle.
-	 */
+
 	public int healthBarCycle = -1000;
-	/**
-	 * Stores current health.
-	 */
+
 	public int currentHealth;
-	/**
-	 * Stores max health.
-	 */
+
 	public int maxHealth;
-	/**
-	 * Stores face x.
-	 */
+
 	public int faceX;
-	/**
-	 * Stores face y.
-	 */
+
 	public int faceY;
-	/**
-	 * Stores turn speed.
-	 */
+
 	public int turnSpeed = 32;
-	/**
-	 * Stores size.
-	 */
+
 	public int size = 1;
-	/**
-	 * Stores force move start x.
-	 */
+
 	public int forceMoveStartX;
-	/**
-	 * Stores force move end x.
-	 */
+
 	public int forceMoveEndX;
-	/**
-	 * Stores force move start y.
-	 */
+
 	public int forceMoveStartY;
-	/**
-	 * Stores force move end y.
-	 */
+
 	public int forceMoveEndY;
-	/**
-	 * Stores force move start cycle.
-	 */
+
 	public int forceMoveStartCycle;
-	/**
-	 * Stores force move end cycle.
-	 */
+
 	public int forceMoveEndCycle;
-	/**
-	 * Stores force move direction.
-	 */
+
 	public int forceMoveDirection;
 	/**
 	 * Index used for target.
 	 */
 	public int targetIndex = -1;
-	/**
-	 * Stores x.
-	 */
+
 	public int x;
-	/**
-	 * Stores y.
-	 */
+
 	public int y;
-	/**
-	 * Stores rotation.
-	 */
+
 	public int rotation;
 	/**
 	 * Number of queued path steps that remained when the current action sequence
 	 * began.
 	 */
 	public int sequencePathLength;
-	/**
-	 * Stores spot animation.
-	 */
+
 	public int spotAnimation = -1;
-	/**
-	 * Stores spot animation frame.
-	 */
+
 	public int spotAnimationFrame;
-	/**
-	 * Stores spot animation frame cycle.
-	 */
+
 	public int spotAnimationFrameCycle;
-	/**
-	 * Stores spot animation start cycle.
-	 */
+
 	public int spotAnimationStartCycle;
-	/**
-	 * Stores spot animation height.
-	 */
+
 	public int spotAnimationHeight;
-	/**
-	 * Stores walk sequence.
-	 */
+
 	public int walkSequence = -1;
-	/**
-	 * Stores walk back sequence.
-	 */
+
 	public int walkBackSequence = -1;
-	/**
-	 * Stores walk right sequence.
-	 */
+
 	public int walkRightSequence = -1;
-	/**
-	 * Stores walk left sequence.
-	 */
+
 	public int walkLeftSequence = -1;
 	/**
 	 * Movement delay accumulated when animation precedence prevents consuming the
 	 * path.
 	 */
 	public int movementDelay;
-	/**
-	 * Stores sequence.
-	 */
+
 	public int sequence = -1;
-	/**
-	 * Stores sequence frame.
-	 */
+
 	public int sequenceFrame;
-	/**
-	 * Stores sequence frame cycle.
-	 */
+
 	public int sequenceFrameCycle;
-	/**
-	 * Stores sequence delay.
-	 */
+
 	public int sequenceDelay;
 	/**
 	 * Number of sequence loop entries.
 	 */
 	public int sequenceLoopCount;
-	/**
-	 * Stores run sequence.
-	 */
+
 	public int runSequence = -1;
-	/**
-	 * Stores hit damages.
-	 */
+
 	public final int[] hitDamages = new int[4];
-	/**
-	 * Stores hit types.
-	 */
+
 	public final int[] hitTypes = new int[4];
-	/**
-	 * Stores hit cycles.
-	 */
+
 	public final int[] hitCycles = new int[4];
-	/**
-	 * Stores path length.
-	 */
+
 	public int pathLength;
-	/**
-	 * Stores idle sequence.
-	 */
+
 	public int idleSequence = -1;
-	/**
-	 * Stores turn sequence.
-	 */
+
 	public int turnSequence = -1;
 
 	/**
@@ -313,7 +209,7 @@ class Actor extends Renderable {
 	/**
 	 * Stores one of the four timed hit-splat slots, using the first slot whose
 	 * expiry has passed.
-	 * 
+	 *
 	 * @param cycle  the cycle
 	 * @param damage the damage
 	 * @param type   the type
@@ -336,7 +232,7 @@ class Actor extends Renderable {
 	 * Non-teleport moves within eight tiles are queued. Larger moves, or explicit
 	 * teleports, discard the path and immediately recompute fine world coordinates.
 	 * </p>
-	 * 
+	 *
 	 * @param tileX    the tile x
 	 * @param tileY    the tile y
 	 * @param teleport the teleport

@@ -538,7 +538,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	 * {@code model_index}, seven-byte {@code map_index} records,
 	 * {@code anim_index}, and {@code midi_index}.
 	 * </p>
-	 * 
+	 *
 	 * @param archive        the archive
 	 * @param clientInstance the client instance
 	 * @param resourceLoader the resource loader
@@ -856,13 +856,12 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		versions = new int[ARCHIVE_TYPE_COUNT][];
 	}
 
-	/** Stores the files loaded. */
 	private int filesLoaded;
-	/** Stores the model indices values. */
+
 	private byte[] modelIndices;
-	/** Stores the map preload flags values. */
+
 	private int[] mapPreloadFlags;
-	/** Stores the file status values. */
+
 	private byte[][] fileStatus;
 	/** Tracks whether waiting. */
 	private boolean waiting;
@@ -870,71 +869,71 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	private volatile boolean running;
 	/** Worker thread owned by this fetcher. */
 	private volatile Thread workerThread;
-	/** Stores the cache request queue. */
+
 	private NodeDeque cacheRequestQueue;
-	/** Stores the highest priority. */
+
 	private volatile int highestPriority;
-	/** Stores the mandatory request count. */
+
 	private int mandatoryRequestCount;
-	/** Stores the extra request count. */
+
 	private int extraRequestCount;
-	/** Stores the crcs values. */
+
 	private int[][] crcs;
-	/** Stores the region ids values. */
+
 	private int[] regionIds;
-	/** Stores the status string. */
+
 	public volatile String statusString;
-	/** Stores the on demand cycle. */
+
 	public volatile int onDemandCycle;
-	/** Stores the output stream. */
+
 	private volatile OutputStream outputStream;
-	/** Stores the total files. */
+
 	public volatile int totalFiles;
-	/** Stores the missing request queue. */
+
 	private NodeDeque missingRequestQueue;
-	/** Stores the idle cycles. */
+
 	private int idleCycles;
-	/** Stores the crc32. */
+
 	private CRC32 crc32;
-	/** Stores the socket. */
+
 	private volatile Socket socket;
-	/** Stores the completed queue. */
+
 	private NodeDeque completedQueue;
-	/** Stores the extra request queue. */
+
 	private NodeDeque extraRequestQueue;
-	/** Stores the terrain file ids values. */
+
 	private int[] terrainFileIds;
-	/** Stores the current chunk offset. */
+
 	private int currentChunkOffset;
-	/** Stores the current chunk length. */
+
 	private int currentChunkLength;
-	/** Stores the io buffer values. */
+
 	private byte[] ioBuffer;
-	/** Stores the landscape file ids values. */
+
 	private int[] landscapeFileIds;
-	/** Stores the midi preload flags values. */
+
 	private int[] midiPreloadFlags;
-	/** Stores the outstanding requests. */
+
 	private DualNodeDeque outstandingRequests;
-	/** Stores the input stream. */
+
 	private volatile InputStream inputStream;
-	/** Stores the current request. */
+
 	private OnDemandRequest currentRequest;
-	/** Stores the client instance. */
+
 	private Client clientInstance;
-	/** Stores the resource loader. */
+
 	private ResourceLoader resourceLoader;
-	/** Stores the network requests. */
+
 	private NodeDeque networkRequests;
-	/** Stores the keep alive cycles. */
+
 	private int keepAliveCycles;
-	/** Stores the animation index values. */
+
 	private int[] animationIndex;
-	/** Stores the versions values. */
+
 	private int[][] versions;
-	/** Stores the last socket open time. */
+
 	private long lastSocketOpenTime;
-	/** Stores the request failures. */
+
 	public volatile int requestFailures;
 
 }

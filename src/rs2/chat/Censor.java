@@ -22,7 +22,7 @@ public final class Censor {
 
 	/**
 	 * Loads the four revision-377 word-filter tables from the supplied archive.
-	 * 
+	 *
 	 * @param archive the archive
 	 */
 	public static void load(Archive archive) {
@@ -180,7 +180,7 @@ public final class Censor {
 
 	/**
 	 * Returns the revision-377 censored representation of {@code text}.
-	 * 
+	 *
 	 * @param text the text
 	 */
 	public static String censor(String text) {
@@ -1085,17 +1085,16 @@ public final class Censor {
 		return encodedValue;
 	}
 
-	/** Stores the fragment hashes values. */
 	private static int[] fragmentHashes;
-	/** Stores the bad words values. */
+
 	private static char[][] badWords;
-	/** Stores the bad word context pairs values. */
+
 	private static byte[][][] badWordContextPairs;
-	/** Stores the domain words values. */
+
 	private static char[][] domainWords;
-	/** Stores the top level domains values. */
+
 	private static char[][] topLevelDomains;
-	/** Stores the top level domain types values. */
+
 	private static int[] topLevelDomainTypes;
 	/** Defines the exceptions constant. */
 	private static final String[] EXCEPTIONS = { "cook", "cook's", "cooks", "seeks", "sheet", "woop", "woops", "faq",

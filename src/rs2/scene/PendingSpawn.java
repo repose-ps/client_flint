@@ -13,57 +13,34 @@ import rs2.collection.Node;
  * restoration of the previous scene state.
  * </p>
  */
-public final /**
-				 * Initializes this instance.
-				 */
-class PendingSpawn extends Node {
+public final class PendingSpawn extends Node {
 
 	/**
 	 * Identifier for spawn.
 	 */
 	public int spawnId;
-	/**
-	 * Stores spawn orientation.
-	 */
+
 	public int spawnOrientation;
-	/**
-	 * Stores spawn type.
-	 */
+
 	public int spawnType;
 	/**
 	 * Identifier for previous.
 	 */
 	public int previousId;
-	/**
-	 * Stores previous orientation.
-	 */
+
 	public int previousOrientation;
-	/**
-	 * Stores previous type.
-	 */
+
 	public int previousType;
-	/**
-	 * Stores restore delay.
-	 */
+
 	public int restoreDelay = -1;
-	/**
-	 * Stores plane.
-	 */
+
 	public int plane;
-	/**
-	 * Stores scene layer.
-	 */
+
 	public int sceneLayer;
-	/**
-	 * Stores x.
-	 */
+
 	public int x;
-	/**
-	 * Stores y.
-	 */
+
 	public int y;
-	/**
-	 * Stores spawn delay.
-	 */
+
 	public int spawnDelay;
 }

@@ -10,10 +10,7 @@ package rs2.net;
  * framing lengths only; the opcode byte itself is not included.
  * </p>
  */
-public /**
-		 * Initializes this instance.
-		 */
-class IncomingPacketLengths {
+public class IncomingPacketLengths {
 
 	/**
 	 * Payload lengths indexed by the ISAAC-deciphered inbound opcode.

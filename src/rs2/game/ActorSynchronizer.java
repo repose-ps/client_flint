@@ -24,69 +24,43 @@ import rs2.text.Base37;
  */
 public final class ActorSynchronizer {
 
-	/**
-	 * Stores max players.
-	 */
 	public static final int MAX_PLAYERS = 2048;
-	/**
-	 * Stores local player index.
-	 */
+
 	public static final int LOCAL_PLAYER_INDEX = 2047;
-	/**
-	 * Stores max npcs.
-	 */
+
 	public static final int MAX_NPCS = 16384;
 
-	/**
-	 * Stores players.
-	 */
 	public final Player[] players = new Player[MAX_PLAYERS];
 	/**
 	 * Number of player entries.
 	 */
 	public int playerCount;
-	/**
-	 * Stores player indices.
-	 */
+
 	public final int[] playerIndices = new int[MAX_PLAYERS];
-	/**
-	 * Stores player appearance buffers.
-	 */
+
 	public final Buffer[] playerAppearanceBuffers = new Buffer[MAX_PLAYERS];
 
-	/**
-	 * Stores npcs.
-	 */
 	public final Npc[] npcs = new Npc[MAX_NPCS];
 	/**
 	 * Number of npc entries.
 	 */
 	public int npcCount;
-	/**
-	 * Stores npc indices.
-	 */
+
 	public final int[] npcIndices = new int[MAX_NPCS];
 
 	/**
 	 * Number of update entries.
 	 */
 	private int updateCount;
-	/**
-	 * Stores update indices.
-	 */
+
 	private final int[] updateIndices = new int[MAX_PLAYERS];
 	/**
 	 * Number of removed entries.
 	 */
 	private int removedCount;
-	/**
-	 * Stores removed indices.
-	 */
+
 	private final int[] removedIndices = new int[1000];
 
-	/**
-	 * Stores local player.
-	 */
 	public Player localPlayer;
 
 	/**
@@ -96,7 +70,7 @@ public final class ActorSynchronizer {
 	public interface ChatHandler {
 		/**
 		 * Returns whether ignored.
-		 * 
+		 *
 		 * @return the resulting boolean
 		 * @param encodedName the encoded name
 		 */
@@ -104,14 +78,14 @@ public final class ActorSynchronizer {
 
 		/**
 		 * Returns whether chat suppressed.
-		 * 
+		 *
 		 * @return the resulting boolean
 		 */
 		boolean isChatSuppressed();
 
 		/**
 		 * Adds chat message.
-		 * 
+		 *
 		 * @param sender  the sender
 		 * @param message the message
 		 * @param type    the type
@@ -119,9 +93,6 @@ public final class ActorSynchronizer {
 		void addChatMessage(String sender, String message, int type);
 	}
 
-	/**
-	 * Initializes this instance.
-	 */
 	public ActorSynchronizer() {
 	}
 
@@ -145,24 +116,7 @@ public final class ActorSynchronizer {
 		return localPlayer;
 	}
 
-	/**
-	 * Decodes one complete player synchronization packet.
-	 *
-	 * <p>
-	 * Legacy client entry point:
-	 * {@code method96(int packetSize, int divideSentinel, Buffer buffer)}. The
-	 * divide sentinel is removed; its valid caller supplied 69.
-	 * </p>
-	 *
-	 * @return the plane selected by the local-player movement block
-	 * @param buffer       the buffer
-	 * @param packetSize   the packet size
-	 * @param cycle        the cycle
-	 * @param currentPlane the current plane
-	 * @param username     the username
-	 * @param chatScratch  the chat scratch
-	 * @param chatHandler  the chat handler
-	 */
+	/** Decodes one complete player-synchronization packet and returns the resulting plane. */
 	public int decodePlayerUpdate(Buffer buffer, int packetSize, int cycle, int currentPlane, String username,
 			Buffer chatScratch, ChatHandler chatHandler) {
 		removedCount = 0;
@@ -194,20 +148,7 @@ public final class ActorSynchronizer {
 		return plane;
 	}
 
-	/**
-	 * Decodes one complete NPC synchronization packet.
-	 *
-	 * <p>
-	 * Legacy client entry point:
-	 * {@code method48(Buffer buffer, boolean unused, int packetSize)}. The boolean
-	 * is removed because it was never read.
-	 * </p>
-	 * 
-	 * @param buffer     the buffer
-	 * @param packetSize the packet size
-	 * @param cycle      the cycle
-	 * @param username   the username
-	 */
+	/** Decodes one complete NPC-synchronization packet. */
 	public void decodeNpcUpdate(Buffer buffer, int packetSize, int cycle, String username) {
 		removedCount = 0;
 		updateCount = 0;
@@ -239,7 +180,7 @@ public final class ActorSynchronizer {
 
 	/**
 	 * Updates players.
-	 * 
+	 *
 	 * @param updater                the updater
 	 * @param cycle                  the cycle
 	 * @param localPlayerServerIndex the local player server index
@@ -260,7 +201,7 @@ public final class ActorSynchronizer {
 
 	/**
 	 * Updates npcs.
-	 * 
+	 *
 	 * @param updater                the updater
 	 * @param cycle                  the cycle
 	 * @param localPlayerServerIndex the local player server index
@@ -278,14 +219,7 @@ public final class ActorSynchronizer {
 		}
 	}
 
-	/**
-	 * Legacy {@code method41(int unused, boolean unusedFlag, Buffer buffer)}. Both
-	 * non-buffer parameters are removed. Bit access is intentionally left open for
-	 * the existing-player and new-player blocks.
-	 * 
-	 * @param buffer       the buffer
-	 * @param currentPlane the current plane
-	 */
+	/** Decodes the local-player movement bit block while leaving bit access open. */
 	private int decodeLocalPlayerMovement(Buffer buffer, int currentPlane) {
 		buffer.startBitAccess();
 		int hasUpdate = buffer.readBits(1);
@@ -325,15 +259,7 @@ public final class ActorSynchronizer {
 		return plane;
 	}
 
-	/**
-	 * Legacy {@code method114(int unused, int negativeSentinel, Buffer buffer)}.
-	 * The first integer was unused; the valid negative sentinel only avoided
-	 * resetting the incoming opcode and is removed from this subsystem API.
-	 * 
-	 * @param buffer   the buffer
-	 * @param cycle    the cycle
-	 * @param username the username
-	 */
+	/** Decodes movement and removal state for players already present in the local list. */
 	private void decodeExistingPlayers(Buffer buffer, int cycle, String username) {
 		int count = buffer.readBits(8);
 		if (count < playerCount) {
@@ -382,14 +308,7 @@ public final class ActorSynchronizer {
 		}
 	}
 
-	/**
-	 * Legacy {@code method16(int packetSize, byte sentinel, Buffer buffer)}. The
-	 * valid sentinel was 6. Finishes bit access before update masks are decoded.
-	 * 
-	 * @param buffer     the buffer
-	 * @param packetSize the packet size
-	 * @param cycle      the cycle
-	 */
+	/** Decodes newly observed players and then finishes bit access. */
 	private void decodeNewPlayers(Buffer buffer, int packetSize, int cycle) {
 		while (buffer.bitPosition + 10 < packetSize * 8) {
 			int playerIndex = buffer.readBits(11);
@@ -423,16 +342,7 @@ public final class ActorSynchronizer {
 		buffer.finishBitAccess();
 	}
 
-	/**
-	 * Legacy {@code method40(int divideSentinel, Buffer buffer, int unused)}. Only
-	 * the buffer is meaningful; the valid caller supplied 808 for the division
-	 * argument.
-	 * 
-	 * @param buffer      the buffer
-	 * @param cycle       the cycle
-	 * @param chatScratch the chat scratch
-	 * @param chatHandler the chat handler
-	 */
+	/** Decodes update masks for players queued by the movement blocks. */
 	private void decodePlayerMasks(Buffer buffer, int cycle, Buffer chatScratch, ChatHandler chatHandler) {
 		for (int index = 0; index < updateCount; index++) {
 			int playerIndex = updateIndices[index];
@@ -445,20 +355,6 @@ public final class ActorSynchronizer {
 		}
 	}
 
-	/**
-	 * Legacy
-	 * {@code method63(int sentinel, int playerIndex, Player player, int mask, Buffer buffer)}.
-	 * The required sentinel value 2 is removed; meaningful parameters are named
-	 * explicitly.
-	 * 
-	 * @param buffer      the buffer
-	 * @param cycle       the cycle
-	 * @param playerIndex the player index
-	 * @param player      the player
-	 * @param mask        the mask
-	 * @param chatScratch the chat scratch
-	 * @param chatHandler the chat handler
-	 */
 	private void decodePlayerMask(Buffer buffer, int cycle, int playerIndex, Player player, int mask,
 			Buffer chatScratch, ChatHandler chatHandler) {
 		if ((mask & 8) != 0) {
@@ -576,15 +472,7 @@ public final class ActorSynchronizer {
 		}
 	}
 
-	/**
-	 * Legacy {@code method46(int unused, byte sentinel, Buffer buffer)}. The first
-	 * integer was unused and the valid byte was -58. Bit access remains open for
-	 * new-NPC additions.
-	 * 
-	 * @param buffer   the buffer
-	 * @param cycle    the cycle
-	 * @param username the username
-	 */
+	/** Decodes movement and removal state for NPCs already present in the local list. */
 	private void decodeExistingNpcs(Buffer buffer, int cycle, String username) {
 		buffer.startBitAccess();
 		int count = buffer.readBits(8);
@@ -634,14 +522,7 @@ public final class ActorSynchronizer {
 		}
 	}
 
-	/**
-	 * Legacy {@code method132(Buffer buffer, int packetSize)}. Meaningful parameter
-	 * order is unchanged.
-	 * 
-	 * @param buffer     the buffer
-	 * @param packetSize the packet size
-	 * @param cycle      the cycle
-	 */
+	/** Decodes newly observed NPCs and then finishes bit access. */
 	private void decodeNewNpcs(Buffer buffer, int packetSize, int cycle) {
 		while (buffer.bitPosition + 21 < packetSize * 8) {
 			int npcIndex = buffer.readBits(14);
@@ -673,14 +554,7 @@ public final class ActorSynchronizer {
 		buffer.finishBitAccess();
 	}
 
-	/**
-	 * Legacy {@code method62(Buffer buffer, int unused, int divideSentinel)}. Only
-	 * the buffer is meaningful; the valid caller supplied 838 for the division
-	 * argument.
-	 * 
-	 * @param buffer the buffer
-	 * @param cycle  the cycle
-	 */
+	/** Decodes update masks for NPCs queued by the movement blocks. */
 	private void decodeNpcMasks(Buffer buffer, int cycle) {
 		for (int index = 0; index < updateCount; index++) {
 			Npc npc = npcs[updateIndices[index]];
@@ -744,7 +618,7 @@ public final class ActorSynchronizer {
 
 	/**
 	 * Applies npc definition.
-	 * 
+	 *
 	 * @param npc        the npc
 	 * @param definition the definition
 	 */
@@ -761,7 +635,7 @@ public final class ActorSynchronizer {
 
 	/**
 	 * Applies sequence.
-	 * 
+	 *
 	 * @param actor    the actor
 	 * @param sequence the sequence
 	 * @param delay    the delay

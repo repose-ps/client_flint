@@ -17,30 +17,9 @@ import rs2.media.renderable.Player;
  * and angle arithmetic.
  * </p>
  */
-public final /**
-				 * Initializes this instance.
-				 */
-class ActorUpdater {
+public final class ActorUpdater {
 
-	/**
-	 * Updates one player or NPC for the current client cycle.
-	 *
-	 * <p>
-	 * Legacy entry point:
-	 * {@code method68(int unusedSize, byte sentinel, Actor actor)}. The supplied
-	 * size argument was never read and the valid byte was -97.
-	 * </p>
-	 * 
-	 * @param actor                  the actor
-	 * @param cycle                  the cycle
-	 * @param localPlayer            the local player
-	 * @param players                the players
-	 * @param npcs                   the npcs
-	 * @param localPlayerServerIndex the local player server index
-	 * @param localPlayerArrayIndex  the local player array index
-	 * @param regionBaseX            the region base x
-	 * @param regionBaseY            the region base y
-	 */
+	/** Advances movement, facing, and animations for one actor during the current client cycle. */
 	public void update(Actor actor, int cycle, Player localPlayer, Player[] players, Npc[] npcs,
 			int localPlayerServerIndex, int localPlayerArrayIndex, int regionBaseX, int regionBaseY) {
 		if (actor.x < 128 || actor.y < 128 || actor.x >= 13184 || actor.y >= 13184) {
@@ -64,7 +43,7 @@ class ActorUpdater {
 
 	/**
 	 * Resets to path start.
-	 * 
+	 *
 	 * @param actor the actor
 	 */
 	private static void resetToPathStart(Actor actor) {
@@ -77,12 +56,7 @@ class ActorUpdater {
 		actor.resetPath();
 	}
 
-	/**
-	 * Legacy {@code method69(Actor actor)}.
-	 * 
-	 * @param actor the actor
-	 * @param cycle the cycle
-	 */
+	/** Interpolates an actor toward the start of a scheduled forced movement. */
 	private static void updatePreForcedMovement(Actor actor, int cycle) {
 		int remaining = actor.forceMoveStartCycle - cycle;
 		int targetX = actor.forceMoveStartX * 128 + actor.size * 64;
@@ -93,13 +67,7 @@ class ActorUpdater {
 		setForcedMovementOrientation(actor);
 	}
 
-	/**
-	 * Legacy {@code method70(Actor actor, int sentinel)}; valid sentinel -31135
-	 * removed.
-	 * 
-	 * @param actor the actor
-	 * @param cycle the cycle
-	 */
+	/** Interpolates an actor across an active forced-movement interval. */
 	private static void updateForcedMovement(Actor actor, int cycle) {
 		if (actor.forceMoveEndCycle == cycle || actor.sequence == -1 || actor.sequenceDelay != 0
 				|| actor.sequenceFrameCycle + 1 > AnimationSequence.sequences[actor.sequence]
@@ -120,7 +88,7 @@ class ActorUpdater {
 
 	/**
 	 * Sets forced movement orientation.
-	 * 
+	 *
 	 * @param actor the actor
 	 */
 	private static void setForcedMovementOrientation(Actor actor) {
@@ -138,11 +106,7 @@ class ActorUpdater {
 		}
 	}
 
-	/**
-	 * Legacy {@code method71(Actor actor, int sentinel)}; valid sentinel 0 removed.
-	 * 
-	 * @param actor the actor
-	 */
+	/** Advances normal path movement and chooses the movement animation and speed. */
 	private static void updatePathMovement(Actor actor) {
 		actor.movementSequence = actor.idleSequence;
 		if (actor.pathLength == 0) {
@@ -262,18 +226,7 @@ class ActorUpdater {
 		}
 	}
 
-	/**
-	 * Legacy {@code method72(byte sentinel, Actor actor)}; valid sentinel 8
-	 * removed.
-	 * 
-	 * @param actor                  the actor
-	 * @param players                the players
-	 * @param npcs                   the npcs
-	 * @param localPlayerServerIndex the local player server index
-	 * @param localPlayerArrayIndex  the local player array index
-	 * @param regionBaseX            the region base x
-	 * @param regionBaseY            the region base y
-	 */
+	/** Rotates an actor toward its target entity or queued face coordinates. */
 	private static void updateFacing(Actor actor, Player[] players, Npc[] npcs, int localPlayerServerIndex,
 			int localPlayerArrayIndex, int regionBaseX, int regionBaseY) {
 		if (actor.turnSpeed == 0) {
@@ -334,13 +287,7 @@ class ActorUpdater {
 		}
 	}
 
-	/**
-	 * Legacy {@code method73(Actor actor, int negativeSentinel)}; negative sentinel
-	 * removed.
-	 * 
-	 * @param actor the actor
-	 * @param cycle the cycle
-	 */
+	/** Advances movement, spot-animation, and primary-sequence frames. */
 	private static void updateAnimations(Actor actor, int cycle) {
 		actor.animationStretches = false;
 		if (actor.movementSequence != -1) {

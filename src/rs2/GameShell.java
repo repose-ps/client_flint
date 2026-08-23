@@ -46,7 +46,6 @@ public class GameShell extends Canvas
 	/** Defines the stopped constant. */
 	private static final int STOPPED = -2;
 
-	/** Stores the shutdown countdown. */
 	private volatile int shutdownCountdown;
 	/** Serializes AWT input mutation with one game tick's consumption. */
 	private final Object inputLock = new Object();
@@ -57,73 +56,70 @@ public class GameShell extends Canvas
 	private boolean cleanupComplete;
 	/** True while a non-game thread owns the normal join-before-cleanup path. */
 	private volatile boolean shutdownJoinPending;
-	/** Stores the cycle duration millis. */
+
 	protected int cycleDurationMillis = 20;
-	/** Stores the minimum sleep millis. */
+
 	protected int minimumSleepMillis = 1;
-	/** Stores the timing samples values. */
+
 	private final long[] timingSamples = new long[TIMING_SAMPLE_COUNT];
 
-	/** Stores the fps. */
 	protected int fps;
 	/** Tracks whether debug timing. */
 	protected boolean debugTiming;
 
-	/** Stores the canvas width. */
 	protected int canvasWidth;
-	/** Stores the canvas height. */
+
 	protected int canvasHeight;
-	/** Stores the graphics. */
+
 	protected Graphics graphics;
-	/** Stores the game buffer. */
+
 	protected GraphicsBuffer gameBuffer;
-	/** Stores the game frame. */
+
 	protected GameFrame gameFrame;
 
 	/** Tracks whether clear screen. */
 	private volatile boolean clearScreen = true;
 	/** Tracks whether has focus. */
 	protected volatile boolean hasFocus = true;
-	/** Stores the idle cycles. */
+
 	protected volatile int idleCycles;
 
 	/** Current mouse button state: 0 none, 1 primary, 2 meta/secondary. */
 	protected volatile int mouseButton;
-	/** Stores the mouse x. */
+
 	protected volatile int mouseX;
-	/** Stores the mouse y. */
+
 	protected volatile int mouseY;
 
-	/** Stores the pending click button. */
 	private int pendingClickButton;
-	/** Stores the pending click x. */
+
 	private int pendingClickX;
-	/** Stores the pending click y. */
+
 	private int pendingClickY;
-	/** Stores the pending click time. */
+
 	private long pendingClickTime;
 
 	/** Mouse click latched at the start of the current client tick. */
 	protected int clickButton;
-	/** Stores the click x. */
+
 	protected int clickX;
-	/** Stores the click y. */
+
 	protected int clickY;
-	/** Stores the click time. */
+
 	protected long clickTime;
 
 	/** Pressed state for the client's 0..127 internal key codes. */
 	protected final int[] keyStatus = new int[KEY_BUFFER_SIZE];
-	/** Stores the key queue values. */
+
 	private final int[] keyQueue = new int[KEY_BUFFER_SIZE];
-	/** Stores the key queue read index. */
+
 	private int keyQueueReadIndex;
-	/** Stores the key queue write index. */
+
 	private int keyQueueWriteIndex;
 
 	/**
 	 * Creates the standalone game frame and starts this shell's game thread.
-	 * 
+	 *
 	 * @param width  the width
 	 * @param height the height
 	 */
@@ -330,7 +326,7 @@ public class GameShell extends Canvas
 
 	/**
 	 * Sets the target game-loop frequency used by the original ratio timer.
-	 * 
+	 *
 	 * @param fps the fps
 	 */
 	public final void setTargetFps(int fps) {
@@ -769,7 +765,7 @@ public class GameShell extends Canvas
 	/**
 	 * Starts a client worker thread with the original start-then-prioritize
 	 * ordering.
-	 * 
+	 *
 	 * @param runnable the runnable
 	 * @param priority the priority
 	 */
@@ -781,7 +777,7 @@ public class GameShell extends Canvas
 
 	/**
 	 * Draws the classic fixed-size loading bar directly through AWT.
-	 * 
+	 *
 	 * @param progress the progress
 	 * @param text     the text
 	 */

@@ -30,6 +30,7 @@ public final class RegressionSuite {
         validateCacheFixture(cache);
 
         List<Suite> suites = List.of(
+                new Suite("rs2.quality.SourceQualityTest"),
                 new Suite("rs2.concurrent.ThreadLifecycleSafetyTest"),
                 new Suite("rs2.net.NetworkResourceRobustnessTest"),
                 new Suite("rs2.media.RendererGoldenTest", cache.toString()),

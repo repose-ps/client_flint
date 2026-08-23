@@ -98,12 +98,7 @@ public final class ResourceLoader {
 		}
 	}
 
-	/**
-	 * Legacy client.method61(int i, int j, String s, int k, int l, String s1)
-	 *
-	 * Parameter mapping: i -> removed fixed 14076 sentinel j -> expectedCrc s ->
-	 * archiveName k -> loadingPercent l -> cacheFileId s1 -> displayName
-	 */
+	/** Loads and CRC-validates one bootstrap archive, recovering it over JAGGRAB when necessary. */
 	public Archive loadArchive(int expectedCrc, String archiveName, int loadingPercent, int cacheFileId,
 			String displayName, JaggrabOpener opener, ProgressListener progress) {
 		byte[] data = null;
@@ -210,15 +205,7 @@ public final class ResourceLoader {
 		return new Archive(data);
 	}
 
-	/**
-	 * Legacy client.method86(boolean flag): flag -> removed false sentinel.
-	 *
-	 * <p>
-	 * Startup calls this only when the local bootstrap set is missing or fails
-	 * revision-377 CRC validation, preserving offline startup for a complete valid
-	 * cache while retaining authoritative server recovery when needed.
-	 * </p>
-	 */
+	/** Fetches and validates the revision-377 bootstrap CRC table used for cache recovery. */
 	public void fetchArchiveCrcs(JaggrabOpener opener, ProgressListener progress) {
 		int retryDelay = 5;
 		int failures = 0;

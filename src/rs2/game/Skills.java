@@ -11,10 +11,7 @@ package rs2.game;
  * interface-script formats.
  * </p>
  */
-public final /**
-				 * Initializes this instance.
-				 */
-class Skills {
+public final class Skills {
 	/** Number of skill slots allocated by the client. */
 	public static final int COUNT = 25;
 

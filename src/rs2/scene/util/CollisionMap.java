@@ -27,112 +27,56 @@ public class CollisionMap {
 	/** Collision bitfield indexed as {@code flags[x][y]}. */
 	public int[][] flags;
 
-	/**
-	 * Stores block north west.
-	 */
 	public static final int BLOCK_NORTH_WEST = 0x1;
-	/**
-	 * Stores block north.
-	 */
+
 	public static final int BLOCK_NORTH = 0x2;
-	/**
-	 * Stores block north east.
-	 */
+
 	public static final int BLOCK_NORTH_EAST = 0x4;
-	/**
-	 * Stores block east.
-	 */
+
 	public static final int BLOCK_EAST = 0x8;
-	/**
-	 * Stores block south east.
-	 */
+
 	public static final int BLOCK_SOUTH_EAST = 0x10;
-	/**
-	 * Stores block south.
-	 */
+
 	public static final int BLOCK_SOUTH = 0x20;
-	/**
-	 * Stores block south west.
-	 */
+
 	public static final int BLOCK_SOUTH_WEST = 0x40;
-	/**
-	 * Stores block west.
-	 */
+
 	public static final int BLOCK_WEST = 0x80;
-	/**
-	 * Stores block object.
-	 */
+
 	public static final int BLOCK_OBJECT = 0x100;
 
-	/**
-	 * Stores block projectile north west.
-	 */
 	public static final int BLOCK_PROJECTILE_NORTH_WEST = 0x200;
-	/**
-	 * Stores block projectile north.
-	 */
+
 	public static final int BLOCK_PROJECTILE_NORTH = 0x400;
-	/**
-	 * Stores block projectile north east.
-	 */
+
 	public static final int BLOCK_PROJECTILE_NORTH_EAST = 0x800;
-	/**
-	 * Stores block projectile east.
-	 */
+
 	public static final int BLOCK_PROJECTILE_EAST = 0x1000;
-	/**
-	 * Stores block projectile south east.
-	 */
+
 	public static final int BLOCK_PROJECTILE_SOUTH_EAST = 0x2000;
-	/**
-	 * Stores block projectile south.
-	 */
+
 	public static final int BLOCK_PROJECTILE_SOUTH = 0x4000;
-	/**
-	 * Stores block projectile south west.
-	 */
+
 	public static final int BLOCK_PROJECTILE_SOUTH_WEST = 0x8000;
-	/**
-	 * Stores block projectile west.
-	 */
+
 	public static final int BLOCK_PROJECTILE_WEST = 0x10000;
-	/**
-	 * Stores block projectile object.
-	 */
+
 	public static final int BLOCK_PROJECTILE_OBJECT = 0x20000;
 
-	/**
-	 * Stores block floor decoration.
-	 */
 	public static final int BLOCK_FLOOR_DECORATION = 0x200000;
-	/**
-	 * Stores unloaded.
-	 */
+
 	public static final int UNLOADED = 0x1000000;
 
-	/**
-	 * Stores border blocked.
-	 */
 	private static final int BORDER_BLOCKED = 0x00ffffff;
-	/**
-	 * Stores projectile flag shift.
-	 */
+
 	private static final int PROJECTILE_FLAG_SHIFT = 9;
-	/**
-	 * Stores access from west blocked.
-	 */
+
 	private static final int ACCESS_FROM_WEST_BLOCKED = 0x1280108;
-	/**
-	 * Stores access from east blocked.
-	 */
+
 	private static final int ACCESS_FROM_EAST_BLOCKED = 0x1280180;
-	/**
-	 * Stores access from south blocked.
-	 */
+
 	private static final int ACCESS_FROM_SOUTH_BLOCKED = 0x1280102;
-	/**
-	 * Stores access from north blocked.
-	 */
+
 	private static final int ACCESS_FROM_NORTH_BLOCKED = 0x1280120;
 
 	/**
@@ -142,7 +86,7 @@ public class CollisionMap {
 	 * The parameter order remains {@code (height, width)} to preserve the original
 	 * client's constructor contract.
 	 * </p>
-	 * 
+	 *
 	 * @param height the height
 	 * @param width  the width
 	 */
@@ -174,7 +118,7 @@ public class CollisionMap {
 	 * Adds collision for a wall and the matching boundary on its neighbour.
 	 *
 	 * {@code 3} diagonal, and {@code 2} corner
-	 * 
+	 *
 	 * @param x                 the x
 	 * @param y                 the y
 	 * @param type              the type
@@ -197,7 +141,7 @@ public class CollisionMap {
 	 * Width and height are exchanged for odd orientations because the object's
 	 * footprint has been rotated by a quarter turn.
 	 * </p>
-	 * 
+	 *
 	 * @param x                 the x
 	 * @param y                 the y
 	 * @param sizeX             the size x
@@ -224,7 +168,7 @@ public class CollisionMap {
 
 	/**
 	 * Marks a tile as blocked by a floor decoration.
-	 * 
+	 *
 	 * @param x the x
 	 * @param y the y
 	 */
@@ -236,7 +180,7 @@ public class CollisionMap {
 
 	/**
 	 * Adds one or more collision bits to a local tile.
-	 * 
+	 *
 	 * @param x             the x
 	 * @param y             the y
 	 * @param conditionFlag the condition flag
@@ -247,7 +191,7 @@ public class CollisionMap {
 
 	/**
 	 * Removes collision for a wall and its mirrored neighbouring boundary.
-	 * 
+	 *
 	 * @param x                 the x
 	 * @param y                 the y
 	 * @param type              the type
@@ -265,7 +209,7 @@ public class CollisionMap {
 
 	/**
 	 * Removes the occupant flags from a rotated rectangular footprint.
-	 * 
+	 *
 	 * @param x                 the x
 	 * @param y                 the y
 	 * @param sizeX             the size x
@@ -297,7 +241,7 @@ public class CollisionMap {
 	 * The 24-bit mask intentionally also clears {@link #UNLOADED}, matching the
 	 * original map-loading behavior.
 	 * </p>
-	 * 
+	 *
 	 * @param x             the x
 	 * @param y             the y
 	 * @param conditionFlag the condition flag
@@ -308,7 +252,7 @@ public class CollisionMap {
 
 	/**
 	 * Removes the floor-decoration blocking flag from a tile.
-	 * 
+	 *
 	 * @param x the x
 	 * @param y the y
 	 */
@@ -472,7 +416,7 @@ public class CollisionMap {
 
 	/**
 	 * Tests whether a mover has reached a wall-decoration interaction tile.
-	 * 
+	 *
 	 * @param currentX       the current x
 	 * @param currentY       the current y
 	 * @param goalX          the goal x
@@ -546,7 +490,7 @@ public class CollisionMap {
 	 * Tests whether a mover occupies or can approach a rectangular object.
 	 *
 	 * {@code 4}, and west {@code 8}
-	 * 
+	 *
 	 * @param currentX   the current x
 	 * @param currentY   the current y
 	 * @param goalX      the goal x
@@ -581,7 +525,7 @@ public class CollisionMap {
 
 	/**
 	 * Updates rectangle.
-	 * 
+	 *
 	 * @param x             the x
 	 * @param y             the y
 	 * @param sizeX         the size x
@@ -604,7 +548,7 @@ public class CollisionMap {
 
 	/**
 	 * Updates wall flags.
-	 * 
+	 *
 	 * @param x           the x
 	 * @param y           the y
 	 * @param type        the type
@@ -664,7 +608,7 @@ public class CollisionMap {
 
 	/**
 	 * Updates flag.
-	 * 
+	 *
 	 * @param x             the x
 	 * @param y             the y
 	 * @param conditionFlag the condition flag

@@ -25,76 +25,35 @@ import rs2.scene.util.CollisionMap;
  */
 public final class WorldState {
 
-	/**
-	 * Stores plane count.
-	 */
 	public static final int PLANE_COUNT = 4;
-	/**
-	 * Stores size.
-	 */
+
 	public static final int SIZE = 104;
 
-	/**
-	 * Stores tile flags.
-	 */
 	public final byte[][][] tileFlags = new byte[PLANE_COUNT][SIZE][SIZE];
-	/**
-	 * Stores tile heights.
-	 */
+
 	public final int[][][] tileHeights = new int[PLANE_COUNT][SIZE + 1][SIZE + 1];
-	/**
-	 * Stores scene.
-	 */
+
 	public final Scene scene = new Scene(tileHeights, PLANE_COUNT, SIZE, SIZE);
-	/**
-	 * Stores collision maps.
-	 */
+
 	public final CollisionMap[] collisionMaps = new CollisionMap[PLANE_COUNT];
-	/**
-	 * Stores ground items.
-	 */
+
 	public final NodeDeque[][][] groundItems = new NodeDeque[PLANE_COUNT][SIZE][SIZE];
-	/**
-	 * Stores pending spawns.
-	 */
+
 	public NodeDeque pendingSpawns = new NodeDeque();
-	/**
-	 * Stores projectiles.
-	 */
+
 	public final NodeDeque projectiles = new NodeDeque();
-	/**
-	 * Stores graphics objects.
-	 */
+
 	public final NodeDeque graphicsObjects = new NodeDeque();
 
-	/**
-	 * Stores projectile keepalive cycles.
-	 */
 	private int projectileKeepaliveCycles;
 
-	/**
-	 * Initializes this instance.
-	 */
 	public WorldState() {
 		for (int plane = 0; plane < PLANE_COUNT; plane++) {
 			collisionMaps[plane] = new CollisionMap(SIZE, SIZE);
 		}
 	}
 
-	/**
-	 * Legacy client.method110(int i, int j, byte byte0, int k)
-	 *
-	 * <pre>
-	 * i     -> worldY
-	 * j     -> worldX
-	 * byte0 -> removed sentinel (required 9)
-	 * k     -> plane
-	 * </pre>
-	 * 
-	 * @param worldX the world x
-	 * @param worldY the world y
-	 * @param plane  the plane
-	 */
+	/** Interpolates the terrain height at one world-space coordinate. */
 	public int getTileHeight(int worldX, int worldY, int plane) {
 		int tileX = worldX >> 7;
 		int tileY = worldY >> 7;
@@ -114,19 +73,7 @@ public final class WorldState {
 		return south * (128 - localY) + north * localY >> 7;
 	}
 
-	/**
-	 * Legacy client.method26(int i, int j)
-	 *
-	 * <pre>
-	 * i -> x
-	 * j -> y
-	 * old client.anInt1091 -> plane
-	 * </pre>
-	 * 
-	 * @param plane the plane
-	 * @param x     the x
-	 * @param y     the y
-	 */
+	/** Rebuilds the visible ground-item pile for one scene tile. */
 	public void updateGroundItemPile(int plane, int x, int y) {
 		NodeDeque items = groundItems[plane][x][y];
 		if (items == null) {
@@ -184,7 +131,7 @@ public final class WorldState {
 
 	/**
 	 * Legacy packet-40 world-zone clearing behavior.
-	 * 
+	 *
 	 * @param plane     the plane
 	 * @param zoneBaseX the zone base x
 	 * @param zoneBaseY the zone base y
@@ -208,29 +155,7 @@ public final class WorldState {
 		}
 	}
 
-	/**
-	 * Legacy client.method45(int i, int j, int k, int l, int i1, int j1, int k1)
-	 *
-	 * <pre>
-	 * i  -> orientation
-	 * j  -> x
-	 * k  -> objectId
-	 * l  -> y
-	 * i1 -> plane
-	 * j1 -> type
-	 * k1 -> sceneLayer
-	 * </pre>
-	 * 
-	 * @param plane        the plane
-	 * @param x            the x
-	 * @param y            the y
-	 * @param sceneLayer   the scene layer
-	 * @param objectId     the object id
-	 * @param type         the type
-	 * @param orientation  the orientation
-	 * @param lowMemory    the low memory
-	 * @param currentPlane the current plane
-	 */
+	/** Applies a dynamic object replacement or removal to scene and collision state. */
 	public void applyGameObjectChange(int plane, int x, int y, int sceneLayer, int objectId, int type, int orientation,
 			boolean lowMemory, int currentPlane) {
 		if (x < 1 || y < 1 || x > 102 || y > 102) {
@@ -302,16 +227,7 @@ public final class WorldState {
 		}
 	}
 
-	/**
-	 * Legacy client.method140(byte byte0, PendingSpawn class50_sub2)
-	 *
-	 * <pre>
-	 * byte0       -> removed sentinel (required -61)
-	 * class50_sub2 -> spawn
-	 * </pre>
-	 * 
-	 * @param spawn the spawn
-	 */
+	/** Captures the scene object currently occupying a pending-spawn location. */
 	public void capturePreviousState(PendingSpawn spawn) {
 		int uid = 0;
 		int id = -1;
@@ -340,33 +256,7 @@ public final class WorldState {
 		spawn.previousOrientation = orientation;
 	}
 
-	/**
-	 * Legacy client.method145(boolean flag, int i, int j, int k, int l, int i1, int
-	 * j1, int k1, int l1, int i2)
-	 *
-	 * <pre>
-	 * flag -> removed unused argument
-	 * i    -> plane
-	 * j    -> x
-	 * k    -> spawnOrientation
-	 * l    -> restoreDelay
-	 * i1   -> spawnType
-	 * j1   -> spawnId
-	 * k1   -> spawnDelay
-	 * l1   -> sceneLayer
-	 * i2   -> y
-	 * </pre>
-	 * 
-	 * @param plane            the plane
-	 * @param x                the x
-	 * @param y                the y
-	 * @param sceneLayer       the scene layer
-	 * @param spawnId          the spawn id
-	 * @param spawnType        the spawn type
-	 * @param spawnOrientation the spawn orientation
-	 * @param spawnDelay       the spawn delay
-	 * @param restoreDelay     the restore delay
-	 */
+	/** Creates or updates a pending scene-object spawn at one tile. */
 	public void schedulePendingSpawn(int plane, int x, int y, int sceneLayer, int spawnId, int spawnType,
 			int spawnOrientation, int spawnDelay, int restoreDelay) {
 		PendingSpawn spawn = null;
@@ -396,9 +286,7 @@ public final class WorldState {
 		spawn.restoreDelay = restoreDelay;
 	}
 
-	/**
-	 * Legacy client.method18(byte 3).
-	 */
+	/** Restores or discards pending spawns after a region rebuild. */
 	public void resetPendingSpawnsAfterRegionBuild() {
 		for (PendingSpawn spawn = (PendingSpawn) pendingSpawns
 				.first(); spawn != null; spawn = (PendingSpawn) pendingSpawns.next()) {
@@ -411,12 +299,7 @@ public final class WorldState {
 		}
 	}
 
-	/**
-	 * Legacy client.method36(int 16220).
-	 * 
-	 * @param lowMemory    the low memory
-	 * @param currentPlane the current plane
-	 */
+	/** Advances pending-spawn delays and applies due scene changes. */
 	public void updatePendingSpawns(boolean lowMemory, int currentPlane) {
 		for (PendingSpawn spawn = (PendingSpawn) pendingSpawns
 				.first(); spawn != null; spawn = (PendingSpawn) pendingSpawns.next()) {
@@ -451,7 +334,7 @@ public final class WorldState {
 
 	/**
 	 * Shifts ground items and pending spawn coordinates after a region-base change.
-	 * 
+	 *
 	 * @param deltaX the delta x
 	 * @param deltaY the delta y
 	 */
@@ -497,17 +380,7 @@ public final class WorldState {
 		}
 	}
 
-	/**
-	 * Legacy client.method51(false).
-	 * 
-	 * @param currentPlane           the current plane
-	 * @param currentCycle           the current cycle
-	 * @param cycleDelta             the cycle delta
-	 * @param localPlayerServerIndex the local player server index
-	 * @param localPlayer            the local player
-	 * @param actors                 the actors
-	 * @param outgoing               the outgoing
-	 */
+	/** Advances active projectiles and submits visible ones to the scene. */
 	public void updateProjectiles(int currentPlane, int currentCycle, int cycleDelta, int localPlayerServerIndex,
 			Player localPlayer, ActorSynchronizer actors, Buffer outgoing) {
 		for (Projectile projectile = (Projectile) projectiles
@@ -544,13 +417,7 @@ public final class WorldState {
 		}
 	}
 
-	/**
-	 * Legacy client.method76(-992).
-	 * 
-	 * @param currentPlane the current plane
-	 * @param currentCycle the current cycle
-	 * @param cycleDelta   the cycle delta
-	 */
+	/** Advances temporary graphics objects and submits visible ones to the scene. */
 	public void updateGraphicsObjects(int currentPlane, int currentCycle, int cycleDelta) {
 		for (GraphicsObject graphics = (GraphicsObject) graphicsObjects
 				.first(); graphics != null; graphics = (GraphicsObject) graphicsObjects.next()) {

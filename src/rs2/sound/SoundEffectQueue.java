@@ -119,15 +119,7 @@ public final class SoundEffectQueue {
 		}
 	}
 
-	/*
-	 * Legacy client.method152(int i), sound-effect portion: i -> removed fixed
-	 * -23763 sentinel; the only caller supplied -23763.
-	 *
-	 * Legacy queue fields moved here: anInt1035 -> count anIntArray1090 -> soundIds
-	 * anIntArray1321 -> loopCounts anIntArray1259 -> delays anInt1272 ->
-	 * lastPlayedSoundId anInt935 -> lastPlayedLoopCount anInt1179 -> lastWaveLength
-	 * aLong1250 -> lastWaveStartTime
-	 */
+	/** Advances queued sound effects, starting or retrying playback and removing completed entries. */
 	public void update(Buffer outgoing) {
 		for (int index = 0; index < count; index++) {
 			if (delays[index] <= 0) {
@@ -137,10 +129,7 @@ public final class SoundEffectQueue {
 						if (!waveBackend.replay())
 							retry = true;
 					} else {
-						/*
-						 * Legacy method152 used the pre-refactor SoundTrack positional order
-						 * (loopCount, soundId). The semantic API is now (soundId, loopCount).
-						 */
+
 						Buffer data = dataProvider.getData(soundIds[index], loopCounts[index]);
 						if (clock.getAsLong() + (long) (data.position / 22) > lastWaveStartTime
 								+ (long) (lastWaveLength / 22)) {

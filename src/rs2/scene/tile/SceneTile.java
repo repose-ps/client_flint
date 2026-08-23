@@ -101,7 +101,7 @@ public class SceneTile extends Node {
 	 * Creates an empty tile at the supplied scene-grid position.
 	 *
 	 * compatibility with the original client
-	 * 
+	 *
 	 * @param plane the plane
 	 * @param x     the x
 	 * @param y     the y

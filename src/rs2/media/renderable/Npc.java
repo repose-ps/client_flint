@@ -6,14 +6,8 @@ import rs2.cache.media.SpotAnimation;
 import rs2.media.AnimationFrame;
 
 /** Runtime non-player actor backed by an {@link NpcDefinition}. */
-public /**
-		 * Initializes this instance.
-		 */
-class Npc extends Actor {
+public class Npc extends Actor {
 
-	/**
-	 * Stores definition.
-	 */
 	public NpcDefinition definition;
 
 	/**
@@ -39,7 +33,7 @@ class Npc extends Actor {
 
 	/**
 	 * Returns model.
-	 * 
+	 *
 	 * @return the resulting model
 	 */
 	@Override
@@ -80,7 +74,7 @@ class Npc extends Actor {
 
 	/**
 	 * Returns whether visible.
-	 * 
+	 *
 	 * @return the resulting boolean
 	 */
 	@Override

@@ -5,41 +5,18 @@ import rs2.game.Pathfinder;
 /** Serializes revision-377 walking routes into the game protocol. */
 public final class MovementPacketEncoder {
 
-	/**
-	 * Stores screen.
-	 */
 	public static final int SCREEN = 0;
-	/**
-	 * Stores minimap.
-	 */
+
 	public static final int MINIMAP = 1;
-	/**
-	 * Stores interaction.
-	 */
+
 	public static final int INTERACTION = 2;
 
-	/**
-	 * Stores max waypoints.
-	 */
 	private static final int MAX_WAYPOINTS = 25;
 
-	/**
-	 * Initializes this instance.
-	 */
 	private MovementPacketEncoder() {
 	}
 
-	/**
-	 * Writes the same compressed movement payload formerly emitted by
-	 * client.method35.
-	 * 
-	 * @param outgoing     the outgoing
-	 * @param route        the route
-	 * @param movementType the movement type
-	 * @param baseX        the base x
-	 * @param baseY        the base y
-	 * @param running      the running
-	 */
+	/** Writes one compressed revision-377 walking route packet. */
 	public static void write(Buffer outgoing, Pathfinder.Route route, int movementType, int baseX, int baseY,
 			boolean running) {
 		int waypointCount = route.getWaypointCount();

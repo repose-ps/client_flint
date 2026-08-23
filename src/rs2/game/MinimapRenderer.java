@@ -16,63 +16,35 @@ import rs2.net.Buffer;
 /**
  * Owns the revision-377 minimap raster, map icons and minimap transform state.
  */
-public final /**
-				 * Initializes this instance.
-				 */
-class MinimapRenderer {
-	/**
-	 * Stores max map functions.
-	 */
+public final class MinimapRenderer {
+
 	private static final int MAX_MAP_FUNCTIONS = 1000;
 
-	/**
-	 * Stores map image.
-	 */
 	public ImageRGB mapImage;
-	/**
-	 * Stores state.
-	 */
+
 	public int state;
-	/**
-	 * Stores rotation offset.
-	 */
+
 	public int rotationOffset;
-	/**
-	 * Stores zoom offset.
-	 */
+
 	public int zoomOffset;
-	/**
-	 * Stores rotation step.
-	 */
+
 	private int rotationStep = 2;
-	/**
-	 * Stores zoom step.
-	 */
+
 	private int zoomStep = 1;
-	/**
-	 * Stores offset cycle.
-	 */
+
 	private int offsetCycle;
-	/**
-	 * Stores rebuild keepalive cycle.
-	 */
+
 	private int rebuildKeepaliveCycle;
 
 	/**
 	 * Number of map function entries.
 	 */
 	private int mapFunctionCount;
-	/**
-	 * Stores map function icons.
-	 */
+
 	private final ImageRGB[] mapFunctionIcons = new ImageRGB[MAX_MAP_FUNCTIONS];
-	/**
-	 * Stores map function x.
-	 */
+
 	private final int[] mapFunctionX = new int[MAX_MAP_FUNCTIONS];
-	/**
-	 * Stores map function y.
-	 */
+
 	private final int[] mapFunctionY = new int[MAX_MAP_FUNCTIONS];
 
 	/**
@@ -128,7 +100,7 @@ class MinimapRenderer {
 
 	/**
 	 * Performs rebuild.
-	 * 
+	 *
 	 * @param world                the world
 	 * @param plane                the plane
 	 * @param mapSceneSprites      the map scene sprites
@@ -229,7 +201,7 @@ class MinimapRenderer {
 
 	/**
 	 * Draws map location.
-	 * 
+	 *
 	 * @param world           the world
 	 * @param tileY           the tile y
 	 * @param plane           the plane
@@ -348,7 +320,7 @@ class MinimapRenderer {
 
 	/**
 	 * Draws map scene sprite.
-	 * 
+	 *
 	 * @param definition the definition
 	 * @param sprite     the sprite
 	 * @param tileX      the tile x
@@ -365,7 +337,7 @@ class MinimapRenderer {
 
 	/**
 	 * Draws value.
-	 * 
+	 *
 	 * @param world           the world
 	 * @param actors          the actors
 	 * @param localPlayer     the local player
@@ -480,7 +452,7 @@ class MinimapRenderer {
 
 	/**
 	 * Draws hint.
-	 * 
+	 *
 	 * @param dy        the dy
 	 * @param sprite    the sprite
 	 * @param dx        the dx
@@ -506,7 +478,7 @@ class MinimapRenderer {
 
 	/**
 	 * Draws on minimap.
-	 * 
+	 *
 	 * @param dy        the dy
 	 * @param sprite    the sprite
 	 * @param dx        the dx
@@ -534,7 +506,7 @@ class MinimapRenderer {
 
 	/**
 	 * Performs transform click.
-	 * 
+	 *
 	 * @return the resulting click
 	 * @param clickX      the click x
 	 * @param clickY      the click y
@@ -559,31 +531,15 @@ class MinimapRenderer {
 	}
 
 	public static final class Click {
-		/**
-		 * Stores local x.
-		 */
+
 		public final int localX;
-		/**
-		 * Stores local y.
-		 */
+
 		public final int localY;
-		/**
-		 * Stores tile x.
-		 */
+
 		public final int tileX;
-		/**
-		 * Stores tile y.
-		 */
+
 		public final int tileY;
 
-		/**
-		 * Initializes this instance.
-		 * 
-		 * @param localX the local x
-		 * @param localY the local y
-		 * @param tileX  the tile x
-		 * @param tileY  the tile y
-		 */
 		private Click(int localX, int localY, int tileX, int tileY) {
 			this.localX = localX;
 			this.localY = localY;
@@ -595,84 +551,48 @@ class MinimapRenderer {
 	public interface FriendLookup {
 		/**
 		 * Returns whether friend.
-		 * 
+		 *
 		 * @return the resulting boolean
 		 * @param name the name
 		 */
 		boolean isFriend(String name);
 	}
 
-	public static final /**
-						 * Initializes this instance.
-						 */
+	public static final
 	class Assets {
-		/**
-		 * Stores minimap buffer.
-		 */
+
 		public GraphicsBuffer minimapBuffer;
-		/**
-		 * Stores scene buffer.
-		 */
+
 		public GraphicsBuffer sceneBuffer;
-		/**
-		 * Stores minimap mask.
-		 */
+
 		public IndexedImage minimapMask;
-		/**
-		 * Stores compass.
-		 */
+
 		public ImageRGB compass;
-		/**
-		 * Stores compass mask widths.
-		 */
+
 		public int[] compassMaskWidths;
-		/**
-		 * Stores compass mask offsets.
-		 */
+
 		public int[] compassMaskOffsets;
-		/**
-		 * Stores minimap mask widths.
-		 */
+
 		public int[] minimapMaskWidths;
-		/**
-		 * Stores minimap mask offsets.
-		 */
+
 		public int[] minimapMaskOffsets;
-		/**
-		 * Stores scene scanline offsets.
-		 */
+
 		public int[] sceneScanlineOffsets;
-		/**
-		 * Stores ground item dot.
-		 */
+
 		public ImageRGB groundItemDot;
-		/**
-		 * Stores npc dot.
-		 */
+
 		public ImageRGB npcDot;
-		/**
-		 * Stores player dot.
-		 */
+
 		public ImageRGB playerDot;
-		/**
-		 * Stores friend dot.
-		 */
+
 		public ImageRGB friendDot;
-		/**
-		 * Stores team dot.
-		 */
+
 		public ImageRGB teamDot;
-		/**
-		 * Stores hint marker.
-		 */
+
 		public ImageRGB hintMarker;
-		/**
-		 * Stores destination marker.
-		 */
+
 		public ImageRGB destinationMarker;
-		/**
-		 * Stores edge arrow.
-		 */
+
 		public ImageRGB edgeArrow;
 	}
 }

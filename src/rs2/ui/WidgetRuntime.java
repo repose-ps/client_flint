@@ -43,9 +43,7 @@ public final class WidgetRuntime {
 		this.context = context;
 	}
 
-	/*
-	 * Legacy client.method88(int i, int j): i -> deltaCycles j -> interfaceId
-	 */
+	/** Advances model-widget animation and rotation state recursively. */
 	public boolean updateAnimations(int deltaCycles, int interfaceId) {
 		boolean changed = false;
 		Widget parent = Widget.get(interfaceId);
@@ -86,13 +84,7 @@ public final class WidgetRuntime {
 		return changed;
 	}
 
-	/*
-	 * Legacy client.method112(byte byte0, int i): byte0 -> removed required 36
-	 * sentinel i -> interfaceId
-	 *
-	 * The legacy recursion checks type 1 rather than container type 0. That oddity
-	 * is deliberately preserved.
-	 */
+	/** Resets animation frames for an interface tree. */
 	public void resetAnimations(int interfaceId) {
 		Widget parent = Widget.get(interfaceId);
 		for (int index = 0; index < parent.children.length; index++) {
@@ -106,7 +98,7 @@ public final class WidgetRuntime {
 		}
 	}
 
-	/* Legacy client.method95(Widget class13): class13 -> widget. */
+	/** Evaluates a widget's CS1 comparisons to determine its active state. */
 	public boolean isActive(Widget widget) {
 		if (widget.cs1Comparisons == null)
 			return false;
@@ -129,10 +121,7 @@ public final class WidgetRuntime {
 		return true;
 	}
 
-	/*
-	 * Legacy client.method129(int i, int j, Widget class13): i -> removed required
-	 * value 3 sentinel j -> scriptIndex class13 -> widget
-	 */
+	/** Evaluates one revision-377 CS1 integer script, returning -1 on evaluation failure. */
 	public int evaluateScript(Widget widget, int scriptIndex) {
 		if (widget.cs1Instructions == null || scriptIndex >= widget.cs1Instructions.length)
 			return -2;

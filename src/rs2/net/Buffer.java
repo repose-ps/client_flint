@@ -74,7 +74,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Creates an empty buffer with the requested capacity.
-	 * 
+	 *
 	 * @param capacity the capacity
 	 */
 	public Buffer(int capacity) {
@@ -85,7 +85,7 @@ public class Buffer extends DualNode {
 	 * Wraps an existing byte array and starts the cursor at zero.
 	 *
 	 * The array is not copied.
-	 * 
+	 *
 	 * @param byteData the byte data
 	 */
 	public Buffer(byte byteData[]) {
@@ -95,7 +95,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes an outgoing packet opcode obfuscated by ISAAC.
-	 * 
+	 *
 	 * @param opcode the opcode
 	 */
 	public void writeOpcode(int opcode) {
@@ -104,7 +104,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes an 8-bit value.
-	 * 
+	 *
 	 * @param value the value
 	 */
 	public void writeByte(int value) {
@@ -113,7 +113,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes a big-endian 16-bit value.
-	 * 
+	 *
 	 * @param value the value
 	 */
 	public void writeShort(int value) {
@@ -123,7 +123,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes a little-endian 16-bit value.
-	 * 
+	 *
 	 * @param value the value
 	 */
 	public void writeShortLE(int value) {
@@ -133,7 +133,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes a big-endian 24-bit value.
-	 * 
+	 *
 	 * @param value the value
 	 */
 	public void writeMedium(int value) {
@@ -144,7 +144,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes a big-endian 32-bit value.
-	 * 
+	 *
 	 * @param inputValue the input value
 	 */
 	public void writeInt(int inputValue) {
@@ -156,7 +156,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes a little-endian 32-bit value.
-	 * 
+	 *
 	 * @param inputValue the input value
 	 */
 	public void writeIntLE(int inputValue) {
@@ -168,7 +168,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes a big-endian 64-bit value.
-	 * 
+	 *
 	 * @param value the value
 	 */
 	public void writeLong(long value) {
@@ -186,7 +186,7 @@ public class Buffer extends DualNode {
 	 * Writes the client's legacy one-byte-per-character string format.
 	 *
 	 * Strings are terminated by line-feed ({@code 0x0A}), not a zero byte.
-	 * 
+	 *
 	 * @param value the value
 	 */
 	public void writeString(String value) {
@@ -199,7 +199,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Copies bytes into this buffer and advances the cursor.
-	 * 
+	 *
 	 * @param source the source
 	 * @param offset the offset
 	 * @param length the length
@@ -221,7 +221,7 @@ public class Buffer extends DualNode {
 	 * <li>Write the variable-length payload.</li>
 	 * <li>Call this method with the number of payload bytes written.</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param length the length
 	 */
 	public void writeLength(int length) {
@@ -312,7 +312,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Copies bytes out of this buffer and advances the cursor.
-	 * 
+	 *
 	 * @param destination       the destination
 	 * @param destinationOffset the destination offset
 	 * @param length            the length
@@ -337,7 +337,7 @@ public class Buffer extends DualNode {
 	 * Call {@link #startBitAccess()} before the first bit read and
 	 * {@link #finishBitAccess()} before returning to byte reads.
 	 * </p>
-	 * 
+	 *
 	 * @param count the count
 	 */
 	public int readBits(int count) {
@@ -429,7 +429,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes a byte with the add transformation.
-	 * 
+	 *
 	 * @param value the value
 	 */
 	public void writeByteAdd(int value) {
@@ -438,7 +438,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes a byte with the neg transformation.
-	 * 
+	 *
 	 * @param value the value
 	 */
 	public void writeByteNeg(int value) {
@@ -447,7 +447,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes a byte with the sub transformation.
-	 * 
+	 *
 	 * @param value the value
 	 */
 	public void writeByteSub(int value) {
@@ -498,7 +498,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes a big-endian short whose low byte has the Add transformation.
-	 * 
+	 *
 	 * @param inputValue the input value
 	 */
 	public void writeShortAdd(int inputValue) {
@@ -508,7 +508,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Writes a little-endian short whose low byte has the Add transformation.
-	 * 
+	 *
 	 * @param inputValue the input value
 	 */
 	public void writeShortAddLE(int inputValue) {
@@ -549,7 +549,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads short le.
-	 * 
+	 *
 	 * @return the resulting int
 	 */
 	public int readShortLE() {
@@ -578,7 +578,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads int le.
-	 * 
+	 *
 	 * @return the resulting int
 	 */
 	public int readIntLE() {
@@ -615,7 +615,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads forward from this buffer while filling the destination backward.
-	 * 
+	 *
 	 * @param destination       the destination
 	 * @param destinationOffset the destination offset
 	 * @param length            the length
@@ -628,7 +628,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads bytes after subtracting 128 from every encoded byte.
-	 * 
+	 *
 	 * @param destination       the destination
 	 * @param destinationOffset the destination offset
 	 * @param length            the length

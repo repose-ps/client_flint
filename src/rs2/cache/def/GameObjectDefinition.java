@@ -31,96 +31,95 @@ import rs2.net.Buffer;
  */
 public class GameObjectDefinition {
 
-	/** Stores the offsets values. */
 	private static int[] offsets;
 
 	/** Tracks whether interactive. */
 	public boolean interactive;
-	/** Stores the scale y. */
+
 	public int scaleY;
-	/** Stores the translate x. */
+
 	public int translateX;
-	/** Stores the model cache. */
+
 	private static LruCache modelCache = new LruCache(40);
-	/** Stores the model ids values. */
+
 	public int[] modelIds;
-	/** Stores the surroundings. */
+
 	public int surroundings;
 	/** Tracks whether obstructs ground. */
 	public boolean obstructsGround;
-	/** Stores the translate z. */
+
 	public int translateZ;
-	/** Stores the data buffer. */
+
 	private static Buffer dataBuffer;
 	/** Tracks whether contoured ground. */
 	public boolean contouredGround;
-	/** Stores the client instance. */
+
 	public static Client clientInstance;
-	/** Stores the model parts values. */
+
 	private static final Model[] modelParts = new Model[4];
 	/** Tracks whether low memory. */
 	public static boolean lowMemory;
-	/** Stores the id. */
+
 	public int id = -1;
-	/** Stores the size y. */
+
 	public int sizeY;
-	/** Stores the name. */
+
 	public String name = "null";
-	/** Stores the cache index. */
+
 	private static int cacheIndex;
-	/** Stores the varbit id. */
+
 	public int varbitId;
-	/** Stores the raw model cache. */
+
 	private static LruCache rawModelCache = new LruCache(500);
-	/** Stores the scale x. */
+
 	public int scaleX;
-	/** Stores the varp id. */
+
 	public int varpId;
-	/** Stores the cache values. */
+
 	private static GameObjectDefinition[] cache;
-	/** Stores the description values. */
+
 	public byte[] description;
-	/** Stores the ambient. */
+
 	public byte ambient;
-	/** Stores the translate y. */
+
 	public int translateY;
-	/** Stores the contrast. */
+
 	public byte contrast;
-	/** Stores the model types values. */
+
 	public int[] modelTypes;
-	/** Stores the actions values. */
+
 	public String[] actions;
 	/** Tracks whether hollow. */
 	public boolean hollow;
-	/** Stores the recolor to values. */
+
 	public int[] recolorTo;
-	/** Stores the support items. */
+
 	public int supportItems;
-	/** Stores the map scene id. */
+
 	public int mapSceneId;
-	/** Stores the scale z. */
+
 	public int scaleZ;
 	/** Tracks whether model clipped. */
 	public boolean modelClipped;
 	/** Tracks whether rotated. */
 	public boolean rotated;
-	/** Stores the recolor from values. */
+
 	public int[] recolorFrom;
-	/** Stores the size x. */
+
 	public int sizeX;
-	/** Stores the decor displacement. */
+
 	public int decorDisplacement;
-	/** Stores the animation id. */
+
 	public int animationId;
 	/** Tracks whether non flat shading. */
 	public boolean nonFlatShading;
-	/** Stores the morph ids values. */
+
 	public int[] morphIds;
-	/** Stores the map function id. */
+
 	public int mapFunctionId;
 	/** Tracks whether casts shadow. */
 	public boolean castsShadow;
-	/** Stores the count. */
+
 	public static int count;
 	/** Tracks whether blocks projectiles. */
 	public boolean blocksProjectiles;
@@ -129,7 +128,7 @@ public class GameObjectDefinition {
 
 	/**
 	 * Loads the indexed location-definition archive.
-	 * 
+	 *
 	 * @param archive the archive
 	 */
 	public static void load(Archive archive) {
@@ -151,7 +150,7 @@ public class GameObjectDefinition {
 	/**
 	 * Looks up a definition through the original 20-entry rotating cache. The
 	 * replacement index is incremented before use, so the first miss uses slot 1.
-	 * 
+	 *
 	 * @param id the id
 	 */
 	public static GameObjectDefinition lookup(int id) {
@@ -193,7 +192,7 @@ public class GameObjectDefinition {
 	/**
 	 * Requests every source model referenced by this definition as a model
 	 * resource.
-	 * 
+	 *
 	 * @param fetcher the fetcher
 	 */
 	public void requestModels(OnDemandFetcher fetcher) {
@@ -221,7 +220,7 @@ public class GameObjectDefinition {
 
 	/**
 	 * Returns whether the model needed for a specific location type is loaded.
-	 * 
+	 *
 	 * @param type the type
 	 */
 	public boolean isModelReady(int type) {
@@ -268,7 +267,7 @@ public class GameObjectDefinition {
 	/**
 	 * Builds a model for a placed location and optionally contours it to the four
 	 * tile heights. Height order is south-west, south-east, north-east, north-west.
-	 * 
+	 *
 	 * @param type            the type
 	 * @param orientation     the orientation
 	 * @param southWestHeight the south west height

@@ -22,115 +22,63 @@ import rs2.text.TextFormatter;
  * id, to transform the player into an NPC.
  * </p>
  */
-public /**
-		 * Initializes this instance.
-		 */
-class Player extends Actor {
+public class Player extends Actor {
 
-	/**
-	 * Stores attached model x.
-	 */
 	public int attachedModelX;
-	/**
-	 * Stores attached model height.
-	 */
+
 	public int attachedModelHeight;
-	/**
-	 * Stores attached model y.
-	 */
+
 	public int attachedModelY;
-	/**
-	 * Stores attached model.
-	 */
+
 	public Model attachedModel;
-	/**
-	 * Stores prayer icon.
-	 */
+
 	public int prayerIcon = -1;
-	/**
-	 * Stores last model hash.
-	 */
+
 	private long lastModelHash = -1L;
-	/**
-	 * Stores tile height.
-	 */
+
 	public int tileHeight;
-	/**
-	 * Stores name.
-	 */
+
 	public String name;
-	/**
-	 * Stores equipment.
-	 */
+
 	public final int[] equipment = new int[12];
-	/**
-	 * Stores combat level.
-	 */
+
 	public int combatLevel;
-	/**
-	 * Stores appearance hash.
-	 */
+
 	private long appearanceHash;
-	/**
-	 * Stores gender.
-	 */
+
 	public int gender;
-	/**
-	 * Stores skull icon.
-	 */
+
 	public int skullIcon = -1;
-	/**
-	 * Stores npc definition.
-	 */
+
 	public NpcDefinition npcDefinition;
 	/**
 	 * Whether visible.
 	 */
 	public boolean visible;
-	/**
-	 * Stores skill level.
-	 */
+
 	public int skillLevel;
-	/**
-	 * Stores body colors.
-	 */
+
 	public final int[] bodyColors = new int[5];
-	/**
-	 * Stores model cache.
-	 */
+
 	public static LruCache modelCache = new LruCache(260);
 	/**
 	 * When true, return the cached lit base model without applying actor/spot
 	 * animations.
 	 */
 	public boolean isUnanimated;
-	/**
-	 * Stores attached model start cycle.
-	 */
+
 	public int attachedModelStartCycle;
-	/**
-	 * Stores attached model end cycle.
-	 */
+
 	public int attachedModelEndCycle;
-	/**
-	 * Stores team.
-	 */
+
 	public int team;
-	/**
-	 * Stores attached model min x.
-	 */
+
 	public int attachedModelMinX;
-	/**
-	 * Stores attached model min y.
-	 */
+
 	public int attachedModelMinY;
-	/**
-	 * Stores attached model max x.
-	 */
+
 	public int attachedModelMaxX;
-	/**
-	 * Stores attached model max y.
-	 */
+
 	public int attachedModelMaxY;
 
 	/**
@@ -300,7 +248,7 @@ class Player extends Actor {
 
 	/**
 	 * Returns model.
-	 * 
+	 *
 	 * @return the resulting model
 	 */
 	@Override
@@ -377,7 +325,7 @@ class Player extends Actor {
 
 	/**
 	 * Returns whether visible.
-	 * 
+	 *
 	 * @return the resulting boolean
 	 */
 	@Override
@@ -388,7 +336,7 @@ class Player extends Actor {
 	/**
 	 * Decodes the revision-377 player appearance block and recalculates its
 	 * model-cache hash.
-	 * 
+	 *
 	 * @param buffer the buffer
 	 */
 	public void updateAppearance(Buffer buffer) {
@@ -473,7 +421,7 @@ class Player extends Actor {
 
 	/**
 	 * Reads sequence.
-	 * 
+	 *
 	 * @return the resulting int
 	 * @param buffer the buffer
 	 */
@@ -484,7 +432,7 @@ class Player extends Actor {
 
 	/**
 	 * Performs recolor appearance.
-	 * 
+	 *
 	 * @param model the model
 	 */
 	private void recolorAppearance(Model model) {

@@ -13,16 +13,13 @@ import rs2.media.Rasterizer3D;
  */
 public final class TerrainNoise {
 
-	/**
-	 * Initializes this instance.
-	 */
 	private TerrainNoise() {
 	}
 
 	/**
 	 * Returns the client's deterministic 0..255 pseudo-random value for a lattice
 	 * point.
-	 * 
+	 *
 	 * @param x the x
 	 * @param y the y
 	 */
@@ -35,7 +32,7 @@ public final class TerrainNoise {
 
 	/**
 	 * Applies the original corner/edge/center weighting around a lattice point.
-	 * 
+	 *
 	 * @param x the x
 	 * @param y the y
 	 */
@@ -50,7 +47,7 @@ public final class TerrainNoise {
 	/**
 	 * Cosine-interpolates two samples using the renderer's 16-bit fixed-point
 	 * cosine table.
-	 * 
+	 *
 	 * @param from     the from
 	 * @param to       the to
 	 * @param position the position
@@ -63,7 +60,7 @@ public final class TerrainNoise {
 
 	/**
 	 * Bilinearly samples the smoothed lattice at the requested power-of-two scale.
-	 * 
+	 *
 	 * @param x     the x
 	 * @param y     the y
 	 * @param scale the scale
@@ -85,7 +82,7 @@ public final class TerrainNoise {
 	/**
 	 * Produces the default plane-0 tile height before the map stream's
 	 * factor-of-eight conversion.
-	 * 
+	 *
 	 * @param x the x
 	 * @param y the y
 	 */

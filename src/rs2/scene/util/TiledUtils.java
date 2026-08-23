@@ -11,14 +11,8 @@ package rs2.scene.util;
  */
 public final class TiledUtils {
 
-	/**
-	 * Stores chunk max coordinate.
-	 */
 	private static final int CHUNK_MAX_COORDINATE = 7;
 
-	/**
-	 * Initializes this instance.
-	 */
 	private TiledUtils() {
 		// Utility class.
 	}
@@ -73,7 +67,7 @@ public final class TiledUtils {
 	 * chunk rotation is applied. This preserves the occupied south-west corner
 	 * rather than merely rotating a single point.
 	 * </p>
-	 * 
+	 *
 	 * @param x                 the x
 	 * @param y                 the y
 	 * @param sizeX             the size x

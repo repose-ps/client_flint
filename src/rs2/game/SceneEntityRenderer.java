@@ -8,22 +8,15 @@ import rs2.media.renderable.Player;
 /**
  * Adds synchronized actors to the Scene using the revision-377 ordering rules.
  */
-public final /**
-				 * Initializes this instance.
-				 */
-class SceneEntityRenderer {
-	/**
-	 * Stores tile render cycles.
-	 */
+public final class SceneEntityRenderer {
+
 	private final int[][] tileRenderCycles = new int[104][104];
-	/**
-	 * Stores render cycle.
-	 */
+
 	private int renderCycle;
 
 	/**
 	 * Returns render cycle.
-	 * 
+	 *
 	 * @return the resulting int
 	 */
 	public int getRenderCycle() {
@@ -32,7 +25,7 @@ class SceneEntityRenderer {
 
 	/**
 	 * Performs begin frame.
-	 * 
+	 *
 	 * @return the resulting int
 	 * @param localPlayer  the local player
 	 * @param destinationX the destination x
@@ -45,7 +38,7 @@ class SceneEntityRenderer {
 
 	/**
 	 * Adds players.
-	 * 
+	 *
 	 * @param world       the world
 	 * @param actors      the actors
 	 * @param localPlayer the local player
@@ -104,7 +97,7 @@ class SceneEntityRenderer {
 
 	/**
 	 * Adds npcs.
-	 * 
+	 *
 	 * @param world          the world
 	 * @param actors         the actors
 	 * @param plane          the plane

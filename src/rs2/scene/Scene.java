@@ -15,14 +15,6 @@ import rs2.scene.tile.WallDecoration;
 
 public class Scene {
 
-	/**
-	 * Initializes this instance.
-	 * 
-	 * @param heights    the heights
-	 * @param planeCount the plane count
-	 * @param width      the width
-	 * @param height     the height
-	 */
 	public Scene(int heights[][][], int planeCount, int width, int height) {
 		temporaryObjects = new InteractiveObject[5000];
 		mergeStampA = new int[10000];
@@ -79,7 +71,7 @@ public class Scene {
 
 	/**
 	 * Sets min plane.
-	 * 
+	 *
 	 * @param plane the plane
 	 */
 	public void setMinPlane(int plane) {
@@ -93,7 +85,7 @@ public class Scene {
 
 	/**
 	 * Sets bridge mode.
-	 * 
+	 *
 	 * @param x the x
 	 * @param y the y
 	 */
@@ -121,7 +113,7 @@ public class Scene {
 
 	/**
 	 * Adds occluder.
-	 * 
+	 *
 	 * @param plane     the plane
 	 * @param minWorldX the min world x
 	 * @param minWorldZ the min world z
@@ -150,7 +142,7 @@ public class Scene {
 
 	/**
 	 * Sets tile logic height.
-	 * 
+	 *
 	 * @param plane       the plane
 	 * @param x           the x
 	 * @param y           the y
@@ -168,7 +160,7 @@ public class Scene {
 
 	/**
 	 * Adds tile.
-	 * 
+	 *
 	 * @param plane             the plane
 	 * @param x                 the x
 	 * @param y                 the y
@@ -227,7 +219,7 @@ public class Scene {
 
 	/**
 	 * Adds floor decoration.
-	 * 
+	 *
 	 * @param plane      the plane
 	 * @param x          the x
 	 * @param y          the y
@@ -253,7 +245,7 @@ public class Scene {
 
 	/**
 	 * Adds ground item tile.
-	 * 
+	 *
 	 * @param plane  the plane
 	 * @param x      the x
 	 * @param y      the y
@@ -292,7 +284,7 @@ public class Scene {
 
 	/**
 	 * Adds wall.
-	 * 
+	 *
 	 * @param plane                the plane
 	 * @param x                    the x
 	 * @param y                    the y
@@ -327,7 +319,7 @@ public class Scene {
 
 	/**
 	 * Adds wall decoration.
-	 * 
+	 *
 	 * @param plane      the plane
 	 * @param x          the x
 	 * @param y          the y
@@ -362,7 +354,7 @@ public class Scene {
 
 	/**
 	 * Adds game object.
-	 * 
+	 *
 	 * @return the resulting boolean
 	 * @param plane      the plane
 	 * @param x          the x
@@ -389,7 +381,7 @@ public class Scene {
 
 	/**
 	 * Adds entity.
-	 * 
+	 *
 	 * @return the resulting boolean
 	 * @param plane         the plane
 	 * @param worldX        the world x
@@ -429,7 +421,7 @@ public class Scene {
 
 	/**
 	 * Adds entity bounds.
-	 * 
+	 *
 	 * @return the resulting boolean
 	 * @param plane      the plane
 	 * @param minX       the min x
@@ -454,7 +446,7 @@ public class Scene {
 
 	/**
 	 * Adds interactive object.
-	 * 
+	 *
 	 * @return the resulting boolean
 	 * @param plane      the plane
 	 * @param minX       the min x
@@ -540,7 +532,7 @@ public class Scene {
 
 	/**
 	 * Removes interactive object internal.
-	 * 
+	 *
 	 * @param interactiveObject the interactive object
 	 */
 	public void removeInteractiveObjectInternal(InteractiveObject interactiveObject) {
@@ -574,7 +566,7 @@ public class Scene {
 
 	/**
 	 * Performs displace wall decoration.
-	 * 
+	 *
 	 * @param plane        the plane
 	 * @param x            the x
 	 * @param y            the y
@@ -595,7 +587,7 @@ public class Scene {
 
 	/**
 	 * Removes wall.
-	 * 
+	 *
 	 * @param plane the plane
 	 * @param x     the x
 	 * @param y     the y
@@ -609,7 +601,7 @@ public class Scene {
 
 	/**
 	 * Removes wall decoration.
-	 * 
+	 *
 	 * @param plane the plane
 	 * @param x     the x
 	 * @param y     the y
@@ -626,7 +618,7 @@ public class Scene {
 
 	/**
 	 * Removes interactive object.
-	 * 
+	 *
 	 * @param plane the plane
 	 * @param x     the x
 	 * @param y     the y
@@ -648,7 +640,7 @@ public class Scene {
 
 	/**
 	 * Removes floor decoration.
-	 * 
+	 *
 	 * @param plane the plane
 	 * @param x     the x
 	 * @param y     the y
@@ -662,7 +654,7 @@ public class Scene {
 
 	/**
 	 * Removes ground item tile.
-	 * 
+	 *
 	 * @param plane the plane
 	 * @param x     the x
 	 * @param y     the y
@@ -679,7 +671,7 @@ public class Scene {
 
 	/**
 	 * Returns wall.
-	 * 
+	 *
 	 * @return the resulting wall
 	 * @param plane the plane
 	 * @param x     the x
@@ -695,7 +687,7 @@ public class Scene {
 
 	/**
 	 * Returns wall decoration.
-	 * 
+	 *
 	 * @return the resulting wall decoration
 	 * @param plane the plane
 	 * @param x     the x
@@ -711,7 +703,7 @@ public class Scene {
 
 	/**
 	 * Returns interactive object.
-	 * 
+	 *
 	 * @return the resulting interactive object
 	 * @param plane the plane
 	 * @param x     the x
@@ -733,7 +725,7 @@ public class Scene {
 
 	/**
 	 * Returns floor decoration.
-	 * 
+	 *
 	 * @return the resulting floor decoration
 	 * @param plane the plane
 	 * @param x     the x
@@ -749,7 +741,7 @@ public class Scene {
 
 	/**
 	 * Returns wall uid.
-	 * 
+	 *
 	 * @return the resulting int
 	 * @param plane the plane
 	 * @param x     the x
@@ -765,7 +757,7 @@ public class Scene {
 
 	/**
 	 * Returns wall decoration uid.
-	 * 
+	 *
 	 * @return the resulting int
 	 * @param plane the plane
 	 * @param x     the x
@@ -781,7 +773,7 @@ public class Scene {
 
 	/**
 	 * Returns interactive object uid.
-	 * 
+	 *
 	 * @return the resulting int
 	 * @param plane the plane
 	 * @param x     the x
@@ -803,7 +795,7 @@ public class Scene {
 
 	/**
 	 * Returns floor decoration uid.
-	 * 
+	 *
 	 * @return the resulting int
 	 * @param plane the plane
 	 * @param x     the x
@@ -819,7 +811,7 @@ public class Scene {
 
 	/**
 	 * Returns config.
-	 * 
+	 *
 	 * @return the resulting int
 	 * @param plane the plane
 	 * @param x     the x
@@ -845,7 +837,7 @@ public class Scene {
 
 	/**
 	 * Performs shade models.
-	 * 
+	 *
 	 * @param lightX the light x
 	 * @param lightY the light y
 	 * @param lightZ the light z
@@ -893,7 +885,7 @@ public class Scene {
 
 	/**
 	 * Performs merge floor decoration normals.
-	 * 
+	 *
 	 * @param model the model
 	 * @param plane the plane
 	 * @param x     the x
@@ -928,7 +920,7 @@ public class Scene {
 
 	/**
 	 * Performs merge adjacent normals.
-	 * 
+	 *
 	 * @param model the model
 	 * @param plane the plane
 	 * @param x     the x
@@ -997,7 +989,7 @@ public class Scene {
 
 	/**
 	 * Performs merge normals.
-	 * 
+	 *
 	 * @param modelA    the model a
 	 * @param modelB    the model b
 	 * @param offsetX   the offset x
@@ -1069,7 +1061,7 @@ public class Scene {
 
 	/**
 	 * Draws minimap tile.
-	 * 
+	 *
 	 * @param pixels      the pixels
 	 * @param pixelOffset the pixel offset
 	 * @param rowStride   the row stride
@@ -1137,7 +1129,7 @@ public class Scene {
 
 	/**
 	 * Builds visibility maps.
-	 * 
+	 *
 	 * @param minZ           the min z
 	 * @param maxZ           the max z
 	 * @param viewportWidth  the viewport width
@@ -1223,7 +1215,7 @@ public class Scene {
 
 	/**
 	 * Returns whether projection visible.
-	 * 
+	 *
 	 * @return the resulting boolean
 	 * @param x the x
 	 * @param y the y
@@ -1244,7 +1236,7 @@ public class Scene {
 
 	/**
 	 * Sets click.
-	 * 
+	 *
 	 * @param mouseX the mouse x
 	 * @param mouseY the mouse y
 	 */
@@ -1258,7 +1250,7 @@ public class Scene {
 
 	/**
 	 * Renders value.
-	 * 
+	 *
 	 * @param cameraWorldX the camera world x
 	 * @param cameraWorldY the camera world y
 	 * @param cameraWorldZ the camera world z
@@ -1421,7 +1413,7 @@ public class Scene {
 
 	/**
 	 * Renders tile.
-	 * 
+	 *
 	 * @param sceneTile     the scene tile
 	 * @param conditionFlag the condition flag
 	 */
@@ -1886,7 +1878,7 @@ public class Scene {
 
 	/**
 	 * Renders plain tile.
-	 * 
+	 *
 	 * @param tile        the tile
 	 * @param plane       the plane
 	 * @param tileX       the tile x
@@ -2030,7 +2022,7 @@ public class Scene {
 
 	/**
 	 * Renders shaped tile.
-	 * 
+	 *
 	 * @param tile        the tile
 	 * @param tileX       the tile x
 	 * @param tileY       the tile y
@@ -2127,7 +2119,7 @@ public class Scene {
 
 	/**
 	 * Performs mix texture color.
-	 * 
+	 *
 	 * @return the resulting int
 	 * @param lightness the lightness
 	 * @param baseColor the base color
@@ -2144,7 +2136,7 @@ public class Scene {
 
 	/**
 	 * Performs contains screen point.
-	 * 
+	 *
 	 * @return the resulting boolean
 	 * @param pointX the point x
 	 * @param pointY the point y
@@ -2289,7 +2281,7 @@ public class Scene {
 
 	/**
 	 * Returns whether tile occluded.
-	 * 
+	 *
 	 * @return the resulting boolean
 	 * @param plane the plane
 	 * @param x     the x
@@ -2319,7 +2311,7 @@ public class Scene {
 
 	/**
 	 * Returns whether wall occluded.
-	 * 
+	 *
 	 * @return the resulting boolean
 	 * @param plane       the plane
 	 * @param x           the x
@@ -2423,7 +2415,7 @@ public class Scene {
 
 	/**
 	 * Returns whether decoration occluded.
-	 * 
+	 *
 	 * @return the resulting boolean
 	 * @param plane       the plane
 	 * @param x           the x
@@ -2446,7 +2438,7 @@ public class Scene {
 
 	/**
 	 * Returns whether area occluded.
-	 * 
+	 *
 	 * @return the resulting boolean
 	 * @param plane       the plane
 	 * @param minX        the min x
@@ -2493,7 +2485,7 @@ public class Scene {
 
 	/**
 	 * Returns whether point occluded.
-	 * 
+	 *
 	 * @return the resulting boolean
 	 * @param worldX the world x
 	 * @param worldZ the world z
@@ -2591,215 +2583,119 @@ public class Scene {
 	 * Number of plane entries.
 	 */
 	public int planeCount;
-	/**
-	 * Stores width.
-	 */
+
 	public int width;
-	/**
-	 * Stores height.
-	 */
+
 	public int height;
-	/**
-	 * Stores tile heights.
-	 */
+
 	public int tileHeights[][][];
-	/**
-	 * Stores tiles.
-	 */
+
 	public SceneTile tiles[][][];
-	/**
-	 * Stores min plane.
-	 */
+
 	public int minPlane;
 	/**
 	 * Number of temporary object entries.
 	 */
 	public int temporaryObjectCount;
-	/**
-	 * Stores temporary objects.
-	 */
+
 	public InteractiveObject temporaryObjects[];
-	/**
-	 * Stores tile occlusion cycles.
-	 */
+
 	public int tileOcclusionCycles[][][];
 	/**
 	 * Number of remaining tile entries.
 	 */
 	public static int remainingTileCount;
-	/**
-	 * Stores render plane.
-	 */
+
 	public static int renderPlane;
-	/**
-	 * Stores render cycle.
-	 */
+
 	public static int renderCycle;
-	/**
-	 * Stores min tile x.
-	 */
+
 	public static int minTileX;
-	/**
-	 * Stores max tile x.
-	 */
+
 	public static int maxTileX;
-	/**
-	 * Stores min tile y.
-	 */
+
 	public static int minTileY;
-	/**
-	 * Stores max tile y.
-	 */
+
 	public static int maxTileY;
-	/**
-	 * Stores camera tile x.
-	 */
+
 	public static int cameraTileX;
-	/**
-	 * Stores camera tile y.
-	 */
+
 	public static int cameraTileY;
-	/**
-	 * Stores camera x.
-	 */
+
 	public static int cameraX;
-	/**
-	 * Stores camera z.
-	 */
+
 	public static int cameraZ;
-	/**
-	 * Stores camera y.
-	 */
+
 	public static int cameraY;
-	/**
-	 * Stores pitch sine.
-	 */
+
 	public static int pitchSine;
-	/**
-	 * Stores pitch cosine.
-	 */
+
 	public static int pitchCosine;
-	/**
-	 * Stores yaw sine.
-	 */
+
 	public static int yawSine;
-	/**
-	 * Stores yaw cosine.
-	 */
+
 	public static int yawCosine;
-	/**
-	 * Stores render interactive objects.
-	 */
+
 	public static InteractiveObject renderInteractiveObjects[] = new InteractiveObject[100];
-	/**
-	 * Stores wall decoration inset x.
-	 */
+
 	public static final int WALL_DECORATION_INSET_X[] = { 53, -53, -53, 53 };
-	/**
-	 * Stores wall decoration inset y.
-	 */
+
 	public static final int WALL_DECORATION_INSET_Y[] = { -53, -53, 53, 53 };
-	/**
-	 * Stores wall decoration outset x.
-	 */
+
 	public static final int WALL_DECORATION_OUTSET_X[] = { -45, 45, 45, -45 };
-	/**
-	 * Stores wall decoration outset y.
-	 */
+
 	public static final int WALL_DECORATION_OUTSET_Y[] = { 45, 45, -45, -45 };
 	/**
 	 * Whether picking.
 	 */
 	public static boolean picking;
-	/**
-	 * Stores mouse x.
-	 */
+
 	public static int mouseX;
-	/**
-	 * Stores mouse y.
-	 */
+
 	public static int mouseY;
-	/**
-	 * Stores picked tile x.
-	 */
+
 	public static int pickedTileX = -1;
-	/**
-	 * Stores picked tile y.
-	 */
+
 	public static int pickedTileY = -1;
-	/**
-	 * Stores occluder plane count.
-	 */
+
 	public static int OCCLUDER_PLANE_COUNT;
-	/**
-	 * Stores occluder counts.
-	 */
+
 	public static int occluderCounts[];
-	/**
-	 * Stores occluders.
-	 */
+
 	public static SceneCluster occluders[][];
 	/**
 	 * Number of active occluder entries.
 	 */
 	public static int activeOccluderCount;
-	/**
-	 * Stores active occluders.
-	 */
+
 	public static SceneCluster activeOccluders[] = new SceneCluster[500];
-	/**
-	 * Stores tile queue.
-	 */
+
 	public static NodeDeque tileQueue = new NodeDeque();
-	/**
-	 * Stores wall draw flags.
-	 */
+
 	public static final int WALL_DRAW_FLAGS[] = { 19, 55, 38, 155, 255, 110, 137, 205, 76 };
-	/**
-	 * Stores wall cull flags.
-	 */
+
 	public static final int WALL_CULL_FLAGS[] = { 160, 192, 80, 96, 0, 144, 80, 48, 160 };
-	/**
-	 * Stores wall draw flags 2.
-	 */
+
 	public static final int WALL_DRAW_FLAGS_2[] = { 76, 8, 137, 4, 0, 1, 38, 2, 19 };
-	/**
-	 * Stores wall uncull flags 0.
-	 */
+
 	public static final int WALL_UNCULL_FLAGS_0[] = { 0, 0, 2, 0, 0, 2, 1, 1, 0 };
-	/**
-	 * Stores wall uncull flags 1.
-	 */
+
 	public static final int WALL_UNCULL_FLAGS_1[] = { 2, 0, 0, 2, 0, 0, 0, 4, 4 };
-	/**
-	 * Stores wall uncull flags 2.
-	 */
+
 	public static final int WALL_UNCULL_FLAGS_2[] = { 0, 4, 4, 8, 0, 0, 8, 0, 0 };
-	/**
-	 * Stores wall uncull flags 3.
-	 */
+
 	public static final int WALL_UNCULL_FLAGS_3[] = { 1, 1, 0, 0, 0, 8, 0, 0, 8 };
-	/**
-	 * Stores texture colors.
-	 */
+
 	public static final int TEXTURE_COLORS[] = { 41, 39248, 41, 4643, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 43086,
 			41, 41, 41, 41, 41, 41, 41, 8602, 41, 28992, 41, 41, 41, 41, 41, 5056, 41, 41, 41, 7079, 41, 41, 41, 41, 41,
 			41, 41, 41, 41, 41, 3131, 41, 41, 41 };
-	/**
-	 * Stores merge stamp a.
-	 */
+
 	public int mergeStampA[];
-	/**
-	 * Stores merge stamp b.
-	 */
+
 	public int mergeStampB[];
-	/**
-	 * Stores merge cycle.
-	 */
+
 	public int mergeCycle;
-	/**
-	 * Stores minimap tile shape.
-	 */
+
 	public int minimapTileShape[][] = { new int[16], { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
 			{ 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1 }, { 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 },
 			{ 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1 }, { 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
@@ -2807,44 +2703,26 @@ public class Scene {
 			{ 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0 }, { 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1 },
 			{ 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1 },
 			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1 } };
-	/**
-	 * Stores minimap tile rotation.
-	 */
+
 	public int minimapTileRotation[][] = { { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
 			{ 12, 8, 4, 0, 13, 9, 5, 1, 14, 10, 6, 2, 15, 11, 7, 3 },
 			{ 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 },
 			{ 3, 7, 11, 15, 2, 6, 10, 14, 1, 5, 9, 13, 0, 4, 8, 12 } };
-	/**
-	 * Stores visibility maps.
-	 */
+
 	public static boolean visibilityMaps[][][][] = new boolean[8][32][51][51];
-	/**
-	 * Stores visibility map.
-	 */
+
 	public static boolean visibilityMap[][];
-	/**
-	 * Stores viewport center x.
-	 */
+
 	public static int viewportCenterX;
-	/**
-	 * Stores viewport center y.
-	 */
+
 	public static int viewportCenterY;
-	/**
-	 * Stores viewport min x.
-	 */
+
 	public static int viewportMinX;
-	/**
-	 * Stores viewport min y.
-	 */
+
 	public static int viewportMinY;
-	/**
-	 * Stores viewport max x.
-	 */
+
 	public static int viewportMaxX;
-	/**
-	 * Stores viewport max y.
-	 */
+
 	public static int viewportMaxY;
 
 	static {

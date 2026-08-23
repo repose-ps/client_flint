@@ -20,14 +20,8 @@ import java.net.Socket;
  * systems are refactored.
  * </p>
  */
-public final /**
-				 * Initializes this instance.
-				 */
-class NetworkSession {
+public final class NetworkSession {
 
-	/**
-	 * Stores buffer capacity.
-	 */
 	public static final int BUFFER_CAPACITY = 5_000;
 
 	/** Maximum payload that fits in the revision-377 incoming packet buffer. */
@@ -60,18 +54,13 @@ class NetworkSession {
 	/** Opcode completed immediately before {@link #secondLastOpcode}. */
 	public int thirdLastOpcode = -1;
 
-	/**
-	 * Stores connection.
-	 */
 	private BufferedConnection connection;
-	/**
-	 * Stores incoming opcode cipher.
-	 */
+
 	private IsaacCipher incomingOpcodeCipher;
 
 	/**
 	 * Replaces the live game connection with a connection around {@code socket}.
-	 * 
+	 *
 	 * @param socket the socket
 	 */
 	public void connect(Socket socket) throws IOException {
@@ -87,7 +76,7 @@ class NetworkSession {
 
 	/**
 	 * Returns whether connected.
-	 * 
+	 *
 	 * @return the resulting boolean
 	 */
 	public boolean isConnected() {
@@ -121,7 +110,7 @@ class NetworkSession {
 
 	/**
 	 * Raw login-handshake block read.
-	 * 
+	 *
 	 * @param destination the destination
 	 * @param offset      the offset
 	 * @param length      the length
@@ -132,7 +121,7 @@ class NetworkSession {
 
 	/**
 	 * Raw login-handshake write.
-	 * 
+	 *
 	 * @param source the source
 	 * @param offset the offset
 	 * @param length the length
@@ -149,7 +138,7 @@ class NetworkSession {
 	 * the revision-377 server convention of adding 50 to each of the four seed
 	 * words.
 	 * </p>
-	 * 
+	 *
 	 * @param seed the seed
 	 */
 	public void initializeOpcodeCiphers(int[] seed) {
@@ -290,7 +279,7 @@ class NetworkSession {
 
 	/**
 	 * Performs require connection.
-	 * 
+	 *
 	 * @return the resulting buffered connection
 	 */
 	private BufferedConnection requireConnection() throws IOException {

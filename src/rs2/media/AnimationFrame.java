@@ -13,30 +13,16 @@ import rs2.net.Buffer;
  * operands represent translation, rotation, scale, or alpha changes.
  * </p>
  */
-public /**
-		 * Initializes this instance.
-		 */
-class AnimationFrame {
+public class AnimationFrame {
 
-	/**
-	 * Stores footer size.
-	 */
 	private static final int FOOTER_SIZE = 8;
-	/**
-	 * Stores max transforms.
-	 */
+
 	private static final int MAX_TRANSFORMS = 500;
-	/**
-	 * Stores scale transform.
-	 */
+
 	private static final int SCALE_TRANSFORM = 3;
-	/**
-	 * Stores alpha transform.
-	 */
+
 	private static final int ALPHA_TRANSFORM = 5;
-	/**
-	 * Stores default scale.
-	 */
+
 	private static final int DEFAULT_SCALE = 128;
 
 	/** Decoded frames indexed by frame identifier. */
@@ -55,26 +41,18 @@ class AnimationFrame {
 	 * Number of transform entries.
 	 */
 	public int transformCount;
-	/**
-	 * Stores transform skeleton labels.
-	 */
+
 	public int[] transformSkeletonLabels;
-	/**
-	 * Stores transform xs.
-	 */
+
 	public int[] transformXs;
-	/**
-	 * Stores transform ys.
-	 */
+
 	public int[] transformYs;
-	/**
-	 * Stores transform zs.
-	 */
+
 	public int[] transformZs;
 
 	/**
 	 * Allocates the global frame tables for identifiers through {@code maximumId}.
-	 * 
+	 *
 	 * @param maximumId the maximum id
 	 */
 	public static void initialize(int maximumId) {
@@ -91,7 +69,7 @@ class AnimationFrame {
 	 * then consume frame headers, transform masks, smart operands, durations, and
 	 * the shared skeleton without copying the source array.
 	 * </p>
-	 * 
+	 *
 	 * @param data the data
 	 */
 	public static void load(byte[] data) {
@@ -185,7 +163,7 @@ class AnimationFrame {
 
 	/**
 	 * Returns a decoded frame, or {@code null} before the frame table is loaded.
-	 * 
+	 *
 	 * @param frameId the frame id
 	 */
 	public static AnimationFrame get(int frameId) {
@@ -194,7 +172,7 @@ class AnimationFrame {
 
 	/**
 	 * Returns whether an optional animation-frame identifier is absent.
-	 * 
+	 *
 	 * @param frameId the frame id
 	 */
 	public static boolean isNull(int frameId) {

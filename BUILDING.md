@@ -1,6 +1,6 @@
 # Reproducible build and regression verification
 
-The project uses the pinned Maven build introduced in Refinement Step 6. Refinement Step 7 adds renderer pixel-golden coverage to the same regression gate.
+The project uses the pinned Maven build introduced in Refinement Step 6. Refinement Step 7 adds renderer pixel-golden coverage; Refinement Step 8 adds source-hygiene and preservation-documentation checks to the same regression gate.
 
 ## Requirements
 
@@ -42,15 +42,22 @@ verify.cmd C:\path\to\rscache
 
 The `verify` phase runs `rs2.RegressionSuite`, which launches every retained suite in its own JVM:
 
-1. `rs2.concurrent.ThreadLifecycleSafetyTest`
-2. `rs2.net.NetworkResourceRobustnessTest`
-3. `rs2.media.RendererGoldenTest`
-4. `rs2.cache.Revision377CacheSmokeTest`
-5. `rs2.cache.BootstrapArchiveRecoveryTest`
-6. `rs2.cache.Revision377OnDemandDecompressionTest`
+1. `rs2.quality.SourceQualityTest`
+2. `rs2.concurrent.ThreadLifecycleSafetyTest`
+3. `rs2.net.NetworkResourceRobustnessTest`
+4. `rs2.media.RendererGoldenTest`
+5. `rs2.cache.Revision377CacheSmokeTest`
+6. `rs2.cache.BootstrapArchiveRecoveryTest`
+7. `rs2.cache.Revision377OnDemandDecompressionTest`
 
-The runner validates the cache fixture before starting and fails the build immediately if any suite exits unsuccessfully. `RendererGoldenTest` hashes deterministic software-renderer pixel buffers and also loads the authentic texture archive from the revision-377 cache for textured-triangle coverage.
+The runner validates the cache fixture before starting and fails the build immediately if any suite exits unsuccessfully. `SourceQualityTest` locks the Step-8 line-ending policy, rejects stale `methodNN` migration breadcrumbs and generated constructor boilerplate, and verifies that retained/dead-state classifications remain documented in `DEAD_STATE.md`. `RendererGoldenTest` hashes deterministic software-renderer pixel buffers and also loads the authentic texture archive from the revision-377 cache for textured-triangle coverage.
 
 ## Historical parity suites
 
 The historical multi-million-check parity sources described in earlier project handoffs were not present in the Step-5 source baseline. Step 6 therefore retains and wires every test source that actually exists in the authoritative baseline; it does not fabricate replacements for unavailable parity-suite source files. If those historical sources are recovered later, they should be added under `test/` and registered in `RegressionSuite` so they become part of the same `verify` gate.
+
+## Preservation notes and line endings
+
+`DEAD_STATE.md` records state that can look unused or anomalous but is intentionally retained because the supplied revision-377 cache cannot validate removal or because historical behavior is regression-locked.
+
+`.gitattributes` declares LF for Java, Markdown, XML, properties, and POSIX shell files, including Windows `.cmd` files, so the archived source has one line-ending convention across platforms. `SourceQualityTest` checks Java source/test files for LF endings, final newlines, and trailing whitespace.

@@ -21,7 +21,7 @@ public class Skeleton {
 
 	/**
 	 * Decodes a skeleton from the trailing segment of an animation archive.
-	 * 
+	 *
 	 * @param buffer the buffer
 	 */
 	public Skeleton(Buffer buffer) {

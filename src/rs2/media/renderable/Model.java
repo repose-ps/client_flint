@@ -51,7 +51,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Performs initialize model headers.
-	 * 
+	 *
 	 * @param modelCount the model count
 	 * @param provider   the provider
 	 */
@@ -63,7 +63,7 @@ public class Model extends Renderable {
 	/**
 	 * Parses the 18-byte legacy model footer into stream offsets without decoding
 	 * geometry.
-	 * 
+	 *
 	 * @param modelData the model data
 	 * @param modelId   the model id
 	 */
@@ -138,7 +138,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Clears model header state.
-	 * 
+	 *
 	 * @param modelId the model id
 	 */
 	public static void clearModelHeader(int modelId) {
@@ -147,7 +147,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Returns model.
-	 * 
+	 *
 	 * @return the resulting model
 	 * @param modelId the model id
 	 */
@@ -165,7 +165,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Returns whether loaded.
-	 * 
+	 *
 	 * @return the resulting boolean
 	 * @param modelId the model id
 	 */
@@ -181,18 +181,10 @@ public class Model extends Renderable {
 		}
 	}
 
-	/**
-	 * Initializes this instance.
-	 */
 	private Model() {
 		singleTile = false;
 	}
 
-	/**
-	 * Initializes this instance.
-	 * 
-	 * @param modelId the model id
-	 */
 	private Model(int modelId) {
 		singleTile = false;
 		ModelHeader header = modelHeaders[modelId];
@@ -318,12 +310,6 @@ public class Model extends Renderable {
 		}
 	}
 
-	/**
-	 * Initializes this instance.
-	 * 
-	 * @param modelCount the model count
-	 * @param models     the models
-	 */
 	public Model(int modelCount, Model[] models) {
 		singleTile = false;
 		boolean conditionFlag = false;
@@ -428,12 +414,6 @@ public class Model extends Renderable {
 
 	}
 
-	/**
-	 * Initializes this instance.
-	 * 
-	 * @param models     the models
-	 * @param modelCount the model count
-	 */
 	public Model(Model[] models, int modelCount) {
 		singleTile = false;
 		boolean conditionFlag = false;
@@ -547,14 +527,6 @@ public class Model extends Renderable {
 		calculateDiagonals();
 	}
 
-	/**
-	 * Initializes this instance.
-	 * 
-	 * @param source        the source
-	 * @param shareVertices the share vertices
-	 * @param shareColors   the share colors
-	 * @param shareAlpha    the share alpha
-	 */
 	public Model(Model source, boolean shareVertices, boolean shareColors, boolean shareAlpha) {
 		singleTile = false;
 		vertexCount = source.vertexCount;
@@ -610,13 +582,6 @@ public class Model extends Renderable {
 		texturedTriangleC = source.texturedTriangleC;
 	}
 
-	/**
-	 * Initializes this instance.
-	 * 
-	 * @param source        the source
-	 * @param copyVerticesY the copy vertices y
-	 * @param copyLighting  the copy lighting
-	 */
 	public Model(Model source, boolean copyVerticesY, boolean copyLighting) {
 		singleTile = false;
 		vertexCount = source.vertexCount;
@@ -691,7 +656,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Performs replace with model.
-	 * 
+	 *
 	 * @param source     the source
 	 * @param shareAlpha the share alpha
 	 */
@@ -748,7 +713,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Returns first identical vertex id.
-	 * 
+	 *
 	 * @return the resulting int
 	 * @param source      the source
 	 * @param vertexIndex the vertex index
@@ -904,7 +869,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Applies transformation.
-	 * 
+	 *
 	 * @param frameId the frame id
 	 */
 	public void applyTransformation(int frameId) {
@@ -930,7 +895,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Performs mix animation frames.
-	 * 
+	 *
 	 * @param primaryFrameId   the primary frame id
 	 * @param secondaryFrameId the secondary frame id
 	 * @param interleaveOrder  the interleave order
@@ -985,7 +950,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Performs transform frame.
-	 * 
+	 *
 	 * @param transformType the transform type
 	 * @param groups        the groups
 	 * @param x             the x
@@ -1150,7 +1115,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Performs rotate x.
-	 * 
+	 *
 	 * @param angle the angle
 	 */
 	public void rotateX(int angle) {
@@ -1167,7 +1132,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Performs translate.
-	 * 
+	 *
 	 * @param x the x
 	 * @param y the y
 	 * @param z the z
@@ -1183,7 +1148,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Performs recolor.
-	 * 
+	 *
 	 * @param fromColor the from color
 	 * @param toColor   the to color
 	 */
@@ -1211,7 +1176,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Performs scale.
-	 * 
+	 *
 	 * @param xScale the x scale
 	 * @param yScale the y scale
 	 * @param zScale the z scale
@@ -1227,7 +1192,7 @@ public class Model extends Renderable {
 	/**
 	 * Accumulates face normals and either shades immediately or retains normals for
 	 * scene merging.
-	 * 
+	 *
 	 * @param ambient          the ambient
 	 * @param contrast         the contrast
 	 * @param lightX           the light x
@@ -1317,7 +1282,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Applies the stored ambient/contrast after scene normal merging.
-	 * 
+	 *
 	 * @param lightX the light x
 	 * @param lightY the light y
 	 * @param lightZ the light z
@@ -1330,7 +1295,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Finalizes Gouraud/flat face lightness values from the current vertex normals.
-	 * 
+	 *
 	 * @param ambient  the ambient
 	 * @param contrast the contrast
 	 * @param lightX   the light x
@@ -1387,7 +1352,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Performs adjust lightness.
-	 * 
+	 *
 	 * @return the resulting int
 	 * @param color     the color
 	 * @param lightness the lightness
@@ -1412,7 +1377,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Renders simple.
-	 * 
+	 *
 	 * @param rotationX    the rotation x
 	 * @param rotationY    the rotation y
 	 * @param rotationZ    the rotation z
@@ -1487,7 +1452,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Draws value.
-	 * 
+	 *
 	 * @param orientation the orientation
 	 * @param pitchSine   the pitch sine
 	 * @param pitchCosine the pitch cosine
@@ -1506,7 +1471,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Draws internal.
-	 * 
+	 *
 	 * @param inputValue  the input value
 	 * @param inputValue2 the input value2
 	 * @param inputValue3 the input value3
@@ -1626,7 +1591,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Draws faces.
-	 * 
+	 *
 	 * @param conditionFlag  the condition flag
 	 * @param conditionFlag2 the condition flag2
 	 * @param inputValue     the input value
@@ -1804,7 +1769,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Draws face.
-	 * 
+	 *
 	 * @param inputValue the input value
 	 */
 	private void drawFace(int triangle) {
@@ -1869,7 +1834,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Draws near clipped face.
-	 * 
+	 *
 	 * @param inputValue the input value
 	 */
 	private void drawNearClippedFace(int inputValue) {
@@ -2091,7 +2056,7 @@ public class Model extends Renderable {
 
 	/**
 	 * Performs contains point.
-	 * 
+	 *
 	 * @return the resulting boolean
 	 * @param inputValue  the input value
 	 * @param inputValue2 the input value2
@@ -2113,105 +2078,60 @@ public class Model extends Renderable {
 		return inputValue <= inputValue6 || inputValue <= inputValue7 || inputValue <= inputValue8;
 	}
 
-	/**
-	 * Stores shared model.
-	 */
 	public static final Model sharedModel = new Model();
-	/**
-	 * Stores shared vertices x.
-	 */
+
 	private static int sharedVerticesX[] = new int[2000];
-	/**
-	 * Stores shared vertices y.
-	 */
+
 	private static int sharedVerticesY[] = new int[2000];
-	/**
-	 * Stores shared vertices z.
-	 */
+
 	private static int sharedVerticesZ[] = new int[2000];
-	/**
-	 * Stores shared triangle alpha.
-	 */
+
 	private static int sharedTriangleAlpha[] = new int[2000];
 	/**
 	 * Number of vertex entries.
 	 */
 	public int vertexCount;
-	/**
-	 * Stores vertices x.
-	 */
+
 	public int verticesX[];
-	/**
-	 * Stores vertices y.
-	 */
+
 	public int verticesY[];
-	/**
-	 * Stores vertices z.
-	 */
+
 	public int verticesZ[];
 	/**
 	 * Number of triangle entries.
 	 */
 	public int triangleCount;
-	/**
-	 * Stores triangle vertex a.
-	 */
+
 	public int triangleVertexA[];
-	/**
-	 * Stores triangle vertex b.
-	 */
+
 	public int triangleVertexB[];
-	/**
-	 * Stores triangle vertex c.
-	 */
+
 	public int triangleVertexC[];
-	/**
-	 * Stores triangle shade a.
-	 */
+
 	public int triangleShadeA[];
-	/**
-	 * Stores triangle shade b.
-	 */
+
 	public int triangleShadeB[];
-	/**
-	 * Stores triangle shade c.
-	 */
+
 	public int triangleShadeC[];
-	/**
-	 * Stores triangle draw type.
-	 */
+
 	public int triangleDrawType[];
-	/**
-	 * Stores triangle priorities.
-	 */
+
 	public int trianglePriorities[];
-	/**
-	 * Stores triangle alpha.
-	 */
+
 	public int triangleAlpha[];
-	/**
-	 * Stores triangle colors.
-	 */
+
 	public int triangleColors[];
-	/**
-	 * Stores default triangle priority.
-	 */
+
 	public int defaultTrianglePriority;
 	/**
 	 * Number of textured triangle entries.
 	 */
 	public int texturedTriangleCount;
-	/**
-	 * Stores textured triangle a.
-	 */
+
 	public int texturedTriangleA[];
-	/**
-	 * Stores textured triangle b.
-	 */
+
 	public int texturedTriangleB[];
-	/**
-	 * Stores textured triangle c.
-	 */
+
 	public int texturedTriangleC[];
 	/**
 	 * Packed deferred-lighting state: ambient in the high 16 bits, scaled contrast
@@ -2225,177 +2145,99 @@ public class Model extends Renderable {
 	 * original packing.
 	 */
 	public int packedZBounds;
-	/**
-	 * Stores horizontal radius.
-	 */
+
 	public int horizontalRadius;
-	/**
-	 * Stores max y.
-	 */
+
 	public int maxY;
-	/**
-	 * Stores depth span.
-	 */
+
 	public int depthSpan;
-	/**
-	 * Stores radius.
-	 */
+
 	public int radius;
 	/**
 	 * Scene support height used when stacking ground-item piles on top of models.
 	 */
 	public int itemDropHeight;
-	/**
-	 * Stores vertex skins.
-	 */
+
 	public int vertexSkins[];
-	/**
-	 * Stores triangle skins.
-	 */
+
 	public int triangleSkins[];
-	/**
-	 * Stores vertex groups.
-	 */
+
 	public int vertexGroups[][];
-	/**
-	 * Stores triangle groups.
-	 */
+
 	public int triangleGroups[][];
 	/**
 	 * Whether single tile.
 	 */
 	public boolean singleTile;
-	/**
-	 * Stores vertex normal offsets.
-	 */
+
 	public VertexNormal vertexNormalOffsets[];
-	/**
-	 * Stores model headers.
-	 */
+
 	private static ModelHeader modelHeaders[];
-	/**
-	 * Stores model provider.
-	 */
+
 	private static OnDemandProvider modelProvider;
-	/**
-	 * Stores face out of bounds.
-	 */
+
 	private static boolean faceOutOfBounds[] = new boolean[4096];
-	/**
-	 * Stores face near clipped.
-	 */
+
 	private static boolean faceNearClipped[] = new boolean[4096];
-	/**
-	 * Stores projected x.
-	 */
+
 	private static int projectedX[] = new int[4096];
-	/**
-	 * Stores projected y.
-	 */
+
 	private static int projectedY[] = new int[4096];
-	/**
-	 * Stores projected depth.
-	 */
+
 	private static int projectedDepth[] = new int[4096];
-	/**
-	 * Stores camera x.
-	 */
+
 	private static int cameraX[] = new int[4096];
-	/**
-	 * Stores camera y.
-	 */
+
 	private static int cameraY[] = new int[4096];
-	/**
-	 * Stores camera z.
-	 */
+
 	private static int cameraZ[] = new int[4096];
-	/**
-	 * Stores depth bucket counts.
-	 */
+
 	private static int depthBucketCounts[] = new int[1500];
-	/**
-	 * Stores depth buckets.
-	 */
+
 	private static int depthBuckets[][] = new int[1500][512];
-	/**
-	 * Stores priority bucket counts.
-	 */
+
 	private static int priorityBucketCounts[] = new int[12];
-	/**
-	 * Stores priority buckets.
-	 */
+
 	private static int priorityBuckets[][] = new int[12][2000];
-	/**
-	 * Stores priority10 depths.
-	 */
+
 	private static int priority10Depths[] = new int[2000];
-	/**
-	 * Stores priority11 depths.
-	 */
+
 	private static int priority11Depths[] = new int[2000];
-	/**
-	 * Stores priority depth sums.
-	 */
+
 	private static int priorityDepthSums[] = new int[12];
-	/**
-	 * Stores clipped x.
-	 */
+
 	private static int clippedX[] = new int[10];
-	/**
-	 * Stores clipped y.
-	 */
+
 	private static int clippedY[] = new int[10];
-	/**
-	 * Stores clipped shade.
-	 */
+
 	private static int clippedShade[] = new int[10];
-	/**
-	 * Stores transform pivot x.
-	 */
+
 	private static int transformPivotX;
-	/**
-	 * Stores transform pivot y.
-	 */
+
 	private static int transformPivotY;
-	/**
-	 * Stores transform pivot z.
-	 */
+
 	private static int transformPivotZ;
 	/**
 	 * Whether picking enabled.
 	 */
 	public static boolean pickingEnabled;
-	/**
-	 * Stores mouse x.
-	 */
+
 	public static int mouseX;
-	/**
-	 * Stores mouse y.
-	 */
+
 	public static int mouseY;
 	/**
 	 * Number of picked entries.
 	 */
 	public static int pickedCount;
-	/**
-	 * Stores picked uids.
-	 */
+
 	public static int pickedUids[] = new int[1000];
-	/**
-	 * Stores sine.
-	 */
+
 	public static int SINE[];
-	/**
-	 * Stores cosine.
-	 */
+
 	public static int COSINE[];
-	/**
-	 * Stores hsl to rgb.
-	 */
+
 	private static int HSL_TO_RGB[];
-	/**
-	 * Stores reciprocal 16.
-	 */
+
 	private static int RECIPROCAL_16[];
 
 	static {

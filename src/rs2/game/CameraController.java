@@ -9,168 +9,88 @@ import rs2.sign.Signlink;
  * Owns revision-377 camera position, follow controls, cinematic camera motion,
  * roof-plane selection and camera shake state.
  */
-public final /**
-				 * Initializes this instance.
-				 */
-class CameraController {
-	/**
-	 * Stores angle mask.
-	 */
+public final class CameraController {
+
 	public static final int ANGLE_MASK = 0x7ff;
 
-	/**
-	 * Stores x.
-	 */
 	public int x;
-	/**
-	 * Stores height.
-	 */
+
 	public int height;
-	/**
-	 * Stores y.
-	 */
+
 	public int y;
-	/**
-	 * Stores pitch.
-	 */
+
 	public int pitch = 128;
-	/**
-	 * Stores yaw.
-	 */
+
 	public int yaw;
 
-	/**
-	 * Stores follow pitch.
-	 */
 	public int followPitch = 128;
-	/**
-	 * Stores follow yaw.
-	 */
+
 	public int followYaw;
-	/**
-	 * Stores yaw velocity.
-	 */
+
 	private int yawVelocity;
-	/**
-	 * Stores pitch velocity.
-	 */
+
 	private int pitchVelocity;
-	/**
-	 * Stores follow target x.
-	 */
+
 	public int followTargetX;
-	/**
-	 * Stores follow target y.
-	 */
+
 	public int followTargetY;
-	/**
-	 * Stores terrain pitch scale.
-	 */
+
 	public int terrainPitchScale;
 
-	/**
-	 * Stores follow offset x.
-	 */
 	public int followOffsetX;
-	/**
-	 * Stores follow offset y.
-	 */
+
 	public int followOffsetY;
-	/**
-	 * Stores yaw offset.
-	 */
+
 	public int yawOffset;
-	/**
-	 * Stores follow offset xstep.
-	 */
+
 	private int followOffsetXStep = 2;
-	/**
-	 * Stores follow offset ystep.
-	 */
+
 	private int followOffsetYStep = 2;
-	/**
-	 * Stores yaw offset step.
-	 */
+
 	private int yawOffsetStep = 1;
-	/**
-	 * Stores follow offset cycle.
-	 */
+
 	private int followOffsetCycle;
 
 	/**
 	 * Whether cinematic.
 	 */
 	public boolean cinematic;
-	/**
-	 * Stores position tile x.
-	 */
+
 	private int positionTileX;
-	/**
-	 * Stores position tile y.
-	 */
+
 	private int positionTileY;
-	/**
-	 * Stores position height offset.
-	 */
+
 	private int positionHeightOffset;
-	/**
-	 * Stores position base speed.
-	 */
+
 	private int positionBaseSpeed;
-	/**
-	 * Stores position scale.
-	 */
+
 	private int positionScale;
-	/**
-	 * Stores look tile x.
-	 */
+
 	private int lookTileX;
-	/**
-	 * Stores look tile y.
-	 */
+
 	private int lookTileY;
-	/**
-	 * Stores look height offset.
-	 */
+
 	private int lookHeightOffset;
-	/**
-	 * Stores look base speed.
-	 */
+
 	private int lookBaseSpeed;
-	/**
-	 * Stores look scale.
-	 */
+
 	private int lookScale;
 
-	/**
-	 * Stores shake enabled.
-	 */
 	private final boolean[] shakeEnabled = new boolean[5];
-	/**
-	 * Stores shake random amplitude.
-	 */
+
 	private final int[] shakeRandomAmplitude = new int[5];
-	/**
-	 * Stores shake sine amplitude.
-	 */
+
 	private final int[] shakeSineAmplitude = new int[5];
-	/**
-	 * Stores shake frequency.
-	 */
+
 	private final int[] shakeFrequency = new int[5];
-	/**
-	 * Stores shake cycles.
-	 */
+
 	private final int[] shakeCycles = new int[5];
 
-	/**
-	 * Stores roof probe counter.
-	 */
 	private int roofProbeCounter;
 
 	/**
 	 * Updates follow.
-	 * 
+	 *
 	 * @param localPlayer the local player
 	 * @param keyStatus   the key status
 	 * @param world       the world
@@ -259,7 +179,7 @@ class CameraController {
 
 	/**
 	 * Updates cinematic.
-	 * 
+	 *
 	 * @param world the world
 	 * @param plane the plane
 	 */
@@ -316,7 +236,7 @@ class CameraController {
 
 	/**
 	 * Performs approach.
-	 * 
+	 *
 	 * @return the resulting int
 	 * @param current   the current
 	 * @param target    the target
@@ -340,7 +260,7 @@ class CameraController {
 
 	/**
 	 * Sets cinematic position.
-	 * 
+	 *
 	 * @param tileX        the tile x
 	 * @param tileY        the tile y
 	 * @param heightOffset the height offset
@@ -366,7 +286,7 @@ class CameraController {
 
 	/**
 	 * Sets cinematic look at.
-	 * 
+	 *
 	 * @param tileX        the tile x
 	 * @param tileY        the tile y
 	 * @param heightOffset the height offset
@@ -412,7 +332,7 @@ class CameraController {
 
 	/**
 	 * Performs configure shake.
-	 * 
+	 *
 	 * @param index           the index
 	 * @param randomAmplitude the random amplitude
 	 * @param sineAmplitude   the sine amplitude
@@ -446,7 +366,7 @@ class CameraController {
 
 	/**
 	 * Returns minimum pitch for render.
-	 * 
+	 *
 	 * @return the resulting int
 	 */
 	public int getMinimumPitchForRender() {
@@ -462,7 +382,7 @@ class CameraController {
 
 	/**
 	 * Performs snapshot.
-	 * 
+	 *
 	 * @return the resulting snapshot
 	 */
 	public Snapshot snapshot() {
@@ -471,7 +391,7 @@ class CameraController {
 
 	/**
 	 * Performs restore.
-	 * 
+	 *
 	 * @param snapshot the snapshot
 	 */
 	public void restore(Snapshot snapshot) {
@@ -515,7 +435,7 @@ class CameraController {
 
 	/**
 	 * Performs position from target.
-	 * 
+	 *
 	 * @param targetHeight the target height
 	 * @param targetX      the target x
 	 * @param pitch        the pitch
@@ -552,7 +472,7 @@ class CameraController {
 
 	/**
 	 * Performs select normal render plane.
-	 * 
+	 *
 	 * @return the resulting int
 	 * @param world        the world
 	 * @param currentPlane the current plane
@@ -635,7 +555,7 @@ class CameraController {
 
 	/**
 	 * Performs select cinematic render plane.
-	 * 
+	 *
 	 * @return the resulting int
 	 * @param world        the world
 	 * @param currentPlane the current plane
@@ -650,7 +570,7 @@ class CameraController {
 
 	/**
 	 * Performs project.
-	 * 
+	 *
 	 * @return the resulting screen point
 	 * @param world        the world
 	 * @param plane        the plane
@@ -725,36 +645,17 @@ class CameraController {
 	}
 
 	public static final class Snapshot {
-		/**
-		 * Stores x.
-		 */
+
 		private final int x;
-		/**
-		 * Stores height.
-		 */
+
 		private final int height;
-		/**
-		 * Stores y.
-		 */
+
 		private final int y;
-		/**
-		 * Stores pitch.
-		 */
+
 		private final int pitch;
-		/**
-		 * Stores yaw.
-		 */
+
 		private final int yaw;
 
-		/**
-		 * Initializes this instance.
-		 * 
-		 * @param x      the x
-		 * @param height the height
-		 * @param y      the y
-		 * @param pitch  the pitch
-		 * @param yaw    the yaw
-		 */
 		private Snapshot(int x, int height, int y, int pitch, int yaw) {
 			this.x = x;
 			this.height = height;
@@ -765,25 +666,13 @@ class CameraController {
 	}
 
 	public static final class ScreenPoint {
-		/**
-		 * Stores invisible.
-		 */
+
 		public static final ScreenPoint INVISIBLE = new ScreenPoint(-1, -1);
-		/**
-		 * Stores x.
-		 */
+
 		public final int x;
-		/**
-		 * Stores y.
-		 */
+
 		public final int y;
 
-		/**
-		 * Initializes this instance.
-		 * 
-		 * @param x the x
-		 * @param y the y
-		 */
 		public ScreenPoint(int x, int y) {
 			this.x = x;
 			this.y = y;
@@ -791,7 +680,7 @@ class CameraController {
 
 		/**
 		 * Returns whether visible.
-		 * 
+		 *
 		 * @return the resulting boolean
 		 */
 		public boolean isVisible() {

@@ -438,99 +438,98 @@ public class ItemDefinition {
 		id = -1;
 	}
 
-	/** Stores the female model0. */
 	public int femaleModel0;
-	/** Stores the offset x2d. */
+
 	public int offsetX2d;
-	/** Stores the description values. */
+
 	public byte description[];
-	/** Stores the name. */
+
 	public String name;
-	/** Stores the female offset. */
+
 	public byte femaleOffset;
-	/** Stores the male model1. */
+
 	public int maleModel1;
-	/** Stores the team. */
+
 	public int team;
-	/** Stores the note id. */
+
 	public int noteId;
-	/** Stores the male head model0. */
+
 	public int maleHeadModel0;
-	/** Stores the count. */
+
 	public static int count;
-	/** Stores the cache values. */
+
 	public static ItemDefinition cache[];
-	/** Stores the model cache. */
+
 	public static LruCache modelCache = new LruCache(50);
-	/** Stores the ground actions values. */
+
 	public String groundActions[];
-	/** Stores the zan2d. */
+
 	public int zan2d;
-	/** Stores the offset y2d. */
+
 	public int offsetY2d;
-	/** Stores the recolor to values. */
+
 	public int recolorTo[];
-	/** Stores the offsets values. */
+
 	public static int offsets[];
-	/** Stores the note template id. */
+
 	public int noteTemplateId;
 	/** Tracks whether members world. */
 	public static boolean membersWorld = true;
-	/** Stores the price. */
+
 	public int price;
-	/** Stores the inventory actions values. */
+
 	public String inventoryActions[];
-	/** Stores the cache index. */
+
 	public static int cacheIndex;
-	/** Stores the male model0. */
+
 	public int maleModel0;
-	/** Stores the ambient. */
+
 	public int ambient;
-	/** Stores the female model1. */
+
 	public int femaleModel1;
-	/** Stores the yan2d. */
+
 	public int yan2d;
-	/** Stores the resize y. */
+
 	public int resizeY;
-	/** Stores the contrast. */
+
 	public int contrast;
-	/** Stores the xan2d. */
+
 	public int xan2d;
-	/** Stores the model id. */
+
 	public int modelId;
-	/** Stores the male head model1. */
+
 	public int maleHeadModel1;
-	/** Stores the female head model1. */
+
 	public int femaleHeadModel1;
-	/** Stores the id. */
+
 	public int id;
-	/** Stores the recolor from values. */
+
 	public int recolorFrom[];
-	/** Stores the stack variant ids values. */
+
 	public int stackVariantIds[];
-	/** Stores the resize x. */
+
 	public int resizeX;
-	/** Stores the female model2. */
+
 	public int femaleModel2;
-	/** Stores the resize z. */
+
 	public int resizeZ;
-	/** Stores the zoom2d. */
+
 	public int zoom2d;
-	/** Stores the male model2. */
+
 	public int maleModel2;
 	/** Tracks whether stackable. */
 	public boolean stackable;
-	/** Stores the opcode10 value. */
+
 	public int opcode10Value;
-	/** Stores the data buffer. */
+
 	public static Buffer dataBuffer;
-	/** Stores the female head model0. */
+
 	public int femaleHeadModel0;
-	/** Stores the stack variant amounts values. */
+
 	public int stackVariantAmounts[];
 	/** Tracks whether members only. */
 	public boolean membersOnly;
-	/** Stores the male offset. */
+
 	public byte maleOffset;
 
 }

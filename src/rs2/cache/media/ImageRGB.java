@@ -13,19 +13,18 @@ import rs2.net.Buffer;
 /** Full-colour software sprite backed by 24-bit RGB pixels. */
 public class ImageRGB extends Rasterizer {
 
-	/** Stores the pixels values. */
 	public int[] pixels;
-	/** Stores the width. */
+
 	public int width;
-	/** Stores the height. */
+
 	public int height;
-	/** Stores the offset x. */
+
 	public int offsetX;
-	/** Stores the offset y. */
+
 	public int offsetY;
-	/** Stores the max width. */
+
 	public int maxWidth;
-	/** Stores the max height. */
+
 	public int maxHeight;
 
 	/**

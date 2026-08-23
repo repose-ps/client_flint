@@ -12,10 +12,7 @@ import rs2.media.VertexNormal;
  * before rendering, matching the revision-377 client.
  * </p>
  */
-public /**
-		 * Initializes this instance.
-		 */
-class Renderable extends DualNode {
+public class Renderable extends DualNode {
 
 	/** Per-vertex normals used by scene lighting/normal merging. */
 	public VertexNormal[] vertexNormals;
@@ -25,7 +22,7 @@ class Renderable extends DualNode {
 
 	/**
 	 * Draws value.
-	 * 
+	 *
 	 * @param orientation the orientation
 	 * @param pitchSine   the pitch sine
 	 * @param pitchCosine the pitch cosine

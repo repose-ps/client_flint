@@ -11,10 +11,7 @@ import rs2.media.renderable.Renderable;
  * angles expressed in degrees.
  * </p>
  */
-public /**
-		 * Initializes this instance.
-		 */
-class Wall {
+public class Wall {
 
 	/** World-space elevation of the wall. */
 	public int z;

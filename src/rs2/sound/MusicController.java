@@ -5,14 +5,8 @@ import rs2.cache.ondemand.OnDemandRequest;
 import rs2.sign.Signlink;
 
 /**
- * Revision-377 MIDI selection, on-demand request, fade, volume and resume
+ * Owns revision-377 MIDI selection, on-demand request, fade, volume, and resume
  * state.
- *
- * <p>
- * Legacy ownership moved from client fields anInt1327 (selected track),
- * anInt1270 (requested track), aBoolean1271 (fade request), anInt1128 (resume
- * delay), and aBoolean1266 (music enabled).
- * </p>
  */
 public final class MusicController {
 	@FunctionalInterface

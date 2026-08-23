@@ -34,79 +34,44 @@ public class Rasterizer3D extends Rasterizer {
 	public static boolean gouraudBlockShading = true;
 	/** 0..255 source alpha used by flat and Gouraud scanlines. */
 	public static int alpha;
-	/**
-	 * Stores center x.
-	 */
+
 	public static int centerX;
-	/**
-	 * Stores center y.
-	 */
+
 	public static int centerY;
 
-	/**
-	 * Stores reciprocal15.
-	 */
 	public static int[] reciprocal15 = new int[512];
-	/**
-	 * Stores reciprocal16.
-	 */
+
 	public static int[] reciprocal16 = new int[2048];
-	/**
-	 * Stores sine.
-	 */
+
 	public static int[] SINE = new int[2048];
-	/**
-	 * Stores cosine.
-	 */
+
 	public static int[] COSINE = new int[2048];
-	/**
-	 * Stores scanline offsets.
-	 */
+
 	public static int[] scanlineOffsets;
 
 	/**
 	 * Number of loaded texture entries.
 	 */
 	private static int loadedTextureCount;
-	/**
-	 * Stores textures.
-	 */
+
 	public static IndexedImage[] textures = new IndexedImage[50];
-	/**
-	 * Stores texture has transparency.
-	 */
+
 	private static boolean[] textureHasTransparency = new boolean[50];
-	/**
-	 * Stores average texture colors.
-	 */
+
 	private static int[] averageTextureColors = new int[50];
-	/**
-	 * Stores texture pool available.
-	 */
+
 	private static int texturePoolAvailable;
-	/**
-	 * Stores texture pool.
-	 */
+
 	private static int[][] texturePool;
-	/**
-	 * Stores texture pixels.
-	 */
+
 	private static int[][] texturePixels = new int[50][];
-	/**
-	 * Stores texture last used.
-	 */
+
 	public static int[] textureLastUsed = new int[50];
-	/**
-	 * Stores texture cycle.
-	 */
+
 	public static int textureCycle;
-	/**
-	 * Stores hsl to rgb.
-	 */
+
 	public static int[] HSL_TO_RGB = new int[0x10000];
-	/**
-	 * Stores texture palettes.
-	 */
+
 	private static int[][] texturePalettes = new int[50][];
 
 	static {
@@ -120,9 +85,6 @@ public class Rasterizer3D extends Rasterizer {
 		}
 	}
 
-	/**
-	 * Initializes this instance.
-	 */
 	private Rasterizer3D() {
 	}
 
@@ -161,7 +123,7 @@ public class Rasterizer3D extends Rasterizer {
 
 	/**
 	 * Builds projection scanline offsets for an explicit viewport.
-	 * 
+	 *
 	 * @param width  the width
 	 * @param height the height
 	 */
@@ -186,7 +148,7 @@ public class Rasterizer3D extends Rasterizer {
 	/**
 	 * Allocates the reusable expanded-texel pool if it has not already been
 	 * allocated.
-	 * 
+	 *
 	 * @param capacity the capacity
 	 */
 	public static void initializeTexturePool(int capacity) {
@@ -201,7 +163,7 @@ public class Rasterizer3D extends Rasterizer {
 	/**
 	 * Loads numbered indexed textures 0..49; absent entries are silently skipped as
 	 * in 377.
-	 * 
+	 *
 	 * @param archive the archive
 	 */
 	public static void loadTextures(Archive archive) {
@@ -222,7 +184,7 @@ public class Rasterizer3D extends Rasterizer {
 
 	/**
 	 * Returns the cached gamma-adjusted average palette colour for a texture.
-	 * 
+	 *
 	 * @param textureId the texture id
 	 */
 	public static int getAverageTextureColor(int textureId) {
@@ -244,7 +206,7 @@ public class Rasterizer3D extends Rasterizer {
 
 	/**
 	 * Returns an expanded texture buffer to the shared pool.
-	 * 
+	 *
 	 * @param textureId the texture id
 	 */
 	public static void releaseTexture(int textureId) {
@@ -256,7 +218,7 @@ public class Rasterizer3D extends Rasterizer {
 
 	/**
 	 * Returns texture pixels.
-	 * 
+	 *
 	 * @return the resulting int array
 	 * @param textureId the texture id
 	 */
@@ -320,7 +282,7 @@ public class Rasterizer3D extends Rasterizer {
 	/**
 	 * Rebuilds the HSL and texture palettes using the client's randomized
 	 * brightness jitter.
-	 * 
+	 *
 	 * @param brightness the brightness
 	 */
 	public static void setBrightness(double brightness) {
@@ -365,7 +327,7 @@ public class Rasterizer3D extends Rasterizer {
 
 	/**
 	 * Performs hue to rgb.
-	 * 
+	 *
 	 * @return the resulting double
 	 * @param lowerComponent the lower component
 	 * @param upperComponent the upper component
@@ -387,7 +349,7 @@ public class Rasterizer3D extends Rasterizer {
 
 	/**
 	 * Performs adjust brightness.
-	 * 
+	 *
 	 * @return the resulting int
 	 * @param rgb        the rgb
 	 * @param brightness the brightness
@@ -401,7 +363,7 @@ public class Rasterizer3D extends Rasterizer {
 
 	/**
 	 * Draws gouraud triangle.
-	 * 
+	 *
 	 * @param yA     the y a
 	 * @param yB     the y b
 	 * @param yC     the y c
@@ -419,7 +381,7 @@ public class Rasterizer3D extends Rasterizer {
 
 	/**
 	 * Draws flat triangle.
-	 * 
+	 *
 	 * @param yA  the y a
 	 * @param yB  the y b
 	 * @param yC  the y c
@@ -434,7 +396,7 @@ public class Rasterizer3D extends Rasterizer {
 
 	/**
 	 * Draws textured triangle.
-	 * 
+	 *
 	 * @param yA        the y a
 	 * @param yB        the y b
 	 * @param yC        the y c
@@ -464,7 +426,7 @@ public class Rasterizer3D extends Rasterizer {
 
 	/**
 	 * Draws gouraud triangle internal.
-	 * 
+	 *
 	 * @param inputValue  the input value
 	 * @param inputValue2 the input value2
 	 * @param inputValue3 the input value3
@@ -889,7 +851,7 @@ public class Rasterizer3D extends Rasterizer {
 
 	/**
 	 * Draws gouraud scanline.
-	 * 
+	 *
 	 * @param pixels          destination pixel buffer
 	 * @param offset          scanline base offset
 	 * @param rgb             scratch RGB value retained by the original scanline loop
@@ -1017,7 +979,7 @@ public class Rasterizer3D extends Rasterizer {
 
 	/**
 	 * Draws flat triangle internal.
-	 * 
+	 *
 	 * @param inputValue  the input value
 	 * @param inputValue2 the input value2
 	 * @param inputValue3 the input value3
@@ -1343,7 +1305,7 @@ public class Rasterizer3D extends Rasterizer {
 
 	/**
 	 * Draws flat scanline.
-	 * 
+	 *
 	 * @param pixels          destination pixel buffer
 	 * @param offset          scanline base offset
 	 * @param rgb             flat RGB value
@@ -1397,7 +1359,7 @@ public class Rasterizer3D extends Rasterizer {
 
 	/**
 	 * Draws textured triangle internal.
-	 * 
+	 *
 	 * @param inputValue   the input value
 	 * @param inputValue2  the input value2
 	 * @param inputValue3  the input value3
@@ -1997,7 +1959,7 @@ public class Rasterizer3D extends Rasterizer {
 
 	/**
 	 * Draws textured scanline.
-	 * 
+	 *
 	 * @param values       the values
 	 * @param values2      the values2
 	 * @param inputValue   the input value

@@ -17,41 +17,24 @@ import rs2.cache.media.AnimationSequence;
  */
 public class DynamicObject extends Renderable {
 
-	/**
-	 * Stores south west height.
-	 */
 	public int southWestHeight;
-	/**
-	 * Stores south east height.
-	 */
+
 	public int southEastHeight;
-	/**
-	 * Stores north east height.
-	 */
+
 	public int northEastHeight;
-	/**
-	 * Stores north west height.
-	 */
+
 	public int northWestHeight;
 	/**
 	 * Identifier for object.
 	 */
 	public int objectId;
-	/**
-	 * Stores type.
-	 */
+
 	public int type;
-	/**
-	 * Stores orientation.
-	 */
+
 	public int orientation;
-	/**
-	 * Stores client instance.
-	 */
+
 	public static Client clientInstance;
-	/**
-	 * Stores sequence.
-	 */
+
 	public AnimationSequence sequence;
 	/**
 	 * Identifier for varbit.
@@ -61,32 +44,13 @@ public class DynamicObject extends Renderable {
 	 * Identifier for varp.
 	 */
 	public int varpId;
-	/**
-	 * Stores morph ids.
-	 */
+
 	public int[] morphIds;
-	/**
-	 * Stores animation cycle start.
-	 */
+
 	public int animationCycleStart;
-	/**
-	 * Stores frame.
-	 */
+
 	public int frame;
 
-	/**
-	 * Initializes this instance.
-	 * 
-	 * @param objectId           the object id
-	 * @param type               the type
-	 * @param orientation        the orientation
-	 * @param southWestHeight    the south west height
-	 * @param southEastHeight    the south east height
-	 * @param northEastHeight    the north east height
-	 * @param northWestHeight    the north west height
-	 * @param animationId        the animation id
-	 * @param randomizeAnimation the randomize animation
-	 */
 	public DynamicObject(int objectId, int type, int orientation, int southWestHeight, int southEastHeight,
 			int northEastHeight, int northWestHeight, int animationId, boolean randomizeAnimation) {
 		this.objectId = objectId;
@@ -115,7 +79,7 @@ public class DynamicObject extends Renderable {
 
 	/**
 	 * Performs resolve definition.
-	 * 
+	 *
 	 * @return the resulting game object definition
 	 */
 	private GameObjectDefinition resolveDefinition() {
@@ -136,7 +100,7 @@ public class DynamicObject extends Renderable {
 
 	/**
 	 * Returns model.
-	 * 
+	 *
 	 * @return the resulting model
 	 */
 	@Override

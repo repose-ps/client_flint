@@ -14,101 +14,52 @@ import rs2.scene.util.TiledUtils;
 
 public class Region {
 
-	/**
-	 * Stores tile flags.
-	 */
 	private final byte[][][] tileFlags;
-	/**
-	 * Stores hue offset.
-	 */
+
 	private static int hueOffset = (int) (Math.random() * 17.0D) - 8;
-	/**
-	 * Stores overlay rotations.
-	 */
+
 	private final byte[][][] overlayRotations;
-	/**
-	 * Stores wall decoration y offsets.
-	 */
+
 	private static final int[] WALL_DECORATION_Y_OFFSETS = { 0, -1, 0, 1 };
-	/**
-	 * Stores hue sums.
-	 */
+
 	private final int[] hueSums;
-	/**
-	 * Stores saturation sums.
-	 */
+
 	private final int[] saturationSums;
-	/**
-	 * Stores lightness sums.
-	 */
+
 	private final int[] lightnessSums;
-	/**
-	 * Stores hue multiplier sums.
-	 */
+
 	private final int[] hueMultiplierSums;
-	/**
-	 * Stores underlay counts.
-	 */
+
 	private final int[] underlayCounts;
-	/**
-	 * Stores tile heights.
-	 */
+
 	private final int[][][] tileHeights;
-	/**
-	 * Stores minimum plane.
-	 */
+
 	public static int minimumPlane = 99;
-	/**
-	 * Stores width.
-	 */
+
 	private final int width;
-	/**
-	 * Stores height.
-	 */
+
 	private final int height;
-	/**
-	 * Stores overlay shapes.
-	 */
+
 	private final byte[][][] overlayShapes;
-	/**
-	 * Stores overlay ids.
-	 */
+
 	private final byte[][][] overlayIds;
-	/**
-	 * Stores wall orientation flags.
-	 */
+
 	private static final int[] WALL_ORIENTATION_FLAGS = { 1, 2, 4, 8 };
-	/**
-	 * Stores underlay ids.
-	 */
+
 	private final byte[][][] underlayIds;
-	/**
-	 * Stores wall decoration x offsets.
-	 */
+
 	private static final int[] WALL_DECORATION_X_OFFSETS = { 1, 0, -1, 0 };
-	/**
-	 * Stores current plane.
-	 */
+
 	public static int currentPlane;
-	/**
-	 * Stores lightness offset.
-	 */
+
 	private static int lightnessOffset = (int) (Math.random() * 33.0D) - 16;
-	/**
-	 * Stores shadow intensity.
-	 */
+
 	private final byte[][][] shadowIntensity;
-	/**
-	 * Stores tile lightness.
-	 */
+
 	private final int[][] tileLightness;
-	/**
-	 * Stores diagonal wall orientation flags.
-	 */
+
 	private static final int[] DIAGONAL_WALL_ORIENTATION_FLAGS = { 16, 32, 64, 128 };
-	/**
-	 * Stores occlusion flags.
-	 */
+
 	private final int[][][] occlusionFlags;
 	/**
 	 * Whether low memory.
@@ -117,7 +68,7 @@ public class Region {
 
 	/**
 	 * Returns the effective render plane after bridge/roof tile flags are applied.
-	 * 
+	 *
 	 * @param plane the plane
 	 * @param x     the x
 	 * @param y     the y
@@ -134,7 +85,7 @@ public class Region {
 
 	/**
 	 * Performs create renderable.
-	 * 
+	 *
 	 * @return the resulting renderable
 	 * @param definition      the definition
 	 * @param objectId        the object id
@@ -162,7 +113,7 @@ public class Region {
 	 * This is intentionally separate from map-build placement: live updates do not
 	 * modify the region shadow/occlusion work arrays or minimum-plane state.
 	 * </p>
-	 * 
+	 *
 	 * @param objectId     the object id
 	 * @param heightPlane  the height plane
 	 * @param type         the type
@@ -335,7 +286,7 @@ public class Region {
 	/**
 	 * Clears one 8x8 instanced terrain chunk while preserving neighboring edge
 	 * heights.
-	 * 
+	 *
 	 * @param plane the plane
 	 * @param x     the x
 	 * @param y     the y
@@ -368,7 +319,7 @@ public class Region {
 	/**
 	 * Finalizes terrain collision, lighting, floor tiles, bridges and occluders
 	 * after map decoding.
-	 * 
+	 *
 	 * @param collisionMaps the collision maps
 	 * @param scene         the scene
 	 */
@@ -389,7 +340,7 @@ public class Region {
 
 	/**
 	 * Applies blocked tile collision.
-	 * 
+	 *
 	 * @param collisionMaps the collision maps
 	 */
 	private void applyBlockedTileCollision(CollisionMap[] collisionMaps) {
@@ -432,7 +383,7 @@ public class Region {
 
 	/**
 	 * Performs calculate tile lightness.
-	 * 
+	 *
 	 * @param plane the plane
 	 */
 	private void calculateTileLightness(int plane) {
@@ -464,7 +415,7 @@ public class Region {
 
 	/**
 	 * Builds floor tiles.
-	 * 
+	 *
 	 * @param plane the plane
 	 * @param scene the scene
 	 */
@@ -635,7 +586,7 @@ public class Region {
 
 	/**
 	 * Performs should build tile.
-	 * 
+	 *
 	 * @return the resulting boolean
 	 * @param plane the plane
 	 * @param x     the x
@@ -648,7 +599,7 @@ public class Region {
 
 	/**
 	 * Applies effective planes.
-	 * 
+	 *
 	 * @param plane the plane
 	 * @param scene the scene
 	 */
@@ -662,7 +613,7 @@ public class Region {
 
 	/**
 	 * Applies bridge tiles.
-	 * 
+	 *
 	 * @param scene the scene
 	 */
 	private void applyBridgeTiles(Scene scene) {
@@ -710,7 +661,7 @@ public class Region {
 
 	/**
 	 * Performs merge xwall occluder.
-	 * 
+	 *
 	 * @param sourcePlane the source plane
 	 * @param targetPlane the target plane
 	 * @param x           the x
@@ -760,7 +711,7 @@ public class Region {
 
 	/**
 	 * Performs merge ywall occluder.
-	 * 
+	 *
 	 * @param sourcePlane the source plane
 	 * @param targetPlane the target plane
 	 * @param x           the x
@@ -810,7 +761,7 @@ public class Region {
 
 	/**
 	 * Performs merge horizontal occluder.
-	 * 
+	 *
 	 * @param plane       the plane
 	 * @param targetPlane the target plane
 	 * @param x           the x
@@ -858,7 +809,7 @@ public class Region {
 
 	/**
 	 * Decodes one rotated 8x8 terrain chunk from a 64x64 map square.
-	 * 
+	 *
 	 * @param data             the data
 	 * @param sourcePlane      the source plane
 	 * @param sourceX          the source x
@@ -899,7 +850,7 @@ public class Region {
 
 	/**
 	 * Requests every source model referenced by a delta-encoded landscape stream.
-	 * 
+	 *
 	 * @param buffer  the buffer
 	 * @param fetcher the fetcher
 	 */
@@ -924,7 +875,7 @@ public class Region {
 
 	/**
 	 * Returns whether the definition has the model required by a placement type.
-	 * 
+	 *
 	 * @param objectId the object id
 	 * @param type     the type
 	 */
@@ -941,7 +892,7 @@ public class Region {
 
 	/**
 	 * Performs adjust underlay lightness.
-	 * 
+	 *
 	 * @return the resulting int
 	 * @param packedHsl  the packed hsl
 	 * @param brightness the brightness
@@ -961,7 +912,7 @@ public class Region {
 
 	/**
 	 * Decodes one rotated 8x8 landscape/object chunk from a 64x64 map square.
-	 * 
+	 *
 	 * @param data             the data
 	 * @param sourcePlane      the source plane
 	 * @param sourceX          the source x
@@ -1023,7 +974,7 @@ public class Region {
 
 	/**
 	 * Places one map-loaded object and updates region shadow/occlusion work state.
-	 * 
+	 *
 	 * @param objectId     the object id
 	 * @param type         the type
 	 * @param orientation  the orientation
@@ -1299,7 +1250,7 @@ public class Region {
 
 	/**
 	 * Decodes a complete 64x64 terrain map square into the local region.
-	 * 
+	 *
 	 * @param data          the data
 	 * @param baseX         the base x
 	 * @param baseY         the base y
@@ -1330,14 +1281,6 @@ public class Region {
 		}
 	}
 
-	/**
-	 * Initializes this instance.
-	 * 
-	 * @param tileHeights the tile heights
-	 * @param tileFlags   the tile flags
-	 * @param width       the width
-	 * @param height      the height
-	 */
 	public Region(int[][][] tileHeights, byte[][][] tileFlags, int width, int height) {
 		minimumPlane = 99;
 		this.width = width;
@@ -1360,7 +1303,7 @@ public class Region {
 
 	/**
 	 * Decodes a complete delta-encoded landscape/object map square.
-	 * 
+	 *
 	 * @param data          the data
 	 * @param baseX         the base x
 	 * @param baseY         the base y
@@ -1407,7 +1350,7 @@ public class Region {
 	/**
 	 * Fills an unavailable terrain rectangle with shadow 127 and copied edge
 	 * heights.
-	 * 
+	 *
 	 * @param x          the x
 	 * @param y          the y
 	 * @param areaWidth  the area width
@@ -1439,7 +1382,7 @@ public class Region {
 	/**
 	 * Scans a landscape stream and verifies the first relevant placement of each
 	 * object has its models loaded.
-	 * 
+	 *
 	 * @param data  the data
 	 * @param baseX the base x
 	 * @param baseY the base y
@@ -1490,7 +1433,7 @@ public class Region {
 
 	/**
 	 * Performs adjust overlay lightness.
-	 * 
+	 *
 	 * @return the resulting int
 	 * @param packedHsl  the packed hsl
 	 * @param brightness the brightness
@@ -1519,7 +1462,7 @@ public class Region {
 	/**
 	 * Decodes one terrain-tile record. Out-of-bounds targets still consume the
 	 * complete record.
-	 * 
+	 *
 	 * @param buffer   the buffer
 	 * @param plane    the plane
 	 * @param x        the x

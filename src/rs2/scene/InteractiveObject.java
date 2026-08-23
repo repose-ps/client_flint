@@ -11,10 +11,7 @@ import rs2.media.renderable.Renderable;
  * once during a scene traversal.
  * </p>
  */
-public /**
-		 * Initializes this instance.
-		 */
-class InteractiveObject {
+public class InteractiveObject {
 
 	/** Scene plane containing the object. */
 	public int plane;

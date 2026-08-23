@@ -90,7 +90,7 @@ public class Client extends GameShell {
 	/**
 	 * Searches loaded item definitions for names containing all supplied query
 	 * terms.
-	 * 
+	 *
 	 * @param query the item-name search query
 	 */
 	public void searchItems(String query) {
@@ -164,7 +164,7 @@ public class Client extends GameShell {
 	/**
 	 * Starts the standalone revision-377 client with command-line world, port, and
 	 * memory settings.
-	 * 
+	 *
 	 * @param args the command-line arguments
 	 */
 	public static void main(String args[]) {
@@ -182,8 +182,7 @@ public class Client extends GameShell {
 			else if (args[2].equals("highmem")) {
 				setHighMemory();
 			} else {
-				System.out.println(
-						"Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host]");
+				System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host]");
 				return;
 			}
 			if (args[3].equals("free"))
@@ -191,8 +190,7 @@ public class Client extends GameShell {
 			else if (args[3].equals("members")) {
 				membersWorld = true;
 			} else {
-				System.out.println(
-						"Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host]");
+				System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host]");
 				return;
 			}
 			Signlink.storeId = Integer.parseInt(args[4]);
@@ -206,7 +204,6 @@ public class Client extends GameShell {
 		}
 	}
 
-	/* Legacy Client.method17(byte byte0): byte0 -> removed fixed 4 sentinel. */
 	/**
 	 * Runs the title-screen flame animation timing loop.
 	 */
@@ -245,10 +242,9 @@ public class Client extends GameShell {
 		}
 	}
 
-	/* Legacy Client.method19(String s): fatal startup/on-demand load halt. */
 	/**
 	 * Marks startup as failed and displays the supplied loading-error reason.
-	 * 
+	 *
 	 * @param message the message text
 	 */
 	public void haltOnLoadError(String message) {
@@ -263,7 +259,7 @@ public class Client extends GameShell {
 
 	/**
 	 * Formats an item stack amount using the original K/M abbreviations.
-	 * 
+	 *
 	 * @param amount the numeric/item-stack amount
 	 * @return the resulting text
 	 */
@@ -473,7 +469,6 @@ public class Client extends GameShell {
 		}
 	}
 
-	/* Legacy Client.method22(int i): i -> removed nonzero division sentinel. */
 	/**
 	 * Updates the normal follow-camera focal point, yaw, pitch, and distance.
 	 */
@@ -482,13 +477,9 @@ public class Client extends GameShell {
 				regionManager.regionY, regionManager.baseX, regionManager.baseY);
 	}
 
-	/*
-	 * Legacy Client.method23(Widget class13, int i): class13 -> widget i -> removed
-	 * division sentinel; the only caller supplied 8
-	 */
 	/**
 	 * Builds friend/ignore context-menu entries for a social-list widget.
-	 * 
+	 *
 	 * @param widget the widget being processed
 	 * @return true when the requested condition/action succeeds; otherwise false
 	 */
@@ -844,7 +835,6 @@ public class Client extends GameShell {
 		}
 	}
 
-	/* Legacy Client.method29(boolean flag): flag -> removed false sentinel. */
 	/**
 	 * Advances the scripted/cinematic camera toward its configured position and
 	 * look target.
@@ -853,10 +843,6 @@ public class Client extends GameShell {
 		cameraController.updateCinematic(worldState, currentPlane);
 	}
 
-	/*
-	 * Legacy Client.method30(byte byte0): byte0 -> removed required value 2
-	 * sentinel.
-	 */
 	/**
 	 * Consumes queued keyboard input for prompts, chat, commands, item search, and
 	 * dialogue input.
@@ -1090,7 +1076,7 @@ public class Client extends GameShell {
 
 	/**
 	 * Opens a JAGGRAB request stream for the supplied resource path.
-	 * 
+	 *
 	 * @param request the request
 	 * @return the resulting data input stream
 	 */
@@ -1112,7 +1098,7 @@ public class Client extends GameShell {
 
 	/**
 	 * Opens a client socket through the game shell.
-	 * 
+	 *
 	 * @param port the server port
 	 * @return the resulting socket
 	 */
@@ -1122,7 +1108,7 @@ public class Client extends GameShell {
 
 	/**
 	 * Reads and dispatches at most one complete incoming packet frame.
-	 * 
+	 *
 	 * @return true when the requested condition/action succeeds; otherwise false
 	 */
 	public boolean processIncomingPacket() {
@@ -1150,7 +1136,7 @@ public class Client extends GameShell {
 	/**
 	 * Handles the currently framed incoming packet while preserving revision-377
 	 * opcode-specific reads and side effects.
-	 * 
+	 *
 	 * @return true when the requested condition/action succeeds; otherwise false
 	 */
 	private boolean dispatchIncomingPacket() {
@@ -1971,7 +1957,6 @@ public class Client extends GameShell {
 		return true;
 	}
 
-	/* Legacy Client.method34(byte byte0): byte0 -> removed fixed -79 sentinel. */
 	/**
 	 * Draws the contextual action tooltip shown when the context menu is closed.
 	 */
@@ -1990,20 +1975,10 @@ public class Client extends GameShell {
 		boldFont.drawRandomizedTextWithTags(tooltip, 4, 15, 0xffffff, gameCycle / 1000, true);
 	}
 
-	/*
-	 * Legacy Client.method35(boolean flag, boolean flag1, int i, int j, int k, int
-	 * l, int i1, int j1, int k1, int l1, int i2, int j2)
-	 *
-	 * Parameter mapping: flag -> allowAlternative flag1 -> removed dummy branch
-	 * (all supplied callers pass false) i -> destinationY j -> removed startY
-	 * (always local player's pathY[0]) k -> targetWidth l -> targetHeight i1 ->
-	 * movementType j1 -> interactionType k1 -> destinationX l1 -> accessMask i2 ->
-	 * orientation j2 -> removed startX (always local player's pathX[0])
-	 */
 	/**
 	 * Finds a route to a tile or interaction target and sends the appropriate
 	 * movement request.
-	 * 
+	 *
 	 * @param allowAlternative whether the pathfinder may choose the original
 	 *                         alternative-route fallback
 	 * @param targetX          the target tile X coordinate
@@ -2038,16 +2013,14 @@ public class Client extends GameShell {
 	/**
 	 * Returns the explicit standalone game host used in place of the removed Applet
 	 * code-base lookup.
-	 * 
+	 *
 	 * @return the resulting text
 	 */
 	public String getConfiguredHost() {
 		return serverHost;
 	}
 
-	/**
-	 * Configures the hostname used by all standalone game/update/archive sockets.
-	 */
+	/** Configures the hostname used by all standalone game/update/archive sockets. */
 	public static void setServerHost(String host) {
 		if (host == null || host.trim().isEmpty()) {
 			throw new IllegalArgumentException("server host must not be blank");
@@ -2055,14 +2028,9 @@ public class Client extends GameShell {
 		serverHost = host.trim();
 	}
 
-	/*
-	 * Legacy Client.method38(int i, int j, int k, Player
-	 * class50_sub1_sub4_sub3_sub2): i -> playerIndex, j -> tileY, k -> tileX,
-	 * class50... -> player
-	 */
 	/**
 	 * Adds context-menu actions for a player at the supplied scene tile.
-	 * 
+	 *
 	 * @param playerIndex the player index
 	 * @param tileY       the local scene-tile Y coordinate
 	 * @param tileX       the local scene-tile X coordinate
@@ -2136,21 +2104,9 @@ public class Client extends GameShell {
 
 	}
 
-	/*
-	 * Legacy Client.method39(boolean flag) was removed. Its only caller passed
-	 * true, while all contained behavior was guarded by !flag, so it was
-	 * behaviorally inert.
-	 */
-
-	/*
-	 * Legacy Client.method42(int i, int j, Widget class13, byte byte0, int k, int
-	 * l, int i1, int j1, int k1): i -> scrollHeight, j -> y, class13 -> widget,
-	 * byte0 -> removed 102 sentinel, k -> mouseY, l -> redrawArea, i1 -> mouseX, j1
-	 * -> height, k1 -> x.
-	 */
 	/**
 	 * Processes scrollbar arrow, track, and drag input for a widget.
-	 * 
+	 *
 	 * @param scrollHeight the full scrollable content height
 	 * @param y            the Y coordinate
 	 * @param widget       the widget being processed
@@ -2199,7 +2155,6 @@ public class Client extends GameShell {
 		}
 	}
 
-	/* Legacy Client.method43(byte byte0): byte0 -> removed fixed 7 sentinel. */
 	/**
 	 * Builds world-view menu entries from the scene picking results.
 	 */
@@ -2391,23 +2346,18 @@ public class Client extends GameShell {
 
 	}
 
-	/* Legacy Client.method44(int i): i -> interfaceId. */
 	/**
 	 * Releases model resources held by the widgets in an interface group.
-	 * 
+	 *
 	 * @param interfaceId the interface group identifier
 	 */
 	public void unloadInterface(int interfaceId) {
 		Widget.unloadGroup(interfaceId);
 	}
 
-	/*
-	 * Legacy Client.method47(String s, String s1, int i): s -> sender s1 -> message
-	 * i -> type
-	 */
 	/**
 	 * Adds a message to the fixed chat history and requests the appropriate redraw.
-	 * 
+	 *
 	 * @param sender  the message sender name
 	 * @param message the message text
 	 * @param type    the chat message type
@@ -2434,10 +2384,6 @@ public class Client extends GameShell {
 		SpotAnimation.modelCache.clear();
 	}
 
-	/*
-	 * Legacy Client.method52(boolean flag): flag -> removed false sentinel.
-	 * Initializes title sprites, flame palettes/noise and the flame thread.
-	 */
 	/**
 	 * Loads title-screen sprites, initializes flame palettes/noise, and starts the
 	 * flame thread.
@@ -2514,14 +2460,10 @@ public class Client extends GameShell {
 		}
 	}
 
-	/*
-	 * Legacy Client.method53(long l, int i): l -> encodedName i -> removed zero
-	 * sentinel; the original only added it to incomingLength.
-	 */
 	/**
 	 * Removes a friend through SocialManager and refreshes dependent interface
 	 * state.
-	 * 
+	 *
 	 * @param encodedName the Base-37 encoded player name
 	 */
 	public void removeFriend(long encodedName) {
@@ -2529,7 +2471,6 @@ public class Client extends GameShell {
 			sidebarRedraw = true;
 	}
 
-	/* Legacy Client.method54(int i): i -> removed fixed 0 sentinel. */
 	/**
 	 * Processes mouse interaction with either the open context menu or the default
 	 * menu action.
@@ -2635,16 +2576,9 @@ public class Client extends GameShell {
 		}
 	}
 
-	// Legacy method55 moved into MinimapRenderer.drawHint.
-
-	/*
-	 * Legacy Client.method56(boolean flag, int i, int j, int k, int l, int i1):
-	 * flag -> removed always-true sentinel, i -> scrollY, j -> x, k -> height, l ->
-	 * scrollHeight, i1 -> y.
-	 */
 	/**
 	 * Draws the original fixed-width scrollbar for a scrollable widget.
-	 * 
+	 *
 	 * @param scrollY      the current scroll offset
 	 * @param x            the X coordinate
 	 * @param height       the visible height
@@ -2670,13 +2604,9 @@ public class Client extends GameShell {
 		Rasterizer.drawHorizontalLine(x + 1, y + 14 + thumbY + thumbHeight, 15, scrollbarShadowColor);
 	}
 
-	/*
-	 * Legacy Client.method57(int i, boolean flag): i -> removed 751 sentinel; flag
-	 * -> priorityRender.
-	 */
 	/**
 	 * Adds NPCs matching the requested render-priority pass to the scene.
-	 * 
+	 *
 	 * @param priorityRender whether to render the priority NPC/player pass
 	 */
 	private void addNpcsToScene(boolean priorityRender) {
@@ -2709,14 +2639,10 @@ public class Client extends GameShell {
 		}
 	}
 
-	/*
-	 * Legacy Client.method60(int i, Widget class13): i -> removed positive
-	 * sentinel; class13 -> widget.
-	 */
 	/**
 	 * Handles content-type-specific widget buttons such as appearance, logout, and
 	 * report-abuse controls.
-	 * 
+	 *
 	 * @param widget the widget being processed
 	 * @return true when the requested condition/action succeeds; otherwise false
 	 */
@@ -2820,14 +2746,9 @@ public class Client extends GameShell {
 		return false;
 	}
 
-	/*
-	 * Legacy Client.method61(int i, int j, String s, int k, int l, String s1): i ->
-	 * removed fixed 14076 sentinel, j -> expectedCrc, s -> archiveName, k ->
-	 * loadingPercent, l -> cacheFileId, s1 -> displayName.
-	 */
 	/**
 	 * Loads one startup archive through ResourceLoader while reporting progress.
-	 * 
+	 *
 	 * @param expectedCrc    the expected archive CRC
 	 * @param archiveName    the archive request name
 	 * @param loadingPercent the loading progress percentage
@@ -2841,7 +2762,6 @@ public class Client extends GameShell {
 				this::openJaggrabStream, this::drawLoadingText);
 	}
 
-	/* Legacy Client.method64(int i): i -> removed negative sentinel. */
 	/**
 	 * Allocates and initializes the fixed title-screen graphics buffers.
 	 */
@@ -3245,7 +3165,7 @@ public class Client extends GameShell {
 
 	/**
 	 * Scrolls the legacy animated texture byte maps for the current texture cycle.
-	 * 
+	 *
 	 * @param textureCycle the accumulated texture animation cycle count
 	 */
 	public void animateTextures(int textureCycle) {
@@ -3270,15 +3190,10 @@ public class Client extends GameShell {
 		}
 	}
 
-	/*
-	 * Legacy Client.method66(int i, Widget class13, int j, int k, int l, int i1,
-	 * int j1, int k1): i -> y, class13 -> widget, j -> screenArea, k -> scrollY, l
-	 * -> x, i1 -> mouseX, j1 -> removed fixed 23658 sentinel, k1 -> mouseY
-	 */
 	/**
 	 * Recursively builds context-menu entries for widgets and inventory slots under
 	 * the mouse.
-	 * 
+	 *
 	 * @param y          the Y coordinate
 	 * @param widget     the widget being processed
 	 * @param screenArea the fixed client screen area identifier
@@ -3758,7 +3673,6 @@ public class Client extends GameShell {
 		animationCycleDelta = 0;
 	}
 
-	/* Legacy Client.method75(int i): i -> removed zero sentinel. */
 	/**
 	 * Draws the optional private-message overlay above the chatbox.
 	 */
@@ -3852,7 +3766,7 @@ public class Client extends GameShell {
 	/**
 	 * Performs the revision-377 login handshake and applies the full
 	 * successful-login subsystem reset.
-	 * 
+	 *
 	 * @param loginUsername the login username
 	 * @param loginPassword the login password
 	 * @param reconnecting  the reconnecting
@@ -4136,15 +4050,10 @@ public class Client extends GameShell {
 		loginScreen.message2 = "Error connecting to server.";
 	}
 
-	/*
-	 * Legacy Client.method80(int i, int j, int k, int l) i -> tileY j -> removed
-	 * dummy value (all supplied callers pass 0; only added to incoming packet
-	 * length) k -> tileX l -> uid
-	 */
 	/**
 	 * Resolves a scene object footprint and routes the local player into
 	 * interaction range.
-	 * 
+	 *
 	 * @param tileY the local scene-tile Y coordinate
 	 * @param tileX the local scene-tile X coordinate
 	 * @param uid   the uid
@@ -4182,7 +4091,6 @@ public class Client extends GameShell {
 		return true;
 	}
 
-	/* Legacy Client.method81(byte byte0): byte0 -> removed fixed 1 sentinel. */
 	/**
 	 * Advances the title flame simulation by two original update steps.
 	 */
@@ -4250,14 +4158,9 @@ public class Client extends GameShell {
 		}
 	}
 
-	/*
-	 * Legacy Client.method82(NpcDefinition class37, int i, int j, int k, byte
-	 * byte0): class37 -> definition, i -> tileY, j -> tileX, k -> npcIndex, byte0
-	 * -> removed fixed -76 sentinel
-	 */
 	/**
 	 * Adds context-menu actions for an NPC at the supplied scene tile.
-	 * 
+	 *
 	 * @param definition the definition
 	 * @param tileY      the local scene-tile Y coordinate
 	 * @param tileX      the local scene-tile X coordinate
@@ -4355,15 +4258,10 @@ public class Client extends GameShell {
 		}
 	}
 
-	/*
-	 * Legacy Client.method83(IndexedImage class50_sub1_sub1_sub3, int i):
-	 * class50_sub1_sub1_sub3 -> rune, i -> removed zero packet-length mutation
-	 * sentinel.
-	 */
 	/**
 	 * Randomizes and smooths the title flame noise buffer, optionally masking it
 	 * with a rune sprite.
-	 * 
+	 *
 	 * @param rune the rune
 	 */
 	public void initializeTitleFlameNoise(IndexedImage rune) {
@@ -4591,10 +4489,6 @@ public class Client extends GameShell {
 
 	}
 
-	/*
-	 * Legacy Client.method86(boolean flag): flag -> removed false sentinel. The
-	 * startup now invokes this only when the local bootstrap cache is incomplete.
-	 */
 	/**
 	 * Retrieves and validates the nine-entry startup archive CRC table.
 	 */
@@ -4602,7 +4496,6 @@ public class Client extends GameShell {
 		resourceLoader.fetchArchiveCrcs(this::openJaggrabStream, this::drawLoadingText);
 	}
 
-	/* Legacy Client.method87(int i): i -> removed nonzero division sentinel. */
 	/**
 	 * Draws the minimap, compass, map functions, ground items, actors, hints, and
 	 * destination marker.
@@ -4633,7 +4526,7 @@ public class Client extends GameShell {
 
 	/**
 	 * Formats a CS1/widget-script value using the original overflow placeholder.
-	 * 
+	 *
 	 * @param value the value
 	 * @return the resulting text
 	 */
@@ -4644,14 +4537,10 @@ public class Client extends GameShell {
 			return "*";
 	}
 
-	/*
-	 * Legacy Client.method90(int i, long l): i -> removed -916 sentinel l ->
-	 * encodedName
-	 */
 	/**
 	 * Adds an ignored name through SocialManager and refreshes dependent interface
 	 * state.
-	 * 
+	 *
 	 * @param encodedName the Base-37 encoded player name
 	 */
 	public void addIgnore(long encodedName) {
@@ -4673,7 +4562,6 @@ public class Client extends GameShell {
 		processOnDemandRequests();
 	}
 
-	/* Legacy Client.method91(): rebuild the complete context-menu option list. */
 	/**
 	 * Rebuilds and priority-partitions the context menu for the current mouse
 	 * location.
@@ -4749,7 +4637,7 @@ public class Client extends GameShell {
 
 	/**
 	 * Returns the legacy color tag for the difference between two combat levels.
-	 * 
+	 *
 	 * @param playerLevel the player level
 	 * @param localLevel  the local level
 	 * @return the resulting text
@@ -4776,14 +4664,9 @@ public class Client extends GameShell {
 			return "@yel@";
 	}
 
-	/*
-	 * Legacy Client.method94(int i, int j, int k, int l, int i1, int j1, byte
-	 * byte0) i -> targetHeight, j -> targetX, k -> pitch, l -> distance, i1 -> yaw,
-	 * j1 -> targetY, byte0 -> removed -103 sentinel.
-	 */
 	/**
 	 * Positions the 3D camera from a focal point, distance, pitch, and yaw.
-	 * 
+	 *
 	 * @param targetHeight the target height in tiles
 	 * @param targetX      the target tile X coordinate
 	 * @param pitch        the pitch
@@ -4795,14 +4678,10 @@ public class Client extends GameShell {
 		cameraController.positionFromTarget(targetHeight, targetX, pitch, distance, yaw, targetY);
 	}
 
-	/*
-	 * Legacy Client.method97(int i, long l): i -> removed 325 division sentinel l
-	 * -> encodedName
-	 */
 	/**
 	 * Removes an ignored name through SocialManager and refreshes dependent
 	 * interface state.
-	 * 
+	 *
 	 * @param encodedName the Base-37 encoded player name
 	 */
 	public void removeIgnore(long encodedName) {
@@ -4810,7 +4689,6 @@ public class Client extends GameShell {
 			sidebarRedraw = true;
 	}
 
-	/* Legacy Client.method98(int i): i -> removed fixed 47 division sentinel. */
 	/**
 	 * Composites the current flame intensities onto the left and right title
 	 * backgrounds.
@@ -4919,13 +4797,9 @@ public class Client extends GameShell {
 		GameObjectDefinition.lowMemory = true;
 	}
 
-	/*
-	 * Legacy Client.method102(long l, int i): l -> encodedName i -> removed -45229
-	 * sentinel
-	 */
 	/**
 	 * Adds a friend through SocialManager and refreshes dependent interface state.
-	 * 
+	 *
 	 * @param encodedName the Base-37 encoded player name
 	 */
 	public void addFriend(long encodedName) {
@@ -4935,11 +4809,10 @@ public class Client extends GameShell {
 			sidebarRedraw = true;
 	}
 
-	/* Legacy Client.method103(Widget class13): class13 -> widget. */
 	/**
 	 * Populates dynamic widget content such as social lists, appearance preview,
 	 * and account status.
-	 * 
+	 *
 	 * @param widget the widget being processed
 	 */
 	public void updateWidgetContent(Widget widget) {
@@ -5204,7 +5077,7 @@ public class Client extends GameShell {
 	/**
 	 * Formats an account-status day count using the original client calendar
 	 * convention.
-	 * 
+	 *
 	 * @param dayValue the day value
 	 * @return the resulting text
 	 */
@@ -5227,7 +5100,7 @@ public class Client extends GameShell {
 	/**
 	 * Applies a changed varp to client settings such as brightness, music, sound,
 	 * and chat options.
-	 * 
+	 *
 	 * @param varpId the varp identifier
 	 */
 	public void applyVarp(int varpId) {
@@ -5266,7 +5139,7 @@ public class Client extends GameShell {
 	/**
 	 * Blends two title-flame palette colors using the original 8-bit fixed-point
 	 * weight.
-	 * 
+	 *
 	 * @param fromColor the from color
 	 * @param toColor   the to color
 	 * @param blend     the blend
@@ -5278,7 +5151,6 @@ public class Client extends GameShell {
 				+ ((fromColor & 0xff00) * inverseBlend + (toColor & 0xff00) * blend & 0xff0000) >> 8;
 	}
 
-	/* Legacy Client.method107(int i): i -> removed negative sentinel. */
 	/**
 	 * Updates the hard-coded tutorial-island/region suppression flag from the local
 	 * player position.
@@ -5296,7 +5168,6 @@ public class Client extends GameShell {
 			tutorialIslandFlag = 0;
 	}
 
-	/* Legacy Client.method108(): compute and open the context-menu rectangle. */
 	/**
 	 * Computes context-menu dimensions and opens it in the appropriate fixed screen
 	 * area.
@@ -5443,7 +5314,6 @@ public class Client extends GameShell {
 		}
 	}
 
-	/* Legacy Client.method111(int i): i -> removed nonzero division sentinel. */
 	/**
 	 * Builds context-menu actions for names visible in the split-private-chat
 	 * overlay.
@@ -5495,14 +5365,10 @@ public class Client extends GameShell {
 
 	}
 
-	/*
-	 * Legacy Client.method113(int i, int j, int k): i -> removed nonzero division
-	 * sentinel j -> removed unused mouseX within chatbox k -> mouseY within chatbox
-	 */
 	/**
 	 * Builds context-menu actions for player names under the chatbox mouse
 	 * position.
-	 * 
+	 *
 	 * @param mouseY the mouse Y coordinate
 	 */
 	public void buildChatboxMessageMenu(int mouseY) {
@@ -5579,14 +5445,10 @@ public class Client extends GameShell {
 
 	}
 
-	/*
-	 * Legacy Client.method115(int i, int j): i -> plane; j -> removed zero
-	 * sentinel.
-	 */
 	/**
 	 * Rebuilds the cached minimap scene image and map-function markers for the
 	 * current plane.
-	 * 
+	 *
 	 * @param plane the scene plane
 	 */
 	private void rebuildMinimap(int plane) {
@@ -5594,24 +5456,19 @@ public class Client extends GameShell {
 				viewportScanlineOffsets, networkSession.outgoing);
 	}
 
-	/*
-	 * Legacy Client.method117(byte byte0): byte0 -> removed fixed aByte956
-	 * sentinel.
-	 */
 	/**
 	 * Selects the normal render plane using camera pitch, roof flags, and tile-line
 	 * traversal.
-	 * 
+	 *
 	 * @return the resulting numeric value
 	 */
 	private int selectNormalRenderPlane() {
 		return cameraController.selectNormalRenderPlane(worldState, currentPlane, localPlayer, networkSession.outgoing);
 	}
 
-	/* Legacy Client.method118(int i): i -> removed negative sentinel. */
 	/**
 	 * Selects the render plane while a cinematic camera is active.
-	 * 
+	 *
 	 * @return the resulting numeric value
 	 */
 	private int selectCinematicRenderPlane() {
@@ -5620,7 +5477,7 @@ public class Client extends GameShell {
 
 	/**
 	 * Starts a client-owned worker thread with the requested priority.
-	 * 
+	 *
 	 * @param runnable the runnable
 	 * @param priority the requested Java thread priority
 	 */
@@ -5630,13 +5487,9 @@ public class Client extends GameShell {
 		Signlink.startThread(runnable, priority);
 	}
 
-	/*
-	 * Legacy Client.method119(int i, boolean flag): i -> removed zero sentinel;
-	 * flag -> localOnly.
-	 */
 	/**
 	 * Adds players matching the requested render pass to the scene.
-	 * 
+	 *
 	 * @param localOnly the local only
 	 */
 	private void addPlayersToScene(boolean localOnly) {
@@ -5644,18 +5497,10 @@ public class Client extends GameShell {
 				localOnly);
 	}
 
-	/*
-	 * Legacy Client.method120(int i, int j): i -> menuIndex j -> removed fixed
-	 * value 8 sentinel
-	 *
-	 * Legacy menu array mapping: anIntArray982 -> actionCmd1 anIntArray979 ->
-	 * actionCmd2 anIntArray980 -> actionCmd3 anIntArray981 -> actionId
-	 * aStringArray1184 -> actionName
-	 */
 	/**
 	 * Normalizes and dispatches one menu action while preserving its numeric
 	 * revision-377 action ID.
-	 * 
+	 *
 	 * @param menuIndex the menu index
 	 */
 	public void dispatchMenuAction(int menuIndex) {
@@ -5689,7 +5534,7 @@ public class Client extends GameShell {
 	// Player target actions: 200, 408, 493, 596, 677, 876, 918.
 	/**
 	 * Handles normalized menu actions targeting players.
-	 * 
+	 *
 	 * @param actionId  the normalized menu action identifier
 	 * @param cmd1      the cmd1
 	 * @param cmd2      the cmd2
@@ -5797,7 +5642,7 @@ public class Client extends GameShell {
 	// NPC target actions: 67, 118, 318, 347, 432, 553, 921, 1668.
 	/**
 	 * Handles normalized menu actions targeting NPCs.
-	 * 
+	 *
 	 * @param actionId  the normalized menu action identifier
 	 * @param cmd1      the cmd1
 	 * @param cmd2      the cmd2
@@ -5927,7 +5772,7 @@ public class Client extends GameShell {
 	// Game-object actions: 35, 376, 389, 467, 888, 892, 1280, 1412.
 	/**
 	 * Handles normalized menu actions targeting scene objects.
-	 * 
+	 *
 	 * @param actionId  the normalized menu action identifier
 	 * @param cmd1      the cmd1
 	 * @param cmd2      the cmd2
@@ -6001,7 +5846,7 @@ public class Client extends GameShell {
 	// Ground-item actions: 26, 68, 100, 199, 270, 684, 930, 1564.
 	/**
 	 * Handles normalized menu actions targeting ground items.
-	 * 
+	 *
 	 * @param actionId  the normalized menu action identifier
 	 * @param cmd1      the cmd1
 	 * @param cmd2      the cmd2
@@ -6130,7 +5975,7 @@ public class Client extends GameShell {
 
 	/**
 	 * Records the inventory slot/widget affected by an inventory menu action.
-	 * 
+	 *
 	 * @param widgetId the widget id
 	 * @param slot     the slot
 	 */
@@ -6148,7 +5993,7 @@ public class Client extends GameShell {
 	// Inventory/item actions retain their original packet/action IDs.
 	/**
 	 * Handles normalized menu actions targeting inventory items and slots.
-	 * 
+	 *
 	 * @param actionId  the normalized menu action identifier
 	 * @param cmd1      the cmd1
 	 * @param cmd2      the cmd2
@@ -6285,7 +6130,7 @@ public class Client extends GameShell {
 	// Widget/button actions, including spell selection and CS1 varp buttons.
 	/**
 	 * Handles normalized menu actions targeting widgets and widget-config state.
-	 * 
+	 *
 	 * @param actionId  the normalized menu action identifier
 	 * @param cmd1      the cmd1
 	 * @param cmd2      the cmd2
@@ -6366,7 +6211,7 @@ public class Client extends GameShell {
 	/**
 	 * Handles normalized menu actions for friends, ignores, private messages, and
 	 * report abuse.
-	 * 
+	 *
 	 * @param actionId  the normalized menu action identifier
 	 * @param cmd1      the cmd1
 	 * @param cmd2      the cmd2
@@ -6454,7 +6299,7 @@ public class Client extends GameShell {
 	/**
 	 * Handles the remaining menu action that does not belong to a target-specific
 	 * group.
-	 * 
+	 *
 	 * @param actionId  the normalized menu action identifier
 	 * @param cmd1      the cmd1
 	 * @param cmd2      the cmd2
@@ -6701,7 +6546,6 @@ public class Client extends GameShell {
 
 	}
 
-	/* Legacy Client.method122(int i): i -> removed negative sentinel. */
 	/**
 	 * Allocates the fixed sidebar, minimap, viewport, chatbox, and frame-decoration
 	 * buffers.
@@ -6738,7 +6582,6 @@ public class Client extends GameShell {
 		}
 	}
 
-	/* Legacy Client.method123(int i): i -> removed fixed 281 division sentinel. */
 	/**
 	 * Draws the startup failure messages for loading, host, or duplicate-client
 	 * errors.
@@ -6813,14 +6656,10 @@ public class Client extends GameShell {
 		musicController.resetOnLogout();
 	}
 
-	/*
-	 * Legacy Client.method125(int i, String s, String s1): i -> removed negative
-	 * sentinel, s -> secondaryMessage, s1 -> primaryMessage.
-	 */
 	/**
 	 * Draws an in-game loading message over the current viewport or full-screen
 	 * buffer.
-	 * 
+	 *
 	 * @param secondaryMessage the secondary message
 	 * @param primaryMessage   the primary message
 	 */
@@ -6863,14 +6702,10 @@ public class Client extends GameShell {
 		}
 	}
 
-	/*
-	 * Legacy Client.method126(int i, byte byte0): byte0 -> removed fixed 97
-	 * sentinel.
-	 */
 	/**
 	 * Tests whether a menu entry represents an Add friend action after priority
 	 * normalization.
-	 * 
+	 *
 	 * @param menuIndex the context-menu entry index
 	 * @return true when the requested condition/action succeeds; otherwise false
 	 */
@@ -6906,9 +6741,6 @@ public class Client extends GameShell {
 		mouseButtonHoldTicks = 0;
 	}
 
-	/*
-	 * Legacy Client.method128(boolean flag): flag -> removed always-false sentinel.
-	 */
 	/**
 	 * Draws the open context menu and highlights the entry under the mouse.
 	 */
@@ -6946,15 +6778,9 @@ public class Client extends GameShell {
 
 	}
 
-	// Legacy method130 moved into MinimapRenderer.drawOnMinimap.
-
-	/*
-	 * Legacy Client.method131(byte byte0, boolean flag): byte0 -> removed fixed -50
-	 * sentinel, flag -> hideButtons.
-	 */
 	/**
 	 * Draws the current welcome, credentials, or create-account title-screen state.
-	 * 
+	 *
 	 * @param hideButtons whether to omit the login buttons
 	 */
 	public void drawLoginScreen(boolean hideButtons) {
@@ -7060,7 +6886,7 @@ public class Client extends GameShell {
 	/**
 	 * Formats a numeric amount with comma grouping and legacy K/million color
 	 * annotations.
-	 * 
+	 *
 	 * @param amount the numeric/item-stack amount
 	 * @return the resulting text
 	 */
@@ -7077,13 +6903,9 @@ public class Client extends GameShell {
 		return " " + amountText;
 	}
 
-	/*
-	 * Legacy Client.method136(Actor actor, boolean flag, int i): flag -> unused; i
-	 * -> heightOffset.
-	 */
 	/**
 	 * Projects an actor-relative point into viewport screen coordinates.
-	 * 
+	 *
 	 * @param actor        the actor
 	 * @param heightOffset the height offset
 	 */
@@ -7091,14 +6913,10 @@ public class Client extends GameShell {
 		projectWorldToScreen(actor.x, heightOffset, actor.y);
 	}
 
-	/*
-	 * Legacy Client.method137(int i, int j, int k, int l) i -> worldX, j ->
-	 * heightOffset, k -> worldY, l -> removed negative sentinel.
-	 */
 	/**
 	 * Projects a world-space point into viewport screen coordinates using the
 	 * current camera.
-	 * 
+	 *
 	 * @param worldX       the local world-space X coordinate
 	 * @param heightOffset the height offset
 	 * @param worldY       the local world-space Y coordinate
@@ -7130,7 +6948,7 @@ public class Client extends GameShell {
 
 	/**
 	 * Returns the AWT component used by the standalone GameShell.
-	 * 
+	 *
 	 * @return the resulting component
 	 */
 	public Component getGameComponent() {
@@ -7142,7 +6960,7 @@ public class Client extends GameShell {
 
 	/**
 	 * Draws startup loading progress using the title-screen buffers when available.
-	 * 
+	 *
 	 * @param percent the percent
 	 * @param message the message text
 	 */
@@ -7182,10 +7000,6 @@ public class Client extends GameShell {
 		}
 	}
 
-	/*
-	 * Legacy Client.method139(boolean flag): flag -> removed false infinite-loop
-	 * sentinel.
-	 */
 	/**
 	 * Decodes and lays out the title background image across the fixed title
 	 * buffers.
@@ -7248,7 +7062,6 @@ public class Client extends GameShell {
 		System.gc();
 	}
 
-	/* Legacy Client.method141(int i): i -> removed fixed 28614 sentinel. */
 	/**
 	 * Stops the title flame thread and releases title-only graphics resources.
 	 */
@@ -7289,14 +7102,10 @@ public class Client extends GameShell {
 		titleRightFlameBackground = null;
 	}
 
-	/*
-	 * Legacy Client.method142(int i, int j, Widget class13, int k, int l): i -> y,
-	 * j -> x, class13 -> widget, k -> scrollY, l -> removed fixed 8 sentinel.
-	 */
 	/**
 	 * Recursively renders a widget tree, including containers, inventories, text,
 	 * sprites, models, and tooltips.
-	 * 
+	 *
 	 * @param y       the Y coordinate
 	 * @param x       the X coordinate
 	 * @param widget  the widget being processed
@@ -7658,7 +7467,7 @@ public class Client extends GameShell {
 	/**
 	 * Returns the interpolated world height at the supplied local world
 	 * coordinates.
-	 * 
+	 *
 	 * @param worldY the local world-space Y coordinate
 	 * @param worldX the local world-space X coordinate
 	 * @param plane  the scene plane
@@ -7671,7 +7480,7 @@ public class Client extends GameShell {
 	/**
 	 * Queues a localized area sound if it falls within the original player-centered
 	 * radius check.
-	 * 
+	 *
 	 * @param soundId the sound-effect identifier
 	 * @param loops   the sound-effect loop count
 	 * @param radius  the area-sound radius
@@ -7722,7 +7531,6 @@ public class Client extends GameShell {
 		}
 	}
 
-	/* Legacy Client.method146(byte byte0): byte0 -> removed fixed 4 sentinel. */
 	/**
 	 * Converts a minimap click through rotation/zoom into a world movement request.
 	 */
@@ -7777,14 +7585,10 @@ public class Client extends GameShell {
 		gameScreenRedraw = true;
 	}
 
-	/*
-	 * Legacy Client.method148(int i, String s): i -> removed 13292 sentinel s ->
-	 * name
-	 */
 	/**
 	 * Tests whether a display name belongs to the local player or current friend
 	 * list.
-	 * 
+	 *
 	 * @param name the name
 	 * @return true when the requested condition/action succeeds; otherwise false
 	 */
@@ -7792,9 +7596,6 @@ public class Client extends GameShell {
 		return socialManager.isFriendOrSelf(name, localPlayer.name);
 	}
 
-	/*
-	 * Legacy Client.method149(int i): i -> removed negative packet-read sentinel.
-	 */
 	/**
 	 * Processes mouse and keyboard input for the title/login screen state machine.
 	 */
@@ -7858,9 +7659,6 @@ public class Client extends GameShell {
 		}
 	}
 
-	// Legacy method150 moved into MinimapRenderer.drawMapLocation.
-
-	/* Legacy Client.method151(): render the complete 3D game view. */
 	/**
 	 * Builds scene entities, positions/shakes/restores the camera, renders the
 	 * world, and presents the viewport.
@@ -7934,7 +7732,7 @@ public class Client extends GameShell {
 		widgetRuntime = new WidgetRuntime(new WidgetRuntime.ScriptContext() {
 			/**
 			 * Returns the current boosted/drained level for a skill.
-			 * 
+			 *
 			 * @param skill the skill
 			 * @return the resulting numeric value
 			 */
@@ -7945,7 +7743,7 @@ public class Client extends GameShell {
 
 			/**
 			 * Returns the base level for a skill.
-			 * 
+			 *
 			 * @param skill the skill
 			 * @return the resulting numeric value
 			 */
@@ -7956,7 +7754,7 @@ public class Client extends GameShell {
 
 			/**
 			 * Returns the accumulated experience for a skill.
-			 * 
+			 *
 			 * @param skill the skill
 			 * @return the resulting numeric value
 			 */
@@ -7967,7 +7765,7 @@ public class Client extends GameShell {
 
 			/**
 			 * Returns the current value of a varp.
-			 * 
+			 *
 			 * @param id the id
 			 * @return the resulting numeric value
 			 */
@@ -7978,7 +7776,7 @@ public class Client extends GameShell {
 
 			/**
 			 * Returns the experience-table entry for a zero-based level index.
-			 * 
+			 *
 			 * @param levelIndex the level index
 			 * @return the resulting numeric value
 			 */
@@ -7989,7 +7787,7 @@ public class Client extends GameShell {
 
 			/**
 			 * Returns the precomputed mask for a bit width.
-			 * 
+			 *
 			 * @param width the width
 			 * @return the resulting numeric value
 			 */
@@ -8000,7 +7798,7 @@ public class Client extends GameShell {
 
 			/**
 			 * Returns the current run-energy percentage.
-			 * 
+			 *
 			 * @return the resulting numeric value
 			 */
 			@Override
@@ -8010,7 +7808,7 @@ public class Client extends GameShell {
 
 			/**
 			 * Returns the current carried-weight value.
-			 * 
+			 *
 			 * @return the resulting numeric value
 			 */
 			@Override
@@ -8020,7 +7818,7 @@ public class Client extends GameShell {
 
 			/**
 			 * Returns the local player combat level.
-			 * 
+			 *
 			 * @return the resulting numeric value
 			 */
 			@Override
@@ -8030,7 +7828,7 @@ public class Client extends GameShell {
 
 			/**
 			 * Returns the local player absolute world X tile.
-			 * 
+			 *
 			 * @return the resulting numeric value
 			 */
 			@Override
@@ -8040,7 +7838,7 @@ public class Client extends GameShell {
 
 			/**
 			 * Returns the local player absolute world Y tile.
-			 * 
+			 *
 			 * @return the resulting numeric value
 			 */
 			@Override
@@ -8050,7 +7848,7 @@ public class Client extends GameShell {
 
 			/**
 			 * Returns whether the client is currently in members-world mode.
-			 * 
+			 *
 			 * @return true when the requested condition/action succeeds; otherwise false
 			 */
 			@Override
@@ -8134,9 +7932,9 @@ public class Client extends GameShell {
 	/** The RSA modulus used by the revision-377 login handshake. */
 	public static BigInteger RSA_MODULUS = new BigInteger(
 			"7162900525229798032761816791230527296329313291232324290237849263501208207972894053929065636522363163621000728841182238772712427862772219676577293600221789");
-	/** Stores the overhead text colors values used by the client. */
+
 	public int overheadTextColors[] = { 0xffff00, 0xff0000, 65280, 65535, 0xff00ff, 0xffffff };
-	/** Stores the skill experiences values used by the client. */
+
 	public int skillExperiences[];
 	/** The client state for hint tile x. */
 	public int hintTileX;
@@ -8156,9 +7954,9 @@ public class Client extends GameShell {
 	public String itemSearchQuery;
 	/** The current number of item search result entries. */
 	public int itemSearchResultCount;
-	/** Stores the item search result names values used by the client. */
+
 	public String itemSearchResultNames[];
-	/** Stores the item search result ids values used by the client. */
+
 	public int itemSearchResultIds[];
 	/** The client state for item search scroll offset. */
 	public int itemSearchScrollOffset;
@@ -8194,7 +7992,7 @@ public class Client extends GameShell {
 	 * behavior.
 	 */
 	public static int systemUpdateKeepaliveCounter;
-	/** Stores the cross sprites values used by the client. */
+
 	public ImageRGB crossSprites[];
 	/** The client state for last click time. */
 	public long lastClickTime;
@@ -8218,7 +8016,7 @@ public class Client extends GameShell {
 	public GraphicsBuffer backHorizontalMiddle2Buffer;
 	/** The current current hovered widget id. */
 	public int currentHoveredWidgetId;
-	/** Stores the minimap mask widths values used by the client. */
+
 	public int minimapMaskWidths[];
 	/** The current current world id. */
 	public static int currentWorldId = 10;
@@ -8247,21 +8045,21 @@ public class Client extends GameShell {
 	public int overheadTextCount;
 	/** The client state for overhead text limit. */
 	public int overheadTextLimit;
-	/** Stores the overhead text xs values used by the client. */
+
 	public int overheadTextXs[];
-	/** Stores the overhead text ys values used by the client. */
+
 	public int overheadTextYs[];
-	/** Stores the overhead text heights values used by the client. */
+
 	public int overheadTextHeights[];
-	/** Stores the overhead text half widths values used by the client. */
+
 	public int overheadTextHalfWidths[];
-	/** Stores the overhead text color codes values used by the client. */
+
 	public int overheadTextColorCodes[];
-	/** Stores the overhead text effects values used by the client. */
+
 	public int overheadTextEffects[];
-	/** Stores the overhead text cycles values used by the client. */
+
 	public int overheadTextCycles[];
-	/** Stores the overhead texts values used by the client. */
+
 	public String overheadTexts[];
 	/** The client state for input dialog text. */
 	public String inputDialogText;
@@ -8269,9 +8067,9 @@ public class Client extends GameShell {
 	public boolean tabAreaRedraw;
 	/** The client state for animation cycle delta. */
 	public int animationCycleDelta;
-	/** Stores the experience table values used by the client. */
+
 	public static int experienceTable[];
-	/** Stores the hint icon sprites values used by the client. */
+
 	public ImageRGB hintIconSprites[];
 	/** The client state for inventory rearrange mode. */
 	public int inventoryRearrangeMode;
@@ -8319,7 +8117,7 @@ public class Client extends GameShell {
 	private final ActorSynchronizer.ChatHandler actorChatHandler = new ActorSynchronizer.ChatHandler() {
 		/**
 		 * Tests whether the supplied encoded name is ignored.
-		 * 
+		 *
 		 * @param encodedName the Base-37 encoded player name
 		 * @return true when the requested condition/action succeeds; otherwise false
 		 */
@@ -8330,7 +8128,7 @@ public class Client extends GameShell {
 
 		/**
 		 * Returns whether tutorial-area state currently suppresses public chat.
-		 * 
+		 *
 		 * @return true when the requested condition/action succeeds; otherwise false
 		 */
 		@Override
@@ -8340,7 +8138,7 @@ public class Client extends GameShell {
 
 		/**
 		 * Adds a message to the fixed chat history and requests the appropriate redraw.
-		 * 
+		 *
 		 * @param sender  the message sender name
 		 * @param message the message text
 		 * @param type    the chat message type
@@ -8360,7 +8158,7 @@ public class Client extends GameShell {
 	public IndexedImage bottomTabBackground;
 	/** The client state for top tab background. */
 	public IndexedImage topTabBackground;
-	/** Stores the sidebar icons values used by the client. */
+
 	public IndexedImage sidebarIcons[];
 	/** The client state for redstone1 vertical. */
 	public IndexedImage redstone1Vertical;
@@ -8378,19 +8176,19 @@ public class Client extends GameShell {
 	public int chatEffects;
 	/** Whether startup started is currently active or requested. */
 	public static boolean startupStarted;
-	/** Stores the chatbox scanline offsets values used by the client. */
+
 	public int chatboxScanlineOffsets[];
-	/** Stores the sidebar scanline offsets values used by the client. */
+
 	public int sidebarScanlineOffsets[];
-	/** Stores the viewport scanline offsets values used by the client. */
+
 	public int viewportScanlineOffsets[];
-	/** Stores the full screen scanline offsets values used by the client. */
+
 	public int fullScreenScanlineOffsets[];
-	/** Stores the varp shadow values values used by the client. */
+
 	public int varpShadowValues[];
 	/** The client state for public chat mode. */
 	public int publicChatMode;
-	/** Stores the body color palettes values used by the client. */
+
 	public static final int bodyColorPalettes[][] = {
 			{ 6798, 107, 10283, 16, 4797, 7744, 5799, 4634, 33697, 22433, 2983, 54193 },
 			{ 8741, 12, 64030, 43162, 7735, 8404, 1701, 38430, 24094, 10153, 56621, 4783, 1341, 16578, 35003, 25239 },
@@ -8406,7 +8204,7 @@ public class Client extends GameShell {
 	public ImageRGB titleLeftFlameBackground;
 	/** The client state for title right flame background. */
 	public ImageRGB titleRightFlameBackground;
-	/** Stores the minimap mask offsets values used by the client. */
+
 	public int minimapMaskOffsets[];
 	/** The client state for cross x. */
 	public int crossX;
@@ -8420,11 +8218,11 @@ public class Client extends GameShell {
 	public String promptInput;
 	/** The client state for loading message. */
 	public String loadingMessage;
-	/** Stores the current skill levels values used by the client. */
+
 	public int currentSkillLevels[];
 	/** The client state for weight. */
 	public int weight;
-	/** Stores the map function sprites values used by the client. */
+
 	public ImageRGB mapFunctionSprites[];
 	/** The client state for recovery questions date. */
 	public int recoveryQuestionsDate;
@@ -8432,7 +8230,7 @@ public class Client extends GameShell {
 	public ImageRGB destinationMapMarker;
 	/** The client state for hint map marker. */
 	public ImageRGB hintMapMarker;
-	/** Stores the varp values values used by the client. */
+
 	public int varpValues[];
 	/** The current sidebar tooltip widget id. */
 	public int sidebarTooltipWidgetId;
@@ -8447,7 +8245,7 @@ public class Client extends GameShell {
 	 * behavior.
 	 */
 	public static int groundItemAction684Counter;
-	/** Stores the base skill levels values used by the client. */
+
 	public int baseSkillLevels[];
 	/**
 	 * Tracks the current system update timer in client ticks/cycles where
@@ -8466,19 +8264,19 @@ public class Client extends GameShell {
 	public TypeFace fancyFont;
 	/** The client state for account membership status. */
 	public int accountMembershipStatus;
-	/** Stores the player actions values used by the client. */
+
 	public String playerActions[];
-	/** Stores the player action low priority values used by the client. */
+
 	public boolean playerActionLowPriority[];
-	/** Stores the prayer icon sprites values used by the client. */
+
 	public ImageRGB prayerIconSprites[];
 	/** The client state for scrollbar thumb color. */
 	public int scrollbarThumbColor;
 	/** The client state for last password change date. */
 	public int lastPasswordChangeDate;
-	/** Stores the title flame intensity values used by the client. */
+
 	public int titleFlameIntensity[];
-	/** Stores the title flame intensity scratch values used by the client. */
+
 	public int titleFlameIntensityScratch[];
 	/** The client state for multi combat overlay. */
 	public ImageRGB multiCombatOverlay;
@@ -8497,7 +8295,7 @@ public class Client extends GameShell {
 	public boolean invalidHostError;
 	/** Whether report abuse mute player is currently active or requested. */
 	public boolean reportAbuseMutePlayer;
-	/** Stores the appearance colors values used by the client. */
+
 	public int appearanceColors[];
 	/**
 	 * Counts ground item action26 events for the original client timing/protocol
@@ -8526,7 +8324,7 @@ public class Client extends GameShell {
 	public GraphicsBuffer topTabsBuffer;
 	/** The sprite resource used for compass sprite. */
 	public ImageRGB compassSprite;
-	/** Stores the title runes values used by the client. */
+
 	public IndexedImage titleRunes[];
 	/** The client state for destination x. */
 	public int destinationX;
@@ -8551,13 +8349,13 @@ public class Client extends GameShell {
 	public static int inventoryAction961Counter;
 	/** The client state for private message target. */
 	public long privateMessageTarget;
-	/** Stores the moderator icons values used by the client. */
+
 	public IndexedImage moderatorIcons[];
 	/** Whether male appearance is currently active or requested. */
 	public boolean maleAppearance;
 	/** The client state for hint player index. */
 	public int hintPlayerIndex;
-	/** Stores the map scene sprites values used by the client. */
+
 	public IndexedImage mapSceneSprites[];
 	/** Whether inventory drag moved is currently active or requested. */
 	public boolean inventoryDragMoved;
@@ -8574,19 +8372,19 @@ public class Client extends GameShell {
 	 * behavior.
 	 */
 	public static int inventoryAction227Counter;
-	/** Stores the title flame line offsets values used by the client. */
+
 	public int titleFlameLineOffsets[];
 	/** The client state for account current day. */
 	public int accountCurrentDay;
-	/** Stores the title flame noise values used by the client. */
+
 	public int titleFlameNoise[];
-	/** Stores the title flame noise scratch values used by the client. */
+
 	public int titleFlameNoiseScratch[];
-	/** Stores the compass mask offsets values used by the client. */
+
 	public int compassMaskOffsets[];
 	/** Whether sidebar redraw is currently active or requested. */
 	public boolean sidebarRedraw;
-	/** Stores the hitmark sprites values used by the client. */
+
 	public ImageRGB hitmarkSprites[];
 	/** The client state for sidebar background. */
 	public IndexedImage sidebarBackground;
@@ -8626,7 +8424,7 @@ public class Client extends GameShell {
 	public GraphicsBuffer titleRightCenterBuffer;
 	/** Whether chat modes redraw is currently active or requested. */
 	public boolean chatModesRedraw;
-	/** Stores the bit masks values used by the client. */
+
 	public static int bitMasks[];
 	/** The client state for last login day. */
 	public int lastLoginDay;
@@ -8663,7 +8461,7 @@ public class Client extends GameShell {
 	private volatile Thread titleFlameThread;
 	/** The client state for input dialog state. */
 	public int inputDialogState;
-	/** Stores the texture scroll scratch values used by the client. */
+
 	public byte textureScrollScratch[];
 	/** The client state for tutorial island flag. */
 	public int tutorialIslandFlag;
@@ -8677,7 +8475,7 @@ public class Client extends GameShell {
 	public int cameraPacketCooldown;
 	/** Whether camera orientation changed is currently active or requested. */
 	public boolean cameraOrientationChanged;
-	/** Stores the skin color palette values used by the client. */
+
 	public static final int skinColorPalette[] = { 9104, 10275, 7595, 3610, 7975, 8526, 918, 38802, 24466, 10145, 58654,
 			5027, 1457, 16565, 34991, 25486 };
 	/** The current number of unread message entries. */
@@ -8694,13 +8492,13 @@ public class Client extends GameShell {
 	public boolean loadingError;
 	/** The current chatbox tooltip widget id. */
 	public int chatboxTooltipWidgetId;
-	/** Stores the compass mask widths values used by the client. */
+
 	public int compassMaskWidths[];
 	/** The client state for scrollbar shadow color. */
 	public int scrollbarShadowColor;
-	/** Stores the skull icon sprites values used by the client. */
+
 	public ImageRGB skullIconSprites[];
-	/** Stores the animated texture ids values used by the client. */
+
 	public int animatedTextureIds[] = { 17, 24, 34, 40 };
 	/** The client state for on demand fetcher. */
 	public OnDemandFetcher onDemandFetcher;
@@ -8718,13 +8516,13 @@ public class Client extends GameShell {
 	public int scrollbarDragPadding;
 	/** Tracks the current draw cycle in client ticks/cycles where applicable. */
 	public static int drawCycle;
-	/** Stores the title flame palette values used by the client. */
+
 	public int titleFlamePalette[];
-	/** Stores the title flame red palette values used by the client. */
+
 	public int titleFlameRedPalette[];
-	/** Stores the title flame green palette values used by the client. */
+
 	public int titleFlameGreenPalette[];
-	/** Stores the title flame blue palette values used by the client. */
+
 	public int titleFlameBluePalette[];
 	/** Whether title flame thread mode is currently active or requested. */
 	public volatile boolean titleFlameThreadMode;
@@ -8743,7 +8541,7 @@ public class Client extends GameShell {
 	public int runEnergy;
 	/** Tracks the current game cycle in client ticks/cycles where applicable. */
 	public static int gameCycle;
-	/** Stores the appearance kit ids values used by the client. */
+
 	public int appearanceKitIds[];
 	/**
 	 * Tracks the current inventory click cycle in client ticks/cycles where
