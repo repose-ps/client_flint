@@ -155,7 +155,9 @@ public final class WorldState {
 		}
 	}
 
-	/** Applies a dynamic object replacement or removal to scene and collision state. */
+	/**
+	 * Applies a dynamic object replacement or removal to scene and collision state.
+	 */
 	public void applyGameObjectChange(int plane, int x, int y, int sceneLayer, int objectId, int type, int orientation,
 			boolean lowMemory, int currentPlane) {
 		if (x < 1 || y < 1 || x > 102 || y > 102) {
@@ -383,41 +385,63 @@ public final class WorldState {
 	/** Advances active projectiles and submits visible ones to the scene. */
 	public void updateProjectiles(int currentPlane, int currentCycle, int cycleDelta, int localPlayerServerIndex,
 			Player localPlayer, ActorSynchronizer actors, Buffer outgoing) {
+
+		boolean hasProjectiles = false;
+
 		for (Projectile projectile = (Projectile) projectiles
 				.first(); projectile != null; projectile = (Projectile) projectiles.next()) {
+
 			if (projectile.plane != currentPlane || currentCycle > projectile.cycleEnd) {
 				projectile.unlink();
-			} else if (currentCycle >= projectile.cycleStart) {
+				continue;
+			}
+
+			hasProjectiles = true;
+
+			if (currentCycle >= projectile.cycleStart) {
 				if (projectile.targetIndex > 0) {
 					Npc npc = actors.npcs[projectile.targetIndex - 1];
+
 					if (npc != null && npc.x >= 0 && npc.x < 13312 && npc.y >= 0 && npc.y < 13312) {
 						projectile.setDestination(npc.x, npc.y,
 								getTileHeight(npc.x, npc.y, projectile.plane) - projectile.endHeight, currentCycle);
 					}
 				}
+
 				if (projectile.targetIndex < 0) {
 					int playerIndex = -projectile.targetIndex - 1;
 					Player player = playerIndex == localPlayerServerIndex ? localPlayer : actors.players[playerIndex];
+
 					if (player != null && player.x >= 0 && player.x < 13312 && player.y >= 0 && player.y < 13312) {
 						projectile.setDestination(player.x, player.y,
 								getTileHeight(player.x, player.y, projectile.plane) - projectile.endHeight,
 								currentCycle);
 					}
 				}
+
 				projectile.advance(cycleDelta);
+
 				scene.addEntity(currentPlane, (int) projectile.x, (int) projectile.y, (int) projectile.z, projectile,
 						-1, 60, false, projectile.yaw);
 			}
 		}
 
-		projectileKeepaliveCycles++;
-		if (projectileKeepaliveCycles > 51) {
+		if (hasProjectiles) {
+			projectileKeepaliveCycles++;
+
+			if (projectileKeepaliveCycles > 51) {
+				projectileKeepaliveCycles = 0;
+				outgoing.writeOpcode(248);
+			}
+
+		} else {
 			projectileKeepaliveCycles = 0;
-			outgoing.writeOpcode(248);
 		}
 	}
 
-	/** Advances temporary graphics objects and submits visible ones to the scene. */
+	/**
+	 * Advances temporary graphics objects and submits visible ones to the scene.
+	 */
 	public void updateGraphicsObjects(int currentPlane, int currentCycle, int cycleDelta) {
 		for (GraphicsObject graphics = (GraphicsObject) graphicsObjects
 				.first(); graphics != null; graphics = (GraphicsObject) graphicsObjects.next()) {
