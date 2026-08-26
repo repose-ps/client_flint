@@ -182,7 +182,8 @@ public class Client extends GameShell {
 			else if (args[2].equals("highmem")) {
 				setHighMemory();
 			} else {
-				System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host]");
+				System.out.println(
+						"Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host]");
 				return;
 			}
 			if (args[3].equals("free"))
@@ -190,7 +191,8 @@ public class Client extends GameShell {
 			else if (args[3].equals("members")) {
 				membersWorld = true;
 			} else {
-				System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host]");
+				System.out.println(
+						"Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host]");
 				return;
 			}
 			Signlink.storeId = Integer.parseInt(args[4]);
@@ -475,6 +477,11 @@ public class Client extends GameShell {
 	private void updateCameraFollow() {
 		cameraController.updateFollow(localPlayer, keyStatus, worldState, currentPlane, regionManager.regionX,
 				regionManager.regionY, regionManager.baseX, regionManager.baseY);
+
+		if (!cameraController.cinematic && (super.cameraDragDeltaX != 0 || super.cameraDragDeltaY != 0)) {
+			cameraController.rotateFollowByMouse(super.cameraDragDeltaX, super.cameraDragDeltaY);
+			cameraOrientationChanged = true;
+		}
 	}
 
 	/**
@@ -2020,7 +2027,9 @@ public class Client extends GameShell {
 		return serverHost;
 	}
 
-	/** Configures the hostname used by all standalone game/update/archive sockets. */
+	/**
+	 * Configures the hostname used by all standalone game/update/archive sockets.
+	 */
 	public static void setServerHost(String host) {
 		if (host == null || host.trim().isEmpty()) {
 			throw new IllegalArgumentException("server host must not be blank");
@@ -2501,6 +2510,7 @@ public class Client extends GameShell {
 				if (menuMouseX < menuState.offsetX - 10 || menuMouseX > menuState.offsetX + menuState.width + 10
 						|| menuMouseY < menuState.offsetY - 10
 						|| menuMouseY > menuState.offsetY + menuState.height + 10) {
+					menuState.open = false;
 					if (menuState.screenArea == 1)
 						sidebarRedraw = true;
 					if (menuState.screenArea == 2)
@@ -2534,6 +2544,7 @@ public class Client extends GameShell {
 
 				if (selectedEntry != -1)
 					dispatchMenuAction(selectedEntry);
+				menuState.open = false;
 				if (menuState.screenArea == 1)
 					sidebarRedraw = true;
 				if (menuState.screenArea == 2) {
@@ -8528,9 +8539,11 @@ public class Client extends GameShell {
 	public volatile boolean titleFlameThreadMode;
 	/** The current current tooltip widget id. */
 	public int currentTooltipWidgetId;
+
 	/** The RSA public exponent used by the revision-377 login handshake. */
 	public static BigInteger RSA_EXPONENT = new BigInteger(
 			"58778699976184461502525193738213253649000149147835990136706041084440742975821");
+
 	/** The client state for multi combat zone. */
 	public int multiCombatZone;
 	/** Whether title flame thread active is currently active or requested. */

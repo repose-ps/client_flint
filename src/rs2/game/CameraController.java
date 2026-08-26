@@ -13,6 +13,9 @@ public final class CameraController {
 
 	public static final int ANGLE_MASK = 0x7ff;
 
+	/** Camera-angle units applied for each pixel of middle-mouse movement. */
+	private static final int MOUSE_DRAG_SENSITIVITY = 3;
+
 	public int x;
 
 	public int height;
@@ -174,6 +177,27 @@ public final class CameraController {
 			Signlink.reportError("glfc_ex " + localPlayer.x + "," + localPlayer.y + "," + followTargetX + ","
 					+ followTargetY + "," + regionX + "," + regionY + "," + baseX + "," + baseY);
 			throw new RuntimeException("eek");
+		}
+	}
+
+	/**
+	 * Rotates the normal follow camera using middle-mouse drag movement.
+	 *
+	 * @param deltaX horizontal mouse movement
+	 * @param deltaY vertical mouse movement
+	 */
+	public void rotateFollowByMouse(int deltaX, int deltaY) {
+		yawVelocity = 0;
+		pitchVelocity = 0;
+
+		followYaw = followYaw - deltaX * MOUSE_DRAG_SENSITIVITY & ANGLE_MASK;
+		followPitch += deltaY * MOUSE_DRAG_SENSITIVITY;
+
+		if (followPitch < 128) {
+			followPitch = 128;
+		}
+		if (followPitch > 383) {
+			followPitch = 383;
 		}
 	}
 

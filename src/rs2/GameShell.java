@@ -84,7 +84,7 @@ public class GameShell extends Canvas
 
 	protected volatile int idleCycles;
 
-	/** Current mouse button state: 0 none, 1 primary, 2 meta/secondary. */
+	/** Current gameplay mouse button state: 0 none, 1 primary, 2 secondary. */
 	protected volatile int mouseButton;
 
 	protected volatile int mouseX;
@@ -99,6 +99,21 @@ public class GameShell extends Canvas
 
 	private long pendingClickTime;
 
+	/** Horizontal middle-mouse camera movement waiting for the next client tick. */
+	private int pendingCameraDragDeltaX;
+
+	/** Vertical middle-mouse camera movement waiting for the next client tick. */
+	private int pendingCameraDragDeltaY;
+
+	/** Whether the middle mouse button is currently being held. */
+	private boolean middleMouseDown;
+
+	/** Previous horizontal mouse position used to measure middle-button camera dragging. */
+	private int middleDragX;
+
+	/** Previous vertical mouse position used to measure middle-button camera dragging. */
+	private int middleDragY;
+
 	/** Mouse click latched at the start of the current client tick. */
 	protected int clickButton;
 
@@ -107,6 +122,12 @@ public class GameShell extends Canvas
 	protected int clickY;
 
 	protected long clickTime;
+
+	/** Horizontal middle-mouse camera movement accumulated for the current client tick. */
+	protected int cameraDragDeltaX;
+
+	/** Vertical middle-mouse camera movement accumulated for the current client tick. */
+	protected int cameraDragDeltaY;
 
 	/** Pressed state for the client's 0..127 internal key codes. */
 	protected final int[] keyStatus = new int[KEY_BUFFER_SIZE];
@@ -233,6 +254,11 @@ public class GameShell extends Canvas
 						clickY = pendingClickY;
 						clickTime = pendingClickTime;
 						pendingClickButton = 0;
+
+						cameraDragDeltaX = pendingCameraDragDeltaX;
+						cameraDragDeltaY = pendingCameraDragDeltaY;
+						pendingCameraDragDeltaX = 0;
+						pendingCameraDragDeltaY = 0;
 
 						processGameLoop();
 						keyQueueReadIndex = keyQueueWriteIndex;
@@ -422,10 +448,23 @@ public class GameShell extends Canvas
 
 		synchronized (inputLock) {
 			idleCycles = 0;
+
+			if (event.getButton() == MouseEvent.BUTTON2) {
+				middleMouseDown = true;
+				middleDragX = x;
+				middleDragY = y;
+				return;
+			}
+
+			if (event.getButton() != MouseEvent.BUTTON1 && event.getButton() != MouseEvent.BUTTON3) {
+				return;
+			}
+
 			pendingClickX = x;
 			pendingClickY = y;
 			pendingClickTime = System.currentTimeMillis();
-			if (event.isMetaDown()) {
+
+			if (event.getButton() == MouseEvent.BUTTON3) {
 				pendingClickButton = 2;
 				mouseButton = 2;
 			} else {
@@ -444,7 +483,16 @@ public class GameShell extends Canvas
 	public final void mouseReleased(MouseEvent event) {
 		synchronized (inputLock) {
 			idleCycles = 0;
-			mouseButton = 0;
+
+			if (event.getButton() == MouseEvent.BUTTON2) {
+				middleMouseDown = false;
+				return;
+			}
+
+			if ((event.getButton() == MouseEvent.BUTTON1 && mouseButton == 1)
+					|| (event.getButton() == MouseEvent.BUTTON3 && mouseButton == 2)) {
+				mouseButton = 0;
+			}
 		}
 	}
 
@@ -487,7 +535,26 @@ public class GameShell extends Canvas
 	 */
 	@Override
 	public final void mouseDragged(MouseEvent event) {
-		updateMousePosition(event);
+		int x = event.getX();
+		int y = event.getY();
+		if (gameFrame != null) {
+			x -= FRAME_MOUSE_X_OFFSET;
+			y -= FRAME_MOUSE_Y_OFFSET;
+		}
+
+		synchronized (inputLock) {
+			idleCycles = 0;
+
+			if (middleMouseDown) {
+				pendingCameraDragDeltaX += x - middleDragX;
+				pendingCameraDragDeltaY += y - middleDragY;
+				middleDragX = x;
+				middleDragY = y;
+			}
+
+			mouseX = x;
+			mouseY = y;
+		}
 	}
 
 	/**
@@ -671,6 +738,11 @@ public class GameShell extends Canvas
 	public final void focusLost(FocusEvent event) {
 		synchronized (inputLock) {
 			hasFocus = false;
+			mouseButton = 0;
+			middleMouseDown = false;
+			pendingCameraDragDeltaX = 0;
+			pendingCameraDragDeltaY = 0;
+
 			for (int keyCode = 0; keyCode < KEY_BUFFER_SIZE; keyCode++) {
 				keyStatus[keyCode] = 0;
 			}
