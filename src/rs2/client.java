@@ -133,6 +133,48 @@ public class Client extends GameShell {
 	}
 
 	/**
+	 * Processes clicks on the fixed chat-mode strip. Public chat cycles through On,
+	 * Friends, Off, and Hide; private chat and trade each cycle through On,
+	 * Friends, and Off. The Report abuse button opens the cache-defined report
+	 * interface. Changed chat modes are sent to the server using revision-377
+	 * opcode 176.
+	 */
+	public void processChatModeClick() {
+		if (super.clickButton != 1)
+			return;
+
+		boolean changed = false;
+
+		if (super.clickX >= 6 && super.clickX <= 106 && super.clickY >= 467 && super.clickY <= 499) {
+			publicChatMode = (publicChatMode + 1) % 4;
+			changed = true;
+		} else if (super.clickX >= 135 && super.clickX <= 235 && super.clickY >= 467 && super.clickY <= 499) {
+			privateChatMode = (privateChatMode + 1) % 3;
+			changed = true;
+		} else if (super.clickX >= 273 && super.clickX <= 373 && super.clickY >= 467 && super.clickY <= 499) {
+			tradeMode = (tradeMode + 1) % 3;
+			changed = true;
+		} else if (super.clickX >= 412 && super.clickX <= 512 && super.clickY >= 467 && super.clickY <= 499) {
+			if (interfaceState.openInterfaceId == -1) {
+				closeInterfaces();
+				reportAbuseName = "";
+				reportAbuseMutePlayer = false;
+				interfaceState.reportAbuseInterfaceId = interfaceState.openInterfaceId = Widget.reportAbuseInterfaceId;
+			} else {
+				addChatMessage("", "Please close the interface you have open before using 'report abuse'", 0);
+			}
+			return;
+		}
+
+		if (!changed)
+			return;
+
+		chatModesRedraw = true;
+		chatboxRedraw = true;
+		ChatPacketEncoder.writeChatModes(networkSession.outgoing, publicChatMode, privateChatMode, tradeMode);
+	}
+
+	/**
 	 * Closes the currently open client interfaces and emits the matching
 	 * close-interface packet.
 	 */
@@ -797,6 +839,7 @@ public class Client extends GameShell {
 			processMinimapClick();
 			processTabClick();
 		}
+		processChatModeClick();
 		if (super.mouseButton == 1 || super.clickButton == 1)
 			mouseButtonHoldTicks++;
 		if (chatboxTooltipWidgetId != 0 || sidebarTooltipWidgetId != 0 || viewportTooltipWidgetId != 0) {
