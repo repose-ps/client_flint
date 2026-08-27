@@ -71,7 +71,10 @@ public class GameShell extends Canvas
 
 	protected int canvasHeight;
 
-	protected Graphics graphics;
+	protected volatile Graphics graphics;
+
+	/** Requests a fresh component graphics context after an AWT expose/repaint. */
+	private volatile boolean graphicsRefreshRequested;
 
 	protected GraphicsBuffer gameBuffer;
 
@@ -416,6 +419,7 @@ public class GameShell extends Canvas
 		if (this.graphics == null) {
 			this.graphics = graphics;
 		}
+		graphicsRefreshRequested = true;
 		clearScreen = true;
 	}
 
@@ -429,6 +433,7 @@ public class GameShell extends Canvas
 		if (this.graphics == null) {
 			this.graphics = graphics;
 		}
+		graphicsRefreshRequested = true;
 		clearScreen = true;
 	}
 
@@ -827,6 +832,27 @@ public class GameShell extends Canvas
 
 	/** One client draw pass. */
 	protected void processDrawing() {
+	}
+
+	/**
+	 * Reacquires the component graphics after AWT reports an expose/repaint.
+	 *
+	 * <p>
+	 * The standalone frame applies its fixed client-area translation in
+	 * {@link GameFrame#getGraphics()}, so reacquiring here is safer than retaining
+	 * the Graphics instance supplied to {@link #paint(Graphics)}.
+	 * </p>
+	 */
+	protected final void refreshGraphicsContextIfRequested() {
+		if (!graphicsRefreshRequested)
+			return;
+
+		Graphics refreshedGraphics = getGameComponent().getGraphics();
+		if (refreshedGraphics == null)
+			return;
+
+		graphics = refreshedGraphics;
+		graphicsRefreshRequested = false;
 	}
 
 	/** Returns the top-level AWT component used for input and drawing. */

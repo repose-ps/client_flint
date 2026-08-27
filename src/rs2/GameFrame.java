@@ -28,7 +28,8 @@ public final class GameFrame extends Frame {
 	@Override
 	public Graphics getGraphics() {
 		Graphics graphics = super.getGraphics();
-		graphics.translate(4, 24);
+		if (graphics != null)
+			graphics.translate(4, 24);
 		return graphics;
 	}
 

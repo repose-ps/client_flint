@@ -448,6 +448,7 @@ public class Client extends GameShell {
 			if (super.clickX >= 625 && super.clickX <= 669 && super.clickY >= 168 && super.clickY < 203
 					&& interfaceState.tabInterfaceIds[3] != -1) {
 				sidebarRedraw = true;
+				interfaceState.selectedTab = 3;
 				tabAreaRedraw = true;
 			}
 			if (super.clickX >= 666 && super.clickX <= 696 && super.clickY >= 168 && super.clickY < 205
@@ -3512,26 +3513,41 @@ public class Client extends GameShell {
 			super.gameBuffer.draw(super.graphics, 0, 0);
 			return;
 		}
+		/*
+		 * Always present the complete fixed-mode frame. The original client only
+		 * blitted most of these buffers when their dirty flags were set. That saves
+		 * work on period hardware, but it leaves exposed AWT regions white after the
+		 * window has been obscured or moved off-screen.
+		 */
+		createGameScreenBuffers();
+		backLeft1Buffer.draw(super.graphics, 0, 4);
+		backLeft2Buffer.draw(super.graphics, 0, 357);
+		backRight1Buffer.draw(super.graphics, 722, 4);
+		backRight2Buffer.draw(super.graphics, 743, 205);
+		backTop1Buffer.draw(super.graphics, 0, 0);
+		backVerticalMiddle1Buffer.draw(super.graphics, 516, 4);
+		backVerticalMiddle2Buffer.draw(super.graphics, 516, 205);
+		backVerticalMiddle3Buffer.draw(super.graphics, 496, 357);
+		backHorizontalMiddle2Buffer.draw(super.graphics, 0, 338);
+
+		// Re-raster and present every fixed UI panel on every draw cycle.
+		sidebarRedraw = true;
+		chatboxRedraw = true;
+		tabAreaRedraw = true;
+		chatModesRedraw = true;
+
+		if (regionManager.loadingStage != RegionManager.STAGE_LOADED) {
+			viewportBuffer.draw(super.graphics, 4, 4);
+			minimapBuffer.draw(super.graphics, 550, 4);
+		}
+
+		/*
+		 * Keep the legacy redraw-triggered packet cadence separate from the new
+		 * unconditional presentation. Forcing gameScreenRedraw true every frame would
+		 * otherwise emit opcode 168 far more often than the original client.
+		 */
 		if (gameScreenRedraw) {
-			createGameScreenBuffers();
 			gameScreenRedraw = false;
-			backLeft1Buffer.draw(super.graphics, 0, 4);
-			backLeft2Buffer.draw(super.graphics, 0, 357);
-			backRight1Buffer.draw(super.graphics, 722, 4);
-			backRight2Buffer.draw(super.graphics, 743, 205);
-			backTop1Buffer.draw(super.graphics, 0, 0);
-			backVerticalMiddle1Buffer.draw(super.graphics, 516, 4);
-			backVerticalMiddle2Buffer.draw(super.graphics, 516, 205);
-			backVerticalMiddle3Buffer.draw(super.graphics, 496, 357);
-			backHorizontalMiddle2Buffer.draw(super.graphics, 0, 338);
-			sidebarRedraw = true;
-			chatboxRedraw = true;
-			tabAreaRedraw = true;
-			chatModesRedraw = true;
-			if (regionManager.loadingStage != RegionManager.STAGE_LOADED) {
-				viewportBuffer.draw(super.graphics, 4, 4);
-				minimapBuffer.draw(super.graphics, 550, 4);
-			}
 			screenRedrawKeepaliveCounter++;
 			if (screenRedrawKeepaliveCounter > 85) {
 				screenRedrawKeepaliveCounter = 0;
@@ -6783,6 +6799,7 @@ public class Client extends GameShell {
 	 * Runs one render cycle in logged-in mode or title/login mode.
 	 */
 	public void processDrawing() {
+		refreshGraphicsContextIfRequested();
 		if (duplicateClientError || loadingError || invalidHostError) {
 			drawStartupErrorScreen();
 			return;
@@ -6908,15 +6925,15 @@ public class Client extends GameShell {
 			boldFont.drawCenteredTextWithTags("Cancel", buttonX3, buttonY3 + 5, 0xffffff, true);
 		}
 		loginBoxBuffer.draw(super.graphics, 202, 171);
-		if (gameScreenRedraw) {
-			gameScreenRedraw = false;
-			titleTopBuffer.draw(super.graphics, 128, 0);
-			titleBottomBuffer.draw(super.graphics, 202, 371);
-			titleLeftBottomBuffer.draw(super.graphics, 0, 265);
-			titleRightBottomBuffer.draw(super.graphics, 562, 265);
-			titleLeftCenterBuffer.draw(super.graphics, 128, 171);
-			titleRightCenterBuffer.draw(super.graphics, 562, 171);
-		}
+		// Present the static title frame every cycle as well, so an AWT expose cannot
+		// leave portions of the login screen white until another state change.
+		gameScreenRedraw = false;
+		titleTopBuffer.draw(super.graphics, 128, 0);
+		titleBottomBuffer.draw(super.graphics, 202, 371);
+		titleLeftBottomBuffer.draw(super.graphics, 0, 265);
+		titleRightBottomBuffer.draw(super.graphics, 562, 265);
+		titleLeftCenterBuffer.draw(super.graphics, 128, 171);
+		titleRightCenterBuffer.draw(super.graphics, 562, 171);
 	}
 
 	/**
