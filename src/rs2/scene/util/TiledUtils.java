@@ -11,8 +11,12 @@ package rs2.scene.util;
  */
 public final class TiledUtils {
 
+	/** Constant value for chunk max coordinate. */
 	private static final int CHUNK_MAX_COORDINATE = 7;
 
+	/**
+	 * Creates a new tiled utils.
+	 */
 	private TiledUtils() {
 		// Utility class.
 	}
@@ -74,6 +78,7 @@ public final class TiledUtils {
 	 * @param sizeY             the size y
 	 * @param objectOrientation the object orientation
 	 * @param chunkRotation     the chunk rotation
+	 * @return the rotated landscape chunk X
 	 */
 	public static int getRotatedLandscapeChunkX(int x, int y, int sizeX, int sizeY, int objectOrientation,
 			int chunkRotation) {
@@ -105,6 +110,7 @@ public final class TiledUtils {
 	 * @param sizeY             the size y
 	 * @param objectOrientation the object orientation
 	 * @param chunkRotation     the chunk rotation
+	 * @return the rotated landscape chunk Y
 	 */
 	public static int getRotatedLandscapeChunkY(int x, int y, int sizeX, int sizeY, int objectOrientation,
 			int chunkRotation) {

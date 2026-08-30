@@ -21,17 +21,40 @@ import rs2.sign.Signlink;
  */
 public final class ResourceLoader {
 
+	/** Creates a new resource loader with its default client state. */
+	public ResourceLoader() {
+	}
+
+	/** Provides JAGGRAB opener state and behavior. */
 	public interface JaggrabOpener {
+		/**
+		 * Opens the operation.
+		 *
+		 * @param request the request
+		 * @return a stream for the requested JAGGRAB resource
+		 * @throws IOException if an I/O operation fails
+		 */
 		DataInputStream open(String request) throws IOException;
 	}
 
+	/** Provides progress listener state and behavior. */
 	public interface ProgressListener {
+		/**
+		 * Updates the operation.
+		 *
+		 * @param percent the percent
+		 * @param message the message text
+		 */
 		void update(int percent, String message);
 	}
 
+	/** Constant value for archive count. */
 	private static final int ARCHIVE_COUNT = 9;
+	/** Constant value for cache index count. */
 	private static final int CACHE_INDEX_COUNT = 5;
+	/** Constant value for revision. */
 	private static final int REVISION = 377;
+	/** Maximum cache entry size. */
 	private static final int MAX_CACHE_ENTRY_SIZE = 0xffffff;
 
 	/**
@@ -42,10 +65,22 @@ public final class ResourceLoader {
 	private static final int[] REVISION_377_BOOTSTRAP_CRCS = { 0, 0x9509ece5, 0x88dcbfa7, 0x5574bc2e,
 			0xa10e55ac, 0x3b8ed781, 0x982e83fb, 0x84fff872, 0x42fd7584 };
 
+	/** Mutable bootstrap-archive CRC table populated from the server at startup. */
 	private final int[] archiveCrcs = REVISION_377_BOOTSTRAP_CRCS.clone();
+	/** Stores cache indices values. */
 	private final CacheIndex[] cacheIndices = new CacheIndex[CACHE_INDEX_COUNT];
+	/**
+	 * Reusable CRC-32 calculator.
+	 *
+	 */
 	private final CRC32 crc32 = new CRC32();
 
+	/**
+	 * Initializes cache indices.
+	 *
+	 * @param dataFile the data file
+	 * @param indexFiles the index files
+	 */
 	public void initializeCacheIndices(RandomAccessFile dataFile, RandomAccessFile[] indexFiles) {
 		if (dataFile == null) {
 			return;
@@ -57,20 +92,47 @@ public final class ResourceLoader {
 
 
 
+	/**
+	 * Returns archive CRC.
+	 *
+	 * @param index the array or registry index
+	 * @return the archive CRC
+	 */
 	public int getArchiveCrc(int index) {
 		return archiveCrcs[index];
 	}
 
+	/**
+	 * Returns cache index.
+	 *
+	 * @param index the array or registry index
+	 * @return the cache index
+	 */
 	public CacheIndex getCacheIndex(int index) {
 		return cacheIndices[index];
 	}
 
+	/**
+	 * Returns whether cache.
+	 *
+	 * @return whether cache
+	 */
 	public boolean hasCache() {
 		return cacheIndices[0] != null;
 	}
 
 
-	/** Loads and CRC-validates one bootstrap archive, recovering it over JAGGRAB when necessary. */
+	/**
+	 * Loads and CRC-validates one bootstrap archive, recovering it over JAGGRAB when necessary.
+	 * @param expectedCrc the expected CRC
+	 * @param archiveName the archive name
+	 * @param loadingPercent the loading percent
+	 * @param cacheFileId the cache file ID
+	 * @param displayName the display name
+	 * @param opener the opener
+	 * @param progress the progress
+	 * @return the validated bootstrap archive
+	 */
 	public Archive loadArchive(int expectedCrc, String archiveName, int loadingPercent, int cacheFileId,
 			String displayName, JaggrabOpener opener, ProgressListener progress) {
 		byte[] data = null;
@@ -177,7 +239,11 @@ public final class ResourceLoader {
 		return new Archive(data);
 	}
 
-	/** Fetches and validates the revision-377 bootstrap CRC table used for cache recovery. */
+	/**
+	 * Fetches and validates the revision-377 bootstrap CRC table used for cache recovery.
+	 * @param opener the opener
+	 * @param progress the progress
+	 */
 	public void fetchArchiveCrcs(JaggrabOpener opener, ProgressListener progress) {
 		int retryDelay = 5;
 		int failures = 0;
@@ -237,6 +303,12 @@ public final class ResourceLoader {
 		}
 	}
 
+	/**
+	 * Checks sum.
+	 *
+	 * @param data the data to process
+	 * @return the CRC-32 checksum of the supplied data
+	 */
 	private int checksum(byte[] data) {
 		crc32.reset();
 		crc32.update(data);

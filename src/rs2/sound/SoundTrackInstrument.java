@@ -14,22 +14,39 @@ import rs2.net.Buffer;
  */
 public class SoundTrackInstrument {
 
+	/** Stores the current pitch envelope. */
 	public SoundTrackEnvelope pitchEnvelope;
+	/** Stores the current volume envelope. */
 	public SoundTrackEnvelope volumeEnvelope;
+	/** Stores the current pitch modulation envelope. */
 	public SoundTrackEnvelope pitchModulationEnvelope;
+	/** Stores the current pitch modulation amplitude envelope. */
 	public SoundTrackEnvelope pitchModulationAmplitudeEnvelope;
+	/** Stores the current volume modulation envelope. */
 	public SoundTrackEnvelope volumeModulationEnvelope;
+	/** Stores the current volume modulation amplitude envelope. */
 	public SoundTrackEnvelope volumeModulationAmplitudeEnvelope;
+	/** Stores the current gating release envelope. */
 	public SoundTrackEnvelope gatingReleaseEnvelope;
+	/** Stores the current gating attack envelope. */
 	public SoundTrackEnvelope gatingAttackEnvelope;
+	/** Stores oscillator volumes values. */
 	public int[] oscillatorVolumes;
+	/** Stores oscillator pitch deltas values. */
 	public int[] oscillatorPitchDeltas;
+	/** Stores oscillator delays values. */
 	public int[] oscillatorDelays;
+	/** Stores the current delay time. */
 	public int delayTime;
+	/** Stores the current delay feedback. */
 	public int delayFeedback;
+	/** Stores the current filter. */
 	public SoundFilter filter;
+	/** Stores the current filter envelope. */
 	public SoundTrackEnvelope filterEnvelope;
+	/** Stores the current duration millis. */
 	public int durationMillis;
+	/** Stores the current offset millis. */
 	public int offsetMillis;
 
 	/** Shared synthesis output; large enough for ten seconds at 22,050 Hz. */
@@ -41,12 +58,20 @@ public class SoundTrackInstrument {
 	/** 14-bit sine lookup covering the instrument's 15-bit phase cycle. */
 	public static int[] sineTable;
 
+	/** Stores phases values. */
 	public static int[] phases = new int[5];
+	/** Stores sample delays values. */
 	public static int[] sampleDelays = new int[5];
+	/** Stores volume steps values. */
 	public static int[] volumeSteps = new int[5];
+	/** Stores pitch steps values. */
 	public static int[] pitchSteps = new int[5];
+	/** Stores base pitch steps values. */
 	public static int[] basePitchSteps = new int[5];
 
+	/**
+	 * Creates a new sound track instrument.
+	 */
 	public SoundTrackInstrument() {
 		oscillatorVolumes = new int[5];
 		oscillatorPitchDeltas = new int[5];
@@ -169,6 +194,11 @@ public class SoundTrackInstrument {
 		return sampleBuffer;
 	}
 
+	/**
+	 * Applies gating.
+	 *
+	 * @param sampleCount the sample count
+	 */
 	private void applyGating(int sampleCount) {
 		if (gatingReleaseEnvelope == null) {
 			return;
@@ -199,6 +229,12 @@ public class SoundTrackInstrument {
 		}
 	}
 
+	/**
+	 * Applies delay.
+	 *
+	 * @param sampleCount the sample count
+	 * @param samplesPerMillisecond the samples per millisecond
+	 */
 	private void applyDelay(int sampleCount, double samplesPerMillisecond) {
 		if (delayTime <= 0 || delayFeedback <= 0) {
 			return;
@@ -209,6 +245,11 @@ public class SoundTrackInstrument {
 		}
 	}
 
+	/**
+	 * Applies filter.
+	 *
+	 * @param sampleCount the sample count
+	 */
 	private void applyFilter(int sampleCount) {
 		if (filter.pairCount[0] == 0 && filter.pairCount[1] == 0) {
 			return;
@@ -283,7 +324,13 @@ public class SoundTrackInstrument {
 		}
 	}
 
-	/** Evaluates one of the four waveform tables used by the synthesizer. */
+	/**
+	 * Evaluates one of the four waveform tables used by the synthesizer.
+	 * @param amplitude the amplitude
+	 * @param phase the phase
+	 * @param waveform the waveform
+	 * @return the generated waveform sample
+	 */
 	public int evaluateWave(int amplitude, int phase, int waveform) {
 		if (waveform == 1) {
 			return (phase & 0x7fff) < 16384 ? amplitude : -amplitude;
@@ -300,7 +347,10 @@ public class SoundTrackInstrument {
 		return 0;
 	}
 
-	/** Decodes the complete instrument definition from the sound-track stream. */
+	/**
+	 * Decodes the complete instrument definition from the sound-track stream.
+	 * @param buffer the source buffer
+	 */
 	public void decode(Buffer buffer) {
 		pitchEnvelope = new SoundTrackEnvelope();
 		pitchEnvelope.decode(buffer);

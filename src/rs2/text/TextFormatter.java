@@ -4,10 +4,26 @@ package rs2.text;
  * Stateless presentation helpers for legacy client text.
  */
 public class TextFormatter {
+
+	/** Creates a new text formatter with its default client state. */
+	public TextFormatter() {
+	}
+	/**
+	 * Returns whether lowercase ascii.
+	 *
+	 * @param character the character
+	 * @return whether lowercase ascii
+	 */
 	private static boolean isLowercaseAscii(char character) {
 		return character >= 'a' && character <= 'z';
 	}
 
+	/**
+	 * Converts a lowercase ASCII letter to uppercase.
+	 *
+	 * @param character the character
+	 * @return the converted value
+	 */
 	private static char toUppercaseAscii(char character) {
 		return (char) (character - 'a' + 'A');
 	}
@@ -19,6 +35,8 @@ public class TextFormatter {
 	 * The protocol is ASCII-oriented, so only lowercase ASCII letters are
 	 * capitalized. This preserves the exact revision-377 transformation.
 	 * </p>
+	 * @param value the value
+	 * @return the display-formatted name
 	 */
 	public static String formatDisplayName(String value) {
 		if (value.length() == 0) {
@@ -48,6 +66,12 @@ public class TextFormatter {
 		return new String(characters);
 	}
 
+	/**
+	 * Returns a masked version of the supplied text.
+	 *
+	 * @param value the value
+	 * @return the masked text
+	 */
 	public static String mask(String value) {
 		StringBuilder masked = new StringBuilder(value.length());
 

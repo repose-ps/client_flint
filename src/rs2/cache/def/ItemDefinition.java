@@ -6,6 +6,7 @@ import rs2.media.ItemSpriteFactory;
 import rs2.media.renderable.Model;
 import rs2.net.Buffer;
 
+/** Provides item definition state and behavior. */
 public class ItemDefinition {
 
 	/**
@@ -32,7 +33,7 @@ public class ItemDefinition {
 	}
 
 	/**
-	 * Performs the lookup operation.
+	 * Looks up an item definition by identifier.
 	 *
 	 * @param id the id
 	 * @return the matching value
@@ -124,7 +125,7 @@ public class ItemDefinition {
 	}
 
 	/**
-	 * Performs the to note operation.
+	 * Converts this definition to its noted-item variant.
 	 */
 	public void toNote() {
 		ItemDefinition templateDefinition = lookup(noteTemplateId);
@@ -438,98 +439,145 @@ public class ItemDefinition {
 		id = -1;
 	}
 
+	/** Stores the current female model0. */
 	public int femaleModel0;
 
+	/** Stores the current offset x2d. */
 	public int offsetX2d;
 
+	/** Stores description values. */
 	public byte description[];
 
+	/** Stores the current name. */
 	public String name;
 
+	/** Stores the current female offset. */
 	public byte femaleOffset;
 
+	/** Stores the current male model1. */
 	public int maleModel1;
 
+	/** Stores the current team. */
 	public int team;
 
+	/** Stores the current note ID. */
 	public int noteId;
 
+	/** Stores the current male head model0. */
 	public int maleHeadModel0;
 
+	/** Stores the current count. */
 	public static int count;
 
+	/** Stores cache values. */
 	public static ItemDefinition cache[];
 
+	/**
+	 * Model cache.
+	 *
+	 */
 	public static LruCache modelCache = new LruCache(50);
 
+	/** Stores ground actions values. */
 	public String groundActions[];
 
+	/** Stores the current zan2d. */
 	public int zan2d;
 
+	/** Stores the current offset y2d. */
 	public int offsetY2d;
 
+	/** Stores recolor to values. */
 	public int recolorTo[];
 
+	/** Stores offsets values. */
 	public static int offsets[];
 
+	/** Stores the current note template ID. */
 	public int noteTemplateId;
 	/** Tracks whether members world. */
 	public static boolean membersWorld = true;
 
+	/** Stores the current price. */
 	public int price;
 
+	/** Stores inventory actions values. */
 	public String inventoryActions[];
 
+	/** Stores the current cache index. */
 	public static int cacheIndex;
 
+	/** Stores the current male model0. */
 	public int maleModel0;
 
+	/** Stores the current ambient. */
 	public int ambient;
 
+	/** Stores the current female model1. */
 	public int femaleModel1;
 
+	/** Stores the current yan2d. */
 	public int yan2d;
 
+	/** Stores the current resize Y. */
 	public int resizeY;
 
+	/** Stores the current contrast. */
 	public int contrast;
 
+	/** Stores the current xan2d. */
 	public int xan2d;
 
+	/** Stores the current model ID. */
 	public int modelId;
 
+	/** Stores the current male head model1. */
 	public int maleHeadModel1;
 
+	/** Stores the current female head model1. */
 	public int femaleHeadModel1;
 
+	/** Stores the current ID. */
 	public int id;
 
+	/** Stores recolor from values. */
 	public int recolorFrom[];
 
+	/** Stores stack variant IDs values. */
 	public int stackVariantIds[];
 
+	/** Stores the current resize X. */
 	public int resizeX;
 
+	/** Stores the current female model2. */
 	public int femaleModel2;
 
+	/** Stores the current resize Z. */
 	public int resizeZ;
 
+	/** Stores the current zoom2d. */
 	public int zoom2d;
 
+	/** Stores the current male model2. */
 	public int maleModel2;
 	/** Tracks whether stackable. */
 	public boolean stackable;
 
+	/** Stores the current opcode10 value. */
 	public int opcode10Value;
 
+	/** Stores the current data buffer. */
 	public static Buffer dataBuffer;
 
+	/** Stores the current female head model0. */
 	public int femaleHeadModel0;
 
+	/** Stores stack variant amounts values. */
 	public int stackVariantAmounts[];
 	/** Tracks whether members only. */
 	public boolean membersOnly;
 
+	/** Stores the current male offset. */
 	public byte maleOffset;
 
 }

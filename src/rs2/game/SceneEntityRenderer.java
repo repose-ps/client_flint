@@ -10,8 +10,14 @@ import rs2.media.renderable.Player;
  */
 public final class SceneEntityRenderer {
 
+	/** Creates a new scene entity renderer with its default client state. */
+	public SceneEntityRenderer() {
+	}
+
+	/** Stores tile render cycles values. */
 	private final int[][] tileRenderCycles = new int[104][104];
 
+	/** Stores the current render cycle. */
 	private int renderCycle;
 
 	/**

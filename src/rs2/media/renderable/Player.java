@@ -24,42 +24,66 @@ import rs2.text.TextFormatter;
  */
 public class Player extends Actor {
 
+	/** Creates a new player with its default client state. */
+	public Player() {
+	}
+
+	/** Stores the current attached model X. */
 	public int attachedModelX;
 
+	/** Stores the current attached model height. */
 	public int attachedModelHeight;
 
+	/** Stores the current attached model Y. */
 	public int attachedModelY;
 
+	/** Stores the current attached model. */
 	public Model attachedModel;
 
+	/** Stores the current prayer icon. */
 	public int prayerIcon = -1;
 
+	/** Stores the current last model hash. */
 	private long lastModelHash = -1L;
 
+	/** Stores the current tile height. */
 	public int tileHeight;
 
+	/** Stores the current name. */
 	public String name;
 
+	/** Stores equipment values. */
 	public final int[] equipment = new int[12];
 
+	/** Stores the current combat level. */
 	public int combatLevel;
 
+	/** Stores the current appearance hash. */
 	private long appearanceHash;
 
+	/** Stores the current gender. */
 	public int gender;
 
+	/** Stores the current skull icon. */
 	public int skullIcon = -1;
 
+	/** Stores the current NPC definition. */
 	public NpcDefinition npcDefinition;
 	/**
 	 * Whether visible.
 	 */
 	public boolean visible;
 
+	/** Stores the current skill level. */
 	public int skillLevel;
 
+	/** Stores body colors values. */
 	public final int[] bodyColors = new int[5];
 
+	/**
+	 * Model cache.
+	 *
+	 */
 	public static LruCache modelCache = new LruCache(260);
 	/**
 	 * When true, return the cached lit base model without applying actor/spot
@@ -67,22 +91,30 @@ public class Player extends Actor {
 	 */
 	public boolean isUnanimated;
 
+	/** Stores the current attached model start cycle. */
 	public int attachedModelStartCycle;
 
+	/** Stores the current attached model end cycle. */
 	public int attachedModelEndCycle;
 
+	/** Stores the current team. */
 	public int team;
 
+	/** Stores the current attached model min X. */
 	public int attachedModelMinX;
 
+	/** Stores the current attached model min Y. */
 	public int attachedModelMinY;
 
+	/** Stores the current attached model max X. */
 	public int attachedModelMaxX;
 
+	/** Stores the current attached model max Y. */
 	public int attachedModelMaxY;
 
 	/**
 	 * Builds the dialogue/head model for the current appearance.
+	 * @return the head model
 	 */
 	public Model getHeadModel() {
 		if (!visible) {
@@ -129,6 +161,7 @@ public class Player extends Actor {
 	/**
 	 * Builds the cached body model and applies the currently selected
 	 * movement/action frames.
+	 * @return the base model
 	 */
 	public Model getBaseModel() {
 		if (npcDefinition != null) {
@@ -326,7 +359,7 @@ public class Player extends Actor {
 	/**
 	 * Returns whether visible.
 	 *
-	 * @return the resulting boolean
+	 * @return {@code true} when visible; otherwise {@code false}
 	 */
 	@Override
 	public boolean isVisible() {

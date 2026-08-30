@@ -6,24 +6,44 @@ package rs2.ui.login;
  */
 public final class LoginScreen {
 
+	/** Creates a new login screen with its default client state. */
+	public LoginScreen() {
+	}
+
+	/** Constant value for welcome. */
 	public static final int WELCOME = 0;
+	/** Constant value for credentials. */
 	public static final int CREDENTIALS = 2;
+	/** Constant value for create account. */
 	public static final int CREATE_ACCOUNT = 3;
 
+	/** Performs this client operation. */
 	private static final String VALID_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!\"\243$%^&*()-_=+[{]};:'@#~,<.>/?\\| ";
 
+	/** Stores the current state. */
 	public int state = WELCOME;
+	/** Stores the current focused field. */
 	public int focusedField;
+	/** Stores the current username. */
 	public String username = "";
+	/** Stores the current password. */
 	public String password = "";
+	/** Stores the current message1. */
 	public String message1 = "";
+	/** Stores the current message2. */
 	public String message2 = "";
 
+	/**
+	 * Switches the login UI to the account-creation screen.
+	 */
 	public void showCreateAccount() {
 		state = CREATE_ACCOUNT;
 		focusedField = 0;
 	}
 
+	/**
+	 * Switches the login UI to the credential-entry screen.
+	 */
 	public void showCredentials() {
 		message1 = "";
 		message2 = "Enter your username & password.";
@@ -31,23 +51,35 @@ public final class LoginScreen {
 		focusedField = 0;
 	}
 
+	/**
+	 * Returns whether cel credentials.
+	 */
 	public void cancelCredentials() {
 		state = WELCOME;
 		username = "";
 		password = "";
 	}
 
+	/**
+	 * Returns whether cel create account.
+	 */
 	public void cancelCreateAccount() {
 		state = WELCOME;
 	}
 
+	/**
+	 * Resets for logout.
+	 */
 	public void resetForLogout() {
 		state = WELCOME;
 		username = "";
 		password = "";
 	}
 
-	/** Preserves the original per-key order, field switching and length caps. */
+	/**
+	 * Preserves the original per-key order, field switching and length caps.
+	 * @param key the lookup key
+	 */
 	public void processKey(int key) {
 		boolean valid = false;
 		for (int index = 0; index < VALID_CHARACTERS.length(); index++) {

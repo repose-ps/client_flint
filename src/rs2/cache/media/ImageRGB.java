@@ -13,18 +13,25 @@ import rs2.net.Buffer;
 /** Full-colour software sprite backed by 24-bit RGB pixels. */
 public class ImageRGB extends Rasterizer {
 
+	/** Stores pixels values. */
 	public int[] pixels;
 
+	/** Stores the current width. */
 	public int width;
 
+	/** Stores the current height. */
 	public int height;
 
+	/** Stores the current offset X. */
 	public int offsetX;
 
+	/** Stores the current offset Y. */
 	public int offsetY;
 
+	/** Stores the current max width. */
 	public int maxWidth;
 
+	/** Stores the current max height. */
 	public int maxHeight;
 
 	/**
@@ -125,7 +132,7 @@ public class ImageRGB extends Rasterizer {
 	}
 
 	/**
-	 * Performs the adjust rgb operation.
+	 * Adjusts the RGB channels of every non-transparent pixel.
 	 *
 	 * @param redOffset   the red offset
 	 * @param greenOffset the green offset
@@ -160,7 +167,7 @@ public class ImageRGB extends Rasterizer {
 	}
 
 	/**
-	 * Performs the trim operation.
+	 * Expands the image into its maximum canvas and clears its offsets.
 	 */
 	public void trim() {
 		int[] newPixels = new int[maxWidth * maxHeight];
@@ -304,7 +311,7 @@ public class ImageRGB extends Rasterizer {
 	}
 
 	/**
-	 * Performs the shape image to pixels operation.
+	 * Draws the image through the supplied shaped row mask.
 	 *
 	 * @param pixels                the pixels
 	 * @param rasterizerPixels      the rasterizer pixels
@@ -441,7 +448,7 @@ public class ImageRGB extends Rasterizer {
 	}
 
 	/**
-	 * Performs the shape image to pixels operation.
+	 * Draws the image through the supplied shaped row mask.
 	 *
 	 * @param x          the x
 	 * @param y          the y

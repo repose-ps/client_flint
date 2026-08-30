@@ -13,20 +13,42 @@ import rs2.text.TextFormatter;
  * </p>
  */
 public final class SocialManager {
+
+	/** Creates a new social manager with its default client state. */
+	public SocialManager() {
+	}
+	/** Maximum friends. */
 	public static final int MAX_FRIENDS = 200;
+	/** Maximum free friends. */
 	public static final int MAX_FREE_FRIENDS = 100;
+	/** Maximum ignores. */
 	public static final int MAX_IGNORES = 100;
 
+	/** Stores the current friend count. */
 	public int friendCount;
+	/** Stores friend names values. */
 	public String[] friendNames = new String[MAX_FRIENDS];
+	/** Stores friend encoded names values. */
 	public long[] friendEncodedNames = new long[MAX_FRIENDS];
+	/** Stores friend worlds values. */
 	public int[] friendWorlds = new int[MAX_FRIENDS];
+	/** Stores the current friend list status. */
 	public int friendListStatus;
 
+	/** Stores the current ignore count. */
 	public int ignoreCount;
+	/** Stores ignore encoded names values. */
 	public final long[] ignoreEncodedNames = new long[MAX_IGNORES];
 
+	/** Provides message sink state and behavior. */
 	public interface MessageSink {
+		/**
+		 * Adds chat message.
+		 *
+		 * @param sender the sender
+		 * @param message the message text
+		 * @param type the type
+		 */
 		void addChatMessage(String sender, String message, int type);
 	}
 
@@ -43,6 +65,12 @@ public final class SocialManager {
 		friendCount = 0;
 	}
 
+	/**
+	 * Returns whether ignored.
+	 *
+	 * @param encodedName the encoded name
+	 * @return whether ignored
+	 */
 	public boolean isIgnored(long encodedName) {
 		for (int index = 0; index < ignoreCount; index++) {
 			if (ignoreEncodedNames[index] == encodedName) {
@@ -52,6 +80,12 @@ public final class SocialManager {
 		return false;
 	}
 
+	/**
+	 * Returns whether friend.
+	 *
+	 * @param name the name
+	 * @return whether friend
+	 */
 	public boolean isFriend(String name) {
 		if (name == null) {
 			return false;
@@ -64,6 +98,13 @@ public final class SocialManager {
 		return false;
 	}
 
+	/**
+	 * Returns whether friend or self.
+	 *
+	 * @param name the name
+	 * @param localPlayerName the local player name
+	 * @return whether friend or self
+	 */
 	public boolean isFriendOrSelf(String name, String localPlayerName) {
 		if (isFriend(name)) {
 			return true;
@@ -71,6 +112,12 @@ public final class SocialManager {
 		return name != null && localPlayerName != null && name.equalsIgnoreCase(localPlayerName);
 	}
 
+	/**
+	 * Finds friend index.
+	 *
+	 * @param encodedName the encoded name
+	 * @return the friend index result
+	 */
 	public int findFriendIndex(long encodedName) {
 		for (int index = 0; index < friendCount; index++) {
 			if (friendEncodedNames[index] == encodedName) {
@@ -80,6 +127,16 @@ public final class SocialManager {
 		return -1;
 	}
 
+	/**
+	 * Adds friend.
+	 *
+	 * @param encodedName the encoded name
+	 * @param membersAccount the members account
+	 * @param localPlayerName the local player name
+	 * @param outgoing the outgoing
+	 * @param messages the messages
+	 * @return whether add friend
+	 */
 	public boolean addFriend(long encodedName, boolean membersAccount, String localPlayerName, Buffer outgoing,
 			MessageSink messages) {
 		if (encodedName == 0L) {
@@ -115,6 +172,13 @@ public final class SocialManager {
 		return true;
 	}
 
+	/**
+	 * Removes friend.
+	 *
+	 * @param encodedName the encoded name
+	 * @param outgoing the outgoing
+	 * @return whether remove friend
+	 */
 	public boolean removeFriend(long encodedName, Buffer outgoing) {
 		if (encodedName == 0L) {
 			return false;
@@ -136,6 +200,14 @@ public final class SocialManager {
 		return false;
 	}
 
+	/**
+	 * Adds ignore.
+	 *
+	 * @param encodedName the encoded name
+	 * @param outgoing the outgoing
+	 * @param messages the messages
+	 * @return whether add ignore
+	 */
 	public boolean addIgnore(long encodedName, Buffer outgoing, MessageSink messages) {
 		if (encodedName == 0L) {
 			return false;
@@ -164,6 +236,13 @@ public final class SocialManager {
 		return true;
 	}
 
+	/**
+	 * Removes ignore.
+	 *
+	 * @param encodedName the encoded name
+	 * @param outgoing the outgoing
+	 * @return whether remove ignore
+	 */
 	public boolean removeIgnore(long encodedName, Buffer outgoing) {
 		if (encodedName == 0L) {
 			return false;
@@ -183,6 +262,12 @@ public final class SocialManager {
 		return false;
 	}
 
+	/**
+	 * Replaces ignore list.
+	 *
+	 * @param incoming the incoming
+	 * @param packetLength the packet length
+	 */
 	public void replaceIgnoreList(Buffer incoming, int packetLength) {
 		ignoreCount = packetLength / 8;
 		for (int index = 0; index < ignoreCount; index++) {
@@ -194,6 +279,10 @@ public final class SocialManager {
 	 * Applies opcode-78 friend presence updates and preserves the original
 	 * current-world/online bubble-sort ordering.
 	 *
+	 * @param encodedName the encoded name
+	 * @param world the world
+	 * @param currentWorld the current world
+	 * @param messages the messages
 	 * @return true when visible friend-list state/order changed
 	 */
 	public boolean updateFriend(long encodedName, int world, int currentWorld, MessageSink messages) {

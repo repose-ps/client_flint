@@ -22,30 +22,47 @@ import rs2.scene.Region;
  */
 public final class RegionManager {
 
+	/** Creates a new region manager with its default client state. */
+	public RegionManager() {
+	}
+
+	/** Constant value for stage unloaded. */
 	public static final int STAGE_UNLOADED = 0;
 
+	/** Constant value for stage loading. */
 	public static final int STAGE_LOADING = 1;
 
+	/** Constant value for stage loaded. */
 	public static final int STAGE_LOADED = 2;
 
+	/** Stores instance templates values. */
 	public final int[][][] instanceTemplates = new int[4][13][13];
 
+	/** Stores terrain data values. */
 	public byte[][] terrainData;
 
+	/** Stores landscape data values. */
 	public byte[][] landscapeData;
 
+	/** Stores region IDs values. */
 	public int[] regionIds;
 
+	/** Stores terrain archive IDs values. */
 	public int[] terrainArchiveIds;
 
+	/** Stores landscape archive IDs values. */
 	public int[] landscapeArchiveIds;
 
+	/** Stores the current region X. */
 	public int regionX;
 
+	/** Stores the current region Y. */
 	public int regionY;
 
+	/** Stores the current base X. */
 	public int baseX;
 
+	/** Stores the current base Y. */
 	public int baseY;
 	/**
 	 * Whether instanced.
@@ -56,32 +73,50 @@ public final class RegionManager {
 	 */
 	public boolean specialRegion;
 
+	/** Stores the current loading stage. */
 	public int loadingStage;
 
+	/** Stores the current loading start time. */
 	public long loadingStartTime;
 	/**
 	 * Whether awaiting player update.
 	 */
 	public boolean awaitingPlayerUpdate;
 
+	/** Stores the current previous base X. */
 	private int previousBaseX;
 
+	/** Stores the current previous base Y. */
 	private int previousBaseY;
 
+	/** Provides region shift state and behavior. */
 	public static final class RegionShift {
 		/**
 		 * Whether changed.
 		 */
 		public final boolean changed;
 
+		/** Stores the current delta X. */
 		public final int deltaX;
 
+		/** Stores the current delta Y. */
 		public final int deltaY;
 
+		/** Stores the current destination X. */
 		public final int destinationX;
 
+		/** Stores the current destination Y. */
 		public final int destinationY;
 
+		/**
+		 * Creates a new region shift.
+		 *
+		 * @param changed the changed
+		 * @param deltaX the delta X
+		 * @param deltaY the delta Y
+		 * @param destinationX the destination X
+		 * @param destinationY the destination Y
+		 */
 		private RegionShift(boolean changed, int deltaX, int deltaY, int destinationX, int destinationY) {
 			this.changed = changed;
 			this.deltaX = deltaX;
@@ -102,6 +137,7 @@ public final class RegionManager {
 	 * @param world        the world
 	 * @param destinationX the destination x
 	 * @param destinationY the destination y
+	 * @return the decoded rebuild value
 	 */
 	public RegionShift decodeRebuild(Buffer buffer, int opcode, OnDemandFetcher fetcher, ActorSynchronizer actors,
 			WorldState world, int destinationX, int destinationY) {
@@ -356,7 +392,10 @@ public final class RegionManager {
 		awaitingPlayerUpdate = false;
 	}
 
-	/** Returns the current region-loading readiness code without building the scene. */
+	/**
+	 * Returns the current region-loading readiness code without building the scene.
+	 * @return the loading status
+	 */
 	public int getLoadingStatus() {
 		for (int index = 0; index < terrainData.length; index++) {
 			if (terrainData[index] == null && terrainArchiveIds[index] != -1) {
@@ -389,7 +428,16 @@ public final class RegionManager {
 		return 0;
 	}
 
-	/** Builds terrain, objects, collision, and scene state for the loaded region set. */
+	/**
+	 * Builds terrain, objects, collision, and scene state for the loaded region set.
+	 * @param world the world
+	 * @param currentPlane the current plane
+	 * @param lowMemory whether low-memory mode is active
+	 * @param outgoing the outgoing
+	 * @param fetcher the fetcher
+	 * @param standaloneFrame the standalone frame
+	 * @param rebindSceneRaster the rebind scene raster
+	 */
 	public void buildRegion(WorldState world, int currentPlane, boolean lowMemory, Buffer outgoing,
 			OnDemandFetcher fetcher, boolean standaloneFrame, Runnable rebindSceneRaster) {
 		try {

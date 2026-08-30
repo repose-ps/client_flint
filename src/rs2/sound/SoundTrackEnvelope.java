@@ -62,7 +62,10 @@ public class SoundTrackEnvelope {
 		segmentPeaks = new int[] { 0, 65535 };
 	}
 
-	/** Decodes the envelope header followed by its segment shape. */
+	/**
+	 * Decodes the envelope header followed by its segment shape.
+	 * @param buffer the source buffer
+	 */
 	public void decode(Buffer buffer) {
 		waveform = buffer.readUnsignedByte();
 		start = buffer.readInt();
@@ -70,7 +73,10 @@ public class SoundTrackEnvelope {
 		decodeSegments(buffer);
 	}
 
-	/** Decodes only the piecewise-linear segment data. */
+	/**
+	 * Decodes only the piecewise-linear segment data.
+	 * @param buffer the source buffer
+	 */
 	public void decodeSegments(Buffer buffer) {
 		segmentCount = buffer.readUnsignedByte();
 		segmentDurations = new int[segmentCount];

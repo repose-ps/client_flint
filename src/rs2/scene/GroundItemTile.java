@@ -13,6 +13,10 @@ import rs2.media.renderable.Renderable;
  */
 public class GroundItemTile {
 
+	/** Creates a new ground item tile with its default client state. */
+	public GroundItemTile() {
+	}
+
 	/** World-space height at which the pile is based. */
 	public int z;
 

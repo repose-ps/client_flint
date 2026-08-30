@@ -9,6 +9,11 @@ import rs2.net.Buffer;
  */
 public class AnimationSequence {
 
+	/** Creates a new animation sequence with its default client state. */
+	public AnimationSequence() {
+	}
+
+	/** Constant value for interleave terminator. */
 	private static final int INTERLEAVE_TERMINATOR = 0x98967f;
 
 	/** Number of sequence definitions declared by {@code seq.dat}. */
@@ -17,25 +22,42 @@ public class AnimationSequence {
 	/** Sequence definitions indexed by animation identifier. */
 	public static AnimationSequence[] sequences;
 
+	/** Stores the current frame count. */
 	public int frameCount;
+	/** Stores primary frame IDs values. */
 	public int[] primaryFrameIds;
+	/** Stores secondary frame IDs values. */
 	public int[] secondaryFrameIds;
+	/** Stores frame lengths values. */
 	public int[] frameLengths;
+	/** Stores the current frame step. */
 	public int frameStep = -1;
+	/** Stores interleave order values. */
 	public int[] interleaveOrder;
+	/** Whether stretches is enabled or active. */
 	public boolean stretches;
+	/** Stores the current forced priority. */
 	public int forcedPriority = 5;
+	/** Stores the current shield override. */
 	public int shieldOverride = -1;
+	/** Stores the current weapon override. */
 	public int weaponOverride = -1;
+	/** Stores the current maximum loops. */
 	public int maximumLoops = 99;
+	/** Stores the current precedence animating. */
 	public int precedenceAnimating = -1;
+	/** Stores the current priority. */
 	public int priority = -1;
+	/** Stores the current replay mode. */
 	public int replayMode = 2;
 
 	/** Reserved integer carried by opcode 12 in revision 377. */
 	public int opcode12Value;
 
-	/** Loads all animation sequence definitions from {@code seq.dat}. */
+	/**
+	 * Loads all animation sequence definitions from {@code seq.dat}.
+	 * @param archive the source archive
+	 */
 	public static void load(Archive archive) {
 		Buffer buffer = new Buffer(archive.read("seq.dat"));
 		count = buffer.readUnsignedShort();
@@ -55,6 +77,8 @@ public class AnimationSequence {
 	/**
 	 * Returns a frame's duration, resolving a zero duration from frame metadata. A
 	 * duration of one cycle is used when no metadata is available.
+	 * @param frame the animation frame
+	 * @return the frame length
 	 */
 	public int getFrameLength(int frame) {
 		int length = frameLengths[frame];
@@ -67,7 +91,10 @@ public class AnimationSequence {
 		return length == 0 ? 1 : length;
 	}
 
-	/** Decodes one opcode-delimited sequence definition. */
+	/**
+	 * Decodes one opcode-delimited sequence definition.
+	 * @param buffer the source buffer
+	 */
 	public void decode(Buffer buffer) {
 		while (true) {
 			int opcode = buffer.readUnsignedByte();
@@ -123,6 +150,11 @@ public class AnimationSequence {
 		}
 	}
 
+	/**
+	 * Decodes frames.
+	 *
+	 * @param buffer the source buffer
+	 */
 	private void decodeFrames(Buffer buffer) {
 		frameCount = buffer.readUnsignedByte();
 		primaryFrameIds = new int[frameCount];

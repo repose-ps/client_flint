@@ -13,6 +13,9 @@ import rs2.media.Rasterizer3D;
  */
 public final class TerrainNoise {
 
+	/**
+	 * Creates a new terrain noise.
+	 */
 	private TerrainNoise() {
 	}
 
@@ -22,6 +25,7 @@ public final class TerrainNoise {
 	 *
 	 * @param x the x
 	 * @param y the y
+	 * @return the deterministic pseudo-random noise value
 	 */
 	public static int randomNoise(int x, int y) {
 		int seed = x + y * 57;
@@ -35,6 +39,7 @@ public final class TerrainNoise {
 	 *
 	 * @param x the x
 	 * @param y the y
+	 * @return the smoothed neighborhood noise value
 	 */
 	public static int smoothNoise(int x, int y) {
 		int corners = randomNoise(x - 1, y - 1) + randomNoise(x + 1, y - 1) + randomNoise(x - 1, y + 1)
@@ -52,6 +57,7 @@ public final class TerrainNoise {
 	 * @param to       the to
 	 * @param position the position
 	 * @param scale    the scale
+	 * @return the cosine-interpolated value
 	 */
 	public static int cosineInterpolate(int from, int to, int position, int scale) {
 		int weight = 65536 - Rasterizer3D.COSINE[position * 1024 / scale] >> 1;
@@ -64,6 +70,7 @@ public final class TerrainNoise {
 	 * @param x     the x
 	 * @param y     the y
 	 * @param scale the scale
+	 * @return the interpolated noise value at the requested scale
 	 */
 	public static int interpolatedNoise(int x, int y, int scale) {
 		int cellX = x / scale;
@@ -85,6 +92,7 @@ public final class TerrainNoise {
 	 *
 	 * @param x the x
 	 * @param y the y
+	 * @return the calculated height value
 	 */
 	public static int calculateHeight(int x, int y) {
 		int value = interpolatedNoise(x + 45365, y + 91923, 4) - 128

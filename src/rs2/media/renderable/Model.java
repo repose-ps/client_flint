@@ -166,7 +166,7 @@ public class Model extends Renderable {
 	/**
 	 * Returns whether loaded.
 	 *
-	 * @return the resulting boolean
+	 * @return {@code true} when loaded; otherwise {@code false}
 	 * @param modelId the model id
 	 */
 	public static boolean isLoaded(int modelId) {
@@ -181,10 +181,18 @@ public class Model extends Renderable {
 		}
 	}
 
+	/**
+	 * Creates a new model.
+	 */
 	private Model() {
 		singleTile = false;
 	}
 
+	/**
+	 * Creates a new model.
+	 *
+	 * @param modelId the model ID
+	 */
 	private Model(int modelId) {
 		singleTile = false;
 		ModelHeader header = modelHeaders[modelId];
@@ -310,6 +318,12 @@ public class Model extends Renderable {
 		}
 	}
 
+	/**
+	 * Creates a new model.
+	 *
+	 * @param modelCount the model count
+	 * @param models the models
+	 */
 	public Model(int modelCount, Model[] models) {
 		singleTile = false;
 		boolean conditionFlag = false;
@@ -414,6 +428,12 @@ public class Model extends Renderable {
 
 	}
 
+	/**
+	 * Creates a new model.
+	 *
+	 * @param models the models
+	 * @param modelCount the model count
+	 */
 	public Model(Model[] models, int modelCount) {
 		singleTile = false;
 		boolean conditionFlag = false;
@@ -527,6 +547,14 @@ public class Model extends Renderable {
 		calculateDiagonals();
 	}
 
+	/**
+	 * Creates a new model.
+	 *
+	 * @param source the source
+	 * @param shareVertices the share vertices
+	 * @param shareColors the share colors
+	 * @param shareAlpha the share alpha
+	 */
 	public Model(Model source, boolean shareVertices, boolean shareColors, boolean shareAlpha) {
 		singleTile = false;
 		vertexCount = source.vertexCount;
@@ -582,6 +610,13 @@ public class Model extends Renderable {
 		texturedTriangleC = source.texturedTriangleC;
 	}
 
+	/**
+	 * Creates a new model.
+	 *
+	 * @param source the source
+	 * @param copyVerticesY the copy vertices Y
+	 * @param copyLighting the copy lighting
+	 */
 	public Model(Model source, boolean copyVerticesY, boolean copyLighting) {
 		singleTile = false;
 		vertexCount = source.vertexCount;
@@ -1770,7 +1805,7 @@ public class Model extends Renderable {
 	/**
 	 * Draws face.
 	 *
-	 * @param inputValue the input value
+	 * @param triangle index of the triangle to draw
 	 */
 	private void drawFace(int triangle) {
 		if (faceNearClipped[triangle]) {
@@ -2057,7 +2092,7 @@ public class Model extends Renderable {
 	/**
 	 * Performs contains point.
 	 *
-	 * @return the resulting boolean
+	 * @return {@code true} when contains point; otherwise {@code false}
 	 * @param inputValue  the input value
 	 * @param inputValue2 the input value2
 	 * @param inputValue3 the input value3
@@ -2078,60 +2113,85 @@ public class Model extends Renderable {
 		return inputValue <= inputValue6 || inputValue <= inputValue7 || inputValue <= inputValue8;
 	}
 
+	/**
+	 * Shared model.
+	 *
+	 */
 	public static final Model sharedModel = new Model();
 
+	/** Stores shared vertices X values. */
 	private static int sharedVerticesX[] = new int[2000];
 
+	/** Stores shared vertices Y values. */
 	private static int sharedVerticesY[] = new int[2000];
 
+	/** Stores shared vertices Z values. */
 	private static int sharedVerticesZ[] = new int[2000];
 
+	/** Stores shared triangle alpha values. */
 	private static int sharedTriangleAlpha[] = new int[2000];
 	/**
 	 * Number of vertex entries.
 	 */
 	public int vertexCount;
 
+	/** Stores vertices X values. */
 	public int verticesX[];
 
+	/** Stores vertices Y values. */
 	public int verticesY[];
 
+	/** Stores vertices Z values. */
 	public int verticesZ[];
 	/**
 	 * Number of triangle entries.
 	 */
 	public int triangleCount;
 
+	/** Stores triangle vertex a values. */
 	public int triangleVertexA[];
 
+	/** Stores triangle vertex b values. */
 	public int triangleVertexB[];
 
+	/** Stores triangle vertex c values. */
 	public int triangleVertexC[];
 
+	/** Stores triangle shade a values. */
 	public int triangleShadeA[];
 
+	/** Stores triangle shade b values. */
 	public int triangleShadeB[];
 
+	/** Stores triangle shade c values. */
 	public int triangleShadeC[];
 
+	/** Stores triangle draw type values. */
 	public int triangleDrawType[];
 
+	/** Stores triangle priorities values. */
 	public int trianglePriorities[];
 
+	/** Stores triangle alpha values. */
 	public int triangleAlpha[];
 
+	/** Stores triangle colors values. */
 	public int triangleColors[];
 
+	/** Stores the current default triangle priority. */
 	public int defaultTrianglePriority;
 	/**
 	 * Number of textured triangle entries.
 	 */
 	public int texturedTriangleCount;
 
+	/** Stores textured triangle a values. */
 	public int texturedTriangleA[];
 
+	/** Stores textured triangle b values. */
 	public int texturedTriangleB[];
 
+	/** Stores textured triangle c values. */
 	public int texturedTriangleC[];
 	/**
 	 * Packed deferred-lighting state: ambient in the high 16 bits, scaled contrast
@@ -2146,98 +2206,137 @@ public class Model extends Renderable {
 	 */
 	public int packedZBounds;
 
+	/** Stores the current horizontal radius. */
 	public int horizontalRadius;
 
+	/** Stores the current max Y. */
 	public int maxY;
 
+	/** Stores the current depth span. */
 	public int depthSpan;
 
+	/** Stores the current radius. */
 	public int radius;
 	/**
 	 * Scene support height used when stacking ground-item piles on top of models.
 	 */
 	public int itemDropHeight;
 
+	/** Stores vertex skins values. */
 	public int vertexSkins[];
 
+	/** Stores triangle skins values. */
 	public int triangleSkins[];
 
+	/** Stores vertex groups values. */
 	public int vertexGroups[][];
 
+	/** Stores triangle groups values. */
 	public int triangleGroups[][];
 	/**
 	 * Whether single tile.
 	 */
 	public boolean singleTile;
 
+	/** Stores vertex normal offsets values. */
 	public VertexNormal vertexNormalOffsets[];
 
+	/** Stores model headers values. */
 	private static ModelHeader modelHeaders[];
 
+	/** Stores the current model provider. */
 	private static OnDemandProvider modelProvider;
 
+	/** Whether face out of bounds is enabled or active. */
 	private static boolean faceOutOfBounds[] = new boolean[4096];
 
+	/** Whether face near clipped is enabled or active. */
 	private static boolean faceNearClipped[] = new boolean[4096];
 
+	/** Stores projected X values. */
 	private static int projectedX[] = new int[4096];
 
+	/** Stores projected Y values. */
 	private static int projectedY[] = new int[4096];
 
+	/** Stores projected depth values. */
 	private static int projectedDepth[] = new int[4096];
 
+	/** Stores camera X values. */
 	private static int cameraX[] = new int[4096];
 
+	/** Stores camera Y values. */
 	private static int cameraY[] = new int[4096];
 
+	/** Stores camera Z values. */
 	private static int cameraZ[] = new int[4096];
 
+	/** Stores depth bucket counts values. */
 	private static int depthBucketCounts[] = new int[1500];
 
+	/** Stores depth buckets values. */
 	private static int depthBuckets[][] = new int[1500][512];
 
+	/** Stores priority bucket counts values. */
 	private static int priorityBucketCounts[] = new int[12];
 
+	/** Stores priority buckets values. */
 	private static int priorityBuckets[][] = new int[12][2000];
 
+	/** Stores priority10 depths values. */
 	private static int priority10Depths[] = new int[2000];
 
+	/** Stores priority11 depths values. */
 	private static int priority11Depths[] = new int[2000];
 
+	/** Stores priority depth sums values. */
 	private static int priorityDepthSums[] = new int[12];
 
+	/** Stores clipped X values. */
 	private static int clippedX[] = new int[10];
 
+	/** Stores clipped Y values. */
 	private static int clippedY[] = new int[10];
 
+	/** Stores clipped shade values. */
 	private static int clippedShade[] = new int[10];
 
+	/** Stores the current transform pivot X. */
 	private static int transformPivotX;
 
+	/** Stores the current transform pivot Y. */
 	private static int transformPivotY;
 
+	/** Stores the current transform pivot Z. */
 	private static int transformPivotZ;
 	/**
 	 * Whether picking enabled.
 	 */
 	public static boolean pickingEnabled;
 
+	/** Stores the current mouse X. */
 	public static int mouseX;
 
+	/** Stores the current mouse Y. */
 	public static int mouseY;
 	/**
 	 * Number of picked entries.
 	 */
 	public static int pickedCount;
 
+	/** Stores picked uids values. */
 	public static int pickedUids[] = new int[1000];
 
+	/** Constant value for sine. */
 	public static int SINE[];
 
+	/** Constant value for cosine. */
 	public static int COSINE[];
 
+	/** Constant value for hsl to RGB. */
 	private static int HSL_TO_RGB[];
 
+	/** Constant value for reciprocal 16. */
 	private static int RECIPROCAL_16[];
 
 	static {

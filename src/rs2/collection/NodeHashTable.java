@@ -107,6 +107,8 @@ public class NodeHashTable {
 
 	/**
 	 * Selects the bucket associated with a key.
+	 * @param key the lookup key
+	 * @return the bucket sentinel selected for the key
 	 */
 	private Node bucket(long key) {
 		int index = (int) (key & (bucketCount - 1));

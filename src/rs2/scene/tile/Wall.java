@@ -13,6 +13,10 @@ import rs2.media.renderable.Renderable;
  */
 public class Wall {
 
+	/** Creates a new wall with its default client state. */
+	public Wall() {
+	}
+
 	/** World-space elevation of the wall. */
 	public int z;
 

@@ -33,21 +33,53 @@ import javax.sound.sampled.UnsupportedAudioFileException;
  */
 public final class JavaSoundAudioPlayer implements AutoCloseable {
 
+	/** Provides wave output state and behavior. */
 	interface WaveOutput extends AutoCloseable {
+		/**
+		 * Starts playback using this audio backend.
+		 *
+		 * @param file the file
+		 * @param volume the volume
+		 * @throws Exception if exception is raised while performing the operation
+		 */
 		void play(File file, int volume) throws Exception;
 
+		/**
+		 * Sets volume.
+		 *
+		 * @param volume the volume
+		 */
 		void setVolume(int volume);
 	}
 
+	/** Provides MIDI output state and behavior. */
 	interface MidiOutput extends AutoCloseable {
+		/**
+		 * Starts playback using this audio backend.
+		 *
+		 * @param file the file
+		 * @param volume the volume
+		 * @param fade the fade
+		 * @throws Exception if exception is raised while performing the operation
+		 */
 		void play(File file, int volume, boolean fade) throws Exception;
 
+		/**
+		 * Sets volume.
+		 *
+		 * @param volume the volume
+		 */
 		void setVolume(int volume);
 
+		/**
+		 * Stops the operation.
+		 */
 		void stop();
 	}
 
+	/** Stores the current wave output. */
 	private final WaveOutput waveOutput;
+	/** Stores the current MIDI output. */
 	private final MidiOutput midiOutput;
 
 	/** Creates a player backed by the platform Java Sound implementation. */
@@ -55,12 +87,22 @@ public final class JavaSoundAudioPlayer implements AutoCloseable {
 		this(new ClipWaveOutput(), new SequencerMidiOutput());
 	}
 
+	/**
+	 * Creates a new java sound audio player.
+	 *
+	 * @param waveOutput the wave output
+	 * @param midiOutput the MIDI output
+	 */
 	JavaSoundAudioPlayer(WaveOutput waveOutput, MidiOutput midiOutput) {
 		this.waveOutput = waveOutput;
 		this.midiOutput = midiOutput;
 	}
 
-	/** Plays the supplied revision-377 WAV file at the legacy attenuation value. */
+	/**
+	 * Plays the supplied revision-377 WAV file at the legacy attenuation value.
+	 * @param file the file
+	 * @param volume the volume
+	 */
 	public void playWave(File file, int volume) {
 		try {
 			waveOutput.play(file, volume);
@@ -69,12 +111,20 @@ public final class JavaSoundAudioPlayer implements AutoCloseable {
 		}
 	}
 
-	/** Applies the legacy hundredths-of-a-decibel attenuation to WAV playback. */
+	/**
+	 * Applies the legacy hundredths-of-a-decibel attenuation to WAV playback.
+	 * @param volume the volume
+	 */
 	public void setWaveVolume(int volume) {
 		waveOutput.setVolume(volume);
 	}
 
-	/** Plays a MIDI file, optionally fading the currently playing track first. */
+	/**
+	 * Plays a MIDI file, optionally fading the currently playing track first.
+	 * @param file the file
+	 * @param volume the volume
+	 * @param fade the fade
+	 */
 	public void playMidi(File file, int volume, boolean fade) {
 		try {
 			midiOutput.play(file, volume, fade);
@@ -83,7 +133,10 @@ public final class JavaSoundAudioPlayer implements AutoCloseable {
 		}
 	}
 
-	/** Applies the legacy MIDI attenuation to the currently playing track. */
+	/**
+	 * Applies the legacy MIDI attenuation to the currently playing track.
+	 * @param volume the volume
+	 */
 	public void setMidiVolume(int volume) {
 		midiOutput.setVolume(volume);
 	}
@@ -108,10 +161,22 @@ public final class JavaSoundAudioPlayer implements AutoCloseable {
 		}
 	}
 
+	/**
+	 * Converts a legacy volume value to decibels.
+	 *
+	 * @param legacyVolume the legacy volume
+	 * @return the converted value
+	 */
 	static float toDecibels(int legacyVolume) {
 		return legacyVolume / 100.0F;
 	}
 
+	/**
+	 * Converts a legacy volume value to a MIDI controller level.
+	 *
+	 * @param legacyVolume the legacy volume
+	 * @return the converted value
+	 */
 	static int toMidiControllerVolume(int legacyVolume) {
 		double amplitude = Math.pow(10.0D, legacyVolume / 2000.0D);
 		int value = (int) Math.round(127.0D * amplitude);
@@ -124,12 +189,25 @@ public final class JavaSoundAudioPlayer implements AutoCloseable {
 		return value;
 	}
 
+	/**
+	 * Reports an audio playback failure.
+	 *
+	 * @param kind the kind
+	 * @param exception the exception
+	 */
 	private static void report(String kind, Exception exception) {
 		System.err.println(kind + " playback unavailable: " + exception.getMessage());
 	}
 
+	/** Java Sound {@link Clip}-based implementation of wave playback. */
 	private static final class ClipWaveOutput implements WaveOutput {
+
+		/** Creates a new clip wave output with its default client state. */
+		private ClipWaveOutput() {
+		}
+		/** Stores the current clip. */
 		private Clip clip;
+		/** Stores the current volume. */
 		private int volume;
 
 		@Override
@@ -168,6 +246,9 @@ public final class JavaSoundAudioPlayer implements AutoCloseable {
 			closeClip();
 		}
 
+		/**
+		 * Closes clip.
+		 */
 		private void closeClip() {
 			if (clip != null) {
 				Clip current = clip;
@@ -177,6 +258,12 @@ public final class JavaSoundAudioPlayer implements AutoCloseable {
 			}
 		}
 
+		/**
+		 * Applies gain.
+		 *
+		 * @param target the target
+		 * @param volume the volume
+		 */
 		private static void applyGain(Clip target, int volume) {
 			if (!target.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
 				return;
@@ -192,15 +279,28 @@ public final class JavaSoundAudioPlayer implements AutoCloseable {
 		}
 	}
 
+	/** Java Sound sequencer/synthesizer implementation of MIDI playback. */
 	private static final class SequencerMidiOutput implements MidiOutput {
+
+		/** Creates a new sequencer MIDI output with its default client state. */
+		private SequencerMidiOutput() {
+		}
+		/** Constant value for fade step hundredths db. */
 		private static final int FADE_STEP_HUNDREDTHS_DB = 100;
+		/** Constant value for fade floor hundredths db. */
 		private static final int FADE_FLOOR_HUNDREDTHS_DB = -3600;
+		/** Constant value for fade step millis. */
 		private static final long FADE_STEP_MILLIS = 200L;
 
+		/** Stores the current sequencer. */
 		private Sequencer sequencer;
+		/** Stores the current synthesizer. */
 		private Synthesizer synthesizer;
+		/** Stores the current transmitter. */
 		private Transmitter transmitter;
+		/** Stores the current volume. */
 		private int volume;
+		/** Stores the current generation. */
 		private int generation;
 
 		@Override
@@ -239,6 +339,13 @@ public final class JavaSoundAudioPlayer implements AutoCloseable {
 			closeDevices();
 		}
 
+		/**
+		 * Fades the current MIDI sequence before replacing it.
+		 *
+		 * @param sequence the sequence
+		 * @param requestedVolume the requested volume
+		 * @param requestGeneration the request generation
+		 */
 		private void fadeThenReplace(Sequence sequence, int requestedVolume, int requestGeneration) {
 			int fadeVolume;
 			synchronized (this) {
@@ -271,6 +378,14 @@ public final class JavaSoundAudioPlayer implements AutoCloseable {
 			}
 		}
 
+		/**
+		 * Replaces sequence.
+		 *
+		 * @param sequence the sequence
+		 * @param requestedVolume the requested volume
+		 * @throws MidiUnavailableException if MIDI unavailable exception is raised while performing the operation
+		 * @throws InvalidMidiDataException if invalid MIDI data exception is raised while performing the operation
+		 */
 		private void replaceSequence(Sequence sequence, int requestedVolume)
 				throws MidiUnavailableException, InvalidMidiDataException {
 			closeDevices();
@@ -309,6 +424,13 @@ public final class JavaSoundAudioPlayer implements AutoCloseable {
 			sequencer.start();
 		}
 
+		/**
+		 * Closes temporary.
+		 *
+		 * @param transmitter the transmitter
+		 * @param sequencer the sequencer
+		 * @param synthesizer the synthesizer
+		 */
 		private static void closeTemporary(Transmitter transmitter, Sequencer sequencer, Synthesizer synthesizer) {
 			if (transmitter != null) {
 				transmitter.close();
@@ -321,6 +443,11 @@ public final class JavaSoundAudioPlayer implements AutoCloseable {
 			}
 		}
 
+		/**
+		 * Applies MIDI volume.
+		 *
+		 * @param requestedVolume the requested volume
+		 */
 		private void applyMidiVolume(int requestedVolume) {
 			if (synthesizer == null || !synthesizer.isOpen()) {
 				return;
@@ -333,6 +460,9 @@ public final class JavaSoundAudioPlayer implements AutoCloseable {
 			}
 		}
 
+		/**
+		 * Closes devices.
+		 */
 		private void closeDevices() {
 			if (sequencer != null) {
 				sequencer.stop();

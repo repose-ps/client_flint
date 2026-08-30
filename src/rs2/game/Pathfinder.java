@@ -15,24 +15,38 @@ import rs2.scene.util.CollisionMap;
  */
 public final class Pathfinder {
 
+	/** Creates a new pathfinder with its default client state. */
+	public Pathfinder() {
+	}
+
+	/** Constant value for map size. */
 	private static final int MAP_SIZE = 104;
 
+	/** Constant value for queue capacity. */
 	private static final int QUEUE_CAPACITY = 4000;
 
+	/** Constant value for unreachable distance. */
 	private static final int UNREACHABLE_DISTANCE = 0x5f5e0ff;
 
+	/** Constant value for start direction. */
 	private static final int START_DIRECTION = 99;
 
+	/** Constant value for alternative search radius. */
 	private static final int ALTERNATIVE_SEARCH_RADIUS = 10;
 
+	/** Constant value for alternative max distance. */
 	private static final int ALTERNATIVE_MAX_DISTANCE = 100;
 
+	/** Stores directions values. */
 	private final int[][] directions = new int[MAP_SIZE][MAP_SIZE];
 
+	/** Stores distances values. */
 	private final int[][] distances = new int[MAP_SIZE][MAP_SIZE];
 
+	/** Stores queue X values. */
 	private final int[] queueX = new int[QUEUE_CAPACITY];
 
+	/** Stores queue Y values. */
 	private final int[] queueY = new int[QUEUE_CAPACITY];
 
 	/**
@@ -271,8 +285,10 @@ public final class Pathfinder {
 	/** Compressed turn-point route in the original endpoint-to-start order. */
 	public static final class Route {
 
+		/** Stores X values. */
 		private final int[] x;
 
+		/** Stores Y values. */
 		private final int[] y;
 		/**
 		 * Number of waypoint entries.
@@ -283,6 +299,14 @@ public final class Pathfinder {
 		 */
 		private final boolean alternative;
 
+		/**
+		 * Creates a new route.
+		 *
+		 * @param x the X coordinate
+		 * @param y the Y coordinate
+		 * @param waypointCount the waypoint count
+		 * @param alternative the alternative
+		 */
 		private Route(int[] x, int[] y, int waypointCount, boolean alternative) {
 			this.x = x;
 			this.y = y;
@@ -340,7 +364,7 @@ public final class Pathfinder {
 		/**
 		 * Returns whether alternative.
 		 *
-		 * @return the resulting boolean
+		 * @return {@code true} when alternative; otherwise {@code false}
 		 */
 		public boolean isAlternative() {
 			return alternative;

@@ -8,22 +8,39 @@ package rs2.ui.menu;
  * low-priority variants and are normalized only when an action is dispatched.
  */
 public final class MenuState {
+
+	/** Creates a new menu state with its default client state. */
+	public MenuState() {
+	}
+	/** Constant value for capacity. */
 	public static final int CAPACITY = 500;
+	/** Constant value for cancel action. */
 	public static final int CANCEL_ACTION = 1016;
 
+	/** Stores action names values. */
 	public String[] actionNames = new String[CAPACITY];
+	/** Stores action IDs values. */
 	public int[] actionIds = new int[CAPACITY];
+	/** Stores action cmd1 values. */
 	public int[] actionCmd1 = new int[CAPACITY];
+	/** Stores action cmd2 values. */
 	public int[] actionCmd2 = new int[CAPACITY];
+	/** Stores action cmd3 values. */
 	public int[] actionCmd3 = new int[CAPACITY];
+	/** Stores the current count. */
 	public int count;
 
+	/** Whether open is enabled or active. */
 	public boolean open;
 	/** 0 = viewport, 1 = sidebar, 2 = chatbox. */
 	public int screenArea;
+	/** Stores the current offset X. */
 	public int offsetX;
+	/** Stores the current offset Y. */
 	public int offsetY;
+	/** Stores the current width. */
 	public int width;
+	/** Stores the current height. */
 	public int height;
 
 	/** Restores the one-entry default menu used before each rebuild. */
@@ -49,6 +66,12 @@ public final class MenuState {
 		}
 	}
 
+	/**
+	 * Returns whether add friend action.
+	 *
+	 * @param index the array or registry index
+	 * @return whether add friend action
+	 */
 	public boolean isAddFriendAction(int index) {
 		if (index < 0)
 			return false;
@@ -56,6 +79,12 @@ public final class MenuState {
 		return actionId == 762;
 	}
 
+	/**
+	 * Normalizes a menu action identifier by removing the priority offset.
+	 *
+	 * @param actionId the action ID
+	 * @return the converted value
+	 */
 	public static int normalizeActionId(int actionId) {
 		return actionId >= 2000 ? actionId - 2000 : actionId;
 	}
@@ -69,6 +98,12 @@ public final class MenuState {
 		actionCmd3 = null;
 	}
 
+	/**
+	 * Swaps two menu entries.
+	 *
+	 * @param first the first
+	 * @param second the second
+	 */
 	private void swap(int first, int second) {
 		String name = actionNames[first];
 		actionNames[first] = actionNames[second];

@@ -13,6 +13,10 @@ import rs2.collection.DualNode;
  */
 public class OnDemandRequest extends DualNode {
 
+	/** Creates a new on demand request with its default client state. */
+	public OnDemandRequest() {
+	}
+
 	/** Archive type: 0=model, 1=animation, 2=MIDI, 3=map. */
 	public int type;
 

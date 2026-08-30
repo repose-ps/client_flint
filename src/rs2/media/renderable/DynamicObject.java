@@ -17,24 +17,32 @@ import rs2.cache.media.AnimationSequence;
  */
 public class DynamicObject extends Renderable {
 
+	/** Stores the current south west height. */
 	public int southWestHeight;
 
+	/** Stores the current south east height. */
 	public int southEastHeight;
 
+	/** Stores the current north east height. */
 	public int northEastHeight;
 
+	/** Stores the current north west height. */
 	public int northWestHeight;
 	/**
 	 * Identifier for object.
 	 */
 	public int objectId;
 
+	/** Stores the current type. */
 	public int type;
 
+	/** Stores the current orientation. */
 	public int orientation;
 
+	/** Stores the current client instance. */
 	public static Client clientInstance;
 
+	/** Stores the current sequence. */
 	public AnimationSequence sequence;
 	/**
 	 * Identifier for varbit.
@@ -45,12 +53,28 @@ public class DynamicObject extends Renderable {
 	 */
 	public int varpId;
 
+	/** Stores morph IDs values. */
 	public int[] morphIds;
 
+	/** Stores the current animation cycle start. */
 	public int animationCycleStart;
 
+	/** Stores the current frame. */
 	public int frame;
 
+	/**
+	 * Creates a new dynamic object.
+	 *
+	 * @param objectId the object ID
+	 * @param type the type
+	 * @param orientation the orientation
+	 * @param southWestHeight the south west height
+	 * @param southEastHeight the south east height
+	 * @param northEastHeight the north east height
+	 * @param northWestHeight the north west height
+	 * @param animationId the animation ID
+	 * @param randomizeAnimation the randomize animation
+	 */
 	public DynamicObject(int objectId, int type, int orientation, int southWestHeight, int southEastHeight,
 			int northEastHeight, int northWestHeight, int animationId, boolean randomizeAnimation) {
 		this.objectId = objectId;

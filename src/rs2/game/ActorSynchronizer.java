@@ -24,28 +24,36 @@ import rs2.text.Base37;
  */
 public final class ActorSynchronizer {
 
+	/** Maximum number of player slots representable by the revision-377 protocol. */
 	public static final int MAX_PLAYERS = 2048;
 
+	/** Reserved client-side player index used for the local player. */
 	public static final int LOCAL_PLAYER_INDEX = 2047;
 
+	/** Maximum number of NPC slots representable by the revision-377 protocol. */
 	public static final int MAX_NPCS = 16384;
 
+	/** Player registry indexed by protocol player index. */
 	public final Player[] players = new Player[MAX_PLAYERS];
 	/**
 	 * Number of player entries.
 	 */
 	public int playerCount;
 
+	/** Active remote-player indices in synchronization order. */
 	public final int[] playerIndices = new int[MAX_PLAYERS];
 
+	/** Cached appearance blocks keyed by player index for reuse when players re-enter view. */
 	public final Buffer[] playerAppearanceBuffers = new Buffer[MAX_PLAYERS];
 
+	/** NPC registry indexed by protocol NPC index. */
 	public final Npc[] npcs = new Npc[MAX_NPCS];
 	/**
 	 * Number of npc entries.
 	 */
 	public int npcCount;
 
+	/** Active NPC indices in synchronization order. */
 	public final int[] npcIndices = new int[MAX_NPCS];
 
 	/**
@@ -53,14 +61,17 @@ public final class ActorSynchronizer {
 	 */
 	private int updateCount;
 
+	/** Entity indices whose update masks follow the movement bit blocks. */
 	private final int[] updateIndices = new int[MAX_PLAYERS];
 	/**
 	 * Number of removed entries.
 	 */
 	private int removedCount;
 
+	/** Entity indices removed from the local synchronization list this packet. */
 	private final int[] removedIndices = new int[1000];
 
+	/** Local player instance stored in {@link #LOCAL_PLAYER_INDEX}. */
 	public Player localPlayer;
 
 	/**
@@ -71,7 +82,7 @@ public final class ActorSynchronizer {
 		/**
 		 * Returns whether ignored.
 		 *
-		 * @return the resulting boolean
+		 * @return {@code true} when ignored; otherwise {@code false}
 		 * @param encodedName the encoded name
 		 */
 		boolean isIgnored(long encodedName);
@@ -79,7 +90,7 @@ public final class ActorSynchronizer {
 		/**
 		 * Returns whether chat suppressed.
 		 *
-		 * @return the resulting boolean
+		 * @return {@code true} when chat suppressed; otherwise {@code false}
 		 */
 		boolean isChatSuppressed();
 
@@ -93,11 +104,14 @@ public final class ActorSynchronizer {
 		void addChatMessage(String sender, String message, int type);
 	}
 
+	/** Creates an empty actor synchronizer; call {@link #reset()} before decoding updates. */
 	public ActorSynchronizer() {
 	}
 
 	/**
 	 * Clears the runtime registries and recreates the local player in slot 2047.
+	 *
+	 * @return the newly created local-player instance
 	 */
 	public Player reset() {
 		playerCount = 0;
@@ -116,7 +130,19 @@ public final class ActorSynchronizer {
 		return localPlayer;
 	}
 
-	/** Decodes one complete player-synchronization packet and returns the resulting plane. */
+	/**
+	 * Decodes one complete player-synchronization packet and returns the resulting
+	 * plane.
+	 *
+	 * @param buffer       incoming packet buffer positioned at the synchronization payload
+	 * @param packetSize   payload size in bytes
+	 * @param cycle        current client cycle used for update and removal bookkeeping
+	 * @param currentPlane plane before applying any local-player teleport update
+	 * @param username     local username used when reporting malformed synchronization state
+	 * @param chatScratch  reusable scratch buffer for compressed public-chat payloads
+	 * @param chatHandler  callback for ignore checks, chat suppression and chat-history output
+	 * @return the plane after decoding the local-player movement block
+	 */
 	public int decodePlayerUpdate(Buffer buffer, int packetSize, int cycle, int currentPlane, String username,
 			Buffer chatScratch, ChatHandler chatHandler) {
 		removedCount = 0;
@@ -148,7 +174,14 @@ public final class ActorSynchronizer {
 		return plane;
 	}
 
-	/** Decodes one complete NPC-synchronization packet. */
+	/**
+	 * Decodes one complete NPC-synchronization packet.
+	 *
+	 * @param buffer     incoming packet buffer positioned at the synchronization payload
+	 * @param packetSize payload size in bytes
+	 * @param cycle      current client cycle used for update and removal bookkeeping
+	 * @param username   local username used when reporting malformed synchronization state
+	 */
 	public void decodeNpcUpdate(Buffer buffer, int packetSize, int cycle, String username) {
 		removedCount = 0;
 		updateCount = 0;
@@ -219,7 +252,13 @@ public final class ActorSynchronizer {
 		}
 	}
 
-	/** Decodes the local-player movement bit block while leaving bit access open. */
+	/**
+	 * Decodes the local-player movement bit block while leaving bit access open.
+	 *
+	 * @param buffer       packet buffer whose bit-access mode is started by this method
+	 * @param currentPlane plane before applying any teleport update
+	 * @return the unchanged plane or the newly decoded teleport plane
+	 */
 	private int decodeLocalPlayerMovement(Buffer buffer, int currentPlane) {
 		buffer.startBitAccess();
 		int hasUpdate = buffer.readBits(1);
@@ -259,7 +298,14 @@ public final class ActorSynchronizer {
 		return plane;
 	}
 
-	/** Decodes movement and removal state for players already present in the local list. */
+	/**
+	 * Decodes movement and removal state for players already present in the local
+	 * list.
+	 *
+	 * @param buffer   packet buffer currently in bit-access mode
+	 * @param cycle    current client cycle written to retained players
+	 * @param username local username used when reporting an invalid player count
+	 */
 	private void decodeExistingPlayers(Buffer buffer, int cycle, String username) {
 		int count = buffer.readBits(8);
 		if (count < playerCount) {
@@ -308,7 +354,13 @@ public final class ActorSynchronizer {
 		}
 	}
 
-	/** Decodes newly observed players and then finishes bit access. */
+	/**
+	 * Decodes newly observed players and then finishes bit access.
+	 *
+	 * @param buffer     packet buffer currently in bit-access mode
+	 * @param packetSize payload size in bytes, used to detect the end of the bit block
+	 * @param cycle      current client cycle written to newly observed players
+	 */
 	private void decodeNewPlayers(Buffer buffer, int packetSize, int cycle) {
 		while (buffer.bitPosition + 10 < packetSize * 8) {
 			int playerIndex = buffer.readBits(11);
@@ -342,7 +394,14 @@ public final class ActorSynchronizer {
 		buffer.finishBitAccess();
 	}
 
-	/** Decodes update masks for players queued by the movement blocks. */
+	/**
+	 * Decodes update masks for players queued by the movement blocks.
+	 *
+	 * @param buffer      packet buffer positioned after the player movement bit block
+	 * @param cycle       current client cycle used by timed mask effects
+	 * @param chatScratch reusable scratch buffer for compressed public-chat payloads
+	 * @param chatHandler callback for social filtering and chat-history output
+	 */
 	private void decodePlayerMasks(Buffer buffer, int cycle, Buffer chatScratch, ChatHandler chatHandler) {
 		for (int index = 0; index < updateCount; index++) {
 			int playerIndex = updateIndices[index];
@@ -355,6 +414,17 @@ public final class ActorSynchronizer {
 		}
 	}
 
+	/**
+	 * Applies one player's extended update mask in revision-377 mask order.
+	 *
+	 * @param buffer      packet buffer positioned at this player's mask payload
+	 * @param cycle       current client cycle used by timed effects
+	 * @param playerIndex protocol index of {@code player}
+	 * @param player      player receiving the decoded state
+	 * @param mask        decoded update-mask bits, including any extension byte
+	 * @param chatScratch reusable scratch buffer for compressed public-chat payloads
+	 * @param chatHandler callback for social filtering and chat-history output
+	 */
 	private void decodePlayerMask(Buffer buffer, int cycle, int playerIndex, Player player, int mask,
 			Buffer chatScratch, ChatHandler chatHandler) {
 		if ((mask & 8) != 0) {
@@ -472,7 +542,13 @@ public final class ActorSynchronizer {
 		}
 	}
 
-	/** Decodes movement and removal state for NPCs already present in the local list. */
+	/**
+	 * Decodes movement and removal state for NPCs already present in the local list.
+	 *
+	 * @param buffer   packet buffer on which this method starts bit access
+	 * @param cycle    current client cycle written to retained NPCs
+	 * @param username local username used when reporting an invalid NPC count
+	 */
 	private void decodeExistingNpcs(Buffer buffer, int cycle, String username) {
 		buffer.startBitAccess();
 		int count = buffer.readBits(8);
@@ -522,7 +598,13 @@ public final class ActorSynchronizer {
 		}
 	}
 
-	/** Decodes newly observed NPCs and then finishes bit access. */
+	/**
+	 * Decodes newly observed NPCs and then finishes bit access.
+	 *
+	 * @param buffer     packet buffer currently in bit-access mode
+	 * @param packetSize payload size in bytes, used to detect the end of the bit block
+	 * @param cycle      current client cycle written to newly observed NPCs
+	 */
 	private void decodeNewNpcs(Buffer buffer, int packetSize, int cycle) {
 		while (buffer.bitPosition + 21 < packetSize * 8) {
 			int npcIndex = buffer.readBits(14);
@@ -554,7 +636,12 @@ public final class ActorSynchronizer {
 		buffer.finishBitAccess();
 	}
 
-	/** Decodes update masks for NPCs queued by the movement blocks. */
+	/**
+	 * Decodes update masks for NPCs queued by the movement blocks.
+	 *
+	 * @param buffer packet buffer positioned after the NPC movement bit block
+	 * @param cycle  current client cycle used by timed mask effects
+	 */
 	private void decodeNpcMasks(Buffer buffer, int cycle) {
 		for (int index = 0; index < updateCount; index++) {
 			Npc npc = npcs[updateIndices[index]];

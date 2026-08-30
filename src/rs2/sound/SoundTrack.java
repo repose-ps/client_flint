@@ -13,10 +13,15 @@ import rs2.net.Buffer;
  */
 public class SoundTrack {
 
+	/** Constant value for sample rate. */
 	private static final int SAMPLE_RATE = 22050;
+	/** Constant value for wav header size. */
 	private static final int WAV_HEADER_SIZE = 44;
+	/** Maximum tracks. */
 	private static final int MAX_TRACKS = 5000;
+	/** Maximum instruments. */
 	private static final int MAX_INSTRUMENTS = 10;
+	/** Performs this client operation. */
 	private static final byte PCM_SILENCE = (byte) 0x80;
 
 	/** Decoded tracks indexed by their cache identifier. */
@@ -40,11 +45,17 @@ public class SoundTrack {
 	/** Loop end position in milliseconds. */
 	public int loopEnd;
 
+	/**
+	 * Creates a new sound track.
+	 */
 	public SoundTrack() {
 		instruments = new SoundTrackInstrument[MAX_INSTRUMENTS];
 	}
 
-	/** Loads all track definitions from a cache sound archive buffer. */
+	/**
+	 * Loads all track definitions from a cache sound archive buffer.
+	 * @param buffer the source buffer
+	 */
 	public static void load(Buffer buffer) {
 		outputData = new byte[0x6baa8];
 		outputBuffer = new Buffer(outputData);
@@ -62,13 +73,21 @@ public class SoundTrack {
 		}
 	}
 
-	/** Returns an encoded WAV buffer for a decoded track, or {@code null}. */
+	/**
+	 * Returns an encoded WAV buffer for a decoded track, or {@code null}.
+	 * @param trackId the track ID
+	 * @param loopCount the loop count
+	 * @return the data
+	 */
 	public static Buffer getData(int trackId, int loopCount) {
 		SoundTrack track = tracks[trackId];
 		return track == null ? null : track.encode(loopCount);
 	}
 
-	/** Decodes instrument slots and loop boundaries for this track. */
+	/**
+	 * Decodes instrument slots and loop boundaries for this track.
+	 * @param buffer the source buffer
+	 */
 	public void decode(Buffer buffer) {
 		for (int instrument = 0; instrument < MAX_INSTRUMENTS; instrument++) {
 			int active = buffer.readUnsignedByte();
@@ -113,7 +132,11 @@ public class SoundTrack {
 		return delay;
 	}
 
-	/** Encodes the mixed track with a standard 44-byte PCM WAV header. */
+	/**
+	 * Encodes the mixed track with a standard 44-byte PCM WAV header.
+	 * @param loopCount the loop count
+	 * @return a buffer containing the RIFF/WAVE data for the mixed track
+	 */
 	public Buffer encode(int loopCount) {
 		int dataLength = mix(loopCount);
 		outputBuffer.position = 0;

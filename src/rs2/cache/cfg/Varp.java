@@ -16,6 +16,10 @@ import rs2.net.Buffer;
  */
 public class Varp {
 
+	/** Creates a new varp with its default client state. */
+	public Varp() {
+	}
+
 	/** Number of definitions declared by the cache. */
 	public static int count;
 
@@ -31,25 +35,37 @@ public class Varp {
 	/** Optional diagnostic name encoded by opcode 10. */
 	public String debugName;
 
+	/** Stores the current opcode1 value. */
 	public int opcode1Value;
+	/** Stores the current opcode2 value. */
 	public int opcode2Value;
+	/** Whether opcode3 enabled is enabled or active. */
 	public boolean opcode3Enabled;
+	/** Whether opcode4 enabled is enabled or active. */
 	public boolean opcode4Enabled = true;
 
 	/** Client behavior selector encoded by opcode 5. */
 	public int clientCode;
 
+	/** Whether opcode6 enabled is enabled or active. */
 	public boolean opcode6Enabled;
+	/** Stores the current opcode7 value. */
 	public int opcode7Value;
+	/** Stores the current opcode8 or13 value. */
 	public int opcode8Or13Value;
 
 	/** Set by opcodes 8, 11, and 13, and by linked varbit definitions. */
 	public boolean varbitLinked;
 
+	/** Stores the current opcode12 value. */
 	public int opcode12Value = -1;
+	/** Whether opcode14 enabled is enabled or active. */
 	public boolean opcode14Enabled = true;
 
-	/** Loads every varp definition from {@code varp.dat}. */
+	/**
+	 * Loads every varp definition from {@code varp.dat}.
+	 * @param archive the source archive
+	 */
 	public static void load(Archive archive) {
 		Buffer buffer = new Buffer(archive.read("varp.dat"));
 		opcode3Count = 0;
@@ -74,7 +90,11 @@ public class Varp {
 		}
 	}
 
-	/** Decodes one opcode-delimited varp definition. */
+	/**
+	 * Decodes one opcode-delimited varp definition.
+	 * @param id the identifier
+	 * @param buffer the source buffer
+	 */
 	public void decode(int id, Buffer buffer) {
 		while (true) {
 			int opcode = buffer.readUnsignedByte();

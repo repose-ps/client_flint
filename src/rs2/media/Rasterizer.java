@@ -5,17 +5,38 @@ import rs2.collection.DualNode;
 /** Shared revision-377 software raster and clipping operations. */
 public class Rasterizer extends DualNode {
 
+	/** Creates a new rasterizer with its default client state. */
+	public Rasterizer() {
+	}
+
+	/** Stores pixels values. */
 	public static int[] pixels;
+	/** Stores the current width. */
 	public static int width;
+	/** Stores the current height. */
 	public static int height;
+	/** Stores the current top Y. */
 	public static int topY;
+	/** Stores the current bottom Y. */
 	public static int bottomY;
+	/** Stores the current top X. */
 	public static int topX;
+	/** Stores the current bottom X. */
 	public static int bottomX;
+	/** Stores the current viewport rx. */
 	public static int viewportRx;
+	/** Stores the current center X. */
 	public static int centerX;
+	/** Stores the current center Y. */
 	public static int centerY;
 
+	/**
+	 * Creates rasterizer.
+	 *
+	 * @param pixels the pixels
+	 * @param width the width in pixels
+	 * @param height the height in pixels
+	 */
 	public static void createRasterizer(int[] pixels, int width, int height) {
 		Rasterizer.pixels = pixels;
 		Rasterizer.width = width;
@@ -23,6 +44,9 @@ public class Rasterizer extends DualNode {
 		setCoordinates(0, 0, width, height);
 	}
 
+	/**
+	 * Resets coordinates.
+	 */
 	public static void resetCoordinates() {
 		topX = 0;
 		topY = 0;
@@ -32,6 +56,14 @@ public class Rasterizer extends DualNode {
 		centerX = bottomX / 2;
 	}
 
+	/**
+	 * Resizes the operation.
+	 *
+	 * @param topX the top X
+	 * @param topY the top Y
+	 * @param bottomX the bottom X
+	 * @param bottomY the bottom Y
+	 */
 	public static void resize(int topX, int topY, int bottomX, int bottomY) {
 		if (Rasterizer.topX < topX) {
 			Rasterizer.topX = topX;
@@ -47,6 +79,14 @@ public class Rasterizer extends DualNode {
 		}
 	}
 
+	/**
+	 * Sets coordinates.
+	 *
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 * @param width the width in pixels
+	 * @param height the height in pixels
+	 */
 	public static void setCoordinates(int x, int y, int width, int height) {
 		if (x < 0)
 			x = 0;
@@ -66,6 +106,9 @@ public class Rasterizer extends DualNode {
 
 	}
 
+	/**
+	 * Resets pixels.
+	 */
 	public static void resetPixels() {
 		int pixelCount = width * height;
 		for (int pixel = 0; pixel < pixelCount; pixel++)
@@ -73,6 +116,16 @@ public class Rasterizer extends DualNode {
 
 	}
 
+	/**
+	 * Draws filled rectangle alpha.
+	 *
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 * @param width the width in pixels
+	 * @param height the height in pixels
+	 * @param colour the color value
+	 * @param alpha the alpha
+	 */
 	public static void drawFilledRectangleAlpha(int x, int y, int width, int height, int colour, int alpha) {
 		if (x < topX) {
 			width -= topX - x;
@@ -106,6 +159,15 @@ public class Rasterizer extends DualNode {
 
 	}
 
+	/**
+	 * Draws filled rectangle.
+	 *
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 * @param width the width in pixels
+	 * @param height the height in pixels
+	 * @param colour the color value
+	 */
 	public static void drawFilledRectangle(int x, int y, int width, int height, int colour) {
 		if (x < topX) {
 			width -= topX - x;
@@ -129,6 +191,15 @@ public class Rasterizer extends DualNode {
 		}
 	}
 
+	/**
+	 * Draws unfilled rectangle.
+	 *
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 * @param width the width in pixels
+	 * @param height the height in pixels
+	 * @param color the color value
+	 */
 	public static void drawUnfilledRectangle(int x, int y, int width, int height, int color) {
 		drawHorizontalLine(x, y, width, color);
 		drawHorizontalLine(x, (y + height) - 1, width, color);
@@ -136,6 +207,16 @@ public class Rasterizer extends DualNode {
 		drawVerticalLine((x + width) - 1, y, height, color);
 	}
 
+	/**
+	 * Draws unfilled rectangle alpha.
+	 *
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 * @param width the width in pixels
+	 * @param height the height in pixels
+	 * @param colour the color value
+	 * @param alpha the alpha
+	 */
 	public static void drawUnfilledRectangleAlpha(int x, int y, int width, int height, int colour, int alpha) {
 		drawHorizontalLineAlpha(x, y, width, colour, alpha);
 		drawHorizontalLineAlpha(x, (y + height) - 1, width, colour, alpha);
@@ -145,6 +226,14 @@ public class Rasterizer extends DualNode {
 		}
 	}
 
+	/**
+	 * Draws horizontal line.
+	 *
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 * @param lenght the lenght
+	 * @param colour the color value
+	 */
 	public static void drawHorizontalLine(int x, int y, int lenght, int colour) {
 		if (y < topY || y >= bottomY)
 			return;
@@ -160,6 +249,15 @@ public class Rasterizer extends DualNode {
 
 	}
 
+	/**
+	 * Draws horizontal line alpha.
+	 *
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 * @param length the number of elements or bytes
+	 * @param colour the color value
+	 * @param alpha the alpha
+	 */
 	public static void drawHorizontalLineAlpha(int x, int y, int length, int colour, int alpha) {
 		if (y < topY || y >= bottomY)
 			return;
@@ -183,6 +281,14 @@ public class Rasterizer extends DualNode {
 		}
 	}
 
+	/**
+	 * Draws vertical line.
+	 *
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 * @param lenght the lenght
+	 * @param colour the color value
+	 */
 	public static void drawVerticalLine(int x, int y, int lenght, int colour) {
 		if (x < topX || x >= bottomX)
 			return;
@@ -198,6 +304,15 @@ public class Rasterizer extends DualNode {
 
 	}
 
+	/**
+	 * Draws vertical line alpha.
+	 *
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 * @param lenght the lenght
+	 * @param colour the color value
+	 * @param alpha the alpha
+	 */
 	public static void drawVerticalLineAlpha(int x, int y, int lenght, int colour, int alpha) {
 		if (x < topX || x >= bottomX)
 			return;

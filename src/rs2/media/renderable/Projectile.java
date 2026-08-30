@@ -16,58 +16,95 @@ import rs2.media.AnimationFrame;
  */
 public class Projectile extends Renderable {
 
+	/** Stores the current spot animation. */
 	public SpotAnimation spotAnimation;
 
+	/** Stores the current plane. */
 	public int plane;
 
+	/** Stores the current X. */
 	public double x;
 
+	/** Stores the current Y. */
 	public double y;
 
+	/** Stores the current Z. */
 	public double z;
 
+	/** Stores the current slope. */
 	public int slope;
 
+	/** Stores the current start height. */
 	public int startHeight;
 	/**
 	 * Index used for target.
 	 */
 	public int targetIndex;
 
+	/** Stores the current yaw. */
 	public int yaw;
 
+	/** Stores the current pitch. */
 	public int pitch;
 
+	/** Stores the current cycle start. */
 	public int cycleStart;
 
+	/** Stores the current cycle end. */
 	public int cycleEnd;
 
+	/** Stores the current frame. */
 	public int frame;
 
+	/** Stores the current frame cycle. */
 	public int frameCycle;
 
+	/** Stores the current speed X. */
 	public double speedX;
 
+	/** Stores the current speed Y. */
 	public double speedY;
 
+	/** Stores the current speed. */
 	public double speed;
 
+	/** Stores the current speed Z. */
 	public double speedZ;
 
+	/** Stores the current acceleration Z. */
 	public double accelerationZ;
 	/**
 	 * Whether is moving.
 	 */
 	public boolean isMoving;
 
+	/** Stores the current source X. */
 	public int sourceX;
 
+	/** Stores the current source Y. */
 	public int sourceY;
 
+	/** Stores the current source Z. */
 	public int sourceZ;
 
+	/** Stores the current end height. */
 	public int endHeight;
 
+	/**
+	 * Creates a new projectile.
+	 *
+	 * @param spotAnimationId the spot animation ID
+	 * @param plane the scene plane
+	 * @param sourceX the source X
+	 * @param sourceY the source Y
+	 * @param sourceZ the source Z
+	 * @param cycleStart the cycle start
+	 * @param cycleEnd the cycle end
+	 * @param slope the slope
+	 * @param startHeight the start height
+	 * @param targetIndex the target index
+	 * @param endHeight the end height
+	 */
 	public Projectile(int spotAnimationId, int plane, int sourceX, int sourceY, int sourceZ, int cycleStart,
 			int cycleEnd, int slope, int startHeight, int targetIndex, int endHeight) {
 		this.spotAnimation = SpotAnimation.definitions[spotAnimationId];

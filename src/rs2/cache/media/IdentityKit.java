@@ -16,7 +16,13 @@ import rs2.net.Buffer;
  */
 public class IdentityKit {
 
+	/** Creates a new identity kit with its default client state. */
+	public IdentityKit() {
+	}
+
+	/** Constant value for recolor count. */
 	private static final int RECOLOR_COUNT = 6;
+	/** Constant value for head model count. */
 	private static final int HEAD_MODEL_COUNT = 5;
 
 	/** Number of identity-kit definitions declared by the cache. */
@@ -43,7 +49,10 @@ public class IdentityKit {
 	/** Whether this kit must be omitted from player-customization choices. */
 	public boolean nonSelectable;
 
-	/** Loads all identity-kit definitions from {@code idk.dat}. */
+	/**
+	 * Loads all identity-kit definitions from {@code idk.dat}.
+	 * @param archive the source archive
+	 */
 	public static void load(Archive archive) {
 		Buffer buffer = new Buffer(archive.read("idk.dat"));
 		count = buffer.readUnsignedShort();
@@ -60,7 +69,10 @@ public class IdentityKit {
 		}
 	}
 
-	/** Decodes one opcode-delimited identity-kit definition. */
+	/**
+	 * Decodes one opcode-delimited identity-kit definition.
+	 * @param buffer the source buffer
+	 */
 	public void decode(Buffer buffer) {
 		while (true) {
 			int opcode = buffer.readUnsignedByte();
@@ -88,7 +100,10 @@ public class IdentityKit {
 		}
 	}
 
-	/** Returns whether every body model required by this kit is available. */
+	/**
+	 * Returns whether every body model required by this kit is available.
+	 * @return whether are body models ready
+	 */
 	public boolean areBodyModelsReady() {
 		if (bodyModelIds == null) {
 			return true;
@@ -103,7 +118,10 @@ public class IdentityKit {
 		return ready;
 	}
 
-	/** Builds and recolours the kit's combined full-body model. */
+	/**
+	 * Builds and recolours the kit's combined full-body model.
+	 * @return the constructed body model
+	 */
 	public Model buildBodyModel() {
 		if (bodyModelIds == null) {
 			return null;
@@ -119,7 +137,10 @@ public class IdentityKit {
 		return model;
 	}
 
-	/** Returns whether every chat-head model required by this kit is available. */
+	/**
+	 * Returns whether every chat-head model required by this kit is available.
+	 * @return whether are head models ready
+	 */
 	public boolean areHeadModelsReady() {
 		boolean ready = true;
 		for (int modelId : headModelIds) {
@@ -130,7 +151,10 @@ public class IdentityKit {
 		return ready;
 	}
 
-	/** Builds and recolours the kit's combined chat-head model. */
+	/**
+	 * Builds and recolours the kit's combined chat-head model.
+	 * @return the constructed head model
+	 */
 	public Model buildHeadModel() {
 		Model[] models = new Model[HEAD_MODEL_COUNT];
 		int modelCount = 0;
@@ -145,7 +169,10 @@ public class IdentityKit {
 		return model;
 	}
 
-	/** Applies the cache's consecutive recolouring pairs to a model. */
+	/**
+	 * Applies the cache's consecutive recolouring pairs to a model.
+	 * @param model the model
+	 */
 	private void recolor(Model model) {
 		for (int index = 0; index < RECOLOR_COUNT; index++) {
 			if (originalColors[index] == 0) {

@@ -13,8 +13,17 @@ import rs2.scene.tile.SceneTile;
 import rs2.scene.tile.Wall;
 import rs2.scene.tile.WallDecoration;
 
+/** Provides scene state and behavior. */
 public class Scene {
 
+	/**
+	 * Creates a new scene.
+	 *
+	 * @param heights the heights
+	 * @param planeCount the plane count
+	 * @param width the width in pixels
+	 * @param height the height in pixels
+	 */
 	public Scene(int heights[][][], int planeCount, int width, int height) {
 		temporaryObjects = new InteractiveObject[5000];
 		mergeStampA = new int[10000];
@@ -355,7 +364,7 @@ public class Scene {
 	/**
 	 * Adds game object.
 	 *
-	 * @return the resulting boolean
+	 * @return {@code true} when add game object; otherwise {@code false}
 	 * @param plane      the plane
 	 * @param x          the x
 	 * @param y          the y
@@ -382,7 +391,7 @@ public class Scene {
 	/**
 	 * Adds entity.
 	 *
-	 * @return the resulting boolean
+	 * @return {@code true} when add entity; otherwise {@code false}
 	 * @param plane         the plane
 	 * @param worldX        the world x
 	 * @param worldY        the world y
@@ -422,7 +431,7 @@ public class Scene {
 	/**
 	 * Adds entity bounds.
 	 *
-	 * @return the resulting boolean
+	 * @return {@code true} when add entity bounds; otherwise {@code false}
 	 * @param plane      the plane
 	 * @param minX       the min x
 	 * @param minY       the min y
@@ -447,7 +456,7 @@ public class Scene {
 	/**
 	 * Adds interactive object.
 	 *
-	 * @return the resulting boolean
+	 * @return {@code true} when add interactive object; otherwise {@code false}
 	 * @param plane      the plane
 	 * @param minX       the min x
 	 * @param minY       the min y
@@ -1216,7 +1225,7 @@ public class Scene {
 	/**
 	 * Returns whether projection visible.
 	 *
-	 * @return the resulting boolean
+	 * @return {@code true} when projection visible; otherwise {@code false}
 	 * @param x the x
 	 * @param y the y
 	 * @param z the z
@@ -2137,7 +2146,7 @@ public class Scene {
 	/**
 	 * Performs contains screen point.
 	 *
-	 * @return the resulting boolean
+	 * @return {@code true} when contains screen point; otherwise {@code false}
 	 * @param pointX the point x
 	 * @param pointY the point y
 	 * @param yA     the y a
@@ -2282,7 +2291,7 @@ public class Scene {
 	/**
 	 * Returns whether tile occluded.
 	 *
-	 * @return the resulting boolean
+	 * @return {@code true} when tile occluded; otherwise {@code false}
 	 * @param plane the plane
 	 * @param x     the x
 	 * @param y     the y
@@ -2312,7 +2321,7 @@ public class Scene {
 	/**
 	 * Returns whether wall occluded.
 	 *
-	 * @return the resulting boolean
+	 * @return {@code true} when wall occluded; otherwise {@code false}
 	 * @param plane       the plane
 	 * @param x           the x
 	 * @param y           the y
@@ -2416,7 +2425,7 @@ public class Scene {
 	/**
 	 * Returns whether decoration occluded.
 	 *
-	 * @return the resulting boolean
+	 * @return {@code true} when decoration occluded; otherwise {@code false}
 	 * @param plane       the plane
 	 * @param x           the x
 	 * @param y           the y
@@ -2439,7 +2448,7 @@ public class Scene {
 	/**
 	 * Returns whether area occluded.
 	 *
-	 * @return the resulting boolean
+	 * @return {@code true} when area occluded; otherwise {@code false}
 	 * @param plane       the plane
 	 * @param minX        the min x
 	 * @param maxX        the max x
@@ -2486,7 +2495,7 @@ public class Scene {
 	/**
 	 * Returns whether point occluded.
 	 *
-	 * @return the resulting boolean
+	 * @return {@code true} when point occluded; otherwise {@code false}
 	 * @param worldX the world x
 	 * @param worldZ the world z
 	 * @param worldY the world y
@@ -2584,118 +2593,169 @@ public class Scene {
 	 */
 	public int planeCount;
 
+	/** Stores the current width. */
 	public int width;
 
+	/** Stores the current height. */
 	public int height;
 
+	/** Stores tile heights values. */
 	public int tileHeights[][][];
 
+	/** Stores tiles values. */
 	public SceneTile tiles[][][];
 
+	/** Stores the current min plane. */
 	public int minPlane;
 	/**
 	 * Number of temporary object entries.
 	 */
 	public int temporaryObjectCount;
 
+	/** Stores temporary objects values. */
 	public InteractiveObject temporaryObjects[];
 
+	/** Stores tile occlusion cycles values. */
 	public int tileOcclusionCycles[][][];
 	/**
 	 * Number of remaining tile entries.
 	 */
 	public static int remainingTileCount;
 
+	/** Stores the current render plane. */
 	public static int renderPlane;
 
+	/** Stores the current render cycle. */
 	public static int renderCycle;
 
+	/** Stores the current min tile X. */
 	public static int minTileX;
 
+	/** Stores the current max tile X. */
 	public static int maxTileX;
 
+	/** Stores the current min tile Y. */
 	public static int minTileY;
 
+	/** Stores the current max tile Y. */
 	public static int maxTileY;
 
+	/** Stores the current camera tile X. */
 	public static int cameraTileX;
 
+	/** Stores the current camera tile Y. */
 	public static int cameraTileY;
 
+	/** Stores the current camera X. */
 	public static int cameraX;
 
+	/** Stores the current camera Z. */
 	public static int cameraZ;
 
+	/** Stores the current camera Y. */
 	public static int cameraY;
 
+	/** Stores the current pitch sine. */
 	public static int pitchSine;
 
+	/** Stores the current pitch cosine. */
 	public static int pitchCosine;
 
+	/** Stores the current yaw sine. */
 	public static int yawSine;
 
+	/** Stores the current yaw cosine. */
 	public static int yawCosine;
 
+	/** Stores render interactive objects values. */
 	public static InteractiveObject renderInteractiveObjects[] = new InteractiveObject[100];
 
+	/** Constant value for wall decoration inset X. */
 	public static final int WALL_DECORATION_INSET_X[] = { 53, -53, -53, 53 };
 
+	/** Constant value for wall decoration inset Y. */
 	public static final int WALL_DECORATION_INSET_Y[] = { -53, -53, 53, 53 };
 
+	/** Constant value for wall decoration outset X. */
 	public static final int WALL_DECORATION_OUTSET_X[] = { -45, 45, 45, -45 };
 
+	/** Constant value for wall decoration outset Y. */
 	public static final int WALL_DECORATION_OUTSET_Y[] = { 45, 45, -45, -45 };
 	/**
 	 * Whether picking.
 	 */
 	public static boolean picking;
 
+	/** Stores the current mouse X. */
 	public static int mouseX;
 
+	/** Stores the current mouse Y. */
 	public static int mouseY;
 
+	/** Stores the current picked tile X. */
 	public static int pickedTileX = -1;
 
+	/** Stores the current picked tile Y. */
 	public static int pickedTileY = -1;
 
+	/** Constant value for occluder plane count. */
 	public static int OCCLUDER_PLANE_COUNT;
 
+	/** Stores occluder counts values. */
 	public static int occluderCounts[];
 
+	/** Stores occluders values. */
 	public static SceneCluster occluders[][];
 	/**
 	 * Number of active occluder entries.
 	 */
 	public static int activeOccluderCount;
 
+	/** Stores active occluders values. */
 	public static SceneCluster activeOccluders[] = new SceneCluster[500];
 
+	/**
+	 * Tile queue.
+	 *
+	 */
 	public static NodeDeque tileQueue = new NodeDeque();
 
+	/** Constant value for wall draw flags. */
 	public static final int WALL_DRAW_FLAGS[] = { 19, 55, 38, 155, 255, 110, 137, 205, 76 };
 
+	/** Constant value for wall cull flags. */
 	public static final int WALL_CULL_FLAGS[] = { 160, 192, 80, 96, 0, 144, 80, 48, 160 };
 
+	/** Constant value for wall draw flags 2. */
 	public static final int WALL_DRAW_FLAGS_2[] = { 76, 8, 137, 4, 0, 1, 38, 2, 19 };
 
+	/** Constant value for wall uncull flags 0. */
 	public static final int WALL_UNCULL_FLAGS_0[] = { 0, 0, 2, 0, 0, 2, 1, 1, 0 };
 
+	/** Constant value for wall uncull flags 1. */
 	public static final int WALL_UNCULL_FLAGS_1[] = { 2, 0, 0, 2, 0, 0, 0, 4, 4 };
 
+	/** Constant value for wall uncull flags 2. */
 	public static final int WALL_UNCULL_FLAGS_2[] = { 0, 4, 4, 8, 0, 0, 8, 0, 0 };
 
+	/** Constant value for wall uncull flags 3. */
 	public static final int WALL_UNCULL_FLAGS_3[] = { 1, 1, 0, 0, 0, 8, 0, 0, 8 };
 
+	/** Constant value for texture colors. */
 	public static final int TEXTURE_COLORS[] = { 41, 39248, 41, 4643, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 43086,
 			41, 41, 41, 41, 41, 41, 41, 8602, 41, 28992, 41, 41, 41, 41, 41, 5056, 41, 41, 41, 7079, 41, 41, 41, 41, 41,
 			41, 41, 41, 41, 41, 3131, 41, 41, 41 };
 
+	/** Stores merge stamp a values. */
 	public int mergeStampA[];
 
+	/** Stores merge stamp b values. */
 	public int mergeStampB[];
 
+	/** Stores the current merge cycle. */
 	public int mergeCycle;
 
+	/** Stores minimap tile shape values. */
 	public int minimapTileShape[][] = { new int[16], { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
 			{ 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1 }, { 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 },
 			{ 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1 }, { 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
@@ -2704,25 +2764,34 @@ public class Scene {
 			{ 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1 },
 			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1 } };
 
+	/** Stores minimap tile rotation values. */
 	public int minimapTileRotation[][] = { { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
 			{ 12, 8, 4, 0, 13, 9, 5, 1, 14, 10, 6, 2, 15, 11, 7, 3 },
 			{ 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 },
 			{ 3, 7, 11, 15, 2, 6, 10, 14, 1, 5, 9, 13, 0, 4, 8, 12 } };
 
+	/** Whether visibility maps is enabled or active. */
 	public static boolean visibilityMaps[][][][] = new boolean[8][32][51][51];
 
+	/** Whether visibility map is enabled or active. */
 	public static boolean visibilityMap[][];
 
+	/** Stores the current viewport center X. */
 	public static int viewportCenterX;
 
+	/** Stores the current viewport center Y. */
 	public static int viewportCenterY;
 
+	/** Stores the current viewport min X. */
 	public static int viewportMinX;
 
+	/** Stores the current viewport min Y. */
 	public static int viewportMinY;
 
+	/** Stores the current viewport max X. */
 	public static int viewportMaxX;
 
+	/** Stores the current viewport max Y. */
 	public static int viewportMaxY;
 
 	static {

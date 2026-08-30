@@ -9,20 +9,49 @@ import rs2.sign.Signlink;
  * state.
  */
 public final class MusicController {
+	/** Provides requester state and behavior. */
 	@FunctionalInterface
 	public interface Requester {
+		/**
+		 * Requests the operation.
+		 *
+		 * @param type the type
+		 * @param id the identifier
+		 */
 		void request(int type, int id);
 	}
 
+	/** Provides MIDI backend state and behavior. */
 	interface MidiBackend {
+		/**
+		 * Sets volume.
+		 *
+		 * @param volume the volume
+		 * @param adjustPlayingTrack the adjust playing track
+		 */
 		void setVolume(int volume, boolean adjustPlayingTrack);
 
+		/**
+		 * Stops the operation.
+		 */
 		void stop();
 
+		/**
+		 * Saves the operation.
+		 *
+		 * @param data the data to process
+		 * @param length the number of elements or bytes
+		 * @param fade the fade
+		 */
 		void save(byte[] data, int length, boolean fade);
 	}
 
+	/** MIDI backend that delegates legacy playback requests to {@link Signlink}. */
 	private static final class SignlinkMidiBackend implements MidiBackend {
+
+		/** Creates a new signlink MIDI backend with its default client state. */
+		private SignlinkMidiBackend() {
+		}
 		public void setVolume(int volume, boolean adjustPlayingTrack) {
 			Signlink.setMidiVolume(volume, adjustPlayingTrack);
 		}
@@ -36,21 +65,41 @@ public final class MusicController {
 		}
 	}
 
+	/** Stores the current backend. */
 	private final MidiBackend backend;
+	/** Whether enabled is enabled or active. */
 	private boolean enabled = true;
+	/** Whether fade requested track is enabled or active. */
 	private boolean fadeRequestedTrack = true;
+	/** Stores the current requested track ID. */
 	private int requestedTrackId;
+	/** Stores the current selected track ID. */
 	private int selectedTrackId = -1;
+	/** Stores the current resume delay. */
 	private int resumeDelay;
 
+	/**
+	 * Creates a new music controller.
+	 */
 	public MusicController() {
 		this(new SignlinkMidiBackend());
 	}
 
+	/**
+	 * Creates a new music controller.
+	 *
+	 * @param backend the backend
+	 */
 	MusicController(MidiBackend backend) {
 		this.backend = backend;
 	}
 
+	/**
+	 * Requests startup track.
+	 *
+	 * @param requester the requester
+	 * @param lowMemory whether low-memory mode is active
+	 */
 	public void requestStartupTrack(Requester requester, boolean lowMemory) {
 		if (!lowMemory) {
 			requestedTrackId = 0;
@@ -59,6 +108,13 @@ public final class MusicController {
 		}
 	}
 
+	/**
+	 * Selects track.
+	 *
+	 * @param trackId the track ID
+	 * @param lowMemory whether low-memory mode is active
+	 * @param requester the requester
+	 */
 	public void selectTrack(int trackId, boolean lowMemory, Requester requester) {
 		if (trackId == 65535)
 			trackId = -1;
@@ -70,6 +126,14 @@ public final class MusicController {
 		selectedTrackId = trackId;
 	}
 
+	/**
+	 * Requests playback of a temporary music track.
+	 *
+	 * @param trackId the track ID
+	 * @param delay the delay
+	 * @param lowMemory whether low-memory mode is active
+	 * @param requester the requester
+	 */
 	public void playTemporaryTrack(int trackId, int delay, boolean lowMemory, Requester requester) {
 		if (enabled && !lowMemory) {
 			requestedTrackId = trackId;
@@ -79,6 +143,12 @@ public final class MusicController {
 		}
 	}
 
+	/**
+	 * Handles a completed on-demand music request.
+	 *
+	 * @param request the request
+	 * @return whether accept on demand request
+	 */
 	public boolean acceptOnDemandRequest(OnDemandRequest request) {
 		if (request.type == OnDemandFetcher.MIDI && request.id == requestedTrackId && request.buffer != null) {
 			if (enabled)
@@ -88,6 +158,12 @@ public final class MusicController {
 		return false;
 	}
 
+	/**
+	 * Updates resume delay.
+	 *
+	 * @param lowMemory whether low-memory mode is active
+	 * @param requester the requester
+	 */
 	public void updateResumeDelay(boolean lowMemory, Requester requester) {
 		if (resumeDelay > 0) {
 			resumeDelay -= 20;
@@ -101,6 +177,13 @@ public final class MusicController {
 		}
 	}
 
+	/**
+	 * Applies setting.
+	 *
+	 * @param setting the setting
+	 * @param lowMemory whether low-memory mode is active
+	 * @param requester the requester
+	 */
 	public void applySetting(int setting, boolean lowMemory, Requester requester) {
 		boolean wasEnabled = enabled;
 		if (setting == 0) {
@@ -133,10 +216,16 @@ public final class MusicController {
 		}
 	}
 
+	/**
+	 * Stops the operation.
+	 */
 	public void stop() {
 		backend.stop();
 	}
 
+	/**
+	 * Resets on logout.
+	 */
 	public void resetOnLogout() {
 		backend.stop();
 		selectedTrackId = -1;
@@ -144,22 +233,47 @@ public final class MusicController {
 		resumeDelay = 0;
 	}
 
+	/**
+	 * Returns whether enabled.
+	 *
+	 * @return whether enabled
+	 */
 	boolean isEnabled() {
 		return enabled;
 	}
 
+	/**
+	 * Returns whether fade requested track is active.
+	 *
+	 * @return whether fade requested track
+	 */
 	boolean fadeRequestedTrack() {
 		return fadeRequestedTrack;
 	}
 
+	/**
+	 * Requests ed track ID.
+	 *
+	 * @return the currently requested track identifier
+	 */
 	int requestedTrackId() {
 		return requestedTrackId;
 	}
 
+	/**
+	 * Selects ed track ID.
+	 *
+	 * @return the currently selected background-track identifier
+	 */
 	int selectedTrackId() {
 		return selectedTrackId;
 	}
 
+	/**
+	 * Returns the resume delay.
+	 *
+	 * @return the resume delay
+	 */
 	int resumeDelay() {
 		return resumeDelay;
 	}

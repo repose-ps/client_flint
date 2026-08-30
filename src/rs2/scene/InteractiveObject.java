@@ -13,6 +13,10 @@ import rs2.media.renderable.Renderable;
  */
 public class InteractiveObject {
 
+	/** Creates a new interactive object with its default client state. */
+	public InteractiveObject() {
+	}
+
 	/** Scene plane containing the object. */
 	public int plane;
 

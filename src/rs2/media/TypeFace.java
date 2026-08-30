@@ -23,21 +23,35 @@ import rs2.net.Buffer;
  */
 public class TypeFace extends Rasterizer {
 
+	/** Constant value for glyph count. */
 	private static final int GLYPH_COUNT = 256;
+	/** Constant value for shadow color. */
 	private static final int SHADOW_COLOR = 0;
+	/** Constant value for strikethrough color. */
 	private static final int STRIKETHROUGH_COLOR = 0x800000;
 
+	/** Stores glyph masks values. */
 	private final byte[][] glyphMasks = new byte[GLYPH_COUNT][];
+	/** Stores glyph widths values. */
 	private final int[] glyphWidths = new int[GLYPH_COUNT];
+	/** Stores glyph heights values. */
 	private final int[] glyphHeights = new int[GLYPH_COUNT];
+	/** Stores glyph X offsets values. */
 	private final int[] glyphXOffsets = new int[GLYPH_COUNT];
+	/** Stores glyph Y offsets values. */
 	private final int[] glyphYOffsets = new int[GLYPH_COUNT];
+	/** Stores glyph advances values. */
 	private final int[] glyphAdvances = new int[GLYPH_COUNT];
+	/**
+	 * Random-number generator.
+	 *
+	 */
 	private final Random random = new Random();
 
 	/** Maximum glyph height among character codes 0..127. */
 	public int lineHeight;
 
+	/** Whether strikethrough is enabled or active. */
 	private boolean strikethrough;
 
 	/**
@@ -113,12 +127,24 @@ public class TypeFace extends Rasterizer {
 		glyphAdvances[' '] = glyphAdvances[useUppercaseISpaceWidth ? 'I' : 'i'];
 	}
 
-	/** Draws unformatted text whose right edge is {@code rightX}. */
+	/**
+	 * Draws unformatted text whose right edge is {@code rightX}.
+	 * @param text the text
+	 * @param rightX the right X
+	 * @param y the Y coordinate
+	 * @param color the color value
+	 */
 	public void drawRightAlignedText(String text, int rightX, int y, int color) {
 		drawText(text, rightX - getTextWidth(text), y, color);
 	}
 
-	/** Draws unformatted text centered on {@code centerX}. */
+	/**
+	 * Draws unformatted text centered on {@code centerX}.
+	 * @param text the text
+	 * @param centerX the center X
+	 * @param y the Y coordinate
+	 * @param color the color value
+	 */
 	public void drawCenteredText(String text, int centerX, int y, int color) {
 		drawText(text, centerX - getTextWidth(text) / 2, y, color);
 	}
@@ -128,6 +154,10 @@ public class TypeFace extends Rasterizer {
 	 *
 	 * @param shadow when true, each glyph also receives the original one-pixel
 	 *               black drop shadow
+	 * @param text the text
+	 * @param centerX the center X
+	 * @param y the Y coordinate
+	 * @param color the color value
 	 */
 	public void drawCenteredTextWithTags(String text, int centerX, int y, int color, boolean shadow) {
 		drawTextWithTags(text, centerX - getFormattedTextWidth(text) / 2, y, color, shadow);
@@ -136,6 +166,8 @@ public class TypeFace extends Rasterizer {
 	/**
 	 * Returns the advance width while ignoring every five-character {@code @xxx@}
 	 * span.
+	 * @param text the text
+	 * @return the formatted text width
 	 */
 	public int getFormattedTextWidth(String text) {
 		if (text == null) {
@@ -153,7 +185,11 @@ public class TypeFace extends Rasterizer {
 		return width;
 	}
 
-	/** Returns the advance width of every character, including tag characters. */
+	/**
+	 * Returns the advance width of every character, including tag characters.
+	 * @param text the text
+	 * @return the text width
+	 */
 	public int getTextWidth(String text) {
 		if (text == null) {
 			return 0;
@@ -166,7 +202,13 @@ public class TypeFace extends Rasterizer {
 		return width;
 	}
 
-	/** Draws unformatted opaque text. The supplied y-coordinate is the baseline. */
+	/**
+	 * Draws unformatted opaque text. The supplied y-coordinate is the baseline.
+	 * @param text the text
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 * @param color the color value
+	 */
 	public void drawText(String text, int x, int y, int color) {
 		if (text == null) {
 			return;
@@ -183,7 +225,14 @@ public class TypeFace extends Rasterizer {
 		}
 	}
 
-	/** Draws horizontally centered text with a vertical sine-wave displacement. */
+	/**
+	 * Draws horizontally centered text with a vertical sine-wave displacement.
+	 * @param text the text
+	 * @param centerX the center X
+	 * @param y the Y coordinate
+	 * @param color the color value
+	 * @param phase the phase
+	 */
 	public void drawWaveText(String text, int centerX, int y, int color, int phase) {
 		if (text == null) {
 			return;
@@ -202,7 +251,14 @@ public class TypeFace extends Rasterizer {
 		}
 	}
 
-	/** Draws horizontally centered text with independent x/y sine waves. */
+	/**
+	 * Draws horizontally centered text with independent x/y sine waves.
+	 * @param text the text
+	 * @param centerX the center X
+	 * @param y the Y coordinate
+	 * @param color the color value
+	 * @param phase the phase
+	 */
 	public void drawWave2Text(String text, int centerX, int y, int color, int phase) {
 		if (text == null) {
 			return;
@@ -226,6 +282,12 @@ public class TypeFace extends Rasterizer {
 	/**
 	 * Draws centered text with the revision-377 decaying wave effect. The amplitude
 	 * is {@code max(0, 7 - age / 8)}.
+	 * @param text the text
+	 * @param centerX the center X
+	 * @param y the Y coordinate
+	 * @param color the color value
+	 * @param age the age
+	 * @param phase the phase
 	 */
 	public void drawWaveAmplitudeText(String text, int centerX, int y, int color, int age, int phase) {
 		if (text == null) {
@@ -253,6 +315,11 @@ public class TypeFace extends Rasterizer {
 	/**
 	 * Draws text with classic {@code @xxx@} color/strikethrough tags. Unknown tags
 	 * are consumed exactly like recognized tags but do not alter state.
+	 * @param text the text
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 * @param color the color value
+	 * @param shadow the shadow
 	 */
 	public void drawTextWithTags(String text, int x, int y, int color, boolean shadow) {
 		strikethrough = false;
@@ -298,6 +365,12 @@ public class TypeFace extends Rasterizer {
 	 * always 192..223 inclusive, and one extra horizontal pixel is inserted with
 	 * probability 1/4 after each visible/text-space character.
 	 * </p>
+	 * @param text the text
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 * @param color the color value
+	 * @param seed the seed
+	 * @param shadow the shadow
 	 */
 	public void drawRandomizedTextWithTags(String text, int x, int y, int color, int seed, boolean shadow) {
 		if (text == null) {
@@ -336,6 +409,12 @@ public class TypeFace extends Rasterizer {
 		}
 	}
 
+	/**
+	 * Parses tag.
+	 *
+	 * @param tag the tag
+	 * @return the RGB color represented by the tag, or {@code -1} when the tag is unknown
+	 */
 	private int parseTag(String tag) {
 		if (tag.equals("red"))
 			return 0xff0000;
@@ -378,6 +457,16 @@ public class TypeFace extends Rasterizer {
 		return -1;
 	}
 
+	/**
+	 * Draws glyph.
+	 *
+	 * @param mask the mask
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 * @param width the width in pixels
+	 * @param height the height in pixels
+	 * @param color the color value
+	 */
 	private void drawGlyph(byte[] mask, int x, int y, int width, int height, int color) {
 		int destination = x + y * Rasterizer.width;
 		int destinationRowSkip = Rasterizer.width - width;
@@ -418,6 +507,19 @@ public class TypeFace extends Rasterizer {
 		}
 	}
 
+	/**
+	 * Draws glyph opaque.
+	 *
+	 * @param destinationPixels the destination pixels
+	 * @param sourceMask the source mask
+	 * @param color the color value
+	 * @param source the source
+	 * @param destination the destination
+	 * @param width the width in pixels
+	 * @param height the height in pixels
+	 * @param destinationRowSkip the destination row skip
+	 * @param sourceRowSkip the source row skip
+	 */
 	private static void drawGlyphOpaque(int[] destinationPixels, byte[] sourceMask, int color, int source,
 			int destination, int width, int height, int destinationRowSkip, int sourceRowSkip) {
 		int groupsOfFour = -(width >> 2);
@@ -453,6 +555,17 @@ public class TypeFace extends Rasterizer {
 		}
 	}
 
+	/**
+	 * Draws glyph alpha.
+	 *
+	 * @param mask the mask
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 * @param width the width in pixels
+	 * @param height the height in pixels
+	 * @param color the color value
+	 * @param alpha the alpha
+	 */
 	private void drawGlyphAlpha(byte[] mask, int x, int y, int width, int height, int color, int alpha) {
 		int destination = x + y * Rasterizer.width;
 		int destinationRowSkip = Rasterizer.width - width;
@@ -491,6 +604,20 @@ public class TypeFace extends Rasterizer {
 		}
 	}
 
+	/**
+	 * Draws glyph alpha pixels.
+	 *
+	 * @param source the source
+	 * @param destinationRowSkip the destination row skip
+	 * @param sourceRowSkip the source row skip
+	 * @param destination the destination
+	 * @param alpha the alpha
+	 * @param destinationPixels the destination pixels
+	 * @param color the color value
+	 * @param height the height in pixels
+	 * @param width the width in pixels
+	 * @param sourceMask the source mask
+	 */
 	private static void drawGlyphAlphaPixels(int source, int destinationRowSkip, int sourceRowSkip, int destination,
 			int alpha, int[] destinationPixels, int color, int height, int width, byte[] sourceMask) {
 		int sourceColor = (((color & 0xff00ff) * alpha & 0xff00ff00) + ((color & 0xff00) * alpha & 0xff0000)) >> 8;

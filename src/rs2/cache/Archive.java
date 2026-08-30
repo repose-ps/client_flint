@@ -6,16 +6,25 @@ import java.util.Objects;
 import rs2.cache.bzip2.Bzip2Decompressor;
 import rs2.net.Buffer;
 
+/** Provides archive state and behavior. */
 public class Archive {
 
+	/** Constant value for header size. */
 	private static final int HEADER_SIZE = 6;
+	/** Constant value for entry size. */
 	private static final int ENTRY_SIZE = 10;
 
+	/** Stores data values. */
 	private final byte[] data;
+	/** Stores name hashes values. */
 	private final int[] nameHashes;
+	/** Stores uncompressed sizes values. */
 	private final int[] uncompressedSizes;
+	/** Stores compressed sizes values. */
 	private final int[] compressedSizes;
+	/** Stores offsets values. */
 	private final int[] offsets;
+	/** Whether whole archive compressed is enabled or active. */
 	private final boolean wholeArchiveCompressed;
 
 	/**
@@ -85,6 +94,8 @@ public class Archive {
 	 * Returning a fresh array preserves the original Client's behavior and prevents
 	 * callers from mutating the archive's shared backing data.
 	 * </p>
+	 * @param fileName the file name
+	 * @return the decoded  value
 	 */
 	public byte[] read(String fileName) {
 		int requestedHash = hashName(fileName);
@@ -116,6 +127,8 @@ public class Archive {
 
 	/**
 	 * Computes the case-insensitive hash stored in revision 377 archives.
+	 * @param fileName the file name
+	 * @return whether h name
 	 */
 	public static int hashName(String fileName) {
 		Objects.requireNonNull(fileName, "fileName");
@@ -130,6 +143,12 @@ public class Archive {
 		return hash;
 	}
 
+	/**
+	 * Validates an archive decoding invariant.
+	 *
+	 * @param condition the condition
+	 * @param message the message text
+	 */
 	private static void require(boolean condition, String message) {
 		if (!condition) {
 			throw new IllegalArgumentException(message);

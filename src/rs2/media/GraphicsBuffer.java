@@ -32,12 +32,24 @@ public final class GraphicsBuffer implements ImageProducer, ImageObserver {
 	/** Directly writable 32-bit RGB software-raster pixels. */
 	public final int[] pixels;
 
+	/** Stores the current width. */
 	private final int width;
+	/** Stores the current height. */
 	private final int height;
+	/** Stores the current color model. */
 	private final ColorModel colorModel;
+	/** Stores the current consumer. */
 	private ImageConsumer consumer;
+	/** Stores the current image. */
 	private final Image image;
 
+	/**
+	 * Creates a new graphics buffer.
+	 *
+	 * @param component the AWT component
+	 * @param width the width in pixels
+	 * @param height the height in pixels
+	 */
 	public GraphicsBuffer(Component component, int width, int height) {
 		this.width = width;
 		this.height = height;
@@ -55,12 +67,18 @@ public final class GraphicsBuffer implements ImageProducer, ImageObserver {
 		bindRaster();
 	}
 
-	/** Returns this software buffer's fixed pixel width. */
+	/**
+	 * Returns this software buffer's fixed pixel width.
+	 * @return the width
+	 */
 	public int getWidth() {
 		return width;
 	}
 
-	/** Returns this software buffer's fixed pixel height. */
+	/**
+	 * Returns this software buffer's fixed pixel height.
+	 * @return the height
+	 */
 	public int getHeight() {
 		return height;
 	}
@@ -72,6 +90,9 @@ public final class GraphicsBuffer implements ImageProducer, ImageObserver {
 
 	/**
 	 * Publishes the current pixels and draws the produced image at {@code (x, y)}.
+	 * @param graphics the graphics context
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
 	 */
 	public void draw(Graphics graphics, int x, int y) {
 		pushPixels();

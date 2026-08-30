@@ -8,10 +8,16 @@ import rs2.media.AnimationFrame;
 /** Runtime non-player actor backed by an {@link NpcDefinition}. */
 public class Npc extends Actor {
 
+	/** Creates a new NPC with its default client state. */
+	public Npc() {
+	}
+
+	/** Stores the current definition. */
 	public NpcDefinition definition;
 
 	/**
 	 * Builds the NPC body with its current movement/action animation frames.
+	 * @return the base model
 	 */
 	public Model getBaseModel() {
 		if (sequence >= 0 && sequenceDelay == 0) {
@@ -75,7 +81,7 @@ public class Npc extends Actor {
 	/**
 	 * Returns whether visible.
 	 *
-	 * @return the resulting boolean
+	 * @return {@code true} when visible; otherwise {@code false}
 	 */
 	@Override
 	public boolean isVisible() {

@@ -15,14 +15,23 @@ import rs2.net.Buffer;
  */
 public class AnimationFrame {
 
+	/** Creates a new animation frame with its default client state. */
+	public AnimationFrame() {
+	}
+
+	/** Constant value for footer size. */
 	private static final int FOOTER_SIZE = 8;
 
+	/** Maximum transforms. */
 	private static final int MAX_TRANSFORMS = 500;
 
+	/** Constant value for scale transform. */
 	private static final int SCALE_TRANSFORM = 3;
 
+	/** Constant value for alpha transform. */
 	private static final int ALPHA_TRANSFORM = 5;
 
+	/** Default scale. */
 	private static final int DEFAULT_SCALE = 128;
 
 	/** Decoded frames indexed by frame identifier. */
@@ -42,12 +51,16 @@ public class AnimationFrame {
 	 */
 	public int transformCount;
 
+	/** Stores transform skeleton labels values. */
 	public int[] transformSkeletonLabels;
 
+	/** Stores transform xs values. */
 	public int[] transformXs;
 
+	/** Stores transform ys values. */
 	public int[] transformYs;
 
+	/** Stores transform zs values. */
 	public int[] transformZs;
 
 	/**
@@ -165,6 +178,7 @@ public class AnimationFrame {
 	 * Returns a decoded frame, or {@code null} before the frame table is loaded.
 	 *
 	 * @param frameId the frame id
+	 * @return the decoded frame, or {@code null} when the frame table is unavailable
 	 */
 	public static AnimationFrame get(int frameId) {
 		return frames == null ? null : frames[frameId];
@@ -174,6 +188,7 @@ public class AnimationFrame {
 	 * Returns whether an optional animation-frame identifier is absent.
 	 *
 	 * @param frameId the frame id
+	 * @return whether null
 	 */
 	public static boolean isNull(int frameId) {
 		return frameId == -1;

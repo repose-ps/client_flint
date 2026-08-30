@@ -19,7 +19,22 @@ import rs2.media.renderable.Player;
  */
 public final class ActorUpdater {
 
-	/** Advances movement, facing, and animations for one actor during the current client cycle. */
+	/** Creates a new actor updater with its default client state. */
+	public ActorUpdater() {
+	}
+
+	/**
+	 * Advances movement, facing, and animations for one actor during the current client cycle.
+	 * @param actor the actor
+	 * @param cycle the current client cycle
+	 * @param localPlayer the local player
+	 * @param players the player registry
+	 * @param npcs the NPC registry
+	 * @param localPlayerServerIndex the local player server index
+	 * @param localPlayerArrayIndex the local player array index
+	 * @param regionBaseX the region base X coordinate
+	 * @param regionBaseY the region base Y coordinate
+	 */
 	public void update(Actor actor, int cycle, Player localPlayer, Player[] players, Npc[] npcs,
 			int localPlayerServerIndex, int localPlayerArrayIndex, int regionBaseX, int regionBaseY) {
 		if (actor.x < 128 || actor.y < 128 || actor.x >= 13184 || actor.y >= 13184) {
@@ -56,7 +71,11 @@ public final class ActorUpdater {
 		actor.resetPath();
 	}
 
-	/** Interpolates an actor toward the start of a scheduled forced movement. */
+	/**
+	 * Interpolates an actor toward the start of a scheduled forced movement.
+	 * @param actor the actor
+	 * @param cycle the current client cycle
+	 */
 	private static void updatePreForcedMovement(Actor actor, int cycle) {
 		int remaining = actor.forceMoveStartCycle - cycle;
 		int targetX = actor.forceMoveStartX * 128 + actor.size * 64;
@@ -67,7 +86,11 @@ public final class ActorUpdater {
 		setForcedMovementOrientation(actor);
 	}
 
-	/** Interpolates an actor across an active forced-movement interval. */
+	/**
+	 * Interpolates an actor across an active forced-movement interval.
+	 * @param actor the actor
+	 * @param cycle the current client cycle
+	 */
 	private static void updateForcedMovement(Actor actor, int cycle) {
 		if (actor.forceMoveEndCycle == cycle || actor.sequence == -1 || actor.sequenceDelay != 0
 				|| actor.sequenceFrameCycle + 1 > AnimationSequence.sequences[actor.sequence]
@@ -106,7 +129,10 @@ public final class ActorUpdater {
 		}
 	}
 
-	/** Advances normal path movement and chooses the movement animation and speed. */
+	/**
+	 * Advances normal path movement and chooses the movement animation and speed.
+	 * @param actor the actor
+	 */
 	private static void updatePathMovement(Actor actor) {
 		actor.movementSequence = actor.idleSequence;
 		if (actor.pathLength == 0) {
@@ -226,7 +252,16 @@ public final class ActorUpdater {
 		}
 	}
 
-	/** Rotates an actor toward its target entity or queued face coordinates. */
+	/**
+	 * Rotates an actor toward its target entity or queued face coordinates.
+	 * @param actor the actor
+	 * @param players the player registry
+	 * @param npcs the NPC registry
+	 * @param localPlayerServerIndex the local player server index
+	 * @param localPlayerArrayIndex the local player array index
+	 * @param regionBaseX the region base X coordinate
+	 * @param regionBaseY the region base Y coordinate
+	 */
 	private static void updateFacing(Actor actor, Player[] players, Npc[] npcs, int localPlayerServerIndex,
 			int localPlayerArrayIndex, int regionBaseX, int regionBaseY) {
 		if (actor.turnSpeed == 0) {
@@ -287,7 +322,11 @@ public final class ActorUpdater {
 		}
 	}
 
-	/** Advances movement, spot-animation, and primary-sequence frames. */
+	/**
+	 * Advances movement, spot-animation, and primary-sequence frames.
+	 * @param actor the actor
+	 * @param cycle the current client cycle
+	 */
 	private static void updateAnimations(Actor actor, int cycle) {
 		actor.animationStretches = false;
 		if (actor.movementSequence != -1) {

@@ -13,6 +13,10 @@ import rs2.net.Buffer;
  */
 public class Varbit {
 
+	/** Creates a new varbit with its default client state. */
+	public Varbit() {
+	}
+
 	/** Number of definitions declared by the cache. */
 	public static int count;
 
@@ -40,9 +44,13 @@ public class Varbit {
 	/** Reserved integer encoded by opcode 4. */
 	public int opcode4Value;
 
+	/** Whether opcode5 enabled is enabled or active. */
 	public boolean opcode5Enabled = true;
 
-	/** Loads every varbit definition from {@code varbit.dat}. */
+	/**
+	 * Loads every varbit definition from {@code varbit.dat}.
+	 * @param archive the source archive
+	 */
 	public static void load(Archive archive) {
 		Buffer buffer = new Buffer(archive.read("varbit.dat"));
 		count = buffer.readUnsignedShort();
@@ -67,7 +75,10 @@ public class Varbit {
 		}
 	}
 
-	/** Decodes one opcode-delimited varbit definition. */
+	/**
+	 * Decodes one opcode-delimited varbit definition.
+	 * @param buffer the source buffer
+	 */
 	public void decode(Buffer buffer) {
 		while (true) {
 			int opcode = buffer.readUnsignedByte();

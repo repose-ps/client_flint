@@ -15,32 +15,46 @@ import rs2.collection.Node;
  */
 public final class PendingSpawn extends Node {
 
+	/** Creates a new pending spawn with its default client state. */
+	public PendingSpawn() {
+	}
+
 	/**
 	 * Identifier for spawn.
 	 */
 	public int spawnId;
 
+	/** Stores the current spawn orientation. */
 	public int spawnOrientation;
 
+	/** Stores the current spawn type. */
 	public int spawnType;
 	/**
 	 * Identifier for previous.
 	 */
 	public int previousId;
 
+	/** Stores the current previous orientation. */
 	public int previousOrientation;
 
+	/** Stores the current previous type. */
 	public int previousType;
 
+	/** Stores the current restore delay. */
 	public int restoreDelay = -1;
 
+	/** Stores the current plane. */
 	public int plane;
 
+	/** Stores the current scene layer. */
 	public int sceneLayer;
 
+	/** Stores the current X. */
 	public int x;
 
+	/** Stores the current Y. */
 	public int y;
 
+	/** Stores the current spawn delay. */
 	public int spawnDelay;
 }

@@ -25,35 +25,64 @@ import rs2.scene.util.CollisionMap;
  */
 public final class WorldState {
 
+	/** Constant value for plane count. */
 	public static final int PLANE_COUNT = 4;
 
+	/** Constant value for size. */
 	public static final int SIZE = 104;
 
+	/** Stores tile flags values. */
 	public final byte[][][] tileFlags = new byte[PLANE_COUNT][SIZE][SIZE];
 
+	/** Stores tile heights values. */
 	public final int[][][] tileHeights = new int[PLANE_COUNT][SIZE + 1][SIZE + 1];
 
+	/** Scene graph backed by this world's shared tile-height array. */
 	public final Scene scene = new Scene(tileHeights, PLANE_COUNT, SIZE, SIZE);
 
+	/** Stores collision maps values. */
 	public final CollisionMap[] collisionMaps = new CollisionMap[PLANE_COUNT];
 
+	/** Stores ground items values. */
 	public final NodeDeque[][][] groundItems = new NodeDeque[PLANE_COUNT][SIZE][SIZE];
 
+	/**
+	 * Pending spawns.
+	 *
+	 */
 	public NodeDeque pendingSpawns = new NodeDeque();
 
+	/**
+	 * Projectiles.
+	 *
+	 */
 	public final NodeDeque projectiles = new NodeDeque();
 
+	/**
+	 * Graphics objects.
+	 *
+	 */
 	public final NodeDeque graphicsObjects = new NodeDeque();
 
+	/** Stores the current projectile keepalive cycles. */
 	private int projectileKeepaliveCycles;
 
+	/**
+	 * Creates a new world state.
+	 */
 	public WorldState() {
 		for (int plane = 0; plane < PLANE_COUNT; plane++) {
 			collisionMaps[plane] = new CollisionMap(SIZE, SIZE);
 		}
 	}
 
-	/** Interpolates the terrain height at one world-space coordinate. */
+	/**
+	 * Interpolates the terrain height at one world-space coordinate.
+	 * @param worldX the world X
+	 * @param worldY the world Y
+	 * @param plane the scene plane
+	 * @return the tile height
+	 */
 	public int getTileHeight(int worldX, int worldY, int plane) {
 		int tileX = worldX >> 7;
 		int tileY = worldY >> 7;
@@ -73,7 +102,12 @@ public final class WorldState {
 		return south * (128 - localY) + north * localY >> 7;
 	}
 
-	/** Rebuilds the visible ground-item pile for one scene tile. */
+	/**
+	 * Rebuilds the visible ground-item pile for one scene tile.
+	 * @param plane the scene plane
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 */
 	public void updateGroundItemPile(int plane, int x, int y) {
 		NodeDeque items = groundItems[plane][x][y];
 		if (items == null) {
@@ -157,6 +191,15 @@ public final class WorldState {
 
 	/**
 	 * Applies a dynamic object replacement or removal to scene and collision state.
+	 * @param plane the scene plane
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 * @param sceneLayer the scene layer
+	 * @param objectId the object ID
+	 * @param type the type
+	 * @param orientation the orientation
+	 * @param lowMemory whether low-memory mode is active
+	 * @param currentPlane the current plane
 	 */
 	public void applyGameObjectChange(int plane, int x, int y, int sceneLayer, int objectId, int type, int orientation,
 			boolean lowMemory, int currentPlane) {
@@ -229,7 +272,10 @@ public final class WorldState {
 		}
 	}
 
-	/** Captures the scene object currently occupying a pending-spawn location. */
+	/**
+	 * Captures the scene object currently occupying a pending-spawn location.
+	 * @param spawn the spawn
+	 */
 	public void capturePreviousState(PendingSpawn spawn) {
 		int uid = 0;
 		int id = -1;
@@ -258,7 +304,18 @@ public final class WorldState {
 		spawn.previousOrientation = orientation;
 	}
 
-	/** Creates or updates a pending scene-object spawn at one tile. */
+	/**
+	 * Creates or updates a pending scene-object spawn at one tile.
+	 * @param plane the scene plane
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 * @param sceneLayer the scene layer
+	 * @param spawnId the spawn ID
+	 * @param spawnType the spawn type
+	 * @param spawnOrientation the spawn orientation
+	 * @param spawnDelay the spawn delay
+	 * @param restoreDelay the restore delay
+	 */
 	public void schedulePendingSpawn(int plane, int x, int y, int sceneLayer, int spawnId, int spawnType,
 			int spawnOrientation, int spawnDelay, int restoreDelay) {
 		PendingSpawn spawn = null;
@@ -301,7 +358,11 @@ public final class WorldState {
 		}
 	}
 
-	/** Advances pending-spawn delays and applies due scene changes. */
+	/**
+	 * Advances pending-spawn delays and applies due scene changes.
+	 * @param lowMemory whether low-memory mode is active
+	 * @param currentPlane the current plane
+	 */
 	public void updatePendingSpawns(boolean lowMemory, int currentPlane) {
 		for (PendingSpawn spawn = (PendingSpawn) pendingSpawns
 				.first(); spawn != null; spawn = (PendingSpawn) pendingSpawns.next()) {
@@ -382,7 +443,16 @@ public final class WorldState {
 		}
 	}
 
-	/** Advances active projectiles and submits visible ones to the scene. */
+	/**
+	 * Advances active projectiles and submits visible ones to the scene.
+	 * @param currentPlane the current plane
+	 * @param currentCycle the current client cycle
+	 * @param cycleDelta the cycle delta
+	 * @param localPlayerServerIndex the local player server index
+	 * @param localPlayer the local player
+	 * @param actors the actors
+	 * @param outgoing the outgoing
+	 */
 	public void updateProjectiles(int currentPlane, int currentCycle, int cycleDelta, int localPlayerServerIndex,
 			Player localPlayer, ActorSynchronizer actors, Buffer outgoing) {
 
@@ -441,6 +511,9 @@ public final class WorldState {
 
 	/**
 	 * Advances temporary graphics objects and submits visible ones to the scene.
+	 * @param currentPlane the current plane
+	 * @param currentCycle the current client cycle
+	 * @param cycleDelta the cycle delta
 	 */
 	public void updateGraphicsObjects(int currentPlane, int currentCycle, int cycleDelta) {
 		for (GraphicsObject graphics = (GraphicsObject) graphicsObjects

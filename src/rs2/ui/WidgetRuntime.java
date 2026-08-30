@@ -11,39 +11,117 @@ import rs2.game.Skills;
  * evaluation, CS1 comparisons, model animation updates, and animation reset.
  */
 public final class WidgetRuntime {
+	/** Provides script context state and behavior. */
 	public interface ScriptContext {
+		/**
+		 * Returns the current skill level.
+		 *
+		 * @param skill the skill
+		 * @return the current skill level
+		 */
 		int currentSkillLevel(int skill);
 
+		/**
+		 * Returns the base skill level.
+		 *
+		 * @param skill the skill
+		 * @return the base skill level
+		 */
 		int baseSkillLevel(int skill);
 
+		/**
+		 * Returns the skill experience.
+		 *
+		 * @param skill the skill
+		 * @return the skill experience
+		 */
 		int skillExperience(int skill);
 
+		/**
+		 * Returns the varp.
+		 *
+		 * @param id the identifier
+		 * @return the varp
+		 */
 		int varp(int id);
 
+		/**
+		 * Returns the experience for level.
+		 *
+		 * @param levelIndex the level index
+		 * @return the experience for level
+		 */
 		int experienceForLevel(int levelIndex);
 
+		/**
+		 * Returns the bit mask.
+		 *
+		 * @param width the width in pixels
+		 * @return the bit mask
+		 */
 		int bitMask(int width);
 
+		/**
+		 * Runs energy.
+		 *
+		 * @return the current run-energy percentage
+		 */
 		int runEnergy();
 
+		/**
+		 * Returns the weight.
+		 *
+		 * @return the weight
+		 */
 		int weight();
 
+		/**
+		 * Returns the combat level.
+		 *
+		 * @return the combat level
+		 */
 		int combatLevel();
 
+		/**
+		 * Returns the player world X coordinate.
+		 *
+		 * @return the player world X
+		 */
 		int playerWorldX();
 
+		/**
+		 * Returns the player world Y coordinate.
+		 *
+		 * @return the player world Y
+		 */
 		int playerWorldY();
 
+		/**
+		 * Returns whether members world is active.
+		 *
+		 * @return whether members world
+		 */
 		boolean membersWorld();
 	}
 
+	/** Stores the current context. */
 	private final ScriptContext context;
 
+	/**
+	 * Creates a new widget runtime.
+	 *
+	 * @param context the context
+	 */
 	public WidgetRuntime(ScriptContext context) {
 		this.context = context;
 	}
 
-	/** Advances model-widget animation and rotation state recursively. */
+	/**
+	 * Advances model-widget animation and rotation state recursively.
+	 * @param deltaCycles the delta cycles
+	 * @param interfaceId the interface ID
+	 * @return whether update animations
+	 */
 	public boolean updateAnimations(int deltaCycles, int interfaceId) {
 		boolean changed = false;
 		Widget parent = Widget.get(interfaceId);
@@ -84,7 +162,10 @@ public final class WidgetRuntime {
 		return changed;
 	}
 
-	/** Resets animation frames for an interface tree. */
+	/**
+	 * Resets animation frames for an interface tree.
+	 * @param interfaceId the interface ID
+	 */
 	public void resetAnimations(int interfaceId) {
 		Widget parent = Widget.get(interfaceId);
 		for (int index = 0; index < parent.children.length; index++) {
@@ -98,7 +179,11 @@ public final class WidgetRuntime {
 		}
 	}
 
-	/** Evaluates a widget's CS1 comparisons to determine its active state. */
+	/**
+	 * Evaluates a widget's CS1 comparisons to determine its active state.
+	 * @param widget the widget
+	 * @return whether active
+	 */
 	public boolean isActive(Widget widget) {
 		if (widget.cs1Comparisons == null)
 			return false;
@@ -121,7 +206,12 @@ public final class WidgetRuntime {
 		return true;
 	}
 
-	/** Evaluates one revision-377 CS1 integer script, returning -1 on evaluation failure. */
+	/**
+	 * Evaluates one revision-377 CS1 integer script, returning -1 on evaluation failure.
+	 * @param widget the widget
+	 * @param scriptIndex the script index
+	 * @return the script result, or a negative sentinel when evaluation cannot complete
+	 */
 	public int evaluateScript(Widget widget, int scriptIndex) {
 		if (widget.cs1Instructions == null || scriptIndex >= widget.cs1Instructions.length)
 			return -2;

@@ -32,6 +32,10 @@ package rs2.collection;
  */
 public class Node {
 
+	/** Creates a new node with its default client state. */
+	public Node() {
+	}
+
 	/**
 	 * Identifier used when this node is stored in a {@link NodeHashTable}.
 	 *

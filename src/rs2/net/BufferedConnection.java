@@ -23,8 +23,10 @@ import java.net.Socket;
  */
 public class BufferedConnection implements Runnable, Closeable {
 
+	/** Constant value for read timeout millis. */
 	private static final int READ_TIMEOUT_MILLIS = 30_000;
 
+	/** Constant value for write buffer capacity. */
 	private static final int WRITE_BUFFER_CAPACITY = 5_000;
 
 	/**
@@ -33,18 +35,23 @@ public class BufferedConnection implements Runnable, Closeable {
 	 */
 	private static final int MAX_PENDING_BYTES = 4_900;
 
+	/** Constant value for writer thread priority. */
 	private static final int WRITER_THREAD_PRIORITY = 3;
 
+	/** Stores the current input. */
 	public InputStream input;
 
+	/** Stores the current output. */
 	public OutputStream output;
 
+	/** Stores the current socket. */
 	public Socket socket;
 	/**
 	 * Whether closed.
 	 */
 	private boolean closed;
 
+	/** Stores write buffer values. */
 	public byte[] writeBuffer = new byte[WRITE_BUFFER_CAPACITY];
 
 	/**
@@ -61,8 +68,10 @@ public class BufferedConnection implements Runnable, Closeable {
 	 */
 	public boolean writeThreadStarted;
 
+	/** Stores the current writer thread. */
 	private Thread writerThread;
 
+	/** Stores the current writer failure. */
 	private IOException writerFailure;
 
 	/**
@@ -74,6 +83,7 @@ public class BufferedConnection implements Runnable, Closeable {
 	 * </p>
 	 *
 	 * @param socket the socket
+	 * @throws IOException if an I/O operation fails
 	 */
 	public BufferedConnection(Socket socket) throws IOException {
 		this.socket = socket;
@@ -143,6 +153,7 @@ public class BufferedConnection implements Runnable, Closeable {
 	 * Reads one unsigned byte, blocking until data is available.
 	 *
 	 * @return a value from 0 to 255, or -1 if the peer reached end-of-stream
+	 * @throws IOException if an I/O operation fails
 	 */
 	public int read() throws IOException {
 		ensureOpen();
@@ -151,6 +162,8 @@ public class BufferedConnection implements Runnable, Closeable {
 
 	/**
 	 * Returns the number of bytes that can currently be read without blocking.
+	 * @return the number of bytes currently available to read
+	 * @throws IOException if an I/O operation fails
 	 */
 	public int available() throws IOException {
 		ensureOpen();
@@ -338,7 +351,7 @@ public class BufferedConnection implements Runnable, Closeable {
 	/**
 	 * Returns whether closed.
 	 *
-	 * @return the resulting boolean
+	 * @return {@code true} when closed; otherwise {@code false}
 	 */
 	public synchronized boolean isClosed() {
 		return closed;
@@ -404,6 +417,7 @@ public class BufferedConnection implements Runnable, Closeable {
 
 	/**
 	 * Performs ensure open.
+	 * @throws IOException if an I/O operation fails
 	 */
 	private void ensureOpen() throws IOException {
 		if (closed) {
@@ -413,6 +427,7 @@ public class BufferedConnection implements Runnable, Closeable {
 
 	/**
 	 * Performs check writer failure.
+	 * @throws IOException if an I/O operation fails
 	 */
 	private void checkWriterFailure() throws IOException {
 		if (writerFailure != null) {
@@ -422,6 +437,7 @@ public class BufferedConnection implements Runnable, Closeable {
 
 	/**
 	 * Calculates the number of bytes waiting in the circular buffer.
+	 * @return the number of bytes waiting in the write ring buffer
 	 */
 	private int pendingBytes() {
 		return (writePosition - readPosition + WRITE_BUFFER_CAPACITY) % WRITE_BUFFER_CAPACITY;

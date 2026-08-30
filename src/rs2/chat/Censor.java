@@ -147,7 +147,7 @@ public final class Censor {
 	}
 
 	/**
-	 * Performs the sanitize operation.
+	 * Removes unsupported characters from the working censor buffer.
 	 *
 	 * @param text the text
 	 */
@@ -182,6 +182,7 @@ public final class Censor {
 	 * Returns the revision-377 censored representation of {@code text}.
 	 *
 	 * @param text the text
+	 * @return the sanitized and censored text
 	 */
 	public static String censor(String text) {
 		char characters[] = text.toCharArray();
@@ -210,7 +211,7 @@ public final class Censor {
 	}
 
 	/**
-	 * Performs the restore uppercase operation.
+	 * Restores allowed uppercase characters after censoring.
 	 *
 	 * @param filtered the filtered
 	 * @param original the original
@@ -223,7 +224,7 @@ public final class Censor {
 	}
 
 	/**
-	 * Performs the normalize capitalization operation.
+	 * Normalizes capitalization in censored text.
 	 *
 	 * @param text the text
 	 */
@@ -723,7 +724,7 @@ public final class Censor {
 	}
 
 	/**
-	 * Performs the contains context pair operation.
+	 * Returns whether a context-pair table contains the supplied pair.
 	 *
 	 * @param right the right
 	 * @param pairs the pairs
@@ -750,12 +751,12 @@ public final class Censor {
 	}
 
 	/**
-	 * Performs the match domain character operation.
+	 * Matches a domain-filter character and returns the consumed width.
 	 *
 	 * @param current  the current
 	 * @param expected the expected
 	 * @param next     the next
-	 * @return the resulting value
+	 * @return the number of input characters consumed by the match
 	 */
 	private static int matchDomainCharacter(char current, char expected, char next) {
 		if (expected == current)
@@ -774,12 +775,12 @@ public final class Censor {
 	}
 
 	/**
-	 * Performs the match bad word character operation.
+	 * Matches a bad-word-filter character and returns the consumed width.
 	 *
 	 * @param expected the expected
 	 * @param current  the current
 	 * @param next     the next
-	 * @return the resulting value
+	 * @return the number of input characters consumed by the match
 	 */
 	private static int matchBadWordCharacter(char expected, char current, char next) {
 		if (expected == current)
@@ -886,7 +887,7 @@ public final class Censor {
 	 * Encodes context character.
 	 *
 	 * @param character the character
-	 * @return the resulting value
+	 * @return the compact context-table code for the character
 	 */
 	private static byte encodeContextCharacter(char character) {
 		if (character >= 'a' && character <= 'z')
@@ -1064,7 +1065,7 @@ public final class Censor {
 	 * Encodes fragment.
 	 *
 	 * @param fragment the fragment
-	 * @return the resulting value
+	 * @return the encoded fragment value
 	 */
 	private static int encodeFragment(char fragment[]) {
 		if (fragment.length > 6)
@@ -1085,16 +1086,22 @@ public final class Censor {
 		return encodedValue;
 	}
 
+	/** Stores fragment hashes values. */
 	private static int[] fragmentHashes;
 
+	/** Stores bad words values. */
 	private static char[][] badWords;
 
+	/** Stores bad word context pairs values. */
 	private static byte[][][] badWordContextPairs;
 
+	/** Stores domain words values. */
 	private static char[][] domainWords;
 
+	/** Stores top level domains values. */
 	private static char[][] topLevelDomains;
 
+	/** Stores top level domain types values. */
 	private static int[] topLevelDomainTypes;
 	/** Defines the exceptions constant. */
 	private static final String[] EXCEPTIONS = { "cook", "cook's", "cooks", "seeks", "sheet", "woop", "woops", "faq",

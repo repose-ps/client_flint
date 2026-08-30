@@ -5,6 +5,9 @@ package rs2.net;
  */
 public final class Ipv4Address {
 
+	/**
+	 * Creates a new ipv4 address.
+	 */
 	private Ipv4Address() {
 		throw new AssertionError("No instances");
 	}
@@ -17,6 +20,7 @@ public final class Ipv4Address {
 	 * </p>
 	 *
 	 * @param address the address
+	 * @return the dotted-decimal IPv4 address
 	 */
 	public static String format(int address) {
 		return new StringBuilder(15).append(address >>> 24 & 0xff).append('.').append(address >>> 16 & 0xff).append('.')

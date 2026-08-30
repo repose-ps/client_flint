@@ -27,56 +27,82 @@ public class CollisionMap {
 	/** Collision bitfield indexed as {@code flags[x][y]}. */
 	public int[][] flags;
 
+	/** Constant value for block north west. */
 	public static final int BLOCK_NORTH_WEST = 0x1;
 
+	/** Constant value for block north. */
 	public static final int BLOCK_NORTH = 0x2;
 
+	/** Constant value for block north east. */
 	public static final int BLOCK_NORTH_EAST = 0x4;
 
+	/** Constant value for block east. */
 	public static final int BLOCK_EAST = 0x8;
 
+	/** Constant value for block south east. */
 	public static final int BLOCK_SOUTH_EAST = 0x10;
 
+	/** Constant value for block south. */
 	public static final int BLOCK_SOUTH = 0x20;
 
+	/** Constant value for block south west. */
 	public static final int BLOCK_SOUTH_WEST = 0x40;
 
+	/** Constant value for block west. */
 	public static final int BLOCK_WEST = 0x80;
 
+	/** Constant value for block object. */
 	public static final int BLOCK_OBJECT = 0x100;
 
+	/** Constant value for block projectile north west. */
 	public static final int BLOCK_PROJECTILE_NORTH_WEST = 0x200;
 
+	/** Constant value for block projectile north. */
 	public static final int BLOCK_PROJECTILE_NORTH = 0x400;
 
+	/** Constant value for block projectile north east. */
 	public static final int BLOCK_PROJECTILE_NORTH_EAST = 0x800;
 
+	/** Constant value for block projectile east. */
 	public static final int BLOCK_PROJECTILE_EAST = 0x1000;
 
+	/** Constant value for block projectile south east. */
 	public static final int BLOCK_PROJECTILE_SOUTH_EAST = 0x2000;
 
+	/** Constant value for block projectile south. */
 	public static final int BLOCK_PROJECTILE_SOUTH = 0x4000;
 
+	/** Constant value for block projectile south west. */
 	public static final int BLOCK_PROJECTILE_SOUTH_WEST = 0x8000;
 
+	/** Constant value for block projectile west. */
 	public static final int BLOCK_PROJECTILE_WEST = 0x10000;
 
+	/** Constant value for block projectile object. */
 	public static final int BLOCK_PROJECTILE_OBJECT = 0x20000;
 
+	/** Constant value for block floor decoration. */
 	public static final int BLOCK_FLOOR_DECORATION = 0x200000;
 
+	/** Constant value for unloaded. */
 	public static final int UNLOADED = 0x1000000;
 
+	/** Constant value for border blocked. */
 	private static final int BORDER_BLOCKED = 0x00ffffff;
 
+	/** Constant value for projectile flag shift. */
 	private static final int PROJECTILE_FLAG_SHIFT = 9;
 
+	/** Constant value for access from west blocked. */
 	private static final int ACCESS_FROM_WEST_BLOCKED = 0x1280108;
 
+	/** Constant value for access from east blocked. */
 	private static final int ACCESS_FROM_EAST_BLOCKED = 0x1280180;
 
+	/** Constant value for access from south blocked. */
 	private static final int ACCESS_FROM_SOUTH_BLOCKED = 0x1280102;
 
+	/** Constant value for access from north blocked. */
 	private static final int ACCESS_FROM_NORTH_BLOCKED = 0x1280120;
 
 	/**
@@ -271,6 +297,7 @@ public class CollisionMap {
 	 * @param goalY       the goal y
 	 * @param wallType    the wall type
 	 * @param orientation the orientation
+	 * @return whether reached wall
 	 */
 	public boolean reachedWall(int currentX, int currentY, int goalX, int goalY, int wallType, int orientation) {
 		if (currentX == goalX && currentY == goalY) {
@@ -423,6 +450,7 @@ public class CollisionMap {
 	 * @param goalY          the goal y
 	 * @param decorationType the decoration type
 	 * @param orientation    the orientation
+	 * @return whether reached wall decoration
 	 */
 	public boolean reachedWallDecoration(int currentX, int currentY, int goalX, int goalY, int decorationType,
 			int orientation) {
@@ -498,6 +526,7 @@ public class CollisionMap {
 	 * @param sizeX      the size x
 	 * @param sizeY      the size y
 	 * @param accessMask the access mask
+	 * @return whether reached object
 	 */
 	public boolean reachedObject(int currentX, int currentY, int goalX, int goalY, int sizeX, int sizeY,
 			int accessMask) {

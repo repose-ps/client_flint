@@ -11,6 +11,10 @@ package rs2.cache.ondemand;
  */
 public class OnDemandProvider {
 
+	/** Creates a new on demand provider with its default client state. */
+	public OnDemandProvider() {
+	}
+
 	/**
 	 * Requests a model archive entry.
 	 *

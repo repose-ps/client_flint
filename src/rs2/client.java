@@ -88,6 +88,10 @@ import rs2.ui.login.LoginScreen;
  */
 public class Client extends GameShell {
 
+	/**
+	 * Layout.
+	 *
+	 */
 	private final ClientLayout layout = new ClientLayout();
 	/** Complete client frame composed off-screen before one AWT presentation blit. */
 	private BufferedImage presentationBuffer;
@@ -1140,6 +1144,7 @@ public class Client extends GameShell {
 	 *
 	 * @param request the request
 	 * @return the resulting data input stream
+	 * @throws IOException if an I/O operation fails
 	 */
 	public DataInputStream openJaggrabStream(String request) throws IOException {
 		if (jaggrabSocket != null) {
@@ -1162,6 +1167,7 @@ public class Client extends GameShell {
 	 *
 	 * @param port the server port
 	 * @return the resulting socket
+	 * @throws IOException if an I/O operation fails
 	 */
 	public Socket openSocket(int port) throws IOException {
 		return Signlink.openSocket(port);
@@ -2083,6 +2089,7 @@ public class Client extends GameShell {
 
 	/**
 	 * Configures the hostname used by all standalone game/update/archive sockets.
+	 * @param host the host name
 	 */
 	public static void setServerHost(String host) {
 		if (host == null || host.trim().isEmpty()) {
@@ -8093,8 +8100,10 @@ public class Client extends GameShell {
 	public static BigInteger RSA_MODULUS = new BigInteger(
 			"7162900525229798032761816791230527296329313291232324290237849263501208207972894053929065636522363163621000728841182238772712427862772219676577293600221789");
 
+	/** Stores overhead text colors values. */
 	public int overheadTextColors[] = { 0xffff00, 0xff0000, 65280, 65535, 0xff00ff, 0xffffff };
 
+	/** Stores skill experiences values. */
 	public int skillExperiences[];
 	/** The client state for hint tile x. */
 	public int hintTileX;
@@ -8115,8 +8124,10 @@ public class Client extends GameShell {
 	/** The current number of item search result entries. */
 	public int itemSearchResultCount;
 
+	/** Stores item search result names values. */
 	public String itemSearchResultNames[];
 
+	/** Stores item search result IDs values. */
 	public int itemSearchResultIds[];
 	/** The client state for item search scroll offset. */
 	public int itemSearchScrollOffset;
@@ -8153,6 +8164,7 @@ public class Client extends GameShell {
 	 */
 	public static int systemUpdateKeepaliveCounter;
 
+	/** Stores cross sprites values. */
 	public ImageRGB crossSprites[];
 	/** The client state for last click time. */
 	public long lastClickTime;
@@ -8177,6 +8189,7 @@ public class Client extends GameShell {
 	/** The current current hovered widget id. */
 	public int currentHoveredWidgetId;
 
+	/** Stores minimap mask widths values. */
 	public int minimapMaskWidths[];
 	/** The current current world id. */
 	public static int currentWorldId = 10;
@@ -8206,20 +8219,28 @@ public class Client extends GameShell {
 	/** The client state for overhead text limit. */
 	public int overheadTextLimit;
 
+	/** Stores overhead text xs values. */
 	public int overheadTextXs[];
 
+	/** Stores overhead text ys values. */
 	public int overheadTextYs[];
 
+	/** Stores overhead text heights values. */
 	public int overheadTextHeights[];
 
+	/** Stores overhead text half widths values. */
 	public int overheadTextHalfWidths[];
 
+	/** Stores overhead text color codes values. */
 	public int overheadTextColorCodes[];
 
+	/** Stores overhead text effects values. */
 	public int overheadTextEffects[];
 
+	/** Stores overhead text cycles values. */
 	public int overheadTextCycles[];
 
+	/** Stores overhead texts values. */
 	public String overheadTexts[];
 	/** The client state for input dialog text. */
 	public String inputDialogText;
@@ -8228,8 +8249,10 @@ public class Client extends GameShell {
 	/** The client state for animation cycle delta. */
 	public int animationCycleDelta;
 
+	/** Stores experience table values. */
 	public static int experienceTable[];
 
+	/** Stores hint icon sprites values. */
 	public ImageRGB hintIconSprites[];
 	/** The client state for inventory rearrange mode. */
 	public int inventoryRearrangeMode;
@@ -8319,6 +8342,7 @@ public class Client extends GameShell {
 	/** The client state for top tab background. */
 	public IndexedImage topTabBackground;
 
+	/** Stores sidebar icons values. */
 	public IndexedImage sidebarIcons[];
 	/** The client state for redstone1 vertical. */
 	public IndexedImage redstone1Vertical;
@@ -8337,18 +8361,24 @@ public class Client extends GameShell {
 	/** Whether startup started is currently active or requested. */
 	public static boolean startupStarted;
 
+	/** Stores chatbox scanline offsets values. */
 	public int chatboxScanlineOffsets[];
 
+	/** Stores sidebar scanline offsets values. */
 	public int sidebarScanlineOffsets[];
 
+	/** Stores viewport scanline offsets values. */
 	public int viewportScanlineOffsets[];
 
+	/** Stores full screen scanline offsets values. */
 	public int fullScreenScanlineOffsets[];
 
+	/** Stores varp shadow values values. */
 	public int varpShadowValues[];
 	/** The client state for public chat mode. */
 	public int publicChatMode;
 
+	/** Stores body color palettes values. */
 	public static final int bodyColorPalettes[][] = {
 			{ 6798, 107, 10283, 16, 4797, 7744, 5799, 4634, 33697, 22433, 2983, 54193 },
 			{ 8741, 12, 64030, 43162, 7735, 8404, 1701, 38430, 24094, 10153, 56621, 4783, 1341, 16578, 35003, 25239 },
@@ -8365,6 +8395,7 @@ public class Client extends GameShell {
 	/** The client state for title right flame background. */
 	public ImageRGB titleRightFlameBackground;
 
+	/** Stores minimap mask offsets values. */
 	public int minimapMaskOffsets[];
 	/** The client state for cross x. */
 	public int crossX;
@@ -8379,10 +8410,12 @@ public class Client extends GameShell {
 	/** The client state for loading message. */
 	public String loadingMessage;
 
+	/** Stores current skill levels values. */
 	public int currentSkillLevels[];
 	/** The client state for weight. */
 	public int weight;
 
+	/** Stores map function sprites values. */
 	public ImageRGB mapFunctionSprites[];
 	/** The client state for recovery questions date. */
 	public int recoveryQuestionsDate;
@@ -8391,6 +8424,7 @@ public class Client extends GameShell {
 	/** The client state for hint map marker. */
 	public ImageRGB hintMapMarker;
 
+	/** Stores varp values values. */
 	public int varpValues[];
 	/** The current sidebar tooltip widget id. */
 	public int sidebarTooltipWidgetId;
@@ -8406,6 +8440,7 @@ public class Client extends GameShell {
 	 */
 	public static int groundItemAction684Counter;
 
+	/** Stores base skill levels values. */
 	public int baseSkillLevels[];
 	/**
 	 * Tracks the current system update timer in client ticks/cycles where
@@ -8425,18 +8460,23 @@ public class Client extends GameShell {
 	/** The client state for account membership status. */
 	public int accountMembershipStatus;
 
+	/** Stores player actions values. */
 	public String playerActions[];
 
+	/** Whether player action low priority is enabled or active. */
 	public boolean playerActionLowPriority[];
 
+	/** Stores prayer icon sprites values. */
 	public ImageRGB prayerIconSprites[];
 	/** The client state for scrollbar thumb color. */
 	public int scrollbarThumbColor;
 	/** The client state for last password change date. */
 	public int lastPasswordChangeDate;
 
+	/** Stores title flame intensity values. */
 	public int titleFlameIntensity[];
 
+	/** Stores title flame intensity scratch values. */
 	public int titleFlameIntensityScratch[];
 	/** The client state for multi combat overlay. */
 	public ImageRGB multiCombatOverlay;
@@ -8456,6 +8496,7 @@ public class Client extends GameShell {
 	/** Whether report abuse mute player is currently active or requested. */
 	public boolean reportAbuseMutePlayer;
 
+	/** Stores appearance colors values. */
 	public int appearanceColors[];
 	/**
 	 * Counts ground item action26 events for the original client timing/protocol
@@ -8485,6 +8526,7 @@ public class Client extends GameShell {
 	/** The sprite resource used for compass sprite. */
 	public ImageRGB compassSprite;
 
+	/** Stores title runes values. */
 	public IndexedImage titleRunes[];
 	/** The client state for destination x. */
 	public int destinationX;
@@ -8510,12 +8552,14 @@ public class Client extends GameShell {
 	/** The client state for private message target. */
 	public long privateMessageTarget;
 
+	/** Stores moderator icons values. */
 	public IndexedImage moderatorIcons[];
 	/** Whether male appearance is currently active or requested. */
 	public boolean maleAppearance;
 	/** The client state for hint player index. */
 	public int hintPlayerIndex;
 
+	/** Stores map scene sprites values. */
 	public IndexedImage mapSceneSprites[];
 	/** Whether inventory drag moved is currently active or requested. */
 	public boolean inventoryDragMoved;
@@ -8533,18 +8577,23 @@ public class Client extends GameShell {
 	 */
 	public static int inventoryAction227Counter;
 
+	/** Stores title flame line offsets values. */
 	public int titleFlameLineOffsets[];
 	/** The client state for account current day. */
 	public int accountCurrentDay;
 
+	/** Stores title flame noise values. */
 	public int titleFlameNoise[];
 
+	/** Stores title flame noise scratch values. */
 	public int titleFlameNoiseScratch[];
 
+	/** Stores compass mask offsets values. */
 	public int compassMaskOffsets[];
 	/** Whether sidebar redraw is currently active or requested. */
 	public boolean sidebarRedraw;
 
+	/** Stores hitmark sprites values. */
 	public ImageRGB hitmarkSprites[];
 	/** The client state for sidebar background. */
 	public IndexedImage sidebarBackground;
@@ -8585,6 +8634,7 @@ public class Client extends GameShell {
 	/** Whether chat modes redraw is currently active or requested. */
 	public boolean chatModesRedraw;
 
+	/** Stores bit masks values. */
 	public static int bitMasks[];
 	/** The client state for last login day. */
 	public int lastLoginDay;
@@ -8622,6 +8672,7 @@ public class Client extends GameShell {
 	/** The client state for input dialog state. */
 	public int inputDialogState;
 
+	/** Stores texture scroll scratch values. */
 	public byte textureScrollScratch[];
 	/** The client state for tutorial island flag. */
 	public int tutorialIslandFlag;
@@ -8636,6 +8687,7 @@ public class Client extends GameShell {
 	/** Whether camera orientation changed is currently active or requested. */
 	public boolean cameraOrientationChanged;
 
+	/** Stores skin color palette values. */
 	public static final int skinColorPalette[] = { 9104, 10275, 7595, 3610, 7975, 8526, 918, 38802, 24466, 10145, 58654,
 			5027, 1457, 16565, 34991, 25486 };
 	/** The current number of unread message entries. */
@@ -8653,12 +8705,15 @@ public class Client extends GameShell {
 	/** The current chatbox tooltip widget id. */
 	public int chatboxTooltipWidgetId;
 
+	/** Stores compass mask widths values. */
 	public int compassMaskWidths[];
 	/** The client state for scrollbar shadow color. */
 	public int scrollbarShadowColor;
 
+	/** Stores skull icon sprites values. */
 	public ImageRGB skullIconSprites[];
 
+	/** Stores animated texture IDs values. */
 	public int animatedTextureIds[] = { 17, 24, 34, 40 };
 	/** The client state for on demand fetcher. */
 	public OnDemandFetcher onDemandFetcher;
@@ -8677,12 +8732,16 @@ public class Client extends GameShell {
 	/** Tracks the current draw cycle in client ticks/cycles where applicable. */
 	public static int drawCycle;
 
+	/** Stores title flame palette values. */
 	public int titleFlamePalette[];
 
+	/** Stores title flame red palette values. */
 	public int titleFlameRedPalette[];
 
+	/** Stores title flame green palette values. */
 	public int titleFlameGreenPalette[];
 
+	/** Stores title flame blue palette values. */
 	public int titleFlameBluePalette[];
 	/** Whether title flame thread mode is currently active or requested. */
 	public volatile boolean titleFlameThreadMode;
@@ -8704,6 +8763,7 @@ public class Client extends GameShell {
 	/** Tracks the current game cycle in client ticks/cycles where applicable. */
 	public static int gameCycle;
 
+	/** Stores appearance kit IDs values. */
 	public int appearanceKitIds[];
 	/**
 	 * Tracks the current inventory click cycle in client ticks/cycles where

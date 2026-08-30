@@ -15,27 +15,48 @@ import rs2.net.Buffer;
  */
 public class SpotAnimation {
 
+	/** Creates a new spot animation with its default client state. */
+	public SpotAnimation() {
+	}
+
+	/** Constant value for recolor count. */
 	private static final int RECOLOR_COUNT = 6;
 
+	/** Stores the current count. */
 	public static int count;
+	/** Stores definitions values. */
 	public static SpotAnimation[] definitions;
 
+	/** Stores the current ID. */
 	public int id;
+	/** Stores the current model ID. */
 	public int modelId;
+	/** Stores the current animation ID. */
 	public int animationId = -1;
+	/** Stores the current sequence. */
 	public AnimationSequence sequence;
+	/** Stores original colors values. */
 	public int[] originalColors = new int[RECOLOR_COUNT];
+	/** Stores replacement colors values. */
 	public int[] replacementColors = new int[RECOLOR_COUNT];
+	/** Stores the current resize xy. */
 	public int resizeXY = 128;
+	/** Stores the current resize Z. */
 	public int resizeZ = 128;
+	/** Stores the current rotation. */
 	public int rotation;
+	/** Stores the current ambient. */
 	public int ambient;
+	/** Stores the current contrast. */
 	public int contrast;
 
 	/** Shared cache of unanimated, recoloured base models. */
 	public static LruCache modelCache = new LruCache(30);
 
-	/** Loads all spot-animation definitions from {@code spotanim.dat}. */
+	/**
+	 * Loads all spot-animation definitions from {@code spotanim.dat}.
+	 * @param archive the source archive
+	 */
 	public static void load(Archive archive) {
 		Buffer buffer = new Buffer(archive.read("spotanim.dat"));
 		count = buffer.readUnsignedShort();
@@ -53,7 +74,10 @@ public class SpotAnimation {
 		}
 	}
 
-	/** Decodes one opcode-delimited spot-animation definition. */
+	/**
+	 * Decodes one opcode-delimited spot-animation definition.
+	 * @param buffer the source buffer
+	 */
 	public void decode(Buffer buffer) {
 		while (true) {
 			int opcode = buffer.readUnsignedByte();
@@ -88,6 +112,7 @@ public class SpotAnimation {
 
 	/**
 	 * Returns the cached base model, loading and recolouring it when necessary.
+	 * @return the model
 	 */
 	public Model getModel() {
 		Model model = (Model) modelCache.get(id);

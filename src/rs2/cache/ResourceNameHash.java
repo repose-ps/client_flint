@@ -7,12 +7,19 @@ import java.util.Locale;
  */
 public final class ResourceNameHash {
 
+	/** Constant value for radix. */
 	private static final int RADIX = 61;
+	/** Constant value for character bias. */
 	private static final int CHARACTER_BIAS = 32;
+	/** Constant value for folded bits. */
 	private static final int FOLDED_BITS = 56;
 
+	/** Constant value for hash mask. */
 	private static final long HASH_MASK = 0x00ffffffffffffffL;
 
+	/**
+	 * Creates a new resource name hash.
+	 */
 	private ResourceNameHash() {
 		throw new AssertionError("No instances");
 	}
@@ -25,6 +32,8 @@ public final class ResourceNameHash {
 	 * display language. The original default-locale conversion could otherwise
 	 * produce different cache keys in locales such as Turkish.
 	 * </p>
+	 * @param resourceName the resource name
+	 * @return whether h
 	 */
 	public static long hash(String resourceName) {
 		String normalized = resourceName.toUpperCase(Locale.ROOT);

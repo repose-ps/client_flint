@@ -12,6 +12,10 @@ package rs2.net;
  */
 public class IncomingPacketLengths {
 
+	/** Creates a new incoming packet lengths with its default client state. */
+	public IncomingPacketLengths() {
+	}
+
 	/**
 	 * Payload lengths indexed by the ISAAC-deciphered inbound opcode.
 	 */

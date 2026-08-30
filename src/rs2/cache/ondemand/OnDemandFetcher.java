@@ -170,6 +170,11 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	/**
 	 * Fills a requested region or reports peer EOF rather than allowing a
 	 * decrementing/never-completing legacy read loop.
+	 * @param input the input data
+	 * @param destination the destination
+	 * @param offset the starting offset
+	 * @param length the number of elements or bytes
+	 * @throws IOException if an I/O operation fails
 	 */
 	private static void readFully(InputStream input, byte[] destination, int offset, int length) throws IOException {
 		int read = 0;
@@ -196,7 +201,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	}
 
 	/**
-	 * Performs the request model operation.
+	 * Queues a model for on-demand loading.
 	 *
 	 * @param modelId the model id
 	 */
@@ -297,7 +302,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	}
 
 	/**
-	 * Performs the request operation.
+	 * Queues an on-demand resource request.
 	 *
 	 * @param type the type
 	 * @param id   the id
@@ -327,9 +332,9 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	}
 
 	/**
-	 * Performs the poll operation.
+	 * Removes and returns the next completed on-demand request.
 	 *
-	 * @return the resulting value
+	 * @return the next completed request, or {@code null} when none is available
 	 */
 	public OnDemandRequest poll() {
 		OnDemandRequest request;
@@ -490,7 +495,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	}
 
 	/**
-	 * Performs the preload maps operation.
+	 * Queues map resources for background preloading.
 	 *
 	 * @param includeAllMaps whether include all maps
 	 */
@@ -619,7 +624,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	}
 
 	/**
-	 * Performs the queue extra request operation.
+	 * Queues a low-priority extra resource request.
 	 *
 	 * @param type the type
 	 * @param id   the id
@@ -643,7 +648,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	}
 
 	/**
-	 * Performs the check cache operation.
+	 * Processes pending requests against the local cache.
 	 */
 	private void checkCache() {
 		OnDemandRequest request;
@@ -675,7 +680,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	}
 
 	/**
-	 * Performs the stop operation.
+	 * Stops the on-demand fetcher and closes its update connection.
 	 */
 	public void stop() {
 		running = false;
@@ -702,6 +707,9 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		closeUpdateConnection();
 	}
 
+	/**
+	 * Closes update connection.
+	 */
 	private void closeUpdateConnection() {
 		Socket currentSocket = socket;
 		socket = null;
@@ -741,7 +749,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	}
 
 	/**
-	 * Performs the crc matches operation.
+	 * Returns whether cached data matches its expected version and CRC.
 	 *
 	 * @param data            the data
 	 * @param expectedVersion the expected version
@@ -762,7 +770,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	}
 
 	/**
-	 * Performs the send request operation.
+	 * Sends an on-demand resource request to the update server.
 	 *
 	 * @param request the request
 	 */
@@ -856,12 +864,16 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		versions = new int[ARCHIVE_TYPE_COUNT][];
 	}
 
+	/** Stores the current files loaded. */
 	private int filesLoaded;
 
+	/** Stores model indices values. */
 	private byte[] modelIndices;
 
+	/** Stores map preload flags values. */
 	private int[] mapPreloadFlags;
 
+	/** Stores file status values. */
 	private byte[][] fileStatus;
 	/** Tracks whether waiting. */
 	private boolean waiting;
@@ -870,70 +882,103 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	/** Worker thread owned by this fetcher. */
 	private volatile Thread workerThread;
 
+	/** Stores the current cache request queue. */
 	private NodeDeque cacheRequestQueue;
 
+	/** Stores the current highest priority. */
 	private volatile int highestPriority;
 
+	/** Stores the current mandatory request count. */
 	private int mandatoryRequestCount;
 
+	/** Stores the current extra request count. */
 	private int extraRequestCount;
 
+	/** Stores crcs values. */
 	private int[][] crcs;
 
+	/** Stores region IDs values. */
 	private int[] regionIds;
 
+	/** Stores the current status string. */
 	public volatile String statusString;
 
+	/** Stores the current on demand cycle. */
 	public volatile int onDemandCycle;
 
+	/** Stores the current output stream. */
 	private volatile OutputStream outputStream;
 
+	/** Stores the current total files. */
 	public volatile int totalFiles;
 
+	/** Stores the current missing request queue. */
 	private NodeDeque missingRequestQueue;
 
+	/** Stores the current idle cycles. */
 	private int idleCycles;
 
+	/** Stores the current crc32. */
 	private CRC32 crc32;
 
+	/** Stores the current socket. */
 	private volatile Socket socket;
 
+	/** Stores the current completed queue. */
 	private NodeDeque completedQueue;
 
+	/** Stores the current extra request queue. */
 	private NodeDeque extraRequestQueue;
 
+	/** Stores terrain file IDs values. */
 	private int[] terrainFileIds;
 
+	/** Stores the current chunk offset. */
 	private int currentChunkOffset;
 
+	/** Stores the current chunk length. */
 	private int currentChunkLength;
 
+	/** Stores I/O buffer values. */
 	private byte[] ioBuffer;
 
+	/** Stores landscape file IDs values. */
 	private int[] landscapeFileIds;
 
+	/** Stores MIDI preload flags values. */
 	private int[] midiPreloadFlags;
 
+	/** Stores the current outstanding requests. */
 	private DualNodeDeque outstandingRequests;
 
+	/** Stores the current input stream. */
 	private volatile InputStream inputStream;
 
+	/** Stores the current request. */
 	private OnDemandRequest currentRequest;
 
+	/** Stores the current client instance. */
 	private Client clientInstance;
 
+	/** Stores the current resource loader. */
 	private ResourceLoader resourceLoader;
 
+	/** Stores the current network requests. */
 	private NodeDeque networkRequests;
 
+	/** Stores the current keep alive cycles. */
 	private int keepAliveCycles;
 
+	/** Stores animation index values. */
 	private int[] animationIndex;
 
+	/** Stores versions values. */
 	private int[][] versions;
 
+	/** Stores the current last socket open time. */
 	private long lastSocketOpenTime;
 
+	/** Stores the current request failures. */
 	public volatile int requestFailures;
 
 }

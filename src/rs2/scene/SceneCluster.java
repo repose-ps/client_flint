@@ -12,6 +12,10 @@ package rs2.scene;
  */
 public class SceneCluster {
 
+	/** Creates a new scene cluster with its default client state. */
+	public SceneCluster() {
+	}
+
 	/** Minimum tile-space X coordinate covered by this cluster. */
 	public int minTileX;
 

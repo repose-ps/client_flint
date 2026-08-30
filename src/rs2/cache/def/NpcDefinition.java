@@ -20,60 +20,103 @@ import rs2.net.Buffer;
  */
 public class NpcDefinition {
 
+	/** Creates a new NPC definition with its default client state. */
+	public NpcDefinition() {
+	}
+
+	/** Stores the current idle sequence. */
 	public int idleSequence = -1;
+	/** Stores morph IDs values. */
 	public int[] morphIds;
+	/** Stores head model IDs values. */
 	public int[] headModelIds;
+	/** Stores model IDs values. */
 	public int[] modelIds;
 	/**
 	 * Value consumed by opcode 91. Its role is not established by the supplied
 	 * Client.
 	 */
 	public int opcode91Value = -1;
+	/** Stores the current ID. */
 	public long id = -1L;
+	/** Stores the current client instance. */
 	public static Client clientInstance;
+	/** Stores the current scale Y. */
 	public int scaleY = 128;
+	/** Whether clickable is enabled or active. */
 	public boolean clickable = true;
+	/** Stores the current scale xz. */
 	public int scaleXZ = 128;
+	/** Stores the current turn90 ccw sequence. */
 	public int turn90CcwSequence = -1;
+	/** Stores recolor from values. */
 	public int[] recolorFrom;
+	/**
+	 * Model cache.
+	 *
+	 */
 	public static LruCache modelCache = new LruCache(30);
+	/** Whether visible on minimap is enabled or active. */
 	public boolean visibleOnMinimap = true;
 	/**
 	 * Value consumed by opcode 92. Its role is not established by the supplied
 	 * Client.
 	 */
 	public int opcode92Value = -1;
+	/** Stores the current prayer icon. */
 	public int prayerIcon = -1;
+	/** Stores the current combat level. */
 	public int combatLevel = -1;
+	/** Stores the current turn90 cw sequence. */
 	public int turn90CwSequence = -1;
+	/** Stores the current size. */
 	public byte size = 1;
+	/** Stores the current walk back sequence. */
 	public int walkBackSequence = -1;
+	/** Whether priority render is enabled or active. */
 	public boolean priorityRender;
+	/** Stores the current walk sequence. */
 	public int walkSequence = -1;
+	/** Stores actions values. */
 	public String[] actions;
 	/**
 	 * Value consumed by opcode 90. Its role is not established by the supplied
 	 * Client.
 	 */
 	public int opcode90Value = -1;
+	/** Stores the current count. */
 	public static int count;
+	/** Stores offsets values. */
 	public static int[] offsets;
+	/** Stores the current turn speed. */
 	public int turnSpeed = 32;
+	/** Stores the current name. */
 	public String name = "null";
+	/** Stores the current varbit ID. */
 	public int varbitId = -1;
+	/** Stores cache values. */
 	private static NpcDefinition[] cache;
+	/** Stores recolor to values. */
 	public int[] recolorTo;
+	/** Stores the current data buffer. */
 	private static Buffer dataBuffer;
 	/**
 	 * Contrast adjustment. Opcode 101 stores the signed byte multiplied by five.
 	 */
 	public int contrast;
+	/** Stores the current varp ID. */
 	public int varpId = -1;
+	/** Stores description values. */
 	public byte[] description;
+	/** Stores the current cache index. */
 	private static int cacheIndex;
+	/** Stores the current ambient. */
 	public int ambient;
 
-	/** Decodes one opcode-delimited definition. */
+	/**
+	 * Decodes one opcode-delimited definition.
+	 * @param buffer the source buffer
+	 */
 	public void decode(Buffer buffer) {
 		while (true) {
 			int opcode = buffer.readUnsignedByte();
@@ -211,6 +254,7 @@ public class NpcDefinition {
 	/**
 	 * Builds the head/dialogue model, or {@code null} when required model files are
 	 * unavailable.
+	 * @return the head model
 	 */
 	public Model getHeadModel() {
 		if (morphIds != null) {
@@ -239,6 +283,7 @@ public class NpcDefinition {
 	/**
 	 * Returns whether the currently selected morph points at a valid NPC
 	 * definition.
+	 * @return whether morph visible
 	 */
 	public boolean isMorphVisible() {
 		if (morphIds == null) {
@@ -250,6 +295,7 @@ public class NpcDefinition {
 
 	/**
 	 * Loads the indexed NPC definition table from {@code npc.dat}/{@code npc.idx}.
+	 * @param archive the source archive
 	 */
 	public static void load(Archive archive) {
 		dataBuffer = new Buffer(archive.read("npc.dat"));
@@ -271,6 +317,10 @@ public class NpcDefinition {
 	 * Returns a lit animated body model. The shared scratch model behavior is
 	 * retained exactly; callers must not retain the returned transformed scratch
 	 * model as an immutable instance.
+	 * @param primaryFrameId the primary frame ID
+	 * @param secondaryFrameId the secondary frame ID
+	 * @param interleaveOrder the interleave order
+	 * @return the animated model
 	 */
 	public Model getAnimatedModel(int primaryFrameId, int secondaryFrameId, int[] interleaveOrder) {
 		if (morphIds != null) {
@@ -320,6 +370,7 @@ public class NpcDefinition {
 
 	/**
 	 * Resolves this definition's active varbit/varp morph, or returns {@code null}.
+	 * @return the active morph definition, or {@code null} when no valid morph is selected
 	 */
 	public NpcDefinition transform() {
 		int morphIndex = getMorphIndex();
@@ -331,6 +382,8 @@ public class NpcDefinition {
 
 	/**
 	 * Retrieves a definition through the original 20-entry rotating decode cache.
+	 * @param id the identifier
+	 * @return the  result
 	 */
 	public static NpcDefinition lookup(int id) {
 		for (NpcDefinition definition : cache) {
@@ -347,6 +400,11 @@ public class NpcDefinition {
 		return definition;
 	}
 
+	/**
+	 * Returns morph index.
+	 *
+	 * @return the morph index
+	 */
 	private int getMorphIndex() {
 		if (varbitId != -1) {
 			Varbit varbit = Varbit.definitions[varbitId];
@@ -362,6 +420,11 @@ public class NpcDefinition {
 		return -1;
 	}
 
+	/**
+	 * Applies this definition's recoloring table to a model.
+	 *
+	 * @param model the model
+	 */
 	private void recolor(Model model) {
 		if (recolorFrom == null) {
 			return;

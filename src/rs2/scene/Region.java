@@ -12,54 +12,79 @@ import rs2.net.Buffer;
 import rs2.scene.util.CollisionMap;
 import rs2.scene.util.TiledUtils;
 
+/** Provides region state and behavior. */
 public class Region {
 
+	/** Stores tile flags values. */
 	private final byte[][][] tileFlags;
 
+	/** Randomized hue offset applied while building terrain colors. */
 	private static int hueOffset = (int) (Math.random() * 17.0D) - 8;
 
+	/** Stores overlay rotations values. */
 	private final byte[][][] overlayRotations;
 
+	/** Constant value for wall decoration Y offsets. */
 	private static final int[] WALL_DECORATION_Y_OFFSETS = { 0, -1, 0, 1 };
 
+	/** Stores hue sums values. */
 	private final int[] hueSums;
 
+	/** Stores saturation sums values. */
 	private final int[] saturationSums;
 
+	/** Stores lightness sums values. */
 	private final int[] lightnessSums;
 
+	/** Stores hue multiplier sums values. */
 	private final int[] hueMultiplierSums;
 
+	/** Stores underlay counts values. */
 	private final int[] underlayCounts;
 
+	/** Stores tile heights values. */
 	private final int[][][] tileHeights;
 
+	/** Stores the current minimum plane. */
 	public static int minimumPlane = 99;
 
+	/** Stores the current width. */
 	private final int width;
 
+	/** Stores the current height. */
 	private final int height;
 
+	/** Stores overlay shapes values. */
 	private final byte[][][] overlayShapes;
 
+	/** Stores overlay IDs values. */
 	private final byte[][][] overlayIds;
 
+	/** Constant value for wall orientation flags. */
 	private static final int[] WALL_ORIENTATION_FLAGS = { 1, 2, 4, 8 };
 
+	/** Stores underlay IDs values. */
 	private final byte[][][] underlayIds;
 
+	/** Constant value for wall decoration X offsets. */
 	private static final int[] WALL_DECORATION_X_OFFSETS = { 1, 0, -1, 0 };
 
+	/** Stores the current plane. */
 	public static int currentPlane;
 
+	/** Randomized lightness offset applied while building terrain colors. */
 	private static int lightnessOffset = (int) (Math.random() * 33.0D) - 16;
 
+	/** Stores shadow intensity values. */
 	private final byte[][][] shadowIntensity;
 
+	/** Stores tile lightness values. */
 	private final int[][] tileLightness;
 
+	/** Constant value for diagonal wall orientation flags. */
 	private static final int[] DIAGONAL_WALL_ORIENTATION_FLAGS = { 16, 32, 64, 128 };
 
+	/** Stores occlusion flags values. */
 	private final int[][][] occlusionFlags;
 	/**
 	 * Whether low memory.
@@ -72,6 +97,7 @@ public class Region {
 	 * @param plane the plane
 	 * @param x     the x
 	 * @param y     the y
+	 * @return the effective plane
 	 */
 	public int getEffectivePlane(int plane, int x, int y) {
 		if ((tileFlags[plane][x][y] & 0x8) != 0) {
@@ -587,7 +613,7 @@ public class Region {
 	/**
 	 * Performs should build tile.
 	 *
-	 * @return the resulting boolean
+	 * @return {@code true} when should build tile; otherwise {@code false}
 	 * @param plane the plane
 	 * @param x     the x
 	 * @param y     the y
@@ -878,6 +904,7 @@ public class Region {
 	 *
 	 * @param objectId the object id
 	 * @param type     the type
+	 * @return whether game object model ready
 	 */
 	public static boolean isGameObjectModelReady(int objectId, int type) {
 		GameObjectDefinition definition = GameObjectDefinition.lookup(objectId);
@@ -1281,6 +1308,14 @@ public class Region {
 		}
 	}
 
+	/**
+	 * Creates a new region.
+	 *
+	 * @param tileHeights the tile heights
+	 * @param tileFlags the tile flags
+	 * @param width the width in pixels
+	 * @param height the height in pixels
+	 */
 	public Region(int[][][] tileHeights, byte[][][] tileFlags, int width, int height) {
 		minimumPlane = 99;
 		this.width = width;
@@ -1386,6 +1421,7 @@ public class Region {
 	 * @param data  the data
 	 * @param baseX the base x
 	 * @param baseY the base y
+	 * @return whether are object models ready
 	 */
 	public static boolean areObjectModelsReady(byte[] data, int baseX, int baseY) {
 		boolean ready = true;

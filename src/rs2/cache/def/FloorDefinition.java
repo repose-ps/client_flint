@@ -14,6 +14,10 @@ import rs2.net.Buffer;
  */
 public class FloorDefinition {
 
+	/** Creates a new floor definition with its default client state. */
+	public FloorDefinition() {
+	}
+
 	/** Legacy definition flag retained from the revision-377 format. */
 	public boolean enabled = true;
 
@@ -23,10 +27,15 @@ public class FloorDefinition {
 	/** Definitions indexed by floor identifier. */
 	public static FloorDefinition[] definitions;
 
+	/** Stores the current name. */
 	public String name;
+	/** Stores the current RGB color. */
 	public int rgbColor;
+	/** Stores the current texture ID. */
 	public int textureId = -1;
+	/** Whether opcode3 enabled is enabled or active. */
 	public boolean opcode3Enabled;
+	/** Whether occlude is enabled or active. */
 	public boolean occlude = true;
 
 	/** Hue scaled to the range 0 through 255. */
@@ -47,7 +56,10 @@ public class FloorDefinition {
 	/** Randomized color encoded for the client's 16-bit HSL palette. */
 	public int randomizedPackedHsl;
 
-	/** Loads all floor definitions from {@code flo.dat}. */
+	/**
+	 * Loads all floor definitions from {@code flo.dat}.
+	 * @param archive the source archive
+	 */
 	public static void load(Archive archive) {
 		Buffer buffer = new Buffer(archive.read("flo.dat"));
 		count = buffer.readUnsignedShort();
@@ -64,7 +76,10 @@ public class FloorDefinition {
 		}
 	}
 
-	/** Decodes one opcode-delimited floor definition. */
+	/**
+	 * Decodes one opcode-delimited floor definition.
+	 * @param buffer the source buffer
+	 */
 	public void decode(Buffer buffer) {
 		while (true) {
 			int opcode = buffer.readUnsignedByte();
@@ -104,6 +119,7 @@ public class FloorDefinition {
 	 * This deliberately preserves the revision-377 assignment that copies the
 	 * restored weighted hue into {@link #hueMultiplier}.
 	 * </p>
+	 * @param alternateRgb the alternate RGB
 	 */
 	private void decodeAlternateColor(int alternateRgb) {
 		int primaryHue = hue;
@@ -120,7 +136,10 @@ public class FloorDefinition {
 		hueMultiplier = primaryWeightedHue;
 	}
 
-	/** Converts a 24-bit RGB value into the client's HSL color representation. */
+	/**
+	 * Converts a 24-bit RGB value into the client's HSL color representation.
+	 * @param rgb the RGB color value
+	 */
 	public void convertRgbToHsl(int rgb) {
 		// Magenta is the cache's transparent-color marker.
 		if (rgb == 0xff00ff) {
@@ -173,7 +192,13 @@ public class FloorDefinition {
 		randomizedPackedHsl = packHsl(randomizedHue, randomizedSaturation, randomizedLightness);
 	}
 
-	/** Packs 8-bit HSL components into the client's 16-bit palette index. */
+	/**
+	 * Packs 8-bit HSL components into the client's 16-bit palette index.
+	 * @param hue the hue
+	 * @param saturation the saturation
+	 * @param lightness the lightness
+	 * @return the packed 16-bit HSL palette value
+	 */
 	public static int packHsl(int hue, int saturation, int lightness) {
 		if (lightness > 179) {
 			saturation /= 2;
@@ -190,6 +215,14 @@ public class FloorDefinition {
 		return (hue / 4 << 10) + (saturation / 32 << 7) + lightness / 2;
 	}
 
+	/**
+	 * Clamps the operation.
+	 *
+	 * @param value the value
+	 * @param minimum the minimum
+	 * @param maximum the maximum
+	 * @return the value constrained to the inclusive range
+	 */
 	private static int clamp(int value, int minimum, int maximum) {
 		return Math.max(minimum, Math.min(maximum, value));
 	}

@@ -31,95 +31,141 @@ import rs2.net.Buffer;
  */
 public class GameObjectDefinition {
 
+	/** Creates a new game object definition with its default client state. */
+	public GameObjectDefinition() {
+	}
+
+	/** Stores offsets values. */
 	private static int[] offsets;
 
 	/** Tracks whether interactive. */
 	public boolean interactive;
 
+	/** Stores the current scale Y. */
 	public int scaleY;
 
+	/** Stores the current translate X. */
 	public int translateX;
 
+	/**
+	 * Model cache.
+	 *
+	 */
 	private static LruCache modelCache = new LruCache(40);
 
+	/** Stores model IDs values. */
 	public int[] modelIds;
 
+	/** Stores the current surroundings. */
 	public int surroundings;
 	/** Tracks whether obstructs ground. */
 	public boolean obstructsGround;
 
+	/** Stores the current translate Z. */
 	public int translateZ;
 
+	/** Stores the current data buffer. */
 	private static Buffer dataBuffer;
 	/** Tracks whether contoured ground. */
 	public boolean contouredGround;
 
+	/** Stores the current client instance. */
 	public static Client clientInstance;
 
+	/** Stores model parts values. */
 	private static final Model[] modelParts = new Model[4];
 	/** Tracks whether low memory. */
 	public static boolean lowMemory;
 
+	/** Stores the current ID. */
 	public int id = -1;
 
+	/** Stores the current size Y. */
 	public int sizeY;
 
+	/** Stores the current name. */
 	public String name = "null";
 
+	/** Stores the current cache index. */
 	private static int cacheIndex;
 
+	/** Stores the current varbit ID. */
 	public int varbitId;
 
+	/**
+	 * Raw model cache.
+	 *
+	 */
 	private static LruCache rawModelCache = new LruCache(500);
 
+	/** Stores the current scale X. */
 	public int scaleX;
 
+	/** Stores the current varp ID. */
 	public int varpId;
 
+	/** Stores cache values. */
 	private static GameObjectDefinition[] cache;
 
+	/** Stores description values. */
 	public byte[] description;
 
+	/** Stores the current ambient. */
 	public byte ambient;
 
+	/** Stores the current translate Y. */
 	public int translateY;
 
+	/** Stores the current contrast. */
 	public byte contrast;
 
+	/** Stores model types values. */
 	public int[] modelTypes;
 
+	/** Stores actions values. */
 	public String[] actions;
 	/** Tracks whether hollow. */
 	public boolean hollow;
 
+	/** Stores recolor to values. */
 	public int[] recolorTo;
 
+	/** Stores the current support items. */
 	public int supportItems;
 
+	/** Stores the current map scene ID. */
 	public int mapSceneId;
 
+	/** Stores the current scale Z. */
 	public int scaleZ;
 	/** Tracks whether model clipped. */
 	public boolean modelClipped;
 	/** Tracks whether rotated. */
 	public boolean rotated;
 
+	/** Stores recolor from values. */
 	public int[] recolorFrom;
 
+	/** Stores the current size X. */
 	public int sizeX;
 
+	/** Stores the current decor displacement. */
 	public int decorDisplacement;
 
+	/** Stores the current animation ID. */
 	public int animationId;
 	/** Tracks whether non flat shading. */
 	public boolean nonFlatShading;
 
+	/** Stores morph IDs values. */
 	public int[] morphIds;
 
+	/** Stores the current map function ID. */
 	public int mapFunctionId;
 	/** Tracks whether casts shadow. */
 	public boolean castsShadow;
 
+	/** Stores the current count. */
 	public static int count;
 	/** Tracks whether blocks projectiles. */
 	public boolean blocksProjectiles;
@@ -152,6 +198,7 @@ public class GameObjectDefinition {
 	 * replacement index is incremented before use, so the first miss uses slot 1.
 	 *
 	 * @param id the id
+	 * @return the  result
 	 */
 	public static GameObjectDefinition lookup(int id) {
 		for (GameObjectDefinition definition : cache) {
@@ -206,6 +253,7 @@ public class GameObjectDefinition {
 
 	/**
 	 * Returns whether all source models referenced by the definition are loaded.
+	 * @return whether are all models ready
 	 */
 	public boolean areAllModelsReady() {
 		if (modelIds == null) {
@@ -222,6 +270,7 @@ public class GameObjectDefinition {
 	 * Returns whether the model needed for a specific location type is loaded.
 	 *
 	 * @param type the type
+	 * @return whether model ready
 	 */
 	public boolean isModelReady(int type) {
 		if (modelTypes == null) {
@@ -248,6 +297,7 @@ public class GameObjectDefinition {
 	/**
 	 * Resolves the active morph using this definition's varbit first, otherwise its
 	 * varp.
+	 * @return the active morph definition, or {@code null} when no valid morph is selected
 	 */
 	public GameObjectDefinition transform() {
 		int morphIndex = -1;
@@ -275,6 +325,7 @@ public class GameObjectDefinition {
 	 * @param northEastHeight the north east height
 	 * @param northWestHeight the north west height
 	 * @param frameId         the frame id
+	 * @return the model at
 	 */
 	public Model getModelAt(int type, int orientation, int southWestHeight, int southEastHeight, int northEastHeight,
 			int northWestHeight, int frameId) {

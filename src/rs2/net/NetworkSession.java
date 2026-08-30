@@ -22,6 +22,11 @@ import java.net.Socket;
  */
 public final class NetworkSession {
 
+	/** Creates a new network session with its default client state. */
+	public NetworkSession() {
+	}
+
+	/** Constant value for buffer capacity. */
 	public static final int BUFFER_CAPACITY = 5_000;
 
 	/** Maximum payload that fits in the revision-377 incoming packet buffer. */
@@ -54,14 +59,17 @@ public final class NetworkSession {
 	/** Opcode completed immediately before {@link #secondLastOpcode}. */
 	public int thirdLastOpcode = -1;
 
+	/** Stores the current connection. */
 	private BufferedConnection connection;
 
+	/** Stores the current incoming opcode cipher. */
 	private IsaacCipher incomingOpcodeCipher;
 
 	/**
 	 * Replaces the live game connection with a connection around {@code socket}.
 	 *
 	 * @param socket the socket
+	 * @throws IOException if an I/O operation fails
 	 */
 	public void connect(Socket socket) throws IOException {
 		connection = new BufferedConnection(socket);
@@ -69,6 +77,7 @@ public final class NetworkSession {
 
 	/**
 	 * Returns the current connection for the reconnect path's old-socket cleanup.
+	 * @return the connection
 	 */
 	public BufferedConnection getConnection() {
 		return connection;
@@ -77,7 +86,7 @@ public final class NetworkSession {
 	/**
 	 * Returns whether connected.
 	 *
-	 * @return the resulting boolean
+	 * @return {@code true} when connected; otherwise {@code false}
 	 */
 	public boolean isConnected() {
 		return connection != null;
@@ -100,6 +109,8 @@ public final class NetworkSession {
 
 	/**
 	 * Raw login-handshake read.
+	 * @return the decoded  value
+	 * @throws IOException if an I/O operation fails
 	 */
 	public int read() throws IOException {
 		if (connection == null) {
@@ -114,6 +125,7 @@ public final class NetworkSession {
 	 * @param destination the destination
 	 * @param offset      the offset
 	 * @param length      the length
+	 * @throws IOException if an I/O operation fails
 	 */
 	public void readFully(byte[] destination, int offset, int length) throws IOException {
 		requireConnection().readFully(destination, offset, length);
@@ -125,6 +137,7 @@ public final class NetworkSession {
 	 * @param source the source
 	 * @param offset the offset
 	 * @param length the length
+	 * @throws IOException if an I/O operation fails
 	 */
 	public void write(byte[] source, int offset, int length) throws IOException {
 		requireConnection().write(source, offset, length);
@@ -154,6 +167,7 @@ public final class NetworkSession {
 	/**
 	 * Transitional access for untouched decompiler-invalid branches elsewhere in
 	 * client.java. Valid runtime packet framing uses this cipher internally.
+	 * @return the next ISAAC value from the incoming opcode cipher
 	 */
 	public int nextIncomingOpcodeCipherValue() {
 		return incomingOpcodeCipher.nextInt();
@@ -164,6 +178,7 @@ public final class NetworkSession {
 	 *
 	 * @return {@code true} only when {@link #incoming} contains the complete
 	 *         payload for {@link #incomingOpcode}
+	 * @throws IOException if an I/O operation fails
 	 */
 	public boolean readIncomingPacket() throws IOException {
 		if (connection == null) {
@@ -227,6 +242,7 @@ public final class NetworkSession {
 	/**
 	 * Rejects a framed payload that cannot fit in the fixed revision-377 receive
 	 * buffer before any payload bytes are copied into it.
+	 * @throws IOException if an I/O operation fails
 	 */
 	private void validateIncomingLength() throws IOException {
 		if (incomingLength < 0 || incomingLength > MAX_INCOMING_PAYLOAD_LENGTH) {
@@ -268,6 +284,7 @@ public final class NetworkSession {
 
 	/**
 	 * Flushes all queued client packet bytes to the connection, if any.
+	 * @throws IOException if an I/O operation fails
 	 */
 	public void flushOutgoing() throws IOException {
 		if (connection != null && outgoing.position > 0) {
@@ -281,6 +298,7 @@ public final class NetworkSession {
 	 * Performs require connection.
 	 *
 	 * @return the resulting buffered connection
+	 * @throws IOException if an I/O operation fails
 	 */
 	private BufferedConnection requireConnection() throws IOException {
 		if (connection == null) {

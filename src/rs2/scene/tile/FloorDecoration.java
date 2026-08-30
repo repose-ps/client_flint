@@ -12,6 +12,10 @@ import rs2.media.renderable.Renderable;
  */
 public class FloorDecoration {
 
+	/** Creates a new floor decoration with its default client state. */
+	public FloorDecoration() {
+	}
+
 	/** World-space elevation of the decoration. */
 	public int z;
 

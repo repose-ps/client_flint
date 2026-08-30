@@ -24,61 +24,108 @@ import rs2.sound.JavaSoundAudioPlayer;
  */
 public final class Signlink implements Runnable {
 
+	/** Constant value for client version. */
 	public static final int CLIENT_VERSION = 377;
+	/** Constant value for cache index count. */
 	private static final int CACHE_INDEX_COUNT = 5;
+	/** Maximum cache data length. */
 	private static final long MAX_CACHE_DATA_LENGTH = 0x3200000L;
+	/** Maximum save length. */
 	private static final int MAX_SAVE_LENGTH = 0x1e8480;
+	/** Constant value for audio file slots. */
 	private static final int AUDIO_FILE_SLOTS = 5;
+	/** Constant value for poll interval millis. */
 	private static final long POLL_INTERVAL_MILLIS = 50L;
+	/**
+	 * Lifecycle lock.
+	 *
+	 */
 	private static final Object LIFECYCLE_LOCK = new Object();
+	/** Java Sound backend used for wave and MIDI playback. */
 	private static volatile JavaSoundAudioPlayer audioPlayer = new JavaSoundAudioPlayer();
 
+	/** Stores the current UID. */
 	public static int uid;
+	/** Stores the current store ID. */
 	public static int storeId = 32;
+	/** Stores the current cache data. */
 	public static volatile RandomAccessFile cacheData;
+	/** Stores cache indexes values. */
 	public static RandomAccessFile[] cacheIndexes = new RandomAccessFile[CACHE_INDEX_COUNT];
 
+	/** Whether active is enabled or active. */
 	private static volatile boolean active;
+	/** Whether initialized is enabled or active. */
 	private static volatile boolean initialized;
+	/** Stores the current worker generation. */
 	private static volatile int workerGeneration;
+	/** Stores the current worker thread. */
 	private static volatile Thread workerThread;
 
+	/** Stores the current socket address. */
 	private static volatile InetAddress socketAddress;
+	/** Stores the current socket request port. */
 	private static volatile int socketRequestPort;
+	/** Stores the current requested socket. */
 	private static volatile Socket requestedSocket;
 
+	/** Stores the current thread request priority. */
 	private static int threadRequestPriority = 1;
+	/** Stores the current thread request. */
 	private static volatile Runnable threadRequest;
 
+	/** Stores the current dns request. */
 	private static volatile String dnsRequest;
+	/** Stores the current dns. */
 	public static volatile String dns;
 
+	/** Stores the current save length. */
 	private static int saveLength;
+	/** Stores the current save request. */
 	private static volatile String saveRequest;
+	/** Stores save buffer values. */
 	private static byte[] saveBuffer;
 
+	/** Whether MIDI play pending is enabled or active. */
 	public static volatile boolean midiPlayPending;
+	/** Stores the current MIDI position. */
 	private static int midiPosition;
+	/** Stores the current MIDI. */
 	public static volatile String midi;
+	/** Stores the current MIDI volume. */
 	public static int midiVolume;
+	/** Stores the current MIDI fade. */
 	public static int midiFade;
 
+	/** Whether wave play pending is enabled or active. */
 	private static volatile boolean wavePlayPending;
+	/** Stores the current wave position. */
 	private static int wavePosition;
+	/** Stores the current wave. */
 	public static volatile String wave;
+	/** Stores the current wave volume. */
 	public static int waveVolume;
 
+	/** Whether report errors is enabled or active. */
 	public static boolean reportErrors = true;
+	/** Stores the current cache directory. */
 	private static volatile String cacheDirectory = "./rscache/";
 
+	/** Stores the current generation. */
 	private final int generation;
 
+	/**
+	 * Creates a new signlink.
+	 *
+	 * @param generation the generation
+	 */
 	private Signlink(int generation) {
 		this.generation = generation;
 	}
 
 	/**
 	 * Starts a fresh signlink worker and waits until it has initialized.
+	 * @param address the address
 	 */
 	public static void start(InetAddress address) {
 		stopWorker(false);
@@ -217,12 +264,16 @@ public final class Signlink implements Runnable {
 	 * This deliberately preserves the user's current fixed relative cache path
 	 * rather than restoring the old platform-directory search.
 	 * </p>
+	 * @return the cache directory result
 	 */
 	public static String findCacheDirectory() {
 		return cacheDirectory;
 	}
 
-	/** Selects the disk-cache directory before {@link #start(InetAddress)} is called. */
+	/**
+	 * Selects the disk-cache directory before {@link #start(InetAddress)} is called.
+	 * @param directory the directory
+	 */
 	public static void setCacheDirectory(String directory) {
 		if (directory == null || directory.trim().isEmpty()) {
 			throw new IllegalArgumentException("cache directory must not be empty");
@@ -237,6 +288,8 @@ public final class Signlink implements Runnable {
 	/**
 	 * Reads or creates the historical four-byte installation UID and returns the
 	 * stored value plus one.
+	 * @param cacheDirectory the cache directory
+	 * @return the UID
 	 */
 	public static int getUid(String cacheDirectory) {
 		try {
@@ -256,7 +309,12 @@ public final class Signlink implements Runnable {
 		}
 	}
 
-	/** Opens a socket on the signlink worker thread and blocks for its result. */
+	/**
+	 * Opens a socket on the signlink worker thread and blocks for its result.
+	 * @param port the network port
+	 * @return the connected socket
+	 * @throws IOException if an I/O operation fails
+	 */
 	public static synchronized Socket openSocket(int port) throws IOException {
 		requestedSocket = null;
 		socketRequestPort = port;
@@ -277,19 +335,29 @@ public final class Signlink implements Runnable {
 		return socket;
 	}
 
-	/** Queues a reverse/host-name lookup and immediately exposes the query text. */
+	/**
+	 * Queues a reverse/host-name lookup and immediately exposes the query text.
+	 * @param address the address
+	 */
 	public static synchronized void lookupDns(String address) {
 		dns = address;
 		dnsRequest = address;
 	}
 
-	/** Queues creation of a daemon worker thread at the requested priority. */
+	/**
+	 * Queues creation of a daemon worker thread at the requested priority.
+	 * @param runnable the runnable
+	 * @param priority the request priority
+	 */
 	public static synchronized void startThread(Runnable runnable, int priority) {
 		threadRequestPriority = priority;
 		threadRequest = runnable;
 	}
 
-	/** Applies the legacy WAV attenuation to the standalone Java Sound player. */
+	/**
+	 * Applies the legacy WAV attenuation to the standalone Java Sound player.
+	 * @param volume the volume
+	 */
 	public static synchronized void setWaveVolume(int volume) {
 		waveVolume = volume;
 		JavaSoundAudioPlayer player = audioPlayer;
@@ -298,7 +366,11 @@ public final class Signlink implements Runnable {
 		}
 	}
 
-	/** Applies the legacy MIDI attenuation, optionally updating the live track. */
+	/**
+	 * Applies the legacy MIDI attenuation, optionally updating the live track.
+	 * @param volume the volume
+	 * @param adjustPlayingTrack the adjust playing track
+	 */
 	public static synchronized void setMidiVolume(int volume, boolean adjustPlayingTrack) {
 		midiVolume = volume;
 		if (adjustPlayingTrack) {
@@ -321,7 +393,12 @@ public final class Signlink implements Runnable {
 		}
 	}
 
-	/** Queues a WAV file save using the original five-slot filename ring. */
+	/**
+	 * Queues a WAV file save using the original five-slot filename ring.
+	 * @param data the data to process
+	 * @param length the number of elements or bytes
+	 * @return whether save wave
+	 */
 	public static synchronized boolean saveWave(byte[] data, int length) {
 		if (length > MAX_SAVE_LENGTH) {
 			return false;
@@ -340,6 +417,7 @@ public final class Signlink implements Runnable {
 
 	/**
 	 * Queues the most recently selected WAV file for replay without rewriting it.
+	 * @return whether replay wave
 	 */
 	public static synchronized boolean replayWave() {
 		if (saveRequest != null) {
@@ -352,7 +430,12 @@ public final class Signlink implements Runnable {
 		return true;
 	}
 
-	/** Queues a MIDI file save using the original five-slot filename ring. */
+	/**
+	 * Queues a MIDI file save using the original five-slot filename ring.
+	 * @param data the data to process
+	 * @param length the number of elements or bytes
+	 * @param fade the fade
+	 */
 	public static synchronized void saveMidi(byte[] data, int length, boolean fade) {
 		if (length > MAX_SAVE_LENGTH || saveRequest != null) {
 			return;
@@ -366,7 +449,11 @@ public final class Signlink implements Runnable {
 		saveRequest = "jingle" + midiPosition + ".mid";
 	}
 
-	/** Compatibility overload retaining the currently selected fade mode. */
+	/**
+	 * Compatibility overload retaining the currently selected fade mode.
+	 * @param data the data to process
+	 * @param length the number of elements or bytes
+	 */
 	public static synchronized void saveMidi(byte[] data, int length) {
 		saveMidi(data, length, midiFade != 0);
 	}
@@ -376,6 +463,11 @@ public final class Signlink implements Runnable {
 		stopWorker(true);
 	}
 
+	/**
+	 * Stops worker.
+	 *
+	 * @param closeAudio the close audio
+	 */
 	private static void stopWorker(boolean closeAudio) {
 		Thread thread;
 		Socket staleSocket;
@@ -437,6 +529,9 @@ public final class Signlink implements Runnable {
 		}
 	}
 
+	/**
+	 * Closes cache files.
+	 */
 	private static void closeCacheFiles() {
 		RandomAccessFile data = cacheData;
 		cacheData = null;
@@ -467,6 +562,7 @@ public final class Signlink implements Runnable {
 	 * relative CGI URL. Standalone error reporting therefore retains its observable
 	 * console behavior only.
 	 * </p>
+	 * @param message the message text
 	 */
 	public static void reportError(String message) {
 		if (!reportErrors || !active) {

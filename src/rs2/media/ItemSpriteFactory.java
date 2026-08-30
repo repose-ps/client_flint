@@ -17,8 +17,15 @@ import rs2.media.renderable.Model;
  */
 public final class ItemSpriteFactory {
 
+	/**
+	 * Sprite cache.
+	 *
+	 */
 	private static LruCache spriteCache = new LruCache(100);
 
+	/**
+	 * Creates a new item sprite factory.
+	 */
 	private ItemSpriteFactory() {
 	}
 
@@ -30,6 +37,7 @@ public final class ItemSpriteFactory {
 	 * @param outlineColor {@code 0} for the normal diagonal shadow, {@code >0} for
 	 *                     a colored outline, and {@code -1} for the enlarged
 	 *                     note-overlay path
+	 * @return the sprite
 	 */
 	public static ImageRGB getSprite(int itemId, int quantity, int outlineColor) {
 		if (outlineColor == 0) {
@@ -148,6 +156,11 @@ public final class ItemSpriteFactory {
 		spriteCache = null;
 	}
 
+	/**
+	 * Adds inner outline.
+	 *
+	 * @param pixels the pixels
+	 */
 	private static void addInnerOutline(int[] pixels) {
 		for (int x = 31; x >= 0; x--) {
 			for (int y = 31; y >= 0; y--) {
@@ -168,6 +181,12 @@ public final class ItemSpriteFactory {
 		}
 	}
 
+	/**
+	 * Adds colored outline.
+	 *
+	 * @param pixels the pixels
+	 * @param color the color value
+	 */
 	private static void addColoredOutline(int[] pixels, int color) {
 		for (int x = 31; x >= 0; x--) {
 			for (int y = 31; y >= 0; y--) {
@@ -188,6 +207,11 @@ public final class ItemSpriteFactory {
 		}
 	}
 
+	/**
+	 * Adds diagonal shadow.
+	 *
+	 * @param pixels the pixels
+	 */
 	private static void addDiagonalShadow(int[] pixels) {
 		for (int x = 31; x >= 0; x--) {
 			for (int y = 31; y >= 0; y--) {

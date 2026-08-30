@@ -230,6 +230,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads an unsigned 8-bit value.
+	 * @return the decoded unsigned byte value
 	 */
 	public int readUnsignedByte() {
 		return payload[position++] & 0xff;
@@ -237,6 +238,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads a signed 8-bit value.
+	 * @return the decoded signed byte value
 	 */
 	public byte readSignedByte() {
 		return payload[position++];
@@ -244,6 +246,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads an unsigned big-endian 16-bit value.
+	 * @return the decoded unsigned short value
 	 */
 	public int readUnsignedShort() {
 		return (readUnsignedByte() << 8) | readUnsignedByte();
@@ -251,6 +254,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads a signed big-endian 16-bit value.
+	 * @return the decoded signed short value
 	 */
 	public int readSignedShort() {
 		int value = readUnsignedShort();
@@ -259,6 +263,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads an unsigned big-endian 24-bit value.
+	 * @return the decoded medium value
 	 */
 	public int readMedium() {
 		return (readUnsignedByte() << 16) | (readUnsignedByte() << 8) | readUnsignedByte();
@@ -266,6 +271,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads a big-endian 32-bit value.
+	 * @return the decoded int value
 	 */
 	public int readInt() {
 		return (readUnsignedByte() << 24) | (readUnsignedByte() << 16) | (readUnsignedByte() << 8) | readUnsignedByte();
@@ -273,6 +279,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads a big-endian 64-bit value.
+	 * @return the decoded long value
 	 */
 	public long readLong() {
 		long high = readInt() & 0xffffffffL;
@@ -282,6 +289,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads a line-feed-terminated legacy string.
+	 * @return the decoded string value
 	 */
 	public String readString() {
 		int start = position;
@@ -295,6 +303,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads the bytes of a line-feed-terminated string without decoding them.
+	 * @return the decoded string bytes value
 	 */
 	public byte[] readStringBytes() {
 		int start = position;
@@ -339,6 +348,7 @@ public class Buffer extends DualNode {
 	 * </p>
 	 *
 	 * @param count the count
+	 * @return the decoded bits value
 	 */
 	public int readBits(int count) {
 		int byteIndex = bitPosition >>> 3;
@@ -377,6 +387,7 @@ public class Buffer extends DualNode {
 	 * Values beginning below 128 occupy one byte and are biased by 64. Other values
 	 * occupy two bytes and are biased by 49,152.
 	 * </p>
+	 * @return the decoded signed smart value
 	 */
 	public int readSignedSmart() {
 		int peek = payload[position] & 0xff;
@@ -386,6 +397,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads a one- or two-byte unsigned "smart" value.
+	 * @return the decoded unsigned smart value
 	 */
 	public int readUnsignedSmart() {
 		int peek = payload[position] & 0xff;
@@ -456,6 +468,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads an unsigned byte with the add transformation.
+	 * @return the decoded unsigned byte add value
 	 */
 	public int readUnsignedByteAdd() {
 		return payload[position++] - 128 & 0xff;
@@ -463,6 +476,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads an unsigned byte with the neg transformation.
+	 * @return the decoded unsigned byte neg value
 	 */
 	public int readUnsignedByteNeg() {
 		return -payload[position++] & 0xff;
@@ -470,6 +484,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads an unsigned byte with the sub transformation.
+	 * @return the decoded unsigned byte sub value
 	 */
 	public int readUnsignedByteSub() {
 		return 128 - payload[position++] & 0xff;
@@ -477,6 +492,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads a byte with the add transformation.
+	 * @return the decoded byte add value
 	 */
 	public byte readByteAdd() {
 		return (byte) (payload[position++] - 128);
@@ -484,6 +500,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads a byte with the neg transformation.
+	 * @return the decoded byte neg value
 	 */
 	public byte readByteNeg() {
 		return (byte) (-payload[position++]);
@@ -491,6 +508,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads a byte with the sub transformation.
+	 * @return the decoded byte sub value
 	 */
 	public byte readByteSub() {
 		return (byte) (128 - payload[position++]);
@@ -518,6 +536,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads a 16-bit short value in little endian order.
+	 * @return the decoded unsigned short le value
 	 */
 	public int readUnsignedShortLE() {
 		int low = readUnsignedByte();
@@ -528,6 +547,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads a big-endian unsigned short whose low byte has the Add transformation.
+	 * @return the decoded unsigned short add value
 	 */
 	public int readUnsignedShortAdd() {
 		int high = readUnsignedByte();
@@ -539,6 +559,7 @@ public class Buffer extends DualNode {
 	/**
 	 * Reads a little-endian unsigned short whose low byte has the Add
 	 * transformation.
+	 * @return the decoded unsigned short add le value
 	 */
 	public int readUnsignedShortAddLE() {
 		int low = (payload[position++] - 128) & 0xff;
@@ -559,6 +580,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads a signed big-endian short whose low byte has the Add transformation.
+	 * @return the decoded short add value
 	 */
 	public int readShortAdd() {
 		int value = readUnsignedShortAdd();
@@ -567,6 +589,7 @@ public class Buffer extends DualNode {
 
 	/**
 	 * Reads a 24-bit value stored in middle, high, low byte order.
+	 * @return the decoded medium me value
 	 */
 	public int readMediumME() {
 		int middle = readUnsignedByte();
@@ -589,6 +612,7 @@ public class Buffer extends DualNode {
 	 * Reads a value stored in third, fourth, first, second significance order.
 	 *
 	 * For {@code 0x12345678}, the stored bytes are: {@code 56 78 12 34}.
+	 * @return the decoded int me value
 	 */
 	public int readIntME() {
 		int third = readUnsignedByte();
@@ -603,6 +627,7 @@ public class Buffer extends DualNode {
 	 * Reads a value stored in second, first, fourth, third significance order.
 	 *
 	 * For {@code 0x12345678}, the stored bytes are: {@code 34 12 78 56}.
+	 * @return the decoded int ime value
 	 */
 	public int readIntIME() {
 		int second = readUnsignedByte();

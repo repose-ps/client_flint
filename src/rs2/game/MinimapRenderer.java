@@ -18,22 +18,35 @@ import rs2.net.Buffer;
  */
 public final class MinimapRenderer {
 
+	/** Creates a new minimap renderer with its default client state. */
+	public MinimapRenderer() {
+	}
+
+	/** Maximum map functions. */
 	private static final int MAX_MAP_FUNCTIONS = 1000;
 
+	/** Stores the current map image. */
 	public ImageRGB mapImage;
 
+	/** Stores the current state. */
 	public int state;
 
+	/** Stores the current rotation offset. */
 	public int rotationOffset;
 
+	/** Stores the current zoom offset. */
 	public int zoomOffset;
 
+	/** Stores the current rotation step. */
 	private int rotationStep = 2;
 
+	/** Stores the current zoom step. */
 	private int zoomStep = 1;
 
+	/** Stores the current offset cycle. */
 	private int offsetCycle;
 
+	/** Stores the current rebuild keepalive cycle. */
 	private int rebuildKeepaliveCycle;
 
 	/**
@@ -41,10 +54,13 @@ public final class MinimapRenderer {
 	 */
 	private int mapFunctionCount;
 
+	/** Stores map function icons values. */
 	private final ImageRGB[] mapFunctionIcons = new ImageRGB[MAX_MAP_FUNCTIONS];
 
+	/** Stores map function X values. */
 	private final int[] mapFunctionX = new int[MAX_MAP_FUNCTIONS];
 
+	/** Stores map function Y values. */
 	private final int[] mapFunctionY = new int[MAX_MAP_FUNCTIONS];
 
 	/**
@@ -530,16 +546,29 @@ public final class MinimapRenderer {
 		return new Click(x, y, tileX, tileY);
 	}
 
+	/** Provides click state and behavior. */
 	public static final class Click {
 
+		/** Stores the current local X. */
 		public final int localX;
 
+		/** Stores the current local Y. */
 		public final int localY;
 
+		/** Stores the current tile X. */
 		public final int tileX;
 
+		/** Stores the current tile Y. */
 		public final int tileY;
 
+		/**
+		 * Creates a new click.
+		 *
+		 * @param localX the local X
+		 * @param localY the local Y
+		 * @param tileX the tile X
+		 * @param tileY the tile Y
+		 */
 		private Click(int localX, int localY, int tileX, int tileY) {
 			this.localX = localX;
 			this.localY = localY;
@@ -548,51 +577,74 @@ public final class MinimapRenderer {
 		}
 	}
 
+	/** Provides friend lookup state and behavior. */
 	public interface FriendLookup {
 		/**
 		 * Returns whether friend.
 		 *
-		 * @return the resulting boolean
+		 * @return {@code true} when friend; otherwise {@code false}
 		 * @param name the name
 		 */
 		boolean isFriend(String name);
 	}
 
+	/** Mutable sprite and buffer assets consumed by the minimap renderer. */
 	public static final
 	class Assets {
 
+		/** Creates a new assets with its default client state. */
+		public Assets() {
+		}
+
+		/** Stores the current minimap buffer. */
 		public GraphicsBuffer minimapBuffer;
 
+		/** Stores the current scene buffer. */
 		public GraphicsBuffer sceneBuffer;
 
+		/** Stores the current minimap mask. */
 		public IndexedImage minimapMask;
 
+		/** Stores the current compass. */
 		public ImageRGB compass;
 
+		/** Stores compass mask widths values. */
 		public int[] compassMaskWidths;
 
+		/** Stores compass mask offsets values. */
 		public int[] compassMaskOffsets;
 
+		/** Stores minimap mask widths values. */
 		public int[] minimapMaskWidths;
 
+		/** Stores minimap mask offsets values. */
 		public int[] minimapMaskOffsets;
 
+		/** Stores scene scanline offsets values. */
 		public int[] sceneScanlineOffsets;
 
+		/** Stores the current ground item dot. */
 		public ImageRGB groundItemDot;
 
+		/** Stores the current NPC dot. */
 		public ImageRGB npcDot;
 
+		/** Stores the current player dot. */
 		public ImageRGB playerDot;
 
+		/** Stores the current friend dot. */
 		public ImageRGB friendDot;
 
+		/** Stores the current team dot. */
 		public ImageRGB teamDot;
 
+		/** Stores the current hint marker. */
 		public ImageRGB hintMarker;
 
+		/** Stores the current destination marker. */
 		public ImageRGB destinationMarker;
 
+		/** Stores the current edge arrow. */
 		public ImageRGB edgeArrow;
 	}
 }

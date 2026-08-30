@@ -16,8 +16,14 @@ import rs2.net.Buffer;
  */
 public class ChatCodec {
 
+	/** Creates a new chat codec with its default client state. */
+	public ChatCodec() {
+	}
+
+	/** Maximum message length. */
 	public static final int MAX_MESSAGE_LENGTH = 80;
 
+	/** Constant value for alphabet. */
 	public static final char ALPHABET[] = { ' ', 'e', 't', 'a', 'o', 'i', 'h', 'n', 's', 'r', 'd', 'l', 'u', 'm', 'w',
 			'c', 'y', 'f', 'g', 'p', 'b', 'v', 'k', 'x', 'j', 'q', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8',
 			'9', ' ', '!', '?', '.', ',', ':', ';', '(', ')', '-', '&', '*', '\\', '\'', '@', '#', '+', '=', '\243',
@@ -43,6 +49,7 @@ public class ChatCodec {
 	 *
 	 * @param buffer source buffer
 	 * @param length number of encoded bytes to consume
+	 * @return the decoded  value
 	 */
 	public static String decode(Buffer buffer, int length) {
 		if (length < 0 || length > Integer.MAX_VALUE / 2) {
@@ -102,6 +109,8 @@ public class ChatCodec {
 	 * Messages are truncated to 80 characters and converted to lowercase, matching
 	 * the original protocol. Unsupported characters are encoded as spaces.
 	 * </p>
+	 * @param message the message text
+	 * @param buffer the source buffer
 	 */
 	public static void encode(String message, Buffer buffer) {
 		if (message.length() > MAX_MESSAGE_LENGTH) {
@@ -148,6 +157,8 @@ public class ChatCodec {
 	/**
 	 * Applies the exact encode/decode transformation used before displaying locally
 	 * entered chat.
+	 * @param message the message text
+	 * @return the converted value
 	 */
 	public static String normalize(String message) {
 		Buffer temporary = new Buffer(MAX_MESSAGE_LENGTH);
@@ -161,6 +172,13 @@ public class ChatCodec {
 		return decode(temporary, encodedLength);
 	}
 
+	/**
+	 * Decodes extended character.
+	 *
+	 * @param firstNibble the first nibble
+	 * @param secondNibble the second nibble
+	 * @return the decoded extended character value
+	 */
 	private static char decodeExtendedCharacter(int firstNibble, int secondNibble) {
 		int alphabetIndex = ((firstNibble << 4) + secondNibble) - EXTENDED_CHARACTER_OFFSET;
 
@@ -171,6 +189,8 @@ public class ChatCodec {
 	 * Finds a character's protocol alphabet index.
 	 *
 	 * Unsupported characters use index zero, which represents a space.
+	 * @param character the character
+	 * @return the alphabet index result
 	 */
 	private static int findAlphabetIndex(char character) {
 		for (int index = 0; index < ALPHABET.length; index++) {
@@ -182,6 +202,12 @@ public class ChatCodec {
 		return 0;
 	}
 
+	/**
+	 * Applies sentence capitalization.
+	 *
+	 * @param characters the characters
+	 * @param length the number of elements or bytes
+	 */
 	private static void applySentenceCapitalization(char[] characters, int length) {
 		boolean capitalize = true;
 

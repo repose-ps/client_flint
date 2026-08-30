@@ -19,15 +19,25 @@ import java.util.Objects;
  */
 public final class Bzip2Decompressor {
 
+	/** Constant value for block magic 1. */
 	private static final int BLOCK_MAGIC_1 = 0x31;
+	/** Constant value for block magic 2. */
 	private static final int BLOCK_MAGIC_2 = 0x41;
+	/** Constant value for block magic 3. */
 	private static final int BLOCK_MAGIC_3 = 0x59;
+	/** Constant value for block magic 4. */
 	private static final int BLOCK_MAGIC_4 = 0x26;
+	/** Constant value for block magic 5. */
 	private static final int BLOCK_MAGIC_5 = 0x53;
+	/** Constant value for block magic 6. */
 	private static final int BLOCK_MAGIC_6 = 0x59;
 
+	/** Constant value for end of stream magic 1. */
 	private static final int END_OF_STREAM_MAGIC_1 = 0x17;
 
+	/**
+	 * Creates a new BZIP2 decompressor.
+	 */
 	private Bzip2Decompressor() {
 		// Utility class.
 	}
@@ -70,6 +80,7 @@ public final class Bzip2Decompressor {
 
 	/**
 	 * Expands the final BZip2 run-length stage into the caller's output.
+	 * @param state the state
 	 */
 	private static void writeDecodedBlock(Bzip2State state) {
 		byte outputRunByte = state.outputRunByte;
@@ -209,6 +220,11 @@ public final class Bzip2Decompressor {
 		state.outputRemaining = outputRemaining;
 	}
 
+	/**
+	 * Decodes the operation.
+	 *
+	 * @param state the state
+	 */
 	private static void decode(Bzip2State state) {
 		/*
 		 * BZip2 switches between Huffman tables after every 50 decoded symbols. These
@@ -628,14 +644,33 @@ public final class Bzip2Decompressor {
 		}
 	}
 
+	/**
+	 * Reads unsigned byte.
+	 *
+	 * @param state the state
+	 * @return the decoded unsigned byte value
+	 */
 	private static int readUnsignedByte(Bzip2State state) {
 		return readBits(8, state);
 	}
 
+	/**
+	 * Reads bit.
+	 *
+	 * @param state the state
+	 * @return the decoded bit value
+	 */
 	private static byte readBit(Bzip2State state) {
 		return (byte) readBits(1, state);
 	}
 
+	/**
+	 * Reads bits.
+	 *
+	 * @param bitCount the bit count
+	 * @param state the state
+	 * @return the decoded bits value
+	 */
 	private static int readBits(int bitCount, Bzip2State state) {
 		while (state.liveBits < bitCount) {
 			requireRange(state.inputRemaining > 0, "Truncated BZip2 stream");
@@ -653,6 +688,11 @@ public final class Bzip2Decompressor {
 		return bits;
 	}
 
+	/**
+	 * Builds symbol map.
+	 *
+	 * @param state the state
+	 */
 	private static void buildSymbolMap(Bzip2State state) {
 		state.usedSymbolCount = 0;
 
@@ -665,6 +705,13 @@ public final class Bzip2Decompressor {
 
 	/**
 	 * Builds canonical Huffman decoder tables from a code-length table.
+	 * @param codeLimits the code limits
+	 * @param codeBases the code bases
+	 * @param codePermutations the code permutations
+	 * @param codeLengths the code lengths
+	 * @param minimumLength the minimum length
+	 * @param maximumLength the maximum length
+	 * @param alphabetSize the alphabet size
 	 */
 	private static void buildHuffmanDecodeTables(int[] codeLimits, int[] codeBases, int[] codePermutations,
 			byte[] codeLengths, int minimumLength, int maximumLength, int alphabetSize) {
@@ -708,6 +755,12 @@ public final class Bzip2Decompressor {
 		}
 	}
 
+	/**
+	 * Validates a BZIP2 decoding range invariant.
+	 *
+	 * @param condition the condition
+	 * @param message the message text
+	 */
 	private static void requireRange(boolean condition, String message) {
 		if (!condition) {
 			throw new IllegalArgumentException(message);

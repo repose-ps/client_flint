@@ -32,117 +32,200 @@ import rs2.Client;
  * </p>
  */
 public class Widget {
+	/**
+	 * Creates a new widget.
+	 */
 	public Widget() {
 	}
 
+	/** Constant value for type container. */
 	public static final int TYPE_CONTAINER = 0;
+	/** Constant value for type unknown. */
 	public static final int TYPE_UNKNOWN = 1;
+	/** Constant value for type inventory. */
 	public static final int TYPE_INVENTORY = 2;
+	/** Constant value for type rectangle. */
 	public static final int TYPE_RECTANGLE = 3;
+	/** Constant value for type text. */
 	public static final int TYPE_TEXT = 4;
+	/** Constant value for type sprite. */
 	public static final int TYPE_SPRITE = 5;
+	/** Constant value for type model. */
 	public static final int TYPE_MODEL = 6;
+	/** Constant value for type inventory text. */
 	public static final int TYPE_INVENTORY_TEXT = 7;
+	/** Constant value for type tooltip. */
 	public static final int TYPE_TOOLTIP = 8;
 
+	/** Constant value for sprite cache capacity. */
 	private static final int SPRITE_CACHE_CAPACITY = 50_000;
+	/** Constant value for model cache capacity. */
 	private static final int MODEL_CACHE_CAPACITY = 30;
 
+	/** Stores the current spell name. */
 	public String spellName;
+	/** Stores the current sprite. */
 	public ImageRGB sprite;
+	/** Stores sprite Y offsets values. */
 	public int[] spriteYOffsets;
+	/** Stores the current sprite archive. */
 	private static Archive spriteArchive;
+	/** Stores the current ID. */
 	public int id;
+	/** Stores widgets values. */
 	public static Widget[] widgets;
+	/** Whether inventory replace items is enabled or active. */
 	public boolean inventoryReplaceItems;
 	/** Packed signed model pitch/yaw speeds: high 16 bits / low 16 bits. */
 	public int modelRotationSpeed;
+	/** Whether mouseover triggered is enabled or active. */
 	public boolean mouseoverTriggered;
+	/** Stores the current transparency. */
 	public byte transparency;
+	/** Stores sprite X offsets values. */
 	public int[] spriteXOffsets;
+	/** Stores the current spell usable on. */
 	public int spellUsableOn;
+	/** Stores fonts values. */
 	private static TypeFace[] fonts;
+	/** Stores item amounts values. */
 	public int[] itemAmounts;
 	/**
 	 * Type-1 field consumed from the cache but not semantically used by this
 	 * Client.
 	 */
 	public int type1UnknownValue;
+	/** Stores the current active mouseover color. */
 	public int activeMouseoverColor;
+	/** Stores the current animation cycle. */
 	public int animationCycle;
+	/** Stores the current X offset. */
 	public int xOffset;
+	/** Whether inventory has options is enabled or active. */
 	public boolean inventoryHasOptions;
+	/** Stores the current text. */
 	public String text;
+	/** Stores the current scroll Y. */
 	public int scrollY;
+	/** Stores child X values. */
 	public int[] childX;
 	/**
 	 * Type-1 field consumed from the cache but not semantically used by this
 	 * Client.
 	 */
 	public boolean type1UnknownEnabled;
+	/** Stores cs1 instructions values. */
 	public int[][] cs1Instructions;
+	/** Stores the current animation frame. */
 	public int animationFrame;
+	/** Stores the current type. */
 	public int type;
+	/** Stores the current font. */
 	public TypeFace font;
+	/** Stores the current height. */
 	public int height;
+	/** Whether filled is enabled or active. */
 	public boolean filled;
+	/** Stores the current color. */
 	public int color;
+	/** Stores the current width. */
 	public int width;
+	/** Stores the current content type. */
 	public int contentType;
+	/** Stores the current model contrast. */
 	private static int modelContrast;
+	/** Stores the current inventory sprite padding Y. */
 	public int inventorySpritePaddingY;
+	/** Stores the current active sprite. */
 	public ImageRGB activeSprite;
 	/** Parent interface id containing content type 600; used for Report Abuse. */
 	public static int reportAbuseInterfaceId = -1;
+	/** Whether text shadowed is enabled or active. */
 	public boolean textShadowed;
+	/** Stores the current parent ID. */
 	public int parentId;
+	/** Stores the current active text. */
 	public String activeText;
+	/** Stores the current sprite cache. */
 	private static LruCache spriteCache;
+	/** Stores the current model zoom. */
 	public int modelZoom;
+	/** Stores the current model pitch. */
 	public int modelPitch;
+	/** Stores the current model yaw. */
 	public int modelYaw;
+	/** Stores the current mouseover target ID. */
 	public int mouseoverTargetId;
 	/**
 	 * Parent interface id containing content type 650. The supplied revision-377
 	 * Client records this id while decoding but does not otherwise use it.
 	 */
 	public static int contentType650InterfaceId = -1;
+	/** Stores cs1 comparison values values. */
 	public int[] cs1ComparisonValues;
+	/** Stores children values. */
 	public int[] children;
+	/** Stores the current Y offset. */
 	public int yOffset;
+	/** Stores the current active color. */
 	public int activeColor;
+	/** Stores the current mouseover color. */
 	public int mouseoverColor;
+	/** Stores actions values. */
 	public String[] actions;
+	/** Stores the current inventory sprite padding X. */
 	public int inventorySpritePaddingX;
+	/** Shared cache of widget models keyed by media type and identifier. */
 	private static final LruCache modelCache = new LruCache(MODEL_CACHE_CAPACITY);
+	/** Stores inventory sprites values. */
 	public ImageRGB[] inventorySprites;
+	/** Stores the current active media type. */
 	public int activeMediaType;
+	/** Stores the current active media ID. */
 	public int activeMediaId;
+	/** Stores the current tooltip. */
 	public String tooltip;
+	/** Stores item IDs values. */
 	public int[] itemIds;
+	/** Whether text centered is enabled or active. */
 	public boolean textCentered;
+	/** Stores cs1 comparisons values. */
 	public int[] cs1Comparisons;
+	/** Whether inventory allow swap is enabled or active. */
 	public boolean inventoryAllowSwap;
+	/** Stores child Y values. */
 	public int[] childY;
 	/**
 	 * Parent interface id containing content type 655. The supplied revision-377
 	 * Client records this id while decoding but does not otherwise use it.
 	 */
 	public static int contentType655InterfaceId = -1;
+	/** Stores the current model ambient. */
 	private static int modelAmbient;
+	/** Stores the current selected action name. */
 	public String selectedActionName;
+	/** Stores encoded widgets values. */
 	private static byte[][] encodedWidgets;
+	/** Stores the current media type. */
 	public int mediaType;
+	/** Stores the current media ID. */
 	public int mediaId;
+	/** Stores the current scroll height. */
 	public int scrollHeight;
+	/** Stores the current animation ID. */
 	public int animationId;
+	/** Stores the current active animation ID. */
 	public int activeAnimationId;
+	/** Whether inventory usable items is enabled or active. */
 	public boolean inventoryUsableItems;
+	/** Stores the current button type. */
 	public int buttonType;
 
 	/**
 	 * Returns a widget, lazily rebuilding it from the retained encoded record when
 	 * an interface group has previously been unloaded.
+	 * @param id the identifier
+	 * @return the decoded widget for the supplied interface identifier
 	 */
 	public static Widget get(int id) {
 		if (widgets[id] == null) {
@@ -153,7 +236,11 @@ public class Widget {
 		return widgets[id];
 	}
 
-	/** Swaps the item id and amount at two inventory slots. */
+	/**
+	 * Swaps the item id and amount at two inventory slots.
+	 * @param firstSlot the first slot
+	 * @param secondSlot the second slot
+	 */
 	public void swapItems(int firstSlot, int secondSlot) {
 		int itemId = itemIds[secondSlot];
 		itemIds[secondSlot] = itemIds[firstSlot];
@@ -210,6 +297,7 @@ public class Widget {
 	 * Discards decoded widgets belonging to one parent group so they can be lazily
 	 * reconstructed later. Type-2 inventory widgets are intentionally retained
 	 * because their item arrays contain mutable runtime state.
+	 * @param parentId the parent ID
 	 */
 	public static void unloadGroup(int parentId) {
 		if (parentId == -1) {
@@ -239,6 +327,9 @@ public class Widget {
 	/**
 	 * Replaces the one-entry model source used for Client-built widget models. The
 	 * cache is cleared before insertion, preserving revision-377 behavior.
+	 * @param mediaType the media type
+	 * @param mediaId the media ID
+	 * @param model the model
 	 */
 	public static void cacheModel(int mediaType, int mediaId, Model model) {
 		modelCache.clear();
@@ -250,6 +341,10 @@ public class Widget {
 	/**
 	 * Builds the model displayed by a type-6 widget for its inactive or active
 	 * state and optional animation frames.
+	 * @param primaryFrameId the primary frame ID
+	 * @param secondaryFrameId the secondary frame ID
+	 * @param active whether the state is active
+	 * @return the animated model
 	 */
 	public Model getAnimatedModel(int primaryFrameId, int secondaryFrameId, boolean active) {
 		modelAmbient = 64;
@@ -279,6 +374,13 @@ public class Widget {
 		return model;
 	}
 
+	/**
+	 * Loads sprite.
+	 *
+	 * @param name the name
+	 * @param index the array or registry index
+	 * @return the cached or newly loaded sprite, or {@code null} if loading fails
+	 */
 	private static ImageRGB loadSprite(String name, int index) {
 		long key = (ResourceNameHash.hash(name) << 8) + index;
 		ImageRGB cached = (ImageRGB) spriteCache.get(key);
@@ -300,6 +402,13 @@ public class Widget {
 		}
 	}
 
+	/**
+	 * Returns media model.
+	 *
+	 * @param mediaType the media type
+	 * @param mediaId the media ID
+	 * @return the media model
+	 */
 	private Model getMediaModel(int mediaType, int mediaId) {
 		ItemDefinition itemDefinition = null;
 		if (mediaType == 4) {
@@ -336,6 +445,14 @@ public class Widget {
 		return model;
 	}
 
+	/**
+	 * Decodes the operation.
+	 *
+	 * @param parentId the parent ID
+	 * @param buffer the source buffer
+	 * @param id the identifier
+	 * @return the decoded  value
+	 */
 	private static Widget decode(int parentId, Buffer buffer, int id) {
 		Widget widget = new Widget();
 		widget.id = id;

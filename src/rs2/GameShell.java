@@ -32,6 +32,10 @@ import rs2.media.GraphicsBuffer;
 public class GameShell extends Canvas
 		implements Runnable, MouseListener, MouseMotionListener, KeyListener, FocusListener, WindowListener {
 
+	/** Creates a new game shell with its default client state. */
+	public GameShell() {
+	}
+
 	/** Defines the timing sample count constant. */
 	private static final int TIMING_SAMPLE_COUNT = 10;
 	/** Defines the key buffer size constant. */
@@ -41,38 +45,51 @@ public class GameShell extends Canvas
 	/** Defines the stopped constant. */
 	private static final int STOPPED = -2;
 
+	/** Stores the current shutdown countdown. */
 	private volatile int shutdownCountdown;
 	/** Serializes AWT input mutation with one game tick's consumption. */
 	private final Object inputLock = new Object();
 	/** Protects game-thread ownership and one-time cleanup state. */
 	private final Object lifecycleLock = new Object();
+	/** Stores the current game thread. */
 	private volatile Thread gameThread;
+	/** Whether cleanup started is enabled or active. */
 	private boolean cleanupStarted;
+	/** Whether cleanup complete is enabled or active. */
 	private boolean cleanupComplete;
 	/** True while a non-game thread owns the normal join-before-cleanup path. */
 	private volatile boolean shutdownJoinPending;
 
+	/** Stores the current cycle duration millis. */
 	protected int cycleDurationMillis = 20;
 
+	/** Stores the current minimum sleep millis. */
 	protected int minimumSleepMillis = 1;
 
+	/** Stores timing samples values. */
 	private final long[] timingSamples = new long[TIMING_SAMPLE_COUNT];
 
+	/** Stores the current fps. */
 	protected int fps;
 	/** Tracks whether debug timing. */
 	protected boolean debugTiming;
 
+	/** Stores the current canvas width. */
 	protected int canvasWidth;
 
+	/** Stores the current canvas height. */
 	protected int canvasHeight;
 
+	/** Stores the current graphics. */
 	protected volatile Graphics graphics;
 
 	/** Requests a fresh component graphics context after an AWT expose/repaint. */
 	private volatile boolean graphicsRefreshRequested;
 
+	/** Stores the current game buffer. */
 	protected GraphicsBuffer gameBuffer;
 
+	/** Stores the current game frame. */
 	protected GameFrame gameFrame;
 
 	/** Tracks whether clear screen. */
@@ -80,21 +97,28 @@ public class GameShell extends Canvas
 	/** Tracks whether has focus. */
 	protected volatile boolean hasFocus = true;
 
+	/** Stores the current idle cycles. */
 	protected volatile int idleCycles;
 
 	/** Current gameplay mouse button state: 0 none, 1 primary, 2 secondary. */
 	protected volatile int mouseButton;
 
+	/** Stores the current mouse X. */
 	protected volatile int mouseX;
 
+	/** Stores the current mouse Y. */
 	protected volatile int mouseY;
 
+	/** Stores the current pending click button. */
 	private int pendingClickButton;
 
+	/** Stores the current pending click X. */
 	private int pendingClickX;
 
+	/** Stores the current pending click Y. */
 	private int pendingClickY;
 
+	/** Stores the current pending click time. */
 	private long pendingClickTime;
 
 	/** Horizontal middle-mouse camera movement waiting for the next client tick. */
@@ -115,10 +139,13 @@ public class GameShell extends Canvas
 	/** Mouse click latched at the start of the current client tick. */
 	protected int clickButton;
 
+	/** Stores the current click X. */
 	protected int clickX;
 
+	/** Stores the current click Y. */
 	protected int clickY;
 
+	/** Stores the current click time. */
 	protected long clickTime;
 
 	/** Horizontal middle-mouse camera movement accumulated for the current client tick. */
@@ -130,10 +157,13 @@ public class GameShell extends Canvas
 	/** Pressed state for the client's 0..127 internal key codes. */
 	protected final int[] keyStatus = new int[KEY_BUFFER_SIZE];
 
+	/** Stores key queue values. */
 	private final int[] keyQueue = new int[KEY_BUFFER_SIZE];
 
+	/** Stores the current key queue read index. */
 	private int keyQueueReadIndex;
 
+	/** Stores the current key queue write index. */
 	private int keyQueueWriteIndex;
 
 	/**
@@ -150,7 +180,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the initialize graphics operation.
+	 * Initializes the AWT graphics context and software framebuffer.
 	 */
 	private void initializeGraphics() {
 		Component component = getGameComponent();
@@ -434,7 +464,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the mouse pressed operation.
+	 * Handles the mouse pressed event.
 	 *
 	 * @param event the event
 	 */
@@ -472,7 +502,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the mouse released operation.
+	 * Handles the mouse released event.
 	 *
 	 * @param event the event
 	 */
@@ -494,7 +524,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the mouse clicked operation.
+	 * Handles the mouse clicked event.
 	 *
 	 * @param event the event
 	 */
@@ -503,7 +533,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the mouse entered operation.
+	 * Handles the mouse entered event.
 	 *
 	 * @param event the event
 	 */
@@ -512,7 +542,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the mouse exited operation.
+	 * Handles the mouse exited event.
 	 *
 	 * @param event the event
 	 */
@@ -526,7 +556,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the mouse dragged operation.
+	 * Handles the mouse dragged event.
 	 *
 	 * @param event the event
 	 */
@@ -551,7 +581,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the mouse moved operation.
+	 * Handles the mouse moved event.
 	 *
 	 * @param event the event
 	 */
@@ -576,7 +606,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the key pressed operation.
+	 * Handles the key pressed event.
 	 *
 	 * @param event the event
 	 */
@@ -640,7 +670,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the key released operation.
+	 * Handles the key released event.
 	 *
 	 * @param event the event
 	 */
@@ -685,7 +715,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the key typed operation.
+	 * Handles the key typed event.
 	 *
 	 * @param event the event
 	 */
@@ -693,7 +723,10 @@ public class GameShell extends Canvas
 	public final void keyTyped(KeyEvent event) {
 	}
 
-	/** Returns the next queued client key code, or {@code -1} when empty. */
+	/**
+	 * Returns the next queued client key code, or {@code -1} when empty.
+	 * @return the next completed request, or {@code null} when none is available
+	 */
 	public final int pollKey() {
 		synchronized (inputLock) {
 			int key = -1;
@@ -706,7 +739,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the focus gained operation.
+	 * Handles the focus gained event.
 	 *
 	 * @param event the event
 	 */
@@ -719,7 +752,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the focus lost operation.
+	 * Handles the focus lost event.
 	 *
 	 * @param event the event
 	 */
@@ -739,7 +772,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the window activated operation.
+	 * Handles the window activated event.
 	 *
 	 * @param event the event
 	 */
@@ -748,7 +781,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the window closed operation.
+	 * Handles the window closed event.
 	 *
 	 * @param event the event
 	 */
@@ -757,7 +790,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the window closing operation.
+	 * Handles the window closing event.
 	 *
 	 * @param event the event
 	 */
@@ -767,7 +800,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the window deactivated operation.
+	 * Handles the window deactivated event.
 	 *
 	 * @param event the event
 	 */
@@ -776,7 +809,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the window deiconified operation.
+	 * Handles the window deiconified event.
 	 *
 	 * @param event the event
 	 */
@@ -785,7 +818,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the window iconified operation.
+	 * Handles the window iconified event.
 	 *
 	 * @param event the event
 	 */
@@ -794,7 +827,7 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Performs the window opened operation.
+	 * Handles the window opened event.
 	 *
 	 * @param event the event
 	 */
@@ -823,15 +856,31 @@ public class GameShell extends Canvas
 		onResize(width, height);
 	}
 
+	/**
+	 * Converts a frame-relative X coordinate to client-area coordinates.
+	 *
+	 * @param frameX the frame X
+	 * @return the converted value
+	 */
 	private int toClientX(int frameX) {
 		return gameFrame == null ? frameX : gameFrame.toClientX(frameX);
 	}
 
+	/**
+	 * Converts a frame-relative Y coordinate to client-area coordinates.
+	 *
+	 * @param frameY the frame Y
+	 * @return the converted value
+	 */
 	private int toClientY(int frameY) {
 		return gameFrame == null ? frameY : gameFrame.toClientY(frameY);
 	}
 
-	/** Called on the game thread whenever the drawable client area changes size. */
+	/**
+	 * Called on the game thread whenever the drawable client area changes size.
+	 * @param width the width in pixels
+	 * @param height the height in pixels
+	 */
 	protected void onResize(int width, int height) {
 	}
 
@@ -872,7 +921,10 @@ public class GameShell extends Canvas
 		graphicsRefreshRequested = false;
 	}
 
-	/** Returns the top-level AWT component used for input and drawing. */
+	/**
+	 * Returns the top-level AWT component used for input and drawing.
+	 * @return the game component
+	 */
 	public Component getGameComponent() {
 		return gameFrame != null ? gameFrame : this;
 	}
@@ -933,12 +985,18 @@ public class GameShell extends Canvas
 		graphics.drawString(text, (canvasWidth - metrics.stringWidth(text)) / 2, y + 22);
 	}
 
-	/** Current mouse X used by the asynchronous mouse recorder. */
+	/**
+	 * Current mouse X used by the asynchronous mouse recorder.
+	 * @return the mouse X
+	 */
 	public final int getMouseX() {
 		return mouseX;
 	}
 
-	/** Current mouse Y used by the asynchronous mouse recorder. */
+	/**
+	 * Current mouse Y used by the asynchronous mouse recorder.
+	 * @return the mouse Y
+	 */
 	public final int getMouseY() {
 		return mouseY;
 	}

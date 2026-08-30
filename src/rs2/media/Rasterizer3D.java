@@ -35,18 +35,25 @@ public class Rasterizer3D extends Rasterizer {
 	/** 0..255 source alpha used by flat and Gouraud scanlines. */
 	public static int alpha;
 
+	/** Stores the current center X. */
 	public static int centerX;
 
+	/** Stores the current center Y. */
 	public static int centerY;
 
+	/** Stores reciprocal15 values. */
 	public static int[] reciprocal15 = new int[8192];
 
+	/** Stores reciprocal16 values. */
 	public static int[] reciprocal16 = new int[2048];
 
+	/** Constant value for sine. */
 	public static int[] SINE = new int[2048];
 
+	/** Constant value for cosine. */
 	public static int[] COSINE = new int[2048];
 
+	/** Stores scanline offsets values. */
 	public static int[] scanlineOffsets;
 
 	/**
@@ -54,24 +61,34 @@ public class Rasterizer3D extends Rasterizer {
 	 */
 	private static int loadedTextureCount;
 
+	/** Stores textures values. */
 	public static IndexedImage[] textures = new IndexedImage[50];
 
+	/** Whether texture has transparency is enabled or active. */
 	private static boolean[] textureHasTransparency = new boolean[50];
 
+	/** Stores average texture colors values. */
 	private static int[] averageTextureColors = new int[50];
 
+	/** Stores the current texture pool available. */
 	private static int texturePoolAvailable;
 
+	/** Stores texture pool values. */
 	private static int[][] texturePool;
 
+	/** Stores texture pixels values. */
 	private static int[][] texturePixels = new int[50][];
 
+	/** Stores texture last used values. */
 	public static int[] textureLastUsed = new int[50];
 
+	/** Stores the current texture cycle. */
 	public static int textureCycle;
 
+	/** Constant value for hsl to RGB. */
 	public static int[] HSL_TO_RGB = new int[0x10000];
 
+	/** Stores texture palettes values. */
 	private static int[][] texturePalettes = new int[50][];
 
 	static {
@@ -85,6 +102,9 @@ public class Rasterizer3D extends Rasterizer {
 		}
 	}
 
+	/**
+	 * Creates a new rasterizer3 d.
+	 */
 	private Rasterizer3D() {
 	}
 
@@ -186,6 +206,7 @@ public class Rasterizer3D extends Rasterizer {
 	 * Returns the cached gamma-adjusted average palette colour for a texture.
 	 *
 	 * @param textureId the texture id
+	 * @return the average texture color
 	 */
 	public static int getAverageTextureColor(int textureId) {
 		if (averageTextureColors[textureId] != 0)

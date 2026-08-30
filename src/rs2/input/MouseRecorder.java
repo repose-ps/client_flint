@@ -13,19 +13,37 @@ import rs2.GameShell;
  */
 public final class MouseRecorder implements Runnable {
 
+	/** Whether running is enabled or active. */
 	public volatile boolean running = true;
+	/** Stores the current worker thread. */
 	private volatile Thread workerThread;
+	/** Stores Y coordinates values. */
 	public final int[] yCoordinates = new int[500];
+	/**
+	 * Lock.
+	 *
+	 */
 	public final Object lock = new Object();
+	/** Stores the current source. */
 	private final GameShell source;
+	/** Stores the current sample count. */
 	public int sampleCount;
+	/** Stores X coordinates values. */
 	public final int[] xCoordinates = new int[500];
 
+	/**
+	 * Creates a new mouse recorder.
+	 *
+	 * @param source the source
+	 */
 	public MouseRecorder(GameShell source) {
 		this.source = source;
 	}
 
-	/** Starts the recorder on its owned daemon thread. */
+	/**
+	 * Starts the recorder on its owned daemon thread.
+	 * @param priority the request priority
+	 */
 	public synchronized void start(int priority) {
 		if (workerThread != null && workerThread.isAlive()) {
 			return;

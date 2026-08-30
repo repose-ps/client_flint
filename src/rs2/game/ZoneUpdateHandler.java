@@ -17,37 +17,57 @@ import rs2.scene.tile.WallDecoration;
 /** Decodes the compact 8x8-zone update packet formats used by revision 377. */
 public final class ZoneUpdateHandler {
 
+	/** Constant value for attach object to player. */
 	public static final int ATTACH_OBJECT_TO_PLAYER = 203;
 
+	/** Constant value for add ground item for other player. */
 	public static final int ADD_GROUND_ITEM_FOR_OTHER_PLAYER = 106;
 
+	/** Constant value for animate game object. */
 	public static final int ANIMATE_GAME_OBJECT = 142;
 
+	/** Constant value for add ground item. */
 	public static final int ADD_GROUND_ITEM = 107;
 
+	/** Constant value for update ground item amount. */
 	public static final int UPDATE_GROUND_ITEM_AMOUNT = 121;
 
+	/** Constant value for add projectile. */
 	public static final int ADD_PROJECTILE = 181;
 
+	/** Constant value for play area sound. */
 	public static final int PLAY_AREA_SOUND = 41;
 
+	/** Constant value for add graphics object. */
 	public static final int ADD_GRAPHICS_OBJECT = 59;
 
+	/** Constant value for add game object. */
 	public static final int ADD_GAME_OBJECT = 152;
 
+	/** Constant value for remove ground item. */
 	public static final int REMOVE_GROUND_ITEM = 208;
 
+	/** Constant value for remove game object. */
 	public static final int REMOVE_GAME_OBJECT = 88;
 
+	/** Constant value for scene layers by type. */
 	private static final int[] SCENE_LAYERS_BY_TYPE = { 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
 			2, 3 };
 
+	/** Stores the current world. */
 	private final WorldState world;
 
+	/** Stores the current zone base X. */
 	private int zoneBaseX;
 
+	/** Stores the current zone base Y. */
 	private int zoneBaseY;
 
+	/**
+	 * Creates a new zone update handler.
+	 *
+	 * @param world the world
+	 */
 	public ZoneUpdateHandler(WorldState world) {
 		this.world = world;
 	}
@@ -81,6 +101,7 @@ public final class ZoneUpdateHandler {
 		zoneBaseY = y;
 	}
 
+	/** Handles area sound operations. */
 	@FunctionalInterface
 	public interface AreaSoundHandler {
 		/**
@@ -95,7 +116,17 @@ public final class ZoneUpdateHandler {
 		void queueAreaSound(int soundId, int loops, int radius, int tileX, int tileY);
 	}
 
-	/** Applies one zone-update packet to ground items, objects, projectiles, graphics, or area sound. */
+	/**
+	 * Applies one zone-update packet to ground items, objects, projectiles, graphics, or area sound.
+	 * @param buffer the source buffer
+	 * @param updateType the update type
+	 * @param currentPlane the current plane
+	 * @param currentCycle the current client cycle
+	 * @param localPlayerServerIndex the local player server index
+	 * @param localPlayer the local player
+	 * @param actors the actors
+	 * @param areaSoundHandler the area sound handler
+	 */
 	public void decode(Buffer buffer, int updateType, int currentPlane, int currentCycle, int localPlayerServerIndex,
 			Player localPlayer, ActorSynchronizer actors, AreaSoundHandler areaSoundHandler) {
 		if (updateType == ATTACH_OBJECT_TO_PLAYER) {

@@ -1,5 +1,6 @@
 package rs2.scene.tile;
 
+/** Provides complex tile state and behavior. */
 public class ComplexTile {
 
 	/** World-space x-coordinate for each mesh vertex. */
@@ -93,6 +94,7 @@ public class ComplexTile {
 			{ 1, 0, 1, 5, 1, 1, 4, 5, 1, 1, 2, 4, 0, 0, 5, 3, 0, 5, 4, 3, 0, 4, 2, 3 },
 			{ 1, 0, 5, 4, 1, 0, 1, 5, 0, 0, 4, 3, 0, 4, 5, 3, 0, 5, 2, 3, 0, 1, 2, 5 } };
 
+	/** Constant value for tile size. */
 	private static final int TILE_SIZE = 128;
 
 	/**

@@ -14,6 +14,10 @@ import rs2.media.VertexNormal;
  */
 public class Renderable extends DualNode {
 
+	/** Creates a new renderable with its default client state. */
+	public Renderable() {
+	}
+
 	/** Per-vertex normals used by scene lighting/normal merging. */
 	public VertexNormal[] vertexNormals;
 
@@ -45,6 +49,8 @@ public class Renderable extends DualNode {
 	/**
 	 * Returns the model currently represented by this renderable, or {@code null}
 	 * when nothing should be drawn.
+	 *
+	 * @return the current model, or {@code null} when this renderable has no model
 	 */
 	protected Model getModel() {
 		return null;

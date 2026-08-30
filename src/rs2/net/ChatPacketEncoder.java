@@ -8,6 +8,9 @@ import rs2.chat.ChatCodec;
  */
 public final class ChatPacketEncoder {
 
+	/**
+	 * Creates a new chat packet encoder.
+	 */
 	private ChatPacketEncoder() {
 	}
 

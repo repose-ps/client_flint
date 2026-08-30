@@ -38,6 +38,9 @@ public class SoundFilter {
 	/** Interpolated inverse global gain in 16.16 fixed-point form. */
 	public static int inverseUnity;
 
+	/**
+	 * Creates a new sound filter.
+	 */
 	public SoundFilter() {
 		pairCount = new int[2];
 		pairFrequencies = new int[2][2][4];
@@ -45,6 +48,14 @@ public class SoundFilter {
 		unityGain = new int[2];
 	}
 
+	/**
+	 * Interpolates attenuation.
+	 *
+	 * @param direction the movement direction
+	 * @param pair the pair
+	 * @param interpolation the interpolation
+	 * @return the interpolated attenuation value
+	 */
 	private float interpolateAttenuation(int direction, int pair, float interpolation) {
 		float attenuation = pairAttenuations[direction][0][pair]
 				+ interpolation * (pairAttenuations[direction][1][pair] - pairAttenuations[direction][0][pair]);
@@ -52,11 +63,25 @@ public class SoundFilter {
 		return 1.0F - (float) Math.pow(10.0D, -attenuation / 20.0F);
 	}
 
+	/**
+	 * Normalizes a filter frequency to the mixer sample rate.
+	 *
+	 * @param value the value
+	 * @return the converted value
+	 */
 	private static float normalizeFrequency(float value) {
 		float frequency = 32.7032F * (float) Math.pow(2.0D, value);
 		return frequency * 3.141593F / 11025.0F;
 	}
 
+	/**
+	 * Interpolates frequency.
+	 *
+	 * @param direction the movement direction
+	 * @param pair the pair
+	 * @param interpolation the interpolation
+	 * @return the interpolated normalized frequency
+	 */
 	private float interpolateFrequency(int direction, int pair, float interpolation) {
 		float frequency = pairFrequencies[direction][0][pair]
 				+ interpolation * (pairFrequencies[direction][1][pair] - pairFrequencies[direction][0][pair]);
@@ -67,6 +92,8 @@ public class SoundFilter {
 	/**
 	 * Computes coefficients for one filter direction at an envelope position.
 	 *
+	 * @param direction the movement direction
+	 * @param interpolation the interpolation
 	 * @return twice the number of pole pairs, which is the coefficient count
 	 */
 	public int compute(int direction, float interpolation) {
@@ -114,7 +141,11 @@ public class SoundFilter {
 		return pairCount[direction] * 2;
 	}
 
-	/** Decodes pair parameters and any envelope-controlled alternate values. */
+	/**
+	 * Decodes pair parameters and any envelope-controlled alternate values.
+	 * @param envelope the envelope
+	 * @param buffer the source buffer
+	 */
 	public void decode(SoundTrackEnvelope envelope, Buffer buffer) {
 		int packedPairCount = buffer.readUnsignedByte();
 		pairCount[0] = packedPairCount >> 4;

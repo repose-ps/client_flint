@@ -11,47 +11,71 @@ import rs2.sign.Signlink;
  */
 public final class CameraController {
 
+	/** Creates a new camera controller with its default client state. */
+	public CameraController() {
+	}
+
+	/** Constant value for angle mask. */
 	public static final int ANGLE_MASK = 0x7ff;
 
 	/** Camera-angle units applied for each pixel of middle-mouse movement. */
 	private static final int MOUSE_DRAG_SENSITIVITY = 3;
 
+	/** Stores the current X. */
 	public int x;
 
+	/** Stores the current height. */
 	public int height;
 
+	/** Stores the current Y. */
 	public int y;
 
+	/** Stores the current pitch. */
 	public int pitch = 128;
 
+	/** Stores the current yaw. */
 	public int yaw;
 
+	/** Stores the current follow pitch. */
 	public int followPitch = 128;
 
+	/** Stores the current follow yaw. */
 	public int followYaw;
 
+	/** Stores the current yaw velocity. */
 	private int yawVelocity;
 
+	/** Stores the current pitch velocity. */
 	private int pitchVelocity;
 
+	/** Stores the current follow target X. */
 	public int followTargetX;
 
+	/** Stores the current follow target Y. */
 	public int followTargetY;
 
+	/** Stores the current terrain pitch scale. */
 	public int terrainPitchScale;
 
+	/** Stores the current follow offset X. */
 	public int followOffsetX;
 
+	/** Stores the current follow offset Y. */
 	public int followOffsetY;
 
+	/** Stores the current yaw offset. */
 	public int yawOffset;
 
+	/** Stores the current follow offset X step. */
 	private int followOffsetXStep = 2;
 
+	/** Stores the current follow offset Y step. */
 	private int followOffsetYStep = 2;
 
+	/** Stores the current yaw offset step. */
 	private int yawOffsetStep = 1;
 
+	/** Stores the current follow offset cycle. */
 	private int followOffsetCycle;
 
 	/**
@@ -59,36 +83,52 @@ public final class CameraController {
 	 */
 	public boolean cinematic;
 
+	/** Stores the current position tile X. */
 	private int positionTileX;
 
+	/** Stores the current position tile Y. */
 	private int positionTileY;
 
+	/** Stores the current position height offset. */
 	private int positionHeightOffset;
 
+	/** Stores the current position base speed. */
 	private int positionBaseSpeed;
 
+	/** Stores the current position scale. */
 	private int positionScale;
 
+	/** Stores the current look tile X. */
 	private int lookTileX;
 
+	/** Stores the current look tile Y. */
 	private int lookTileY;
 
+	/** Stores the current look height offset. */
 	private int lookHeightOffset;
 
+	/** Stores the current look base speed. */
 	private int lookBaseSpeed;
 
+	/** Stores the current look scale. */
 	private int lookScale;
 
+	/** Whether shake enabled is enabled or active. */
 	private final boolean[] shakeEnabled = new boolean[5];
 
+	/** Stores shake random amplitude values. */
 	private final int[] shakeRandomAmplitude = new int[5];
 
+	/** Stores shake sine amplitude values. */
 	private final int[] shakeSineAmplitude = new int[5];
 
+	/** Stores shake frequency values. */
 	private final int[] shakeFrequency = new int[5];
 
+	/** Stores shake cycles values. */
 	private final int[] shakeCycles = new int[5];
 
+	/** Stores the current roof probe counter. */
 	private int roofProbeCounter;
 
 	/**
@@ -668,18 +708,33 @@ public final class CameraController {
 			yawOffsetStep = -1;
 	}
 
+	/** Provides snapshot state and behavior. */
 	public static final class Snapshot {
 
+		/** Stores the current X. */
 		private final int x;
 
+		/** Stores the current height. */
 		private final int height;
 
+		/** Stores the current Y. */
 		private final int y;
 
+		/** Stores the current pitch. */
 		private final int pitch;
 
+		/** Stores the current yaw. */
 		private final int yaw;
 
+		/**
+		 * Creates a new snapshot.
+		 *
+		 * @param x the X coordinate
+		 * @param height the height in pixels
+		 * @param y the Y coordinate
+		 * @param pitch the pitch
+		 * @param yaw the yaw
+		 */
 		private Snapshot(int x, int height, int y, int pitch, int yaw) {
 			this.x = x;
 			this.height = height;
@@ -689,14 +744,27 @@ public final class CameraController {
 		}
 	}
 
+	/** Provides screen point state and behavior. */
 	public static final class ScreenPoint {
 
+		/**
+		 * Invisible.
+		 *
+		 */
 		public static final ScreenPoint INVISIBLE = new ScreenPoint(-1, -1);
 
+		/** Stores the current X. */
 		public final int x;
 
+		/** Stores the current Y. */
 		public final int y;
 
+		/**
+		 * Creates a new screen point.
+		 *
+		 * @param x the X coordinate
+		 * @param y the Y coordinate
+		 */
 		public ScreenPoint(int x, int y) {
 			this.x = x;
 			this.y = y;
@@ -705,7 +773,7 @@ public final class CameraController {
 		/**
 		 * Returns whether visible.
 		 *
-		 * @return the resulting boolean
+		 * @return {@code true} when visible; otherwise {@code false}
 		 */
 		public boolean isVisible() {
 			return x >= 0;

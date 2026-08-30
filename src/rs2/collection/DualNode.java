@@ -34,6 +34,10 @@ package rs2.collection;
  */
 public class DualNode extends Node {
 
+	/** Creates a new dual node with its default client state. */
+	public DualNode() {
+	}
+
 	/**
 	 * Next node in the secondary intrusive list.
 	 *

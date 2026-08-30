@@ -6,26 +6,45 @@ import rs2.media.AnimationFrame;
 /** A stationary spot animation placed at a fixed scene position. */
 public class GraphicsObject extends Renderable {
 
+	/** Stores the current plane. */
 	public int plane;
 
+	/** Stores the current X. */
 	public int x;
 
+	/** Stores the current Y. */
 	public int y;
 
+	/** Stores the current Z. */
 	public int z;
 	/**
 	 * Whether finished.
 	 */
 	public boolean finished;
 
+	/** Stores the current frame. */
 	public int frame;
 
+	/** Stores the current frame cycle. */
 	public int frameCycle;
 
+	/** Stores the current spot animation. */
 	public SpotAnimation spotAnimation;
 
+	/** Stores the current cycle start. */
 	public int cycleStart;
 
+	/**
+	 * Creates a new graphics object.
+	 *
+	 * @param spotAnimationId the spot animation ID
+	 * @param plane the scene plane
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 * @param z the Z coordinate
+	 * @param delay the delay
+	 * @param currentCycle the current client cycle
+	 */
 	public GraphicsObject(int spotAnimationId, int plane, int x, int y, int z, int delay, int currentCycle) {
 		this.spotAnimation = SpotAnimation.definitions[spotAnimationId];
 		this.plane = plane;

@@ -7,16 +7,29 @@ import rs2.net.Buffer;
 /** Palette-indexed software sprite loaded from the media archive. */
 public class IndexedImage extends Rasterizer {
 
+	/** Stores pixels values. */
 	public byte[] pixels;
+	/** Stores palette values. */
 	public int[] palette;
+	/** Stores the current width. */
 	public int width;
+	/** Stores the current height. */
 	public int height;
+	/** Stores the current offset X. */
 	public int offsetX;
+	/** Stores the current offset Y. */
 	public int offsetY;
+	/** Stores the current max width. */
 	public int maxWidth;
+	/** Stores the current max height. */
 	public int maxHeight;
 
-	/** Creates an empty indexed sprite for client-side media generation. */
+	/**
+	 * Creates an empty indexed sprite for client-side media generation.
+	 * @param width the width in pixels
+	 * @param height the height in pixels
+	 * @param palette the palette
+	 */
 	public IndexedImage(int width, int height, int[] palette) {
 		if (width < 0 || height < 0) {
 			throw new IllegalArgumentException("Sprite dimensions must be non-negative");
@@ -27,6 +40,13 @@ public class IndexedImage extends Rasterizer {
 		pixels = new byte[width * height];
 	}
 
+	/**
+	 * Creates a new indexed image.
+	 *
+	 * @param archive the source archive
+	 * @param archiveName the archive name
+	 * @param offset the starting offset
+	 */
 	public IndexedImage(Archive archive, String archiveName, int offset) {
 		Buffer dataBuffer = new Buffer(archive.read(archiveName + ".dat"));
 		Buffer indexBuffer = new Buffer(archive.read("index.dat"));
@@ -67,6 +87,9 @@ public class IndexedImage extends Rasterizer {
 		}
 	}
 
+	/**
+	 * Resizes to half.
+	 */
 	public void resizeToHalf() {
 		maxWidth /= 2;
 		maxHeight /= 2;
@@ -85,6 +108,9 @@ public class IndexedImage extends Rasterizer {
 		offsetY = 0;
 	}
 
+	/**
+	 * Resizes to canvas.
+	 */
 	public void resizeToCanvas() {
 		if (width != maxWidth || height != maxHeight) {
 			byte[] resizedPixels = new byte[maxWidth * maxHeight];
@@ -104,6 +130,9 @@ public class IndexedImage extends Rasterizer {
 
 	}
 
+	/**
+	 * Flips the indexed image horizontally.
+	 */
 	public void flipHorizontal() {
 		byte[] flipedPixels = new byte[width * height];
 		int pixelCount = 0;
@@ -118,6 +147,9 @@ public class IndexedImage extends Rasterizer {
 
 	}
 
+	/**
+	 * Flips the indexed image vertically.
+	 */
 	public void flipVertical() {
 		byte[] flipedPixels = new byte[width * height];
 		int pixelCount = 0;
@@ -130,6 +162,13 @@ public class IndexedImage extends Rasterizer {
 		offsetY = maxHeight - height - offsetY;
 	}
 
+	/**
+	 * Adjusts every entry in the indexed-image palette.
+	 *
+	 * @param red the red
+	 * @param green the green
+	 * @param blue the blue
+	 */
 	public void adjustPalette(int red, int green, int blue) {
 		for (int index = 0; index < palette.length; index++) {
 			int r = palette[index] >> 16 & 0xff;
@@ -154,6 +193,12 @@ public class IndexedImage extends Rasterizer {
 		}
 	}
 
+	/**
+	 * Draws the operation.
+	 *
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 */
 	public void draw(int x, int y) {
 		x += offsetX;
 		y += offsetY;
@@ -193,6 +238,19 @@ public class IndexedImage extends Rasterizer {
 		}
 	}
 
+	/**
+	 * Copies pixels.
+	 *
+	 * @param pixels the pixels
+	 * @param rasterizerPixels the rasterizer pixels
+	 * @param width the width in pixels
+	 * @param height the height in pixels
+	 * @param offset the starting offset
+	 * @param originalOffset the original offset
+	 * @param deviation the deviation
+	 * @param originalDeviation the original deviation
+	 * @param pallete the pallete
+	 */
 	public void copyPixels(byte[] pixels, int[] rasterizerPixels, int width, int height, int offset, int originalOffset,
 			int deviation, int originalDeviation, int[] pallete) {
 		int shiftedWidth = -(width >> 2);
