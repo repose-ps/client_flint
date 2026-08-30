@@ -69,6 +69,7 @@ public final class Signlink implements Runnable {
 	public static int waveVolume;
 
 	public static boolean reportErrors = true;
+	private static volatile String cacheDirectory = "./rscache/";
 
 	private final int generation;
 
@@ -218,7 +219,19 @@ public final class Signlink implements Runnable {
 	 * </p>
 	 */
 	public static String findCacheDirectory() {
-		return "./rscache/";
+		return cacheDirectory;
+	}
+
+	/** Selects the disk-cache directory before {@link #start(InetAddress)} is called. */
+	public static void setCacheDirectory(String directory) {
+		if (directory == null || directory.trim().isEmpty()) {
+			throw new IllegalArgumentException("cache directory must not be empty");
+		}
+		String normalized = new File(directory).getPath();
+		if (!normalized.endsWith(File.separator)) {
+			normalized += File.separator;
+		}
+		cacheDirectory = normalized;
 	}
 
 	/**

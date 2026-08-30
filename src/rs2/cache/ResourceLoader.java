@@ -32,15 +32,12 @@ public final class ResourceLoader {
 	private static final int ARCHIVE_COUNT = 9;
 	private static final int CACHE_INDEX_COUNT = 5;
 	private static final int REVISION = 377;
+	private static final int MAX_CACHE_ENTRY_SIZE = 0xffffff;
 
 	/**
-	 * CRC-32 values for bootstrap cache entries 1..8 in the supplied authentic
-	 * revision-377 cache fixture. Entry zero is not present in cache index 0 and
-	 * therefore remains unknown until a server CRC table is fetched.
-	 *
-	 * <p>These defaults preserve standalone startup without a web server while
-	 * still allowing local corruption to be detected. A successfully fetched CRC
-	 * table replaces all nine values.</p>
+	 * Fallback CRC-32 values for the authentic revision-377 bootstrap cache.
+	 * Startup immediately replaces these with the authoritative table fetched from
+	 * the game server before any bootstrap archive is accepted.
 	 */
 	private static final int[] REVISION_377_BOOTSTRAP_CRCS = { 0, 0x9509ece5, 0x88dcbfa7, 0x5574bc2e,
 			0xa10e55ac, 0x3b8ed781, 0x982e83fb, 0x84fff872, 0x42fd7584 };
@@ -54,16 +51,14 @@ public final class ResourceLoader {
 			return;
 		}
 		for (int index = 0; index < CACHE_INDEX_COUNT; index++) {
-			cacheIndices[index] = new CacheIndex(index + 1, 0x927c0, dataFile, indexFiles[index]);
+			cacheIndices[index] = new CacheIndex(index + 1, MAX_CACHE_ENTRY_SIZE, dataFile, indexFiles[index]);
 		}
 	}
 
+
+
 	public int getArchiveCrc(int index) {
 		return archiveCrcs[index];
-	}
-
-	public int[] copyArchiveCrcs() {
-		return archiveCrcs.clone();
 	}
 
 	public CacheIndex getCacheIndex(int index) {
@@ -74,29 +69,6 @@ public final class ResourceLoader {
 		return cacheIndices[0] != null;
 	}
 
-	/**
-	 * Returns whether all eight bootstrap archives needed before the on-demand
-	 * system are readable and match the known revision-377 CRCs.
-	 *
-	 * <p>If any archive is absent, structurally unreadable, or has the wrong CRC,
-	 * startup fetches the server CRC table before attempting JAGGRAB recovery.</p>
-	 */
-	public boolean hasAllBootstrapArchives() {
-		if (cacheIndices[0] == null) {
-			return false;
-		}
-		try {
-			for (int archiveId = 1; archiveId < ARCHIVE_COUNT; archiveId++) {
-				byte[] data = cacheIndices[0].read(archiveId);
-				if (data == null || checksum(data) != archiveCrcs[archiveId]) {
-					return false;
-				}
-			}
-			return true;
-		} catch (RuntimeException exception) {
-			return false;
-		}
-	}
 
 	/** Loads and CRC-validates one bootstrap archive, recovering it over JAGGRAB when necessary. */
 	public Archive loadArchive(int expectedCrc, String archiveName, int loadingPercent, int cacheFileId,
@@ -212,7 +184,7 @@ public final class ResourceLoader {
 		boolean loaded = false;
 		while (!loaded) {
 			String error = "Unknown problem";
-			progress.update(20, "Connecting to web server");
+			progress.update(20, "Checking server cache");
 			try (DataInputStream input = opener.open("crc" + (int) (Math.random() * 99999999D) + "-" + REVISION)) {
 				Buffer buffer = new Buffer(new byte[40]);
 				input.readFully(buffer.payload, 0, buffer.payload.length);

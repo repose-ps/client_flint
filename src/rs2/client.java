@@ -212,9 +212,9 @@ public class Client extends GameShell {
 	public static void main(String args[]) {
 		try {
 			System.out.println("RS2 user Client - release #" + 377);
-			if (args.length != 5 && args.length != 6) {
+			if (args.length < 5 || args.length > 7) {
 				System.out.println(
-						"Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host]");
+						"Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host], [cache-directory]");
 				return;
 			}
 			currentWorldId = Integer.parseInt(args[0]);
@@ -225,7 +225,7 @@ public class Client extends GameShell {
 				setHighMemory();
 			} else {
 				System.out.println(
-						"Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host]");
+						"Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host], [cache-directory]");
 				return;
 			}
 			if (args[3].equals("free"))
@@ -234,11 +234,13 @@ public class Client extends GameShell {
 				membersWorld = true;
 			} else {
 				System.out.println(
-						"Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host]");
+						"Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid, [server-host], [cache-directory]");
 				return;
 			}
 			Signlink.storeId = Integer.parseInt(args[4]);
-			setServerHost(args.length == 6 ? args[5] : InetAddress.getLocalHost().getHostAddress());
+			setServerHost(args.length >= 6 ? args[5] : InetAddress.getLocalHost().getHostAddress());
+			if (args.length >= 7)
+				Signlink.setCacheDirectory(args[6]);
 			Signlink.start(InetAddress.getByName(serverHost));
 			Client client1 = new Client();
 			client1.createFrame(765, 503);
@@ -1139,7 +1141,7 @@ public class Client extends GameShell {
 			}
 			jaggrabSocket = null;
 		}
-		jaggrabSocket = openSocket(43595);
+		jaggrabSocket = openSocket(43595 + portOffset);
 		jaggrabSocket.setSoTimeout(10000);
 		java.io.InputStream inputstream = jaggrabSocket.getInputStream();
 		OutputStream outputstream = jaggrabSocket.getOutputStream();
@@ -2870,11 +2872,14 @@ public class Client extends GameShell {
 		startupStarted = true;
 		if (Signlink.cacheData != null) {
 			resourceLoader.initializeCacheIndices(Signlink.cacheData, Signlink.cacheIndexes);
-
 		}
 		try {
-			if (!resourceLoader.hasAllBootstrapArchives())
-				loadArchiveCrcs();
+			/*
+			 * The game server is authoritative for the packed cache. Always obtain its
+			 * bootstrap CRC table first; loadArchive() will then keep matching local
+			 * archives and JAGGRAB only the missing or outdated ones.
+			 */
+			loadArchiveCrcs();
 			titleArchive = loadArchive(resourceLoader.getArchiveCrc(1), "title", 25, 1, "title screen");
 			smallFont = new TypeFace(false, titleArchive, "p11_full");
 			plainFont = new TypeFace(false, titleArchive, "p12_full");
@@ -2894,7 +2899,7 @@ public class Client extends GameShell {
 			minimapRenderer.initializeMapImage();
 			Archive versionListArchive = loadArchive(resourceLoader.getArchiveCrc(5), "versionlist", 60, 5,
 					"update list");
-			drawLoadingText(60, "Connecting to update server");
+			drawLoadingText(60, "Initializing on-demand cache");
 			onDemandFetcher = new OnDemandFetcher();
 			onDemandFetcher.start(versionListArchive, this, resourceLoader);
 			AnimationFrame.initialize(onDemandFetcher.getAnimationCount());
