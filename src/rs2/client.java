@@ -85,9 +85,11 @@ import rs2.text.Base37;
 import rs2.text.TextFormatter;
 import rs2.ui.AppearanceEditor;
 import rs2.ui.ClientScriptContext;
-import rs2.ui.InterfaceState;
+import rs2.ui.InterfaceController;
 import rs2.ui.WidgetRuntime;
+import rs2.ui.WidgetRenderer;
 import rs2.ui.menu.MenuState;
+import rs2.ui.menu.MenuController;
 import rs2.ui.login.LoginScreen;
 import rs2.ui.login.TitleFlameAnimator;
 
@@ -217,11 +219,10 @@ public class Client extends GameShell {
 			chatController.setTradeMode((chatController.tradeMode() + 1) % ChatMode.STANDARD_MODE_COUNT);
 			changed = true;
 		} else if (button == ClientLayout.CHAT_MODE_REPORT_ABUSE) {
-			if (interfaceState.openInterfaceId == -1) {
+			if (interfaceController.state().openInterfaceId == -1) {
 				closeInterfaces();
-				reportAbuseName = "";
-				reportAbuseMutePlayer = false;
-				interfaceState.reportAbuseInterfaceId = interfaceState.openInterfaceId = Widget.reportAbuseInterfaceId;
+						interfaceController.setReportAbuseMutePlayer(false);
+				interfaceController.state().reportAbuseInterfaceId = interfaceController.state().openInterfaceId = Widget.reportAbuseInterfaceId;
 			} else {
 				addChatMessage("", "Please close the interface you have open before using 'report abuse'", ChatMessageType.GAME);
 			}
@@ -236,33 +237,9 @@ public class Client extends GameShell {
 		ChatPacketEncoder.writeChatModes(networkSession.outgoing, chatController.publicMode(), chatController.privateMode(), chatController.tradeMode());
 	}
 
-	/**
-	 * Closes the currently open client interfaces and emits the matching
-	 * close-interface packet.
-	 */
+	/** Closes all open interface groups through {@link InterfaceController}. */
 	public void closeInterfaces() {
-		networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.CLOSE_INTERFACES);
-		if (interfaceState.sidebarOverlayInterfaceId != -1) {
-			unloadInterface(interfaceState.sidebarOverlayInterfaceId);
-			sidebarRedraw = true;
-			interfaceActionPending = false;
-			tabAreaRedraw = true;
-		}
-		if (interfaceState.chatboxInterfaceId != -1) {
-			unloadInterface(interfaceState.chatboxInterfaceId);
-			chatboxRedraw = true;
-			interfaceActionPending = false;
-		}
-		if (interfaceState.fullscreenInterfaceId != -1) {
-			unloadInterface(interfaceState.fullscreenInterfaceId);
-			gameScreenRedraw = true;
-		}
-		if (interfaceState.fullscreenOverlayInterfaceId != -1) {
-			unloadInterface(interfaceState.fullscreenOverlayInterfaceId);
-		}
-		if (interfaceState.openInterfaceId != -1) {
-			unloadInterface(interfaceState.openInterfaceId);
-		}
+		interfaceController.closeAll(networkSession.outgoing, interfaceRedrawSink);
 	}
 
 	/**
@@ -330,18 +307,13 @@ public class Client extends GameShell {
 	}
 
 	/**
-	 * Formats an item stack amount using the original K/M abbreviations.
+	 * Formats an item stack amount using the renderer's revision-377 notation.
 	 *
-	 * @param amount the numeric/item-stack amount
-	 * @return the resulting text
+	 * @param amount numeric amount
+	 * @return formatted amount
 	 */
 	public static String formatItemStackAmount(int amount) {
-		if (amount < 0x186a0)
-			return String.valueOf(amount);
-		if (amount < 0x989680)
-			return amount / 1000 + "K";
-		else
-			return amount / 0xf4240 + "M";
+		return WidgetRenderer.formatItemStackAmount(amount);
 	}
 
 	/**
@@ -428,7 +400,7 @@ public class Client extends GameShell {
 		mapFunctionSprites = null;
 		sidebarIcons = null;
 		multiCombatOverlay = null;
-		menuState.clearReferencesForQuit();
+		menuController.state().clearReferencesForQuit();
 		GameObjectDefinition.clear();
 		NpcDefinition.clear();
 		ItemDefinition.clear();
@@ -457,10 +429,10 @@ public class Client extends GameShell {
 			return;
 
 		for (int tab = 0; tab < ClientLayout.TAB_COUNT; tab++) {
-			if (!layout.isTabHit(tab, super.clickX, super.clickY) || interfaceState.tabInterfaceIds[tab] == -1)
+			if (!layout.isTabHit(tab, super.clickX, super.clickY) || interfaceController.state().tabInterfaceIds[tab] == -1)
 				continue;
 			sidebarRedraw = true;
-			interfaceState.selectedTab = tab;
+			interfaceController.state().selectedTab = tab;
 			tabAreaRedraw = true;
 		}
 	}
@@ -478,39 +450,12 @@ public class Client extends GameShell {
 		}
 	}
 
-	/**
-	 * Builds friend/ignore context-menu entries for a social-list widget.
-	 *
-	 * @param widget the widget being processed
-	 * @return true when the requested condition/action succeeds; otherwise false
+	/** Delegates social-list menu construction to {@link MenuController}.
+	 * @param widget social-list widget
+	 * @return whether the widget supplied a social menu
 	 */
 	public boolean buildSocialWidgetMenu(Widget widget) {
-		int contentType = widget.contentType;
-		if (contentType >= WidgetContentType.FRIEND_NAME_FIRST && contentType <= WidgetContentType.FRIEND_WORLD_LAST || contentType >= WidgetContentType.FRIEND_NAME_ALTERNATE_FIRST && contentType <= WidgetContentType.FRIEND_WORLD_ALTERNATE_LAST) {
-			if (contentType >= WidgetContentType.FRIEND_WORLD_ALTERNATE_FIRST)
-				contentType -= WidgetContentType.FRIEND_WORLD_ALTERNATE_INDEX_OFFSET;
-			else if (contentType >= WidgetContentType.FRIEND_NAME_ALTERNATE_FIRST)
-				contentType -= WidgetContentType.FRIEND_NAME_ALTERNATE_INDEX_OFFSET;
-			else if (contentType >= WidgetContentType.FRIEND_WORLD_FIRST)
-				contentType -= WidgetContentType.FRIEND_WORLD_FIRST;
-			else
-				contentType--;
-			menuState.actionNames[menuState.count] = "Remove @whi@" + socialManager.friendNames[contentType];
-			menuState.actionIds[menuState.count] = MenuState.REMOVE_FRIEND;
-			menuState.count++;
-			menuState.actionNames[menuState.count] = "Message @whi@" + socialManager.friendNames[contentType];
-			menuState.actionIds[menuState.count] = MenuState.MESSAGE_FRIEND;
-			menuState.count++;
-			return true;
-		}
-		if (contentType >= WidgetContentType.IGNORE_NAME_FIRST && contentType <= WidgetContentType.IGNORE_NAME_LAST) {
-			menuState.actionNames[menuState.count] = "Remove @whi@" + widget.text;
-			menuState.actionIds[menuState.count] = MenuState.REMOVE_IGNORE;
-			menuState.count++;
-			return true;
-		} else {
-			return false;
-		}
+		return menuController.buildSocialWidgetMenu(widget);
 	}
 
 	/** Resets appearance-kit selections for the currently selected sex. */
@@ -681,52 +626,52 @@ public class Client extends GameShell {
 			if (crossCycle >= 400)
 				crossType = 0;
 		}
-		if (interfaceState.pressedInventoryArea != 0) {
+		if (interfaceController.state().pressedInventoryArea != 0) {
 			inventoryClickCycle++;
 			if (inventoryClickCycle >= 15) {
-				if (interfaceState.pressedInventoryArea == 2)
+				if (interfaceController.state().pressedInventoryArea == 2)
 					sidebarRedraw = true;
-				if (interfaceState.pressedInventoryArea == 3)
+				if (interfaceController.state().pressedInventoryArea == 3)
 					chatboxRedraw = true;
-				interfaceState.pressedInventoryArea = 0;
+				interfaceController.state().pressedInventoryArea = 0;
 			}
 		}
-		if (interfaceState.inventoryDragArea != 0) {
-			interfaceState.inventoryDragDuration++;
-			if (super.mouseX > interfaceState.inventoryDragStartX + 5
-					|| super.mouseX < interfaceState.inventoryDragStartX - 5
-					|| super.mouseY > interfaceState.inventoryDragStartY + 5
-					|| super.mouseY < interfaceState.inventoryDragStartY - 5)
+		if (interfaceController.state().inventoryDragArea != 0) {
+			interfaceController.state().inventoryDragDuration++;
+			if (super.mouseX > interfaceController.state().inventoryDragStartX + 5
+					|| super.mouseX < interfaceController.state().inventoryDragStartX - 5
+					|| super.mouseY > interfaceController.state().inventoryDragStartY + 5
+					|| super.mouseY < interfaceController.state().inventoryDragStartY - 5)
 				inventoryDragMoved = true;
 			if (super.mouseButton == 0) {
-				if (interfaceState.inventoryDragArea == 2)
+				if (interfaceController.state().inventoryDragArea == 2)
 					sidebarRedraw = true;
-				if (interfaceState.inventoryDragArea == 3)
+				if (interfaceController.state().inventoryDragArea == 3)
 					chatboxRedraw = true;
-				interfaceState.inventoryDragArea = 0;
-				if (inventoryDragMoved && interfaceState.inventoryDragDuration >= 5) {
-					interfaceState.hoveredInventoryWidgetId = -1;
+				interfaceController.state().inventoryDragArea = 0;
+				if (inventoryDragMoved && interfaceController.state().inventoryDragDuration >= 5) {
+					interfaceController.state().hoveredInventoryWidgetId = -1;
 					buildContextMenu();
-					if (interfaceState.hoveredInventoryWidgetId == interfaceState.draggedInventoryWidgetId
-							&& interfaceState.hoveredInventorySlot != interfaceState.draggedInventorySlot) {
-						Widget inventoryWidget = Widget.get(interfaceState.draggedInventoryWidgetId);
+					if (interfaceController.state().hoveredInventoryWidgetId == interfaceController.state().draggedInventoryWidgetId
+							&& interfaceController.state().hoveredInventorySlot != interfaceController.state().draggedInventorySlot) {
+						Widget inventoryWidget = Widget.get(interfaceController.state().draggedInventoryWidgetId);
 						// Legacy drag mode: 0 swaps/moves directly; 1 performs insertion-style
 						// shifting.
 						int insertionMode = 0;
 						if (inventoryRearrangeMode == 1 && inventoryWidget.contentType == WidgetContentType.INSERTABLE_INVENTORY)
 							insertionMode = 1;
-						if (inventoryWidget.itemIds[interfaceState.hoveredInventorySlot] <= 0)
+						if (inventoryWidget.itemIds[interfaceController.state().hoveredInventorySlot] <= 0)
 							insertionMode = 0;
 						if (inventoryWidget.inventoryReplaceItems) {
-							int sourceSlot = interfaceState.draggedInventorySlot;
-							int destinationSlot = interfaceState.hoveredInventorySlot;
+							int sourceSlot = interfaceController.state().draggedInventorySlot;
+							int destinationSlot = interfaceController.state().hoveredInventorySlot;
 							inventoryWidget.itemIds[destinationSlot] = inventoryWidget.itemIds[sourceSlot];
 							inventoryWidget.itemAmounts[destinationSlot] = inventoryWidget.itemAmounts[sourceSlot];
 							inventoryWidget.itemIds[sourceSlot] = -1;
 							inventoryWidget.itemAmounts[sourceSlot] = 0;
 						} else if (insertionMode == 1) {
-							int movingSlot = interfaceState.draggedInventorySlot;
-							for (int targetSlot = interfaceState.hoveredInventorySlot; movingSlot != targetSlot;)
+							int movingSlot = interfaceController.state().draggedInventorySlot;
+							for (int targetSlot = interfaceController.state().hoveredInventorySlot; movingSlot != targetSlot;)
 								if (movingSlot > targetSlot) {
 									inventoryWidget.swapItems(movingSlot - 1, movingSlot);
 									movingSlot--;
@@ -736,20 +681,20 @@ public class Client extends GameShell {
 								}
 
 						} else {
-							inventoryWidget.swapItems(interfaceState.hoveredInventorySlot,
-									interfaceState.draggedInventorySlot);
+							inventoryWidget.swapItems(interfaceController.state().hoveredInventorySlot,
+									interfaceController.state().draggedInventorySlot);
 						}
 						networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.REORDER_INVENTORY_ITEM);
-						networkSession.outgoing.writeShortAddLE(interfaceState.hoveredInventorySlot);
+						networkSession.outgoing.writeShortAddLE(interfaceController.state().hoveredInventorySlot);
 						networkSession.outgoing.writeByteAdd(insertionMode);
-						networkSession.outgoing.writeShortAdd(interfaceState.draggedInventoryWidgetId);
-						networkSession.outgoing.writeShortLE(interfaceState.draggedInventorySlot);
+						networkSession.outgoing.writeShortAdd(interfaceController.state().draggedInventoryWidgetId);
+						networkSession.outgoing.writeShortLE(interfaceController.state().draggedInventorySlot);
 					}
-				} else if ((oneButtonMouseMode == 1 || isAddFriendMenuAction(menuState.count - 1))
-						&& menuState.count > 2)
+				} else if ((oneButtonMouseMode == 1 || isAddFriendMenuAction(menuController.state().count - 1))
+						&& menuController.state().count > 2)
 					openContextMenu();
-				else if (menuState.count > 0)
-					dispatchMenuAction(menuState.count - 1);
+				else if (menuController.state().count > 0)
+					dispatchMenuAction(menuController.state().count - 1);
 				inventoryClickCycle = 10;
 				super.clickButton = 0;
 			}
@@ -772,25 +717,25 @@ public class Client extends GameShell {
 			super.clickButton = 0;
 		}
 		processMenuClick();
-		if (interfaceState.fullscreenInterfaceId == -1) {
+		if (interfaceController.state().fullscreenInterfaceId == -1) {
 			processMinimapClick();
 			processTabClick();
 		}
 		processChatModeClick();
 		if (super.mouseButton == 1 || super.clickButton == 1)
 			mouseButtonHoldTicks++;
-		if (chatboxTooltipWidgetId != 0 || sidebarTooltipWidgetId != 0 || viewportTooltipWidgetId != 0) {
-			if (tooltipHoverTicks < 100) {
-				tooltipHoverTicks++;
-				if (tooltipHoverTicks == 100) {
-					if (chatboxTooltipWidgetId != 0)
+		if (interfaceController.chatboxTooltipWidgetId() != 0 || interfaceController.sidebarTooltipWidgetId() != 0 || interfaceController.viewportTooltipWidgetId() != 0) {
+			if (interfaceController.tooltipHoverTicks() < 100) {
+				interfaceController.setTooltipHoverTicks(interfaceController.tooltipHoverTicks() + 1);
+				if (interfaceController.tooltipHoverTicks() == 100) {
+					if (interfaceController.chatboxTooltipWidgetId() != 0)
 						chatboxRedraw = true;
-					if (sidebarTooltipWidgetId != 0)
+					if (interfaceController.sidebarTooltipWidgetId() != 0)
 						sidebarRedraw = true;
 				}
 			}
-		} else if (tooltipHoverTicks > 0)
-			tooltipHoverTicks--;
+		} else if (interfaceController.tooltipHoverTicks() > 0)
+			interfaceController.setTooltipHoverTicks(interfaceController.tooltipHoverTicks() - 1);
 		if (regionManager.loadingStage == RegionManager.STAGE_LOADED)
 			updateCameraFollow();
 		if (regionManager.loadingStage == RegionManager.STAGE_LOADED && cameraController.cinematic)
@@ -839,13 +784,13 @@ public class Client extends GameShell {
 			int keyCode = pollKey();
 			if (keyCode == -1)
 				break;
-			if (interfaceState.openInterfaceId != -1
-					&& interfaceState.openInterfaceId == interfaceState.reportAbuseInterfaceId) {
-				if (keyCode == 8 && reportAbuseName.length() > 0)
-					reportAbuseName = reportAbuseName.substring(0, reportAbuseName.length() - 1);
+			if (interfaceController.state().openInterfaceId != -1
+					&& interfaceController.state().openInterfaceId == interfaceController.state().reportAbuseInterfaceId) {
+				if (keyCode == 8 && interfaceController.reportAbuseName().length() > 0)
+					interfaceController.setReportAbuseName(interfaceController.reportAbuseName().substring(0, interfaceController.reportAbuseName().length() - 1));
 				if ((keyCode >= 97 && keyCode <= 122 || keyCode >= 65 && keyCode <= 90 || keyCode >= 48 && keyCode <= 57
-						|| keyCode == 32) && reportAbuseName.length() < 12)
-					reportAbuseName += (char) keyCode;
+						|| keyCode == 32) && interfaceController.reportAbuseName().length() < 12)
+					interfaceController.setReportAbuseName(interfaceController.reportAbuseName() + (char) keyCode);
 			} else if (chatController.isPromptRaised()) {
 				if (keyCode >= 32 && keyCode <= 122 && chatController.promptInput().length() < 80) {
 					chatController.setPromptInput(chatController.promptInput() + (char) keyCode);
@@ -937,7 +882,7 @@ public class Client extends GameShell {
 					chatController.setInputDialogText(chatController.inputDialogText().substring(0, chatController.inputDialogText().length() - 1));
 					chatboxRedraw = true;
 				}
-			} else if (interfaceState.chatboxInterfaceId == -1 && interfaceState.fullscreenInterfaceId == -1) {
+			} else if (interfaceController.state().chatboxInterfaceId == -1 && interfaceController.state().fullscreenInterfaceId == -1) {
 				if (keyCode >= 32 && keyCode <= 122 && chatController.input().length() < 80) {
 					chatController.setInput(chatController.input() + (char) keyCode);
 					chatboxRedraw = true;
@@ -1173,7 +1118,7 @@ public class Client extends GameShell {
 			if (varpState.acceptServerValue(varpId, varpValue)) {
 				applyVarp(varpId);
 				sidebarRedraw = true;
-				if (interfaceState.dialogueInterfaceId != -1)
+				if (interfaceController.state().dialogueInterfaceId != -1)
 					chatboxRedraw = true;
 			}
 			networkSession.incomingOpcode = -1;
@@ -1207,26 +1152,26 @@ public class Client extends GameShell {
 		if (networkSession.incomingOpcode == IncomingPacketOpcode.OPEN_CHATBOX_INTERFACE) {
 			int chatboxInterfaceId = networkSession.incoming.readUnsignedShort();
 			widgetRuntime.resetAnimations(chatboxInterfaceId);
-			if (interfaceState.sidebarOverlayInterfaceId != -1) {
-				unloadInterface(interfaceState.sidebarOverlayInterfaceId);
+			if (interfaceController.state().sidebarOverlayInterfaceId != -1) {
+				unloadInterface(interfaceController.state().sidebarOverlayInterfaceId);
 				sidebarRedraw = true;
 				tabAreaRedraw = true;
 			}
-			if (interfaceState.fullscreenInterfaceId != -1) {
-				unloadInterface(interfaceState.fullscreenInterfaceId);
+			if (interfaceController.state().fullscreenInterfaceId != -1) {
+				unloadInterface(interfaceController.state().fullscreenInterfaceId);
 				gameScreenRedraw = true;
 			}
-			if (interfaceState.fullscreenOverlayInterfaceId != -1) {
-				unloadInterface(interfaceState.fullscreenOverlayInterfaceId);
+			if (interfaceController.state().fullscreenOverlayInterfaceId != -1) {
+				unloadInterface(interfaceController.state().fullscreenOverlayInterfaceId);
 			}
-			if (interfaceState.openInterfaceId != -1) {
-				unloadInterface(interfaceState.openInterfaceId);
+			if (interfaceController.state().openInterfaceId != -1) {
+				unloadInterface(interfaceController.state().openInterfaceId);
 			}
-			if (interfaceState.chatboxInterfaceId != chatboxInterfaceId) {
-				unloadInterface(interfaceState.chatboxInterfaceId);
-				interfaceState.chatboxInterfaceId = chatboxInterfaceId;
+			if (interfaceController.state().chatboxInterfaceId != chatboxInterfaceId) {
+				unloadInterface(interfaceController.state().chatboxInterfaceId);
+				interfaceController.state().chatboxInterfaceId = chatboxInterfaceId;
 			}
-			interfaceActionPending = false;
+			interfaceController.setActionPending(false);
 			chatboxRedraw = true;
 			networkSession.incomingOpcode = -1;
 			return true;
@@ -1248,9 +1193,9 @@ public class Client extends GameShell {
 		}
 		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_DIALOGUE_INTERFACE) {
 			int dialogueInterfaceId = networkSession.incoming.readShortLE();
-			if (dialogueInterfaceId != interfaceState.dialogueInterfaceId) {
-				unloadInterface(interfaceState.dialogueInterfaceId);
-				interfaceState.dialogueInterfaceId = dialogueInterfaceId;
+			if (dialogueInterfaceId != interfaceController.state().dialogueInterfaceId) {
+				unloadInterface(interfaceController.state().dialogueInterfaceId);
+				interfaceController.state().dialogueInterfaceId = dialogueInterfaceId;
 			}
 			chatboxRedraw = true;
 			networkSession.incomingOpcode = -1;
@@ -1353,37 +1298,37 @@ public class Client extends GameShell {
 			if (varpState.acceptServerValue(varpId2, varpValue2)) {
 				applyVarp(varpId2);
 				sidebarRedraw = true;
-				if (interfaceState.dialogueInterfaceId != -1)
+				if (interfaceController.state().dialogueInterfaceId != -1)
 					chatboxRedraw = true;
 			}
 			networkSession.incomingOpcode = -1;
 			return true;
 		}
 		if (networkSession.incomingOpcode == IncomingPacketOpcode.CLOSE_INTERFACES) {
-			if (interfaceState.sidebarOverlayInterfaceId != -1) {
-				unloadInterface(interfaceState.sidebarOverlayInterfaceId);
+			if (interfaceController.state().sidebarOverlayInterfaceId != -1) {
+				unloadInterface(interfaceController.state().sidebarOverlayInterfaceId);
 				sidebarRedraw = true;
 				tabAreaRedraw = true;
 			}
-			if (interfaceState.chatboxInterfaceId != -1) {
-				unloadInterface(interfaceState.chatboxInterfaceId);
+			if (interfaceController.state().chatboxInterfaceId != -1) {
+				unloadInterface(interfaceController.state().chatboxInterfaceId);
 				chatboxRedraw = true;
 			}
-			if (interfaceState.fullscreenInterfaceId != -1) {
-				unloadInterface(interfaceState.fullscreenInterfaceId);
+			if (interfaceController.state().fullscreenInterfaceId != -1) {
+				unloadInterface(interfaceController.state().fullscreenInterfaceId);
 				gameScreenRedraw = true;
 			}
-			if (interfaceState.fullscreenOverlayInterfaceId != -1) {
-				unloadInterface(interfaceState.fullscreenOverlayInterfaceId);
+			if (interfaceController.state().fullscreenOverlayInterfaceId != -1) {
+				unloadInterface(interfaceController.state().fullscreenOverlayInterfaceId);
 			}
-			if (interfaceState.openInterfaceId != -1) {
-				unloadInterface(interfaceState.openInterfaceId);
+			if (interfaceController.state().openInterfaceId != -1) {
+				unloadInterface(interfaceController.state().openInterfaceId);
 			}
 			if (chatController.inputDialogState() != 0) {
 				chatController.setInputDialogState(0);
 				chatboxRedraw = true;
 			}
-			interfaceActionPending = false;
+			interfaceController.setActionPending(false);
 			networkSession.incomingOpcode = -1;
 			return true;
 		}
@@ -1436,9 +1381,9 @@ public class Client extends GameShell {
 			int walkableInterfaceId = networkSession.incoming.readSignedShort();
 			if (walkableInterfaceId >= 0)
 				widgetRuntime.resetAnimations(walkableInterfaceId);
-			if (walkableInterfaceId != interfaceState.walkableInterfaceId) {
-				unloadInterface(interfaceState.walkableInterfaceId);
-				interfaceState.walkableInterfaceId = walkableInterfaceId;
+			if (walkableInterfaceId != interfaceController.state().walkableInterfaceId) {
+				unloadInterface(interfaceController.state().walkableInterfaceId);
+				interfaceController.state().walkableInterfaceId = walkableInterfaceId;
 			}
 			networkSession.incomingOpcode = -1;
 			return true;
@@ -1451,7 +1396,7 @@ public class Client extends GameShell {
 			return true;
 		}
 		if (networkSession.incomingOpcode == IncomingPacketOpcode.UPDATE_WEIGHT) {
-			if (interfaceState.selectedTab == 12)
+			if (interfaceController.state().selectedTab == 12)
 				sidebarRedraw = true;
 			weight = networkSession.incoming.readSignedShort();
 			networkSession.incomingOpcode = -1;
@@ -1470,24 +1415,24 @@ public class Client extends GameShell {
 		if (networkSession.incomingOpcode == IncomingPacketOpcode.OPEN_MAIN_AND_SIDEBAR_INTERFACES) {
 			int openInterfaceId = networkSession.incoming.readUnsignedShortAdd();
 			int sidebarOverlayInterfaceId = networkSession.incoming.readUnsignedShortAddLE();
-			if (interfaceState.chatboxInterfaceId != -1) {
-				unloadInterface(interfaceState.chatboxInterfaceId);
+			if (interfaceController.state().chatboxInterfaceId != -1) {
+				unloadInterface(interfaceController.state().chatboxInterfaceId);
 				chatboxRedraw = true;
 			}
-			if (interfaceState.fullscreenInterfaceId != -1) {
-				unloadInterface(interfaceState.fullscreenInterfaceId);
+			if (interfaceController.state().fullscreenInterfaceId != -1) {
+				unloadInterface(interfaceController.state().fullscreenInterfaceId);
 				gameScreenRedraw = true;
 			}
-			if (interfaceState.fullscreenOverlayInterfaceId != -1) {
-				unloadInterface(interfaceState.fullscreenOverlayInterfaceId);
+			if (interfaceController.state().fullscreenOverlayInterfaceId != -1) {
+				unloadInterface(interfaceController.state().fullscreenOverlayInterfaceId);
 			}
-			if (interfaceState.openInterfaceId != openInterfaceId) {
-				unloadInterface(interfaceState.openInterfaceId);
-				interfaceState.openInterfaceId = openInterfaceId;
+			if (interfaceController.state().openInterfaceId != openInterfaceId) {
+				unloadInterface(interfaceController.state().openInterfaceId);
+				interfaceController.state().openInterfaceId = openInterfaceId;
 			}
-			if (interfaceState.sidebarOverlayInterfaceId != sidebarOverlayInterfaceId) {
-				unloadInterface(interfaceState.sidebarOverlayInterfaceId);
-				interfaceState.sidebarOverlayInterfaceId = sidebarOverlayInterfaceId;
+			if (interfaceController.state().sidebarOverlayInterfaceId != sidebarOverlayInterfaceId) {
+				unloadInterface(interfaceController.state().sidebarOverlayInterfaceId);
+				interfaceController.state().sidebarOverlayInterfaceId = sidebarOverlayInterfaceId;
 			}
 			if (chatController.inputDialogState() != 0) {
 				chatController.setInputDialogState(0);
@@ -1495,7 +1440,7 @@ public class Client extends GameShell {
 			}
 			sidebarRedraw = true;
 			tabAreaRedraw = true;
-			interfaceActionPending = false;
+			interfaceController.setActionPending(false);
 			networkSession.incomingOpcode = -1;
 			return true;
 		}
@@ -1541,7 +1486,7 @@ public class Client extends GameShell {
 			return true;
 		}
 		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_SELECTED_TAB) {
-			interfaceState.selectedTab = networkSession.incoming.readUnsignedByteNeg();
+			interfaceController.state().selectedTab = networkSession.incoming.readUnsignedByteNeg();
 			sidebarRedraw = true;
 			tabAreaRedraw = true;
 			networkSession.incomingOpcode = -1;
@@ -1611,54 +1556,54 @@ public class Client extends GameShell {
 		if (networkSession.incomingOpcode == IncomingPacketOpcode.OPEN_MAIN_INTERFACE) {
 			int openInterfaceId2 = networkSession.incoming.readUnsignedShortAddLE();
 			widgetRuntime.resetAnimations(openInterfaceId2);
-			if (interfaceState.sidebarOverlayInterfaceId != -1) {
-				unloadInterface(interfaceState.sidebarOverlayInterfaceId);
+			if (interfaceController.state().sidebarOverlayInterfaceId != -1) {
+				unloadInterface(interfaceController.state().sidebarOverlayInterfaceId);
 				sidebarRedraw = true;
 				tabAreaRedraw = true;
 			}
-			if (interfaceState.chatboxInterfaceId != -1) {
-				unloadInterface(interfaceState.chatboxInterfaceId);
+			if (interfaceController.state().chatboxInterfaceId != -1) {
+				unloadInterface(interfaceController.state().chatboxInterfaceId);
 				chatboxRedraw = true;
 			}
-			if (interfaceState.fullscreenInterfaceId != -1) {
-				unloadInterface(interfaceState.fullscreenInterfaceId);
+			if (interfaceController.state().fullscreenInterfaceId != -1) {
+				unloadInterface(interfaceController.state().fullscreenInterfaceId);
 				gameScreenRedraw = true;
 			}
-			if (interfaceState.fullscreenOverlayInterfaceId != -1) {
-				unloadInterface(interfaceState.fullscreenOverlayInterfaceId);
+			if (interfaceController.state().fullscreenOverlayInterfaceId != -1) {
+				unloadInterface(interfaceController.state().fullscreenOverlayInterfaceId);
 			}
-			if (interfaceState.openInterfaceId != openInterfaceId2) {
-				unloadInterface(interfaceState.openInterfaceId);
-				interfaceState.openInterfaceId = openInterfaceId2;
+			if (interfaceController.state().openInterfaceId != openInterfaceId2) {
+				unloadInterface(interfaceController.state().openInterfaceId);
+				interfaceController.state().openInterfaceId = openInterfaceId2;
 			}
 			if (chatController.inputDialogState() != 0) {
 				chatController.setInputDialogState(0);
 				chatboxRedraw = true;
 			}
-			interfaceActionPending = false;
+			interfaceController.setActionPending(false);
 			networkSession.incomingOpcode = -1;
 			return true;
 		}
 		if (networkSession.incomingOpcode == IncomingPacketOpcode.OPEN_SIDEBAR_INTERFACE) {
 			int sidebarOverlayInterfaceId2 = networkSession.incoming.readUnsignedShortAddLE();
 			widgetRuntime.resetAnimations(sidebarOverlayInterfaceId2);
-			if (interfaceState.chatboxInterfaceId != -1) {
-				unloadInterface(interfaceState.chatboxInterfaceId);
+			if (interfaceController.state().chatboxInterfaceId != -1) {
+				unloadInterface(interfaceController.state().chatboxInterfaceId);
 				chatboxRedraw = true;
 			}
-			if (interfaceState.fullscreenInterfaceId != -1) {
-				unloadInterface(interfaceState.fullscreenInterfaceId);
+			if (interfaceController.state().fullscreenInterfaceId != -1) {
+				unloadInterface(interfaceController.state().fullscreenInterfaceId);
 				gameScreenRedraw = true;
 			}
-			if (interfaceState.fullscreenOverlayInterfaceId != -1) {
-				unloadInterface(interfaceState.fullscreenOverlayInterfaceId);
+			if (interfaceController.state().fullscreenOverlayInterfaceId != -1) {
+				unloadInterface(interfaceController.state().fullscreenOverlayInterfaceId);
 			}
-			if (interfaceState.openInterfaceId != -1) {
-				unloadInterface(interfaceState.openInterfaceId);
+			if (interfaceController.state().openInterfaceId != -1) {
+				unloadInterface(interfaceController.state().openInterfaceId);
 			}
-			if (interfaceState.sidebarOverlayInterfaceId != sidebarOverlayInterfaceId2) {
-				unloadInterface(interfaceState.sidebarOverlayInterfaceId);
-				interfaceState.sidebarOverlayInterfaceId = sidebarOverlayInterfaceId2;
+			if (interfaceController.state().sidebarOverlayInterfaceId != sidebarOverlayInterfaceId2) {
+				unloadInterface(interfaceController.state().sidebarOverlayInterfaceId);
+				interfaceController.state().sidebarOverlayInterfaceId = sidebarOverlayInterfaceId2;
 			}
 			if (chatController.inputDialogState() != 0) {
 				chatController.setInputDialogState(0);
@@ -1666,7 +1611,7 @@ public class Client extends GameShell {
 			}
 			sidebarRedraw = true;
 			tabAreaRedraw = true;
-			interfaceActionPending = false;
+			interfaceController.setActionPending(false);
 			networkSession.incomingOpcode = -1;
 			return true;
 		}
@@ -1736,7 +1681,7 @@ public class Client extends GameShell {
 			return true;
 		}
 		if (networkSession.incomingOpcode == IncomingPacketOpcode.UPDATE_RUN_ENERGY) {
-			if (interfaceState.selectedTab == 12)
+			if (interfaceController.state().selectedTab == 12)
 				sidebarRedraw = true;
 			runEnergy = networkSession.incoming.readUnsignedByte();
 			networkSession.incomingOpcode = -1;
@@ -1801,9 +1746,9 @@ public class Client extends GameShell {
 			int interfaceId = networkSession.incoming.readUnsignedShortAdd();
 			if (interfaceId == ProtocolConstants.NULL_ID)
 				interfaceId = -1;
-			if (interfaceState.tabInterfaceIds[tabIndex] != interfaceId) {
-				unloadInterface(interfaceState.tabInterfaceIds[tabIndex]);
-				interfaceState.tabInterfaceIds[tabIndex] = interfaceId;
+			if (interfaceController.state().tabInterfaceIds[tabIndex] != interfaceId) {
+				unloadInterface(interfaceController.state().tabInterfaceIds[tabIndex]);
+				interfaceController.state().tabInterfaceIds[tabIndex] = interfaceId;
 			}
 			sidebarRedraw = true;
 			tabAreaRedraw = true;
@@ -1822,10 +1767,10 @@ public class Client extends GameShell {
 			return true;
 		}
 		if (networkSession.incomingOpcode == IncomingPacketOpcode.FLASH_TAB) {
-			interfaceState.flashingTab = networkSession.incoming.readUnsignedByte();
-			if (interfaceState.flashingTab == interfaceState.selectedTab) {
-				if (interfaceState.flashingTab == 3)
-					interfaceState.selectedTab = 1;
+			interfaceController.state().flashingTab = networkSession.incoming.readUnsignedByte();
+			if (interfaceController.state().flashingTab == interfaceController.state().selectedTab) {
+				if (interfaceController.state().flashingTab == 3)
+					interfaceController.state().selectedTab = 1;
 				else
 					sidebarRedraw = true;
 			}
@@ -1855,25 +1800,25 @@ public class Client extends GameShell {
 			widgetRuntime.resetAnimations(fullscreenInterfaceId);
 			if (fullscreenOverlayInterfaceId != -1)
 				widgetRuntime.resetAnimations(fullscreenOverlayInterfaceId);
-			if (interfaceState.openInterfaceId != -1) {
-				unloadInterface(interfaceState.openInterfaceId);
+			if (interfaceController.state().openInterfaceId != -1) {
+				unloadInterface(interfaceController.state().openInterfaceId);
 			}
-			if (interfaceState.sidebarOverlayInterfaceId != -1) {
-				unloadInterface(interfaceState.sidebarOverlayInterfaceId);
+			if (interfaceController.state().sidebarOverlayInterfaceId != -1) {
+				unloadInterface(interfaceController.state().sidebarOverlayInterfaceId);
 			}
-			if (interfaceState.chatboxInterfaceId != -1) {
-				unloadInterface(interfaceState.chatboxInterfaceId);
+			if (interfaceController.state().chatboxInterfaceId != -1) {
+				unloadInterface(interfaceController.state().chatboxInterfaceId);
 			}
-			if (interfaceState.fullscreenInterfaceId != fullscreenInterfaceId) {
-				unloadInterface(interfaceState.fullscreenInterfaceId);
-				interfaceState.fullscreenInterfaceId = fullscreenInterfaceId;
+			if (interfaceController.state().fullscreenInterfaceId != fullscreenInterfaceId) {
+				unloadInterface(interfaceController.state().fullscreenInterfaceId);
+				interfaceController.state().fullscreenInterfaceId = fullscreenInterfaceId;
 			}
-			if (interfaceState.fullscreenOverlayInterfaceId != fullscreenInterfaceId) {
-				unloadInterface(interfaceState.fullscreenOverlayInterfaceId);
-				interfaceState.fullscreenOverlayInterfaceId = fullscreenOverlayInterfaceId;
+			if (interfaceController.state().fullscreenOverlayInterfaceId != fullscreenInterfaceId) {
+				unloadInterface(interfaceController.state().fullscreenOverlayInterfaceId);
+				interfaceController.state().fullscreenOverlayInterfaceId = fullscreenOverlayInterfaceId;
 			}
 			chatController.setInputDialogState(0);
-			interfaceActionPending = false;
+			interfaceController.setActionPending(false);
 			networkSession.incomingOpcode = -1;
 			return true;
 		}
@@ -1911,7 +1856,7 @@ public class Client extends GameShell {
 			int widgetId14 = networkSession.incoming.readUnsignedShortAddLE();
 			String widgetText = networkSession.incoming.readString();
 			Widget.get(widgetId14).text = widgetText;
-			if (Widget.get(widgetId14).parentId == interfaceState.tabInterfaceIds[interfaceState.selectedTab])
+			if (Widget.get(widgetId14).parentId == interfaceController.state().tabInterfaceIds[interfaceController.state().selectedTab])
 				sidebarRedraw = true;
 			networkSession.incomingOpcode = -1;
 			return true;
@@ -1940,17 +1885,17 @@ public class Client extends GameShell {
 	 * Draws the contextual action tooltip shown when the context menu is closed.
 	 */
 	public void drawMenuTooltip() {
-		if (menuState.count < 2 && interfaceState.itemSelected == 0 && interfaceState.spellSelected == 0)
+		if (menuController.state().count < 2 && interfaceController.state().itemSelected == 0 && interfaceController.state().spellSelected == 0)
 			return;
 		String tooltip;
-		if (interfaceState.itemSelected == 1 && menuState.count < 2)
-			tooltip = "Use " + interfaceState.selectedItemName + " with...";
-		else if (interfaceState.spellSelected == 1 && menuState.count < 2)
-			tooltip = interfaceState.selectedSpellAction + "...";
+		if (interfaceController.state().itemSelected == 1 && menuController.state().count < 2)
+			tooltip = "Use " + interfaceController.state().selectedItemName + " with...";
+		else if (interfaceController.state().spellSelected == 1 && menuController.state().count < 2)
+			tooltip = interfaceController.state().selectedSpellAction + "...";
 		else
-			tooltip = menuState.actionNames[menuState.count - 1];
-		if (menuState.count > 2)
-			tooltip = tooltip + "@whi@ / " + (menuState.count - 2) + " more options";
+			tooltip = menuController.state().actionNames[menuController.state().count - 1];
+		if (menuController.state().count > 2)
+			tooltip = tooltip + "@whi@ / " + (menuController.state().count - 2) + " more options";
 		boldFont.drawRandomizedTextWithTags(tooltip, 4, 15, 0xffffff, gameCycle / 1000, true);
 	}
 
@@ -2010,331 +1955,48 @@ public class Client extends GameShell {
 		serverHost = host.trim();
 	}
 
-	/**
-	 * Adds context-menu actions for a player at the supplied scene tile.
-	 *
-	 * @param playerIndex the player index
-	 * @param tileY       the local scene-tile Y coordinate
-	 * @param tileX       the local scene-tile X coordinate
-	 * @param player      the target player
+	/** Delegates player menu construction to {@link MenuController}.
+	 * @param playerIndex player index
+	 * @param tileY local tile Y
+	 * @param tileX local tile X
+	 * @param player target player
 	 */
 	public void buildPlayerMenu(int playerIndex, int tileY, int tileX, Player player) {
-		if (player == localPlayer)
-			return;
-		if (menuState.count >= MenuState.BUILD_LIMIT)
-			return;
-		String displayName;
-		if (player.skillLevel == 0)
-			displayName = player.name + getCombatLevelColorTag(player.combatLevel, localPlayer.combatLevel) + " (level-"
-					+ player.combatLevel + ")";
-		else
-			displayName = player.name + " (skill-" + player.skillLevel + ")";
-		if (interfaceState.itemSelected == 1) {
-			menuState.actionNames[menuState.count] = "Use " + interfaceState.selectedItemName + " with @whi@"
-					+ displayName;
-			menuState.actionIds[menuState.count] = MenuState.USE_ITEM_ON_PLAYER;
-			menuState.actionCmd1[menuState.count] = playerIndex;
-			menuState.actionCmd2[menuState.count] = tileX;
-			menuState.actionCmd3[menuState.count] = tileY;
-			menuState.count++;
-		} else if (interfaceState.spellSelected == 1) {
-			if ((interfaceState.selectedSpellTargetMask & 8) == 8) {
-				menuState.actionNames[menuState.count] = interfaceState.selectedSpellAction + " @whi@" + displayName;
-				menuState.actionIds[menuState.count] = MenuState.CAST_SPELL_ON_PLAYER;
-				menuState.actionCmd1[menuState.count] = playerIndex;
-				menuState.actionCmd2[menuState.count] = tileX;
-				menuState.actionCmd3[menuState.count] = tileY;
-				menuState.count++;
-			}
-		} else {
-			for (int actionIndex = 4; actionIndex >= 0; actionIndex--)
-				if (playerActions[actionIndex] != null) {
-					menuState.actionNames[menuState.count] = playerActions[actionIndex] + " @whi@" + displayName;
-					int priorityOffset = 0;
-					if (playerActions[actionIndex].equalsIgnoreCase("attack")) {
-						if (player.combatLevel > localPlayer.combatLevel)
-							priorityOffset = MenuState.LOW_PRIORITY_OFFSET;
-						if (localPlayer.team != 0 && player.team != 0)
-							if (localPlayer.team == player.team)
-								priorityOffset = MenuState.LOW_PRIORITY_OFFSET;
-							else
-								priorityOffset = 0;
-					} else if (playerActionLowPriority[actionIndex])
-						priorityOffset = MenuState.LOW_PRIORITY_OFFSET;
-					if (actionIndex == 0)
-						menuState.actionIds[menuState.count] = MenuState.PLAYER_OPTION_1 + priorityOffset;
-					if (actionIndex == 1)
-						menuState.actionIds[menuState.count] = MenuState.PLAYER_OPTION_2 + priorityOffset;
-					if (actionIndex == 2)
-						menuState.actionIds[menuState.count] = MenuState.PLAYER_OPTION_3 + priorityOffset;
-					if (actionIndex == 3)
-						menuState.actionIds[menuState.count] = MenuState.PLAYER_OPTION_4 + priorityOffset;
-					if (actionIndex == 4)
-						menuState.actionIds[menuState.count] = MenuState.PLAYER_OPTION_5 + priorityOffset;
-					menuState.actionCmd1[menuState.count] = playerIndex;
-					menuState.actionCmd2[menuState.count] = tileX;
-					menuState.actionCmd3[menuState.count] = tileY;
-					menuState.count++;
-				}
-
-		}
-		for (int menuIndex = 0; menuIndex < menuState.count; menuIndex++)
-			if (menuState.actionIds[menuIndex] == MenuState.WALK_HERE) {
-				menuState.actionNames[menuIndex] = "Walk here @whi@" + displayName;
-				return;
-			}
-
+		menuController.buildPlayerMenu(playerIndex, tileY, tileX, player, localPlayer, playerActions,
+				playerActionLowPriority);
 	}
 
 	/**
-	 * Processes scrollbar arrow, track, and drag input for a widget.
+	 * Delegates classic scrollbar input to the interface interaction owner.
 	 *
-	 * @param scrollHeight the full scrollable content height
-	 * @param y            the Y coordinate
-	 * @param widget       the widget being processed
-	 * @param mouseY       the mouse Y coordinate
-	 * @param redrawArea   the redraw area
-	 * @param mouseX       the mouse X coordinate
-	 * @param height       the visible height
-	 * @param x            the X coordinate
+	 * @param scrollHeight full content height
+	 * @param y scrollbar Y coordinate
+	 * @param widget scrollable widget
+	 * @param mouseY mouse Y coordinate
+	 * @param redrawArea fixed redraw area
+	 * @param mouseX mouse X coordinate
+	 * @param height visible height
+	 * @param x scrollbar X coordinate
 	 */
 	public void handleScrollbarInput(int scrollHeight, int y, Widget widget, int mouseY, int redrawArea, int mouseX,
 			int height, int x) {
-		if (scrollbarDragging)
-			scrollbarDragPadding = 32;
-		else
-			scrollbarDragPadding = 0;
-		scrollbarDragging = false;
-		if (mouseX >= x && mouseX < x + 16 && mouseY >= y && mouseY < y + 16) {
-			widget.scrollY -= mouseButtonHoldTicks * 4;
-			if (redrawArea == 1)
-				sidebarRedraw = true;
-			if (redrawArea == 2 || redrawArea == 3)
-				chatboxRedraw = true;
-			return;
-		}
-		if (mouseX >= x && mouseX < x + 16 && mouseY >= (y + height) - 16 && mouseY < y + height) {
-			widget.scrollY += mouseButtonHoldTicks * 4;
-			if (redrawArea == 1)
-				sidebarRedraw = true;
-			if (redrawArea == 2 || redrawArea == 3)
-				chatboxRedraw = true;
-			return;
-		}
-		if (mouseX >= x - scrollbarDragPadding && mouseX < x + 16 + scrollbarDragPadding && mouseY >= y + 16
-				&& mouseY < (y + height) - 16 && mouseButtonHoldTicks > 0) {
-			int thumbHeight = ((height - 32) * height) / scrollHeight;
-			if (thumbHeight < 8)
-				thumbHeight = 8;
-			int dragOffset = mouseY - y - 16 - thumbHeight / 2;
-			int dragRange = height - 32 - thumbHeight;
-			widget.scrollY = ((scrollHeight - height) * dragOffset) / dragRange;
-			if (redrawArea == 1)
-				sidebarRedraw = true;
-			if (redrawArea == 2 || redrawArea == 3)
-				chatboxRedraw = true;
-			scrollbarDragging = true;
-		}
+		interfaceController.handleScrollbarInput(scrollHeight, y, widget, mouseY, redrawArea, mouseX, height, x,
+				mouseButtonHoldTicks, interfaceRedrawSink);
 	}
 
-	/**
-	 * Builds world-view menu entries from the scene picking results.
-	 */
+	/** Delegates scene-pick menu construction to {@link MenuController}. */
 	public void buildViewportMenu() {
-		if (interfaceState.itemSelected == 0 && interfaceState.spellSelected == 0) {
-			menuState.actionNames[menuState.count] = "Walk here";
-			menuState.actionIds[menuState.count] = MenuState.WALK_HERE;
-			menuState.actionCmd2[menuState.count] = super.mouseX;
-			menuState.actionCmd3[menuState.count] = super.mouseY;
-			menuState.count++;
-		}
-		int previousUid = -1;
-		for (int pickedIndex = 0; pickedIndex < Model.pickedCount; pickedIndex++) {
-			int packedUid = Model.pickedUids[pickedIndex];
-			int tileX = packedUid & SceneUid.TILE_COORDINATE_MASK;
-			int tileY = packedUid >> SceneUid.TILE_Y_SHIFT & SceneUid.TILE_COORDINATE_MASK;
-			int entityType = packedUid >> SceneUid.ENTITY_TYPE_SHIFT & SceneUid.ENTITY_TYPE_MASK;
-			int entityId = packedUid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK;
-			if (packedUid == previousUid)
-				continue;
-			previousUid = packedUid;
-			if (entityType == SceneUid.TYPE_OBJECT && worldState.scene.getConfig(currentPlane, tileX, tileY, packedUid) >= 0) {
-				GameObjectDefinition objectDefinition = GameObjectDefinition.lookup(entityId);
-				if (objectDefinition.morphIds != null)
-					objectDefinition = objectDefinition.transform();
-				if (objectDefinition == null)
-					continue;
-				if (interfaceState.itemSelected == 1) {
-					menuState.actionNames[menuState.count] = "Use " + interfaceState.selectedItemName + " with @cya@"
-							+ objectDefinition.name;
-					menuState.actionIds[menuState.count] = MenuState.USE_ITEM_ON_OBJECT;
-					menuState.actionCmd1[menuState.count] = packedUid;
-					menuState.actionCmd2[menuState.count] = tileX;
-					menuState.actionCmd3[menuState.count] = tileY;
-					menuState.count++;
-				} else if (interfaceState.spellSelected == 1) {
-					if ((interfaceState.selectedSpellTargetMask & 4) == 4) {
-						menuState.actionNames[menuState.count] = interfaceState.selectedSpellAction + " @cya@"
-								+ objectDefinition.name;
-						menuState.actionIds[menuState.count] = MenuState.CAST_SPELL_ON_OBJECT;
-						menuState.actionCmd1[menuState.count] = packedUid;
-						menuState.actionCmd2[menuState.count] = tileX;
-						menuState.actionCmd3[menuState.count] = tileY;
-						menuState.count++;
-					}
-				} else {
-					if (objectDefinition.actions != null) {
-						for (int objectActionIndex = 4; objectActionIndex >= 0; objectActionIndex--)
-							if (objectDefinition.actions[objectActionIndex] != null) {
-								menuState.actionNames[menuState.count] = objectDefinition.actions[objectActionIndex]
-										+ " @cya@" + objectDefinition.name;
-								if (objectActionIndex == 0)
-									menuState.actionIds[menuState.count] = MenuState.OBJECT_OPTION_1;
-								if (objectActionIndex == 1)
-									menuState.actionIds[menuState.count] = MenuState.OBJECT_OPTION_2;
-								if (objectActionIndex == 2)
-									menuState.actionIds[menuState.count] = MenuState.OBJECT_OPTION_3;
-								if (objectActionIndex == 3)
-									menuState.actionIds[menuState.count] = MenuState.OBJECT_OPTION_4;
-								if (objectActionIndex == 4)
-									menuState.actionIds[menuState.count] = MenuState.OBJECT_OPTION_5;
-								menuState.actionCmd1[menuState.count] = packedUid;
-								menuState.actionCmd2[menuState.count] = tileX;
-								menuState.actionCmd3[menuState.count] = tileY;
-								menuState.count++;
-							}
-
-					}
-					menuState.actionNames[menuState.count] = "Examine @cya@" + objectDefinition.name;
-					menuState.actionIds[menuState.count] = MenuState.EXAMINE_OBJECT;
-					menuState.actionCmd1[menuState.count] = objectDefinition.id << 14;
-					menuState.actionCmd2[menuState.count] = tileX;
-					menuState.actionCmd3[menuState.count] = tileY;
-					menuState.count++;
-				}
-			}
-			if (entityType == 1) {
-				Npc npc = actorSynchronizer.npcs[entityId];
-				if (npc.definition.size == 1 && (((Actor) (npc)).x & 0x7f) == 64 && (((Actor) (npc)).y & 0x7f) == 64) {
-					for (int activeNpcIndex = 0; activeNpcIndex < actorSynchronizer.npcCount; activeNpcIndex++) {
-						Npc stackedNpc = actorSynchronizer.npcs[actorSynchronizer.npcIndices[activeNpcIndex]];
-						if (stackedNpc != null && stackedNpc != npc && stackedNpc.definition.size == 1
-								&& ((Actor) (stackedNpc)).x == ((Actor) (npc)).x
-								&& ((Actor) (stackedNpc)).y == ((Actor) (npc)).y)
-							buildNpcMenu(stackedNpc.definition, tileY, tileX,
-									actorSynchronizer.npcIndices[activeNpcIndex]);
-					}
-
-					for (int activePlayerIndex = 0; activePlayerIndex < actorSynchronizer.playerCount; activePlayerIndex++) {
-						Player stackedPlayer = actorSynchronizer.players[actorSynchronizer.playerIndices[activePlayerIndex]];
-						if (stackedPlayer != null && ((Actor) (stackedPlayer)).x == ((Actor) (npc)).x
-								&& ((Actor) (stackedPlayer)).y == ((Actor) (npc)).y)
-							buildPlayerMenu(actorSynchronizer.playerIndices[activePlayerIndex], tileY, tileX,
-									stackedPlayer);
-					}
-
-				}
-				buildNpcMenu(npc.definition, tileY, tileX, entityId);
-			}
-			if (entityType == 0) {
-				Player player = actorSynchronizer.players[entityId];
-				if ((((Actor) (player)).x & 0x7f) == 64 && (((Actor) (player)).y & 0x7f) == 64) {
-					for (int activeNpcIndex2 = 0; activeNpcIndex2 < actorSynchronizer.npcCount; activeNpcIndex2++) {
-						Npc stackedNpc2 = actorSynchronizer.npcs[actorSynchronizer.npcIndices[activeNpcIndex2]];
-						if (stackedNpc2 != null && stackedNpc2.definition.size == 1
-								&& ((Actor) (stackedNpc2)).x == ((Actor) (player)).x
-								&& ((Actor) (stackedNpc2)).y == ((Actor) (player)).y)
-							buildNpcMenu(stackedNpc2.definition, tileY, tileX,
-									actorSynchronizer.npcIndices[activeNpcIndex2]);
-					}
-
-					for (int activePlayerIndex2 = 0; activePlayerIndex2 < actorSynchronizer.playerCount; activePlayerIndex2++) {
-						Player stackedPlayer2 = actorSynchronizer.players[actorSynchronizer.playerIndices[activePlayerIndex2]];
-						if (stackedPlayer2 != null && stackedPlayer2 != player
-								&& ((Actor) (stackedPlayer2)).x == ((Actor) (player)).x
-								&& ((Actor) (stackedPlayer2)).y == ((Actor) (player)).y)
-							buildPlayerMenu(actorSynchronizer.playerIndices[activePlayerIndex2], tileY, tileX,
-									stackedPlayer2);
-					}
-
-				}
-				buildPlayerMenu(entityId, tileY, tileX, player);
-			}
-			if (entityType == 3) {
-				NodeDeque groundItems = worldState.groundItems[currentPlane][tileX][tileY];
-				if (groundItems != null) {
-					for (GroundItem groundItem = (GroundItem) groundItems
-							.last(); groundItem != null; groundItem = (GroundItem) groundItems.previous()) {
-						ItemDefinition itemDefinition = ItemDefinition.lookup(groundItem.id);
-						if (interfaceState.itemSelected == 1) {
-							menuState.actionNames[menuState.count] = "Use " + interfaceState.selectedItemName
-									+ " with @lre@" + itemDefinition.name;
-							menuState.actionIds[menuState.count] = MenuState.USE_ITEM_ON_GROUND_ITEM;
-							menuState.actionCmd1[menuState.count] = groundItem.id;
-							menuState.actionCmd2[menuState.count] = tileX;
-							menuState.actionCmd3[menuState.count] = tileY;
-							menuState.count++;
-						} else if (interfaceState.spellSelected == 1) {
-							if ((interfaceState.selectedSpellTargetMask & 1) == 1) {
-								menuState.actionNames[menuState.count] = interfaceState.selectedSpellAction + " @lre@"
-										+ itemDefinition.name;
-								menuState.actionIds[menuState.count] = MenuState.CAST_SPELL_ON_GROUND_ITEM;
-								menuState.actionCmd1[menuState.count] = groundItem.id;
-								menuState.actionCmd2[menuState.count] = tileX;
-								menuState.actionCmd3[menuState.count] = tileY;
-								menuState.count++;
-							}
-						} else {
-							for (int groundActionIndex = 4; groundActionIndex >= 0; groundActionIndex--)
-								if (itemDefinition.groundActions != null
-										&& itemDefinition.groundActions[groundActionIndex] != null) {
-									menuState.actionNames[menuState.count] = itemDefinition.groundActions[groundActionIndex]
-											+ " @lre@" + itemDefinition.name;
-									if (groundActionIndex == 0)
-										menuState.actionIds[menuState.count] = MenuState.GROUND_ITEM_OPTION_1;
-									if (groundActionIndex == 1)
-										menuState.actionIds[menuState.count] = MenuState.GROUND_ITEM_OPTION_2;
-									if (groundActionIndex == 2)
-										menuState.actionIds[menuState.count] = MenuState.GROUND_ITEM_OPTION_3;
-									if (groundActionIndex == 3)
-										menuState.actionIds[menuState.count] = MenuState.GROUND_ITEM_OPTION_4;
-									if (groundActionIndex == 4)
-										menuState.actionIds[menuState.count] = MenuState.GROUND_ITEM_OPTION_5;
-									menuState.actionCmd1[menuState.count] = groundItem.id;
-									menuState.actionCmd2[menuState.count] = tileX;
-									menuState.actionCmd3[menuState.count] = tileY;
-									menuState.count++;
-								} else if (groundActionIndex == 2) {
-									menuState.actionNames[menuState.count] = "Take @lre@" + itemDefinition.name;
-									menuState.actionIds[menuState.count] = MenuState.GROUND_ITEM_OPTION_3;
-									menuState.actionCmd1[menuState.count] = groundItem.id;
-									menuState.actionCmd2[menuState.count] = tileX;
-									menuState.actionCmd3[menuState.count] = tileY;
-									menuState.count++;
-								}
-
-							menuState.actionNames[menuState.count] = "Examine @lre@" + itemDefinition.name;
-							menuState.actionIds[menuState.count] = MenuState.EXAMINE_GROUND_ITEM;
-							menuState.actionCmd1[menuState.count] = groundItem.id;
-							menuState.actionCmd2[menuState.count] = tileX;
-							menuState.actionCmd3[menuState.count] = tileY;
-							menuState.count++;
-						}
-					}
-
-				}
-			}
-		}
-
+		menuController.buildViewportMenu(worldState, actorSynchronizer, currentPlane, localPlayer, playerActions,
+				playerActionLowPriority, super.mouseX, super.mouseY);
 	}
 
 	/**
-	 * Releases model resources held by the widgets in an interface group.
+	 * Releases model resources held by one interface group.
 	 *
-	 * @param interfaceId the interface group identifier
+	 * @param interfaceId interface group identifier
 	 */
 	public void unloadInterface(int interfaceId) {
-		Widget.unloadGroup(interfaceId);
+		interfaceController.unload(interfaceId);
 	}
 
 	/**
@@ -2345,11 +2007,11 @@ public class Client extends GameShell {
 	 * @param type    the chat message type
 	 */
 	public void addChatMessage(String sender, String message, int type) {
-		if (type == 0 && interfaceState.dialogueInterfaceId != -1) {
+		if (type == 0 && interfaceController.state().dialogueInterfaceId != -1) {
 			chatController.setClickToContinueMessage(message);
 			super.clickButton = 0;
 		}
-		if (interfaceState.chatboxInterfaceId == -1)
+		if (interfaceController.state().chatboxInterfaceId == -1)
 			chatboxRedraw = true;
 		chatController.history().add(sender, message, type);
 	}
@@ -2388,140 +2050,25 @@ public class Client extends GameShell {
 			sidebarRedraw = true;
 	}
 
-	/**
-	 * Processes mouse interaction with either the open context menu or the default
-	 * menu action.
-	 */
+	/** Processes context-menu mouse input through {@link MenuController}. */
 	public void processMenuClick() {
-		if (interfaceState.inventoryDragArea != 0)
-			return;
-		int clickButton = super.clickButton;
-		if (interfaceState.spellSelected == 1
-				&& super.clickX >= layout.topTabsX() && super.clickY >= layout.topTabsY()
-				&& super.clickX <= layout.topTabsX() + 249 && super.clickY <= layout.topTabsY() + 45)
-			clickButton = 0;
-		if (menuState.open) {
-			if (clickButton != 1) {
-				int menuMouseX = super.mouseX;
-				int menuMouseY = super.mouseY;
-				if (menuState.screenArea == 0) {
-					menuMouseX -= layout.viewportX();
-					menuMouseY -= layout.viewportY();
-				}
-				if (menuState.screenArea == 1) {
-					menuMouseX -= layout.sidebarX();
-					menuMouseY -= layout.sidebarY();
-				}
-				if (menuState.screenArea == 2) {
-					menuMouseX -= layout.chatboxX();
-					menuMouseY -= layout.chatboxY();
-				}
-				if (menuMouseX < menuState.offsetX - 10 || menuMouseX > menuState.offsetX + menuState.width + 10
-						|| menuMouseY < menuState.offsetY - 10
-						|| menuMouseY > menuState.offsetY + menuState.height + 10) {
-					menuState.open = false;
-					if (menuState.screenArea == 1)
-						sidebarRedraw = true;
-					if (menuState.screenArea == 2)
-						chatboxRedraw = true;
-				}
-			}
-			if (clickButton == 1) {
-				int menuX = menuState.offsetX;
-				int menuY = menuState.offsetY;
-				int menuWidth = menuState.width;
-				int clickX = super.clickX;
-				int clickY = super.clickY;
-				if (menuState.screenArea == 0) {
-					clickX -= layout.viewportX();
-					clickY -= layout.viewportY();
-				}
-				if (menuState.screenArea == 1) {
-					clickX -= layout.sidebarX();
-					clickY -= layout.sidebarY();
-				}
-				if (menuState.screenArea == 2) {
-					clickX -= layout.chatboxX();
-					clickY -= layout.chatboxY();
-				}
-				int selectedEntry = -1;
-				for (int entryIndex = 0; entryIndex < menuState.count; entryIndex++) {
-					int entryY = menuY + 31 + (menuState.count - 1 - entryIndex) * 15;
-					if (clickX > menuX && clickX < menuX + menuWidth && clickY > entryY - 13 && clickY < entryY + 3)
-						selectedEntry = entryIndex;
-				}
-
-				if (selectedEntry != -1)
-					dispatchMenuAction(selectedEntry);
-				menuState.open = false;
-				if (menuState.screenArea == 1)
-					sidebarRedraw = true;
-				if (menuState.screenArea == 2) {
-					chatboxRedraw = true;
-					return;
-				}
-			}
-		} else {
-			if (clickButton == 1 && menuState.count > 0) {
-				int actionId = menuState.actionIds[menuState.count - 1];
-				if (actionId == MenuState.WIDGET_ITEM_OPTION_1 || actionId == MenuState.WIDGET_ITEM_OPTION_2 || actionId == MenuState.WIDGET_ITEM_OPTION_3 || actionId == MenuState.WIDGET_ITEM_OPTION_4 || actionId == MenuState.WIDGET_ITEM_OPTION_5
-						|| actionId == MenuState.INVENTORY_ITEM_OPTION_1 || actionId == MenuState.INVENTORY_ITEM_OPTION_2 || actionId == MenuState.INVENTORY_ITEM_OPTION_3 || actionId == MenuState.INVENTORY_ITEM_OPTION_4 || actionId == MenuState.INVENTORY_ITEM_OPTION_5
-						|| actionId == MenuState.SELECT_ITEM || actionId == MenuState.EXAMINE_INVENTORY_ITEM) {
-					int slot = menuState.actionCmd2[menuState.count - 1];
-					int widgetId = menuState.actionCmd3[menuState.count - 1];
-					Widget inventoryWidget = Widget.get(widgetId);
-					if (inventoryWidget.inventoryAllowSwap || inventoryWidget.inventoryReplaceItems) {
-						inventoryDragMoved = false;
-						interfaceState.inventoryDragDuration = 0;
-						interfaceState.draggedInventoryWidgetId = widgetId;
-						interfaceState.draggedInventorySlot = slot;
-						interfaceState.inventoryDragArea = 2;
-						interfaceState.inventoryDragStartX = super.clickX;
-						interfaceState.inventoryDragStartY = super.clickY;
-						if (Widget.get(widgetId).parentId == interfaceState.openInterfaceId)
-							interfaceState.inventoryDragArea = 1;
-						if (Widget.get(widgetId).parentId == interfaceState.chatboxInterfaceId)
-							interfaceState.inventoryDragArea = 3;
-						return;
-					}
-				}
-			}
-			if (clickButton == 1 && (oneButtonMouseMode == 1 || isAddFriendMenuAction(menuState.count - 1))
-					&& menuState.count > 2)
-				clickButton = 2;
-			if (clickButton == 1 && menuState.count > 0)
-				dispatchMenuAction(menuState.count - 1);
-			if (clickButton == 2 && menuState.count > 0)
-				openContextMenu();
-		}
+		menuController.processClick(super.clickButton, super.clickX, super.clickY, super.mouseX, super.mouseY,
+				oneButtonMouseMode, boldFont, this::dispatchMenuAction, () -> inventoryDragMoved = false);
 	}
 
 	/**
-	 * Draws the original fixed-width scrollbar for a scrollable widget.
+	 * Draws a classic widget scrollbar through {@link WidgetRenderer}.
 	 *
-	 * @param scrollY      the current scroll offset
-	 * @param x            the X coordinate
-	 * @param height       the visible height
-	 * @param scrollHeight the full scrollable content height
-	 * @param y            the Y coordinate
+	 * @param scrollY current scroll offset
+	 * @param x X coordinate
+	 * @param height visible height
+	 * @param scrollHeight full scrollable height
+	 * @param y Y coordinate
 	 */
 	public void drawScrollbar(int scrollY, int x, int height, int scrollHeight, int y) {
-		scrollbarTop.draw(x, y);
-		scrollbarBottom.draw(x, (y + height) - 16);
-		Rasterizer.drawFilledRectangle(x, y + 16, 16, height - 32, scrollbarTrackColor);
-		int thumbHeight = ((height - 32) * height) / scrollHeight;
-		if (thumbHeight < 8)
-			thumbHeight = 8;
-		int thumbY = ((height - 32 - thumbHeight) * scrollY) / (scrollHeight - height);
-		Rasterizer.drawFilledRectangle(x, y + 16 + thumbY, 16, thumbHeight, scrollbarThumbColor);
-		Rasterizer.drawVerticalLine(x, y + 16 + thumbY, thumbHeight, scrollbarHighlightColor);
-		Rasterizer.drawVerticalLine(x + 1, y + 16 + thumbY, thumbHeight, scrollbarHighlightColor);
-		Rasterizer.drawHorizontalLine(x, y + 16 + thumbY, 16, scrollbarHighlightColor);
-		Rasterizer.drawHorizontalLine(x, y + 17 + thumbY, 16, scrollbarHighlightColor);
-		Rasterizer.drawVerticalLine(x + 15, y + 16 + thumbY, thumbHeight, scrollbarShadowColor);
-		Rasterizer.drawVerticalLine(x + 14, y + 17 + thumbY, thumbHeight - 1, scrollbarShadowColor);
-		Rasterizer.drawHorizontalLine(x, y + 15 + thumbY + thumbHeight, 16, scrollbarShadowColor);
-		Rasterizer.drawHorizontalLine(x + 1, y + 14 + thumbY + thumbHeight, 15, scrollbarShadowColor);
+		widgetRenderer.drawScrollbar(new WidgetRenderer.RenderContext(super.mouseX, super.mouseY, animationCycleDelta, smallFont, plainFont,
+				scrollbarTop, scrollbarBottom, scrollbarTrackColor, scrollbarThumbColor, scrollbarHighlightColor,
+				scrollbarShadowColor), scrollY, x, height, scrollHeight, y);
 	}
 
 	/**
@@ -2560,64 +2107,13 @@ public class Client extends GameShell {
 	}
 
 	/**
-	 * Handles content-type-specific widget buttons such as appearance, logout, and
-	 * report-abuse controls.
-	 *
-	 * @param widget the widget being processed
-	 * @return true when the requested condition/action succeeds; otherwise false
+	 * Delegates content-type widget actions to {@link InterfaceController}.
+	 * @param widget activated widget
+	 * @return whether the widget click packet should be sent
 	 */
 	public boolean handleWidgetContentAction(Widget widget) {
-		int contentType = widget.contentType;
-		if (socialManager.friendListStatus == SocialManager.FRIEND_LIST_READY) {
-			if (contentType == WidgetContentType.ADD_FRIEND) {
-				chatboxRedraw = true;
-				chatController.openPrompt(1, "Enter name of friend to add to list");
-			}
-			if (contentType == WidgetContentType.REMOVE_FRIEND) {
-				chatboxRedraw = true;
-				chatController.openPrompt(2, "Enter name of friend to delete from list");
-			}
-		}
-		if (contentType == WidgetContentType.LOGOUT) {
-			logoutTimer = 250;
-			return true;
-		}
-		if (contentType == WidgetContentType.ADD_IGNORE) {
-			chatboxRedraw = true;
-			chatController.openPrompt(4, "Enter name of player to add to list");
-		}
-		if (contentType == WidgetContentType.REMOVE_IGNORE) {
-			chatboxRedraw = true;
-			chatController.openPrompt(5, "Enter name of player to delete from list");
-		}
-		if (contentType >= WidgetContentType.APPEARANCE_KIT_FIRST && contentType <= WidgetContentType.APPEARANCE_KIT_LAST) {
-			int bodyPart = (contentType - WidgetContentType.APPEARANCE_KIT_FIRST) / 2;
-			appearanceEditor.cycleKit(bodyPart, contentType & 1);
-		}
-		if (contentType >= WidgetContentType.APPEARANCE_COLOR_FIRST && contentType <= WidgetContentType.APPEARANCE_COLOR_LAST) {
-			int colorSlot = (contentType - WidgetContentType.APPEARANCE_COLOR_FIRST) / 2;
-			appearanceEditor.cycleColor(colorSlot, contentType & 1);
-		}
-		if (contentType == WidgetContentType.SELECT_MALE_APPEARANCE)
-			appearanceEditor.selectMale();
-		if (contentType == WidgetContentType.SELECT_FEMALE_APPEARANCE)
-			appearanceEditor.selectFemale();
-		if (contentType == WidgetContentType.ACCEPT_APPEARANCE) {
-			appearanceEditor.writeUpdate(networkSession.outgoing);
-			return true;
-		}
-		if (contentType == WidgetContentType.REPORT_ABUSE_MUTE)
-			reportAbuseMutePlayer = !reportAbuseMutePlayer;
-		if (contentType >= WidgetContentType.REPORT_ABUSE_RULE_FIRST && contentType <= WidgetContentType.REPORT_ABUSE_RULE_LAST) {
-			closeInterfaces();
-			if (reportAbuseName.length() > 0) {
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.REPORT_ABUSE);
-				networkSession.outgoing.writeLong(Base37.encode(reportAbuseName));
-				networkSession.outgoing.writeByte(contentType - WidgetContentType.REPORT_ABUSE_RULE_FIRST);
-				networkSession.outgoing.writeByte(reportAbuseMutePlayer ? 1 : 0);
-			}
-		}
-		return false;
+		return interfaceController.handleContentAction(widget, socialManager, chatController, appearanceEditor,
+				networkSession.outgoing, this::closeInterfaces, () -> chatboxRedraw = true, value -> logoutTimer = value);
 	}
 
 	/**
@@ -3057,230 +2553,17 @@ public class Client extends GameShell {
 		}
 	}
 
-	/**
-	 * Recursively builds context-menu entries for widgets and inventory slots under
-	 * the mouse.
-	 *
-	 * @param y          the Y coordinate
-	 * @param widget     the widget being processed
-	 * @param screenArea the fixed client screen area identifier
-	 * @param scrollY    the current scroll offset
-	 * @param x          the X coordinate
-	 * @param mouseX     the mouse X coordinate
-	 * @param mouseY     the mouse Y coordinate
+	/** Delegates widget/inventory menu construction to {@link MenuController}.
+	 * @param y root Y
+	 * @param widget root widget
+	 * @param screenArea fixed UI area
+	 * @param scrollY scroll offset
+	 * @param x root X
+	 * @param mouseX mouse X
+	 * @param mouseY mouse Y
 	 */
 	public void buildInterfaceMenu(int y, Widget widget, int screenArea, int scrollY, int x, int mouseX, int mouseY) {
-		if (widget.type != Widget.TYPE_CONTAINER || widget.children == null || widget.mouseoverTriggered)
-			return;
-		if (mouseX < x || mouseY < y || mouseX > x + widget.width || mouseY > y + widget.height)
-			return;
-		int childCount = widget.children.length;
-		for (int childIndex = 0; childIndex < childCount; childIndex++) {
-			int childX = widget.childX[childIndex] + x;
-			int childY = (widget.childY[childIndex] + y) - scrollY;
-			Widget childWidget = Widget.get(widget.children[childIndex]);
-			childX += childWidget.xOffset;
-			childY += childWidget.yOffset;
-			if ((childWidget.mouseoverTargetId >= 0 || childWidget.mouseoverColor != 0) && mouseX >= childX
-					&& mouseY >= childY && mouseX < childX + childWidget.width && mouseY < childY + childWidget.height)
-				if (childWidget.mouseoverTargetId >= 0)
-					currentHoveredWidgetId = childWidget.mouseoverTargetId;
-				else
-					currentHoveredWidgetId = childWidget.id;
-			if (childWidget.type == Widget.TYPE_TOOLTIP && mouseX >= childX && mouseY >= childY && mouseX < childX + childWidget.width
-					&& mouseY < childY + childWidget.height)
-				currentTooltipWidgetId = childWidget.id;
-			if (childWidget.type == Widget.TYPE_CONTAINER) {
-				buildInterfaceMenu(childY, childWidget, screenArea, childWidget.scrollY, childX, mouseX, mouseY);
-				if (childWidget.scrollHeight > childWidget.height)
-					handleScrollbarInput(childWidget.scrollHeight, childY, childWidget, mouseY, screenArea, mouseX,
-							childWidget.height, childX + childWidget.width);
-			} else {
-				if (childWidget.buttonType == Widget.BUTTON_ACTION && mouseX >= childX && mouseY >= childY
-						&& mouseX < childX + childWidget.width && mouseY < childY + childWidget.height) {
-					boolean contentHandled = false;
-					if (childWidget.contentType != WidgetContentType.NONE)
-						contentHandled = buildSocialWidgetMenu(childWidget);
-					if (!contentHandled) {
-						menuState.actionNames[menuState.count] = childWidget.tooltip;
-						menuState.actionIds[menuState.count] = MenuState.WIDGET_BUTTON;
-						menuState.actionCmd3[menuState.count] = childWidget.id;
-						menuState.count++;
-					}
-				}
-				if (childWidget.buttonType == Widget.BUTTON_SPELL && interfaceState.spellSelected == 0 && mouseX >= childX
-						&& mouseY >= childY && mouseX < childX + childWidget.width
-						&& mouseY < childY + childWidget.height) {
-					String spellAction = childWidget.selectedActionName;
-					if (spellAction.indexOf(" ") != -1)
-						spellAction = spellAction.substring(0, spellAction.indexOf(" "));
-					menuState.actionNames[menuState.count] = spellAction + " @gre@" + childWidget.spellName;
-					menuState.actionIds[menuState.count] = MenuState.SELECT_SPELL;
-					menuState.actionCmd3[menuState.count] = childWidget.id;
-					menuState.count++;
-				}
-				if (childWidget.buttonType == Widget.BUTTON_CLOSE && mouseX >= childX && mouseY >= childY
-						&& mouseX < childX + childWidget.width && mouseY < childY + childWidget.height) {
-					menuState.actionNames[menuState.count] = "Close";
-					if (screenArea == 3)
-						menuState.actionIds[menuState.count] = MenuState.CLOSE_DIALOGUE;
-					else
-						menuState.actionIds[menuState.count] = MenuState.CLOSE_INTERFACE;
-					menuState.actionCmd3[menuState.count] = childWidget.id;
-					menuState.count++;
-				}
-				if (childWidget.buttonType == Widget.BUTTON_TOGGLE_VARP && mouseX >= childX && mouseY >= childY
-						&& mouseX < childX + childWidget.width && mouseY < childY + childWidget.height) {
-					menuState.actionNames[menuState.count] = childWidget.tooltip;
-					menuState.actionIds[menuState.count] = MenuState.WIDGET_TOGGLE_VARP;
-					menuState.actionCmd3[menuState.count] = childWidget.id;
-					menuState.count++;
-				}
-				if (childWidget.buttonType == Widget.BUTTON_SET_VARP && mouseX >= childX && mouseY >= childY
-						&& mouseX < childX + childWidget.width && mouseY < childY + childWidget.height) {
-					menuState.actionNames[menuState.count] = childWidget.tooltip;
-					menuState.actionIds[menuState.count] = MenuState.WIDGET_SET_VARP;
-					menuState.actionCmd3[menuState.count] = childWidget.id;
-					menuState.count++;
-				}
-				if (childWidget.buttonType == Widget.BUTTON_CONTINUE && !interfaceActionPending && mouseX >= childX && mouseY >= childY
-						&& mouseX < childX + childWidget.width && mouseY < childY + childWidget.height) {
-					menuState.actionNames[menuState.count] = childWidget.tooltip;
-					menuState.actionIds[menuState.count] = MenuState.WIDGET_CONTINUE;
-					menuState.actionCmd3[menuState.count] = childWidget.id;
-					menuState.count++;
-				}
-				if (childWidget.type == Widget.TYPE_INVENTORY) {
-					int slot = 0;
-					for (int row = 0; row < childWidget.height; row++) {
-						for (int column = 0; column < childWidget.width; column++) {
-							int slotX = childX + column * (Widget.INVENTORY_SLOT_SIZE + childWidget.inventorySpritePaddingX);
-							int slotY = childY + row * (Widget.INVENTORY_SLOT_SIZE + childWidget.inventorySpritePaddingY);
-							if (slot < Widget.INVENTORY_SPRITE_OFFSET_COUNT) {
-								slotX += childWidget.spriteXOffsets[slot];
-								slotY += childWidget.spriteYOffsets[slot];
-							}
-							if (mouseX >= slotX && mouseY >= slotY && mouseX < slotX + Widget.INVENTORY_SLOT_SIZE && mouseY < slotY + Widget.INVENTORY_SLOT_SIZE) {
-								interfaceState.hoveredInventorySlot = slot;
-								interfaceState.hoveredInventoryWidgetId = childWidget.id;
-								if (childWidget.itemIds[slot] > 0) {
-									ItemDefinition itemDefinition = ItemDefinition
-											.lookup(childWidget.itemIds[slot] - 1);
-									if (interfaceState.itemSelected == 1 && childWidget.inventoryHasOptions) {
-										if (childWidget.id != interfaceState.selectedItemWidgetId
-												|| slot != interfaceState.selectedItemSlot) {
-											menuState.actionNames[menuState.count] = "Use "
-													+ interfaceState.selectedItemName + " with @lre@"
-													+ itemDefinition.name;
-											menuState.actionIds[menuState.count] = MenuState.USE_ITEM_ON_INVENTORY_ITEM;
-											menuState.actionCmd1[menuState.count] = itemDefinition.id;
-											menuState.actionCmd2[menuState.count] = slot;
-											menuState.actionCmd3[menuState.count] = childWidget.id;
-											menuState.count++;
-										}
-									} else if (interfaceState.spellSelected == 1 && childWidget.inventoryHasOptions) {
-										if ((interfaceState.selectedSpellTargetMask & 0x10) == 16) {
-											menuState.actionNames[menuState.count] = interfaceState.selectedSpellAction
-													+ " @lre@" + itemDefinition.name;
-											menuState.actionIds[menuState.count] = MenuState.CAST_SPELL_ON_INVENTORY_ITEM;
-											menuState.actionCmd1[menuState.count] = itemDefinition.id;
-											menuState.actionCmd2[menuState.count] = slot;
-											menuState.actionCmd3[menuState.count] = childWidget.id;
-											menuState.count++;
-										}
-									} else {
-										if (childWidget.inventoryHasOptions) {
-											for (int inventoryActionIndex = 4; inventoryActionIndex >= 3; inventoryActionIndex--)
-												if (itemDefinition.inventoryActions != null
-														&& itemDefinition.inventoryActions[inventoryActionIndex] != null) {
-													menuState.actionNames[menuState.count] = itemDefinition.inventoryActions[inventoryActionIndex]
-															+ " @lre@" + itemDefinition.name;
-													if (inventoryActionIndex == 3)
-														menuState.actionIds[menuState.count] = MenuState.INVENTORY_ITEM_OPTION_4;
-													if (inventoryActionIndex == 4)
-														menuState.actionIds[menuState.count] = MenuState.INVENTORY_ITEM_OPTION_5;
-													menuState.actionCmd1[menuState.count] = itemDefinition.id;
-													menuState.actionCmd2[menuState.count] = slot;
-													menuState.actionCmd3[menuState.count] = childWidget.id;
-													menuState.count++;
-												} else if (inventoryActionIndex == 4) {
-													menuState.actionNames[menuState.count] = "Drop @lre@"
-															+ itemDefinition.name;
-													menuState.actionIds[menuState.count] = MenuState.INVENTORY_ITEM_OPTION_5;
-													menuState.actionCmd1[menuState.count] = itemDefinition.id;
-													menuState.actionCmd2[menuState.count] = slot;
-													menuState.actionCmd3[menuState.count] = childWidget.id;
-													menuState.count++;
-												}
-
-										}
-										if (childWidget.inventoryUsableItems) {
-											menuState.actionNames[menuState.count] = "Use @lre@" + itemDefinition.name;
-											menuState.actionIds[menuState.count] = MenuState.SELECT_ITEM;
-											menuState.actionCmd1[menuState.count] = itemDefinition.id;
-											menuState.actionCmd2[menuState.count] = slot;
-											menuState.actionCmd3[menuState.count] = childWidget.id;
-											menuState.count++;
-										}
-										if (childWidget.inventoryHasOptions
-												&& itemDefinition.inventoryActions != null) {
-											for (int inventoryActionIndex2 = 2; inventoryActionIndex2 >= 0; inventoryActionIndex2--)
-												if (itemDefinition.inventoryActions[inventoryActionIndex2] != null) {
-													menuState.actionNames[menuState.count] = itemDefinition.inventoryActions[inventoryActionIndex2]
-															+ " @lre@" + itemDefinition.name;
-													if (inventoryActionIndex2 == 0)
-														menuState.actionIds[menuState.count] = MenuState.INVENTORY_ITEM_OPTION_1;
-													if (inventoryActionIndex2 == 1)
-														menuState.actionIds[menuState.count] = MenuState.INVENTORY_ITEM_OPTION_2;
-													if (inventoryActionIndex2 == 2)
-														menuState.actionIds[menuState.count] = MenuState.INVENTORY_ITEM_OPTION_3;
-													menuState.actionCmd1[menuState.count] = itemDefinition.id;
-													menuState.actionCmd2[menuState.count] = slot;
-													menuState.actionCmd3[menuState.count] = childWidget.id;
-													menuState.count++;
-												}
-
-										}
-										if (childWidget.actions != null) {
-											for (int widgetActionIndex = 4; widgetActionIndex >= 0; widgetActionIndex--)
-												if (childWidget.actions[widgetActionIndex] != null) {
-													menuState.actionNames[menuState.count] = childWidget.actions[widgetActionIndex]
-															+ " @lre@" + itemDefinition.name;
-													if (widgetActionIndex == 0)
-														menuState.actionIds[menuState.count] = MenuState.WIDGET_ITEM_OPTION_1;
-													if (widgetActionIndex == 1)
-														menuState.actionIds[menuState.count] = MenuState.WIDGET_ITEM_OPTION_2;
-													if (widgetActionIndex == 2)
-														menuState.actionIds[menuState.count] = MenuState.WIDGET_ITEM_OPTION_3;
-													if (widgetActionIndex == 3)
-														menuState.actionIds[menuState.count] = MenuState.WIDGET_ITEM_OPTION_4;
-													if (widgetActionIndex == 4)
-														menuState.actionIds[menuState.count] = MenuState.WIDGET_ITEM_OPTION_5;
-													menuState.actionCmd1[menuState.count] = itemDefinition.id;
-													menuState.actionCmd2[menuState.count] = slot;
-													menuState.actionCmd3[menuState.count] = childWidget.id;
-													menuState.count++;
-												}
-
-										}
-										menuState.actionNames[menuState.count] = "Examine @lre@" + itemDefinition.name;
-										menuState.actionIds[menuState.count] = MenuState.EXAMINE_INVENTORY_ITEM;
-										menuState.actionCmd1[menuState.count] = itemDefinition.id;
-										menuState.actionCmd2[menuState.count] = slot;
-										menuState.actionCmd3[menuState.count] = childWidget.id;
-										menuState.count++;
-									}
-								}
-							}
-							slot++;
-						}
-
-					}
-
-				}
-			}
-		}
-
+		menuController.buildInterfaceMenu(y, widget, screenArea, scrollY, x, mouseX, mouseY);
 	}
 
 	/**
@@ -3288,26 +2571,26 @@ public class Client extends GameShell {
 	 * and fullscreen interfaces.
 	 */
 	public void drawGameScreen() {
-		if (interfaceState.fullscreenInterfaceId != -1
+		if (interfaceController.state().fullscreenInterfaceId != -1
 				&& (regionManager.loadingStage == RegionManager.STAGE_LOADED || super.gameBuffer != null)) {
 			if (regionManager.loadingStage == RegionManager.STAGE_LOADED) {
-				widgetRuntime.updateAnimations(animationCycleDelta, interfaceState.fullscreenInterfaceId);
-				if (interfaceState.fullscreenOverlayInterfaceId != -1)
-					widgetRuntime.updateAnimations(animationCycleDelta, interfaceState.fullscreenOverlayInterfaceId);
+				widgetRuntime.updateAnimations(animationCycleDelta, interfaceController.state().fullscreenInterfaceId);
+				if (interfaceController.state().fullscreenOverlayInterfaceId != -1)
+					widgetRuntime.updateAnimations(animationCycleDelta, interfaceController.state().fullscreenOverlayInterfaceId);
 				animationCycleDelta = 0;
 				createGameBuffer();
 				super.gameBuffer.bindRaster();
 				Rasterizer3D.scanlineOffsets = fullScreenScanlineOffsets;
 				Rasterizer.resetPixels();
 				gameScreenRedraw = true;
-				Widget fullscreenWidget = Widget.get(interfaceState.fullscreenInterfaceId);
+				Widget fullscreenWidget = Widget.get(interfaceController.state().fullscreenInterfaceId);
 				if (fullscreenWidget.width == ClientLayout.FIXED_VIEWPORT_WIDTH && fullscreenWidget.height == ClientLayout.FIXED_VIEWPORT_HEIGHT && fullscreenWidget.type == Widget.TYPE_CONTAINER) {
 					fullscreenWidget.width = ClientLayout.FIXED_WIDTH;
 					fullscreenWidget.height = ClientLayout.FIXED_HEIGHT;
 				}
 				drawInterface(0, 0, fullscreenWidget, 0);
-				if (interfaceState.fullscreenOverlayInterfaceId != -1) {
-					Widget fullscreenOverlayWidget = Widget.get(interfaceState.fullscreenOverlayInterfaceId);
+				if (interfaceController.state().fullscreenOverlayInterfaceId != -1) {
+					Widget fullscreenOverlayWidget = Widget.get(interfaceController.state().fullscreenOverlayInterfaceId);
 					if (fullscreenOverlayWidget.width == ClientLayout.FIXED_VIEWPORT_WIDTH && fullscreenOverlayWidget.height == ClientLayout.FIXED_VIEWPORT_HEIGHT
 							&& fullscreenOverlayWidget.type == Widget.TYPE_CONTAINER) {
 						fullscreenOverlayWidget.width = ClientLayout.FIXED_WIDTH;
@@ -3315,7 +2598,7 @@ public class Client extends GameShell {
 					}
 					drawInterface(0, 0, fullscreenOverlayWidget, 0);
 				}
-				if (!menuState.open) {
+				if (!menuController.state().open) {
 					buildContextMenu();
 					drawMenuTooltip();
 				} else {
@@ -3366,23 +2649,23 @@ public class Client extends GameShell {
 		if (regionManager.loadingStage != RegionManager.STAGE_LOADED)
 			minimapBuffer.draw(super.graphics, layout.minimapX(), layout.minimapY());
 
-		if (menuState.open && menuState.screenArea == 1)
+		if (menuController.state().open && menuController.state().screenArea == 1)
 			sidebarRedraw = true;
-		if (interfaceState.sidebarOverlayInterfaceId != -1) {
+		if (interfaceController.state().sidebarOverlayInterfaceId != -1) {
 			boolean sidebarAnimationChanged = widgetRuntime.updateAnimations(animationCycleDelta,
-					interfaceState.sidebarOverlayInterfaceId);
+					interfaceController.state().sidebarOverlayInterfaceId);
 			if (sidebarAnimationChanged)
 				sidebarRedraw = true;
 		}
-		if (interfaceState.pressedInventoryArea == 2)
+		if (interfaceController.state().pressedInventoryArea == 2)
 			sidebarRedraw = true;
-		if (interfaceState.inventoryDragArea == 2)
+		if (interfaceController.state().inventoryDragArea == 2)
 			sidebarRedraw = true;
 		if (sidebarRedraw) {
 			drawSidebar();
 			sidebarRedraw = false;
 		}
-		if (interfaceState.chatboxInterfaceId == -1 && chatController.inputDialogState() == 0) {
+		if (interfaceController.state().chatboxInterfaceId == -1 && chatController.inputDialogState() == 0) {
 			chatboxScrollWidget.scrollY = chatController.contentHeight() - chatController.scrollOffset() - 77;
 			if (super.mouseX > 448 && super.mouseX < 560 && super.mouseY > layout.chatboxY() - 25)
 				handleScrollbarInput(chatController.contentHeight(), 0, chatboxScrollWidget, super.mouseY - layout.chatboxY(), -1,
@@ -3397,7 +2680,7 @@ public class Client extends GameShell {
 				chatboxRedraw = true;
 			}
 		}
-		if (interfaceState.chatboxInterfaceId == -1 && chatController.inputDialogState() == 3) {
+		if (interfaceController.state().chatboxInterfaceId == -1 && chatController.inputDialogState() == 3) {
 			int searchContentHeight = itemSearchResultCount * 14 + 7;
 			chatboxScrollWidget.scrollY = itemSearchScrollOffset;
 			if (super.mouseX > 448 && super.mouseX < 560 && super.mouseY > layout.chatboxY() - 25)
@@ -3413,19 +2696,19 @@ public class Client extends GameShell {
 				chatboxRedraw = true;
 			}
 		}
-		if (interfaceState.chatboxInterfaceId != -1) {
+		if (interfaceController.state().chatboxInterfaceId != -1) {
 			boolean chatboxAnimationChanged = widgetRuntime.updateAnimations(animationCycleDelta,
-					interfaceState.chatboxInterfaceId);
+					interfaceController.state().chatboxInterfaceId);
 			if (chatboxAnimationChanged)
 				chatboxRedraw = true;
 		}
-		if (interfaceState.pressedInventoryArea == 3)
+		if (interfaceController.state().pressedInventoryArea == 3)
 			chatboxRedraw = true;
-		if (interfaceState.inventoryDragArea == 3)
+		if (interfaceController.state().inventoryDragArea == 3)
 			chatboxRedraw = true;
 		if (chatController.clickToContinueMessage() != null)
 			chatboxRedraw = true;
-		if (menuState.open && menuState.screenArea == 2)
+		if (menuController.state().open && menuController.state().screenArea == 2)
 			chatboxRedraw = true;
 		if (chatboxRedraw) {
 			drawChatbox();
@@ -3435,83 +2718,83 @@ public class Client extends GameShell {
 			drawMinimap();
 			minimapBuffer.draw(super.graphics, layout.minimapX(), layout.minimapY());
 		}
-		if (interfaceState.flashingTab != -1)
+		if (interfaceController.state().flashingTab != -1)
 			tabAreaRedraw = true;
 		if (tabAreaRedraw) {
-			if (interfaceState.flashingTab != -1 && interfaceState.flashingTab == interfaceState.selectedTab) {
+			if (interfaceController.state().flashingTab != -1 && interfaceController.state().flashingTab == interfaceController.state().selectedTab) {
 				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.FLASHING_TAB_ACKNOWLEDGEMENT);
-				networkSession.outgoing.writeByte(interfaceState.selectedTab);
+				networkSession.outgoing.writeByte(interfaceController.state().selectedTab);
 			}
 			tabAreaRedraw = false;
 			topTabsBuffer.bindRaster();
 			topTabBackground.draw(0, 0);
-			if (interfaceState.sidebarOverlayInterfaceId == -1) {
-				if (interfaceState.tabInterfaceIds[interfaceState.selectedTab] != -1) {
-					if (interfaceState.selectedTab == 0)
+			if (interfaceController.state().sidebarOverlayInterfaceId == -1) {
+				if (interfaceController.state().tabInterfaceIds[interfaceController.state().selectedTab] != -1) {
+					if (interfaceController.state().selectedTab == 0)
 						redstone1.draw(22, 10);
-					if (interfaceState.selectedTab == 1)
+					if (interfaceController.state().selectedTab == 1)
 						redstone2.draw(54, 8);
-					if (interfaceState.selectedTab == 2)
+					if (interfaceController.state().selectedTab == 2)
 						redstone2.draw(82, 8);
-					if (interfaceState.selectedTab == 3)
+					if (interfaceController.state().selectedTab == 3)
 						redstone3.draw(110, 8);
-					if (interfaceState.selectedTab == 4)
+					if (interfaceController.state().selectedTab == 4)
 						redstone2Horizontal.draw(153, 8);
-					if (interfaceState.selectedTab == 5)
+					if (interfaceController.state().selectedTab == 5)
 						redstone2Horizontal.draw(181, 8);
-					if (interfaceState.selectedTab == 6)
+					if (interfaceController.state().selectedTab == 6)
 						redstone1Horizontal.draw(209, 9);
 				}
-				if (interfaceState.tabInterfaceIds[0] != -1 && (interfaceState.flashingTab != 0 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[0] != -1 && (interfaceController.state().flashingTab != 0 || gameCycle % 20 < 10))
 					sidebarIcons[0].draw(29, 13);
-				if (interfaceState.tabInterfaceIds[1] != -1 && (interfaceState.flashingTab != 1 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[1] != -1 && (interfaceController.state().flashingTab != 1 || gameCycle % 20 < 10))
 					sidebarIcons[1].draw(53, 11);
-				if (interfaceState.tabInterfaceIds[2] != -1 && (interfaceState.flashingTab != 2 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[2] != -1 && (interfaceController.state().flashingTab != 2 || gameCycle % 20 < 10))
 					sidebarIcons[2].draw(82, 11);
-				if (interfaceState.tabInterfaceIds[3] != -1 && (interfaceState.flashingTab != 3 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[3] != -1 && (interfaceController.state().flashingTab != 3 || gameCycle % 20 < 10))
 					sidebarIcons[3].draw(115, 12);
-				if (interfaceState.tabInterfaceIds[4] != -1 && (interfaceState.flashingTab != 4 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[4] != -1 && (interfaceController.state().flashingTab != 4 || gameCycle % 20 < 10))
 					sidebarIcons[4].draw(153, 13);
-				if (interfaceState.tabInterfaceIds[5] != -1 && (interfaceState.flashingTab != 5 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[5] != -1 && (interfaceController.state().flashingTab != 5 || gameCycle % 20 < 10))
 					sidebarIcons[5].draw(180, 11);
-				if (interfaceState.tabInterfaceIds[6] != -1 && (interfaceState.flashingTab != 6 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[6] != -1 && (interfaceController.state().flashingTab != 6 || gameCycle % 20 < 10))
 					sidebarIcons[6].draw(208, 13);
 			}
 			topTabsBuffer.draw(super.graphics, layout.topTabsX(), layout.topTabsY());
 			bottomTabsBuffer.bindRaster();
 			bottomTabBackground.draw(0, 0);
-			if (interfaceState.sidebarOverlayInterfaceId == -1) {
-				if (interfaceState.tabInterfaceIds[interfaceState.selectedTab] != -1) {
-					if (interfaceState.selectedTab == 7)
+			if (interfaceController.state().sidebarOverlayInterfaceId == -1) {
+				if (interfaceController.state().tabInterfaceIds[interfaceController.state().selectedTab] != -1) {
+					if (interfaceController.state().selectedTab == 7)
 						redstone1Vertical.draw(42, 0);
-					if (interfaceState.selectedTab == 8)
+					if (interfaceController.state().selectedTab == 8)
 						redstone2Vertical.draw(74, 0);
-					if (interfaceState.selectedTab == 9)
+					if (interfaceController.state().selectedTab == 9)
 						redstone2Vertical.draw(102, 0);
-					if (interfaceState.selectedTab == 10)
+					if (interfaceController.state().selectedTab == 10)
 						redstone3Vertical.draw(130, 1);
-					if (interfaceState.selectedTab == 11)
+					if (interfaceController.state().selectedTab == 11)
 						redstone2Both.draw(173, 0);
-					if (interfaceState.selectedTab == 12)
+					if (interfaceController.state().selectedTab == 12)
 						redstone2Both.draw(201, 0);
-					if (interfaceState.selectedTab == 13)
+					if (interfaceController.state().selectedTab == 13)
 						redstone1Both.draw(229, 0);
 				}
-				if (interfaceState.tabInterfaceIds[8] != -1 && (interfaceState.flashingTab != 8 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[8] != -1 && (interfaceController.state().flashingTab != 8 || gameCycle % 20 < 10))
 					sidebarIcons[7].draw(74, 2);
-				if (interfaceState.tabInterfaceIds[9] != -1 && (interfaceState.flashingTab != 9 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[9] != -1 && (interfaceController.state().flashingTab != 9 || gameCycle % 20 < 10))
 					sidebarIcons[8].draw(102, 3);
-				if (interfaceState.tabInterfaceIds[10] != -1
-						&& (interfaceState.flashingTab != 10 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[10] != -1
+						&& (interfaceController.state().flashingTab != 10 || gameCycle % 20 < 10))
 					sidebarIcons[9].draw(137, 4);
-				if (interfaceState.tabInterfaceIds[11] != -1
-						&& (interfaceState.flashingTab != 11 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[11] != -1
+						&& (interfaceController.state().flashingTab != 11 || gameCycle % 20 < 10))
 					sidebarIcons[10].draw(174, 2);
-				if (interfaceState.tabInterfaceIds[12] != -1
-						&& (interfaceState.flashingTab != 12 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[12] != -1
+						&& (interfaceController.state().flashingTab != 12 || gameCycle % 20 < 10))
 					sidebarIcons[11].draw(201, 2);
-				if (interfaceState.tabInterfaceIds[13] != -1
-						&& (interfaceState.flashingTab != 13 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[13] != -1
+						&& (interfaceController.state().flashingTab != 13 || gameCycle % 20 < 10))
 					sidebarIcons[12].draw(226, 2);
 			}
 			bottomTabsBuffer.draw(super.graphics, layout.bottomTabsX(), layout.bottomTabsY());
@@ -3645,7 +2928,7 @@ public class Client extends GameShell {
 					Model.loadModelHeader(request.buffer, request.id);
 					if ((onDemandFetcher.getModelIndex(request.id) & 0x62) != 0) {
 						sidebarRedraw = true;
-						if (interfaceState.chatboxInterfaceId != -1 || interfaceState.dialogueInterfaceId != -1)
+						if (interfaceController.state().chatboxInterfaceId != -1 || interfaceController.state().dialogueInterfaceId != -1)
 							chatboxRedraw = true;
 					}
 				}
@@ -3744,11 +3027,11 @@ public class Client extends GameShell {
 				systemUpdateTimer = 0;
 				logoutTimer = 0;
 				hintIconType = 0;
-				menuState.count = 0;
+				menuController.state().count = 0;
 				super.idleCycles = 0;
 
-				interfaceState.itemSelected = 0;
-				interfaceState.spellSelected = 0;
+				interfaceController.state().itemSelected = 0;
+				interfaceController.state().spellSelected = 0;
 				regionManager.loadingStage = RegionManager.STAGE_UNLOADED;
 				soundEffectQueue.resetForLogin();
 				cameraController.randomizeLoginOffsets();
@@ -3760,14 +3043,14 @@ public class Client extends GameShell {
 				localPlayer = actorSynchronizer.reset();
 				worldState.resetTransientState();
 				socialManager.resetForLogin();
-				unloadInterface(interfaceState.dialogueInterfaceId);
-				unloadInterface(interfaceState.chatboxInterfaceId);
-				unloadInterface(interfaceState.openInterfaceId);
-				unloadInterface(interfaceState.fullscreenInterfaceId);
-				unloadInterface(interfaceState.fullscreenOverlayInterfaceId);
-				unloadInterface(interfaceState.sidebarOverlayInterfaceId);
-				unloadInterface(interfaceState.walkableInterfaceId);
-				interfaceActionPending = false;
+				unloadInterface(interfaceController.state().dialogueInterfaceId);
+				unloadInterface(interfaceController.state().chatboxInterfaceId);
+				unloadInterface(interfaceController.state().openInterfaceId);
+				unloadInterface(interfaceController.state().fullscreenInterfaceId);
+				unloadInterface(interfaceController.state().fullscreenOverlayInterfaceId);
+				unloadInterface(interfaceController.state().sidebarOverlayInterfaceId);
+				unloadInterface(interfaceController.state().walkableInterfaceId);
+				interfaceController.setActionPending(false);
 				chatController.resetForLogin();
 				multiCombatZone = 0;
 				appearanceEditor.resetForLogin();
@@ -3844,7 +3127,7 @@ public class Client extends GameShell {
 				loggedIn = true;
 				networkSession.resetPacketState();
 				systemUpdateTimer = 0;
-				menuState.count = 0;
+				menuController.state().count = 0;
 				regionManager.loadingStartTime = System.currentTimeMillis();
 				return;
 			}
@@ -3983,104 +3266,14 @@ public class Client extends GameShell {
 
 
 
-	/**
-	 * Adds context-menu actions for an NPC at the supplied scene tile.
-	 *
-	 * @param definition the definition
-	 * @param tileY      the local scene-tile Y coordinate
-	 * @param tileX      the local scene-tile X coordinate
-	 * @param npcIndex   the npc index
+	/** Delegates NPC menu construction to {@link MenuController}.
+	 * @param definition NPC definition
+	 * @param tileY local tile Y
+	 * @param tileX local tile X
+	 * @param npcIndex NPC index
 	 */
 	public void buildNpcMenu(NpcDefinition definition, int tileY, int tileX, int npcIndex) {
-		if (menuState.count >= MenuState.BUILD_LIMIT)
-			return;
-		if (definition.morphIds != null)
-			definition = definition.transform();
-		if (definition == null)
-			return;
-		if (!definition.clickable)
-			return;
-		String displayName = definition.name;
-		if (definition.combatLevel != 0)
-			displayName = displayName + getCombatLevelColorTag(definition.combatLevel, localPlayer.combatLevel)
-					+ " (level-" + definition.combatLevel + ")";
-		if (interfaceState.itemSelected == 1) {
-			menuState.actionNames[menuState.count] = "Use " + interfaceState.selectedItemName + " with @yel@"
-					+ displayName;
-			menuState.actionIds[menuState.count] = MenuState.USE_ITEM_ON_NPC;
-			menuState.actionCmd1[menuState.count] = npcIndex;
-			menuState.actionCmd2[menuState.count] = tileX;
-			menuState.actionCmd3[menuState.count] = tileY;
-			menuState.count++;
-			return;
-		}
-		if (interfaceState.spellSelected == 1) {
-			if ((interfaceState.selectedSpellTargetMask & 2) == 2) {
-				menuState.actionNames[menuState.count] = interfaceState.selectedSpellAction + " @yel@" + displayName;
-				menuState.actionIds[menuState.count] = MenuState.CAST_SPELL_ON_NPC;
-				menuState.actionCmd1[menuState.count] = npcIndex;
-				menuState.actionCmd2[menuState.count] = tileX;
-				menuState.actionCmd3[menuState.count] = tileY;
-				menuState.count++;
-				return;
-			}
-		} else {
-			if (definition.actions != null) {
-				for (int actionIndex = 4; actionIndex >= 0; actionIndex--)
-					if (definition.actions[actionIndex] != null
-							&& !definition.actions[actionIndex].equalsIgnoreCase("attack")) {
-						menuState.actionNames[menuState.count] = definition.actions[actionIndex] + " @yel@"
-								+ displayName;
-						if (actionIndex == 0)
-							menuState.actionIds[menuState.count] = MenuState.NPC_OPTION_1;
-						if (actionIndex == 1)
-							menuState.actionIds[menuState.count] = MenuState.NPC_OPTION_2;
-						if (actionIndex == 2)
-							menuState.actionIds[menuState.count] = MenuState.NPC_OPTION_3;
-						if (actionIndex == 3)
-							menuState.actionIds[menuState.count] = MenuState.NPC_OPTION_4;
-						if (actionIndex == 4)
-							menuState.actionIds[menuState.count] = MenuState.NPC_OPTION_5;
-						menuState.actionCmd1[menuState.count] = npcIndex;
-						menuState.actionCmd2[menuState.count] = tileX;
-						menuState.actionCmd3[menuState.count] = tileY;
-						menuState.count++;
-					}
-
-			}
-			if (definition.actions != null) {
-				for (int actionIndex2 = 4; actionIndex2 >= 0; actionIndex2--)
-					if (definition.actions[actionIndex2] != null
-							&& definition.actions[actionIndex2].equalsIgnoreCase("attack")) {
-						int priorityOffset = 0;
-						if (definition.combatLevel > localPlayer.combatLevel)
-							priorityOffset = MenuState.LOW_PRIORITY_OFFSET;
-						menuState.actionNames[menuState.count] = definition.actions[actionIndex2] + " @yel@"
-								+ displayName;
-						if (actionIndex2 == 0)
-							menuState.actionIds[menuState.count] = MenuState.NPC_OPTION_1 + priorityOffset;
-						if (actionIndex2 == 1)
-							menuState.actionIds[menuState.count] = MenuState.NPC_OPTION_2 + priorityOffset;
-						if (actionIndex2 == 2)
-							menuState.actionIds[menuState.count] = MenuState.NPC_OPTION_3 + priorityOffset;
-						if (actionIndex2 == 3)
-							menuState.actionIds[menuState.count] = MenuState.NPC_OPTION_4 + priorityOffset;
-						if (actionIndex2 == 4)
-							menuState.actionIds[menuState.count] = MenuState.NPC_OPTION_5 + priorityOffset;
-						menuState.actionCmd1[menuState.count] = npcIndex;
-						menuState.actionCmd2[menuState.count] = tileX;
-						menuState.actionCmd3[menuState.count] = tileY;
-						menuState.count++;
-					}
-
-			}
-			menuState.actionNames[menuState.count] = "Examine @yel@" + displayName;
-			menuState.actionIds[menuState.count] = MenuState.EXAMINE_NPC;
-			menuState.actionCmd1[menuState.count] = npcIndex;
-			menuState.actionCmd2[menuState.count] = tileX;
-			menuState.actionCmd3[menuState.count] = tileY;
-			menuState.count++;
-		}
+		menuController.buildNpcMenu(definition, tileY, tileX, npcIndex, localPlayer);
 	}
 
 
@@ -4127,10 +3320,10 @@ public class Client extends GameShell {
 		} else if (chatController.clickToContinueMessage() != null) {
 			boldFont.drawCenteredText(chatController.clickToContinueMessage(), 239, 40, 0);
 			boldFont.drawCenteredText("Click to continue", 239, 60, 128);
-		} else if (interfaceState.chatboxInterfaceId != -1)
-			drawInterface(0, 0, Widget.get(interfaceState.chatboxInterfaceId), 0);
-		else if (interfaceState.dialogueInterfaceId != -1) {
-			drawInterface(0, 0, Widget.get(interfaceState.dialogueInterfaceId), 0);
+		} else if (interfaceController.state().chatboxInterfaceId != -1)
+			drawInterface(0, 0, Widget.get(interfaceController.state().chatboxInterfaceId), 0);
+		else if (interfaceController.state().dialogueInterfaceId != -1) {
+			drawInterface(0, 0, Widget.get(interfaceController.state().dialogueInterfaceId), 0);
 		} else {
 			TypeFace chatFont = plainFont;
 			int visibleLine = 0;
@@ -4232,7 +3425,7 @@ public class Client extends GameShell {
 			chatFont.drawText(chatController.input() + "*", 6 + chatFont.getFormattedTextWidth(localDisplayName + ": "), 90, 255);
 			Rasterizer.drawHorizontalLine(0, 77, 479, 0);
 		}
-		if (menuState.open && menuState.screenArea == 2)
+		if (menuController.state().open && menuController.state().screenArea == 2)
 			drawContextMenu();
 		chatboxBuffer.draw(super.graphics, layout.chatboxX(), layout.chatboxY());
 		viewportBuffer.bindRaster();
@@ -4305,16 +3498,13 @@ public class Client extends GameShell {
 	}
 
 	/**
-	 * Formats a CS1/widget-script value using the original overflow placeholder.
+	 * Formats a widget-script value using the renderer's overflow placeholder.
 	 *
-	 * @param value the value
-	 * @return the resulting text
+	 * @param value script value
+	 * @return formatted value
 	 */
 	public String formatWidgetScriptValue(int value) {
-		if (value < 0x3b9ac9ff)
-			return String.valueOf(value);
-		else
-			return "*";
+		return WidgetRenderer.formatWidgetScriptValue(value);
 	}
 
 	/**
@@ -4342,111 +3532,20 @@ public class Client extends GameShell {
 		processOnDemandRequests();
 	}
 
-	/**
-	 * Rebuilds and priority-partitions the context menu for the current mouse
-	 * location.
-	 */
+	/** Rebuilds the context menu through {@link MenuController}. */
 	public void buildContextMenu() {
-		if (interfaceState.inventoryDragArea != 0)
-			return;
-		menuState.reset();
-		if (interfaceState.fullscreenInterfaceId != -1) {
-			currentHoveredWidgetId = 0;
-			currentTooltipWidgetId = 0;
-			buildInterfaceMenu(0, Widget.get(interfaceState.fullscreenInterfaceId), 0, 0, 0, super.mouseX,
-					super.mouseY);
-			if (currentHoveredWidgetId != viewportHoveredWidgetId)
-				viewportHoveredWidgetId = currentHoveredWidgetId;
-			if (currentTooltipWidgetId != viewportTooltipWidgetId)
-				viewportTooltipWidgetId = currentTooltipWidgetId;
-			return;
-		}
-		buildSplitPrivateChatMenu();
-		currentHoveredWidgetId = 0;
-		currentTooltipWidgetId = 0;
-		if (layout.isViewportInteractionPoint(super.mouseX, super.mouseY))
-			if (interfaceState.openInterfaceId != -1) {
-				Widget openInterface = Widget.get(interfaceState.openInterfaceId);
-				int interfaceX = layout.viewportX() + layout.centeredInterfaceX(openInterface.width);
-				int interfaceY = layout.viewportY() + layout.centeredInterfaceY(openInterface.height);
-				buildInterfaceMenu(interfaceY, openInterface, 0, 0, interfaceX, super.mouseX, super.mouseY);
-			} else
-				buildViewportMenu();
-		if (currentHoveredWidgetId != viewportHoveredWidgetId)
-			viewportHoveredWidgetId = currentHoveredWidgetId;
-		if (currentTooltipWidgetId != viewportTooltipWidgetId)
-			viewportTooltipWidgetId = currentTooltipWidgetId;
-		currentHoveredWidgetId = 0;
-		currentTooltipWidgetId = 0;
-		if (super.mouseX > layout.sidebarX() && super.mouseY > layout.sidebarY()
-				&& super.mouseX < layout.sidebarX() + ClientLayout.SIDEBAR_WIDTH && super.mouseY < layout.sidebarY() + ClientLayout.SIDEBAR_HEIGHT)
-			if (interfaceState.sidebarOverlayInterfaceId != -1)
-				buildInterfaceMenu(layout.sidebarY(), Widget.get(interfaceState.sidebarOverlayInterfaceId), 1, 0,
-						layout.sidebarX(), super.mouseX, super.mouseY);
-			else if (interfaceState.tabInterfaceIds[interfaceState.selectedTab] != -1)
-				buildInterfaceMenu(layout.sidebarY(), Widget.get(interfaceState.tabInterfaceIds[interfaceState.selectedTab]),
-						1, 0, layout.sidebarX(), super.mouseX, super.mouseY);
-		if (currentHoveredWidgetId != sidebarHoveredWidgetId) {
-			sidebarRedraw = true;
-			sidebarHoveredWidgetId = currentHoveredWidgetId;
-		}
-		if (currentTooltipWidgetId != sidebarTooltipWidgetId) {
-			sidebarRedraw = true;
-			sidebarTooltipWidgetId = currentTooltipWidgetId;
-		}
-		currentHoveredWidgetId = 0;
-		currentTooltipWidgetId = 0;
-		if (super.mouseX > layout.chatboxX() && super.mouseY > layout.chatboxY()
-				&& super.mouseX < layout.chatboxX() + ClientLayout.CHATBOX_WIDTH && super.mouseY < layout.chatboxY() + ClientLayout.CHATBOX_HEIGHT)
-			if (interfaceState.chatboxInterfaceId != -1)
-				buildInterfaceMenu(layout.chatboxY(), Widget.get(interfaceState.chatboxInterfaceId), 2, 0,
-						layout.chatboxX(), super.mouseX, super.mouseY);
-			else if (interfaceState.dialogueInterfaceId != -1)
-				buildInterfaceMenu(layout.chatboxY(), Widget.get(interfaceState.dialogueInterfaceId), 3, 0,
-						layout.chatboxX(), super.mouseX, super.mouseY);
-			else if (super.mouseY < layout.chatboxY() + 77 && super.mouseX < 426 && chatController.inputDialogState() == 0)
-				buildChatboxMessageMenu(super.mouseY - layout.chatboxY());
-		if ((interfaceState.chatboxInterfaceId != -1 || interfaceState.dialogueInterfaceId != -1)
-				&& currentHoveredWidgetId != chatboxHoveredWidgetId) {
-			chatboxRedraw = true;
-			chatboxHoveredWidgetId = currentHoveredWidgetId;
-		}
-		if ((interfaceState.chatboxInterfaceId != -1 || interfaceState.dialogueInterfaceId != -1)
-				&& currentTooltipWidgetId != chatboxTooltipWidgetId) {
-			chatboxRedraw = true;
-			chatboxTooltipWidgetId = currentTooltipWidgetId;
-		}
-		menuState.prioritizeActions();
-
+		menuController.buildContextMenu(super.mouseX, super.mouseY, systemUpdateTimer, plainFont, playerRights,
+				localPlayer, worldState, actorSynchronizer, currentPlane, playerActions, playerActionLowPriority);
 	}
 
 	/**
-	 * Returns the legacy color tag for the difference between two combat levels.
-	 *
-	 * @param playerLevel the player level
-	 * @param localLevel  the local level
-	 * @return the resulting text
+	 * Returns the classic combat-level difference color tag.
+	 * @param playerLevel target combat level
+	 * @param localLevel local combat level
+	 * @return color tag
 	 */
 	public static String getCombatLevelColorTag(int playerLevel, int localLevel) {
-		int levelDifference = localLevel - playerLevel;
-		if (levelDifference < -9)
-			return "@red@";
-		if (levelDifference < -6)
-			return "@or3@";
-		if (levelDifference < -3)
-			return "@or2@";
-		if (levelDifference < 0)
-			return "@or1@";
-		if (levelDifference > 9)
-			return "@gre@";
-		if (levelDifference > 6)
-			return "@gr3@";
-		if (levelDifference > 3)
-			return "@gr2@";
-		if (levelDifference > 0)
-			return "@gr1@";
-		else
-			return "@yel@";
+		return MenuController.getCombatLevelColorTag(playerLevel, localLevel);
 	}
 
 	/**
@@ -4621,7 +3720,7 @@ public class Client extends GameShell {
 			return;
 		}
 		if (contentType == WidgetContentType.REPORT_ABUSE_NAME) {
-			widget.text = reportAbuseName;
+			widget.text = interfaceController.reportAbuseName();
 			if (gameCycle % 20 < 10) {
 				widget.text += "|";
 				return;
@@ -4632,7 +3731,7 @@ public class Client extends GameShell {
 		}
 		if (contentType == WidgetContentType.REPORT_ABUSE_MUTE)
 			if (playerRights >= 1) {
-				if (reportAbuseMutePlayer) {
+				if (interfaceController.reportAbuseMutePlayer()) {
 					widget.color = 0xff0000;
 					widget.text = "Moderator option: Mute player for 48 hours: <ON>";
 				} else {
@@ -4804,76 +3903,9 @@ public class Client extends GameShell {
 			tutorialIslandFlag = 0;
 	}
 
-	/**
-	 * Computes context-menu dimensions and opens it in the appropriate fixed screen
-	 * area.
-	 */
+	/** Opens the context menu through {@link MenuController}. */
 	public void openContextMenu() {
-		int textWidth = boldFont.getFormattedTextWidth("Choose Option");
-		for (int menuIndex = 0; menuIndex < menuState.count; menuIndex++) {
-			int textWidth2 = boldFont.getFormattedTextWidth(menuState.actionNames[menuIndex]);
-			if (textWidth2 > textWidth)
-				textWidth = textWidth2;
-		}
-
-		textWidth += 8;
-		int menuHeight = 15 * menuState.count + 21;
-		if (layout.isViewportInteractionPoint(super.clickX, super.clickY)) {
-			int clickX = super.clickX - layout.viewportX() - textWidth / 2;
-			if (clickX + textWidth > layout.viewportWidth())
-				clickX = layout.viewportWidth() - textWidth;
-			if (clickX < 0)
-				clickX = 0;
-			int clickY = super.clickY - layout.viewportY();
-			if (clickY + menuHeight > layout.viewportHeight())
-				clickY = layout.viewportHeight() - menuHeight;
-			if (clickY < 0)
-				clickY = 0;
-			menuState.open = true;
-			menuState.screenArea = 0;
-			menuState.offsetX = clickX;
-			menuState.offsetY = clickY;
-			menuState.width = textWidth;
-			menuState.height = 15 * menuState.count + 22;
-		}
-		if (super.clickX > layout.sidebarX() && super.clickY > layout.sidebarY()
-				&& super.clickX < layout.sidebarX() + ClientLayout.SIDEBAR_WIDTH && super.clickY < layout.sidebarY() + ClientLayout.SIDEBAR_HEIGHT) {
-			int clickX2 = super.clickX - layout.sidebarX() - textWidth / 2;
-			if (clickX2 < 0)
-				clickX2 = 0;
-			else if (clickX2 + textWidth > ClientLayout.SIDEBAR_WIDTH)
-				clickX2 = ClientLayout.SIDEBAR_WIDTH - textWidth;
-			int clickY2 = super.clickY - layout.sidebarY();
-			if (clickY2 < 0)
-				clickY2 = 0;
-			else if (clickY2 + menuHeight > ClientLayout.SIDEBAR_HEIGHT)
-				clickY2 = ClientLayout.SIDEBAR_HEIGHT - menuHeight;
-			menuState.open = true;
-			menuState.screenArea = 1;
-			menuState.offsetX = clickX2;
-			menuState.offsetY = clickY2;
-			menuState.width = textWidth;
-			menuState.height = 15 * menuState.count + 22;
-		}
-		if (super.clickX > layout.chatboxX() && super.clickY > layout.chatboxY()
-				&& super.clickX < layout.chatboxX() + ClientLayout.CHATBOX_WIDTH && super.clickY < layout.chatboxY() + ClientLayout.CHATBOX_HEIGHT) {
-			int clickX3 = super.clickX - layout.chatboxX() - textWidth / 2;
-			if (clickX3 < 0)
-				clickX3 = 0;
-			else if (clickX3 + textWidth > ClientLayout.CHATBOX_WIDTH)
-				clickX3 = ClientLayout.CHATBOX_WIDTH - textWidth;
-			int clickY3 = super.clickY - layout.chatboxY();
-			if (clickY3 < 0)
-				clickY3 = 0;
-			else if (clickY3 + menuHeight > ClientLayout.CHATBOX_HEIGHT)
-				clickY3 = ClientLayout.CHATBOX_HEIGHT - menuHeight;
-			menuState.open = true;
-			menuState.screenArea = 2;
-			menuState.offsetX = clickX3;
-			menuState.offsetY = clickY3;
-			menuState.width = textWidth;
-			menuState.height = 15 * menuState.count + 22;
-		}
+		menuController.openContextMenu(boldFont, super.clickX, super.clickY);
 	}
 
 	/**
@@ -4886,22 +3918,22 @@ public class Client extends GameShell {
 			crossSprites[crossCycle / 100].drawImage(crossX - 8 - 4, crossY - 8 - 4);
 		if (crossType == 2)
 			crossSprites[4 + crossCycle / 100].drawImage(crossX - 8 - 4, crossY - 8 - 4);
-		if (interfaceState.walkableInterfaceId != -1) {
-			widgetRuntime.updateAnimations(animationCycleDelta, interfaceState.walkableInterfaceId);
-			drawInterface(0, 0, Widget.get(interfaceState.walkableInterfaceId), 0);
+		if (interfaceController.state().walkableInterfaceId != -1) {
+			widgetRuntime.updateAnimations(animationCycleDelta, interfaceController.state().walkableInterfaceId);
+			drawInterface(0, 0, Widget.get(interfaceController.state().walkableInterfaceId), 0);
 		}
-		if (interfaceState.openInterfaceId != -1) {
-			widgetRuntime.updateAnimations(animationCycleDelta, interfaceState.openInterfaceId);
-			Widget openInterface = Widget.get(interfaceState.openInterfaceId);
+		if (interfaceController.state().openInterfaceId != -1) {
+			widgetRuntime.updateAnimations(animationCycleDelta, interfaceController.state().openInterfaceId);
+			Widget openInterface = Widget.get(interfaceController.state().openInterfaceId);
 			int interfaceX = layout.centeredInterfaceX(openInterface.width);
 			int interfaceY = layout.centeredInterfaceY(openInterface.height);
 			drawInterface(interfaceY, interfaceX, openInterface, 0);
 		}
 		updateTutorialIslandFlag();
-		if (!menuState.open) {
+		if (!menuController.state().open) {
 			buildContextMenu();
 			drawMenuTooltip();
-		} else if (menuState.screenArea == 0)
+		} else if (menuController.state().screenArea == 0)
 			drawContextMenu();
 		if (multiCombatZone == 1)
 			multiCombatOverlay.drawImage(layout.unobscuredViewportWidth() - 40, layout.unobscuredViewportHeight() - 38);
@@ -4944,136 +3976,18 @@ public class Client extends GameShell {
 
 
 
-	/**
-	 * Builds context-menu actions for names visible in the split-private-chat
-	 * overlay.
-	 */
+	/** Delegates split-private-chat menu construction to {@link MenuController}. */
 	public void buildSplitPrivateChatMenu() {
-		if (chatController.splitPrivateChat() == 0)
-			return;
-		int visibleLine = 0;
-		if (systemUpdateTimer != 0)
-			visibleLine = 1;
-		for (int messageIndex = 0; messageIndex < 100; messageIndex++)
-			if (chatController.history().messages[messageIndex] != null) {
-				int messageType = chatController.history().types[messageIndex];
-				String sender = chatController.history().senders[messageIndex];
-				if (sender != null && sender.startsWith("@cr1@")) {
-					sender = sender.substring(5);
-				}
-				if (sender != null && sender.startsWith("@cr2@")) {
-					sender = sender.substring(5);
-				}
-				if ((messageType == ChatMessageType.PRIVATE_RECEIVED || messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED) && (messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED || chatController.privateMode() == ChatMode.ON
-						|| chatController.privateMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
-					int lineY = layout.unobscuredViewportHeight() - 5 - visibleLine * 13;
-					if (super.mouseX > layout.viewportX() && super.mouseY - layout.viewportY() > lineY - 10
-							&& super.mouseY - layout.viewportY() <= lineY + 3) {
-						int messageWidth = plainFont
-								.getFormattedTextWidth("From:  " + sender + chatController.history().messages[messageIndex]) + 25;
-						if (messageWidth > 450)
-							messageWidth = 450;
-						if (super.mouseX < layout.viewportX() + messageWidth) {
-							if (playerRights >= 1) {
-								menuState.actionNames[menuState.count] = "Report abuse @whi@" + sender;
-								menuState.actionIds[menuState.count] = MenuState.lowPriority(MenuState.REPORT_ABUSE);
-								menuState.count++;
-							}
-							menuState.actionNames[menuState.count] = "Add ignore @whi@" + sender;
-							menuState.actionIds[menuState.count] = MenuState.lowPriority(MenuState.ADD_IGNORE);
-							menuState.count++;
-							menuState.actionNames[menuState.count] = "Add friend @whi@" + sender;
-							menuState.actionIds[menuState.count] = MenuState.lowPriority(MenuState.ADD_FRIEND);
-							menuState.count++;
-						}
-					}
-					if (++visibleLine >= 5)
-						return;
-				}
-				if ((messageType == ChatMessageType.PRIVATE_STATUS || messageType == ChatMessageType.PRIVATE_SENT) && chatController.privateMode() < ChatMode.OFF && ++visibleLine >= 5)
-					return;
-			}
-
+		menuController.buildSplitPrivateChatMenu(systemUpdateTimer, super.mouseX, super.mouseY, plainFont, playerRights,
+				localPlayer.name);
 	}
 
 	/**
-	 * Builds context-menu actions for player names under the chatbox mouse
-	 * position.
-	 *
-	 * @param mouseY the mouse Y coordinate
+	 * Delegates chatbox message menu construction to {@link MenuController}.
+	 * @param mouseY chatbox-local mouse Y coordinate
 	 */
 	public void buildChatboxMessageMenu(int mouseY) {
-		int visibleLine = 0;
-		for (int messageIndex = 0; messageIndex < 100; messageIndex++) {
-			if (chatController.history().messages[messageIndex] == null)
-				continue;
-			int messageType = chatController.history().types[messageIndex];
-			int lineY = (70 - visibleLine * 14) + chatController.scrollOffset() + 4;
-			if (lineY < -20)
-				break;
-			String sender = chatController.history().senders[messageIndex];
-			if (sender != null && sender.startsWith("@cr1@")) {
-				sender = sender.substring(5);
-			}
-			if (sender != null && sender.startsWith("@cr2@")) {
-				sender = sender.substring(5);
-			}
-			if (messageType == ChatMessageType.GAME)
-				visibleLine++;
-			if ((messageType == ChatMessageType.PUBLIC_PRIVILEGED || messageType == ChatMessageType.PUBLIC)
-					&& (messageType == ChatMessageType.PUBLIC_PRIVILEGED || chatController.publicMode() == ChatMode.ON || chatController.publicMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
-				if (mouseY > lineY - 14 && mouseY <= lineY && !sender.equals(localPlayer.name)) {
-					if (playerRights >= 1) {
-						menuState.actionNames[menuState.count] = "Report abuse @whi@" + sender;
-						menuState.actionIds[menuState.count] = MenuState.REPORT_ABUSE;
-						menuState.count++;
-					}
-					menuState.actionNames[menuState.count] = "Add ignore @whi@" + sender;
-					menuState.actionIds[menuState.count] = MenuState.ADD_IGNORE;
-					menuState.count++;
-					menuState.actionNames[menuState.count] = "Add friend @whi@" + sender;
-					menuState.actionIds[menuState.count] = MenuState.ADD_FRIEND;
-					menuState.count++;
-				}
-				visibleLine++;
-			}
-			if ((messageType == ChatMessageType.PRIVATE_RECEIVED || messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED) && chatController.splitPrivateChat() == 0
-					&& (messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED || chatController.privateMode() == ChatMode.ON || chatController.privateMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
-				if (mouseY > lineY - 14 && mouseY <= lineY) {
-					if (playerRights >= 1) {
-						menuState.actionNames[menuState.count] = "Report abuse @whi@" + sender;
-						menuState.actionIds[menuState.count] = MenuState.REPORT_ABUSE;
-						menuState.count++;
-					}
-					menuState.actionNames[menuState.count] = "Add ignore @whi@" + sender;
-					menuState.actionIds[menuState.count] = MenuState.ADD_IGNORE;
-					menuState.count++;
-					menuState.actionNames[menuState.count] = "Add friend @whi@" + sender;
-					menuState.actionIds[menuState.count] = MenuState.ADD_FRIEND;
-					menuState.count++;
-				}
-				visibleLine++;
-			}
-			if (messageType == ChatMessageType.TRADE_REQUEST && (chatController.tradeMode() == ChatMode.ON || chatController.tradeMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
-				if (mouseY > lineY - 14 && mouseY <= lineY) {
-					menuState.actionNames[menuState.count] = "Accept trade @whi@" + sender;
-					menuState.actionIds[menuState.count] = MenuState.ACCEPT_TRADE;
-					menuState.count++;
-				}
-				visibleLine++;
-			}
-			if ((messageType == ChatMessageType.PRIVATE_STATUS || messageType == ChatMessageType.PRIVATE_SENT) && chatController.splitPrivateChat() == 0 && chatController.privateMode() < ChatMode.OFF)
-				visibleLine++;
-			if (messageType == ChatMessageType.CHALLENGE_REQUEST && (chatController.tradeMode() == ChatMode.ON || chatController.tradeMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
-				if (mouseY > lineY - 14 && mouseY <= lineY) {
-					menuState.actionNames[menuState.count] = "Accept challenge @whi@" + sender;
-					menuState.actionIds[menuState.count] = MenuState.ACCEPT_CHALLENGE;
-					menuState.count++;
-				}
-				visibleLine++;
-			}
-		}
-
+		menuController.buildChatboxMessageMenu(mouseY, playerRights, localPlayer.name);
 	}
 
 	/**
@@ -5137,10 +4051,10 @@ public class Client extends GameShell {
 	public void dispatchMenuAction(int menuIndex) {
 		if (menuIndex < 0)
 			return;
-		int cmd2 = menuState.actionCmd2[menuIndex];
-		int cmd3 = menuState.actionCmd3[menuIndex];
-		int actionId = MenuState.normalizeActionId(menuState.actionIds[menuIndex]);
-		int cmd1 = menuState.actionCmd1[menuIndex];
+		int cmd2 = menuController.state().actionCmd2[menuIndex];
+		int cmd3 = menuController.state().actionCmd3[menuIndex];
+		int actionId = MenuState.normalizeActionId(menuController.state().actionIds[menuIndex]);
+		int cmd1 = menuController.state().actionCmd1[menuIndex];
 		if (chatController.inputDialogState() != 0 && actionId != MenuState.CANCEL_ACTION) {
 			chatController.setInputDialogState(0);
 			chatboxRedraw = true;
@@ -5157,8 +4071,8 @@ public class Client extends GameShell {
 		dispatchSocialMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
 		dispatchMiscMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
 
-		interfaceState.itemSelected = 0;
-		interfaceState.spellSelected = 0;
+		interfaceController.state().itemSelected = 0;
+		interfaceController.state().spellSelected = 0;
 		sidebarRedraw = true;
 	}
 
@@ -5236,7 +4150,7 @@ public class Client extends GameShell {
 				crossCycle = 0;
 				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.CAST_SPELL_ON_PLAYER);
 				networkSession.outgoing.writeShort(cmd1);
-				networkSession.outgoing.writeShortLE(interfaceState.selectedSpellWidgetId);
+				networkSession.outgoing.writeShortLE(interfaceController.state().selectedSpellWidgetId);
 			}
 		}
 		if (actionId == MenuState.USE_ITEM_ON_PLAYER) {
@@ -5249,9 +4163,9 @@ public class Client extends GameShell {
 				crossType = 2;
 				crossCycle = 0;
 				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.USE_ITEM_ON_PLAYER);
-				networkSession.outgoing.writeShortLE(interfaceState.selectedItemId);
-				networkSession.outgoing.writeShortAddLE(interfaceState.selectedItemSlot);
-				networkSession.outgoing.writeShort(interfaceState.selectedItemWidgetId);
+				networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemId);
+				networkSession.outgoing.writeShortAddLE(interfaceController.state().selectedItemSlot);
+				networkSession.outgoing.writeShort(interfaceController.state().selectedItemWidgetId);
 				networkSession.outgoing.writeShortAdd(cmd1);
 			}
 		}
@@ -5318,9 +4232,9 @@ public class Client extends GameShell {
 				crossCycle = 0;
 				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.USE_ITEM_ON_NPC);
 				networkSession.outgoing.writeShort(cmd1);
-				networkSession.outgoing.writeShortLE(interfaceState.selectedItemId);
-				networkSession.outgoing.writeShortAddLE(interfaceState.selectedItemWidgetId);
-				networkSession.outgoing.writeShort(interfaceState.selectedItemSlot);
+				networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemId);
+				networkSession.outgoing.writeShortAddLE(interfaceController.state().selectedItemWidgetId);
+				networkSession.outgoing.writeShort(interfaceController.state().selectedItemSlot);
 			}
 		}
 		if (actionId == MenuState.NPC_OPTION_3) {
@@ -5365,7 +4279,7 @@ public class Client extends GameShell {
 				crossType = 2;
 				crossCycle = 0;
 				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.CAST_SPELL_ON_NPC);
-				networkSession.outgoing.writeShortAdd(interfaceState.selectedSpellWidgetId);
+				networkSession.outgoing.writeShortAdd(interfaceController.state().selectedSpellWidgetId);
 				networkSession.outgoing.writeShortLE(cmd1);
 			}
 		}
@@ -5414,15 +4328,15 @@ public class Client extends GameShell {
 		if (actionId == MenuState.USE_ITEM_ON_OBJECT && walkToGameObject(cmd3, cmd2, cmd1)) {
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.USE_ITEM_ON_OBJECT);
 			networkSession.outgoing.writeShortLE(cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
-			networkSession.outgoing.writeShortLE(interfaceState.selectedItemWidgetId);
-			networkSession.outgoing.writeShortLE(interfaceState.selectedItemId);
+			networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemWidgetId);
+			networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemId);
 			networkSession.outgoing.writeShortLE(cmd3 + regionManager.baseY);
-			networkSession.outgoing.writeShort(interfaceState.selectedItemSlot);
+			networkSession.outgoing.writeShort(interfaceController.state().selectedItemSlot);
 			networkSession.outgoing.writeShortAddLE(cmd2 + regionManager.baseX);
 		}
 		if (actionId == MenuState.CAST_SPELL_ON_OBJECT && walkToGameObject(cmd3, cmd2, cmd1)) {
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.CAST_SPELL_ON_OBJECT);
-			networkSession.outgoing.writeShort(interfaceState.selectedSpellWidgetId);
+			networkSession.outgoing.writeShort(interfaceController.state().selectedSpellWidgetId);
 			networkSession.outgoing.writeShortLE(cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
 			networkSession.outgoing.writeShortAdd(cmd2 + regionManager.baseX);
 			networkSession.outgoing.writeShortLE(cmd3 + regionManager.baseY);
@@ -5553,11 +4467,11 @@ public class Client extends GameShell {
 			crossType = 2;
 			crossCycle = 0;
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.USE_ITEM_ON_GROUND_ITEM);
-			networkSession.outgoing.writeShortAddLE(interfaceState.selectedItemSlot);
-			networkSession.outgoing.writeShortAdd(interfaceState.selectedItemId);
+			networkSession.outgoing.writeShortAddLE(interfaceController.state().selectedItemSlot);
+			networkSession.outgoing.writeShortAdd(interfaceController.state().selectedItemId);
 			networkSession.outgoing.writeShortAddLE(cmd3 + regionManager.baseY);
 			networkSession.outgoing.writeShortAddLE(cmd2 + regionManager.baseX);
-			networkSession.outgoing.writeShortLE(interfaceState.selectedItemWidgetId);
+			networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemWidgetId);
 			networkSession.outgoing.writeShortLE(cmd1);
 		}
 		if (actionId == MenuState.GROUND_ITEM_OPTION_2) {
@@ -5590,7 +4504,7 @@ public class Client extends GameShell {
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.CAST_SPELL_ON_GROUND_ITEM);
 			networkSession.outgoing.writeShortLE(cmd1);
 			networkSession.outgoing.writeShort(cmd3 + regionManager.baseY);
-			networkSession.outgoing.writeShortLE(interfaceState.selectedSpellWidgetId);
+			networkSession.outgoing.writeShortLE(interfaceController.state().selectedSpellWidgetId);
 			networkSession.outgoing.writeShortAddLE(cmd2 + regionManager.baseX);
 		}
 		if (actionId == MenuState.EXAMINE_GROUND_ITEM) {
@@ -5612,13 +4526,13 @@ public class Client extends GameShell {
 	 */
 	private void markInventoryInteraction(int widgetId, int slot) {
 		inventoryClickCycle = 0;
-		interfaceState.pressedInventoryWidgetId = widgetId;
-		interfaceState.pressedInventorySlot = slot;
-		interfaceState.pressedInventoryArea = 2;
-		if (Widget.get(widgetId).parentId == interfaceState.openInterfaceId)
-			interfaceState.pressedInventoryArea = 1;
-		if (Widget.get(widgetId).parentId == interfaceState.chatboxInterfaceId)
-			interfaceState.pressedInventoryArea = 3;
+		interfaceController.state().pressedInventoryWidgetId = widgetId;
+		interfaceController.state().pressedInventorySlot = slot;
+		interfaceController.state().pressedInventoryArea = 2;
+		if (Widget.get(widgetId).parentId == interfaceController.state().openInterfaceId)
+			interfaceController.state().pressedInventoryArea = 1;
+		if (Widget.get(widgetId).parentId == interfaceController.state().chatboxInterfaceId)
+			interfaceController.state().pressedInventoryArea = 3;
 	}
 
 	// Inventory/item actions retain their original packet/action IDs.
@@ -5676,16 +4590,16 @@ public class Client extends GameShell {
 		if (actionId == MenuState.USE_ITEM_ON_INVENTORY_ITEM) {
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.USE_ITEM_ON_INVENTORY_ITEM);
 			networkSession.outgoing.writeShort(cmd1);
-			networkSession.outgoing.writeShortLE(interfaceState.selectedItemSlot);
-			networkSession.outgoing.writeShortLE(interfaceState.selectedItemId);
-			networkSession.outgoing.writeShortAddLE(interfaceState.selectedItemWidgetId);
+			networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemSlot);
+			networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemId);
+			networkSession.outgoing.writeShortAddLE(interfaceController.state().selectedItemWidgetId);
 			networkSession.outgoing.writeShortAdd(cmd2);
 			networkSession.outgoing.writeShortAdd(cmd3);
 			markInventoryInteraction(cmd3, cmd2);
 		}
 		if (actionId == MenuState.CAST_SPELL_ON_INVENTORY_ITEM) {
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.CAST_SPELL_ON_INVENTORY_ITEM);
-			networkSession.outgoing.writeShort(interfaceState.selectedSpellWidgetId);
+			networkSession.outgoing.writeShort(interfaceController.state().selectedSpellWidgetId);
 			networkSession.outgoing.writeShortAdd(cmd3);
 			networkSession.outgoing.writeShortAdd(cmd2);
 			networkSession.outgoing.writeShortAdd(cmd1);
@@ -5746,12 +4660,12 @@ public class Client extends GameShell {
 			markInventoryInteraction(cmd3, cmd2);
 		}
 		if (actionId == MenuState.SELECT_ITEM) {
-			interfaceState.itemSelected = 1;
-			interfaceState.selectedItemSlot = cmd2;
-			interfaceState.selectedItemWidgetId = cmd3;
-			interfaceState.selectedItemId = cmd1;
-			interfaceState.selectedItemName = String.valueOf(ItemDefinition.lookup(cmd1).name);
-			interfaceState.spellSelected = 0;
+			interfaceController.state().itemSelected = 1;
+			interfaceController.state().selectedItemSlot = cmd2;
+			interfaceController.state().selectedItemWidgetId = cmd3;
+			interfaceController.state().selectedItemId = cmd1;
+			interfaceController.state().selectedItemName = String.valueOf(ItemDefinition.lookup(cmd1).name);
+			interfaceController.state().spellSelected = 0;
 			sidebarRedraw = true;
 			return true;
 		}
@@ -5785,10 +4699,10 @@ public class Client extends GameShell {
 			closeInterfaces();
 		if (actionId == MenuState.SELECT_SPELL) {
 			Widget spellWidget = Widget.get(cmd3);
-			interfaceState.spellSelected = 1;
-			interfaceState.selectedSpellWidgetId = cmd3;
-			interfaceState.selectedSpellTargetMask = spellWidget.spellUsableOn;
-			interfaceState.itemSelected = 0;
+			interfaceController.state().spellSelected = 1;
+			interfaceController.state().selectedSpellWidgetId = cmd3;
+			interfaceController.state().selectedSpellTargetMask = spellWidget.spellUsableOn;
+			interfaceController.state().itemSelected = 0;
 			sidebarRedraw = true;
 			String actionVerb = spellWidget.selectedActionName;
 			if (actionVerb.indexOf(" ") != -1)
@@ -5796,8 +4710,8 @@ public class Client extends GameShell {
 			String actionTarget = spellWidget.selectedActionName;
 			if (actionTarget.indexOf(" ") != -1)
 				actionTarget = actionTarget.substring(actionTarget.indexOf(" ") + 1);
-			interfaceState.selectedSpellAction = actionVerb + " " + spellWidget.spellName + " " + actionTarget;
-			if (interfaceState.selectedSpellTargetMask == 16) {
+			interfaceController.state().selectedSpellAction = actionVerb + " " + spellWidget.spellName + " " + actionTarget;
+			if (interfaceController.state().selectedSpellTargetMask == 16) {
 				sidebarRedraw = true;
 				tabAreaRedraw = true;
 			}
@@ -5813,10 +4727,10 @@ public class Client extends GameShell {
 				networkSession.outgoing.writeShort(cmd3);
 			}
 		}
-		if (actionId == MenuState.WIDGET_CONTINUE && !interfaceActionPending) {
+		if (actionId == MenuState.WIDGET_CONTINUE && !interfaceController.actionPending()) {
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_CONTINUE);
 			networkSession.outgoing.writeShort(cmd3);
-			interfaceActionPending = true;
+			interfaceController.setActionPending(true);
 		}
 		if (actionId == MenuState.WIDGET_SET_VARP) {
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_CLICK);
@@ -5832,7 +4746,7 @@ public class Client extends GameShell {
 			}
 		}
 		if (actionId == MenuState.CLOSE_DIALOGUE) {
-			unloadInterface(interfaceState.dialogueInterfaceId);
+			unloadInterface(interfaceController.state().dialogueInterfaceId);
 			chatboxRedraw = true;
 		}
 		return false;
@@ -5851,7 +4765,7 @@ public class Client extends GameShell {
 	 */
 	private void dispatchSocialMenuAction(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
 		if (actionId == MenuState.ADD_FRIEND || actionId == MenuState.ADD_IGNORE || actionId == MenuState.REMOVE_FRIEND || actionId == MenuState.REMOVE_IGNORE) {
-			String actionText = menuState.actionNames[menuIndex];
+			String actionText = menuController.state().actionNames[menuIndex];
 			int markerIndex = actionText.indexOf("@whi@");
 			if (markerIndex != -1) {
 				long encodedName = Base37.encode(actionText.substring(markerIndex + 5).trim());
@@ -5866,7 +4780,7 @@ public class Client extends GameShell {
 			}
 		}
 		if (actionId == MenuState.ACCEPT_TRADE || actionId == MenuState.ACCEPT_CHALLENGE) {
-			String actionText2 = menuState.actionNames[menuIndex];
+			String actionText2 = menuController.state().actionNames[menuIndex];
 			int markerIndex2 = actionText2.indexOf("@whi@");
 			if (markerIndex2 != -1) {
 				actionText2 = actionText2.substring(markerIndex2 + 5).trim();
@@ -5895,20 +4809,20 @@ public class Client extends GameShell {
 			}
 		}
 		if (actionId == MenuState.REPORT_ABUSE) {
-			String actionText3 = menuState.actionNames[menuIndex];
+			String actionText3 = menuController.state().actionNames[menuIndex];
 			int markerIndex3 = actionText3.indexOf("@whi@");
 			if (markerIndex3 != -1)
-				if (interfaceState.openInterfaceId == -1) {
+				if (interfaceController.state().openInterfaceId == -1) {
 					closeInterfaces();
-					reportAbuseName = actionText3.substring(markerIndex3 + 5).trim();
-					reportAbuseMutePlayer = false;
-					interfaceState.reportAbuseInterfaceId = interfaceState.openInterfaceId = Widget.reportAbuseInterfaceId;
+					interfaceController.setReportAbuseName(actionText3.substring(markerIndex3 + 5).trim());
+					interfaceController.setReportAbuseMutePlayer(false);
+					interfaceController.state().reportAbuseInterfaceId = interfaceController.state().openInterfaceId = Widget.reportAbuseInterfaceId;
 				} else {
 					addChatMessage("", "Please close the interface you have open before using 'report abuse'", ChatMessageType.GAME);
 				}
 		}
 		if (actionId == MenuState.MESSAGE_FRIEND) {
-			String actionText4 = menuState.actionNames[menuIndex];
+			String actionText4 = menuController.state().actionNames[menuIndex];
 			int markerIndex4 = actionText4.indexOf("@whi@");
 			if (markerIndex4 != -1) {
 				long encodedName3 = Base37.encode(actionText4.substring(markerIndex4 + 5).trim());
@@ -5935,7 +4849,7 @@ public class Client extends GameShell {
 	 */
 	private void dispatchMiscMenuAction(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
 		if (actionId == MenuState.WALK_HERE)
-			if (!menuState.open)
+			if (!menuController.state().open)
 				worldState.scene.setClick(super.clickX - layout.viewportX(), super.clickY - layout.viewportY());
 			else
 				worldState.scene.setClick(cmd2 - layout.viewportX(), cmd3 - layout.viewportY());
@@ -6362,14 +5276,12 @@ public class Client extends GameShell {
 	}
 
 	/**
-	 * Tests whether a menu entry represents an Add friend action after priority
-	 * normalization.
-	 *
-	 * @param menuIndex the context-menu entry index
-	 * @return true when the requested condition/action succeeds; otherwise false
+	 * Returns whether a menu entry is the add-friend action.
+	 * @param menuIndex menu index
+	 * @return whether the entry adds a friend
 	 */
 	public boolean isAddFriendMenuAction(int menuIndex) {
-		return menuState.isAddFriendAction(menuIndex);
+		return menuController.state().isAddFriendAction(menuIndex);
 	}
 
 	/**
@@ -6433,10 +5345,10 @@ public class Client extends GameShell {
 	 * Draws the open context menu and highlights the entry under the mouse.
 	 */
 	public void drawContextMenu() {
-		int menuX = menuState.offsetX;
-		int menuY = menuState.offsetY;
-		int menuWidth = menuState.width;
-		int menuHeight = menuState.height;
+		int menuX = menuController.state().offsetX;
+		int menuY = menuController.state().offsetY;
+		int menuWidth = menuController.state().width;
+		int menuHeight = menuController.state().height;
 		int headerColor = 0x5d5447;
 		Rasterizer.drawFilledRectangle(menuX, menuY, menuWidth, menuHeight, headerColor);
 		Rasterizer.drawFilledRectangle(menuX + 1, menuY + 1, menuWidth - 2, 16, 0);
@@ -6444,24 +5356,24 @@ public class Client extends GameShell {
 		boldFont.drawText("Choose Option", menuX + 3, menuY + 14, headerColor);
 		int mouseX = super.mouseX;
 		int mouseY = super.mouseY;
-		if (menuState.screenArea == 0) {
+		if (menuController.state().screenArea == 0) {
 			mouseX -= layout.viewportX();
 			mouseY -= layout.viewportY();
 		}
-		if (menuState.screenArea == 1) {
+		if (menuController.state().screenArea == 1) {
 			mouseX -= layout.sidebarX();
 			mouseY -= layout.sidebarY();
 		}
-		if (menuState.screenArea == 2) {
+		if (menuController.state().screenArea == 2) {
 			mouseX -= layout.chatboxX();
 			mouseY -= layout.chatboxY();
 		}
-		for (int entryIndex = 0; entryIndex < menuState.count; entryIndex++) {
-			int entryY = menuY + 31 + (menuState.count - 1 - entryIndex) * 15;
+		for (int entryIndex = 0; entryIndex < menuController.state().count; entryIndex++) {
+			int entryY = menuY + 31 + (menuController.state().count - 1 - entryIndex) * 15;
 			int entryColor = 0xffffff;
 			if (mouseX > menuX && mouseX < menuX + menuWidth && mouseY > entryY - 13 && mouseY < entryY + 3)
 				entryColor = 0xffff00;
-			boldFont.drawTextWithTags(menuState.actionNames[entryIndex], menuX + 3, entryY, entryColor, true);
+			boldFont.drawTextWithTags(menuController.state().actionNames[entryIndex], menuX + 3, entryY, entryColor, true);
 		}
 
 	}
@@ -6560,11 +5472,11 @@ public class Client extends GameShell {
 		sidebarBuffer.bindRaster();
 		Rasterizer3D.scanlineOffsets = sidebarScanlineOffsets;
 		sidebarBackground.draw(0, 0);
-		if (interfaceState.sidebarOverlayInterfaceId != -1)
-			drawInterface(0, 0, Widget.get(interfaceState.sidebarOverlayInterfaceId), 0);
-		else if (interfaceState.tabInterfaceIds[interfaceState.selectedTab] != -1)
-			drawInterface(0, 0, Widget.get(interfaceState.tabInterfaceIds[interfaceState.selectedTab]), 0);
-		if (menuState.open && menuState.screenArea == 1)
+		if (interfaceController.state().sidebarOverlayInterfaceId != -1)
+			drawInterface(0, 0, Widget.get(interfaceController.state().sidebarOverlayInterfaceId), 0);
+		else if (interfaceController.state().tabInterfaceIds[interfaceController.state().selectedTab] != -1)
+			drawInterface(0, 0, Widget.get(interfaceController.state().tabInterfaceIds[interfaceController.state().selectedTab]), 0);
+		if (menuController.state().open && menuController.state().screenArea == 1)
 			drawContextMenu();
 		sidebarBuffer.draw(super.graphics, layout.sidebarX(), layout.sidebarY());
 		viewportBuffer.bindRaster();
@@ -6572,23 +5484,13 @@ public class Client extends GameShell {
 	}
 
 	/**
-	 * Formats a numeric amount with comma grouping and legacy K/million color
-	 * annotations.
+	 * Formats an inventory amount using the renderer's legacy comma/K/million style.
 	 *
-	 * @param amount the numeric/item-stack amount
-	 * @return the resulting text
+	 * @param amount numeric amount
+	 * @return formatted amount
 	 */
 	public static String formatAmountWithCommas(int amount) {
-		String amountText = String.valueOf(amount);
-		for (int separatorIndex = amountText.length() - 3; separatorIndex > 0; separatorIndex -= 3)
-			amountText = amountText.substring(0, separatorIndex) + "," + amountText.substring(separatorIndex);
-
-		if (amountText.length() > 8)
-			amountText = "@gre@" + amountText.substring(0, amountText.length() - 8) + " million @whi@(" + amountText
-					+ ")";
-		else if (amountText.length() > 4)
-			amountText = "@cya@" + amountText.substring(0, amountText.length() - 4) + "K @whi@(" + amountText + ")";
-		return " " + amountText;
+		return WidgetRenderer.formatAmountWithCommas(amount);
 	}
 
 	/**
@@ -6758,365 +5660,17 @@ public class Client extends GameShell {
 	}
 
 	/**
-	 * Recursively renders a widget tree, including containers, inventories, text,
-	 * sprites, models, and tooltips.
+	 * Draws a cache-defined widget tree through {@link WidgetRenderer}.
 	 *
-	 * @param y       the Y coordinate
-	 * @param x       the X coordinate
-	 * @param widget  the widget being processed
-	 * @param scrollY the current scroll offset
+	 * @param y root Y coordinate
+	 * @param x root X coordinate
+	 * @param widget root widget
+	 * @param scrollY root scroll offset
 	 */
 	public void drawInterface(int y, int x, Widget widget, int scrollY) {
-		if (widget.type != Widget.TYPE_CONTAINER || widget.children == null)
-			return;
-		if (widget.mouseoverTriggered && viewportHoveredWidgetId != widget.id && sidebarHoveredWidgetId != widget.id
-				&& chatboxHoveredWidgetId != widget.id)
-			return;
-		int previousClipLeft = Rasterizer.topX;
-		int previousClipTop = Rasterizer.topY;
-		int previousClipRight = Rasterizer.bottomX;
-		int previousClipBottom = Rasterizer.bottomY;
-		Rasterizer.setCoordinates(x, y, x + widget.width, y + widget.height);
-		int childCount = widget.children.length;
-		for (int childIndex = 0; childIndex < childCount; childIndex++) {
-			int childX = widget.childX[childIndex] + x;
-			int childY = (widget.childY[childIndex] + y) - scrollY;
-			Widget childWidget = Widget.get(widget.children[childIndex]);
-			childX += childWidget.xOffset;
-			childY += childWidget.yOffset;
-			if (childWidget.contentType > WidgetContentType.NONE)
-				updateWidgetContent(childWidget);
-			if (childWidget.type == Widget.TYPE_CONTAINER) {
-				if (childWidget.scrollY > childWidget.scrollHeight - childWidget.height)
-					childWidget.scrollY = childWidget.scrollHeight - childWidget.height;
-				if (childWidget.scrollY < 0)
-					childWidget.scrollY = 0;
-				drawInterface(childY, childX, childWidget, childWidget.scrollY);
-				if (childWidget.scrollHeight > childWidget.height)
-					drawScrollbar(childWidget.scrollY, childX + childWidget.width, childWidget.height,
-							childWidget.scrollHeight, childY);
-			} else if (childWidget.type != Widget.TYPE_UNKNOWN)
-				if (childWidget.type == Widget.TYPE_INVENTORY) {
-					int slot = 0;
-					for (int row = 0; row < childWidget.height; row++) {
-						for (int column = 0; column < childWidget.width; column++) {
-							int slotX = childX + column * (Widget.INVENTORY_SLOT_SIZE + childWidget.inventorySpritePaddingX);
-							int slotY = childY + row * (Widget.INVENTORY_SLOT_SIZE + childWidget.inventorySpritePaddingY);
-							if (slot < Widget.INVENTORY_SPRITE_OFFSET_COUNT) {
-								slotX += childWidget.spriteXOffsets[slot];
-								slotY += childWidget.spriteYOffsets[slot];
-							}
-							if (childWidget.itemIds[slot] > 0) {
-								int dragOffsetX = 0;
-								int dragOffsetY = 0;
-								int itemId = childWidget.itemIds[slot] - 1;
-								if (slotX > Rasterizer.topX - 32 && slotX < Rasterizer.bottomX
-										&& slotY > Rasterizer.topY - 32 && slotY < Rasterizer.bottomY
-										|| interfaceState.inventoryDragArea != 0
-												&& interfaceState.draggedInventorySlot == slot) {
-									// Selected inventory items request the white outline variant from
-									// ItemSpriteFactory.
-									int spriteOutlineColor = 0;
-									if (interfaceState.itemSelected == 1 && interfaceState.selectedItemSlot == slot
-											&& interfaceState.selectedItemWidgetId == childWidget.id)
-										spriteOutlineColor = 0xffffff;
-									ImageRGB itemSprite = ItemSpriteFactory.getSprite(itemId,
-											childWidget.itemAmounts[slot], spriteOutlineColor);
-									if (itemSprite != null) {
-										if (interfaceState.inventoryDragArea != 0
-												&& interfaceState.draggedInventorySlot == slot
-												&& interfaceState.draggedInventoryWidgetId == childWidget.id) {
-											dragOffsetX = super.mouseX - interfaceState.inventoryDragStartX;
-											dragOffsetY = super.mouseY - interfaceState.inventoryDragStartY;
-											if (dragOffsetX < 5 && dragOffsetX > -5)
-												dragOffsetX = 0;
-											if (dragOffsetY < 5 && dragOffsetY > -5)
-												dragOffsetY = 0;
-											if (interfaceState.inventoryDragDuration < 5) {
-												dragOffsetX = 0;
-												dragOffsetY = 0;
-											}
-											itemSprite.drawImageAlpha(slotX + dragOffsetX, slotY + dragOffsetY, 128);
-											if (slotY + dragOffsetY < Rasterizer.topY && widget.scrollY > 0) {
-												int scrollAmount = (animationCycleDelta
-														* (Rasterizer.topY - slotY - dragOffsetY)) / 3;
-												if (scrollAmount > animationCycleDelta * 10)
-													scrollAmount = animationCycleDelta * 10;
-												if (scrollAmount > widget.scrollY)
-													scrollAmount = widget.scrollY;
-												widget.scrollY -= scrollAmount;
-												interfaceState.inventoryDragStartY += scrollAmount;
-											}
-											if (slotY + dragOffsetY + 32 > Rasterizer.bottomY
-													&& widget.scrollY < widget.scrollHeight - widget.height) {
-												int scrollAmount2 = (animationCycleDelta
-														* ((slotY + dragOffsetY + 32) - Rasterizer.bottomY)) / 3;
-												if (scrollAmount2 > animationCycleDelta * 10)
-													scrollAmount2 = animationCycleDelta * 10;
-												if (scrollAmount2 > widget.scrollHeight - widget.height
-														- widget.scrollY)
-													scrollAmount2 = widget.scrollHeight - widget.height
-															- widget.scrollY;
-												widget.scrollY += scrollAmount2;
-												interfaceState.inventoryDragStartY -= scrollAmount2;
-											}
-										} else if (interfaceState.pressedInventoryArea != 0
-												&& interfaceState.pressedInventorySlot == slot
-												&& interfaceState.pressedInventoryWidgetId == childWidget.id)
-											itemSprite.drawImageAlpha(slotX, slotY, 128);
-										else
-											itemSprite.drawImage(slotX, slotY);
-										if (itemSprite.maxWidth == 33 || childWidget.itemAmounts[slot] != 1) {
-											int itemAmount = childWidget.itemAmounts[slot];
-											smallFont.drawText(formatItemStackAmount(itemAmount),
-													slotX + 1 + dragOffsetX, slotY + 10 + dragOffsetY, 0);
-											smallFont.drawText(formatItemStackAmount(itemAmount), slotX + dragOffsetX,
-													slotY + 9 + dragOffsetY, 0xffff00);
-										}
-									}
-								}
-							} else if (childWidget.inventorySprites != null && slot < Widget.INVENTORY_SPRITE_OFFSET_COUNT) {
-								ImageRGB inventorySprite = childWidget.inventorySprites[slot];
-								if (inventorySprite != null)
-									inventorySprite.drawImage(slotX, slotY);
-							}
-							slot++;
-						}
-
-					}
-
-				} else if (childWidget.type == Widget.TYPE_RECTANGLE) {
-					boolean hovered = false;
-					if (chatboxHoveredWidgetId == childWidget.id || sidebarHoveredWidgetId == childWidget.id
-							|| viewportHoveredWidgetId == childWidget.id)
-						hovered = true;
-					int color;
-					if (widgetRuntime.isActive(childWidget)) {
-						color = childWidget.activeColor;
-						if (hovered && childWidget.activeMouseoverColor != 0)
-							color = childWidget.activeMouseoverColor;
-					} else {
-						color = childWidget.color;
-						if (hovered && childWidget.mouseoverColor != 0)
-							color = childWidget.mouseoverColor;
-					}
-					if (childWidget.transparency == 0) {
-						if (childWidget.filled)
-							Rasterizer.drawFilledRectangle(childX, childY, childWidget.width, childWidget.height,
-									color);
-						else
-							Rasterizer.drawUnfilledRectangle(childX, childY, childWidget.width, childWidget.height,
-									color);
-					} else if (childWidget.filled)
-						Rasterizer.drawFilledRectangleAlpha(childX, childY, childWidget.width, childWidget.height,
-								color, 256 - (childWidget.transparency & 0xff));
-					else
-						Rasterizer.drawUnfilledRectangleAlpha(childX, childY, childWidget.width, childWidget.height,
-								color, 256 - (childWidget.transparency & 0xff));
-				} else if (childWidget.type == Widget.TYPE_TEXT) {
-					TypeFace font = childWidget.font;
-					String widgetText = childWidget.text;
-					boolean hovered2 = false;
-					if (chatboxHoveredWidgetId == childWidget.id || sidebarHoveredWidgetId == childWidget.id
-							|| viewportHoveredWidgetId == childWidget.id)
-						hovered2 = true;
-					int textColor;
-					if (widgetRuntime.isActive(childWidget)) {
-						textColor = childWidget.activeColor;
-						if (hovered2 && childWidget.activeMouseoverColor != 0)
-							textColor = childWidget.activeMouseoverColor;
-						if (childWidget.activeText.length() > 0)
-							widgetText = childWidget.activeText;
-					} else {
-						textColor = childWidget.color;
-						if (hovered2 && childWidget.mouseoverColor != 0)
-							textColor = childWidget.mouseoverColor;
-					}
-					if (childWidget.buttonType == Widget.BUTTON_CONTINUE && interfaceActionPending) {
-						widgetText = "Please wait...";
-						textColor = childWidget.color;
-					}
-					if (Rasterizer.width == ClientLayout.CHATBOX_WIDTH) {
-						if (textColor == 0xffff00)
-							textColor = 255;
-						if (textColor == 49152)
-							textColor = 0xffffff;
-					}
-					for (int lineY = childY + font.lineHeight; widgetText.length() > 0; lineY += font.lineHeight) {
-						if (widgetText.indexOf("%") != -1) {
-							do {
-								int placeholderIndex = widgetText.indexOf("%1");
-								if (placeholderIndex == -1)
-									break;
-								widgetText = widgetText.substring(0, placeholderIndex)
-										+ formatWidgetScriptValue(widgetRuntime.evaluateScript(childWidget, 0))
-										+ widgetText.substring(placeholderIndex + 2);
-							} while (true);
-							do {
-								int placeholderIndex2 = widgetText.indexOf("%2");
-								if (placeholderIndex2 == -1)
-									break;
-								widgetText = widgetText.substring(0, placeholderIndex2)
-										+ formatWidgetScriptValue(widgetRuntime.evaluateScript(childWidget, 1))
-										+ widgetText.substring(placeholderIndex2 + 2);
-							} while (true);
-							do {
-								int placeholderIndex3 = widgetText.indexOf("%3");
-								if (placeholderIndex3 == -1)
-									break;
-								widgetText = widgetText.substring(0, placeholderIndex3)
-										+ formatWidgetScriptValue(widgetRuntime.evaluateScript(childWidget, 2))
-										+ widgetText.substring(placeholderIndex3 + 2);
-							} while (true);
-							do {
-								int placeholderIndex4 = widgetText.indexOf("%4");
-								if (placeholderIndex4 == -1)
-									break;
-								widgetText = widgetText.substring(0, placeholderIndex4)
-										+ formatWidgetScriptValue(widgetRuntime.evaluateScript(childWidget, 3))
-										+ widgetText.substring(placeholderIndex4 + 2);
-							} while (true);
-							do {
-								int placeholderIndex5 = widgetText.indexOf("%5");
-								if (placeholderIndex5 == -1)
-									break;
-								widgetText = widgetText.substring(0, placeholderIndex5)
-										+ formatWidgetScriptValue(widgetRuntime.evaluateScript(childWidget, 4))
-										+ widgetText.substring(placeholderIndex5 + 2);
-							} while (true);
-						}
-						int lineBreakIndex = widgetText.indexOf("\\n");
-						String lineText;
-						if (lineBreakIndex != -1) {
-							lineText = widgetText.substring(0, lineBreakIndex);
-							widgetText = widgetText.substring(lineBreakIndex + 2);
-						} else {
-							lineText = widgetText;
-							widgetText = "";
-						}
-						if (childWidget.textCentered)
-							font.drawCenteredTextWithTags(lineText, childX + childWidget.width / 2, lineY, textColor,
-									childWidget.textShadowed);
-						else
-							font.drawTextWithTags(lineText, childX, lineY, textColor, childWidget.textShadowed);
-					}
-
-				} else if (childWidget.type == Widget.TYPE_SPRITE) {
-					ImageRGB sprite;
-					if (widgetRuntime.isActive(childWidget))
-						sprite = childWidget.activeSprite;
-					else
-						sprite = childWidget.sprite;
-					if (sprite != null)
-						sprite.drawImage(childX, childY);
-				} else if (childWidget.type == Widget.TYPE_MODEL) {
-					int previousCenterX = Rasterizer3D.centerX;
-					int previousCenterY = Rasterizer3D.centerY;
-					Rasterizer3D.centerX = childX + childWidget.width / 2;
-					Rasterizer3D.centerY = childY + childWidget.height / 2;
-					int pitchSineOffset = Rasterizer3D.SINE[childWidget.modelPitch] * childWidget.modelZoom >> 16;
-					int pitchCosineOffset = Rasterizer3D.COSINE[childWidget.modelPitch] * childWidget.modelZoom >> 16;
-					boolean active = widgetRuntime.isActive(childWidget);
-					int animationId;
-					if (active)
-						animationId = childWidget.activeAnimationId;
-					else
-						animationId = childWidget.animationId;
-					Model model;
-					if (animationId == -1) {
-						model = childWidget.getAnimatedModel(-1, -1, active);
-					} else {
-						AnimationSequence sequence = AnimationSequence.sequences[animationId];
-						model = childWidget.getAnimatedModel(sequence.primaryFrameIds[childWidget.animationFrame],
-								sequence.secondaryFrameIds[childWidget.animationFrame], active);
-					}
-					if (model != null)
-						model.renderSimple(0, childWidget.modelYaw, 0, childWidget.modelPitch, 0, pitchSineOffset,
-								pitchCosineOffset);
-					Rasterizer3D.centerX = previousCenterX;
-					Rasterizer3D.centerY = previousCenterY;
-				} else {
-					if (childWidget.type == Widget.TYPE_INVENTORY_TEXT) {
-						TypeFace font2 = childWidget.font;
-						int slot2 = 0;
-						for (int row2 = 0; row2 < childWidget.height; row2++) {
-							for (int column2 = 0; column2 < childWidget.width; column2++) {
-								if (childWidget.itemIds[slot2] > 0) {
-									ItemDefinition itemDefinition = ItemDefinition
-											.lookup(childWidget.itemIds[slot2] - 1);
-									String itemText = String.valueOf(itemDefinition.name);
-									if (itemDefinition.stackable || childWidget.itemAmounts[slot2] != 1)
-										itemText = itemText + " x"
-												+ formatAmountWithCommas(childWidget.itemAmounts[slot2]);
-									int itemX = childX + column2 * (115 + childWidget.inventorySpritePaddingX);
-									int itemY = childY + row2 * (12 + childWidget.inventorySpritePaddingY);
-									if (childWidget.textCentered)
-										font2.drawCenteredTextWithTags(itemText, itemX + childWidget.width / 2, itemY,
-												childWidget.color, childWidget.textShadowed);
-									else
-										font2.drawTextWithTags(itemText, itemX, itemY, childWidget.color,
-												childWidget.textShadowed);
-								}
-								slot2++;
-							}
-
-						}
-
-					}
-					if (childWidget.type == Widget.TYPE_TOOLTIP && (chatboxTooltipWidgetId == childWidget.id
-							|| sidebarTooltipWidgetId == childWidget.id || viewportTooltipWidgetId == childWidget.id)
-							&& tooltipHoverTicks == 100) {
-						int tooltipWidth = 0;
-						int tooltipHeight = 0;
-						TypeFace font3 = plainFont;
-						for (String remainingText = childWidget.text; remainingText.length() > 0;) {
-							int lineBreakIndex2 = remainingText.indexOf("\\n");
-							String lineText2;
-							if (lineBreakIndex2 != -1) {
-								lineText2 = remainingText.substring(0, lineBreakIndex2);
-								remainingText = remainingText.substring(lineBreakIndex2 + 2);
-							} else {
-								lineText2 = remainingText;
-								remainingText = "";
-							}
-							int lineWidth = font3.getFormattedTextWidth(lineText2);
-							if (lineWidth > tooltipWidth)
-								tooltipWidth = lineWidth;
-							tooltipHeight += font3.lineHeight + 1;
-						}
-
-						tooltipWidth += 6;
-						tooltipHeight += 7;
-						int tooltipX = (childX + childWidget.width) - 5 - tooltipWidth;
-						int tooltipY = childY + childWidget.height + 5;
-						if (tooltipX < childX + 5)
-							tooltipX = childX + 5;
-						if (tooltipX + tooltipWidth > x + widget.width)
-							tooltipX = (x + widget.width) - tooltipWidth;
-						if (tooltipY + tooltipHeight > y + widget.height)
-							tooltipY = (y + widget.height) - tooltipHeight;
-						Rasterizer.drawFilledRectangle(tooltipX, tooltipY, tooltipWidth, tooltipHeight, 0xffffa0);
-						Rasterizer.drawUnfilledRectangle(tooltipX, tooltipY, tooltipWidth, tooltipHeight, 0);
-						String remainingText2 = childWidget.text;
-						for (int textY = tooltipY + font3.lineHeight + 2; remainingText2
-								.length() > 0; textY += font3.lineHeight + 1) {
-							int lineBreakIndex3 = remainingText2.indexOf("\\n");
-							String lineText3;
-							if (lineBreakIndex3 != -1) {
-								lineText3 = remainingText2.substring(0, lineBreakIndex3);
-								remainingText2 = remainingText2.substring(lineBreakIndex3 + 2);
-							} else {
-								lineText3 = remainingText2;
-								remainingText2 = "";
-							}
-							font3.drawTextWithTags(lineText3, tooltipX + 3, textY, 0, false);
-						}
-
-					}
-				}
-		}
-
-		Rasterizer.setCoordinates(previousClipLeft, previousClipTop, previousClipRight, previousClipBottom);
+		widgetRenderer.drawInterface(new WidgetRenderer.RenderContext(super.mouseX, super.mouseY, animationCycleDelta, smallFont, plainFont,
+				scrollbarTop, scrollbarBottom, scrollbarTrackColor, scrollbarThumbColor, scrollbarHighlightColor,
+				scrollbarShadowColor), y, x, widget, scrollY);
 	}
 
 	/**
@@ -7360,7 +5914,6 @@ public class Client extends GameShell {
 	 * callbacks.
 	 */
 	public Client() {
-		reportAbuseName = "";
 		skillExperiences = new int[Skills.COUNT];
 		itemSearchQuery = "";
 		itemSearchResultNames = new String[100];
@@ -7370,8 +5923,8 @@ public class Client extends GameShell {
 		networkSession = new NetworkSession();
 		socialManager = new SocialManager();
 		chatController = new ChatController();
-		interfaceState = new InterfaceState();
-		menuState = new MenuState();
+		interfaceController = new InterfaceController();
+		menuController = new MenuController(layout, interfaceController, socialManager, chatController, () -> mouseButtonHoldTicks, interfaceRedrawSink);
 		loginScreen = new LoginScreen();
 		titleFlameAnimator = new TitleFlameAnimator();
 		appearanceEditor = new AppearanceEditor();
@@ -7400,6 +5953,7 @@ public class Client extends GameShell {
 				() -> (localPlayer.y >> 7) + regionManager.baseY,
 				() -> membersWorld);
 		widgetRuntime = new WidgetRuntime(scriptContext);
+		widgetRenderer = new WidgetRenderer(interfaceController, widgetRuntime, this::updateWidgetContent);
 		loginBuffer = new Buffer(new byte[5000]);
 		scrollbarTrackColor = 0x23201b;
 		projectedX = -1;
@@ -7429,8 +5983,8 @@ public class Client extends GameShell {
 		prayerIconSprites = new ImageRGB[32];
 		scrollbarThumbColor = 0x4d4233;
 		invalidHostError = false;
-		reportAbuseMutePlayer = false;
-		scrollbarDragging = false;
+		interfaceController.setReportAbuseMutePlayer(false);
+		interfaceController.setScrollbarDragging(false);
 		chatBuffer = new Buffer(new byte[5000]);
 		scrollbarHighlightColor = 0x766654;
 		loggedIn = false;
@@ -7443,7 +5997,7 @@ public class Client extends GameShell {
 		hitmarkSprites = new ImageRGB[20];
 		regionManager.awaitingPlayerUpdate = false;
 		chatModesRedraw = false;
-		interfaceActionPending = false;
+		interfaceController.setActionPending(false);
 		chatboxRedraw = false;
 		textureScrollScratch = new byte[16384];
 		chatboxScrollWidget = new Widget();
@@ -7457,7 +6011,6 @@ public class Client extends GameShell {
 	}
 
 	/** The client state for report abuse name. */
-	public String reportAbuseName;
 	/** The RSA modulus used by the revision-377 login handshake. */
 	public static BigInteger RSA_MODULUS = new BigInteger(
 			"7162900525229798032761816791230527296329313291232324290237849263501208207972894053929065636522363163621000728841182238772712427862772219676577293600221789");
@@ -7513,7 +6066,6 @@ public class Client extends GameShell {
 	 * Tracks the current tooltip hover ticks in client ticks/cycles where
 	 * applicable.
 	 */
-	public int tooltipHoverTicks;
 	/**
 	 * Counts system update keepalive events for the original client timing/protocol
 	 * behavior.
@@ -7543,7 +6095,6 @@ public class Client extends GameShell {
 	/** The graphics or protocol buffer used for back horizontal middle2 buffer. */
 	public GraphicsBuffer backHorizontalMiddle2Buffer;
 	/** The current current hovered widget id. */
-	public int currentHoveredWidgetId;
 
 	/** Stores minimap mask widths values. */
 	public int minimapMaskWidths[];
@@ -7617,9 +6168,31 @@ public class Client extends GameShell {
 	/** Owns chat history, modes, text input, prompts, and chat scrolling. */
 	private final ChatController chatController;
 	/** The client state for interface state. */
-	private final InterfaceState interfaceState;
+	private final InterfaceController interfaceController;
+	/** Receives interface-controller redraw requests. */
+	private final InterfaceController.RedrawSink interfaceRedrawSink = new InterfaceController.RedrawSink() {
+		@Override
+		public void redrawSidebar() {
+			sidebarRedraw = true;
+		}
+
+		@Override
+		public void redrawTabs() {
+			tabAreaRedraw = true;
+		}
+
+		@Override
+		public void redrawChatbox() {
+			chatboxRedraw = true;
+		}
+
+		@Override
+		public void redrawGameScreen() {
+			gameScreenRedraw = true;
+		}
+	};
 	/** The client state for menu state. */
-	private final MenuState menuState;
+	private final MenuController menuController;
 	/** The client state for login screen. */
 	private final LoginScreen loginScreen;
 	/** Owns title-flame simulation state and its animation worker. */
@@ -7634,6 +6207,8 @@ public class Client extends GameShell {
 	private final MusicController musicController;
 	/** The client state for widget runtime. */
 	private final WidgetRuntime widgetRuntime;
+	/** Draws cache-defined widget trees and classic scrollbars. */
+	private final WidgetRenderer widgetRenderer;
 	/** The client state for pathfinder. */
 	private final Pathfinder pathfinder;
 	/** The client state for actor synchronizer. */
@@ -7767,7 +6342,6 @@ public class Client extends GameShell {
 	public ImageRGB hintMapMarker;
 
 	/** The current sidebar tooltip widget id. */
-	public int sidebarTooltipWidgetId;
 	/** Whether game screen redraw is currently active or requested. */
 	public boolean gameScreenRedraw;
 	/**
@@ -7824,7 +6398,6 @@ public class Client extends GameShell {
 	/** Whether invalid host error is currently active or requested. */
 	public boolean invalidHostError;
 	/** Whether report abuse mute player is currently active or requested. */
-	public boolean reportAbuseMutePlayer;
 
 	/**
 	 * Counts ground item action26 events for the original client timing/protocol
@@ -7836,7 +6409,6 @@ public class Client extends GameShell {
 	 */
 	public int titleFlameCycle;
 	/** The current chatbox hovered widget id. */
-	public int chatboxHoveredWidgetId;
 	/** The graphics or protocol buffer used for chat modes buffer. */
 	public GraphicsBuffer chatModesBuffer;
 	/** The graphics or protocol buffer used for bottom tabs buffer. */
@@ -7853,9 +6425,7 @@ public class Client extends GameShell {
 	/** The client state for alternative route. */
 	public int alternativeRoute;
 	/** Whether scrollbar dragging is currently active or requested. */
-	public boolean scrollbarDragging;
 	/** The current viewport tooltip widget id. */
-	public int viewportTooltipWidgetId;
 	/** The graphics or protocol buffer used for chat buffer. */
 	public Buffer chatBuffer;
 	/** The client state for scrollbar highlight color. */
@@ -7960,7 +6530,6 @@ public class Client extends GameShell {
 	 */
 	public static int screenRedrawKeepaliveCounter;
 	/** Whether interface action pending is currently active or requested. */
-	public boolean interfaceActionPending;
 	/** Whether chatbox redraw is currently active or requested. */
 	public boolean chatboxRedraw;
 	/** The client state for last login ip. */
@@ -7988,11 +6557,9 @@ public class Client extends GameShell {
 	/** The client state for last minimap plane. */
 	public int lastMinimapPlane;
 	/** The current sidebar hovered widget id. */
-	public int sidebarHoveredWidgetId;
 	/** Whether loading error is currently active or requested. */
 	public boolean loadingError;
 	/** The current chatbox tooltip widget id. */
-	public int chatboxTooltipWidgetId;
 
 	/** Stores compass mask widths values. */
 	public int compassMaskWidths[];
@@ -8015,9 +6582,7 @@ public class Client extends GameShell {
 	/** The client state for one button mouse mode. */
 	public int oneButtonMouseMode;
 	/** The current viewport hovered widget id. */
-	public int viewportHoveredWidgetId;
 	/** The client state for scrollbar drag padding. */
-	public int scrollbarDragPadding;
 	/** Tracks the current draw cycle in client ticks/cycles where applicable. */
 	public static int drawCycle;
 
@@ -8025,7 +6590,6 @@ public class Client extends GameShell {
 
 
 	/** The current current tooltip widget id. */
-	public int currentTooltipWidgetId;
 
 	/** The RSA public exponent used by the revision-377 login handshake. */
 	public static BigInteger RSA_EXPONENT = new BigInteger(

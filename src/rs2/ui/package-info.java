@@ -1,12 +1,13 @@
 /**
- * Contains mutable interface state and runtime processing for cache-defined
- * widgets.
+ * Contains revision-377 interface lifecycle, interaction state, widget runtime
+ * processing, and widget rendering.
  *
  * <p>
- * The package owns widget selection and dragging state, CS1 evaluation,
- * character-appearance editing, and the narrow client-state view supplied to
- * widget scripts. Rendering remains coordinated by the top-level client until
- * later decomposition phases.
+ * {@link rs2.ui.InterfaceController} owns interface selection, hover/tooltip,
+ * scrollbar, report-abuse, and content-action state. {@link rs2.ui.WidgetRuntime}
+ * evaluates cache-defined CS1 scripts, while {@link rs2.ui.WidgetRenderer}
+ * recursively renders widget trees and scrollbars. Character appearance editing
+ * and the narrow widget-script view of client state also live in this package.
  * </p>
  */
 package rs2.ui;
