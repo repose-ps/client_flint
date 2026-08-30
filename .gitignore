@@ -35,3 +35,5 @@ rscache/*
 /.mvn/wrapper/dists/
 /rscache/
 
+# javadocs
+flint-client-javadocs/*

@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.image.BufferedImage;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -87,6 +88,10 @@ import rs2.ui.login.LoginScreen;
  */
 public class Client extends GameShell {
 
+	private final ClientLayout layout = new ClientLayout();
+	/** Complete client frame composed off-screen before one AWT presentation blit. */
+	private BufferedImage presentationBuffer;
+
 	/**
 	 * Searches loaded item definitions for names containing all supplied query
 	 * terms.
@@ -143,18 +148,19 @@ public class Client extends GameShell {
 		if (super.clickButton != 1)
 			return;
 
+		int clickY = super.clickY - layout.extraHeight();
 		boolean changed = false;
 
-		if (super.clickX >= 6 && super.clickX <= 106 && super.clickY >= 467 && super.clickY <= 499) {
+		if (super.clickX >= 6 && super.clickX <= 106 && clickY >= 467 && clickY <= 499) {
 			publicChatMode = (publicChatMode + 1) % 4;
 			changed = true;
-		} else if (super.clickX >= 135 && super.clickX <= 235 && super.clickY >= 467 && super.clickY <= 499) {
+		} else if (super.clickX >= 135 && super.clickX <= 235 && clickY >= 467 && clickY <= 499) {
 			privateChatMode = (privateChatMode + 1) % 3;
 			changed = true;
-		} else if (super.clickX >= 273 && super.clickX <= 373 && super.clickY >= 467 && super.clickY <= 499) {
+		} else if (super.clickX >= 273 && super.clickX <= 373 && clickY >= 467 && clickY <= 499) {
 			tradeMode = (tradeMode + 1) % 3;
 			changed = true;
-		} else if (super.clickX >= 412 && super.clickX <= 512 && super.clickY >= 467 && super.clickY <= 499) {
+		} else if (super.clickX >= 412 && super.clickX <= 512 && clickY >= 467 && clickY <= 499) {
 			if (interfaceState.openInterfaceId == -1) {
 				closeInterfaces();
 				reportAbuseName = "";
@@ -429,85 +435,87 @@ public class Client extends GameShell {
 	 */
 	public void processTabClick() {
 		if (super.clickButton == 1) {
-			if (super.clickX >= 539 && super.clickX <= 573 && super.clickY >= 169 && super.clickY < 205
+			int clickX = super.clickX - layout.extraWidth();
+			int clickY = super.clickY;
+			if (clickX >= 539 && clickX <= 573 && clickY >= 169 && clickY < 205
 					&& interfaceState.tabInterfaceIds[0] != -1) {
 				sidebarRedraw = true;
 				interfaceState.selectedTab = 0;
 				tabAreaRedraw = true;
 			}
-			if (super.clickX >= 569 && super.clickX <= 599 && super.clickY >= 168 && super.clickY < 205
+			if (clickX >= 569 && clickX <= 599 && clickY >= 168 && clickY < 205
 					&& interfaceState.tabInterfaceIds[1] != -1) {
 				sidebarRedraw = true;
 				interfaceState.selectedTab = 1;
 				tabAreaRedraw = true;
 			}
-			if (super.clickX >= 597 && super.clickX <= 627 && super.clickY >= 168 && super.clickY < 205
+			if (clickX >= 597 && clickX <= 627 && clickY >= 168 && clickY < 205
 					&& interfaceState.tabInterfaceIds[2] != -1) {
 				sidebarRedraw = true;
 				interfaceState.selectedTab = 2;
 				tabAreaRedraw = true;
 			}
-			if (super.clickX >= 625 && super.clickX <= 669 && super.clickY >= 168 && super.clickY < 203
+			if (clickX >= 625 && clickX <= 669 && clickY >= 168 && clickY < 203
 					&& interfaceState.tabInterfaceIds[3] != -1) {
 				sidebarRedraw = true;
 				interfaceState.selectedTab = 3;
 				tabAreaRedraw = true;
 			}
-			if (super.clickX >= 666 && super.clickX <= 696 && super.clickY >= 168 && super.clickY < 205
+			if (clickX >= 666 && clickX <= 696 && clickY >= 168 && clickY < 205
 					&& interfaceState.tabInterfaceIds[4] != -1) {
 				sidebarRedraw = true;
 				interfaceState.selectedTab = 4;
 				tabAreaRedraw = true;
 			}
-			if (super.clickX >= 694 && super.clickX <= 724 && super.clickY >= 168 && super.clickY < 205
+			if (clickX >= 694 && clickX <= 724 && clickY >= 168 && clickY < 205
 					&& interfaceState.tabInterfaceIds[5] != -1) {
 				sidebarRedraw = true;
 				interfaceState.selectedTab = 5;
 				tabAreaRedraw = true;
 			}
-			if (super.clickX >= 722 && super.clickX <= 756 && super.clickY >= 169 && super.clickY < 205
+			if (clickX >= 722 && clickX <= 756 && clickY >= 169 && clickY < 205
 					&& interfaceState.tabInterfaceIds[6] != -1) {
 				sidebarRedraw = true;
 				interfaceState.selectedTab = 6;
 				tabAreaRedraw = true;
 			}
-			if (super.clickX >= 540 && super.clickX <= 574 && super.clickY >= 466 && super.clickY < 502
+			if (clickX >= 540 && clickX <= 574 && clickY >= 466 && clickY < 502
 					&& interfaceState.tabInterfaceIds[7] != -1) {
 				sidebarRedraw = true;
 				interfaceState.selectedTab = 7;
 				tabAreaRedraw = true;
 			}
-			if (super.clickX >= 572 && super.clickX <= 602 && super.clickY >= 466 && super.clickY < 503
+			if (clickX >= 572 && clickX <= 602 && clickY >= 466 && clickY < 503
 					&& interfaceState.tabInterfaceIds[8] != -1) {
 				sidebarRedraw = true;
 				interfaceState.selectedTab = 8;
 				tabAreaRedraw = true;
 			}
-			if (super.clickX >= 599 && super.clickX <= 629 && super.clickY >= 466 && super.clickY < 503
+			if (clickX >= 599 && clickX <= 629 && clickY >= 466 && clickY < 503
 					&& interfaceState.tabInterfaceIds[9] != -1) {
 				sidebarRedraw = true;
 				interfaceState.selectedTab = 9;
 				tabAreaRedraw = true;
 			}
-			if (super.clickX >= 627 && super.clickX <= 671 && super.clickY >= 467 && super.clickY < 502
+			if (clickX >= 627 && clickX <= 671 && clickY >= 467 && clickY < 502
 					&& interfaceState.tabInterfaceIds[10] != -1) {
 				sidebarRedraw = true;
 				interfaceState.selectedTab = 10;
 				tabAreaRedraw = true;
 			}
-			if (super.clickX >= 669 && super.clickX <= 699 && super.clickY >= 466 && super.clickY < 503
+			if (clickX >= 669 && clickX <= 699 && clickY >= 466 && clickY < 503
 					&& interfaceState.tabInterfaceIds[11] != -1) {
 				sidebarRedraw = true;
 				interfaceState.selectedTab = 11;
 				tabAreaRedraw = true;
 			}
-			if (super.clickX >= 696 && super.clickX <= 726 && super.clickY >= 466 && super.clickY < 503
+			if (clickX >= 696 && clickX <= 726 && clickY >= 466 && clickY < 503
 					&& interfaceState.tabInterfaceIds[12] != -1) {
 				sidebarRedraw = true;
 				interfaceState.selectedTab = 12;
 				tabAreaRedraw = true;
 			}
-			if (super.clickX >= 724 && super.clickX <= 758 && super.clickY >= 466 && super.clickY < 502
+			if (clickX >= 724 && clickX <= 758 && clickY >= 466 && clickY < 502
 					&& interfaceState.tabInterfaceIds[13] != -1) {
 				sidebarRedraw = true;
 				interfaceState.selectedTab = 13;
@@ -2534,24 +2542,25 @@ public class Client extends GameShell {
 		if (interfaceState.inventoryDragArea != 0)
 			return;
 		int clickButton = super.clickButton;
-		if (interfaceState.spellSelected == 1 && super.clickX >= 516 && super.clickY >= 160 && super.clickX <= 765
-				&& super.clickY <= 205)
+		if (interfaceState.spellSelected == 1
+				&& super.clickX >= layout.topTabsX() && super.clickY >= layout.topTabsY()
+				&& super.clickX <= layout.topTabsX() + 249 && super.clickY <= layout.topTabsY() + 45)
 			clickButton = 0;
 		if (menuState.open) {
 			if (clickButton != 1) {
 				int menuMouseX = super.mouseX;
 				int menuMouseY = super.mouseY;
 				if (menuState.screenArea == 0) {
-					menuMouseX -= 4;
-					menuMouseY -= 4;
+					menuMouseX -= layout.viewportX();
+					menuMouseY -= layout.viewportY();
 				}
 				if (menuState.screenArea == 1) {
-					menuMouseX -= 553;
-					menuMouseY -= 205;
+					menuMouseX -= layout.sidebarX();
+					menuMouseY -= layout.sidebarY();
 				}
 				if (menuState.screenArea == 2) {
-					menuMouseX -= 17;
-					menuMouseY -= 357;
+					menuMouseX -= layout.chatboxX();
+					menuMouseY -= layout.chatboxY();
 				}
 				if (menuMouseX < menuState.offsetX - 10 || menuMouseX > menuState.offsetX + menuState.width + 10
 						|| menuMouseY < menuState.offsetY - 10
@@ -2570,16 +2579,16 @@ public class Client extends GameShell {
 				int clickX = super.clickX;
 				int clickY = super.clickY;
 				if (menuState.screenArea == 0) {
-					clickX -= 4;
-					clickY -= 4;
+					clickX -= layout.viewportX();
+					clickY -= layout.viewportY();
 				}
 				if (menuState.screenArea == 1) {
-					clickX -= 553;
-					clickY -= 205;
+					clickX -= layout.sidebarX();
+					clickY -= layout.sidebarY();
 				}
 				if (menuState.screenArea == 2) {
-					clickX -= 17;
-					clickY -= 357;
+					clickX -= layout.chatboxX();
+					clickY -= layout.chatboxY();
 				}
 				int selectedEntry = -1;
 				for (int entryIndex = 0; entryIndex < menuState.count; entryIndex++) {
@@ -3199,17 +3208,7 @@ public class Client extends GameShell {
 			chatboxScanlineOffsets = Rasterizer3D.scanlineOffsets;
 			Rasterizer3D.setBounds(190, 261);
 			sidebarScanlineOffsets = Rasterizer3D.scanlineOffsets;
-			Rasterizer3D.setBounds(512, 334);
-			viewportScanlineOffsets = Rasterizer3D.scanlineOffsets;
-			int visibilityPitchHeights[] = new int[9];
-			for (int pitchIndex = 0; pitchIndex < 9; pitchIndex++) {
-				int pitchAngle = 128 + pitchIndex * 32 + 15;
-				int projectionDistance = 600 + pitchAngle * 3;
-				int pitchSine = Rasterizer3D.SINE[pitchAngle];
-				visibilityPitchHeights[pitchIndex] = projectionDistance * pitchSine >> 16;
-			}
-
-			Scene.buildVisibilityMaps(500, 800, 512, 334, visibilityPitchHeights);
+			rebuildViewportProjection();
 			Censor.load(wordEncodingArchive);
 			mouseRecorder = new MouseRecorder(this);
 			mouseRecorder.start(10);
@@ -3525,26 +3524,14 @@ public class Client extends GameShell {
 		 * window has been obscured or moved off-screen.
 		 */
 		createGameScreenBuffers();
-		backLeft1Buffer.draw(super.graphics, 0, 4);
-		backLeft2Buffer.draw(super.graphics, 0, 357);
-		backRight1Buffer.draw(super.graphics, 722, 4);
-		backRight2Buffer.draw(super.graphics, 743, 205);
-		backTop1Buffer.draw(super.graphics, 0, 0);
-		backVerticalMiddle1Buffer.draw(super.graphics, 516, 4);
-		backVerticalMiddle2Buffer.draw(super.graphics, 516, 205);
-		backVerticalMiddle3Buffer.draw(super.graphics, 496, 357);
-		backHorizontalMiddle2Buffer.draw(super.graphics, 0, 338);
-
 		// Re-raster and present every fixed UI panel on every draw cycle.
 		sidebarRedraw = true;
 		chatboxRedraw = true;
 		tabAreaRedraw = true;
 		chatModesRedraw = true;
 
-		if (regionManager.loadingStage != RegionManager.STAGE_LOADED) {
-			viewportBuffer.draw(super.graphics, 4, 4);
-			minimapBuffer.draw(super.graphics, 550, 4);
-		}
+		if (regionManager.loadingStage != RegionManager.STAGE_LOADED)
+			viewportBuffer.draw(super.graphics, layout.viewportX(), layout.viewportY());
 
 		/*
 		 * Keep the legacy redraw-triggered packet cadence separate from the new
@@ -3561,6 +3548,16 @@ public class Client extends GameShell {
 		}
 		if (regionManager.loadingStage == RegionManager.STAGE_LOADED)
 			renderGameScene();
+
+		/*
+		 * The game viewport is the background layer in resizable mode. Draw the
+		 * classic frame pieces after it so their stone borders remain visible, then
+		 * composite the fixed-size UI panels on top below.
+		 */
+		drawGameFrameDecorations();
+		if (regionManager.loadingStage != RegionManager.STAGE_LOADED)
+			minimapBuffer.draw(super.graphics, layout.minimapX(), layout.minimapY());
+
 		if (menuState.open && menuState.screenArea == 1)
 			sidebarRedraw = true;
 		if (interfaceState.sidebarOverlayInterfaceId != -1) {
@@ -3579,9 +3576,9 @@ public class Client extends GameShell {
 		}
 		if (interfaceState.chatboxInterfaceId == -1 && inputDialogState == 0) {
 			chatboxScrollWidget.scrollY = chatContentHeight - chatScrollOffset - 77;
-			if (super.mouseX > 448 && super.mouseX < 560 && super.mouseY > 332)
-				handleScrollbarInput(chatContentHeight, 0, chatboxScrollWidget, super.mouseY - 357, -1,
-						super.mouseX - 17, 77, 463);
+			if (super.mouseX > 448 && super.mouseX < 560 && super.mouseY > layout.chatboxY() - 25)
+				handleScrollbarInput(chatContentHeight, 0, chatboxScrollWidget, super.mouseY - layout.chatboxY(), -1,
+						super.mouseX - layout.chatboxX(), 77, 463);
 			int chatScrollOffsetFromBottom = chatContentHeight - 77 - chatboxScrollWidget.scrollY;
 			if (chatScrollOffsetFromBottom < 0)
 				chatScrollOffsetFromBottom = 0;
@@ -3595,9 +3592,9 @@ public class Client extends GameShell {
 		if (interfaceState.chatboxInterfaceId == -1 && inputDialogState == 3) {
 			int searchContentHeight = itemSearchResultCount * 14 + 7;
 			chatboxScrollWidget.scrollY = itemSearchScrollOffset;
-			if (super.mouseX > 448 && super.mouseX < 560 && super.mouseY > 332)
-				handleScrollbarInput(searchContentHeight, 0, chatboxScrollWidget, super.mouseY - 357, -1,
-						super.mouseX - 17, 77, 463);
+			if (super.mouseX > 448 && super.mouseX < 560 && super.mouseY > layout.chatboxY() - 25)
+				handleScrollbarInput(searchContentHeight, 0, chatboxScrollWidget, super.mouseY - layout.chatboxY(), -1,
+						super.mouseX - layout.chatboxX(), 77, 463);
 			int clampedSearchScroll = chatboxScrollWidget.scrollY;
 			if (clampedSearchScroll < 0)
 				clampedSearchScroll = 0;
@@ -3628,7 +3625,7 @@ public class Client extends GameShell {
 		}
 		if (regionManager.loadingStage == RegionManager.STAGE_LOADED) {
 			drawMinimap();
-			minimapBuffer.draw(super.graphics, 550, 4);
+			minimapBuffer.draw(super.graphics, layout.minimapX(), layout.minimapY());
 		}
 		if (interfaceState.flashingTab != -1)
 			tabAreaRedraw = true;
@@ -3672,7 +3669,7 @@ public class Client extends GameShell {
 				if (interfaceState.tabInterfaceIds[6] != -1 && (interfaceState.flashingTab != 6 || gameCycle % 20 < 10))
 					sidebarIcons[6].draw(208, 13);
 			}
-			topTabsBuffer.draw(super.graphics, 516, 160);
+			topTabsBuffer.draw(super.graphics, layout.topTabsX(), layout.topTabsY());
 			bottomTabsBuffer.bindRaster();
 			bottomTabBackground.draw(0, 0);
 			if (interfaceState.sidebarOverlayInterfaceId == -1) {
@@ -3709,7 +3706,7 @@ public class Client extends GameShell {
 						&& (interfaceState.flashingTab != 13 || gameCycle % 20 < 10))
 					sidebarIcons[12].draw(226, 2);
 			}
-			bottomTabsBuffer.draw(super.graphics, 496, 466);
+			bottomTabsBuffer.draw(super.graphics, layout.bottomTabsX(), layout.bottomTabsY());
 			viewportBuffer.bindRaster();
 			Rasterizer3D.scanlineOffsets = viewportScanlineOffsets;
 		}
@@ -3741,11 +3738,27 @@ public class Client extends GameShell {
 			if (tradeMode == 2)
 				plainFont.drawCenteredTextWithTags("Off", 324, 41, 0xff0000, true);
 			plainFont.drawCenteredTextWithTags("Report abuse", 458, 33, 0xffffff, true);
-			chatModesBuffer.draw(super.graphics, 0, 453);
+			chatModesBuffer.draw(super.graphics, layout.chatModesX(), layout.chatModesY());
 			viewportBuffer.bindRaster();
 			Rasterizer3D.scanlineOffsets = viewportScanlineOffsets;
 		}
 		animationCycleDelta = 0;
+	}
+
+	/** Draws the classic fixed-size frame pieces over the resizable world underlay. */
+	private void drawGameFrameDecorations() {
+		// Viewport/top-left and bottom-chat framing.
+		backLeft1Buffer.draw(super.graphics, 0, 4);
+		backLeft2Buffer.draw(super.graphics, 0, layout.bottomAnchoredY(357));
+		backTop1Buffer.draw(super.graphics, 0, 0);
+		backHorizontalMiddle2Buffer.draw(super.graphics, 0, layout.lowerBorderY());
+
+		// The complete classic right-hand frame now moves as one top-anchored dock.
+		backRight1Buffer.draw(super.graphics, layout.rightAnchoredX(722), 4);
+		backRight2Buffer.draw(super.graphics, layout.rightAnchoredX(743), 205);
+		backVerticalMiddle1Buffer.draw(super.graphics, layout.middleBorderX(), 4);
+		backVerticalMiddle2Buffer.draw(super.graphics, layout.middleBorderX(), 205);
+		backVerticalMiddle3Buffer.draw(super.graphics, layout.rightAnchoredX(496), 357);
 	}
 
 	/**
@@ -3773,7 +3786,7 @@ public class Client extends GameShell {
 				}
 				if ((messageType == 3 || messageType == 7) && (messageType == 7 || privateChatMode == 0
 						|| privateChatMode == 1 && isFriendOrSelf(sender))) {
-					int lineY = 329 - visibleLine * 13;
+					int lineY = layout.unobscuredViewportHeight() - 5 - visibleLine * 13;
 					int textX = 4;
 					font.drawText("From", textX, lineY, 0);
 					font.drawText("From", textX, lineY - 1, 65535);
@@ -3792,14 +3805,14 @@ public class Client extends GameShell {
 						return;
 				}
 				if (messageType == 5 && privateChatMode < 2) {
-					int lineY2 = 329 - visibleLine * 13;
+					int lineY2 = layout.unobscuredViewportHeight() - 5 - visibleLine * 13;
 					font.drawText(chatHistory.messages[messageIndex], 4, lineY2, 0);
 					font.drawText(chatHistory.messages[messageIndex], 4, lineY2 - 1, 65535);
 					if (++visibleLine >= 5)
 						return;
 				}
 				if (messageType == 6 && privateChatMode < 2) {
-					int lineY3 = 329 - visibleLine * 13;
+					int lineY3 = layout.unobscuredViewportHeight() - 5 - visibleLine * 13;
 					font.drawText("To " + sender + ": " + chatHistory.messages[messageIndex], 4, lineY3, 0);
 					font.drawText("To " + sender + ": " + chatHistory.messages[messageIndex], 4, lineY3 - 1, 65535);
 					if (++visibleLine >= 5)
@@ -4529,7 +4542,7 @@ public class Client extends GameShell {
 		}
 		if (menuState.open && menuState.screenArea == 2)
 			drawContextMenu();
-		chatboxBuffer.draw(super.graphics, 17, 357);
+		chatboxBuffer.draw(super.graphics, layout.chatboxX(), layout.chatboxY());
 		viewportBuffer.bindRaster();
 		Rasterizer3D.scanlineOffsets = viewportScanlineOffsets;
 	}
@@ -4659,10 +4672,13 @@ public class Client extends GameShell {
 		buildSplitPrivateChatMenu();
 		currentHoveredWidgetId = 0;
 		currentTooltipWidgetId = 0;
-		if (super.mouseX > 4 && super.mouseY > 4 && super.mouseX < 516 && super.mouseY < 338)
-			if (interfaceState.openInterfaceId != -1)
-				buildInterfaceMenu(4, Widget.get(interfaceState.openInterfaceId), 0, 0, 4, super.mouseX, super.mouseY);
-			else
+		if (layout.isViewportInteractionPoint(super.mouseX, super.mouseY))
+			if (interfaceState.openInterfaceId != -1) {
+				Widget openInterface = Widget.get(interfaceState.openInterfaceId);
+				int interfaceX = layout.viewportX() + layout.centeredInterfaceX(openInterface.width);
+				int interfaceY = layout.viewportY() + layout.centeredInterfaceY(openInterface.height);
+				buildInterfaceMenu(interfaceY, openInterface, 0, 0, interfaceX, super.mouseX, super.mouseY);
+			} else
 				buildViewportMenu();
 		if (currentHoveredWidgetId != viewportHoveredWidgetId)
 			viewportHoveredWidgetId = currentHoveredWidgetId;
@@ -4670,13 +4686,14 @@ public class Client extends GameShell {
 			viewportTooltipWidgetId = currentTooltipWidgetId;
 		currentHoveredWidgetId = 0;
 		currentTooltipWidgetId = 0;
-		if (super.mouseX > 553 && super.mouseY > 205 && super.mouseX < 743 && super.mouseY < 466)
+		if (super.mouseX > layout.sidebarX() && super.mouseY > layout.sidebarY()
+				&& super.mouseX < layout.sidebarX() + 190 && super.mouseY < layout.sidebarY() + 261)
 			if (interfaceState.sidebarOverlayInterfaceId != -1)
-				buildInterfaceMenu(205, Widget.get(interfaceState.sidebarOverlayInterfaceId), 1, 0, 553, super.mouseX,
-						super.mouseY);
+				buildInterfaceMenu(layout.sidebarY(), Widget.get(interfaceState.sidebarOverlayInterfaceId), 1, 0,
+						layout.sidebarX(), super.mouseX, super.mouseY);
 			else if (interfaceState.tabInterfaceIds[interfaceState.selectedTab] != -1)
-				buildInterfaceMenu(205, Widget.get(interfaceState.tabInterfaceIds[interfaceState.selectedTab]), 1, 0,
-						553, super.mouseX, super.mouseY);
+				buildInterfaceMenu(layout.sidebarY(), Widget.get(interfaceState.tabInterfaceIds[interfaceState.selectedTab]),
+						1, 0, layout.sidebarX(), super.mouseX, super.mouseY);
 		if (currentHoveredWidgetId != sidebarHoveredWidgetId) {
 			sidebarRedraw = true;
 			sidebarHoveredWidgetId = currentHoveredWidgetId;
@@ -4687,15 +4704,16 @@ public class Client extends GameShell {
 		}
 		currentHoveredWidgetId = 0;
 		currentTooltipWidgetId = 0;
-		if (super.mouseX > 17 && super.mouseY > 357 && super.mouseX < 496 && super.mouseY < 453)
+		if (super.mouseX > layout.chatboxX() && super.mouseY > layout.chatboxY()
+				&& super.mouseX < layout.chatboxX() + 479 && super.mouseY < layout.chatboxY() + 96)
 			if (interfaceState.chatboxInterfaceId != -1)
-				buildInterfaceMenu(357, Widget.get(interfaceState.chatboxInterfaceId), 2, 0, 17, super.mouseX,
-						super.mouseY);
+				buildInterfaceMenu(layout.chatboxY(), Widget.get(interfaceState.chatboxInterfaceId), 2, 0,
+						layout.chatboxX(), super.mouseX, super.mouseY);
 			else if (interfaceState.dialogueInterfaceId != -1)
-				buildInterfaceMenu(357, Widget.get(interfaceState.dialogueInterfaceId), 3, 0, 17, super.mouseX,
-						super.mouseY);
-			else if (super.mouseY < 434 && super.mouseX < 426 && inputDialogState == 0)
-				buildChatboxMessageMenu(super.mouseY - 357);
+				buildInterfaceMenu(layout.chatboxY(), Widget.get(interfaceState.dialogueInterfaceId), 3, 0,
+						layout.chatboxX(), super.mouseX, super.mouseY);
+			else if (super.mouseY < layout.chatboxY() + 77 && super.mouseX < 426 && inputDialogState == 0)
+				buildChatboxMessageMenu(super.mouseY - layout.chatboxY());
 		if ((interfaceState.chatboxInterfaceId != -1 || interfaceState.dialogueInterfaceId != -1)
 				&& currentHoveredWidgetId != chatboxHoveredWidgetId) {
 			chatboxRedraw = true;
@@ -5257,15 +5275,15 @@ public class Client extends GameShell {
 
 		textWidth += 8;
 		int menuHeight = 15 * menuState.count + 21;
-		if (super.clickX > 4 && super.clickY > 4 && super.clickX < 516 && super.clickY < 338) {
-			int clickX = super.clickX - 4 - textWidth / 2;
-			if (clickX + textWidth > 512)
-				clickX = 512 - textWidth;
+		if (layout.isViewportInteractionPoint(super.clickX, super.clickY)) {
+			int clickX = super.clickX - layout.viewportX() - textWidth / 2;
+			if (clickX + textWidth > layout.viewportWidth())
+				clickX = layout.viewportWidth() - textWidth;
 			if (clickX < 0)
 				clickX = 0;
-			int clickY = super.clickY - 4;
-			if (clickY + menuHeight > 334)
-				clickY = 334 - menuHeight;
+			int clickY = super.clickY - layout.viewportY();
+			if (clickY + menuHeight > layout.viewportHeight())
+				clickY = layout.viewportHeight() - menuHeight;
 			if (clickY < 0)
 				clickY = 0;
 			menuState.open = true;
@@ -5275,13 +5293,14 @@ public class Client extends GameShell {
 			menuState.width = textWidth;
 			menuState.height = 15 * menuState.count + 22;
 		}
-		if (super.clickX > 553 && super.clickY > 205 && super.clickX < 743 && super.clickY < 466) {
-			int clickX2 = super.clickX - 553 - textWidth / 2;
+		if (super.clickX > layout.sidebarX() && super.clickY > layout.sidebarY()
+				&& super.clickX < layout.sidebarX() + 190 && super.clickY < layout.sidebarY() + 261) {
+			int clickX2 = super.clickX - layout.sidebarX() - textWidth / 2;
 			if (clickX2 < 0)
 				clickX2 = 0;
 			else if (clickX2 + textWidth > 190)
 				clickX2 = 190 - textWidth;
-			int clickY2 = super.clickY - 205;
+			int clickY2 = super.clickY - layout.sidebarY();
 			if (clickY2 < 0)
 				clickY2 = 0;
 			else if (clickY2 + menuHeight > 261)
@@ -5293,13 +5312,14 @@ public class Client extends GameShell {
 			menuState.width = textWidth;
 			menuState.height = 15 * menuState.count + 22;
 		}
-		if (super.clickX > 17 && super.clickY > 357 && super.clickX < 496 && super.clickY < 453) {
-			int clickX3 = super.clickX - 17 - textWidth / 2;
+		if (super.clickX > layout.chatboxX() && super.clickY > layout.chatboxY()
+				&& super.clickX < layout.chatboxX() + 479 && super.clickY < layout.chatboxY() + 96) {
+			int clickX3 = super.clickX - layout.chatboxX() - textWidth / 2;
 			if (clickX3 < 0)
 				clickX3 = 0;
 			else if (clickX3 + textWidth > 479)
 				clickX3 = 479 - textWidth;
-			int clickY3 = super.clickY - 357;
+			int clickY3 = super.clickY - layout.chatboxY();
 			if (clickY3 < 0)
 				clickY3 = 0;
 			else if (clickY3 + menuHeight > 96)
@@ -5329,7 +5349,10 @@ public class Client extends GameShell {
 		}
 		if (interfaceState.openInterfaceId != -1) {
 			widgetRuntime.updateAnimations(animationCycleDelta, interfaceState.openInterfaceId);
-			drawInterface(0, 0, Widget.get(interfaceState.openInterfaceId), 0);
+			Widget openInterface = Widget.get(interfaceState.openInterfaceId);
+			int interfaceX = layout.centeredInterfaceX(openInterface.width);
+			int interfaceY = layout.centeredInterfaceY(openInterface.height);
+			drawInterface(interfaceY, interfaceX, openInterface, 0);
 		}
 		updateTutorialIslandFlag();
 		if (!menuState.open) {
@@ -5338,9 +5361,9 @@ public class Client extends GameShell {
 		} else if (menuState.screenArea == 0)
 			drawContextMenu();
 		if (multiCombatZone == 1)
-			multiCombatOverlay.drawImage(472, 296);
+			multiCombatOverlay.drawImage(layout.unobscuredViewportWidth() - 40, layout.unobscuredViewportHeight() - 38);
 		if (showFps) {
-			char rightAlignedX = '\u01FB';
+			int rightAlignedX = layout.unobscuredViewportWidth() - 5;
 			int lineY = 20;
 			int textColor = 0xffff00;
 			if (super.fps < 30 && lowMemory)
@@ -5364,9 +5387,9 @@ public class Client extends GameShell {
 			int minutesRemaining = secondsRemaining / 60;
 			secondsRemaining %= 60;
 			if (secondsRemaining < 10)
-				plainFont.drawText("System update in: " + minutesRemaining + ":0" + secondsRemaining, 4, 329, 0xffff00);
+				plainFont.drawText("System update in: " + minutesRemaining + ":0" + secondsRemaining, 4, layout.unobscuredViewportHeight() - 5, 0xffff00);
 			else
-				plainFont.drawText("System update in: " + minutesRemaining + ":" + secondsRemaining, 4, 329, 0xffff00);
+				plainFont.drawText("System update in: " + minutesRemaining + ":" + secondsRemaining, 4, layout.unobscuredViewportHeight() - 5, 0xffff00);
 			systemUpdateKeepaliveCounter++;
 			if (systemUpdateKeepaliveCounter > 112) {
 				systemUpdateKeepaliveCounter = 0;
@@ -5411,13 +5434,14 @@ public class Client extends GameShell {
 				}
 				if ((messageType == 3 || messageType == 7) && (messageType == 7 || privateChatMode == 0
 						|| privateChatMode == 1 && isFriendOrSelf(sender))) {
-					int lineY = 329 - visibleLine * 13;
-					if (super.mouseX > 4 && super.mouseY - 4 > lineY - 10 && super.mouseY - 4 <= lineY + 3) {
+					int lineY = layout.unobscuredViewportHeight() - 5 - visibleLine * 13;
+					if (super.mouseX > layout.viewportX() && super.mouseY - layout.viewportY() > lineY - 10
+							&& super.mouseY - layout.viewportY() <= lineY + 3) {
 						int messageWidth = plainFont
 								.getFormattedTextWidth("From:  " + sender + chatHistory.messages[messageIndex]) + 25;
 						if (messageWidth > 450)
 							messageWidth = 450;
-						if (super.mouseX < 4 + messageWidth) {
+						if (super.mouseX < layout.viewportX() + messageWidth) {
 							if (playerRights >= 1) {
 								menuState.actionNames[menuState.count] = "Report abuse @whi@" + sender;
 								menuState.actionIds[menuState.count] = 2507;
@@ -6384,9 +6408,9 @@ public class Client extends GameShell {
 	private void dispatchMiscMenuAction(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
 		if (actionId == 14)
 			if (!menuState.open)
-				worldState.scene.setClick(super.clickX - 4, super.clickY - 4);
+				worldState.scene.setClick(super.clickX - layout.viewportX(), super.clickY - layout.viewportY());
 			else
-				worldState.scene.setClick(cmd2 - 4, cmd3 - 4);
+				worldState.scene.setClick(cmd2 - layout.viewportX(), cmd3 - layout.viewportY());
 	}
 
 	/**
@@ -6596,7 +6620,7 @@ public class Client extends GameShell {
 				if (overheadTextEffects[overheadIndex] == 4) {
 					int textWidth = boldFont.getTextWidth(overheadText);
 					int scrollOffset = ((150 - overheadTextCycles[overheadIndex]) * (textWidth + 100)) / 150;
-					Rasterizer.setCoordinates(projectedX - 50, 0, projectedX + 50, 334);
+					Rasterizer.setCoordinates(projectedX - 50, 0, projectedX + 50, layout.viewportHeight());
 					boldFont.drawText(overheadText, (projectedX + 50) - scrollOffset, projectedY + 1, 0);
 					boldFont.drawText(overheadText, (projectedX + 50) - scrollOffset, projectedY, textColor);
 					Rasterizer.resetCoordinates();
@@ -6608,7 +6632,7 @@ public class Client extends GameShell {
 						verticalOffset = effectAge - 25;
 					else if (effectAge > 125)
 						verticalOffset = effectAge - 125;
-					Rasterizer.setCoordinates(0, projectedY - boldFont.lineHeight - 1, 512, projectedY + 5);
+					Rasterizer.setCoordinates(0, projectedY - boldFont.lineHeight - 1, layout.viewportWidth(), projectedY + 5);
 					boldFont.drawCenteredText(overheadText, projectedX, projectedY + 1 + verticalOffset, 0);
 					boldFont.drawCenteredText(overheadText, projectedX, projectedY + verticalOffset, textColor);
 					Rasterizer.resetCoordinates();
@@ -6619,6 +6643,38 @@ public class Client extends GameShell {
 			}
 		}
 
+	}
+
+	/** Rebuilds projection tables and scene visibility for the current viewport size. */
+	private void rebuildViewportProjection() {
+		Rasterizer3D.setBounds(layout.viewportWidth(), layout.viewportHeight());
+		viewportScanlineOffsets = Rasterizer3D.scanlineOffsets;
+		int visibilityPitchHeights[] = new int[9];
+		for (int pitchIndex = 0; pitchIndex < 9; pitchIndex++) {
+			int pitchAngle = 128 + pitchIndex * 32 + 15;
+			int projectionDistance = 600 + pitchAngle * 3;
+			int pitchSine = Rasterizer3D.SINE[pitchAngle];
+			visibilityPitchHeights[pitchIndex] = projectionDistance * pitchSine >> 16;
+		}
+		Scene.buildVisibilityMaps(500, 800, layout.viewportWidth(), layout.viewportHeight(), visibilityPitchHeights);
+	}
+
+	/** Recreates only size-dependent renderer state when the window is resized. */
+	@Override
+	protected void onResize(int width, int height) {
+		layout.resize(width, height);
+		if (viewportBuffer != null)
+			viewportBuffer = new GraphicsBuffer(getGameComponent(), layout.viewportWidth(), layout.viewportHeight());
+		rebuildViewportProjection();
+		if (viewportBuffer != null) {
+			viewportBuffer.bindRaster();
+			Rasterizer3D.scanlineOffsets = viewportScanlineOffsets;
+		}
+		gameScreenRedraw = true;
+		sidebarRedraw = true;
+		chatboxRedraw = true;
+		tabAreaRedraw = true;
+		chatModesRedraw = true;
 	}
 
 	/**
@@ -6645,7 +6701,7 @@ public class Client extends GameShell {
 			Rasterizer.resetPixels();
 			minimapBackground.draw(0, 0);
 			sidebarBuffer = new GraphicsBuffer(getGameComponent(), 190, 261);
-			viewportBuffer = new GraphicsBuffer(getGameComponent(), 512, 334);
+			viewportBuffer = new GraphicsBuffer(getGameComponent(), layout.viewportWidth(), layout.viewportHeight());
 			Rasterizer.resetPixels();
 			chatModesBuffer = new GraphicsBuffer(getGameComponent(), 496, 50);
 			bottomTabsBuffer = new GraphicsBuffer(getGameComponent(), 269, 37);
@@ -6742,17 +6798,17 @@ public class Client extends GameShell {
 		if (viewportBuffer != null) {
 			viewportBuffer.bindRaster();
 			Rasterizer3D.scanlineOffsets = viewportScanlineOffsets;
-			int boxY = 151;
+			int boxY = layout.unobscuredViewportHeight() / 2 - 16;
 			if (secondaryMessage != null)
 				boxY -= 7;
-			plainFont.drawCenteredText(primaryMessage, 257, boxY, 0);
-			plainFont.drawCenteredText(primaryMessage, 256, boxY - 1, 0xffffff);
+			plainFont.drawCenteredText(primaryMessage, layout.unobscuredViewportWidth() / 2 + 1, boxY, 0);
+			plainFont.drawCenteredText(primaryMessage, layout.unobscuredViewportWidth() / 2, boxY - 1, 0xffffff);
 			boxY += 15;
 			if (secondaryMessage != null) {
-				plainFont.drawCenteredText(secondaryMessage, 257, boxY, 0);
-				plainFont.drawCenteredText(secondaryMessage, 256, boxY - 1, 0xffffff);
+				plainFont.drawCenteredText(secondaryMessage, layout.unobscuredViewportWidth() / 2 + 1, boxY, 0);
+				plainFont.drawCenteredText(secondaryMessage, layout.unobscuredViewportWidth() / 2, boxY - 1, 0xffffff);
 			}
-			viewportBuffer.draw(super.graphics, 4, 4);
+			viewportBuffer.draw(super.graphics, layout.viewportX(), layout.viewportY());
 			return;
 		}
 		if (super.gameBuffer != null) {
@@ -6809,11 +6865,39 @@ public class Client extends GameShell {
 			drawStartupErrorScreen();
 			return;
 		}
-		drawCycle++;
-		if (!loggedIn)
-			drawLoginScreen(false);
-		else
-			drawGameScreen();
+
+		Graphics displayGraphics = super.graphics;
+		if (displayGraphics == null)
+			return;
+
+		if (presentationBuffer == null
+				|| presentationBuffer.getWidth() != super.canvasWidth
+				|| presentationBuffer.getHeight() != super.canvasHeight) {
+			presentationBuffer = new BufferedImage(super.canvasWidth, super.canvasHeight, BufferedImage.TYPE_INT_RGB);
+		}
+
+		Graphics frameGraphics = presentationBuffer.getGraphics();
+		frameGraphics.setColor(Color.black);
+		frameGraphics.fillRect(0, 0, super.canvasWidth, super.canvasHeight);
+
+		/*
+		 * All of the legacy GraphicsBuffer blits below now target one off-screen
+		 * presentation image. This prevents the user from seeing the intermediate
+		 * black clear and partially assembled UI that caused resize-mode flicker.
+		 */
+		super.graphics = frameGraphics;
+		try {
+			drawCycle++;
+			if (!loggedIn)
+				drawLoginScreen(false);
+			else
+				drawGameScreen();
+		} finally {
+			super.graphics = displayGraphics;
+			frameGraphics.dispose();
+		}
+
+		displayGraphics.drawImage(presentationBuffer, 0, 0, null);
 		mouseButtonHoldTicks = 0;
 	}
 
@@ -6833,16 +6917,16 @@ public class Client extends GameShell {
 		int mouseX = super.mouseX;
 		int mouseY = super.mouseY;
 		if (menuState.screenArea == 0) {
-			mouseX -= 4;
-			mouseY -= 4;
+			mouseX -= layout.viewportX();
+			mouseY -= layout.viewportY();
 		}
 		if (menuState.screenArea == 1) {
-			mouseX -= 553;
-			mouseY -= 205;
+			mouseX -= layout.sidebarX();
+			mouseY -= layout.sidebarY();
 		}
 		if (menuState.screenArea == 2) {
-			mouseX -= 17;
-			mouseY -= 357;
+			mouseX -= layout.chatboxX();
+			mouseY -= layout.chatboxY();
 		}
 		for (int entryIndex = 0; entryIndex < menuState.count; entryIndex++) {
 			int entryY = menuY + 31 + (menuState.count - 1 - entryIndex) * 15;
@@ -6954,7 +7038,7 @@ public class Client extends GameShell {
 			drawInterface(0, 0, Widget.get(interfaceState.tabInterfaceIds[interfaceState.selectedTab]), 0);
 		if (menuState.open && menuState.screenArea == 1)
 			drawContextMenu();
-		sidebarBuffer.draw(super.graphics, 553, 205);
+		sidebarBuffer.draw(super.graphics, layout.sidebarX(), layout.sidebarY());
 		viewportBuffer.bindRaster();
 		Rasterizer3D.scanlineOffsets = viewportScanlineOffsets;
 	}
@@ -7614,7 +7698,7 @@ public class Client extends GameShell {
 		if (minimapRenderer.state != 0 || clickButton != 1) {
 			return;
 		}
-		MinimapRenderer.Click click = minimapRenderer.transformClick(clickX, clickY, localPlayer,
+		MinimapRenderer.Click click = minimapRenderer.transformClick(clickX - layout.extraWidth(), clickY, localPlayer,
 				cameraController.followYaw);
 		if (click == null) {
 			return;
@@ -7762,8 +7846,8 @@ public class Client extends GameShell {
 		int textureCycle = Rasterizer3D.textureCycle;
 		Model.pickingEnabled = true;
 		Model.pickedCount = 0;
-		Model.mouseX = super.mouseX - 4;
-		Model.mouseY = super.mouseY - 4;
+		Model.mouseX = super.mouseX - layout.viewportX();
+		Model.mouseY = super.mouseY - layout.viewportY();
 		Rasterizer.resetPixels();
 		worldState.scene.render(cameraController.x, cameraController.y, cameraController.height, renderPlane,
 				cameraController.yaw, cameraController.pitch);
@@ -7772,7 +7856,7 @@ public class Client extends GameShell {
 		drawWorldHintIcon();
 		animateTextures(textureCycle);
 		drawViewportOverlays();
-		viewportBuffer.draw(super.graphics, 4, 4);
+		viewportBuffer.draw(super.graphics, layout.viewportX(), layout.viewportY());
 		cameraController.restore(cameraSnapshot);
 	}
 

@@ -36,12 +36,7 @@ public class GameShell extends Canvas
 	private static final int TIMING_SAMPLE_COUNT = 10;
 	/** Defines the key buffer size constant. */
 	private static final int KEY_BUFFER_SIZE = 128;
-	/** Defines the frame mouse x offset constant. */
-	private static final int FRAME_MOUSE_X_OFFSET = 4;
-	/** Defines the frame mouse y offset constant. */
-	private static final int FRAME_MOUSE_Y_OFFSET = 22;
-
-	/** Defines the shutdown requested constant. */
+		/** Defines the shutdown requested constant. */
 	private static final int SHUTDOWN_REQUESTED = -1;
 	/** Defines the stopped constant. */
 	private static final int STOPPED = -2;
@@ -197,6 +192,7 @@ public class GameShell extends Canvas
 			}
 
 			while (shutdownCountdown >= 0) {
+				synchronizeCanvasSize();
 				if (shutdownCountdown > 0) {
 					shutdownCountdown--;
 					if (shutdownCountdown == 0) {
@@ -444,12 +440,8 @@ public class GameShell extends Canvas
 	 */
 	@Override
 	public final void mousePressed(MouseEvent event) {
-		int x = event.getX();
-		int y = event.getY();
-		if (gameFrame != null) {
-			x -= FRAME_MOUSE_X_OFFSET;
-			y -= FRAME_MOUSE_Y_OFFSET;
-		}
+		int x = toClientX(event.getX());
+		int y = toClientY(event.getY());
 
 		synchronized (inputLock) {
 			idleCycles = 0;
@@ -540,12 +532,8 @@ public class GameShell extends Canvas
 	 */
 	@Override
 	public final void mouseDragged(MouseEvent event) {
-		int x = event.getX();
-		int y = event.getY();
-		if (gameFrame != null) {
-			x -= FRAME_MOUSE_X_OFFSET;
-			y -= FRAME_MOUSE_Y_OFFSET;
-		}
+		int x = toClientX(event.getX());
+		int y = toClientY(event.getY());
 
 		synchronized (inputLock) {
 			idleCycles = 0;
@@ -578,12 +566,8 @@ public class GameShell extends Canvas
 	 * @param event the event
 	 */
 	private void updateMousePosition(MouseEvent event) {
-		int x = event.getX();
-		int y = event.getY();
-		if (gameFrame != null) {
-			x -= FRAME_MOUSE_X_OFFSET;
-			y -= FRAME_MOUSE_Y_OFFSET;
-		}
+		int x = toClientX(event.getX());
+		int y = toClientY(event.getY());
 		synchronized (inputLock) {
 			idleCycles = 0;
 			mouseX = x;
@@ -818,6 +802,39 @@ public class GameShell extends Canvas
 	public final void windowOpened(WindowEvent event) {
 	}
 
+	/**
+	 * Synchronizes the logical client-area dimensions with a user-resized frame.
+	 * The callback is invoked on the game thread so renderer buffers are never
+	 * recreated from the AWT event thread.
+	 */
+	private void synchronizeCanvasSize() {
+		if (gameFrame == null)
+			return;
+
+		int width = gameFrame.getClientWidth();
+		int height = gameFrame.getClientHeight();
+		if (width == canvasWidth && height == canvasHeight)
+			return;
+
+		canvasWidth = width;
+		canvasHeight = height;
+		graphicsRefreshRequested = true;
+		clearScreen = true;
+		onResize(width, height);
+	}
+
+	private int toClientX(int frameX) {
+		return gameFrame == null ? frameX : gameFrame.toClientX(frameX);
+	}
+
+	private int toClientY(int frameY) {
+		return gameFrame == null ? frameY : gameFrame.toClientY(frameY);
+	}
+
+	/** Called on the game thread whenever the drawable client area changes size. */
+	protected void onResize(int width, int height) {
+	}
+
 	/** Client initialization hook. */
 	protected void startUp() {
 	}
@@ -838,7 +855,7 @@ public class GameShell extends Canvas
 	 * Reacquires the component graphics after AWT reports an expose/repaint.
 	 *
 	 * <p>
-	 * The standalone frame applies its fixed client-area translation in
+	 * The standalone frame applies its client-area inset translation in
 	 * {@link GameFrame#getGraphics()}, so reacquiring here is safer than retaining
 	 * the Graphics instance supplied to {@link #paint(Graphics)}.
 	 * </p>

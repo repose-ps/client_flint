@@ -55,6 +55,16 @@ public final class GraphicsBuffer implements ImageProducer, ImageObserver {
 		bindRaster();
 	}
 
+	/** Returns this software buffer's fixed pixel width. */
+	public int getWidth() {
+		return width;
+	}
+
+	/** Returns this software buffer's fixed pixel height. */
+	public int getHeight() {
+		return height;
+	}
+
 	/** Makes this buffer the global software-raster drawing target. */
 	public void bindRaster() {
 		Rasterizer.createRasterizer(pixels, width, height);

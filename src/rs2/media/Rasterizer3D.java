@@ -39,7 +39,7 @@ public class Rasterizer3D extends Rasterizer {
 
 	public static int centerY;
 
-	public static int[] reciprocal15 = new int[512];
+	public static int[] reciprocal15 = new int[8192];
 
 	public static int[] reciprocal16 = new int[2048];
 
@@ -75,7 +75,7 @@ public class Rasterizer3D extends Rasterizer {
 	private static int[][] texturePalettes = new int[50][];
 
 	static {
-		for (int loopIndex = 1; loopIndex < 512; loopIndex++)
+		for (int loopIndex = 1; loopIndex < reciprocal15.length; loopIndex++)
 			reciprocal15[loopIndex] = 32768 / loopIndex;
 		for (int loopIndex2 = 1; loopIndex2 < 2048; loopIndex2++)
 			reciprocal16[loopIndex2] = 0x10000 / loopIndex2;
