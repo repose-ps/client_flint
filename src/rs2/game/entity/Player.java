@@ -431,7 +431,7 @@ public class Player extends Actor {
 
 		for (int index = 0; index < BODY_COLOR_COUNT; index++) {
 			int color = buffer.readUnsignedByte();
-			if (color < 0 || color >= Client.bodyColorPalettes[index].length) {
+			if (color < 0 || color >= PlayerAppearancePalettes.bodyColorCount(index)) {
 				color = 0;
 			}
 			bodyColors[index] = color;
@@ -500,9 +500,10 @@ public class Player extends Actor {
 	private void recolorAppearance(Model model) {
 		for (int index = 0; index < BODY_COLOR_COUNT; index++) {
 			if (bodyColors[index] != 0) {
-				model.recolor(Client.bodyColorPalettes[index][0], Client.bodyColorPalettes[index][bodyColors[index]]);
+				model.recolor(PlayerAppearancePalettes.bodyColor(index, 0),
+						PlayerAppearancePalettes.bodyColor(index, bodyColors[index]));
 				if (index == 1) {
-					model.recolor(Client.skinColorPalette[0], Client.skinColorPalette[bodyColors[index]]);
+					model.recolor(PlayerAppearancePalettes.skinColor(0), PlayerAppearancePalettes.skinColor(bodyColors[index]));
 				}
 			}
 		}

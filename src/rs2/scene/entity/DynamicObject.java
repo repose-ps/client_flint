@@ -114,9 +114,9 @@ public class DynamicObject extends Renderable {
 		if (varbitId != -1) {
 			Varbit varbit = Varbit.definitions[varbitId];
 			int mask = Client.bitMasks[varbit.mostSignificantBit - varbit.leastSignificantBit];
-			morphIndex = clientInstance.varpValues[varbit.varpId] >> varbit.leastSignificantBit & mask;
+			morphIndex = clientInstance.getVarp(varbit.varpId) >> varbit.leastSignificantBit & mask;
 		} else if (varpId != -1) {
-			morphIndex = clientInstance.varpValues[varpId];
+			morphIndex = clientInstance.getVarp(varpId);
 		}
 
 		if (morphIndex < 0 || morphIndex >= morphIds.length || morphIds[morphIndex] == -1) {

@@ -38,7 +38,7 @@ import rs2.cache.ondemand.OnDemandFetcher;
 import rs2.cache.ondemand.OnDemandRequest;
 import rs2.ui.Widget;
 import rs2.chat.ChatCodec;
-import rs2.chat.ChatHistory;
+import rs2.chat.ChatController;
 import rs2.chat.ChatMessageType;
 import rs2.chat.ChatMode;
 import rs2.chat.SocialManager;
@@ -53,6 +53,7 @@ import rs2.game.RegionManager;
 import rs2.game.SceneEntityRenderer;
 import rs2.game.MinimapRenderer;
 import rs2.game.WorldState;
+import rs2.game.VarpState;
 import rs2.game.ZoneUpdateHandler;
 import rs2.input.MouseRecorder;
 import rs2.media.AnimationFrame;
@@ -82,10 +83,13 @@ import rs2.sound.SoundEffectQueue;
 import rs2.sound.SoundTrack;
 import rs2.text.Base37;
 import rs2.text.TextFormatter;
+import rs2.ui.AppearanceEditor;
+import rs2.ui.ClientScriptContext;
 import rs2.ui.InterfaceState;
 import rs2.ui.WidgetRuntime;
 import rs2.ui.menu.MenuState;
 import rs2.ui.login.LoginScreen;
+import rs2.ui.login.TitleFlameAnimator;
 
 /**
  * Standalone revision-377 game client coordinator.
@@ -112,9 +116,7 @@ public class Client extends GameShell {
 	private static final int MOUSE_COMPACT_DELTA_MIN = -32;
 	/** Maximum delta represented by the compact two-byte mouse format. */
 	private static final int MOUSE_COMPACT_DELTA_MAX = 31;
-	/**
-	 * Bias that converts compact signed mouse deltas to six-bit unsigned values.
-	 */
+	/** Bias that converts compact signed mouse deltas to six-bit unsigned values. */
 	private static final int MOUSE_COMPACT_DELTA_BIAS = 32;
 	/** Shift of the repeat count in the compact two-byte mouse format. */
 	private static final int MOUSE_SHORT_REPEAT_SHIFT = 12;
@@ -137,14 +139,13 @@ public class Client extends GameShell {
 	/** Recorded sample count that forces a mouse-movement packet. */
 	private static final int MOUSE_PACKET_SAMPLE_THRESHOLD = 40;
 
+
 	/**
 	 * Layout.
 	 *
 	 */
 	private final ClientLayout layout = new ClientLayout();
-	/**
-	 * Complete client frame composed off-screen before one AWT presentation blit.
-	 */
+	/** Complete client frame composed off-screen before one AWT presentation blit. */
 	private BufferedImage presentationBuffer;
 
 	/**
@@ -207,13 +208,13 @@ public class Client extends GameShell {
 		boolean changed = false;
 
 		if (button == ClientLayout.CHAT_MODE_PUBLIC) {
-			publicChatMode = (publicChatMode + 1) % ChatMode.PUBLIC_MODE_COUNT;
+			chatController.setPublicMode((chatController.publicMode() + 1) % ChatMode.PUBLIC_MODE_COUNT);
 			changed = true;
 		} else if (button == ClientLayout.CHAT_MODE_PRIVATE) {
-			privateChatMode = (privateChatMode + 1) % ChatMode.STANDARD_MODE_COUNT;
+			chatController.setPrivateMode((chatController.privateMode() + 1) % ChatMode.STANDARD_MODE_COUNT);
 			changed = true;
 		} else if (button == ClientLayout.CHAT_MODE_TRADE) {
-			tradeMode = (tradeMode + 1) % ChatMode.STANDARD_MODE_COUNT;
+			chatController.setTradeMode((chatController.tradeMode() + 1) % ChatMode.STANDARD_MODE_COUNT);
 			changed = true;
 		} else if (button == ClientLayout.CHAT_MODE_REPORT_ABUSE) {
 			if (interfaceState.openInterfaceId == -1) {
@@ -222,8 +223,7 @@ public class Client extends GameShell {
 				reportAbuseMutePlayer = false;
 				interfaceState.reportAbuseInterfaceId = interfaceState.openInterfaceId = Widget.reportAbuseInterfaceId;
 			} else {
-				addChatMessage("", "Please close the interface you have open before using 'report abuse'",
-						ChatMessageType.GAME);
+				addChatMessage("", "Please close the interface you have open before using 'report abuse'", ChatMessageType.GAME);
 			}
 			return;
 		}
@@ -233,7 +233,7 @@ public class Client extends GameShell {
 
 		chatModesRedraw = true;
 		chatboxRedraw = true;
-		ChatPacketEncoder.writeChatModes(networkSession.outgoing, publicChatMode, privateChatMode, tradeMode);
+		ChatPacketEncoder.writeChatModes(networkSession.outgoing, chatController.publicMode(), chatController.privateMode(), chatController.tradeMode());
 	}
 
 	/**
@@ -312,43 +312,7 @@ public class Client extends GameShell {
 		}
 	}
 
-	/**
-	 * Runs the title-screen flame animation timing loop.
-	 */
-	public void runTitleFlameLoop() {
-		Thread current = Thread.currentThread();
-		titleFlameThread = current;
-		titleFlameThreadActive = true;
-		try {
-			long timingWindowStart = System.currentTimeMillis();
-			int timingSampleCount = 0;
-			int sleepMillis = 20;
-			while (titleFlamesRunning) {
-				titleFlameCycle++;
-				updateTitleFlames();
-				updateTitleFlames();
-				drawTitleFlames();
-				if (++timingSampleCount > 10) {
-					long now = System.currentTimeMillis();
-					int timingError = (int) (now - timingWindowStart) / 10 - sleepMillis;
-					sleepMillis = 40 - timingError;
-					if (sleepMillis < 5)
-						sleepMillis = 5;
-					timingSampleCount = 0;
-					timingWindowStart = now;
-				}
-				try {
-					Thread.sleep(sleepMillis);
-				} catch (Exception ignored) {
-				}
-			}
-		} catch (Exception ignored2) {
-		}
-		titleFlameThreadActive = false;
-		if (titleFlameThread == current) {
-			titleFlameThread = null;
-		}
-	}
+
 
 	/**
 	 * Marks startup as failed and displays the supplied loading-error reason.
@@ -417,7 +381,6 @@ public class Client extends GameShell {
 		chatModesBuffer = null;
 		bottomTabsBuffer = null;
 		topTabsBuffer = null;
-		varpValues = null;
 		regionManager.clear();
 		titleLeftBottomBuffer = null;
 		titleRightBottomBuffer = null;
@@ -523,9 +486,7 @@ public class Client extends GameShell {
 	 */
 	public boolean buildSocialWidgetMenu(Widget widget) {
 		int contentType = widget.contentType;
-		if (contentType >= WidgetContentType.FRIEND_NAME_FIRST && contentType <= WidgetContentType.FRIEND_WORLD_LAST
-				|| contentType >= WidgetContentType.FRIEND_NAME_ALTERNATE_FIRST
-						&& contentType <= WidgetContentType.FRIEND_WORLD_ALTERNATE_LAST) {
+		if (contentType >= WidgetContentType.FRIEND_NAME_FIRST && contentType <= WidgetContentType.FRIEND_WORLD_LAST || contentType >= WidgetContentType.FRIEND_NAME_ALTERNATE_FIRST && contentType <= WidgetContentType.FRIEND_WORLD_ALTERNATE_LAST) {
 			if (contentType >= WidgetContentType.FRIEND_WORLD_ALTERNATE_FIRST)
 				contentType -= WidgetContentType.FRIEND_WORLD_ALTERNATE_INDEX_OFFSET;
 			else if (contentType >= WidgetContentType.FRIEND_NAME_ALTERNATE_FIRST)
@@ -552,24 +513,9 @@ public class Client extends GameShell {
 		}
 	}
 
-	/**
-	 * Resets the appearance-kit selections to the first valid kits for the current
-	 * sex.
-	 */
+	/** Resets appearance-kit selections for the currently selected sex. */
 	public void resetCharacterAppearance() {
-		appearanceModelDirty = true;
-		for (int bodyPart = 0; bodyPart < 7; bodyPart++) {
-			appearanceKitIds[bodyPart] = -1;
-			for (int kitId = 0; kitId < IdentityKit.count; kitId++) {
-				if (IdentityKit.definitions[kitId].nonSelectable
-						|| IdentityKit.definitions[kitId].bodyPartId != bodyPart + (maleAppearance ? 0 : 7))
-					continue;
-				appearanceKitIds[bodyPart] = kitId;
-				break;
-			}
-
-		}
-
+		appearanceEditor.resetKits();
 	}
 
 	/**
@@ -635,22 +581,20 @@ public class Client extends GameShell {
 							lastRecordedMouseX = mouseX;
 							int deltaY = mouseY - lastRecordedMouseY;
 							lastRecordedMouseY = mouseY;
-							if (mouseTelemetryRepeatCount < MOUSE_COMPACT_REPEAT_LIMIT
-									&& deltaX >= MOUSE_COMPACT_DELTA_MIN && deltaX <= MOUSE_COMPACT_DELTA_MAX
-									&& deltaY >= MOUSE_COMPACT_DELTA_MIN && deltaY <= MOUSE_COMPACT_DELTA_MAX) {
+							if (mouseTelemetryRepeatCount < MOUSE_COMPACT_REPEAT_LIMIT && deltaX >= MOUSE_COMPACT_DELTA_MIN && deltaX <= MOUSE_COMPACT_DELTA_MAX && deltaY >= MOUSE_COMPACT_DELTA_MIN
+									&& deltaY <= MOUSE_COMPACT_DELTA_MAX) {
 								deltaX += MOUSE_COMPACT_DELTA_BIAS;
 								deltaY += MOUSE_COMPACT_DELTA_BIAS;
 								networkSession.outgoing
-										.writeShort((mouseTelemetryRepeatCount << MOUSE_SHORT_REPEAT_SHIFT)
-												+ (deltaX << MOUSE_SHORT_X_SHIFT) + deltaY);
+										.writeShort((mouseTelemetryRepeatCount << MOUSE_SHORT_REPEAT_SHIFT) + (deltaX << MOUSE_SHORT_X_SHIFT) + deltaY);
 								mouseTelemetryRepeatCount = 0;
 							} else if (mouseTelemetryRepeatCount < MOUSE_COMPACT_REPEAT_LIMIT) {
-								networkSession.outgoing.writeMedium(MOUSE_MEDIUM_FLAG
-										+ (mouseTelemetryRepeatCount << MOUSE_ABSOLUTE_REPEAT_SHIFT) + packedPosition);
+								networkSession.outgoing
+										.writeMedium(MOUSE_MEDIUM_FLAG + (mouseTelemetryRepeatCount << MOUSE_ABSOLUTE_REPEAT_SHIFT) + packedPosition);
 								mouseTelemetryRepeatCount = 0;
 							} else {
-								networkSession.outgoing.writeInt(MOUSE_INT_FLAG
-										+ (mouseTelemetryRepeatCount << MOUSE_ABSOLUTE_REPEAT_SHIFT) + packedPosition);
+								networkSession.outgoing
+										.writeInt(MOUSE_INT_FLAG + (mouseTelemetryRepeatCount << MOUSE_ABSOLUTE_REPEAT_SHIFT) + packedPosition);
 								mouseTelemetryRepeatCount = 0;
 							}
 						}
@@ -695,8 +639,7 @@ public class Client extends GameShell {
 				clickButton = 1;
 			int encodedClickDelay = (int) clickDelayTicks;
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.MOUSE_CLICK);
-			networkSession.outgoing.writeInt((encodedClickDelay << CLICK_DELAY_SHIFT)
-					+ (clickButton << CLICK_BUTTON_SHIFT) + packedClickPosition);
+			networkSession.outgoing.writeInt((encodedClickDelay << CLICK_DELAY_SHIFT) + (clickButton << CLICK_BUTTON_SHIFT) + packedClickPosition);
 		}
 		if (cameraPacketCooldown > 0)
 			cameraPacketCooldown--;
@@ -770,8 +713,7 @@ public class Client extends GameShell {
 						// Legacy drag mode: 0 swaps/moves directly; 1 performs insertion-style
 						// shifting.
 						int insertionMode = 0;
-						if (inventoryRearrangeMode == 1
-								&& inventoryWidget.contentType == WidgetContentType.INSERTABLE_INVENTORY)
+						if (inventoryRearrangeMode == 1 && inventoryWidget.contentType == WidgetContentType.INSERTABLE_INVENTORY)
 							insertionMode = 1;
 						if (inventoryWidget.itemIds[interfaceState.hoveredInventorySlot] <= 0)
 							insertionMode = 0;
@@ -824,8 +766,8 @@ public class Client extends GameShell {
 				crossCycle = 0;
 			}
 		}
-		if (super.clickButton == 1 && clickToContinueMessage != null) {
-			clickToContinueMessage = null;
+		if (super.clickButton == 1 && chatController.clickToContinueMessage() != null) {
+			chatController.setClickToContinueMessage(null);
 			chatboxRedraw = true;
 			super.clickButton = 0;
 		}
@@ -904,122 +846,122 @@ public class Client extends GameShell {
 				if ((keyCode >= 97 && keyCode <= 122 || keyCode >= 65 && keyCode <= 90 || keyCode >= 48 && keyCode <= 57
 						|| keyCode == 32) && reportAbuseName.length() < 12)
 					reportAbuseName += (char) keyCode;
-			} else if (messagePromptRaised) {
-				if (keyCode >= 32 && keyCode <= 122 && promptInput.length() < 80) {
-					promptInput += (char) keyCode;
+			} else if (chatController.isPromptRaised()) {
+				if (keyCode >= 32 && keyCode <= 122 && chatController.promptInput().length() < 80) {
+					chatController.setPromptInput(chatController.promptInput() + (char) keyCode);
 					chatboxRedraw = true;
 				}
-				if (keyCode == 8 && promptInput.length() > 0) {
-					promptInput = promptInput.substring(0, promptInput.length() - 1);
+				if (keyCode == 8 && chatController.promptInput().length() > 0) {
+					chatController.setPromptInput(chatController.promptInput().substring(0, chatController.promptInput().length() - 1));
 					chatboxRedraw = true;
 				}
 				if (keyCode == 13 || keyCode == 10) {
-					messagePromptRaised = false;
+					chatController.closePrompt();
 					chatboxRedraw = true;
-					if (promptAction == 1) {
-						long encodedName = Base37.encode(promptInput);
+					if (chatController.promptAction() == 1) {
+						long encodedName = Base37.encode(chatController.promptInput());
 						addFriend(encodedName);
 					}
-					if (promptAction == 2 && socialManager.friendCount > 0) {
-						long encodedName2 = Base37.encode(promptInput);
+					if (chatController.promptAction() == 2 && socialManager.friendCount > 0) {
+						long encodedName2 = Base37.encode(chatController.promptInput());
 						removeFriend(encodedName2);
 					}
-					if (promptAction == 3 && promptInput.length() > 0) {
-						ChatPacketEncoder.writePrivateMessage(networkSession.outgoing, privateMessageTarget,
-								promptInput);
-						promptInput = ChatCodec.normalize(promptInput);
-						promptInput = Censor.censor(promptInput);
-						addChatMessage(TextFormatter.formatDisplayName(Base37.decode(privateMessageTarget)),
-								promptInput, 6);
-						if (privateChatMode == ChatMode.OFF) {
-							privateChatMode = ChatMode.FRIENDS;
+					if (chatController.promptAction() == 3 && chatController.promptInput().length() > 0) {
+						ChatPacketEncoder.writePrivateMessage(networkSession.outgoing, chatController.privateMessageTarget(),
+								chatController.promptInput());
+						chatController.setPromptInput(ChatCodec.normalize(chatController.promptInput()));
+						chatController.setPromptInput(Censor.censor(chatController.promptInput()));
+						addChatMessage(TextFormatter.formatDisplayName(Base37.decode(chatController.privateMessageTarget())),
+								chatController.promptInput(), 6);
+						if (chatController.privateMode() == ChatMode.OFF) {
+							chatController.setPrivateMode(ChatMode.FRIENDS);
 							chatModesRedraw = true;
-							ChatPacketEncoder.writeChatModes(networkSession.outgoing, publicChatMode, privateChatMode,
-									tradeMode);
+							ChatPacketEncoder.writeChatModes(networkSession.outgoing, chatController.publicMode(), chatController.privateMode(),
+									chatController.tradeMode());
 						}
 					}
-					if (promptAction == 4 && socialManager.ignoreCount < 100) {
-						long encodedName3 = Base37.encode(promptInput);
+					if (chatController.promptAction() == 4 && socialManager.ignoreCount < 100) {
+						long encodedName3 = Base37.encode(chatController.promptInput());
 						addIgnore(encodedName3);
 					}
-					if (promptAction == 5 && socialManager.ignoreCount > 0) {
-						long encodedName4 = Base37.encode(promptInput);
+					if (chatController.promptAction() == 5 && socialManager.ignoreCount > 0) {
+						long encodedName4 = Base37.encode(chatController.promptInput());
 						removeIgnore(encodedName4);
 					}
 				}
-			} else if (inputDialogState == 1) {
-				if (keyCode >= 48 && keyCode <= 57 && inputDialogText.length() < 10) {
-					inputDialogText += (char) keyCode;
+			} else if (chatController.inputDialogState() == 1) {
+				if (keyCode >= 48 && keyCode <= 57 && chatController.inputDialogText().length() < 10) {
+					chatController.setInputDialogText(chatController.inputDialogText() + (char) keyCode);
 					chatboxRedraw = true;
 				}
-				if (keyCode == 8 && inputDialogText.length() > 0) {
-					inputDialogText = inputDialogText.substring(0, inputDialogText.length() - 1);
+				if (keyCode == 8 && chatController.inputDialogText().length() > 0) {
+					chatController.setInputDialogText(chatController.inputDialogText().substring(0, chatController.inputDialogText().length() - 1));
 					chatboxRedraw = true;
 				}
 				if (keyCode == 13 || keyCode == 10) {
-					if (inputDialogText.length() > 0) {
+					if (chatController.inputDialogText().length() > 0) {
 						int amount = 0;
 						try {
-							amount = Integer.parseInt(inputDialogText);
+							amount = Integer.parseInt(chatController.inputDialogText());
 						} catch (Exception ignored) {
 						}
 						networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.INPUT_AMOUNT);
 						networkSession.outgoing.writeInt(amount);
 					}
-					inputDialogState = 0;
+					chatController.setInputDialogState(0);
 					chatboxRedraw = true;
 				}
-			} else if (inputDialogState == 2) {
-				if (keyCode >= 32 && keyCode <= 122 && inputDialogText.length() < 12) {
-					inputDialogText += (char) keyCode;
+			} else if (chatController.inputDialogState() == 2) {
+				if (keyCode >= 32 && keyCode <= 122 && chatController.inputDialogText().length() < 12) {
+					chatController.setInputDialogText(chatController.inputDialogText() + (char) keyCode);
 					chatboxRedraw = true;
 				}
-				if (keyCode == 8 && inputDialogText.length() > 0) {
-					inputDialogText = inputDialogText.substring(0, inputDialogText.length() - 1);
+				if (keyCode == 8 && chatController.inputDialogText().length() > 0) {
+					chatController.setInputDialogText(chatController.inputDialogText().substring(0, chatController.inputDialogText().length() - 1));
 					chatboxRedraw = true;
 				}
 				if (keyCode == 13 || keyCode == 10) {
-					if (inputDialogText.length() > 0) {
+					if (chatController.inputDialogText().length() > 0) {
 						networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.INPUT_NAME);
-						networkSession.outgoing.writeLong(Base37.encode(inputDialogText));
+						networkSession.outgoing.writeLong(Base37.encode(chatController.inputDialogText()));
 					}
-					inputDialogState = 0;
+					chatController.setInputDialogState(0);
 					chatboxRedraw = true;
 				}
-			} else if (inputDialogState == 3) {
-				if (keyCode >= 32 && keyCode <= 122 && inputDialogText.length() < 40) {
-					inputDialogText += (char) keyCode;
+			} else if (chatController.inputDialogState() == 3) {
+				if (keyCode >= 32 && keyCode <= 122 && chatController.inputDialogText().length() < 40) {
+					chatController.setInputDialogText(chatController.inputDialogText() + (char) keyCode);
 					chatboxRedraw = true;
 				}
-				if (keyCode == 8 && inputDialogText.length() > 0) {
-					inputDialogText = inputDialogText.substring(0, inputDialogText.length() - 1);
+				if (keyCode == 8 && chatController.inputDialogText().length() > 0) {
+					chatController.setInputDialogText(chatController.inputDialogText().substring(0, chatController.inputDialogText().length() - 1));
 					chatboxRedraw = true;
 				}
 			} else if (interfaceState.chatboxInterfaceId == -1 && interfaceState.fullscreenInterfaceId == -1) {
-				if (keyCode >= 32 && keyCode <= 122 && chatInput.length() < 80) {
-					chatInput += (char) keyCode;
+				if (keyCode >= 32 && keyCode <= 122 && chatController.input().length() < 80) {
+					chatController.setInput(chatController.input() + (char) keyCode);
 					chatboxRedraw = true;
 				}
-				if (keyCode == 8 && chatInput.length() > 0) {
-					chatInput = chatInput.substring(0, chatInput.length() - 1);
+				if (keyCode == 8 && chatController.input().length() > 0) {
+					chatController.setInput(chatController.input().substring(0, chatController.input().length() - 1));
 					chatboxRedraw = true;
 				}
-				if ((keyCode == 13 || keyCode == 10) && chatInput.length() > 0) {
+				if ((keyCode == 13 || keyCode == 10) && chatController.input().length() > 0) {
 					if (playerRights == 2) {
-						if (chatInput.equals("::clientdrop"))
+						if (chatController.input().equals("::clientdrop"))
 							reconnect();
-						if (chatInput.equals("::lag"))
+						if (chatController.input().equals("::lag"))
 							printDebugInfo();
-						if (chatInput.equals("::prefetchmusic")) {
+						if (chatController.input().equals("::prefetchmusic")) {
 							for (int midiId = 0; midiId < onDemandFetcher.getFileCount(2); midiId++)
 								onDemandFetcher.setExtraPriority(2, midiId, (byte) 1);
 
 						}
-						if (chatInput.equals("::fpson"))
+						if (chatController.input().equals("::fpson"))
 							showFps = true;
-						if (chatInput.equals("::fpsoff"))
+						if (chatController.input().equals("::fpsoff"))
 							showFps = false;
-						if (chatInput.equals("::noclip")) {
+						if (chatController.input().equals("::noclip")) {
 							for (int plane = 0; plane < 4; plane++) {
 								for (int tileX = 1; tileX < SceneConstants.INTERIOR_MAX_TILE; tileX++) {
 									for (int tileY = 1; tileY < SceneConstants.INTERIOR_MAX_TILE; tileY++)
@@ -1031,91 +973,88 @@ public class Client extends GameShell {
 
 						}
 					}
-					if (chatInput.startsWith("::")) {
-						ChatPacketEncoder.writeCommand(networkSession.outgoing, chatInput);
+					if (chatController.input().startsWith("::")) {
+						ChatPacketEncoder.writeCommand(networkSession.outgoing, chatController.input());
 					} else {
-						String lowercaseInput = chatInput.toLowerCase();
+						String lowercaseInput = chatController.input().toLowerCase();
 						int chatColor = 0;
 						if (lowercaseInput.startsWith("yellow:")) {
 							chatColor = 0;
-							chatInput = chatInput.substring(7);
+							chatController.setInput(chatController.input().substring(7));
 						} else if (lowercaseInput.startsWith("red:")) {
 							chatColor = 1;
-							chatInput = chatInput.substring(4);
+							chatController.setInput(chatController.input().substring(4));
 						} else if (lowercaseInput.startsWith("green:")) {
 							chatColor = 2;
-							chatInput = chatInput.substring(6);
+							chatController.setInput(chatController.input().substring(6));
 						} else if (lowercaseInput.startsWith("cyan:")) {
 							chatColor = 3;
-							chatInput = chatInput.substring(5);
+							chatController.setInput(chatController.input().substring(5));
 						} else if (lowercaseInput.startsWith("purple:")) {
 							chatColor = 4;
-							chatInput = chatInput.substring(7);
+							chatController.setInput(chatController.input().substring(7));
 						} else if (lowercaseInput.startsWith("white:")) {
 							chatColor = 5;
-							chatInput = chatInput.substring(6);
+							chatController.setInput(chatController.input().substring(6));
 						} else if (lowercaseInput.startsWith("flash1:")) {
 							chatColor = 6;
-							chatInput = chatInput.substring(7);
+							chatController.setInput(chatController.input().substring(7));
 						} else if (lowercaseInput.startsWith("flash2:")) {
 							chatColor = 7;
-							chatInput = chatInput.substring(7);
+							chatController.setInput(chatController.input().substring(7));
 						} else if (lowercaseInput.startsWith("flash3:")) {
 							chatColor = 8;
-							chatInput = chatInput.substring(7);
+							chatController.setInput(chatController.input().substring(7));
 						} else if (lowercaseInput.startsWith("glow1:")) {
 							chatColor = 9;
-							chatInput = chatInput.substring(6);
+							chatController.setInput(chatController.input().substring(6));
 						} else if (lowercaseInput.startsWith("glow2:")) {
 							chatColor = 10;
-							chatInput = chatInput.substring(6);
+							chatController.setInput(chatController.input().substring(6));
 						} else if (lowercaseInput.startsWith("glow3:")) {
 							chatColor = 11;
-							chatInput = chatInput.substring(6);
+							chatController.setInput(chatController.input().substring(6));
 						}
-						lowercaseInput = chatInput.toLowerCase();
+						lowercaseInput = chatController.input().toLowerCase();
 						int chatEffect = 0;
 						if (lowercaseInput.startsWith("wave:")) {
 							chatEffect = 1;
-							chatInput = chatInput.substring(5);
+							chatController.setInput(chatController.input().substring(5));
 						} else if (lowercaseInput.startsWith("wave2:")) {
 							chatEffect = 2;
-							chatInput = chatInput.substring(6);
+							chatController.setInput(chatController.input().substring(6));
 						} else if (lowercaseInput.startsWith("shake:")) {
 							chatEffect = 3;
-							chatInput = chatInput.substring(6);
+							chatController.setInput(chatController.input().substring(6));
 						} else if (lowercaseInput.startsWith("scroll:")) {
 							chatEffect = 4;
-							chatInput = chatInput.substring(7);
+							chatController.setInput(chatController.input().substring(7));
 						} else if (lowercaseInput.startsWith("slide:")) {
 							chatEffect = 5;
-							chatInput = chatInput.substring(6);
+							chatController.setInput(chatController.input().substring(6));
 						}
-						ChatPacketEncoder.writePublicMessage(networkSession.outgoing, chatColor, chatEffect, chatInput,
+						ChatPacketEncoder.writePublicMessage(networkSession.outgoing, chatColor, chatEffect, chatController.input(),
 								chatBuffer);
-						chatInput = ChatCodec.normalize(chatInput);
-						chatInput = Censor.censor(chatInput);
-						localPlayer.overheadText = chatInput;
+						chatController.setInput(ChatCodec.normalize(chatController.input()));
+						chatController.setInput(Censor.censor(chatController.input()));
+						localPlayer.overheadText = chatController.input();
 						localPlayer.overheadTextColor = chatColor;
 						localPlayer.overheadTextEffect = chatEffect;
 						localPlayer.overheadTextCyclesRemaining = 150;
 						if (playerRights == 2)
-							addChatMessage("@cr2@" + localPlayer.name, ((Actor) (localPlayer)).overheadText,
-									ChatMessageType.PUBLIC);
+							addChatMessage("@cr2@" + localPlayer.name, ((Actor) (localPlayer)).overheadText, ChatMessageType.PUBLIC);
 						else if (playerRights == 1)
-							addChatMessage("@cr1@" + localPlayer.name, ((Actor) (localPlayer)).overheadText,
-									ChatMessageType.PUBLIC);
+							addChatMessage("@cr1@" + localPlayer.name, ((Actor) (localPlayer)).overheadText, ChatMessageType.PUBLIC);
 						else
-							addChatMessage(localPlayer.name, ((Actor) (localPlayer)).overheadText,
-									ChatMessageType.PUBLIC);
-						if (publicChatMode == ChatMode.OFF) {
-							publicChatMode = ChatMode.HIDE;
+							addChatMessage(localPlayer.name, ((Actor) (localPlayer)).overheadText, ChatMessageType.PUBLIC);
+						if (chatController.publicMode() == ChatMode.OFF) {
+							chatController.setPublicMode(ChatMode.HIDE);
 							chatModesRedraw = true;
-							ChatPacketEncoder.writeChatModes(networkSession.outgoing, publicChatMode, privateChatMode,
-									tradeMode);
+							ChatPacketEncoder.writeChatModes(networkSession.outgoing, chatController.publicMode(), chatController.privateMode(),
+									chatController.tradeMode());
 						}
 					}
-					chatInput = "";
+					chatController.setInput("");
 					chatboxRedraw = true;
 				}
 			}
@@ -1231,9 +1170,7 @@ public class Client extends GameShell {
 		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_VARP_SMALL) {
 			int varpId = networkSession.incoming.readUnsignedShortAdd();
 			byte varpValue = networkSession.incoming.readByteSub();
-			varpShadowValues[varpId] = varpValue;
-			if (varpValues[varpId] != varpValue) {
-				varpValues[varpId] = varpValue;
+			if (varpState.acceptServerValue(varpId, varpValue)) {
 				applyVarp(varpId);
 				sidebarRedraw = true;
 				if (interfaceState.dialogueInterfaceId != -1)
@@ -1345,17 +1282,15 @@ public class Client extends GameShell {
 			return true;
 		}
 		if (networkSession.incomingOpcode == IncomingPacketOpcode.OPEN_NAME_INPUT_DIALOG) {
-			messagePromptRaised = false;
-			inputDialogState = 2;
-			inputDialogText = "";
+			chatController.openInputDialog(2);
 			chatboxRedraw = true;
 			networkSession.incomingOpcode = -1;
 			return true;
 		}
 		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_CHAT_MODES) {
-			publicChatMode = networkSession.incoming.readUnsignedByte();
-			privateChatMode = networkSession.incoming.readUnsignedByte();
-			tradeMode = networkSession.incoming.readUnsignedByte();
+			chatController.setPublicMode(networkSession.incoming.readUnsignedByte());
+			chatController.setPrivateMode(networkSession.incoming.readUnsignedByte());
+			chatController.setTradeMode(networkSession.incoming.readUnsignedByte());
 			chatModesRedraw = true;
 			chatboxRedraw = true;
 			networkSession.incomingOpcode = -1;
@@ -1415,9 +1350,7 @@ public class Client extends GameShell {
 		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_VARP_LARGE) {
 			int varpValue2 = networkSession.incoming.readIntIME();
 			int varpId2 = networkSession.incoming.readUnsignedShortLE();
-			varpShadowValues[varpId2] = varpValue2;
-			if (varpValues[varpId2] != varpValue2) {
-				varpValues[varpId2] = varpValue2;
+			if (varpState.acceptServerValue(varpId2, varpValue2)) {
 				applyVarp(varpId2);
 				sidebarRedraw = true;
 				if (interfaceState.dialogueInterfaceId != -1)
@@ -1446,8 +1379,8 @@ public class Client extends GameShell {
 			if (interfaceState.openInterfaceId != -1) {
 				unloadInterface(interfaceState.openInterfaceId);
 			}
-			if (inputDialogState != 0) {
-				inputDialogState = 0;
+			if (chatController.inputDialogState() != 0) {
+				chatController.setInputDialogState(0);
 				chatboxRedraw = true;
 			}
 			interfaceActionPending = false;
@@ -1556,8 +1489,8 @@ public class Client extends GameShell {
 				unloadInterface(interfaceState.sidebarOverlayInterfaceId);
 				interfaceState.sidebarOverlayInterfaceId = sidebarOverlayInterfaceId;
 			}
-			if (inputDialogState != 0) {
-				inputDialogState = 0;
+			if (chatController.inputDialogState() != 0) {
+				chatController.setInputDialogState(0);
 				chatboxRedraw = true;
 			}
 			sidebarRedraw = true;
@@ -1602,9 +1535,7 @@ public class Client extends GameShell {
 			return true;
 		}
 		if (networkSession.incomingOpcode == IncomingPacketOpcode.OPEN_AMOUNT_INPUT_DIALOG) {
-			messagePromptRaised = false;
-			inputDialogState = 1;
-			inputDialogText = "";
+			chatController.openInputDialog(1);
 			chatboxRedraw = true;
 			networkSession.incomingOpcode = -1;
 			return true;
@@ -1640,13 +1571,13 @@ public class Client extends GameShell {
 			long senderEncodedName = networkSession.incoming.readLong();
 			int privateMessageId = networkSession.incoming.readInt();
 			int senderRights = networkSession.incoming.readUnsignedByte();
-			boolean duplicateOrIgnored = chatHistory.hasRecentPrivateMessage(privateMessageId);
+			boolean duplicateOrIgnored = chatController.history().hasRecentPrivateMessage(privateMessageId);
 
 			if (senderRights <= 1 && socialManager.isIgnored(senderEncodedName))
 				duplicateOrIgnored = true;
 			if (!duplicateOrIgnored && tutorialIslandFlag == 0)
 				try {
-					chatHistory.rememberPrivateMessage(privateMessageId);
+					chatController.history().rememberPrivateMessage(privateMessageId);
 					String privateMessage = ChatCodec.decode(networkSession.incoming,
 							networkSession.incomingLength - 13);
 					if (senderRights != 3)
@@ -1700,8 +1631,8 @@ public class Client extends GameShell {
 				unloadInterface(interfaceState.openInterfaceId);
 				interfaceState.openInterfaceId = openInterfaceId2;
 			}
-			if (inputDialogState != 0) {
-				inputDialogState = 0;
+			if (chatController.inputDialogState() != 0) {
+				chatController.setInputDialogState(0);
 				chatboxRedraw = true;
 			}
 			interfaceActionPending = false;
@@ -1729,8 +1660,8 @@ public class Client extends GameShell {
 				unloadInterface(interfaceState.sidebarOverlayInterfaceId);
 				interfaceState.sidebarOverlayInterfaceId = sidebarOverlayInterfaceId2;
 			}
-			if (inputDialogState != 0) {
-				inputDialogState = 0;
+			if (chatController.inputDialogState() != 0) {
+				chatController.setInputDialogState(0);
 				chatboxRedraw = true;
 			}
 			sidebarRedraw = true;
@@ -1775,8 +1706,7 @@ public class Client extends GameShell {
 			networkSession.incomingOpcode = -1;
 			return true;
 		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.REBUILD_REGION
-				|| networkSession.incomingOpcode == IncomingPacketOpcode.REBUILD_INSTANCED_REGION) {
+		if (networkSession.incomingOpcode == IncomingPacketOpcode.REBUILD_REGION || networkSession.incomingOpcode == IncomingPacketOpcode.REBUILD_INSTANCED_REGION) {
 			RegionManager.RegionShift shift = regionManager.decodeRebuild(networkSession.incoming,
 					networkSession.incomingOpcode, onDemandFetcher, actorSynchronizer, worldState, destinationX,
 					destinationY);
@@ -1794,16 +1724,11 @@ public class Client extends GameShell {
 			networkSession.incomingOpcode = -1;
 			return true;
 		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.PLAY_AREA_SOUND
-				|| networkSession.incomingOpcode == IncomingPacketOpcode.UPDATE_GROUND_ITEM_AMOUNT
-				|| networkSession.incomingOpcode == IncomingPacketOpcode.ATTACH_OBJECT_TO_PLAYER
-				|| networkSession.incomingOpcode == IncomingPacketOpcode.ADD_GROUND_ITEM_FOR_OTHER_PLAYER
-				|| networkSession.incomingOpcode == IncomingPacketOpcode.ADD_GRAPHICS_OBJECT
-				|| networkSession.incomingOpcode == IncomingPacketOpcode.ADD_PROJECTILE
-				|| networkSession.incomingOpcode == IncomingPacketOpcode.REMOVE_GROUND_ITEM
-				|| networkSession.incomingOpcode == IncomingPacketOpcode.ADD_GROUND_ITEM
-				|| networkSession.incomingOpcode == IncomingPacketOpcode.ANIMATE_GAME_OBJECT
-				|| networkSession.incomingOpcode == IncomingPacketOpcode.REMOVE_GAME_OBJECT
+		if (networkSession.incomingOpcode == IncomingPacketOpcode.PLAY_AREA_SOUND || networkSession.incomingOpcode == IncomingPacketOpcode.UPDATE_GROUND_ITEM_AMOUNT
+				|| networkSession.incomingOpcode == IncomingPacketOpcode.ATTACH_OBJECT_TO_PLAYER || networkSession.incomingOpcode == IncomingPacketOpcode.ADD_GROUND_ITEM_FOR_OTHER_PLAYER
+				|| networkSession.incomingOpcode == IncomingPacketOpcode.ADD_GRAPHICS_OBJECT || networkSession.incomingOpcode == IncomingPacketOpcode.ADD_PROJECTILE
+				|| networkSession.incomingOpcode == IncomingPacketOpcode.REMOVE_GROUND_ITEM || networkSession.incomingOpcode == IncomingPacketOpcode.ADD_GROUND_ITEM
+				|| networkSession.incomingOpcode == IncomingPacketOpcode.ANIMATE_GAME_OBJECT || networkSession.incomingOpcode == IncomingPacketOpcode.REMOVE_GAME_OBJECT
 				|| networkSession.incomingOpcode == IncomingPacketOpcode.ADD_GAME_OBJECT) {
 			zoneUpdates.decode(networkSession.incoming, networkSession.incomingOpcode, currentPlane, gameCycle,
 					localPlayerServerIndex, localPlayer, actorSynchronizer, this::queueAreaSound);
@@ -1947,7 +1872,7 @@ public class Client extends GameShell {
 				unloadInterface(interfaceState.fullscreenOverlayInterfaceId);
 				interfaceState.fullscreenOverlayInterfaceId = fullscreenOverlayInterfaceId;
 			}
-			inputDialogState = 0;
+			chatController.setInputDialogState(0);
 			interfaceActionPending = false;
 			networkSession.incomingOpcode = -1;
 			return true;
@@ -1974,12 +1899,10 @@ public class Client extends GameShell {
 			return true;
 		}
 		if (networkSession.incomingOpcode == IncomingPacketOpcode.SYNCHRONIZE_VARPS) {
-			for (int varpId3 = 0; varpId3 < varpValues.length; varpId3++)
-				if (varpValues[varpId3] != varpShadowValues[varpId3]) {
-					varpValues[varpId3] = varpShadowValues[varpId3];
-					applyVarp(varpId3);
-					sidebarRedraw = true;
-				}
+			varpState.synchronizeToShadow(varpId3 -> {
+				applyVarp(varpId3);
+				sidebarRedraw = true;
+			});
 
 			networkSession.incomingOpcode = -1;
 			return true;
@@ -2078,7 +2001,6 @@ public class Client extends GameShell {
 
 	/**
 	 * Configures the hostname used by all standalone game/update/archive sockets.
-	 * 
 	 * @param host the host name
 	 */
 	public static void setServerHost(String host) {
@@ -2236,8 +2158,7 @@ public class Client extends GameShell {
 			if (packedUid == previousUid)
 				continue;
 			previousUid = packedUid;
-			if (entityType == SceneUid.TYPE_OBJECT
-					&& worldState.scene.getConfig(currentPlane, tileX, tileY, packedUid) >= 0) {
+			if (entityType == SceneUid.TYPE_OBJECT && worldState.scene.getConfig(currentPlane, tileX, tileY, packedUid) >= 0) {
 				GameObjectDefinition objectDefinition = GameObjectDefinition.lookup(entityId);
 				if (objectDefinition.morphIds != null)
 					objectDefinition = objectDefinition.transform();
@@ -2425,12 +2346,12 @@ public class Client extends GameShell {
 	 */
 	public void addChatMessage(String sender, String message, int type) {
 		if (type == 0 && interfaceState.dialogueInterfaceId != -1) {
-			clickToContinueMessage = message;
+			chatController.setClickToContinueMessage(message);
 			super.clickButton = 0;
 		}
 		if (interfaceState.chatboxInterfaceId == -1)
 			chatboxRedraw = true;
-		chatHistory.add(sender, message, type);
+		chatController.history().add(sender, message, type);
 	}
 
 	/**
@@ -2446,79 +2367,14 @@ public class Client extends GameShell {
 	}
 
 	/**
-	 * Loads title-screen sprites, initializes flame palettes/noise, and starts the
-	 * flame thread.
+	 * Loads title-screen sprites and starts the independently owned flame animator.
 	 */
 	public void initializeTitleScreen() {
 		titleBoxImage = new IndexedImage(titleArchive, "titlebox", 0);
 		titleButtonImage = new IndexedImage(titleArchive, "titlebutton", 0);
-		titleRunes = new IndexedImage[12];
-		for (int assetIndex = 0; assetIndex < 12; assetIndex++)
-			titleRunes[assetIndex] = new IndexedImage(titleArchive, "runes", assetIndex);
-
-		titleLeftFlameBackground = new ImageRGB(128, 265);
-		titleRightFlameBackground = new ImageRGB(128, 265);
-		for (int pixelIndex = 0; pixelIndex < 33920; pixelIndex++)
-			titleLeftFlameBackground.pixels[pixelIndex] = titleLeftFlameBuffer.pixels[pixelIndex];
-
-		for (int pixelIndex2 = 0; pixelIndex2 < 33920; pixelIndex2++)
-			titleRightFlameBackground.pixels[pixelIndex2] = titleRightFlameBuffer.pixels[pixelIndex2];
-
-		titleFlameRedPalette = new int[256];
-		for (int paletteStep = 0; paletteStep < 64; paletteStep++)
-			titleFlameRedPalette[paletteStep] = paletteStep * 0x40000;
-
-		for (int paletteStep = 0; paletteStep < 64; paletteStep++)
-			titleFlameRedPalette[paletteStep + 64] = 0xff0000 + 1024 * paletteStep;
-
-		for (int paletteStep = 0; paletteStep < 64; paletteStep++)
-			titleFlameRedPalette[paletteStep + 128] = 0xffff00 + 4 * paletteStep;
-
-		for (int paletteStep = 0; paletteStep < 64; paletteStep++)
-			titleFlameRedPalette[paletteStep + 192] = 0xffffff;
-
-		titleFlameGreenPalette = new int[256];
-		for (int paletteStep = 0; paletteStep < 64; paletteStep++)
-			titleFlameGreenPalette[paletteStep] = paletteStep * 1024;
-
-		for (int paletteStep = 0; paletteStep < 64; paletteStep++)
-			titleFlameGreenPalette[paletteStep + 64] = 65280 + 4 * paletteStep;
-
-		for (int paletteStep = 0; paletteStep < 64; paletteStep++)
-			titleFlameGreenPalette[paletteStep + 128] = 65535 + 0x40000 * paletteStep;
-
-		for (int paletteStep = 0; paletteStep < 64; paletteStep++)
-			titleFlameGreenPalette[paletteStep + 192] = 0xffffff;
-
-		titleFlameBluePalette = new int[256];
-		for (int paletteStep = 0; paletteStep < 64; paletteStep++)
-			titleFlameBluePalette[paletteStep] = paletteStep * 4;
-
-		for (int paletteStep = 0; paletteStep < 64; paletteStep++)
-			titleFlameBluePalette[paletteStep + 64] = 255 + 0x40000 * paletteStep;
-
-		for (int paletteStep = 0; paletteStep < 64; paletteStep++)
-			titleFlameBluePalette[paletteStep + 128] = 0xff00ff + 1024 * paletteStep;
-
-		for (int paletteStep = 0; paletteStep < 64; paletteStep++)
-			titleFlameBluePalette[paletteStep + 192] = 0xffffff;
-
-		titleFlamePalette = new int[256];
-		titleFlameNoise = new int[32768];
-		titleFlameNoiseScratch = new int[32768];
-		initializeTitleFlameNoise(null);
-		titleFlameIntensity = new int[32768];
-		titleFlameIntensityScratch = new int[32768];
+		titleFlameAnimator.prepare(titleArchive, titleLeftFlameBuffer, titleRightFlameBuffer);
 		drawLoadingText(10, "Connecting to fileserver");
-		if (!titleFlamesRunning) {
-			titleFlameThreadMode = true;
-			titleFlamesRunning = true;
-			Thread thread = new Thread(this, "rs2-title-flame");
-			thread.setDaemon(true);
-			titleFlameThread = thread;
-			thread.start();
-			thread.setPriority(2);
-		}
+		titleFlameAnimator.start(() -> gameCycle, () -> super.graphics);
 	}
 
 	/**
@@ -2540,7 +2396,8 @@ public class Client extends GameShell {
 		if (interfaceState.inventoryDragArea != 0)
 			return;
 		int clickButton = super.clickButton;
-		if (interfaceState.spellSelected == 1 && super.clickX >= layout.topTabsX() && super.clickY >= layout.topTabsY()
+		if (interfaceState.spellSelected == 1
+				&& super.clickX >= layout.topTabsX() && super.clickY >= layout.topTabsY()
 				&& super.clickX <= layout.topTabsX() + 249 && super.clickY <= layout.topTabsY() + 45)
 			clickButton = 0;
 		if (menuState.open) {
@@ -2607,14 +2464,9 @@ public class Client extends GameShell {
 		} else {
 			if (clickButton == 1 && menuState.count > 0) {
 				int actionId = menuState.actionIds[menuState.count - 1];
-				if (actionId == MenuState.WIDGET_ITEM_OPTION_1 || actionId == MenuState.WIDGET_ITEM_OPTION_2
-						|| actionId == MenuState.WIDGET_ITEM_OPTION_3 || actionId == MenuState.WIDGET_ITEM_OPTION_4
-						|| actionId == MenuState.WIDGET_ITEM_OPTION_5 || actionId == MenuState.INVENTORY_ITEM_OPTION_1
-						|| actionId == MenuState.INVENTORY_ITEM_OPTION_2
-						|| actionId == MenuState.INVENTORY_ITEM_OPTION_3
-						|| actionId == MenuState.INVENTORY_ITEM_OPTION_4
-						|| actionId == MenuState.INVENTORY_ITEM_OPTION_5 || actionId == MenuState.SELECT_ITEM
-						|| actionId == MenuState.EXAMINE_INVENTORY_ITEM) {
+				if (actionId == MenuState.WIDGET_ITEM_OPTION_1 || actionId == MenuState.WIDGET_ITEM_OPTION_2 || actionId == MenuState.WIDGET_ITEM_OPTION_3 || actionId == MenuState.WIDGET_ITEM_OPTION_4 || actionId == MenuState.WIDGET_ITEM_OPTION_5
+						|| actionId == MenuState.INVENTORY_ITEM_OPTION_1 || actionId == MenuState.INVENTORY_ITEM_OPTION_2 || actionId == MenuState.INVENTORY_ITEM_OPTION_3 || actionId == MenuState.INVENTORY_ITEM_OPTION_4 || actionId == MenuState.INVENTORY_ITEM_OPTION_5
+						|| actionId == MenuState.SELECT_ITEM || actionId == MenuState.EXAMINE_INVENTORY_ITEM) {
 					int slot = menuState.actionCmd2[menuState.count - 1];
 					int widgetId = menuState.actionCmd3[menuState.count - 1];
 					Widget inventoryWidget = Widget.get(widgetId);
@@ -2719,19 +2571,11 @@ public class Client extends GameShell {
 		if (socialManager.friendListStatus == SocialManager.FRIEND_LIST_READY) {
 			if (contentType == WidgetContentType.ADD_FRIEND) {
 				chatboxRedraw = true;
-				inputDialogState = 0;
-				messagePromptRaised = true;
-				promptInput = "";
-				promptAction = 1;
-				promptMessage = "Enter name of friend to add to list";
+				chatController.openPrompt(1, "Enter name of friend to add to list");
 			}
 			if (contentType == WidgetContentType.REMOVE_FRIEND) {
 				chatboxRedraw = true;
-				inputDialogState = 0;
-				messagePromptRaised = true;
-				promptInput = "";
-				promptAction = 2;
-				promptMessage = "Enter name of friend to delete from list";
+				chatController.openPrompt(2, "Enter name of friend to delete from list");
 			}
 		}
 		if (contentType == WidgetContentType.LOGOUT) {
@@ -2740,72 +2584,31 @@ public class Client extends GameShell {
 		}
 		if (contentType == WidgetContentType.ADD_IGNORE) {
 			chatboxRedraw = true;
-			inputDialogState = 0;
-			messagePromptRaised = true;
-			promptInput = "";
-			promptAction = 4;
-			promptMessage = "Enter name of player to add to list";
+			chatController.openPrompt(4, "Enter name of player to add to list");
 		}
 		if (contentType == WidgetContentType.REMOVE_IGNORE) {
 			chatboxRedraw = true;
-			inputDialogState = 0;
-			messagePromptRaised = true;
-			promptInput = "";
-			promptAction = 5;
-			promptMessage = "Enter name of player to delete from list";
+			chatController.openPrompt(5, "Enter name of player to delete from list");
 		}
-		if (contentType >= WidgetContentType.APPEARANCE_KIT_FIRST
-				&& contentType <= WidgetContentType.APPEARANCE_KIT_LAST) {
+		if (contentType >= WidgetContentType.APPEARANCE_KIT_FIRST && contentType <= WidgetContentType.APPEARANCE_KIT_LAST) {
 			int bodyPart = (contentType - WidgetContentType.APPEARANCE_KIT_FIRST) / 2;
-			int direction = contentType & 1;
-			int kitId = appearanceKitIds[bodyPart];
-			if (kitId != -1) {
-				do {
-					if (direction == 0 && --kitId < 0)
-						kitId = IdentityKit.count - 1;
-					if (direction == 1 && ++kitId >= IdentityKit.count)
-						kitId = 0;
-				} while (IdentityKit.definitions[kitId].nonSelectable
-						|| IdentityKit.definitions[kitId].bodyPartId != bodyPart + (maleAppearance ? 0 : 7));
-				appearanceKitIds[bodyPart] = kitId;
-				appearanceModelDirty = true;
-			}
+			appearanceEditor.cycleKit(bodyPart, contentType & 1);
 		}
-		if (contentType >= WidgetContentType.APPEARANCE_COLOR_FIRST
-				&& contentType <= WidgetContentType.APPEARANCE_COLOR_LAST) {
+		if (contentType >= WidgetContentType.APPEARANCE_COLOR_FIRST && contentType <= WidgetContentType.APPEARANCE_COLOR_LAST) {
 			int colorSlot = (contentType - WidgetContentType.APPEARANCE_COLOR_FIRST) / 2;
-			int direction2 = contentType & 1;
-			int colorIndex = appearanceColors[colorSlot];
-			if (direction2 == 0 && --colorIndex < 0)
-				colorIndex = bodyColorPalettes[colorSlot].length - 1;
-			if (direction2 == 1 && ++colorIndex >= bodyColorPalettes[colorSlot].length)
-				colorIndex = 0;
-			appearanceColors[colorSlot] = colorIndex;
-			appearanceModelDirty = true;
+			appearanceEditor.cycleColor(colorSlot, contentType & 1);
 		}
-		if (contentType == WidgetContentType.SELECT_MALE_APPEARANCE && !maleAppearance) {
-			maleAppearance = true;
-			resetCharacterAppearance();
-		}
-		if (contentType == WidgetContentType.SELECT_FEMALE_APPEARANCE && maleAppearance) {
-			maleAppearance = false;
-			resetCharacterAppearance();
-		}
+		if (contentType == WidgetContentType.SELECT_MALE_APPEARANCE)
+			appearanceEditor.selectMale();
+		if (contentType == WidgetContentType.SELECT_FEMALE_APPEARANCE)
+			appearanceEditor.selectFemale();
 		if (contentType == WidgetContentType.ACCEPT_APPEARANCE) {
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.APPEARANCE_UPDATE);
-			networkSession.outgoing.writeByte(maleAppearance ? 0 : 1);
-			for (int bodyPart2 = 0; bodyPart2 < 7; bodyPart2++)
-				networkSession.outgoing.writeByte(appearanceKitIds[bodyPart2]);
-
-			for (int colorSlot2 = 0; colorSlot2 < 5; colorSlot2++)
-				networkSession.outgoing.writeByte(appearanceColors[colorSlot2]);
-
+			appearanceEditor.writeUpdate(networkSession.outgoing);
 			return true;
 		}
 		if (contentType == WidgetContentType.REPORT_ABUSE_MUTE)
 			reportAbuseMutePlayer = !reportAbuseMutePlayer;
-		if (contentType >= WidgetContentType.REPORT_ABUSE_RULE_FIRST
-				&& contentType <= WidgetContentType.REPORT_ABUSE_RULE_LAST) {
+		if (contentType >= WidgetContentType.REPORT_ABUSE_RULE_FIRST && contentType <= WidgetContentType.REPORT_ABUSE_RULE_LAST) {
 			closeInterfaces();
 			if (reportAbuseName.length() > 0) {
 				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.REPORT_ABUSE);
@@ -2974,30 +2777,18 @@ public class Client extends GameShell {
 			}
 			if (resourceLoader.hasCache()) {
 				drawLoadingText(75, "Requesting maps");
-				onDemandFetcher.request(OnDemandFetcher.MAP,
-						onDemandFetcher.getMapFileId(47, 48, OnDemandFetcher.MAP_FILE_TERRAIN));
-				onDemandFetcher.request(OnDemandFetcher.MAP,
-						onDemandFetcher.getMapFileId(47, 48, OnDemandFetcher.MAP_FILE_LANDSCAPE));
-				onDemandFetcher.request(OnDemandFetcher.MAP,
-						onDemandFetcher.getMapFileId(48, 48, OnDemandFetcher.MAP_FILE_TERRAIN));
-				onDemandFetcher.request(OnDemandFetcher.MAP,
-						onDemandFetcher.getMapFileId(48, 48, OnDemandFetcher.MAP_FILE_LANDSCAPE));
-				onDemandFetcher.request(OnDemandFetcher.MAP,
-						onDemandFetcher.getMapFileId(49, 48, OnDemandFetcher.MAP_FILE_TERRAIN));
-				onDemandFetcher.request(OnDemandFetcher.MAP,
-						onDemandFetcher.getMapFileId(49, 48, OnDemandFetcher.MAP_FILE_LANDSCAPE));
-				onDemandFetcher.request(OnDemandFetcher.MAP,
-						onDemandFetcher.getMapFileId(47, 47, OnDemandFetcher.MAP_FILE_TERRAIN));
-				onDemandFetcher.request(OnDemandFetcher.MAP,
-						onDemandFetcher.getMapFileId(47, 47, OnDemandFetcher.MAP_FILE_LANDSCAPE));
-				onDemandFetcher.request(OnDemandFetcher.MAP,
-						onDemandFetcher.getMapFileId(48, 47, OnDemandFetcher.MAP_FILE_TERRAIN));
-				onDemandFetcher.request(OnDemandFetcher.MAP,
-						onDemandFetcher.getMapFileId(48, 47, OnDemandFetcher.MAP_FILE_LANDSCAPE));
-				onDemandFetcher.request(OnDemandFetcher.MAP,
-						onDemandFetcher.getMapFileId(48, 148, OnDemandFetcher.MAP_FILE_TERRAIN));
-				onDemandFetcher.request(OnDemandFetcher.MAP,
-						onDemandFetcher.getMapFileId(48, 148, OnDemandFetcher.MAP_FILE_LANDSCAPE));
+				onDemandFetcher.request(OnDemandFetcher.MAP, onDemandFetcher.getMapFileId(47, 48, OnDemandFetcher.MAP_FILE_TERRAIN));
+				onDemandFetcher.request(OnDemandFetcher.MAP, onDemandFetcher.getMapFileId(47, 48, OnDemandFetcher.MAP_FILE_LANDSCAPE));
+				onDemandFetcher.request(OnDemandFetcher.MAP, onDemandFetcher.getMapFileId(48, 48, OnDemandFetcher.MAP_FILE_TERRAIN));
+				onDemandFetcher.request(OnDemandFetcher.MAP, onDemandFetcher.getMapFileId(48, 48, OnDemandFetcher.MAP_FILE_LANDSCAPE));
+				onDemandFetcher.request(OnDemandFetcher.MAP, onDemandFetcher.getMapFileId(49, 48, OnDemandFetcher.MAP_FILE_TERRAIN));
+				onDemandFetcher.request(OnDemandFetcher.MAP, onDemandFetcher.getMapFileId(49, 48, OnDemandFetcher.MAP_FILE_LANDSCAPE));
+				onDemandFetcher.request(OnDemandFetcher.MAP, onDemandFetcher.getMapFileId(47, 47, OnDemandFetcher.MAP_FILE_TERRAIN));
+				onDemandFetcher.request(OnDemandFetcher.MAP, onDemandFetcher.getMapFileId(47, 47, OnDemandFetcher.MAP_FILE_LANDSCAPE));
+				onDemandFetcher.request(OnDemandFetcher.MAP, onDemandFetcher.getMapFileId(48, 47, OnDemandFetcher.MAP_FILE_TERRAIN));
+				onDemandFetcher.request(OnDemandFetcher.MAP, onDemandFetcher.getMapFileId(48, 47, OnDemandFetcher.MAP_FILE_LANDSCAPE));
+				onDemandFetcher.request(OnDemandFetcher.MAP, onDemandFetcher.getMapFileId(48, 148, OnDemandFetcher.MAP_FILE_TERRAIN));
+				onDemandFetcher.request(OnDemandFetcher.MAP, onDemandFetcher.getMapFileId(48, 148, OnDemandFetcher.MAP_FILE_LANDSCAPE));
 				requestCount = onDemandFetcher.getOutstandingRequestCount();
 				while (onDemandFetcher.getOutstandingRequestCount() > 0) {
 					int loadedMapCount = requestCount - onDemandFetcher.getOutstandingRequestCount();
@@ -3296,8 +3087,8 @@ public class Client extends GameShell {
 					currentHoveredWidgetId = childWidget.mouseoverTargetId;
 				else
 					currentHoveredWidgetId = childWidget.id;
-			if (childWidget.type == Widget.TYPE_TOOLTIP && mouseX >= childX && mouseY >= childY
-					&& mouseX < childX + childWidget.width && mouseY < childY + childWidget.height)
+			if (childWidget.type == Widget.TYPE_TOOLTIP && mouseX >= childX && mouseY >= childY && mouseX < childX + childWidget.width
+					&& mouseY < childY + childWidget.height)
 				currentTooltipWidgetId = childWidget.id;
 			if (childWidget.type == Widget.TYPE_CONTAINER) {
 				buildInterfaceMenu(childY, childWidget, screenArea, childWidget.scrollY, childX, mouseX, mouseY);
@@ -3317,8 +3108,8 @@ public class Client extends GameShell {
 						menuState.count++;
 					}
 				}
-				if (childWidget.buttonType == Widget.BUTTON_SPELL && interfaceState.spellSelected == 0
-						&& mouseX >= childX && mouseY >= childY && mouseX < childX + childWidget.width
+				if (childWidget.buttonType == Widget.BUTTON_SPELL && interfaceState.spellSelected == 0 && mouseX >= childX
+						&& mouseY >= childY && mouseX < childX + childWidget.width
 						&& mouseY < childY + childWidget.height) {
 					String spellAction = childWidget.selectedActionName;
 					if (spellAction.indexOf(" ") != -1)
@@ -3352,9 +3143,8 @@ public class Client extends GameShell {
 					menuState.actionCmd3[menuState.count] = childWidget.id;
 					menuState.count++;
 				}
-				if (childWidget.buttonType == Widget.BUTTON_CONTINUE && !interfaceActionPending && mouseX >= childX
-						&& mouseY >= childY && mouseX < childX + childWidget.width
-						&& mouseY < childY + childWidget.height) {
+				if (childWidget.buttonType == Widget.BUTTON_CONTINUE && !interfaceActionPending && mouseX >= childX && mouseY >= childY
+						&& mouseX < childX + childWidget.width && mouseY < childY + childWidget.height) {
 					menuState.actionNames[menuState.count] = childWidget.tooltip;
 					menuState.actionIds[menuState.count] = MenuState.WIDGET_CONTINUE;
 					menuState.actionCmd3[menuState.count] = childWidget.id;
@@ -3364,16 +3154,13 @@ public class Client extends GameShell {
 					int slot = 0;
 					for (int row = 0; row < childWidget.height; row++) {
 						for (int column = 0; column < childWidget.width; column++) {
-							int slotX = childX
-									+ column * (Widget.INVENTORY_SLOT_SIZE + childWidget.inventorySpritePaddingX);
-							int slotY = childY
-									+ row * (Widget.INVENTORY_SLOT_SIZE + childWidget.inventorySpritePaddingY);
+							int slotX = childX + column * (Widget.INVENTORY_SLOT_SIZE + childWidget.inventorySpritePaddingX);
+							int slotY = childY + row * (Widget.INVENTORY_SLOT_SIZE + childWidget.inventorySpritePaddingY);
 							if (slot < Widget.INVENTORY_SPRITE_OFFSET_COUNT) {
 								slotX += childWidget.spriteXOffsets[slot];
 								slotY += childWidget.spriteYOffsets[slot];
 							}
-							if (mouseX >= slotX && mouseY >= slotY && mouseX < slotX + Widget.INVENTORY_SLOT_SIZE
-									&& mouseY < slotY + Widget.INVENTORY_SLOT_SIZE) {
+							if (mouseX >= slotX && mouseY >= slotY && mouseX < slotX + Widget.INVENTORY_SLOT_SIZE && mouseY < slotY + Widget.INVENTORY_SLOT_SIZE) {
 								interfaceState.hoveredInventorySlot = slot;
 								interfaceState.hoveredInventoryWidgetId = childWidget.id;
 								if (childWidget.itemIds[slot] > 0) {
@@ -3514,17 +3301,14 @@ public class Client extends GameShell {
 				Rasterizer.resetPixels();
 				gameScreenRedraw = true;
 				Widget fullscreenWidget = Widget.get(interfaceState.fullscreenInterfaceId);
-				if (fullscreenWidget.width == ClientLayout.FIXED_VIEWPORT_WIDTH
-						&& fullscreenWidget.height == ClientLayout.FIXED_VIEWPORT_HEIGHT
-						&& fullscreenWidget.type == Widget.TYPE_CONTAINER) {
+				if (fullscreenWidget.width == ClientLayout.FIXED_VIEWPORT_WIDTH && fullscreenWidget.height == ClientLayout.FIXED_VIEWPORT_HEIGHT && fullscreenWidget.type == Widget.TYPE_CONTAINER) {
 					fullscreenWidget.width = ClientLayout.FIXED_WIDTH;
 					fullscreenWidget.height = ClientLayout.FIXED_HEIGHT;
 				}
 				drawInterface(0, 0, fullscreenWidget, 0);
 				if (interfaceState.fullscreenOverlayInterfaceId != -1) {
 					Widget fullscreenOverlayWidget = Widget.get(interfaceState.fullscreenOverlayInterfaceId);
-					if (fullscreenOverlayWidget.width == ClientLayout.FIXED_VIEWPORT_WIDTH
-							&& fullscreenOverlayWidget.height == ClientLayout.FIXED_VIEWPORT_HEIGHT
+					if (fullscreenOverlayWidget.width == ClientLayout.FIXED_VIEWPORT_WIDTH && fullscreenOverlayWidget.height == ClientLayout.FIXED_VIEWPORT_HEIGHT
 							&& fullscreenOverlayWidget.type == Widget.TYPE_CONTAINER) {
 						fullscreenOverlayWidget.width = ClientLayout.FIXED_WIDTH;
 						fullscreenOverlayWidget.height = ClientLayout.FIXED_HEIGHT;
@@ -3574,9 +3358,9 @@ public class Client extends GameShell {
 			renderGameScene();
 
 		/*
-		 * The game viewport is the background layer in resizable mode. Draw the classic
-		 * frame pieces after it so their stone borders remain visible, then composite
-		 * the fixed-size UI panels on top below.
+		 * The game viewport is the background layer in resizable mode. Draw the
+		 * classic frame pieces after it so their stone borders remain visible, then
+		 * composite the fixed-size UI panels on top below.
 		 */
 		drawGameFrameDecorations();
 		if (regionManager.loadingStage != RegionManager.STAGE_LOADED)
@@ -3598,22 +3382,22 @@ public class Client extends GameShell {
 			drawSidebar();
 			sidebarRedraw = false;
 		}
-		if (interfaceState.chatboxInterfaceId == -1 && inputDialogState == 0) {
-			chatboxScrollWidget.scrollY = chatContentHeight - chatScrollOffset - 77;
+		if (interfaceState.chatboxInterfaceId == -1 && chatController.inputDialogState() == 0) {
+			chatboxScrollWidget.scrollY = chatController.contentHeight() - chatController.scrollOffset() - 77;
 			if (super.mouseX > 448 && super.mouseX < 560 && super.mouseY > layout.chatboxY() - 25)
-				handleScrollbarInput(chatContentHeight, 0, chatboxScrollWidget, super.mouseY - layout.chatboxY(), -1,
+				handleScrollbarInput(chatController.contentHeight(), 0, chatboxScrollWidget, super.mouseY - layout.chatboxY(), -1,
 						super.mouseX - layout.chatboxX(), 77, 463);
-			int chatScrollOffsetFromBottom = chatContentHeight - 77 - chatboxScrollWidget.scrollY;
+			int chatScrollOffsetFromBottom = chatController.contentHeight() - 77 - chatboxScrollWidget.scrollY;
 			if (chatScrollOffsetFromBottom < 0)
 				chatScrollOffsetFromBottom = 0;
-			if (chatScrollOffsetFromBottom > chatContentHeight - 77)
-				chatScrollOffsetFromBottom = chatContentHeight - 77;
-			if (chatScrollOffset != chatScrollOffsetFromBottom) {
-				chatScrollOffset = chatScrollOffsetFromBottom;
+			if (chatScrollOffsetFromBottom > chatController.contentHeight() - 77)
+				chatScrollOffsetFromBottom = chatController.contentHeight() - 77;
+			if (chatController.scrollOffset() != chatScrollOffsetFromBottom) {
+				chatController.setScrollOffset(chatScrollOffsetFromBottom);
 				chatboxRedraw = true;
 			}
 		}
-		if (interfaceState.chatboxInterfaceId == -1 && inputDialogState == 3) {
+		if (interfaceState.chatboxInterfaceId == -1 && chatController.inputDialogState() == 3) {
 			int searchContentHeight = itemSearchResultCount * 14 + 7;
 			chatboxScrollWidget.scrollY = itemSearchScrollOffset;
 			if (super.mouseX > 448 && super.mouseX < 560 && super.mouseY > layout.chatboxY() - 25)
@@ -3639,7 +3423,7 @@ public class Client extends GameShell {
 			chatboxRedraw = true;
 		if (interfaceState.inventoryDragArea == 3)
 			chatboxRedraw = true;
-		if (clickToContinueMessage != null)
+		if (chatController.clickToContinueMessage() != null)
 			chatboxRedraw = true;
 		if (menuState.open && menuState.screenArea == 2)
 			chatboxRedraw = true;
@@ -3739,27 +3523,27 @@ public class Client extends GameShell {
 			chatModesBuffer.bindRaster();
 			chatModesBackground.draw(0, 0);
 			plainFont.drawCenteredTextWithTags("Public chat", 55, 28, 0xffffff, true);
-			if (publicChatMode == ChatMode.ON)
+			if (chatController.publicMode() == ChatMode.ON)
 				plainFont.drawCenteredTextWithTags("On", 55, 41, 65280, true);
-			if (publicChatMode == ChatMode.FRIENDS)
+			if (chatController.publicMode() == ChatMode.FRIENDS)
 				plainFont.drawCenteredTextWithTags("Friends", 55, 41, 0xffff00, true);
-			if (publicChatMode == ChatMode.OFF)
+			if (chatController.publicMode() == ChatMode.OFF)
 				plainFont.drawCenteredTextWithTags("Off", 55, 41, 0xff0000, true);
-			if (publicChatMode == ChatMode.HIDE)
+			if (chatController.publicMode() == ChatMode.HIDE)
 				plainFont.drawCenteredTextWithTags("Hide", 55, 41, 65535, true);
 			plainFont.drawCenteredTextWithTags("Private chat", 184, 28, 0xffffff, true);
-			if (privateChatMode == ChatMode.ON)
+			if (chatController.privateMode() == ChatMode.ON)
 				plainFont.drawCenteredTextWithTags("On", 184, 41, 65280, true);
-			if (privateChatMode == ChatMode.FRIENDS)
+			if (chatController.privateMode() == ChatMode.FRIENDS)
 				plainFont.drawCenteredTextWithTags("Friends", 184, 41, 0xffff00, true);
-			if (privateChatMode == ChatMode.OFF)
+			if (chatController.privateMode() == ChatMode.OFF)
 				plainFont.drawCenteredTextWithTags("Off", 184, 41, 0xff0000, true);
 			plainFont.drawCenteredTextWithTags("Trade/compete", 324, 28, 0xffffff, true);
-			if (tradeMode == ChatMode.ON)
+			if (chatController.tradeMode() == ChatMode.ON)
 				plainFont.drawCenteredTextWithTags("On", 324, 41, 65280, true);
-			if (tradeMode == ChatMode.FRIENDS)
+			if (chatController.tradeMode() == ChatMode.FRIENDS)
 				plainFont.drawCenteredTextWithTags("Friends", 324, 41, 0xffff00, true);
-			if (tradeMode == ChatMode.OFF)
+			if (chatController.tradeMode() == ChatMode.OFF)
 				plainFont.drawCenteredTextWithTags("Off", 324, 41, 0xff0000, true);
 			plainFont.drawCenteredTextWithTags("Report abuse", 458, 33, 0xffffff, true);
 			chatModesBuffer.draw(super.graphics, layout.chatModesX(), layout.chatModesY());
@@ -3769,9 +3553,7 @@ public class Client extends GameShell {
 		animationCycleDelta = 0;
 	}
 
-	/**
-	 * Draws the classic fixed-size frame pieces over the resizable world underlay.
-	 */
+	/** Draws the classic fixed-size frame pieces over the resizable world underlay. */
 	private void drawGameFrameDecorations() {
 		// Viewport/top-left and bottom-chat framing.
 		backLeft1Buffer.draw(super.graphics, 0, 4);
@@ -3791,16 +3573,16 @@ public class Client extends GameShell {
 	 * Draws the optional private-message overlay above the chatbox.
 	 */
 	public void drawSplitPrivateChat() {
-		if (splitPrivateChat == 0)
+		if (chatController.splitPrivateChat() == 0)
 			return;
 		TypeFace font = plainFont;
 		int visibleLine = 0;
 		if (systemUpdateTimer != 0)
 			visibleLine = 1;
 		for (int messageIndex = 0; messageIndex < 100; messageIndex++)
-			if (chatHistory.messages[messageIndex] != null) {
-				int messageType = chatHistory.types[messageIndex];
-				String sender = chatHistory.senders[messageIndex];
+			if (chatController.history().messages[messageIndex] != null) {
+				int messageType = chatController.history().types[messageIndex];
+				String sender = chatController.history().senders[messageIndex];
 				byte rightsIcon = 0;
 				if (sender != null && sender.startsWith("@cr1@")) {
 					sender = sender.substring(5);
@@ -3810,10 +3592,8 @@ public class Client extends GameShell {
 					sender = sender.substring(5);
 					rightsIcon = 2;
 				}
-				if ((messageType == ChatMessageType.PRIVATE_RECEIVED
-						|| messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED)
-						&& (messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED || privateChatMode == ChatMode.ON
-								|| privateChatMode == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
+				if ((messageType == ChatMessageType.PRIVATE_RECEIVED || messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED) && (messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED || chatController.privateMode() == ChatMode.ON
+						|| chatController.privateMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
 					int lineY = layout.unobscuredViewportHeight() - 5 - visibleLine * 13;
 					int textX = 4;
 					font.drawText("From", textX, lineY, 0);
@@ -3827,22 +3607,22 @@ public class Client extends GameShell {
 						moderatorIcons[1].draw(textX, lineY - 12);
 						textX += 14;
 					}
-					font.drawText(sender + ": " + chatHistory.messages[messageIndex], textX, lineY, 0);
-					font.drawText(sender + ": " + chatHistory.messages[messageIndex], textX, lineY - 1, 65535);
+					font.drawText(sender + ": " + chatController.history().messages[messageIndex], textX, lineY, 0);
+					font.drawText(sender + ": " + chatController.history().messages[messageIndex], textX, lineY - 1, 65535);
 					if (++visibleLine >= 5)
 						return;
 				}
-				if (messageType == ChatMessageType.PRIVATE_STATUS && privateChatMode < ChatMode.OFF) {
+				if (messageType == ChatMessageType.PRIVATE_STATUS && chatController.privateMode() < ChatMode.OFF) {
 					int lineY2 = layout.unobscuredViewportHeight() - 5 - visibleLine * 13;
-					font.drawText(chatHistory.messages[messageIndex], 4, lineY2, 0);
-					font.drawText(chatHistory.messages[messageIndex], 4, lineY2 - 1, 65535);
+					font.drawText(chatController.history().messages[messageIndex], 4, lineY2, 0);
+					font.drawText(chatController.history().messages[messageIndex], 4, lineY2 - 1, 65535);
 					if (++visibleLine >= 5)
 						return;
 				}
-				if (messageType == ChatMessageType.PRIVATE_SENT && privateChatMode < ChatMode.OFF) {
+				if (messageType == ChatMessageType.PRIVATE_SENT && chatController.privateMode() < ChatMode.OFF) {
 					int lineY3 = layout.unobscuredViewportHeight() - 5 - visibleLine * 13;
-					font.drawText("To " + sender + ": " + chatHistory.messages[messageIndex], 4, lineY3, 0);
-					font.drawText("To " + sender + ": " + chatHistory.messages[messageIndex], 4, lineY3 - 1, 65535);
+					font.drawText("To " + sender + ": " + chatController.history().messages[messageIndex], 4, lineY3, 0);
+					font.drawText("To " + sender + ": " + chatController.history().messages[messageIndex], 4, lineY3 - 1, 65535);
 					if (++visibleLine >= 5)
 						return;
 				}
@@ -3966,7 +3746,6 @@ public class Client extends GameShell {
 				hintIconType = 0;
 				menuState.count = 0;
 				super.idleCycles = 0;
-				chatHistory.clearMessages();
 
 				interfaceState.itemSelected = 0;
 				interfaceState.spellSelected = 0;
@@ -3989,14 +3768,9 @@ public class Client extends GameShell {
 				unloadInterface(interfaceState.sidebarOverlayInterfaceId);
 				unloadInterface(interfaceState.walkableInterfaceId);
 				interfaceActionPending = false;
-				inputDialogState = 0;
-				messagePromptRaised = false;
-				clickToContinueMessage = null;
+				chatController.resetForLogin();
 				multiCombatZone = 0;
-				maleAppearance = true;
-				resetCharacterAppearance();
-				for (int colorSlot = 0; colorSlot < 5; colorSlot++)
-					appearanceColors[colorSlot] = 0;
+				appearanceEditor.resetForLogin();
 
 				for (int actionIndex = 0; actionIndex < 5; actionIndex++) {
 					playerActions[actionIndex] = null;
@@ -4207,72 +3981,7 @@ public class Client extends GameShell {
 		return true;
 	}
 
-	/**
-	 * Advances the title flame simulation by two original update steps.
-	 */
-	public void updateTitleFlames() {
-		char flameHeight = '\u0100';
-		for (int sparkX = 10; sparkX < 117; sparkX++) {
-			// Random control value for the original title-flame spark distribution.
-			int sparkRoll = (int) (Math.random() * 100D);
-			if (sparkRoll < 50)
-				titleFlameIntensity[sparkX + (flameHeight - 2 << 7)] = 255;
-		}
 
-		for (int sparkIndex = 0; sparkIndex < 100; sparkIndex++) {
-			int sparkX2 = (int) (Math.random() * 124D) + 2;
-			int sparkY = (int) (Math.random() * 128D) + 128;
-			int sparkOffset = sparkX2 + (sparkY << 7);
-			titleFlameIntensity[sparkOffset] = 192;
-		}
-
-		for (int blurY = 1; blurY < flameHeight - 1; blurY++) {
-			for (int blurX = 1; blurX < 127; blurX++) {
-				int blurOffset = blurX + (blurY << 7);
-				titleFlameIntensityScratch[blurOffset] = (titleFlameIntensity[blurOffset - 1]
-						+ titleFlameIntensity[blurOffset + 1] + titleFlameIntensity[blurOffset - 128]
-						+ titleFlameIntensity[blurOffset + 128]) / 4;
-			}
-
-		}
-
-		titleFlameNoiseOffset += 128;
-		if (titleFlameNoiseOffset > titleFlameNoise.length) {
-			titleFlameNoiseOffset -= titleFlameNoise.length;
-			int runeIndex = (int) (Math.random() * 12D);
-			initializeTitleFlameNoise(titleRunes[runeIndex]);
-		}
-		for (int noiseY = 1; noiseY < flameHeight - 1; noiseY++) {
-			for (int noiseX = 1; noiseX < 127; noiseX++) {
-				int noiseOffset = noiseX + (noiseY << 7);
-				int intensity = titleFlameIntensityScratch[noiseOffset + 128]
-						- titleFlameNoise[noiseOffset + titleFlameNoiseOffset & titleFlameNoise.length - 1] / 5;
-				if (intensity < 0)
-					intensity = 0;
-				titleFlameIntensity[noiseOffset] = intensity;
-			}
-
-		}
-
-		for (int lineIndex = 0; lineIndex < flameHeight - 1; lineIndex++)
-			titleFlameLineOffsets[lineIndex] = titleFlameLineOffsets[lineIndex + 1];
-
-		titleFlameLineOffsets[flameHeight - 1] = (int) (Math.sin((double) gameCycle / 14D) * 16D
-				+ Math.sin((double) gameCycle / 15D) * 14D + Math.sin((double) gameCycle / 16D) * 12D);
-		if (greenFlameTransition > 0)
-			greenFlameTransition -= 4;
-		if (blueFlameTransition > 0)
-			blueFlameTransition -= 4;
-		if (greenFlameTransition == 0 && blueFlameTransition == 0) {
-			// Random trigger for the green/blue palette transitions; historical name is
-			// unknown.
-			int transitionRoll = (int) (Math.random() * 2000D);
-			if (transitionRoll == 0)
-				greenFlameTransition = 1024;
-			if (transitionRoll == 1)
-				blueFlameTransition = 1024;
-		}
-	}
 
 	/**
 	 * Adds context-menu actions for an NPC at the supplied scene tile.
@@ -4374,53 +4083,7 @@ public class Client extends GameShell {
 		}
 	}
 
-	/**
-	 * Randomizes and smooths the title flame noise buffer, optionally masking it
-	 * with a rune sprite.
-	 *
-	 * @param rune the rune
-	 */
-	public void initializeTitleFlameNoise(IndexedImage rune) {
-		int flameHeight = 256;
-		for (int clearIndex = 0; clearIndex < titleFlameNoise.length; clearIndex++)
-			titleFlameNoise[clearIndex] = 0;
 
-		for (int randomPoint = 0; randomPoint < 5000; randomPoint++) {
-			int randomOffset = (int) (Math.random() * 128D * (double) flameHeight);
-			titleFlameNoise[randomOffset] = (int) (Math.random() * 256D);
-		}
-
-		for (int blurPass = 0; blurPass < 20; blurPass++) {
-			for (int blurY = 1; blurY < flameHeight - 1; blurY++) {
-				for (int blurX = 1; blurX < 127; blurX++) {
-					int blurOffset = blurX + (blurY << 7);
-					titleFlameNoiseScratch[blurOffset] = (titleFlameNoise[blurOffset - 1]
-							+ titleFlameNoise[blurOffset + 1] + titleFlameNoise[blurOffset - 128]
-							+ titleFlameNoise[blurOffset + 128]) / 4;
-				}
-
-			}
-
-			int noiseSwap[] = titleFlameNoise;
-			titleFlameNoise = titleFlameNoiseScratch;
-			titleFlameNoiseScratch = noiseSwap;
-		}
-
-		if (rune != null) {
-			int runePixelIndex = 0;
-			for (int runeY = 0; runeY < rune.height; runeY++) {
-				for (int runeX = 0; runeX < rune.width; runeX++)
-					if (rune.pixels[runePixelIndex++] != 0) {
-						int maskX = runeX + 16 + rune.offsetX;
-						int maskY = runeY + 16 + rune.offsetY;
-						int maskOffset = maskX + (maskY << 7);
-						titleFlameNoise[maskOffset] = 0;
-					}
-
-			}
-
-		}
-	}
 
 	/**
 	 * Draws the chatbox, prompts, item-search results, dialogue interfaces, and
@@ -4430,19 +4093,19 @@ public class Client extends GameShell {
 		chatboxBuffer.bindRaster();
 		Rasterizer3D.scanlineOffsets = chatboxScanlineOffsets;
 		chatboxBackground.draw(0, 0);
-		if (messagePromptRaised) {
-			boldFont.drawCenteredText(promptMessage, 239, 40, 0);
-			boldFont.drawCenteredText(promptInput + "*", 239, 60, 128);
-		} else if (inputDialogState == 1) {
+		if (chatController.isPromptRaised()) {
+			boldFont.drawCenteredText(chatController.promptMessage(), 239, 40, 0);
+			boldFont.drawCenteredText(chatController.promptInput() + "*", 239, 60, 128);
+		} else if (chatController.inputDialogState() == 1) {
 			boldFont.drawCenteredText("Enter amount:", 239, 40, 0);
-			boldFont.drawCenteredText(inputDialogText + "*", 239, 60, 128);
-		} else if (inputDialogState == 2) {
+			boldFont.drawCenteredText(chatController.inputDialogText() + "*", 239, 60, 128);
+		} else if (chatController.inputDialogState() == 2) {
 			boldFont.drawCenteredText("Enter name:", 239, 40, 0);
-			boldFont.drawCenteredText(inputDialogText + "*", 239, 60, 128);
-		} else if (inputDialogState == 3) {
-			if (inputDialogText != itemSearchQuery) {
-				searchItems(inputDialogText);
-				itemSearchQuery = inputDialogText;
+			boldFont.drawCenteredText(chatController.inputDialogText() + "*", 239, 60, 128);
+		} else if (chatController.inputDialogState() == 3) {
+			if (chatController.inputDialogText() != itemSearchQuery) {
+				searchItems(chatController.inputDialogText());
+				itemSearchQuery = chatController.inputDialogText();
 			}
 			TypeFace searchFont = plainFont;
 			Rasterizer.setCoordinates(0, 0, 463, 77);
@@ -4455,14 +4118,14 @@ public class Client extends GameShell {
 			Rasterizer.resetCoordinates();
 			if (itemSearchResultCount > 5)
 				drawScrollbar(itemSearchScrollOffset, 463, 77, itemSearchResultCount * 14 + 7, 0);
-			if (inputDialogText.length() == 0)
+			if (chatController.inputDialogText().length() == 0)
 				boldFont.drawCenteredText("Enter object name", 239, 40, 255);
 			else if (itemSearchResultCount == 0)
 				boldFont.drawCenteredText("No matching objects found, please shorten search", 239, 40, 0);
-			searchFont.drawCenteredText(inputDialogText + "*", 239, 90, 0);
+			searchFont.drawCenteredText(chatController.inputDialogText() + "*", 239, 90, 0);
 			Rasterizer.drawHorizontalLine(0, 77, 479, 0);
-		} else if (clickToContinueMessage != null) {
-			boldFont.drawCenteredText(clickToContinueMessage, 239, 40, 0);
+		} else if (chatController.clickToContinueMessage() != null) {
+			boldFont.drawCenteredText(chatController.clickToContinueMessage(), 239, 40, 0);
 			boldFont.drawCenteredText("Click to continue", 239, 60, 128);
 		} else if (interfaceState.chatboxInterfaceId != -1)
 			drawInterface(0, 0, Widget.get(interfaceState.chatboxInterfaceId), 0);
@@ -4473,10 +4136,10 @@ public class Client extends GameShell {
 			int visibleLine = 0;
 			Rasterizer.setCoordinates(0, 0, 463, 77);
 			for (int messageIndex = 0; messageIndex < 100; messageIndex++)
-				if (chatHistory.messages[messageIndex] != null) {
-					int messageType = chatHistory.types[messageIndex];
-					int lineY = (70 - visibleLine * 14) + chatScrollOffset;
-					String sender = chatHistory.senders[messageIndex];
+				if (chatController.history().messages[messageIndex] != null) {
+					int messageType = chatController.history().types[messageIndex];
+					int lineY = (70 - visibleLine * 14) + chatController.scrollOffset();
+					String sender = chatController.history().senders[messageIndex];
 					byte rightsIcon = 0;
 					if (sender != null && sender.startsWith("@cr1@")) {
 						sender = sender.substring(5);
@@ -4488,12 +4151,11 @@ public class Client extends GameShell {
 					}
 					if (messageType == ChatMessageType.GAME) {
 						if (lineY > 0 && lineY < 110)
-							chatFont.drawText(chatHistory.messages[messageIndex], 4, lineY, 0);
+							chatFont.drawText(chatController.history().messages[messageIndex], 4, lineY, 0);
 						visibleLine++;
 					}
-					if ((messageType == ChatMessageType.PUBLIC_PRIVILEGED || messageType == ChatMessageType.PUBLIC)
-							&& (messageType == ChatMessageType.PUBLIC_PRIVILEGED || publicChatMode == ChatMode.ON
-									|| publicChatMode == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
+					if ((messageType == ChatMessageType.PUBLIC_PRIVILEGED || messageType == ChatMessageType.PUBLIC) && (messageType == ChatMessageType.PUBLIC_PRIVILEGED || chatController.publicMode() == ChatMode.ON
+							|| chatController.publicMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
 						if (lineY > 0 && lineY < 110) {
 							int textX = 4;
 							if (rightsIcon == 1) {
@@ -4506,16 +4168,12 @@ public class Client extends GameShell {
 							}
 							chatFont.drawText(sender + ":", textX, lineY, 0);
 							textX += chatFont.getFormattedTextWidth(sender) + 8;
-							chatFont.drawText(chatHistory.messages[messageIndex], textX, lineY, 255);
+							chatFont.drawText(chatController.history().messages[messageIndex], textX, lineY, 255);
 						}
 						visibleLine++;
 					}
-					if ((messageType == ChatMessageType.PRIVATE_RECEIVED
-							|| messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED)
-							&& splitPrivateChat == 0
-							&& (messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED
-									|| privateChatMode == ChatMode.ON
-									|| privateChatMode == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
+					if ((messageType == ChatMessageType.PRIVATE_RECEIVED || messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED) && chatController.splitPrivateChat() == 0 && (messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED
+							|| chatController.privateMode() == ChatMode.ON || chatController.privateMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
 						if (lineY > 0 && lineY < 110) {
 							int textX2 = 4;
 							chatFont.drawText("From", textX2, lineY, 0);
@@ -4530,51 +4188,48 @@ public class Client extends GameShell {
 							}
 							chatFont.drawText(sender + ":", textX2, lineY, 0);
 							textX2 += chatFont.getFormattedTextWidth(sender) + 8;
-							chatFont.drawText(chatHistory.messages[messageIndex], textX2, lineY, 0x800000);
+							chatFont.drawText(chatController.history().messages[messageIndex], textX2, lineY, 0x800000);
 						}
 						visibleLine++;
 					}
-					if (messageType == ChatMessageType.TRADE_REQUEST
-							&& (tradeMode == ChatMode.ON || tradeMode == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
+					if (messageType == ChatMessageType.TRADE_REQUEST && (chatController.tradeMode() == ChatMode.ON || chatController.tradeMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
 						if (lineY > 0 && lineY < 110)
-							chatFont.drawText(sender + " " + chatHistory.messages[messageIndex], 4, lineY, 0x800080);
+							chatFont.drawText(sender + " " + chatController.history().messages[messageIndex], 4, lineY, 0x800080);
 						visibleLine++;
 					}
-					if (messageType == ChatMessageType.PRIVATE_STATUS && splitPrivateChat == 0
-							&& privateChatMode < ChatMode.OFF) {
+					if (messageType == ChatMessageType.PRIVATE_STATUS && chatController.splitPrivateChat() == 0 && chatController.privateMode() < ChatMode.OFF) {
 						if (lineY > 0 && lineY < 110)
-							chatFont.drawText(chatHistory.messages[messageIndex], 4, lineY, 0x800000);
+							chatFont.drawText(chatController.history().messages[messageIndex], 4, lineY, 0x800000);
 						visibleLine++;
 					}
-					if (messageType == ChatMessageType.PRIVATE_SENT && splitPrivateChat == 0
-							&& privateChatMode < ChatMode.OFF) {
+					if (messageType == ChatMessageType.PRIVATE_SENT && chatController.splitPrivateChat() == 0 && chatController.privateMode() < ChatMode.OFF) {
 						if (lineY > 0 && lineY < 110) {
 							chatFont.drawText("To " + sender + ":", 4, lineY, 0);
-							chatFont.drawText(chatHistory.messages[messageIndex],
+							chatFont.drawText(chatController.history().messages[messageIndex],
 									12 + chatFont.getFormattedTextWidth("To " + sender), lineY, 0x800000);
 						}
 						visibleLine++;
 					}
-					if (messageType == ChatMessageType.CHALLENGE_REQUEST
-							&& (tradeMode == ChatMode.ON || tradeMode == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
+					if (messageType == ChatMessageType.CHALLENGE_REQUEST && (chatController.tradeMode() == ChatMode.ON || chatController.tradeMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
 						if (lineY > 0 && lineY < 110)
-							chatFont.drawText(sender + " " + chatHistory.messages[messageIndex], 4, lineY, 0x7e3200);
+							chatFont.drawText(sender + " " + chatController.history().messages[messageIndex], 4, lineY, 0x7e3200);
 						visibleLine++;
 					}
 				}
 
 			Rasterizer.resetCoordinates();
-			chatContentHeight = visibleLine * 14 + 7;
-			if (chatContentHeight < 78)
-				chatContentHeight = 78;
-			drawScrollbar(chatContentHeight - chatScrollOffset - 77, 463, 77, chatContentHeight, 0);
+			chatController.setContentHeight(visibleLine * 14 + 7);
+			if (chatController.contentHeight() < ChatController.MIN_CONTENT_HEIGHT)
+				chatController.setContentHeight(ChatController.MIN_CONTENT_HEIGHT);
+			drawScrollbar(chatController.contentHeight() - chatController.scrollOffset() - 77, 463, 77,
+					chatController.contentHeight(), 0);
 			String localDisplayName;
 			if (localPlayer != null && localPlayer.name != null)
 				localDisplayName = localPlayer.name;
 			else
 				localDisplayName = TextFormatter.formatDisplayName(loginScreen.username);
 			chatFont.drawText(localDisplayName + ":", 4, 90, 0);
-			chatFont.drawText(chatInput + "*", 6 + chatFont.getFormattedTextWidth(localDisplayName + ": "), 90, 255);
+			chatFont.drawText(chatController.input() + "*", 6 + chatFont.getFormattedTextWidth(localDisplayName + ": "), 90, 255);
 			Rasterizer.drawHorizontalLine(0, 77, 479, 0);
 		}
 		if (menuState.open && menuState.screenArea == 2)
@@ -4724,15 +4379,13 @@ public class Client extends GameShell {
 		currentHoveredWidgetId = 0;
 		currentTooltipWidgetId = 0;
 		if (super.mouseX > layout.sidebarX() && super.mouseY > layout.sidebarY()
-				&& super.mouseX < layout.sidebarX() + ClientLayout.SIDEBAR_WIDTH
-				&& super.mouseY < layout.sidebarY() + ClientLayout.SIDEBAR_HEIGHT)
+				&& super.mouseX < layout.sidebarX() + ClientLayout.SIDEBAR_WIDTH && super.mouseY < layout.sidebarY() + ClientLayout.SIDEBAR_HEIGHT)
 			if (interfaceState.sidebarOverlayInterfaceId != -1)
 				buildInterfaceMenu(layout.sidebarY(), Widget.get(interfaceState.sidebarOverlayInterfaceId), 1, 0,
 						layout.sidebarX(), super.mouseX, super.mouseY);
 			else if (interfaceState.tabInterfaceIds[interfaceState.selectedTab] != -1)
-				buildInterfaceMenu(layout.sidebarY(),
-						Widget.get(interfaceState.tabInterfaceIds[interfaceState.selectedTab]), 1, 0, layout.sidebarX(),
-						super.mouseX, super.mouseY);
+				buildInterfaceMenu(layout.sidebarY(), Widget.get(interfaceState.tabInterfaceIds[interfaceState.selectedTab]),
+						1, 0, layout.sidebarX(), super.mouseX, super.mouseY);
 		if (currentHoveredWidgetId != sidebarHoveredWidgetId) {
 			sidebarRedraw = true;
 			sidebarHoveredWidgetId = currentHoveredWidgetId;
@@ -4744,15 +4397,14 @@ public class Client extends GameShell {
 		currentHoveredWidgetId = 0;
 		currentTooltipWidgetId = 0;
 		if (super.mouseX > layout.chatboxX() && super.mouseY > layout.chatboxY()
-				&& super.mouseX < layout.chatboxX() + ClientLayout.CHATBOX_WIDTH
-				&& super.mouseY < layout.chatboxY() + ClientLayout.CHATBOX_HEIGHT)
+				&& super.mouseX < layout.chatboxX() + ClientLayout.CHATBOX_WIDTH && super.mouseY < layout.chatboxY() + ClientLayout.CHATBOX_HEIGHT)
 			if (interfaceState.chatboxInterfaceId != -1)
 				buildInterfaceMenu(layout.chatboxY(), Widget.get(interfaceState.chatboxInterfaceId), 2, 0,
 						layout.chatboxX(), super.mouseX, super.mouseY);
 			else if (interfaceState.dialogueInterfaceId != -1)
 				buildInterfaceMenu(layout.chatboxY(), Widget.get(interfaceState.dialogueInterfaceId), 3, 0,
 						layout.chatboxX(), super.mouseX, super.mouseY);
-			else if (super.mouseY < layout.chatboxY() + 77 && super.mouseX < 426 && inputDialogState == 0)
+			else if (super.mouseY < layout.chatboxY() + 77 && super.mouseX < 426 && chatController.inputDialogState() == 0)
 				buildChatboxMessageMenu(super.mouseY - layout.chatboxY());
 		if ((interfaceState.chatboxInterfaceId != -1 || interfaceState.dialogueInterfaceId != -1)
 				&& currentHoveredWidgetId != chatboxHoveredWidgetId) {
@@ -4822,101 +4474,7 @@ public class Client extends GameShell {
 			sidebarRedraw = true;
 	}
 
-	/**
-	 * Composites the current flame intensities onto the left and right title
-	 * backgrounds.
-	 */
-	public void drawTitleFlames() {
-		char flameHeight = '\u0100';
-		if (greenFlameTransition > 0) {
-			for (int paletteIndex = 0; paletteIndex < 256; paletteIndex++)
-				if (greenFlameTransition > 768)
-					titleFlamePalette[paletteIndex] = blendTitleFlameColors(titleFlameRedPalette[paletteIndex],
-							titleFlameGreenPalette[paletteIndex], 1024 - greenFlameTransition);
-				else if (greenFlameTransition > 256)
-					titleFlamePalette[paletteIndex] = titleFlameGreenPalette[paletteIndex];
-				else
-					titleFlamePalette[paletteIndex] = blendTitleFlameColors(titleFlameGreenPalette[paletteIndex],
-							titleFlameRedPalette[paletteIndex], 256 - greenFlameTransition);
 
-		} else if (blueFlameTransition > 0) {
-			for (int paletteIndex2 = 0; paletteIndex2 < 256; paletteIndex2++)
-				if (blueFlameTransition > 768)
-					titleFlamePalette[paletteIndex2] = blendTitleFlameColors(titleFlameRedPalette[paletteIndex2],
-							titleFlameBluePalette[paletteIndex2], 1024 - blueFlameTransition);
-				else if (blueFlameTransition > 256)
-					titleFlamePalette[paletteIndex2] = titleFlameBluePalette[paletteIndex2];
-				else
-					titleFlamePalette[paletteIndex2] = blendTitleFlameColors(titleFlameBluePalette[paletteIndex2],
-							titleFlameRedPalette[paletteIndex2], 256 - blueFlameTransition);
-
-		} else {
-			for (int paletteIndex3 = 0; paletteIndex3 < 256; paletteIndex3++)
-				titleFlamePalette[paletteIndex3] = titleFlameRedPalette[paletteIndex3];
-
-		}
-		for (int pixelIndex = 0; pixelIndex < 33920; pixelIndex++)
-			titleLeftFlameBuffer.pixels[pixelIndex] = titleLeftFlameBackground.pixels[pixelIndex];
-
-		int intensityOffset = 0;
-		int framebufferOffset = 1152;
-		for (int row = 1; row < flameHeight - 1; row++) {
-			int lineOffset = (titleFlameLineOffsets[row] * (flameHeight - row)) / flameHeight;
-			int leftInset = 22 + lineOffset;
-			if (leftInset < 0)
-				leftInset = 0;
-			intensityOffset += leftInset;
-			for (int column = leftInset; column < 128; column++) {
-				int intensity = titleFlameIntensity[intensityOffset++];
-				if (intensity != 0) {
-					int alpha = intensity;
-					int inverseAlpha = 256 - intensity;
-					intensity = titleFlamePalette[intensity];
-					int backgroundColor = titleLeftFlameBuffer.pixels[framebufferOffset];
-					titleLeftFlameBuffer.pixels[framebufferOffset++] = ((intensity & 0xff00ff) * alpha
-							+ (backgroundColor & 0xff00ff) * inverseAlpha & 0xff00ff00)
-							+ ((intensity & 0xff00) * alpha + (backgroundColor & 0xff00) * inverseAlpha
-									& 0xff0000) >> 8;
-				} else {
-					framebufferOffset++;
-				}
-			}
-
-			framebufferOffset += leftInset;
-		}
-
-		titleLeftFlameBuffer.draw(super.graphics, 0, 0);
-		for (int pixelIndex2 = 0; pixelIndex2 < 33920; pixelIndex2++)
-			titleRightFlameBuffer.pixels[pixelIndex2] = titleRightFlameBackground.pixels[pixelIndex2];
-
-		intensityOffset = 0;
-		framebufferOffset = 1176;
-		for (int row2 = 1; row2 < flameHeight - 1; row2++) {
-			int lineOffset2 = (titleFlameLineOffsets[row2] * (flameHeight - row2)) / flameHeight;
-			int visibleWidth = 103 - lineOffset2;
-			framebufferOffset += lineOffset2;
-			for (int column2 = 0; column2 < visibleWidth; column2++) {
-				int intensity2 = titleFlameIntensity[intensityOffset++];
-				if (intensity2 != 0) {
-					int alpha2 = intensity2;
-					int inverseAlpha2 = 256 - intensity2;
-					intensity2 = titleFlamePalette[intensity2];
-					int backgroundColor2 = titleRightFlameBuffer.pixels[framebufferOffset];
-					titleRightFlameBuffer.pixels[framebufferOffset++] = ((intensity2 & 0xff00ff) * alpha2
-							+ (backgroundColor2 & 0xff00ff) * inverseAlpha2 & 0xff00ff00)
-							+ ((intensity2 & 0xff00) * alpha2 + (backgroundColor2 & 0xff00) * inverseAlpha2
-									& 0xff0000) >> 8;
-				} else {
-					framebufferOffset++;
-				}
-			}
-
-			intensityOffset += 128 - visibleWidth;
-			framebufferOffset += 128 - visibleWidth - lineOffset2;
-		}
-
-		titleRightFlameBuffer.draw(super.graphics, 637, 0);
-	}
 
 	/**
 	 * Enables the original low-memory configuration across rendering and region
@@ -4950,23 +4508,18 @@ public class Client extends GameShell {
 	 */
 	public void updateWidgetContent(Widget widget) {
 		int contentType = widget.contentType;
-		if (contentType >= WidgetContentType.FRIEND_NAME_FIRST && contentType <= WidgetContentType.FRIEND_NAME_LAST
-				|| contentType >= WidgetContentType.FRIEND_NAME_ALTERNATE_FIRST
-						&& contentType <= WidgetContentType.FRIEND_NAME_ALTERNATE_LAST) {
-			if (contentType == WidgetContentType.FRIEND_NAME_FIRST
-					&& socialManager.friendListStatus == SocialManager.FRIEND_LIST_LOADING) {
+		if (contentType >= WidgetContentType.FRIEND_NAME_FIRST && contentType <= WidgetContentType.FRIEND_NAME_LAST || contentType >= WidgetContentType.FRIEND_NAME_ALTERNATE_FIRST && contentType <= WidgetContentType.FRIEND_NAME_ALTERNATE_LAST) {
+			if (contentType == WidgetContentType.FRIEND_NAME_FIRST && socialManager.friendListStatus == SocialManager.FRIEND_LIST_LOADING) {
 				widget.text = "Loading friend list";
 				widget.buttonType = Widget.BUTTON_NONE;
 				return;
 			}
-			if (contentType == WidgetContentType.FRIEND_NAME_FIRST
-					&& socialManager.friendListStatus == SocialManager.FRIEND_LIST_CONNECTING) {
+			if (contentType == WidgetContentType.FRIEND_NAME_FIRST && socialManager.friendListStatus == SocialManager.FRIEND_LIST_CONNECTING) {
 				widget.text = "Connecting to friendserver";
 				widget.buttonType = Widget.BUTTON_NONE;
 				return;
 			}
-			if (contentType == WidgetContentType.FRIEND_NAME_SECOND
-					&& socialManager.friendListStatus != SocialManager.FRIEND_LIST_READY) {
+			if (contentType == WidgetContentType.FRIEND_NAME_SECOND && socialManager.friendListStatus != SocialManager.FRIEND_LIST_READY) {
 				widget.text = "Please wait...";
 				widget.buttonType = Widget.BUTTON_NONE;
 				return;
@@ -4988,9 +4541,7 @@ public class Client extends GameShell {
 				return;
 			}
 		}
-		if (contentType >= WidgetContentType.FRIEND_WORLD_FIRST && contentType <= WidgetContentType.FRIEND_WORLD_LAST
-				|| contentType >= WidgetContentType.FRIEND_WORLD_ALTERNATE_FIRST
-						&& contentType <= WidgetContentType.FRIEND_WORLD_ALTERNATE_LAST) {
+		if (contentType >= WidgetContentType.FRIEND_WORLD_FIRST && contentType <= WidgetContentType.FRIEND_WORLD_LAST || contentType >= WidgetContentType.FRIEND_WORLD_ALTERNATE_FIRST && contentType <= WidgetContentType.FRIEND_WORLD_ALTERNATE_LAST) {
 			int friendCount2 = socialManager.friendCount;
 			if (socialManager.friendListStatus != SocialManager.FRIEND_LIST_READY)
 				friendCount2 = 0;
@@ -5027,14 +4578,12 @@ public class Client extends GameShell {
 			return;
 		}
 		if (contentType >= WidgetContentType.IGNORE_NAME_FIRST && contentType <= WidgetContentType.IGNORE_NAME_LAST) {
-			if ((contentType -= WidgetContentType.IGNORE_NAME_FIRST) == 0
-					&& socialManager.friendListStatus == SocialManager.FRIEND_LIST_LOADING) {
+			if ((contentType -= WidgetContentType.IGNORE_NAME_FIRST) == 0 && socialManager.friendListStatus == SocialManager.FRIEND_LIST_LOADING) {
 				widget.text = "Loading ignore list";
 				widget.buttonType = Widget.BUTTON_NONE;
 				return;
 			}
-			if (contentType == WidgetContentType.FRIEND_NAME_FIRST
-					&& socialManager.friendListStatus == SocialManager.FRIEND_LIST_LOADING) {
+			if (contentType == WidgetContentType.FRIEND_NAME_FIRST && socialManager.friendListStatus == SocialManager.FRIEND_LIST_LOADING) {
 				widget.text = "Please wait...";
 				widget.buttonType = Widget.BUTTON_NONE;
 				return;
@@ -5060,68 +4609,16 @@ public class Client extends GameShell {
 			return;
 		}
 		if (contentType == WidgetContentType.APPEARANCE_PREVIEW) {
-			widget.modelPitch = 150;
-			widget.modelYaw = (int) (Math.sin((double) gameCycle / 40D) * 256D) & Angle.MASK;
-			if (appearanceModelDirty) {
-				for (int bodyPart = 0; bodyPart < 7; bodyPart++) {
-					int kitId = appearanceKitIds[bodyPart];
-					if (kitId >= 0 && !IdentityKit.definitions[kitId].areBodyModelsReady())
-						return;
-				}
-
-				appearanceModelDirty = false;
-				Model aclass50_sub1_sub4_sub4[] = new Model[7];
-				int modelCount = 0;
-				for (int appearanceSlot = 0; appearanceSlot < 7; appearanceSlot++) {
-					int kitId2 = appearanceKitIds[appearanceSlot];
-					if (kitId2 >= 0)
-						aclass50_sub1_sub4_sub4[modelCount++] = IdentityKit.definitions[kitId2].buildBodyModel();
-				}
-
-				Model model = new Model(modelCount, aclass50_sub1_sub4_sub4);
-				for (int colorSlot = 0; colorSlot < 5; colorSlot++)
-					if (appearanceColors[colorSlot] != 0) {
-						model.recolor(bodyColorPalettes[colorSlot][0],
-								bodyColorPalettes[colorSlot][appearanceColors[colorSlot]]);
-						if (colorSlot == 1)
-							model.recolor(skinColorPalette[0], skinColorPalette[appearanceColors[colorSlot]]);
-					}
-
-				model.createBones();
-				model.applyTransformation(
-						AnimationSequence.sequences[((Actor) (localPlayer)).idleSequence].primaryFrameIds[0]);
-				model.light(64, 850, -30, -50, -30, true);
-				widget.mediaType = Widget.MEDIA_CACHED_MODEL;
-				widget.mediaId = 0;
-				Widget.cacheModel(5, 0, model);
-			}
+			appearanceEditor.updatePreview(widget, gameCycle, localPlayer);
 			return;
 		}
 		if (contentType == WidgetContentType.SELECT_MALE_APPEARANCE) {
-			if (maleAppearanceButtonSprite == null) {
-				maleAppearanceButtonSprite = widget.sprite;
-				femaleAppearanceButtonSprite = widget.activeSprite;
-			}
-			if (maleAppearance) {
-				widget.sprite = femaleAppearanceButtonSprite;
-				return;
-			} else {
-				widget.sprite = maleAppearanceButtonSprite;
-				return;
-			}
+			appearanceEditor.updateGenderButton(widget, true);
+			return;
 		}
 		if (contentType == WidgetContentType.SELECT_FEMALE_APPEARANCE) {
-			if (maleAppearanceButtonSprite == null) {
-				maleAppearanceButtonSprite = widget.sprite;
-				femaleAppearanceButtonSprite = widget.activeSprite;
-			}
-			if (maleAppearance) {
-				widget.sprite = maleAppearanceButtonSprite;
-				return;
-			} else {
-				widget.sprite = femaleAppearanceButtonSprite;
-				return;
-			}
+			appearanceEditor.updateGenderButton(widget, false);
+			return;
 		}
 		if (contentType == WidgetContentType.REPORT_ABUSE_NAME) {
 			widget.text = reportAbuseName;
@@ -5240,6 +4737,16 @@ public class Client extends GameShell {
 	}
 
 	/**
+	 * Returns one current client varp value for definition morphing.
+	 *
+	 * @param varpId varp identifier
+	 * @return current varp value
+	 */
+	public int getVarp(int varpId) {
+		return varpState.get(varpId);
+	}
+
+	/**
 	 * Applies a changed varp to client settings such as brightness, music, sound,
 	 * and chat options.
 	 *
@@ -5249,7 +4756,7 @@ public class Client extends GameShell {
 		int clientCode = Varp.definitions[varpId].clientCode;
 		if (clientCode == 0)
 			return;
-		int varpValue = varpValues[varpId];
+		int varpValue = varpState.get(varpId);
 		if (clientCode == 1) {
 			if (varpValue == 1)
 				Rasterizer3D.setBrightness(0.90000000000000002D);
@@ -5271,27 +4778,14 @@ public class Client extends GameShell {
 		if (clientCode == 6)
 			chatEffects = varpValue;
 		if (clientCode == 8) {
-			splitPrivateChat = varpValue;
+			chatController.setSplitPrivateChat(varpValue);
 			chatboxRedraw = true;
 		}
 		if (clientCode == 9)
 			inventoryRearrangeMode = varpValue;
 	}
 
-	/**
-	 * Blends two title-flame palette colors using the original 8-bit fixed-point
-	 * weight.
-	 *
-	 * @param fromColor the from color
-	 * @param toColor   the to color
-	 * @param blend     the blend
-	 * @return the resulting numeric value
-	 */
-	public int blendTitleFlameColors(int fromColor, int toColor, int blend) {
-		int inverseBlend = 256 - blend;
-		return ((fromColor & 0xff00ff) * inverseBlend + (toColor & 0xff00ff) * blend & 0xff00ff00)
-				+ ((fromColor & 0xff00) * inverseBlend + (toColor & 0xff00) * blend & 0xff0000) >> 8;
-	}
+
 
 	/**
 	 * Updates the hard-coded tutorial-island/region suppression flag from the local
@@ -5343,8 +4837,7 @@ public class Client extends GameShell {
 			menuState.height = 15 * menuState.count + 22;
 		}
 		if (super.clickX > layout.sidebarX() && super.clickY > layout.sidebarY()
-				&& super.clickX < layout.sidebarX() + ClientLayout.SIDEBAR_WIDTH
-				&& super.clickY < layout.sidebarY() + ClientLayout.SIDEBAR_HEIGHT) {
+				&& super.clickX < layout.sidebarX() + ClientLayout.SIDEBAR_WIDTH && super.clickY < layout.sidebarY() + ClientLayout.SIDEBAR_HEIGHT) {
 			int clickX2 = super.clickX - layout.sidebarX() - textWidth / 2;
 			if (clickX2 < 0)
 				clickX2 = 0;
@@ -5363,8 +4856,7 @@ public class Client extends GameShell {
 			menuState.height = 15 * menuState.count + 22;
 		}
 		if (super.clickX > layout.chatboxX() && super.clickY > layout.chatboxY()
-				&& super.clickX < layout.chatboxX() + ClientLayout.CHATBOX_WIDTH
-				&& super.clickY < layout.chatboxY() + ClientLayout.CHATBOX_HEIGHT) {
+				&& super.clickX < layout.chatboxX() + ClientLayout.CHATBOX_WIDTH && super.clickY < layout.chatboxY() + ClientLayout.CHATBOX_HEIGHT) {
 			int clickX3 = super.clickX - layout.chatboxX() - textWidth / 2;
 			if (clickX3 < 0)
 				clickX3 = 0;
@@ -5438,11 +4930,9 @@ public class Client extends GameShell {
 			int minutesRemaining = secondsRemaining / 60;
 			secondsRemaining %= 60;
 			if (secondsRemaining < 10)
-				plainFont.drawText("System update in: " + minutesRemaining + ":0" + secondsRemaining, 4,
-						layout.unobscuredViewportHeight() - 5, 0xffff00);
+				plainFont.drawText("System update in: " + minutesRemaining + ":0" + secondsRemaining, 4, layout.unobscuredViewportHeight() - 5, 0xffff00);
 			else
-				plainFont.drawText("System update in: " + minutesRemaining + ":" + secondsRemaining, 4,
-						layout.unobscuredViewportHeight() - 5, 0xffff00);
+				plainFont.drawText("System update in: " + minutesRemaining + ":" + secondsRemaining, 4, layout.unobscuredViewportHeight() - 5, 0xffff00);
 			systemUpdateKeepaliveCounter++;
 			if (systemUpdateKeepaliveCounter > 112) {
 				systemUpdateKeepaliveCounter = 0;
@@ -5452,48 +4942,35 @@ public class Client extends GameShell {
 		}
 	}
 
-	/**
-	 * Runs the GameShell loop or delegates the dedicated title-flame thread.
-	 */
-	public void run() {
-		if (titleFlameThreadMode) {
-			runTitleFlameLoop();
-			return;
-		} else {
-			super.run();
-			return;
-		}
-	}
+
 
 	/**
 	 * Builds context-menu actions for names visible in the split-private-chat
 	 * overlay.
 	 */
 	public void buildSplitPrivateChatMenu() {
-		if (splitPrivateChat == 0)
+		if (chatController.splitPrivateChat() == 0)
 			return;
 		int visibleLine = 0;
 		if (systemUpdateTimer != 0)
 			visibleLine = 1;
 		for (int messageIndex = 0; messageIndex < 100; messageIndex++)
-			if (chatHistory.messages[messageIndex] != null) {
-				int messageType = chatHistory.types[messageIndex];
-				String sender = chatHistory.senders[messageIndex];
+			if (chatController.history().messages[messageIndex] != null) {
+				int messageType = chatController.history().types[messageIndex];
+				String sender = chatController.history().senders[messageIndex];
 				if (sender != null && sender.startsWith("@cr1@")) {
 					sender = sender.substring(5);
 				}
 				if (sender != null && sender.startsWith("@cr2@")) {
 					sender = sender.substring(5);
 				}
-				if ((messageType == ChatMessageType.PRIVATE_RECEIVED
-						|| messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED)
-						&& (messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED || privateChatMode == ChatMode.ON
-								|| privateChatMode == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
+				if ((messageType == ChatMessageType.PRIVATE_RECEIVED || messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED) && (messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED || chatController.privateMode() == ChatMode.ON
+						|| chatController.privateMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
 					int lineY = layout.unobscuredViewportHeight() - 5 - visibleLine * 13;
 					if (super.mouseX > layout.viewportX() && super.mouseY - layout.viewportY() > lineY - 10
 							&& super.mouseY - layout.viewportY() <= lineY + 3) {
 						int messageWidth = plainFont
-								.getFormattedTextWidth("From:  " + sender + chatHistory.messages[messageIndex]) + 25;
+								.getFormattedTextWidth("From:  " + sender + chatController.history().messages[messageIndex]) + 25;
 						if (messageWidth > 450)
 							messageWidth = 450;
 						if (super.mouseX < layout.viewportX() + messageWidth) {
@@ -5513,8 +4990,7 @@ public class Client extends GameShell {
 					if (++visibleLine >= 5)
 						return;
 				}
-				if ((messageType == ChatMessageType.PRIVATE_STATUS || messageType == ChatMessageType.PRIVATE_SENT)
-						&& privateChatMode < ChatMode.OFF && ++visibleLine >= 5)
+				if ((messageType == ChatMessageType.PRIVATE_STATUS || messageType == ChatMessageType.PRIVATE_SENT) && chatController.privateMode() < ChatMode.OFF && ++visibleLine >= 5)
 					return;
 			}
 
@@ -5529,13 +5005,13 @@ public class Client extends GameShell {
 	public void buildChatboxMessageMenu(int mouseY) {
 		int visibleLine = 0;
 		for (int messageIndex = 0; messageIndex < 100; messageIndex++) {
-			if (chatHistory.messages[messageIndex] == null)
+			if (chatController.history().messages[messageIndex] == null)
 				continue;
-			int messageType = chatHistory.types[messageIndex];
-			int lineY = (70 - visibleLine * 14) + chatScrollOffset + 4;
+			int messageType = chatController.history().types[messageIndex];
+			int lineY = (70 - visibleLine * 14) + chatController.scrollOffset() + 4;
 			if (lineY < -20)
 				break;
-			String sender = chatHistory.senders[messageIndex];
+			String sender = chatController.history().senders[messageIndex];
 			if (sender != null && sender.startsWith("@cr1@")) {
 				sender = sender.substring(5);
 			}
@@ -5545,8 +5021,7 @@ public class Client extends GameShell {
 			if (messageType == ChatMessageType.GAME)
 				visibleLine++;
 			if ((messageType == ChatMessageType.PUBLIC_PRIVILEGED || messageType == ChatMessageType.PUBLIC)
-					&& (messageType == ChatMessageType.PUBLIC_PRIVILEGED || publicChatMode == ChatMode.ON
-							|| publicChatMode == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
+					&& (messageType == ChatMessageType.PUBLIC_PRIVILEGED || chatController.publicMode() == ChatMode.ON || chatController.publicMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
 				if (mouseY > lineY - 14 && mouseY <= lineY && !sender.equals(localPlayer.name)) {
 					if (playerRights >= 1) {
 						menuState.actionNames[menuState.count] = "Report abuse @whi@" + sender;
@@ -5562,10 +5037,8 @@ public class Client extends GameShell {
 				}
 				visibleLine++;
 			}
-			if ((messageType == ChatMessageType.PRIVATE_RECEIVED
-					|| messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED) && splitPrivateChat == 0
-					&& (messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED || privateChatMode == ChatMode.ON
-							|| privateChatMode == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
+			if ((messageType == ChatMessageType.PRIVATE_RECEIVED || messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED) && chatController.splitPrivateChat() == 0
+					&& (messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED || chatController.privateMode() == ChatMode.ON || chatController.privateMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
 				if (mouseY > lineY - 14 && mouseY <= lineY) {
 					if (playerRights >= 1) {
 						menuState.actionNames[menuState.count] = "Report abuse @whi@" + sender;
@@ -5581,8 +5054,7 @@ public class Client extends GameShell {
 				}
 				visibleLine++;
 			}
-			if (messageType == ChatMessageType.TRADE_REQUEST
-					&& (tradeMode == ChatMode.ON || tradeMode == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
+			if (messageType == ChatMessageType.TRADE_REQUEST && (chatController.tradeMode() == ChatMode.ON || chatController.tradeMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
 				if (mouseY > lineY - 14 && mouseY <= lineY) {
 					menuState.actionNames[menuState.count] = "Accept trade @whi@" + sender;
 					menuState.actionIds[menuState.count] = MenuState.ACCEPT_TRADE;
@@ -5590,11 +5062,9 @@ public class Client extends GameShell {
 				}
 				visibleLine++;
 			}
-			if ((messageType == ChatMessageType.PRIVATE_STATUS || messageType == ChatMessageType.PRIVATE_SENT)
-					&& splitPrivateChat == 0 && privateChatMode < ChatMode.OFF)
+			if ((messageType == ChatMessageType.PRIVATE_STATUS || messageType == ChatMessageType.PRIVATE_SENT) && chatController.splitPrivateChat() == 0 && chatController.privateMode() < ChatMode.OFF)
 				visibleLine++;
-			if (messageType == ChatMessageType.CHALLENGE_REQUEST
-					&& (tradeMode == ChatMode.ON || tradeMode == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
+			if (messageType == ChatMessageType.CHALLENGE_REQUEST && (chatController.tradeMode() == ChatMode.ON || chatController.tradeMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
 				if (mouseY > lineY - 14 && mouseY <= lineY) {
 					menuState.actionNames[menuState.count] = "Accept challenge @whi@" + sender;
 					menuState.actionIds[menuState.count] = MenuState.ACCEPT_CHALLENGE;
@@ -5671,8 +5141,8 @@ public class Client extends GameShell {
 		int cmd3 = menuState.actionCmd3[menuIndex];
 		int actionId = MenuState.normalizeActionId(menuState.actionIds[menuIndex]);
 		int cmd1 = menuState.actionCmd1[menuIndex];
-		if (inputDialogState != 0 && actionId != MenuState.CANCEL_ACTION) {
-			inputDialogState = 0;
+		if (chatController.inputDialogState() != 0 && actionId != MenuState.CANCEL_ACTION) {
+			chatController.setInputDialogState(0);
 			chatboxRedraw = true;
 		}
 
@@ -6306,7 +5776,7 @@ public class Client extends GameShell {
 			Widget widget = Widget.get(cmd3);
 			if (widget.cs1Instructions != null && widget.cs1Instructions[0][0] == 5) {
 				int varpId = widget.cs1Instructions[0][1];
-				varpValues[varpId] = 1 - varpValues[varpId];
+				varpState.toggleBinary(varpId);
 				applyVarp(varpId);
 				sidebarRedraw = true;
 			}
@@ -6354,8 +5824,8 @@ public class Client extends GameShell {
 			Widget configWidget = Widget.get(cmd3);
 			if (configWidget.cs1Instructions != null && configWidget.cs1Instructions[0][0] == 5) {
 				int varpId2 = configWidget.cs1Instructions[0][1];
-				if (varpValues[varpId2] != configWidget.cs1ComparisonValues[0]) {
-					varpValues[varpId2] = configWidget.cs1ComparisonValues[0];
+				if (varpState.get(varpId2) != configWidget.cs1ComparisonValues[0]) {
+					varpState.set(varpId2, configWidget.cs1ComparisonValues[0]);
 					applyVarp(varpId2);
 					sidebarRedraw = true;
 				}
@@ -6380,8 +5850,7 @@ public class Client extends GameShell {
 	 * @param menuIndex the menu index
 	 */
 	private void dispatchSocialMenuAction(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
-		if (actionId == MenuState.ADD_FRIEND || actionId == MenuState.ADD_IGNORE || actionId == MenuState.REMOVE_FRIEND
-				|| actionId == MenuState.REMOVE_IGNORE) {
+		if (actionId == MenuState.ADD_FRIEND || actionId == MenuState.ADD_IGNORE || actionId == MenuState.REMOVE_FRIEND || actionId == MenuState.REMOVE_IGNORE) {
 			String actionText = menuState.actionNames[menuIndex];
 			int markerIndex = actionText.indexOf("@whi@");
 			if (markerIndex != -1) {
@@ -6435,8 +5904,7 @@ public class Client extends GameShell {
 					reportAbuseMutePlayer = false;
 					interfaceState.reportAbuseInterfaceId = interfaceState.openInterfaceId = Widget.reportAbuseInterfaceId;
 				} else {
-					addChatMessage("", "Please close the interface you have open before using 'report abuse'",
-							ChatMessageType.GAME);
+					addChatMessage("", "Please close the interface you have open before using 'report abuse'", ChatMessageType.GAME);
 				}
 		}
 		if (actionId == MenuState.MESSAGE_FRIEND) {
@@ -6448,12 +5916,8 @@ public class Client extends GameShell {
 
 				if (friendIndex != -1 && socialManager.friendWorlds[friendIndex] > 0) {
 					chatboxRedraw = true;
-					inputDialogState = 0;
-					messagePromptRaised = true;
-					promptInput = "";
-					promptAction = 3;
-					privateMessageTarget = socialManager.friendEncodedNames[friendIndex];
-					promptMessage = "Enter message to send to " + socialManager.friendNames[friendIndex];
+					chatController.openPrivateMessagePrompt(socialManager.friendEncodedNames[friendIndex],
+							socialManager.friendNames[friendIndex]);
 				}
 			}
 		}
@@ -6539,9 +6003,9 @@ public class Client extends GameShell {
 						hintIconSprites[0].drawImage(projectedX - 12, projectedY - 28);
 				}
 			}
-			if (((Actor) (obj)).overheadText != null && (actorListIndex >= actorSynchronizer.playerCount
-					|| publicChatMode == ChatMode.ON || publicChatMode == ChatMode.HIDE
-					|| publicChatMode == ChatMode.FRIENDS && isFriendOrSelf(((Player) obj).name))) {
+			if (((Actor) (obj)).overheadText != null
+					&& (actorListIndex >= actorSynchronizer.playerCount || chatController.publicMode() == ChatMode.ON || chatController.publicMode() == ChatMode.HIDE
+							|| chatController.publicMode() == ChatMode.FRIENDS && isFriendOrSelf(((Player) obj).name))) {
 				projectActorToScreen((Actor) obj, ((Actor) obj).height);
 				if (projectedX > -1 && overheadTextCount < overheadTextLimit) {
 					overheadTextHalfWidths[overheadTextCount] = boldFont.getTextWidth(((Actor) (obj)).overheadText) / 2;
@@ -6696,8 +6160,7 @@ public class Client extends GameShell {
 						verticalOffset = effectAge - 25;
 					else if (effectAge > 125)
 						verticalOffset = effectAge - 125;
-					Rasterizer.setCoordinates(0, projectedY - boldFont.lineHeight - 1, layout.viewportWidth(),
-							projectedY + 5);
+					Rasterizer.setCoordinates(0, projectedY - boldFont.lineHeight - 1, layout.viewportWidth(), projectedY + 5);
 					boldFont.drawCenteredText(overheadText, projectedX, projectedY + 1 + verticalOffset, 0);
 					boldFont.drawCenteredText(overheadText, projectedX, projectedY + verticalOffset, textColor);
 					Rasterizer.resetCoordinates();
@@ -6710,10 +6173,7 @@ public class Client extends GameShell {
 
 	}
 
-	/**
-	 * Rebuilds projection tables and scene visibility for the current viewport
-	 * size.
-	 */
+	/** Rebuilds projection tables and scene visibility for the current viewport size. */
 	private void rebuildViewportProjection() {
 		Rasterizer3D.setBounds(layout.viewportWidth(), layout.viewportHeight());
 		viewportScanlineOffsets = Rasterizer3D.scanlineOffsets;
@@ -6764,13 +6224,11 @@ public class Client extends GameShell {
 			titleRightBottomBuffer = null;
 			titleLeftCenterBuffer = null;
 			titleRightCenterBuffer = null;
-			chatboxBuffer = new GraphicsBuffer(getGameComponent(), ClientLayout.CHATBOX_WIDTH,
-					ClientLayout.CHATBOX_HEIGHT);
+			chatboxBuffer = new GraphicsBuffer(getGameComponent(), ClientLayout.CHATBOX_WIDTH, ClientLayout.CHATBOX_HEIGHT);
 			minimapBuffer = new GraphicsBuffer(getGameComponent(), 172, 156);
 			Rasterizer.resetPixels();
 			minimapBackground.draw(0, 0);
-			sidebarBuffer = new GraphicsBuffer(getGameComponent(), ClientLayout.SIDEBAR_WIDTH,
-					ClientLayout.SIDEBAR_HEIGHT);
+			sidebarBuffer = new GraphicsBuffer(getGameComponent(), ClientLayout.SIDEBAR_WIDTH, ClientLayout.SIDEBAR_HEIGHT);
 			viewportBuffer = new GraphicsBuffer(getGameComponent(), layout.viewportWidth(), layout.viewportHeight());
 			Rasterizer.resetPixels();
 			chatModesBuffer = new GraphicsBuffer(getGameComponent(), 496, 50);
@@ -6793,7 +6251,7 @@ public class Client extends GameShell {
 		g.fillRect(0, 0, ClientLayout.FIXED_WIDTH, ClientLayout.FIXED_HEIGHT);
 		setTargetFps(1);
 		if (loadingError) {
-			titleFlamesRunning = false;
+			titleFlameAnimator.requestStop();
 			g.setFont(new Font("Helvetica", 1, 16));
 			g.setColor(Color.yellow);
 			int lineY = 35;
@@ -6815,7 +6273,7 @@ public class Client extends GameShell {
 			g.drawString("5: Try selecting a different version of Java from the play-game menu", 30, lineY);
 		}
 		if (invalidHostError) {
-			titleFlamesRunning = false;
+			titleFlameAnimator.requestStop();
 			g.setFont(new Font("Helvetica", 1, 20));
 			g.setColor(Color.white);
 			g.drawString("Error - unable to load game!", 50, 50);
@@ -6823,7 +6281,7 @@ public class Client extends GameShell {
 			g.drawString("http://www.runescape.com", 50, 150);
 		}
 		if (duplicateClientError) {
-			titleFlamesRunning = false;
+			titleFlameAnimator.requestStop();
 			g.setColor(Color.yellow);
 			int lineY2 = 35;
 			g.drawString("Error a copy of RuneScape already appears to be loaded", 30, lineY2);
@@ -6940,7 +6398,8 @@ public class Client extends GameShell {
 		if (displayGraphics == null)
 			return;
 
-		if (presentationBuffer == null || presentationBuffer.getWidth() != super.canvasWidth
+		if (presentationBuffer == null
+				|| presentationBuffer.getWidth() != super.canvasWidth
 				|| presentationBuffer.getHeight() != super.canvasHeight) {
 			presentationBuffer = new BufferedImage(super.canvasWidth, super.canvasHeight, BufferedImage.TYPE_INT_RGB);
 		}
@@ -6951,8 +6410,8 @@ public class Client extends GameShell {
 
 		/*
 		 * All of the legacy GraphicsBuffer blits below now target one off-screen
-		 * presentation image. This prevents the user from seeing the intermediate black
-		 * clear and partially assembled UI that caused resize-mode flicker.
+		 * presentation image. This prevents the user from seeing the intermediate
+		 * black clear and partially assembled UI that caused resize-mode flicker.
 		 */
 		super.graphics = frameGraphics;
 		try {
@@ -7163,7 +6622,7 @@ public class Client extends GameShell {
 	 */
 	public void printDebugInfo() {
 		System.out.println("============");
-		System.out.println("flame-cycle:" + titleFlameCycle);
+		System.out.println("flame-cycle:" + titleFlameAnimator.cycle());
 		if (onDemandFetcher != null)
 			System.out.println("Od-cycle:" + onDemandFetcher.onDemandCycle);
 		System.out.println("loop-cycle:" + gameCycle);
@@ -7216,7 +6675,7 @@ public class Client extends GameShell {
 		loginBoxBuffer.draw(super.graphics, 202, 171);
 		if (gameScreenRedraw) {
 			gameScreenRedraw = false;
-			if (!titleFlamesRunning) {
+			if (!titleFlameAnimator.isRunning()) {
 				titleLeftFlameBuffer.draw(super.graphics, 0, 0);
 				titleRightFlameBuffer.draw(super.graphics, 637, 0);
 			}
@@ -7291,44 +6750,11 @@ public class Client extends GameShell {
 		System.gc();
 	}
 
-	/**
-	 * Stops the title flame thread and releases title-only graphics resources.
-	 */
+	/** Stops and releases title-only animation resources. */
 	public void disposeTitleScreen() {
-		titleFlamesRunning = false;
-		Thread thread = titleFlameThread;
-		if (thread != null && thread != Thread.currentThread()) {
-			thread.interrupt();
-			boolean interrupted = false;
-			for (;;) {
-				try {
-					thread.join();
-					break;
-				} catch (InterruptedException exception) {
-					interrupted = true;
-				}
-			}
-			if (interrupted) {
-				Thread.currentThread().interrupt();
-			}
-		}
-		if (titleFlameThread == thread) {
-			titleFlameThread = null;
-		}
-		titleFlameThreadActive = false;
+		titleFlameAnimator.dispose();
 		titleBoxImage = null;
 		titleButtonImage = null;
-		titleRunes = null;
-		titleFlamePalette = null;
-		titleFlameRedPalette = null;
-		titleFlameGreenPalette = null;
-		titleFlameBluePalette = null;
-		titleFlameNoise = null;
-		titleFlameNoiseScratch = null;
-		titleFlameIntensity = null;
-		titleFlameIntensityScratch = null;
-		titleLeftFlameBackground = null;
-		titleRightFlameBackground = null;
 	}
 
 	/**
@@ -7374,10 +6800,8 @@ public class Client extends GameShell {
 					int slot = 0;
 					for (int row = 0; row < childWidget.height; row++) {
 						for (int column = 0; column < childWidget.width; column++) {
-							int slotX = childX
-									+ column * (Widget.INVENTORY_SLOT_SIZE + childWidget.inventorySpritePaddingX);
-							int slotY = childY
-									+ row * (Widget.INVENTORY_SLOT_SIZE + childWidget.inventorySpritePaddingY);
+							int slotX = childX + column * (Widget.INVENTORY_SLOT_SIZE + childWidget.inventorySpritePaddingX);
+							int slotY = childY + row * (Widget.INVENTORY_SLOT_SIZE + childWidget.inventorySpritePaddingY);
 							if (slot < Widget.INVENTORY_SPRITE_OFFSET_COUNT) {
 								slotX += childWidget.spriteXOffsets[slot];
 								slotY += childWidget.spriteYOffsets[slot];
@@ -7451,8 +6875,7 @@ public class Client extends GameShell {
 										}
 									}
 								}
-							} else if (childWidget.inventorySprites != null
-									&& slot < Widget.INVENTORY_SPRITE_OFFSET_COUNT) {
+							} else if (childWidget.inventorySprites != null && slot < Widget.INVENTORY_SPRITE_OFFSET_COUNT) {
 								ImageRGB inventorySprite = childWidget.inventorySprites[slot];
 								if (inventorySprite != null)
 									inventorySprite.drawImage(slotX, slotY);
@@ -7942,15 +7365,16 @@ public class Client extends GameShell {
 		itemSearchQuery = "";
 		itemSearchResultNames = new String[100];
 		itemSearchResultIds = new int[100];
-		messagePromptRaised = false;
 		crossSprites = new ImageRGB[8];
 		minimapMaskWidths = new int[151];
 		networkSession = new NetworkSession();
 		socialManager = new SocialManager();
-		chatHistory = new ChatHistory();
+		chatController = new ChatController();
 		interfaceState = new InterfaceState();
 		menuState = new MenuState();
 		loginScreen = new LoginScreen();
+		titleFlameAnimator = new TitleFlameAnimator();
+		appearanceEditor = new AppearanceEditor();
 		resourceLoader = new ResourceLoader();
 		soundEffectQueue = new SoundEffectQueue();
 		musicController = new MusicController();
@@ -7961,138 +7385,25 @@ public class Client extends GameShell {
 		sceneEntityRenderer = new SceneEntityRenderer();
 		minimapRenderer = new MinimapRenderer();
 		regionManager = new RegionManager();
-		widgetRuntime = new WidgetRuntime(new WidgetRuntime.ScriptContext() {
-			/**
-			 * Returns the current boosted/drained level for a skill.
-			 *
-			 * @param skill the skill
-			 * @return the resulting numeric value
-			 */
-			@Override
-			public int currentSkillLevel(int skill) {
-				return currentSkillLevels[skill];
-			}
-
-			/**
-			 * Returns the base level for a skill.
-			 *
-			 * @param skill the skill
-			 * @return the resulting numeric value
-			 */
-			@Override
-			public int baseSkillLevel(int skill) {
-				return baseSkillLevels[skill];
-			}
-
-			/**
-			 * Returns the accumulated experience for a skill.
-			 *
-			 * @param skill the skill
-			 * @return the resulting numeric value
-			 */
-			@Override
-			public int skillExperience(int skill) {
-				return skillExperiences[skill];
-			}
-
-			/**
-			 * Returns the current value of a varp.
-			 *
-			 * @param id the id
-			 * @return the resulting numeric value
-			 */
-			@Override
-			public int varp(int id) {
-				return varpValues[id];
-			}
-
-			/**
-			 * Returns the experience-table entry for a zero-based level index.
-			 *
-			 * @param levelIndex the level index
-			 * @return the resulting numeric value
-			 */
-			@Override
-			public int experienceForLevel(int levelIndex) {
-				return experienceTable[levelIndex];
-			}
-
-			/**
-			 * Returns the precomputed mask for a bit width.
-			 *
-			 * @param width the width
-			 * @return the resulting numeric value
-			 */
-			@Override
-			public int bitMask(int width) {
-				return bitMasks[width];
-			}
-
-			/**
-			 * Returns the current run-energy percentage.
-			 *
-			 * @return the resulting numeric value
-			 */
-			@Override
-			public int runEnergy() {
-				return runEnergy;
-			}
-
-			/**
-			 * Returns the current carried-weight value.
-			 *
-			 * @return the resulting numeric value
-			 */
-			@Override
-			public int weight() {
-				return weight;
-			}
-
-			/**
-			 * Returns the local player combat level.
-			 *
-			 * @return the resulting numeric value
-			 */
-			@Override
-			public int combatLevel() {
-				return localPlayer.combatLevel;
-			}
-
-			/**
-			 * Returns the local player absolute world X tile.
-			 *
-			 * @return the resulting numeric value
-			 */
-			@Override
-			public int playerWorldX() {
-				return (localPlayer.x >> 7) + regionManager.baseX;
-			}
-
-			/**
-			 * Returns the local player absolute world Y tile.
-			 *
-			 * @return the resulting numeric value
-			 */
-			@Override
-			public int playerWorldY() {
-				return (localPlayer.y >> 7) + regionManager.baseY;
-			}
-
-			/**
-			 * Returns whether the client is currently in members-world mode.
-			 *
-			 * @return true when the requested condition/action succeeds; otherwise false
-			 */
-			@Override
-			public boolean membersWorld() {
-				return membersWorld;
-			}
-		});
+		varpState = new VarpState();
+		ClientScriptContext scriptContext = new ClientScriptContext(
+				skill -> currentSkillLevels[skill],
+				skill -> baseSkillLevels[skill],
+				skill -> skillExperiences[skill],
+				varpState::get,
+				levelIndex -> experienceTable[levelIndex],
+				width -> bitMasks[width],
+				() -> runEnergy,
+				() -> weight,
+				() -> localPlayer.combatLevel,
+				() -> (localPlayer.x >> 7) + regionManager.baseX,
+				() -> (localPlayer.y >> 7) + regionManager.baseY,
+				() -> membersWorld);
+		widgetRuntime = new WidgetRuntime(scriptContext);
 		loginBuffer = new Buffer(new byte[5000]);
 		scrollbarTrackColor = 0x23201b;
 		projectedX = -1;
 		projectedY = -1;
-		promptMessage = "";
 		overheadTextLimit = 50;
 		overheadTextXs = new int[overheadTextLimit];
 		overheadTextYs = new int[overheadTextLimit];
@@ -8102,18 +7413,14 @@ public class Client extends GameShell {
 		overheadTextEffects = new int[overheadTextLimit];
 		overheadTextCycles = new int[overheadTextLimit];
 		overheadTexts = new String[overheadTextLimit];
-		inputDialogText = "";
 		tabAreaRedraw = false;
 		hintIconSprites = new ImageRGB[32];
 		localPlayerServerIndex = -1;
 		sidebarIcons = new IndexedImage[13];
-		varpShadowValues = new int[2000];
 		duplicateClientError = false;
 		minimapMaskOffsets = new int[151];
-		promptInput = "";
 		currentSkillLevels = new int[Skills.COUNT];
 		mapFunctionSprites = new ImageRGB[100];
-		varpValues = new int[2000];
 		gameScreenRedraw = false;
 		baseSkillLevels = new int[Skills.COUNT];
 		regionManager.specialRegion = false;
@@ -8123,19 +7430,14 @@ public class Client extends GameShell {
 		scrollbarThumbColor = 0x4d4233;
 		invalidHostError = false;
 		reportAbuseMutePlayer = false;
-		appearanceColors = new int[5];
-		chatInput = "";
-		chatContentHeight = 78;
 		scrollbarDragging = false;
 		chatBuffer = new Buffer(new byte[5000]);
 		scrollbarHighlightColor = 0x766654;
 		loggedIn = false;
 		moderatorIcons = new IndexedImage[2];
-		maleAppearance = true;
 		mapSceneSprites = new IndexedImage[100];
 		inventoryDragMoved = false;
 		regionManager.instanced = false;
-		titleFlameLineOffsets = new int[256];
 		compassMaskOffsets = new int[33];
 		sidebarRedraw = false;
 		hitmarkSprites = new ImageRGB[20];
@@ -8143,20 +7445,15 @@ public class Client extends GameShell {
 		chatModesRedraw = false;
 		interfaceActionPending = false;
 		chatboxRedraw = false;
-		titleFlamesRunning = false;
 		textureScrollScratch = new byte[16384];
 		chatboxScrollWidget = new Widget();
 		cameraOrientationChanged = false;
 		windowFocusReported = true;
 		lastMinimapPlane = -1;
-		appearanceModelDirty = false;
 		loadingError = false;
 		compassMaskWidths = new int[33];
 		scrollbarShadowColor = 0x332d25;
 		skullIconSprites = new ImageRGB[32];
-		titleFlameThreadMode = false;
-		titleFlameThreadActive = false;
-		appearanceKitIds = new int[7];
 	}
 
 	/** The client state for report abuse name. */
@@ -8182,8 +7479,6 @@ public class Client extends GameShell {
 	public int hintOffsetY;
 	/** The client state for login failures. */
 	public int loginFailures;
-	/** The client state for chat scroll offset. */
-	public int chatScrollOffset;
 	/** The client state for item search query. */
 	public String itemSearchQuery;
 	/** The current number of item search result entries. */
@@ -8196,8 +7491,6 @@ public class Client extends GameShell {
 	public int itemSearchResultIds[];
 	/** The client state for item search scroll offset. */
 	public int itemSearchScrollOffset;
-	/** Whether message prompt raised is currently active or requested. */
-	public boolean messagePromptRaised;
 	/** The client state for player rights. */
 	public int playerRights;
 	/** Whether show fps is currently active or requested. */
@@ -8214,8 +7507,6 @@ public class Client extends GameShell {
 	public IndexedImage redstone1Horizontal;
 	/** The client state for redstone2 horizontal. */
 	public IndexedImage redstone2Horizontal;
-	/** The client state for private chat mode. */
-	public int privateChatMode;
 	/** The client state for title archive. */
 	public Archive titleArchive;
 	/**
@@ -8277,8 +7568,6 @@ public class Client extends GameShell {
 	public int projectedX;
 	/** The client state for projected y. */
 	public int projectedY;
-	/** The client state for prompt message. */
-	public String promptMessage;
 	/** The current number of overhead text entries. */
 	public int overheadTextCount;
 	/** The client state for overhead text limit. */
@@ -8307,8 +7596,6 @@ public class Client extends GameShell {
 
 	/** Stores overhead texts values. */
 	public String overheadTexts[];
-	/** The client state for input dialog text. */
-	public String inputDialogText;
 	/** Whether tab area redraw is currently active or requested. */
 	public boolean tabAreaRedraw;
 	/** The client state for animation cycle delta. */
@@ -8327,14 +7614,18 @@ public class Client extends GameShell {
 	public NetworkSession networkSession;
 	/** The client state for social manager. */
 	private final SocialManager socialManager;
-	/** The client state for chat history. */
-	private final ChatHistory chatHistory;
+	/** Owns chat history, modes, text input, prompts, and chat scrolling. */
+	private final ChatController chatController;
 	/** The client state for interface state. */
 	private final InterfaceState interfaceState;
 	/** The client state for menu state. */
 	private final MenuState menuState;
 	/** The client state for login screen. */
 	private final LoginScreen loginScreen;
+	/** Owns title-flame simulation state and its animation worker. */
+	private final TitleFlameAnimator titleFlameAnimator;
+	/** Character-design interface state and preview owner. */
+	private final AppearanceEditor appearanceEditor;
 	/** The client state for resource loader. */
 	private final ResourceLoader resourceLoader;
 	/** The client state for sound effect queue. */
@@ -8357,6 +7648,8 @@ public class Client extends GameShell {
 	private final MinimapRenderer minimapRenderer;
 	/** The client state for region manager. */
 	private final RegionManager regionManager;
+	/** Current and server-shadow client varp state. */
+	private final VarpState varpState;
 	/** The client state for world state. */
 	private WorldState worldState;
 	/** The client state for zone updates. */
@@ -8438,27 +7731,13 @@ public class Client extends GameShell {
 	/** Stores full screen scanline offsets values. */
 	public int fullScreenScanlineOffsets[];
 
-	/** Stores varp shadow values values. */
-	public int varpShadowValues[];
-	/** The client state for public chat mode. */
-	public int publicChatMode;
 
-	/** Stores body color palettes values. */
-	public static final int bodyColorPalettes[][] = {
-			{ 6798, 107, 10283, 16, 4797, 7744, 5799, 4634, 33697, 22433, 2983, 54193 },
-			{ 8741, 12, 64030, 43162, 7735, 8404, 1701, 38430, 24094, 10153, 56621, 4783, 1341, 16578, 35003, 25239 },
-			{ 25238, 8742, 12, 64030, 43162, 7735, 8404, 1701, 38430, 24094, 10153, 56621, 4783, 1341, 16578, 35003 },
-			{ 4626, 11146, 6439, 12, 4758, 10270 }, { 4550, 4537, 5681, 5673, 5790, 6806, 8076, 4574 } };
 	/** The client state for last recorded mouse x. */
 	public int lastRecordedMouseX;
 	/** The client state for last recorded mouse y. */
 	public int lastRecordedMouseY;
 	/** Whether duplicate client error is currently active or requested. */
 	public boolean duplicateClientError;
-	/** The client state for title left flame background. */
-	public ImageRGB titleLeftFlameBackground;
-	/** The client state for title right flame background. */
-	public ImageRGB titleRightFlameBackground;
 
 	/** Stores minimap mask offsets values. */
 	public int minimapMaskOffsets[];
@@ -8470,8 +7749,6 @@ public class Client extends GameShell {
 	public int crossCycle;
 	/** The client state for cross type. */
 	public int crossType;
-	/** The client state for prompt input. */
-	public String promptInput;
 	/** The client state for loading message. */
 	public String loadingMessage;
 
@@ -8489,16 +7766,10 @@ public class Client extends GameShell {
 	/** The client state for hint map marker. */
 	public ImageRGB hintMapMarker;
 
-	/** Stores varp values values. */
-	public int varpValues[];
 	/** The current sidebar tooltip widget id. */
 	public int sidebarTooltipWidgetId;
 	/** Whether game screen redraw is currently active or requested. */
 	public boolean gameScreenRedraw;
-	/** The client state for green flame transition. */
-	public int greenFlameTransition;
-	/** The client state for blue flame transition. */
-	public int blueFlameTransition;
 	/**
 	 * Counts ground item action684 events for the original client timing/protocol
 	 * behavior.
@@ -8512,8 +7783,6 @@ public class Client extends GameShell {
 	 * applicable.
 	 */
 	public int systemUpdateTimer;
-	/** The client state for click to continue message. */
-	public String clickToContinueMessage;
 	/** The font used for small font. */
 	public TypeFace smallFont;
 	/** The font used for plain font. */
@@ -8538,11 +7807,7 @@ public class Client extends GameShell {
 	/** The client state for last password change date. */
 	public int lastPasswordChangeDate;
 
-	/** Stores title flame intensity values. */
-	public int titleFlameIntensity[];
 
-	/** Stores title flame intensity scratch values. */
-	public int titleFlameIntensityScratch[];
 	/** The client state for multi combat overlay. */
 	public ImageRGB multiCombatOverlay;
 	/** The client state for current plane. */
@@ -8561,8 +7826,6 @@ public class Client extends GameShell {
 	/** Whether report abuse mute player is currently active or requested. */
 	public boolean reportAbuseMutePlayer;
 
-	/** Stores appearance colors values. */
-	public int appearanceColors[];
 	/**
 	 * Counts ground item action26 events for the original client timing/protocol
 	 * behavior.
@@ -8572,16 +7835,8 @@ public class Client extends GameShell {
 	 * Tracks the current title flame cycle in client ticks/cycles where applicable.
 	 */
 	public int titleFlameCycle;
-	/** The sprite resource used for male appearance button sprite. */
-	public ImageRGB maleAppearanceButtonSprite;
-	/** The sprite resource used for female appearance button sprite. */
-	public ImageRGB femaleAppearanceButtonSprite;
-	/** The client state for chat input. */
-	public String chatInput;
 	/** The current chatbox hovered widget id. */
 	public int chatboxHoveredWidgetId;
-	/** The client state for chat content height. */
-	public int chatContentHeight;
 	/** The graphics or protocol buffer used for chat modes buffer. */
 	public GraphicsBuffer chatModesBuffer;
 	/** The graphics or protocol buffer used for bottom tabs buffer. */
@@ -8591,8 +7846,6 @@ public class Client extends GameShell {
 	/** The sprite resource used for compass sprite. */
 	public ImageRGB compassSprite;
 
-	/** Stores title runes values. */
-	public IndexedImage titleRunes[];
 	/** The client state for destination x. */
 	public int destinationX;
 	/** The client state for destination y. */
@@ -8614,13 +7867,9 @@ public class Client extends GameShell {
 	 * behavior.
 	 */
 	public static int inventoryAction961Counter;
-	/** The client state for private message target. */
-	public long privateMessageTarget;
 
 	/** Stores moderator icons values. */
 	public IndexedImage moderatorIcons[];
-	/** Whether male appearance is currently active or requested. */
-	public boolean maleAppearance;
 	/** The client state for hint player index. */
 	public int hintPlayerIndex;
 
@@ -8642,16 +7891,10 @@ public class Client extends GameShell {
 	 */
 	public static int inventoryAction227Counter;
 
-	/** Stores title flame line offsets values. */
-	public int titleFlameLineOffsets[];
 	/** The client state for account current day. */
 	public int accountCurrentDay;
 
-	/** Stores title flame noise values. */
-	public int titleFlameNoise[];
 
-	/** Stores title flame noise scratch values. */
-	public int titleFlameNoiseScratch[];
 
 	/** Stores compass mask offsets values. */
 	public int compassMaskOffsets[];
@@ -8703,16 +7946,10 @@ public class Client extends GameShell {
 	public static int bitMasks[];
 	/** The client state for last login day. */
 	public int lastLoginDay;
-	/** The client state for prompt action. */
-	public int promptAction;
-	/** The client state for split private chat. */
-	public int splitPrivateChat;
 	/** The client state for jaggrab socket. */
 	public Socket jaggrabSocket;
 	/** The client state for hint npc index. */
 	public int hintNpcIndex;
-	/** The client state for trade mode. */
-	public int tradeMode;
 	/**
 	 * Counts npc action118 events for the original client timing/protocol behavior.
 	 */
@@ -8722,20 +7959,12 @@ public class Client extends GameShell {
 	 * behavior.
 	 */
 	public static int screenRedrawKeepaliveCounter;
-	/** The client state for title flame noise offset. */
-	public int titleFlameNoiseOffset;
 	/** Whether interface action pending is currently active or requested. */
 	public boolean interfaceActionPending;
 	/** Whether chatbox redraw is currently active or requested. */
 	public boolean chatboxRedraw;
 	/** The client state for last login ip. */
 	public int lastLoginIp;
-	/** Whether title flames running is currently active or requested. */
-	public volatile boolean titleFlamesRunning;
-	/** Dedicated title-flame worker, owned by this client. */
-	private volatile Thread titleFlameThread;
-	/** The client state for input dialog state. */
-	public int inputDialogState;
 
 	/** Stores texture scroll scratch values. */
 	public byte textureScrollScratch[];
@@ -8752,17 +7981,12 @@ public class Client extends GameShell {
 	/** Whether camera orientation changed is currently active or requested. */
 	public boolean cameraOrientationChanged;
 
-	/** Stores skin color palette values. */
-	public static final int skinColorPalette[] = { 9104, 10275, 7595, 3610, 7975, 8526, 918, 38802, 24466, 10145, 58654,
-			5027, 1457, 16565, 34991, 25486 };
 	/** The current number of unread message entries. */
 	public int unreadMessageCount;
 	/** Whether window focus reported is currently active or requested. */
 	public boolean windowFocusReported;
 	/** The client state for last minimap plane. */
 	public int lastMinimapPlane;
-	/** Whether appearance model dirty is currently active or requested. */
-	public boolean appearanceModelDirty;
 	/** The current sidebar hovered widget id. */
 	public int sidebarHoveredWidgetId;
 	/** Whether loading error is currently active or requested. */
@@ -8797,19 +8021,9 @@ public class Client extends GameShell {
 	/** Tracks the current draw cycle in client ticks/cycles where applicable. */
 	public static int drawCycle;
 
-	/** Stores title flame palette values. */
-	public int titleFlamePalette[];
 
-	/** Stores title flame red palette values. */
-	public int titleFlameRedPalette[];
 
-	/** Stores title flame green palette values. */
-	public int titleFlameGreenPalette[];
 
-	/** Stores title flame blue palette values. */
-	public int titleFlameBluePalette[];
-	/** Whether title flame thread mode is currently active or requested. */
-	public volatile boolean titleFlameThreadMode;
 	/** The current current tooltip widget id. */
 	public int currentTooltipWidgetId;
 
@@ -8819,8 +8033,6 @@ public class Client extends GameShell {
 
 	/** The client state for multi combat zone. */
 	public int multiCombatZone;
-	/** Whether title flame thread active is currently active or requested. */
-	public volatile boolean titleFlameThreadActive;
 	/** The client state for loading percent. */
 	public int loadingPercent;
 	/** The client state for run energy. */
@@ -8828,8 +8040,6 @@ public class Client extends GameShell {
 	/** Tracks the current game cycle in client ticks/cycles where applicable. */
 	public static int gameCycle;
 
-	/** Stores appearance kit IDs values. */
-	public int appearanceKitIds[];
 	/**
 	 * Tracks the current inventory click cycle in client ticks/cycles where
 	 * applicable.

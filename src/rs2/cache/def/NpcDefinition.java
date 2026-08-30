@@ -468,10 +468,10 @@ public class NpcDefinition {
 			int leastBit = varbit.leastSignificantBit;
 			int mostBit = varbit.mostSignificantBit;
 			int mask = Client.bitMasks[mostBit - leastBit];
-			return clientInstance.varpValues[varp] >> leastBit & mask;
+			return clientInstance.getVarp(varp) >> leastBit & mask;
 		}
 		if (varpId != -1) {
-			return clientInstance.varpValues[varpId];
+			return clientInstance.getVarp(varpId);
 		}
 		return -1;
 	}
