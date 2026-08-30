@@ -1,4 +1,4 @@
-package rs2.media.renderable;
+package rs2.media.model;
 
 /**
  * Parsed metadata and segment offsets for a packed revision-377 model.

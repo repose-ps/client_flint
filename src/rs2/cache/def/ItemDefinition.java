@@ -2,8 +2,8 @@ package rs2.cache.def;
 
 import rs2.cache.Archive;
 import rs2.collection.LruCache;
-import rs2.media.ItemSpriteFactory;
-import rs2.media.renderable.Model;
+import rs2.media.sprite.ItemSpriteFactory;
+import rs2.media.model.Model;
 import rs2.net.Buffer;
 
 /** Provides item definition state and behavior. */

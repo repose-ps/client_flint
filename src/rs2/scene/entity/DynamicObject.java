@@ -1,10 +1,13 @@
 
-package rs2.media.renderable;
+package rs2.scene.entity;
 
 import rs2.Client;
 import rs2.cache.cfg.Varbit;
+import rs2.cache.def.AnimationSequence;
 import rs2.cache.def.GameObjectDefinition;
-import rs2.cache.media.AnimationSequence;
+import rs2.media.model.Model;
+import rs2.media.model.Renderable;
+
 
 /**
  * Scene location whose model may animate and/or morph according to a varbit or

@@ -1,12 +1,12 @@
 package rs2.game;
 
 import rs2.cache.def.NpcDefinition;
-import rs2.cache.media.AnimationSequence;
+import rs2.cache.def.AnimationSequence;
 import rs2.chat.ChatCodec;
 import rs2.chat.Censor;
-import rs2.media.renderable.Actor;
-import rs2.media.renderable.Npc;
-import rs2.media.renderable.Player;
+import rs2.game.entity.Actor;
+import rs2.game.entity.Npc;
+import rs2.game.entity.Player;
 import rs2.net.Buffer;
 import rs2.sign.Signlink;
 import rs2.text.Base37;

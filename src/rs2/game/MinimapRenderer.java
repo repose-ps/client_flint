@@ -2,15 +2,15 @@ package rs2.game;
 
 import rs2.cache.def.GameObjectDefinition;
 import rs2.cache.def.NpcDefinition;
-import rs2.cache.media.ImageRGB;
-import rs2.cache.media.IndexedImage;
+import rs2.media.sprite.ImageRGB;
+import rs2.media.sprite.IndexedImage;
 import rs2.collection.NodeDeque;
 import rs2.media.GraphicsBuffer;
 import rs2.media.Rasterizer;
 import rs2.media.Rasterizer3D;
-import rs2.media.renderable.Model;
-import rs2.media.renderable.Npc;
-import rs2.media.renderable.Player;
+import rs2.media.model.Model;
+import rs2.game.entity.Npc;
+import rs2.game.entity.Player;
 import rs2.net.Buffer;
 
 /**

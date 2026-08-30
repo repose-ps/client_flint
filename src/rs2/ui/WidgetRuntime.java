@@ -2,8 +2,8 @@ package rs2.ui;
 
 import rs2.cache.cfg.Varbit;
 import rs2.cache.def.ItemDefinition;
-import rs2.cache.media.AnimationSequence;
-import rs2.cache.ui.Widget;
+import rs2.cache.def.AnimationSequence;
+import rs2.ui.Widget;
 import rs2.game.Skills;
 
 /**

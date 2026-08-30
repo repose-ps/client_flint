@@ -1,6 +1,6 @@
 package rs2.scene;
 
-import rs2.media.renderable.Renderable;
+import rs2.media.model.Renderable;
 
 /**
  * Describes the renderable item pile attached to a single scene tile.

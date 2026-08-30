@@ -1,4 +1,4 @@
-package rs2.media;
+package rs2.media.model;
 
 /**
  * Accumulated vertex normal used by the software model-lighting pipeline.

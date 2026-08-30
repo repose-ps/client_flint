@@ -3,7 +3,7 @@
  * widgets.
  *
  * <p>
- * Static widget definitions are decoded in {@code rs2.cache.ui}; this package
+ * Static widget definitions are decoded in {@code rs2.ui}; this package
  * owns client-side selection, dragging, script evaluation, and related UI
  * behavior.
  * </p>

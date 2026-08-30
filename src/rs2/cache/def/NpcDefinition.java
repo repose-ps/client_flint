@@ -5,7 +5,7 @@ import rs2.cache.Archive;
 import rs2.cache.cfg.Varbit;
 import rs2.collection.LruCache;
 import rs2.media.AnimationFrame;
-import rs2.media.renderable.Model;
+import rs2.media.model.Model;
 import rs2.net.Buffer;
 
 /**

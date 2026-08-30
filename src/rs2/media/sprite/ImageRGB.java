@@ -1,4 +1,4 @@
-package rs2.cache.media;
+package rs2.media.sprite;
 
 import java.awt.Component;
 import java.awt.Image;

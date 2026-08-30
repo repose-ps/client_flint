@@ -1,7 +1,7 @@
 package rs2.game;
 
-import rs2.media.renderable.Actor;
-import rs2.media.renderable.Model;
+import rs2.game.entity.Actor;
+import rs2.media.model.Model;
 import rs2.net.Buffer;
 import rs2.sign.Signlink;
 

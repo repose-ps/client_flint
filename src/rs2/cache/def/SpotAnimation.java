@@ -1,8 +1,8 @@
-package rs2.cache.media;
+package rs2.cache.def;
 
 import rs2.cache.Archive;
 import rs2.collection.LruCache;
-import rs2.media.renderable.Model;
+import rs2.media.model.Model;
 import rs2.net.Buffer;
 
 /**

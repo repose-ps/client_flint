@@ -1,6 +1,8 @@
-package rs2.media.renderable;
+package rs2.game.entity;
 
-import rs2.cache.media.AnimationSequence;
+import rs2.cache.def.AnimationSequence;
+import rs2.media.model.Renderable;
+
 
 /**
  * Shared movement, orientation, animation, overhead-text and hit state for

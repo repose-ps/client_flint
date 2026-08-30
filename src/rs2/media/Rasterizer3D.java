@@ -1,7 +1,7 @@
 package rs2.media;
 
 import rs2.cache.Archive;
-import rs2.cache.media.IndexedImage;
+import rs2.media.sprite.IndexedImage;
 
 /**
  * Revision-377 software 3D triangle rasterizer.

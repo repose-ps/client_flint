@@ -1,16 +1,18 @@
-package rs2.media.renderable;
+package rs2.game.entity;
 
 import rs2.Client;
+import rs2.cache.def.AnimationSequence;
+import rs2.cache.def.IdentityKit;
 import rs2.cache.def.ItemDefinition;
 import rs2.cache.def.NpcDefinition;
-import rs2.cache.media.AnimationSequence;
-import rs2.cache.media.IdentityKit;
-import rs2.cache.media.SpotAnimation;
+import rs2.cache.def.SpotAnimation;
 import rs2.collection.LruCache;
 import rs2.media.AnimationFrame;
+import rs2.media.model.Model;
 import rs2.net.Buffer;
 import rs2.text.Base37;
 import rs2.text.TextFormatter;
+
 
 /**
  * Runtime player actor and revision-377 appearance/model builder.

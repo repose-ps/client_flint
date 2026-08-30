@@ -2,12 +2,12 @@ package rs2.game;
 
 import rs2.cache.def.GameObjectDefinition;
 import rs2.collection.NodeDeque;
-import rs2.media.renderable.DynamicObject;
-import rs2.media.renderable.GraphicsObject;
-import rs2.media.renderable.GroundItem;
-import rs2.media.renderable.Model;
-import rs2.media.renderable.Player;
-import rs2.media.renderable.Projectile;
+import rs2.scene.entity.DynamicObject;
+import rs2.scene.entity.GraphicsObject;
+import rs2.scene.entity.GroundItem;
+import rs2.media.model.Model;
+import rs2.game.entity.Player;
+import rs2.scene.entity.Projectile;
 import rs2.net.Buffer;
 import rs2.scene.tile.FloorDecoration;
 import rs2.scene.InteractiveObject;

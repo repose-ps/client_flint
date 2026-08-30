@@ -1,7 +1,10 @@
-package rs2.media.renderable;
+package rs2.scene.entity;
 
-import rs2.cache.media.SpotAnimation;
+import rs2.cache.def.SpotAnimation;
 import rs2.media.AnimationFrame;
+import rs2.media.model.Model;
+import rs2.media.model.Renderable;
+
 
 /**
  * A moving spot-animation model following the client's parabolic projectile

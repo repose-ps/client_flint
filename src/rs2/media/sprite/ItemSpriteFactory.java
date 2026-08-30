@@ -1,9 +1,12 @@
-package rs2.media;
+package rs2.media.sprite;
 
 import rs2.cache.def.ItemDefinition;
-import rs2.cache.media.ImageRGB;
 import rs2.collection.LruCache;
-import rs2.media.renderable.Model;
+import rs2.media.Rasterizer3D;
+import rs2.media.Rasterizer;
+import rs2.media.model.Model;
+import rs2.media.sprite.ImageRGB;
+
 
 /**
  * Renders revision-377 32x32 item icons using the global software rasterizers.

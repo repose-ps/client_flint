@@ -1,6 +1,6 @@
 package rs2.scene;
 
-import rs2.media.renderable.Renderable;
+import rs2.media.model.Renderable;
 
 /**
  * A renderable scene object that may occupy one or more adjacent tiles.

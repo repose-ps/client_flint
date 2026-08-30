@@ -1,10 +1,10 @@
 package rs2.game;
 
-import rs2.cache.media.AnimationSequence;
-import rs2.cache.media.SpotAnimation;
-import rs2.media.renderable.Actor;
-import rs2.media.renderable.Npc;
-import rs2.media.renderable.Player;
+import rs2.cache.def.AnimationSequence;
+import rs2.cache.def.SpotAnimation;
+import rs2.game.entity.Actor;
+import rs2.game.entity.Npc;
+import rs2.game.entity.Player;
 
 /**
  * Advances revision-377 actor movement, facing and animation state for one

@@ -1,9 +1,11 @@
-package rs2.media.renderable;
+package rs2.game.entity;
 
+import rs2.cache.def.AnimationSequence;
 import rs2.cache.def.NpcDefinition;
-import rs2.cache.media.AnimationSequence;
-import rs2.cache.media.SpotAnimation;
+import rs2.cache.def.SpotAnimation;
 import rs2.media.AnimationFrame;
+import rs2.media.model.Model;
+
 
 /** Runtime non-player actor backed by an {@link NpcDefinition}. */
 public class Npc extends Actor {

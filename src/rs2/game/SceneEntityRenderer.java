@@ -1,9 +1,9 @@
 package rs2.game;
 
 import rs2.cache.def.NpcDefinition;
-import rs2.media.renderable.Actor;
-import rs2.media.renderable.Npc;
-import rs2.media.renderable.Player;
+import rs2.game.entity.Actor;
+import rs2.game.entity.Npc;
+import rs2.game.entity.Player;
 
 /**
  * Adds synchronized actors to the Scene using the revision-377 ordering rules.

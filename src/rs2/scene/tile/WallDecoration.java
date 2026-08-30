@@ -1,6 +1,6 @@
 package rs2.scene.tile;
 
-import rs2.media.renderable.Renderable;
+import rs2.media.model.Renderable;
 
 /**
  * A decoration rendered against a wall, such as a painting or mounted object.
