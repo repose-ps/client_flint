@@ -1,5 +1,6 @@
 package rs2.scene;
 
+import rs2.media.Angle;
 import rs2.cache.def.FloorDefinition;
 import rs2.cache.def.GameObjectDefinition;
 import rs2.cache.ondemand.OnDemandFetcher;
@@ -14,6 +15,31 @@ import rs2.scene.util.TiledUtils;
 
 /** Provides region state and behavior. */
 public class Region {
+
+	/** Terrain opcode that derives height from procedural noise or the lower plane. */
+	private static final int TERRAIN_OPCODE_DEFAULT_HEIGHT = 0;
+	/** Terrain opcode that supplies an explicit one-byte height offset. */
+	private static final int TERRAIN_OPCODE_EXPLICIT_HEIGHT = 1;
+	/** First terrain opcode that encodes an overlay shape and rotation. */
+	private static final int TERRAIN_OVERLAY_OPCODE_FIRST = 2;
+	/** Last terrain opcode that encodes an overlay shape and rotation. */
+	private static final int TERRAIN_OVERLAY_OPCODE_LAST = 49;
+	/** Last terrain opcode that encodes tile flags. */
+	private static final int TERRAIN_FLAGS_OPCODE_LAST = 81;
+	/** Base subtracted from a tile-flag terrain opcode. */
+	private static final int TERRAIN_FLAGS_OPCODE_BASE = TERRAIN_OVERLAY_OPCODE_LAST;
+	/** Base subtracted from an underlay terrain opcode. */
+	private static final int TERRAIN_UNDERLAY_OPCODE_BASE = TERRAIN_FLAGS_OPCODE_LAST;
+	/** Number of overlay opcodes allocated to each overlay shape. */
+	private static final int TERRAIN_OVERLAY_ROTATION_COUNT = 4;
+	/** Scale from serialized terrain height units to scene Z units. */
+	private static final int TERRAIN_HEIGHT_SCALE = 8;
+	/** Default vertical separation between generated terrain planes. */
+	private static final int TERRAIN_PLANE_HEIGHT = 240;
+	/** X seed mixed into procedural terrain-height noise. */
+	private static final int TERRAIN_NOISE_X_SEED = 932_731;
+	/** Y seed mixed into procedural terrain-height noise. */
+	private static final int TERRAIN_NOISE_Y_SEED = 556_238;
 
 	/** Stores tile flags values. */
 	private final byte[][][] tileFlags;
@@ -100,10 +126,10 @@ public class Region {
 	 * @return the effective plane
 	 */
 	public int getEffectivePlane(int plane, int x, int y) {
-		if ((tileFlags[plane][x][y] & 0x8) != 0) {
+		if ((tileFlags[plane][x][y] & TileFlags.FORCE_LOWEST_PLANE) != 0) {
 			return 0;
 		}
-		if (plane > 0 && (tileFlags[1][x][y] & 0x2) != 0) {
+		if (plane > 0 && (tileFlags[1][x][y] & TileFlags.BRIDGE) != 0) {
 			return plane - 1;
 		}
 		return plane;
@@ -160,11 +186,11 @@ public class Region {
 		int averageHeight = southWestHeight + southEastHeight + northEastHeight + northWestHeight >> 2;
 
 		GameObjectDefinition definition = GameObjectDefinition.lookup(objectId);
-		int uid = x + (y << 7) + (objectId << 14) + 0x40000000;
+		int uid = x + (y << 7) + (objectId << SceneUid.ENTITY_ID_SHIFT) + SceneUid.OBJECT_TYPE_BITS;
 		if (!definition.interactive) {
-			uid += 0x80000000;
+			uid += SceneUid.NON_INTERACTIVE_FLAG;
 		}
-		byte config = (byte) ((orientation << 6) + type);
+		byte config = SceneConfig.pack(type, orientation);
 
 		if (type == 22) {
 			Renderable renderable = createRenderable(definition, objectId, 22, orientation, southWestHeight,
@@ -288,17 +314,17 @@ public class Region {
 		Renderable decoration = createRenderable(definition, objectId, 4, 0, southWestHeight, southEastHeight,
 				northEastHeight, northWestHeight);
 		if (type == 4) {
-			scene.addWallDecoration(scenePlane, x, y, averageHeight, 0, 0, orientation * 512, uid, config,
+			scene.addWallDecoration(scenePlane, x, y, averageHeight, 0, 0, orientation * Angle.QUARTER_TURN, uid, config,
 					WALL_ORIENTATION_FLAGS[orientation], decoration);
 		} else if (type == 5) {
 			int displacement = 16;
 			int wallUid = scene.getWallUid(scenePlane, x, y);
 			if (wallUid > 0) {
-				displacement = GameObjectDefinition.lookup(wallUid >> 14 & 0x7fff).decorDisplacement;
+				displacement = GameObjectDefinition.lookup(wallUid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK).decorDisplacement;
 			}
 			scene.addWallDecoration(scenePlane, x, y, averageHeight,
 					WALL_DECORATION_X_OFFSETS[orientation] * displacement,
-					WALL_DECORATION_Y_OFFSETS[orientation] * displacement, orientation * 512, uid, config,
+					WALL_DECORATION_Y_OFFSETS[orientation] * displacement, orientation * Angle.QUARTER_TURN, uid, config,
 					WALL_ORIENTATION_FLAGS[orientation], decoration);
 		} else if (type == 6) {
 			scene.addWallDecoration(scenePlane, x, y, averageHeight, 0, 0, orientation, uid, config, 256, decoration);
@@ -353,7 +379,7 @@ public class Region {
 		applyBlockedTileCollision(collisionMaps);
 		randomizeFloorColorOffsets();
 
-		for (int plane = 0; plane < 4; plane++) {
+		for (int plane = 0; plane < SceneConstants.PLANE_COUNT; plane++) {
 			calculateTileLightness(plane);
 			buildFloorTiles(plane, scene);
 			applyEffectivePlanes(plane, scene);
@@ -370,14 +396,14 @@ public class Region {
 	 * @param collisionMaps the collision maps
 	 */
 	private void applyBlockedTileCollision(CollisionMap[] collisionMaps) {
-		for (int plane = 0; plane < 4; plane++) {
-			for (int x = 0; x < 104; x++) {
-				for (int y = 0; y < 104; y++) {
-					if ((tileFlags[plane][x][y] & 0x1) == 0) {
+		for (int plane = 0; plane < SceneConstants.PLANE_COUNT; plane++) {
+			for (int x = 0; x < SceneConstants.SIZE; x++) {
+				for (int y = 0; y < SceneConstants.SIZE; y++) {
+					if ((tileFlags[plane][x][y] & TileFlags.BLOCKED) == 0) {
 						continue;
 					}
 					int collisionPlane = plane;
-					if ((tileFlags[1][x][y] & 0x2) == 2) {
+					if ((tileFlags[1][x][y] & TileFlags.BRIDGE) != 0) {
 						collisionPlane--;
 					}
 					if (collisionPlane >= 0) {
@@ -619,8 +645,8 @@ public class Region {
 	 * @param y     the y
 	 */
 	private boolean shouldBuildTile(int plane, int x, int y) {
-		return !lowMemory || (tileFlags[0][x][y] & 0x2) != 0
-				|| ((tileFlags[plane][x][y] & 0x10) == 0 && getEffectivePlane(plane, x, y) == currentPlane);
+		return !lowMemory || (tileFlags[0][x][y] & TileFlags.BRIDGE) != 0
+				|| ((tileFlags[plane][x][y] & TileFlags.LOW_MEMORY_HIDDEN) == 0 && getEffectivePlane(plane, x, y) == currentPlane);
 	}
 
 	/**
@@ -645,7 +671,7 @@ public class Region {
 	private void applyBridgeTiles(Scene scene) {
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
-				if ((tileFlags[1][x][y] & 0x2) == 2) {
+				if ((tileFlags[1][x][y] & TileFlags.BRIDGE) != 0) {
 					scene.setBridgeMode(x, y);
 				}
 			}
@@ -725,9 +751,9 @@ public class Region {
 		if (area < 8) {
 			return;
 		}
-		int upperZ = tileHeights[maxPlane][x][minY] - 240;
+		int upperZ = tileHeights[maxPlane][x][minY] - TERRAIN_PLANE_HEIGHT;
 		int lowerZ = tileHeights[minPlane][x][minY];
-		Scene.addOccluder(targetPlane, x * 128, upperZ, x * 128, maxY * 128 + 128, lowerZ, minY * 128, 1);
+		Scene.addOccluder(targetPlane, x * SceneConstants.TILE_SIZE, upperZ, x * SceneConstants.TILE_SIZE, maxY * SceneConstants.TILE_SIZE + SceneConstants.TILE_SIZE, lowerZ, minY * SceneConstants.TILE_SIZE, SceneCluster.TYPE_X_PLANE);
 		for (int plane = minPlane; plane <= maxPlane; plane++) {
 			for (int tileY = minY; tileY <= maxY; tileY++) {
 				occlusionFlags[plane][x][tileY] &= ~mask;
@@ -775,9 +801,9 @@ public class Region {
 		if (area < 8) {
 			return;
 		}
-		int upperZ = tileHeights[maxPlane][minX][y] - 240;
+		int upperZ = tileHeights[maxPlane][minX][y] - TERRAIN_PLANE_HEIGHT;
 		int lowerZ = tileHeights[minPlane][minX][y];
-		Scene.addOccluder(targetPlane, minX * 128, upperZ, maxX * 128 + 128, y * 128, lowerZ, y * 128, 2);
+		Scene.addOccluder(targetPlane, minX * SceneConstants.TILE_SIZE, upperZ, maxX * SceneConstants.TILE_SIZE + SceneConstants.TILE_SIZE, y * SceneConstants.TILE_SIZE, lowerZ, y * SceneConstants.TILE_SIZE, SceneCluster.TYPE_Y_PLANE);
 		for (int plane = minPlane; plane <= maxPlane; plane++) {
 			for (int tileX = minX; tileX <= maxX; tileX++) {
 				occlusionFlags[plane][tileX][y] &= ~mask;
@@ -825,7 +851,7 @@ public class Region {
 			return;
 		}
 		int worldZ = tileHeights[plane][minX][minY];
-		Scene.addOccluder(targetPlane, minX * 128, worldZ, maxX * 128 + 128, maxY * 128 + 128, worldZ, minY * 128, 4);
+		Scene.addOccluder(targetPlane, minX * SceneConstants.TILE_SIZE, worldZ, maxX * SceneConstants.TILE_SIZE + SceneConstants.TILE_SIZE, maxY * SceneConstants.TILE_SIZE + SceneConstants.TILE_SIZE, worldZ, minY * SceneConstants.TILE_SIZE, SceneCluster.TYPE_HORIZONTAL_PLANE);
 		for (int tileX = minX; tileX <= maxX; tileX++) {
 			for (int tileY = minY; tileY <= maxY; tileY++) {
 				occlusionFlags[plane][tileX][tileY] &= ~mask;
@@ -852,19 +878,20 @@ public class Region {
 			for (int y = 0; y < 8; y++) {
 				int targetX = destinationX + x;
 				int targetY = destinationY + y;
-				if (targetX > 0 && targetX < 103 && targetY > 0 && targetY < 103) {
+				if (targetX >= SceneConstants.INTERIOR_MIN_TILE && targetX < SceneConstants.INTERIOR_MAX_TILE
+						&& targetY >= SceneConstants.INTERIOR_MIN_TILE && targetY < SceneConstants.INTERIOR_MAX_TILE) {
 					collisionMaps[destinationPlane].flags[targetX][targetY] &= ~0x1000000;
 				}
 			}
 		}
 
 		Buffer buffer = new Buffer(data);
-		for (int plane = 0; plane < 4; plane++) {
-			for (int x = 0; x < 64; x++) {
-				for (int y = 0; y < 64; y++) {
+		for (int plane = 0; plane < SceneConstants.PLANE_COUNT; plane++) {
+			for (int x = 0; x < SceneConstants.REGION_SIZE; x++) {
+				for (int y = 0; y < SceneConstants.REGION_SIZE; y++) {
 					if (plane == sourcePlane && x >= sourceX && x < sourceX + 8 && y >= sourceY && y < sourceY + 8) {
-						int targetX = destinationX + TiledUtils.getRotatedMapChunkX(x & 7, y & 7, rotation);
-						int targetY = destinationY + TiledUtils.getRotatedMapChunkY(x & 7, y & 7, rotation);
+						int targetX = destinationX + TiledUtils.getRotatedMapChunkX(x & SceneConstants.CHUNK_COORDINATE_MASK, y & SceneConstants.CHUNK_COORDINATE_MASK, rotation);
+						int targetY = destinationY + TiledUtils.getRotatedMapChunkY(x & SceneConstants.CHUNK_COORDINATE_MASK, y & SceneConstants.CHUNK_COORDINATE_MASK, rotation);
 						decodeTile(buffer, destinationPlane, targetX, targetY, 0, 0, rotation);
 					} else {
 						decodeTile(buffer, 0, -1, -1, 0, 0, 0);
@@ -980,16 +1007,17 @@ public class Region {
 				}
 
 				GameObjectDefinition definition = GameObjectDefinition.lookup(objectId);
-				int x = destinationX + TiledUtils.getRotatedLandscapeChunkX(localX & 7, localY & 7, definition.sizeX,
+				int x = destinationX + TiledUtils.getRotatedLandscapeChunkX(localX & SceneConstants.CHUNK_COORDINATE_MASK, localY & SceneConstants.CHUNK_COORDINATE_MASK, definition.sizeX,
 						definition.sizeY, orientation, rotation);
-				int y = destinationY + TiledUtils.getRotatedLandscapeChunkY(localX & 7, localY & 7, definition.sizeX,
+				int y = destinationY + TiledUtils.getRotatedLandscapeChunkY(localX & SceneConstants.CHUNK_COORDINATE_MASK, localY & SceneConstants.CHUNK_COORDINATE_MASK, definition.sizeX,
 						definition.sizeY, orientation, rotation);
-				if (x <= 0 || y <= 0 || x >= 103 || y >= 103) {
+				if (x < SceneConstants.INTERIOR_MIN_TILE || y < SceneConstants.INTERIOR_MIN_TILE
+						|| x >= SceneConstants.INTERIOR_MAX_TILE || y >= SceneConstants.INTERIOR_MAX_TILE) {
 					continue;
 				}
 
 				int collisionPlane = destinationPlane;
-				if ((tileFlags[1][x][y] & 0x2) == 2) {
+				if ((tileFlags[1][x][y] & TileFlags.BRIDGE) != 0) {
 					collisionPlane--;
 				}
 				CollisionMap collisionMap = collisionPlane >= 0 ? collisionMaps[collisionPlane] : null;
@@ -1013,8 +1041,8 @@ public class Region {
 	 */
 	private void placeLocation(int objectId, int type, int orientation, int plane, int x, int y,
 			CollisionMap collisionMap, Scene scene) {
-		if (lowMemory && (tileFlags[0][x][y] & 0x2) == 0) {
-			if ((tileFlags[plane][x][y] & 0x10) != 0 || getEffectivePlane(plane, x, y) != currentPlane) {
+		if (lowMemory && (tileFlags[0][x][y] & TileFlags.BRIDGE) == 0) {
+			if ((tileFlags[plane][x][y] & TileFlags.LOW_MEMORY_HIDDEN) != 0 || getEffectivePlane(plane, x, y) != currentPlane) {
 				return;
 			}
 		}
@@ -1028,11 +1056,11 @@ public class Region {
 		int northWestHeight = tileHeights[plane][x][y + 1];
 		int averageHeight = southWestHeight + southEastHeight + northEastHeight + northWestHeight >> 2;
 		GameObjectDefinition definition = GameObjectDefinition.lookup(objectId);
-		int uid = x + (y << 7) + (objectId << 14) + 0x40000000;
+		int uid = x + (y << 7) + (objectId << SceneUid.ENTITY_ID_SHIFT) + SceneUid.OBJECT_TYPE_BITS;
 		if (!definition.interactive) {
-			uid += 0x80000000;
+			uid += SceneUid.NON_INTERACTIVE_FLAG;
 		}
-		byte config = (byte) ((orientation << 6) + type);
+		byte config = SceneConfig.pack(type, orientation);
 
 		if (type == 22) {
 			if (!lowMemory || definition.interactive || definition.obstructsGround) {
@@ -1255,16 +1283,16 @@ public class Region {
 		Renderable decoration = createRenderable(definition, objectId, 4, 0, southWestHeight, southEastHeight,
 				northEastHeight, northWestHeight);
 		if (type == 4) {
-			scene.addWallDecoration(plane, x, y, averageHeight, 0, 0, orientation * 512, uid, config,
+			scene.addWallDecoration(plane, x, y, averageHeight, 0, 0, orientation * Angle.QUARTER_TURN, uid, config,
 					WALL_ORIENTATION_FLAGS[orientation], decoration);
 		} else if (type == 5) {
 			int displacement = 16;
 			int wallUid = scene.getWallUid(plane, x, y);
 			if (wallUid > 0) {
-				displacement = GameObjectDefinition.lookup(wallUid >> 14 & 0x7fff).decorDisplacement;
+				displacement = GameObjectDefinition.lookup(wallUid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK).decorDisplacement;
 			}
 			scene.addWallDecoration(plane, x, y, averageHeight, WALL_DECORATION_X_OFFSETS[orientation] * displacement,
-					WALL_DECORATION_Y_OFFSETS[orientation] * displacement, orientation * 512, uid, config,
+					WALL_DECORATION_Y_OFFSETS[orientation] * displacement, orientation * Angle.QUARTER_TURN, uid, config,
 					WALL_ORIENTATION_FLAGS[orientation], decoration);
 		} else if (type == 6) {
 			scene.addWallDecoration(plane, x, y, averageHeight, 0, 0, orientation, uid, config, 256, decoration);
@@ -1287,21 +1315,22 @@ public class Region {
 	 */
 	public void loadTerrainRegion(byte[] data, int baseX, int baseY, int noiseX, int noiseY,
 			CollisionMap[] collisionMaps) {
-		for (int plane = 0; plane < 4; plane++) {
-			for (int x = 0; x < 64; x++) {
-				for (int y = 0; y < 64; y++) {
+		for (int plane = 0; plane < SceneConstants.PLANE_COUNT; plane++) {
+			for (int x = 0; x < SceneConstants.REGION_SIZE; x++) {
+				for (int y = 0; y < SceneConstants.REGION_SIZE; y++) {
 					int targetX = baseX + x;
 					int targetY = baseY + y;
-					if (targetX > 0 && targetX < 103 && targetY > 0 && targetY < 103) {
+					if (targetX >= SceneConstants.INTERIOR_MIN_TILE && targetX < SceneConstants.INTERIOR_MAX_TILE
+						&& targetY >= SceneConstants.INTERIOR_MIN_TILE && targetY < SceneConstants.INTERIOR_MAX_TILE) {
 						collisionMaps[plane].flags[targetX][targetY] &= ~0x1000000;
 					}
 				}
 			}
 		}
 		Buffer buffer = new Buffer(data);
-		for (int plane = 0; plane < 4; plane++) {
-			for (int x = 0; x < 64; x++) {
-				for (int y = 0; y < 64; y++) {
+		for (int plane = 0; plane < SceneConstants.PLANE_COUNT; plane++) {
+			for (int x = 0; x < SceneConstants.REGION_SIZE; x++) {
+				for (int y = 0; y < SceneConstants.REGION_SIZE; y++) {
 					decodeTile(buffer, plane, baseX + x, baseY + y, noiseX, noiseY, 0);
 				}
 			}
@@ -1369,11 +1398,12 @@ public class Region {
 				int orientation = config & 0x3;
 				int x = baseX + localX;
 				int y = baseY + localY;
-				if (x <= 0 || y <= 0 || x >= 103 || y >= 103) {
+				if (x < SceneConstants.INTERIOR_MIN_TILE || y < SceneConstants.INTERIOR_MIN_TILE
+						|| x >= SceneConstants.INTERIOR_MAX_TILE || y >= SceneConstants.INTERIOR_MAX_TILE) {
 					continue;
 				}
 				int collisionPlane = plane;
-				if ((tileFlags[1][x][y] & 0x2) == 2) {
+				if ((tileFlags[1][x][y] & TileFlags.BRIDGE) != 0) {
 					collisionPlane--;
 				}
 				CollisionMap collisionMap = collisionPlane >= 0 ? collisionMaps[collisionPlane] : null;
@@ -1455,7 +1485,8 @@ public class Region {
 				int type = buffer.readUnsignedByte() >> 2;
 				int x = baseX + localX;
 				int y = baseY + localY;
-				if (x <= 0 || y <= 0 || x >= 103 || y >= 103) {
+				if (x < SceneConstants.INTERIOR_MIN_TILE || y < SceneConstants.INTERIOR_MIN_TILE
+						|| x >= SceneConstants.INTERIOR_MAX_TILE || y >= SceneConstants.INTERIOR_MAX_TILE) {
 					continue;
 				}
 				GameObjectDefinition definition = GameObjectDefinition.lookup(objectId);
@@ -1508,53 +1539,53 @@ public class Region {
 	 * @param rotation the rotation
 	 */
 	private void decodeTile(Buffer buffer, int plane, int x, int y, int noiseX, int noiseY, int rotation) {
-		if (x >= 0 && x < 104 && y >= 0 && y < 104) {
+		if (x >= 0 && x < SceneConstants.SIZE && y >= 0 && y < SceneConstants.SIZE) {
 			tileFlags[plane][x][y] = 0;
 			for (;;) {
 				int opcode = buffer.readUnsignedByte();
-				if (opcode == 0) {
+				if (opcode == TERRAIN_OPCODE_DEFAULT_HEIGHT) {
 					if (plane == 0) {
-						tileHeights[0][x][y] = -TerrainNoise.calculateHeight(932731 + x + noiseX, 556238 + y + noiseY)
-								* 8;
+						tileHeights[0][x][y] = -TerrainNoise.calculateHeight(TERRAIN_NOISE_X_SEED + x + noiseX, TERRAIN_NOISE_Y_SEED + y + noiseY)
+								* TERRAIN_HEIGHT_SCALE;
 					} else {
-						tileHeights[plane][x][y] = tileHeights[plane - 1][x][y] - 240;
+						tileHeights[plane][x][y] = tileHeights[plane - 1][x][y] - TERRAIN_PLANE_HEIGHT;
 					}
 					return;
 				}
-				if (opcode == 1) {
+				if (opcode == TERRAIN_OPCODE_EXPLICIT_HEIGHT) {
 					int heightOffset = buffer.readUnsignedByte();
 					if (heightOffset == 1) {
 						heightOffset = 0;
 					}
 					if (plane == 0) {
-						tileHeights[0][x][y] = -heightOffset * 8;
+						tileHeights[0][x][y] = -heightOffset * TERRAIN_HEIGHT_SCALE;
 					} else {
-						tileHeights[plane][x][y] = tileHeights[plane - 1][x][y] - heightOffset * 8;
+						tileHeights[plane][x][y] = tileHeights[plane - 1][x][y] - heightOffset * TERRAIN_HEIGHT_SCALE;
 					}
 					return;
 				}
-				if (opcode <= 49) {
+				if (opcode <= TERRAIN_OVERLAY_OPCODE_LAST) {
 					overlayIds[plane][x][y] = buffer.readSignedByte();
-					overlayShapes[plane][x][y] = (byte) ((opcode - 2) / 4);
-					overlayRotations[plane][x][y] = (byte) (opcode - 2 + rotation & 0x3);
-				} else if (opcode <= 81) {
-					tileFlags[plane][x][y] = (byte) (opcode - 49);
+					overlayShapes[plane][x][y] = (byte) ((opcode - TERRAIN_OVERLAY_OPCODE_FIRST) / TERRAIN_OVERLAY_ROTATION_COUNT);
+					overlayRotations[plane][x][y] = (byte) (opcode - TERRAIN_OVERLAY_OPCODE_FIRST + rotation & SceneConfig.ORIENTATION_MASK);
+				} else if (opcode <= TERRAIN_FLAGS_OPCODE_LAST) {
+					tileFlags[plane][x][y] = (byte) (opcode - TERRAIN_FLAGS_OPCODE_BASE);
 				} else {
-					underlayIds[plane][x][y] = (byte) (opcode - 81);
+					underlayIds[plane][x][y] = (byte) (opcode - TERRAIN_UNDERLAY_OPCODE_BASE);
 				}
 			}
 		}
 
 		for (;;) {
 			int opcode = buffer.readUnsignedByte();
-			if (opcode == 0) {
+			if (opcode == TERRAIN_OPCODE_DEFAULT_HEIGHT) {
 				return;
 			}
-			if (opcode == 1) {
+			if (opcode == TERRAIN_OPCODE_EXPLICIT_HEIGHT) {
 				buffer.readUnsignedByte();
 				return;
 			}
-			if (opcode <= 49) {
+			if (opcode <= TERRAIN_OVERLAY_OPCODE_LAST) {
 				buffer.readUnsignedByte();
 			}
 		}

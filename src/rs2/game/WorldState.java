@@ -1,17 +1,22 @@
 package rs2.game;
 
+import rs2.scene.TileFlags;
+import rs2.scene.SceneConfig;
 import rs2.cache.def.GameObjectDefinition;
 import rs2.cache.def.ItemDefinition;
 import rs2.collection.NodeDeque;
-import rs2.scene.entity.GraphicsObject;
-import rs2.scene.entity.GroundItem;
 import rs2.game.entity.Npc;
 import rs2.game.entity.Player;
-import rs2.scene.entity.Projectile;
 import rs2.net.Buffer;
+import rs2.net.OutgoingPacketOpcode;
 import rs2.scene.PendingSpawn;
 import rs2.scene.Region;
 import rs2.scene.Scene;
+import rs2.scene.SceneUid;
+import rs2.scene.SceneConstants;
+import rs2.scene.entity.GraphicsObject;
+import rs2.scene.entity.GroundItem;
+import rs2.scene.entity.Projectile;
 import rs2.scene.util.CollisionMap;
 
 /**
@@ -26,10 +31,10 @@ import rs2.scene.util.CollisionMap;
 public final class WorldState {
 
 	/** Constant value for plane count. */
-	public static final int PLANE_COUNT = 4;
+	public static final int PLANE_COUNT = SceneConstants.PLANE_COUNT;
 
 	/** Constant value for size. */
-	public static final int SIZE = 104;
+	public static final int SIZE = SceneConstants.SIZE;
 
 	/** Stores tile flags values. */
 	public final byte[][][] tileFlags = new byte[PLANE_COUNT][SIZE][SIZE];
@@ -84,22 +89,22 @@ public final class WorldState {
 	 * @return the tile height
 	 */
 	public int getTileHeight(int worldX, int worldY, int plane) {
-		int tileX = worldX >> 7;
-		int tileY = worldY >> 7;
-		if (tileX < 0 || tileY < 0 || tileX > 103 || tileY > 103) {
+		int tileX = worldX >> SceneConstants.TILE_BITS;
+		int tileY = worldY >> SceneConstants.TILE_BITS;
+		if (tileX < 0 || tileY < 0 || tileX > SceneConstants.MAX_TILE_INDEX || tileY > SceneConstants.MAX_TILE_INDEX) {
 			return 0;
 		}
 		int heightPlane = plane;
-		if (heightPlane < 3 && (tileFlags[1][tileX][tileY] & 2) == 2) {
+		if (heightPlane < 3 && (tileFlags[1][tileX][tileY] & TileFlags.BRIDGE) != 0) {
 			heightPlane++;
 		}
-		int localX = worldX & 0x7f;
-		int localY = worldY & 0x7f;
-		int south = tileHeights[heightPlane][tileX][tileY] * (128 - localX)
-				+ tileHeights[heightPlane][tileX + 1][tileY] * localX >> 7;
-		int north = tileHeights[heightPlane][tileX][tileY + 1] * (128 - localX)
-				+ tileHeights[heightPlane][tileX + 1][tileY + 1] * localX >> 7;
-		return south * (128 - localY) + north * localY >> 7;
+		int localX = worldX & SceneConstants.TILE_OFFSET_MASK;
+		int localY = worldY & SceneConstants.TILE_OFFSET_MASK;
+		int south = tileHeights[heightPlane][tileX][tileY] * (SceneConstants.TILE_SIZE - localX)
+				+ tileHeights[heightPlane][tileX + 1][tileY] * localX >> SceneConstants.TILE_BITS;
+		int north = tileHeights[heightPlane][tileX][tileY + 1] * (SceneConstants.TILE_SIZE - localX)
+				+ tileHeights[heightPlane][tileX + 1][tileY + 1] * localX >> SceneConstants.TILE_BITS;
+		return south * (SceneConstants.TILE_SIZE - localY) + north * localY >> SceneConstants.TILE_BITS;
 	}
 
 	/**
@@ -141,8 +146,8 @@ public final class WorldState {
 			}
 		}
 
-		int uid = x + (y << 7) + 0x60000000;
-		scene.addGroundItemTile(plane, x, y, getTileHeight(x * 128 + 64, y * 128 + 64, plane), uid, primary, secondary,
+		int uid = x + (y << SceneUid.TILE_Y_SHIFT) + SceneUid.GROUND_ITEM_TYPE_BITS;
+		scene.addGroundItemTile(plane, x, y, getTileHeight(x * SceneConstants.TILE_SIZE + SceneConstants.TILE_CENTER, y * SceneConstants.TILE_SIZE + SceneConstants.TILE_CENTER, plane), uid, primary, secondary,
 				tertiary);
 	}
 
@@ -171,8 +176,8 @@ public final class WorldState {
 	 * @param zoneBaseY the zone base y
 	 */
 	public void clearZone(int plane, int zoneBaseX, int zoneBaseY) {
-		for (int x = zoneBaseX; x < zoneBaseX + 8; x++) {
-			for (int y = zoneBaseY; y < zoneBaseY + 8; y++) {
+		for (int x = zoneBaseX; x < zoneBaseX + SceneConstants.CHUNK_SIZE; x++) {
+			for (int y = zoneBaseY; y < zoneBaseY + SceneConstants.CHUNK_SIZE; y++) {
 				if (groundItems[plane][x][y] != null) {
 					groundItems[plane][x][y] = null;
 					updateGroundItemPile(plane, x, y);
@@ -182,7 +187,7 @@ public final class WorldState {
 
 		for (PendingSpawn spawn = (PendingSpawn) pendingSpawns
 				.first(); spawn != null; spawn = (PendingSpawn) pendingSpawns.next()) {
-			if (spawn.x >= zoneBaseX && spawn.x < zoneBaseX + 8 && spawn.y >= zoneBaseY && spawn.y < zoneBaseY + 8
+			if (spawn.x >= zoneBaseX && spawn.x < zoneBaseX + SceneConstants.CHUNK_SIZE && spawn.y >= zoneBaseY && spawn.y < zoneBaseY + SceneConstants.CHUNK_SIZE
 					&& spawn.plane == plane) {
 				spawn.restoreDelay = 0;
 			}
@@ -203,7 +208,8 @@ public final class WorldState {
 	 */
 	public void applyGameObjectChange(int plane, int x, int y, int sceneLayer, int objectId, int type, int orientation,
 			boolean lowMemory, int currentPlane) {
-		if (x < 1 || y < 1 || x > 102 || y > 102) {
+		if (x < SceneConstants.INTERIOR_MIN_TILE || y < SceneConstants.INTERIOR_MIN_TILE
+				|| x > SceneConstants.INTERIOR_MAX_TILE || y > SceneConstants.INTERIOR_MAX_TILE) {
 			return;
 		}
 		if (lowMemory && plane != currentPlane) {
@@ -226,9 +232,9 @@ public final class WorldState {
 
 		if (uid != 0) {
 			int config = scene.getConfig(plane, x, y, uid);
-			int previousId = uid >> 14 & 0x7fff;
-			int previousType = config & 0x1f;
-			int previousOrientation = config >> 6;
+			int previousId = uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK;
+			int previousType = SceneConfig.type(config);
+			int previousOrientation = SceneConfig.orientation(config);
 
 			if (sceneLayer == 0) {
 				scene.removeWall(plane, x, y);
@@ -244,8 +250,8 @@ public final class WorldState {
 			if (sceneLayer == 2) {
 				scene.removeInteractiveObject(plane, x, y);
 				GameObjectDefinition definition = GameObjectDefinition.lookup(previousId);
-				if (x + definition.sizeX > 103 || y + definition.sizeX > 103 || x + definition.sizeY > 103
-						|| y + definition.sizeY > 103) {
+				if (x + definition.sizeX > SceneConstants.MAX_TILE_INDEX || y + definition.sizeX > SceneConstants.MAX_TILE_INDEX || x + definition.sizeY > SceneConstants.MAX_TILE_INDEX
+						|| y + definition.sizeY > SceneConstants.MAX_TILE_INDEX) {
 					return;
 				}
 				if (definition.blocksMovement) {
@@ -264,7 +270,7 @@ public final class WorldState {
 
 		if (objectId >= 0) {
 			int heightPlane = plane;
-			if (heightPlane < 3 && (tileFlags[1][x][y] & 2) == 2) {
+			if (heightPlane < 3 && (tileFlags[1][x][y] & TileFlags.BRIDGE) != 0) {
 				heightPlane++;
 			}
 			Region.addLocation(objectId, heightPlane, type, orientation, x, y, plane, collisionMaps[plane], scene,
@@ -295,9 +301,9 @@ public final class WorldState {
 		}
 		if (uid != 0) {
 			int config = scene.getConfig(spawn.plane, spawn.x, spawn.y, uid);
-			id = uid >> 14 & 0x7fff;
-			type = config & 0x1f;
-			orientation = config >> 6;
+			id = uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK;
+			type = SceneConfig.type(config);
+			orientation = SceneConfig.orientation(config);
 		}
 		spawn.previousId = id;
 		spawn.previousType = type;
@@ -379,7 +385,7 @@ public final class WorldState {
 				if (spawn.spawnDelay > 0) {
 					spawn.spawnDelay--;
 				}
-				if (spawn.spawnDelay == 0 && spawn.x >= 1 && spawn.y >= 1 && spawn.x <= 102 && spawn.y <= 102
+				if (spawn.spawnDelay == 0 && spawn.x >= 1 && spawn.y >= 1 && spawn.x < SceneConstants.MAX_TILE_INDEX && spawn.y < SceneConstants.MAX_TILE_INDEX
 						&& (spawn.spawnId < 0 || Region.isGameObjectModelReady(spawn.spawnId, spawn.spawnType))) {
 					applyGameObjectChange(spawn.plane, spawn.x, spawn.y, spawn.sceneLayer, spawn.spawnId,
 							spawn.spawnType, spawn.spawnOrientation, lowMemory, currentPlane);
@@ -501,7 +507,7 @@ public final class WorldState {
 
 			if (projectileKeepaliveCycles > 51) {
 				projectileKeepaliveCycles = 0;
-				outgoing.writeOpcode(248);
+				outgoing.writeOpcode(OutgoingPacketOpcode.PROJECTILE_KEEPALIVE);
 			}
 
 		} else {

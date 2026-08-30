@@ -8,6 +8,90 @@ import rs2.net.Buffer;
 
 /** Provides item definition state and behavior. */
 public class ItemDefinition {
+	/* Cache-format opcode values. */
+	/** Opcode for end. */
+	private static final int OPCODE_END = 0;
+	/** Opcode for model. */
+	private static final int OPCODE_MODEL = 1;
+	/** Opcode for name. */
+	private static final int OPCODE_NAME = 2;
+	/** Opcode for description. */
+	private static final int OPCODE_DESCRIPTION = 3;
+	/** Opcode for zoom 2d. */
+	private static final int OPCODE_ZOOM_2D = 4;
+	/** Opcode for x angle 2d. */
+	private static final int OPCODE_X_ANGLE_2D = 5;
+	/** Opcode for y angle 2d. */
+	private static final int OPCODE_Y_ANGLE_2D = 6;
+	/** Opcode for x offset 2d. */
+	private static final int OPCODE_X_OFFSET_2D = 7;
+	/** Opcode for y offset 2d. */
+	private static final int OPCODE_Y_OFFSET_2D = 8;
+	/** Opcode for unknown 10. */
+	private static final int OPCODE_UNKNOWN_10 = 10;
+	/** Opcode for stackable. */
+	private static final int OPCODE_STACKABLE = 11;
+	/** Opcode for price. */
+	private static final int OPCODE_PRICE = 12;
+	/** Opcode for members only. */
+	private static final int OPCODE_MEMBERS_ONLY = 16;
+	/** Opcode for male model 0. */
+	private static final int OPCODE_MALE_MODEL_0 = 23;
+	/** Opcode for male model 1. */
+	private static final int OPCODE_MALE_MODEL_1 = 24;
+	/** Opcode for female model 0. */
+	private static final int OPCODE_FEMALE_MODEL_0 = 25;
+	/** Opcode for female model 1. */
+	private static final int OPCODE_FEMALE_MODEL_1 = 26;
+	/** Opcode for recolors. */
+	private static final int OPCODE_RECOLORS = 40;
+	/** Opcode for male model 2. */
+	private static final int OPCODE_MALE_MODEL_2 = 78;
+	/** Opcode for female model 2. */
+	private static final int OPCODE_FEMALE_MODEL_2 = 79;
+	/** Opcode for male head model 0. */
+	private static final int OPCODE_MALE_HEAD_MODEL_0 = 90;
+	/** Opcode for female head model 0. */
+	private static final int OPCODE_FEMALE_HEAD_MODEL_0 = 91;
+	/** Opcode for male head model 1. */
+	private static final int OPCODE_MALE_HEAD_MODEL_1 = 92;
+	/** Opcode for female head model 1. */
+	private static final int OPCODE_FEMALE_HEAD_MODEL_1 = 93;
+	/** Opcode for z angle 2d. */
+	private static final int OPCODE_Z_ANGLE_2D = 95;
+	/** Opcode for note id. */
+	private static final int OPCODE_NOTE_ID = 97;
+	/** Opcode for note template. */
+	private static final int OPCODE_NOTE_TEMPLATE = 98;
+	/** Opcode for resize x. */
+	private static final int OPCODE_RESIZE_X = 110;
+	/** Opcode for resize y. */
+	private static final int OPCODE_RESIZE_Y = 111;
+	/** Opcode for resize z. */
+	private static final int OPCODE_RESIZE_Z = 112;
+	/** Opcode for ambient. */
+	private static final int OPCODE_AMBIENT = 113;
+	/** Opcode for contrast. */
+	private static final int OPCODE_CONTRAST = 114;
+	/** Opcode for team. */
+	private static final int OPCODE_TEAM = 115;
+	/** First opcode in the ground action range. */
+	private static final int GROUND_ACTION_OPCODE_FIRST = 30;
+	/** Exclusive upper bound of the ground action opcode range. */
+	private static final int GROUND_ACTION_OPCODE_LIMIT = 35;
+	/** First opcode in the inventory action range. */
+	private static final int INVENTORY_ACTION_OPCODE_FIRST = 35;
+	/** Exclusive upper bound of the inventory action opcode range. */
+	private static final int INVENTORY_ACTION_OPCODE_LIMIT = 40;
+	/** First opcode in the stack variant range. */
+	private static final int STACK_VARIANT_OPCODE_FIRST = 100;
+	/** Exclusive upper bound of the stack variant opcode range. */
+	private static final int STACK_VARIANT_OPCODE_LIMIT = 110;
+	/** Action count. */
+	private static final int ACTION_COUNT = 5;
+	/** Stack variant count. */
+	private static final int STACK_VARIANT_COUNT = 10;
+
 
 	/**
 	 * Returns whether head models ready.
@@ -213,57 +297,57 @@ public class ItemDefinition {
 	public void decode(Buffer buffer) {
 		do {
 			int opcode = buffer.readUnsignedByte();
-			if (opcode == 0)
+			if (opcode == OPCODE_END)
 				return;
-			if (opcode == 1)
+			if (opcode == OPCODE_MODEL)
 				modelId = buffer.readUnsignedShort();
-			else if (opcode == 2)
+			else if (opcode == OPCODE_NAME)
 				name = buffer.readString();
-			else if (opcode == 3)
+			else if (opcode == OPCODE_DESCRIPTION)
 				description = buffer.readStringBytes();
-			else if (opcode == 4)
+			else if (opcode == OPCODE_ZOOM_2D)
 				zoom2d = buffer.readUnsignedShort();
-			else if (opcode == 5)
+			else if (opcode == OPCODE_X_ANGLE_2D)
 				xan2d = buffer.readUnsignedShort();
-			else if (opcode == 6)
+			else if (opcode == OPCODE_Y_ANGLE_2D)
 				yan2d = buffer.readUnsignedShort();
-			else if (opcode == 7) {
+			else if (opcode == OPCODE_X_OFFSET_2D) {
 				offsetX2d = buffer.readUnsignedShort();
 				if (offsetX2d > 32767)
 					offsetX2d -= 0x10000;
-			} else if (opcode == 8) {
+			} else if (opcode == OPCODE_Y_OFFSET_2D) {
 				offsetY2d = buffer.readUnsignedShort();
 				if (offsetY2d > 32767)
 					offsetY2d -= 0x10000;
-			} else if (opcode == 10)
+			} else if (opcode == OPCODE_UNKNOWN_10)
 				opcode10Value = buffer.readUnsignedShort();
-			else if (opcode == 11)
+			else if (opcode == OPCODE_STACKABLE)
 				stackable = true;
-			else if (opcode == 12)
+			else if (opcode == OPCODE_PRICE)
 				price = buffer.readInt();
-			else if (opcode == 16)
+			else if (opcode == OPCODE_MEMBERS_ONLY)
 				membersOnly = true;
-			else if (opcode == 23) {
+			else if (opcode == OPCODE_MALE_MODEL_0) {
 				maleModel0 = buffer.readUnsignedShort();
 				maleOffset = buffer.readSignedByte();
-			} else if (opcode == 24)
+			} else if (opcode == OPCODE_MALE_MODEL_1)
 				maleModel1 = buffer.readUnsignedShort();
-			else if (opcode == 25) {
+			else if (opcode == OPCODE_FEMALE_MODEL_0) {
 				femaleModel0 = buffer.readUnsignedShort();
 				femaleOffset = buffer.readSignedByte();
-			} else if (opcode == 26)
+			} else if (opcode == OPCODE_FEMALE_MODEL_1)
 				femaleModel1 = buffer.readUnsignedShort();
-			else if (opcode >= 30 && opcode < 35) {
+			else if (opcode >= GROUND_ACTION_OPCODE_FIRST && opcode < GROUND_ACTION_OPCODE_LIMIT) {
 				if (groundActions == null)
-					groundActions = new String[5];
-				groundActions[opcode - 30] = buffer.readString();
-				if (groundActions[opcode - 30].equalsIgnoreCase("hidden"))
-					groundActions[opcode - 30] = null;
-			} else if (opcode >= 35 && opcode < 40) {
+					groundActions = new String[ACTION_COUNT];
+				groundActions[opcode - GROUND_ACTION_OPCODE_FIRST] = buffer.readString();
+				if (groundActions[opcode - GROUND_ACTION_OPCODE_FIRST].equalsIgnoreCase("hidden"))
+					groundActions[opcode - GROUND_ACTION_OPCODE_FIRST] = null;
+			} else if (opcode >= INVENTORY_ACTION_OPCODE_FIRST && opcode < INVENTORY_ACTION_OPCODE_LIMIT) {
 				if (inventoryActions == null)
-					inventoryActions = new String[5];
-				inventoryActions[opcode - 35] = buffer.readString();
-			} else if (opcode == 40) {
+					inventoryActions = new String[ACTION_COUNT];
+				inventoryActions[opcode - INVENTORY_ACTION_OPCODE_FIRST] = buffer.readString();
+			} else if (opcode == OPCODE_RECOLORS) {
 				int recolorCount = buffer.readUnsignedByte();
 				recolorFrom = new int[recolorCount];
 				recolorTo = new int[recolorCount];
@@ -272,42 +356,42 @@ public class ItemDefinition {
 					recolorTo[recolorIndex] = buffer.readUnsignedShort();
 				}
 
-			} else if (opcode == 78)
+			} else if (opcode == OPCODE_MALE_MODEL_2)
 				maleModel2 = buffer.readUnsignedShort();
-			else if (opcode == 79)
+			else if (opcode == OPCODE_FEMALE_MODEL_2)
 				femaleModel2 = buffer.readUnsignedShort();
-			else if (opcode == 90)
+			else if (opcode == OPCODE_MALE_HEAD_MODEL_0)
 				maleHeadModel0 = buffer.readUnsignedShort();
-			else if (opcode == 91)
+			else if (opcode == OPCODE_FEMALE_HEAD_MODEL_0)
 				femaleHeadModel0 = buffer.readUnsignedShort();
-			else if (opcode == 92)
+			else if (opcode == OPCODE_MALE_HEAD_MODEL_1)
 				maleHeadModel1 = buffer.readUnsignedShort();
-			else if (opcode == 93)
+			else if (opcode == OPCODE_FEMALE_HEAD_MODEL_1)
 				femaleHeadModel1 = buffer.readUnsignedShort();
-			else if (opcode == 95)
+			else if (opcode == OPCODE_Z_ANGLE_2D)
 				zan2d = buffer.readUnsignedShort();
-			else if (opcode == 97)
+			else if (opcode == OPCODE_NOTE_ID)
 				noteId = buffer.readUnsignedShort();
-			else if (opcode == 98)
+			else if (opcode == OPCODE_NOTE_TEMPLATE)
 				noteTemplateId = buffer.readUnsignedShort();
-			else if (opcode >= 100 && opcode < 110) {
+			else if (opcode >= STACK_VARIANT_OPCODE_FIRST && opcode < STACK_VARIANT_OPCODE_LIMIT) {
 				if (stackVariantIds == null) {
-					stackVariantIds = new int[10];
-					stackVariantAmounts = new int[10];
+					stackVariantIds = new int[STACK_VARIANT_COUNT];
+					stackVariantAmounts = new int[STACK_VARIANT_COUNT];
 				}
-				stackVariantIds[opcode - 100] = buffer.readUnsignedShort();
-				stackVariantAmounts[opcode - 100] = buffer.readUnsignedShort();
-			} else if (opcode == 110)
+				stackVariantIds[opcode - STACK_VARIANT_OPCODE_FIRST] = buffer.readUnsignedShort();
+				stackVariantAmounts[opcode - STACK_VARIANT_OPCODE_FIRST] = buffer.readUnsignedShort();
+			} else if (opcode == OPCODE_RESIZE_X)
 				resizeX = buffer.readUnsignedShort();
-			else if (opcode == 111)
+			else if (opcode == OPCODE_RESIZE_Y)
 				resizeY = buffer.readUnsignedShort();
-			else if (opcode == 112)
+			else if (opcode == OPCODE_RESIZE_Z)
 				resizeZ = buffer.readUnsignedShort();
-			else if (opcode == 113)
+			else if (opcode == OPCODE_AMBIENT)
 				ambient = buffer.readSignedByte();
-			else if (opcode == 114)
+			else if (opcode == OPCODE_CONTRAST)
 				contrast = buffer.readSignedByte() * 5;
-			else if (opcode == 115)
+			else if (opcode == OPCODE_TEAM)
 				team = buffer.readUnsignedByte();
 		} while (true);
 	}

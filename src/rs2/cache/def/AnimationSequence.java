@@ -8,6 +8,34 @@ import rs2.net.Buffer;
  * Cache definition describing the frames and playback policy of an animation.
  */
 public class AnimationSequence {
+	/* Cache-format opcode values. */
+	/** Opcode for end. */
+	private static final int OPCODE_END = 0;
+	/** Opcode for frames. */
+	private static final int OPCODE_FRAMES = 1;
+	/** Opcode for frame step. */
+	private static final int OPCODE_FRAME_STEP = 2;
+	/** Opcode for interleave. */
+	private static final int OPCODE_INTERLEAVE = 3;
+	/** Opcode for stretches. */
+	private static final int OPCODE_STRETCHES = 4;
+	/** Opcode for forced priority. */
+	private static final int OPCODE_FORCED_PRIORITY = 5;
+	/** Opcode for shield override. */
+	private static final int OPCODE_SHIELD_OVERRIDE = 6;
+	/** Opcode for weapon override. */
+	private static final int OPCODE_WEAPON_OVERRIDE = 7;
+	/** Opcode for maximum loops. */
+	private static final int OPCODE_MAXIMUM_LOOPS = 8;
+	/** Opcode for precedence animating. */
+	private static final int OPCODE_PRECEDENCE_ANIMATING = 9;
+	/** Opcode for priority. */
+	private static final int OPCODE_PRIORITY = 10;
+	/** Opcode for replay mode. */
+	private static final int OPCODE_REPLAY_MODE = 11;
+	/** Opcode for unknown 12. */
+	private static final int OPCODE_UNKNOWN_12 = 12;
+
 
 	/** Creates a new animation sequence with its default client state. */
 	public AnimationSequence() {
@@ -99,16 +127,16 @@ public class AnimationSequence {
 		while (true) {
 			int opcode = buffer.readUnsignedByte();
 			switch (opcode) {
-			case 0:
+			case OPCODE_END:
 				applyDefaults();
 				return;
-			case 1:
+			case OPCODE_FRAMES:
 				decodeFrames(buffer);
 				break;
-			case 2:
+			case OPCODE_FRAME_STEP:
 				frameStep = buffer.readUnsignedShort();
 				break;
-			case 3:
+			case OPCODE_INTERLEAVE:
 				int count = buffer.readUnsignedByte();
 				interleaveOrder = new int[count + 1];
 				for (int index = 0; index < count; index++) {
@@ -116,31 +144,31 @@ public class AnimationSequence {
 				}
 				interleaveOrder[count] = INTERLEAVE_TERMINATOR;
 				break;
-			case 4:
+			case OPCODE_STRETCHES:
 				stretches = true;
 				break;
-			case 5:
+			case OPCODE_FORCED_PRIORITY:
 				forcedPriority = buffer.readUnsignedByte();
 				break;
-			case 6:
+			case OPCODE_SHIELD_OVERRIDE:
 				shieldOverride = buffer.readUnsignedShort();
 				break;
-			case 7:
+			case OPCODE_WEAPON_OVERRIDE:
 				weaponOverride = buffer.readUnsignedShort();
 				break;
-			case 8:
+			case OPCODE_MAXIMUM_LOOPS:
 				maximumLoops = buffer.readUnsignedByte();
 				break;
-			case 9:
+			case OPCODE_PRECEDENCE_ANIMATING:
 				precedenceAnimating = buffer.readUnsignedByte();
 				break;
-			case 10:
+			case OPCODE_PRIORITY:
 				priority = buffer.readUnsignedByte();
 				break;
-			case 11:
+			case OPCODE_REPLAY_MODE:
 				replayMode = buffer.readUnsignedByte();
 				break;
-			case 12:
+			case OPCODE_UNKNOWN_12:
 				opcode12Value = buffer.readInt();
 				break;
 			default:
@@ -164,7 +192,7 @@ public class AnimationSequence {
 		for (int frame = 0; frame < frameCount; frame++) {
 			primaryFrameIds[frame] = buffer.readUnsignedShort();
 			secondaryFrameIds[frame] = buffer.readUnsignedShort();
-			if (secondaryFrameIds[frame] == 65535) {
+			if (secondaryFrameIds[frame] == DefinitionConstants.NULL_REFERENCE_ID) {
 				secondaryFrameIds[frame] = -1;
 			}
 			frameLengths[frame] = buffer.readUnsignedShort();

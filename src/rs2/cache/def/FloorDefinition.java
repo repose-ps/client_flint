@@ -13,6 +13,22 @@ import rs2.net.Buffer;
  * </p>
  */
 public class FloorDefinition {
+	/* Cache-format opcode values. */
+	/** Opcode for end. */
+	private static final int OPCODE_END = 0;
+	/** Opcode for rgb color. */
+	private static final int OPCODE_RGB_COLOR = 1;
+	/** Opcode for texture. */
+	private static final int OPCODE_TEXTURE = 2;
+	/** Opcode for unknown 3. */
+	private static final int OPCODE_UNKNOWN_3 = 3;
+	/** Opcode for disable occlusion. */
+	private static final int OPCODE_DISABLE_OCCLUSION = 5;
+	/** Opcode for name. */
+	private static final int OPCODE_NAME = 6;
+	/** Opcode for alternate color. */
+	private static final int OPCODE_ALTERNATE_COLOR = 7;
+
 
 	/** Creates a new floor definition with its default client state. */
 	public FloorDefinition() {
@@ -84,25 +100,25 @@ public class FloorDefinition {
 		while (true) {
 			int opcode = buffer.readUnsignedByte();
 			switch (opcode) {
-			case 0:
+			case OPCODE_END:
 				return;
-			case 1:
+			case OPCODE_RGB_COLOR:
 				rgbColor = buffer.readMedium();
 				convertRgbToHsl(rgbColor);
 				break;
-			case 2:
+			case OPCODE_TEXTURE:
 				textureId = buffer.readUnsignedByte();
 				break;
-			case 3:
+			case OPCODE_UNKNOWN_3:
 				opcode3Enabled = true;
 				break;
-			case 5:
+			case OPCODE_DISABLE_OCCLUSION:
 				occlude = false;
 				break;
-			case 6:
+			case OPCODE_NAME:
 				name = buffer.readString();
 				break;
-			case 7:
+			case OPCODE_ALTERNATE_COLOR:
 				decodeAlternateColor(buffer.readMedium());
 				break;
 			default:

@@ -1,6 +1,7 @@
 package rs2.chat;
 
 import rs2.net.Buffer;
+import rs2.net.OutgoingPacketOpcode;
 import rs2.text.Base37;
 import rs2.text.TextFormatter;
 
@@ -17,6 +18,13 @@ public final class SocialManager {
 	/** Creates a new social manager with its default client state. */
 	public SocialManager() {
 	}
+	/** Friend list is waiting for initial data. */
+	public static final int FRIEND_LIST_LOADING = 0;
+	/** Friend list is connecting to the friend server. */
+	public static final int FRIEND_LIST_CONNECTING = 1;
+	/** Friend list is fully available. */
+	public static final int FRIEND_LIST_READY = 2;
+
 	/** Maximum friends. */
 	public static final int MAX_FRIENDS = 200;
 	/** Maximum free friends. */
@@ -61,7 +69,7 @@ public final class SocialManager {
 
 	/** Login resets only the friend-server state/count in the supplied client. */
 	public void resetForLogin() {
-		friendListStatus = 0;
+		friendListStatus = FRIEND_LIST_LOADING;
 		friendCount = 0;
 	}
 
@@ -143,19 +151,19 @@ public final class SocialManager {
 			return false;
 		}
 		if (friendCount >= MAX_FREE_FRIENDS && !membersAccount || friendCount >= MAX_FRIENDS) {
-			messages.addChatMessage("", "Your friendlist is full. Max of 100 for free users, and 200 for members", 0);
+			messages.addChatMessage("", "Your friendlist is full. Max of 100 for free users, and 200 for members", ChatMessageType.GAME);
 			return false;
 		}
 		String displayName = TextFormatter.formatDisplayName(Base37.decode(encodedName));
 		for (int index = 0; index < friendCount; index++) {
 			if (friendEncodedNames[index] == encodedName) {
-				messages.addChatMessage("", displayName + " is already on your friend list", 0);
+				messages.addChatMessage("", displayName + " is already on your friend list", ChatMessageType.GAME);
 				return false;
 			}
 		}
 		for (int index = 0; index < ignoreCount; index++) {
 			if (ignoreEncodedNames[index] == encodedName) {
-				messages.addChatMessage("", "Please remove " + displayName + " from your ignore list first", 0);
+				messages.addChatMessage("", "Please remove " + displayName + " from your ignore list first", ChatMessageType.GAME);
 				return false;
 			}
 		}
@@ -167,7 +175,7 @@ public final class SocialManager {
 		friendEncodedNames[friendCount] = encodedName;
 		friendWorlds[friendCount] = 0;
 		friendCount++;
-		outgoing.writeOpcode(120);
+		outgoing.writeOpcode(OutgoingPacketOpcode.ADD_FRIEND);
 		outgoing.writeLong(encodedName);
 		return true;
 	}
@@ -193,7 +201,7 @@ public final class SocialManager {
 				friendWorlds[shift] = friendWorlds[shift + 1];
 				friendEncodedNames[shift] = friendEncodedNames[shift + 1];
 			}
-			outgoing.writeOpcode(141);
+			outgoing.writeOpcode(OutgoingPacketOpcode.REMOVE_FRIEND);
 			outgoing.writeLong(encodedName);
 			return true;
 		}
@@ -213,25 +221,25 @@ public final class SocialManager {
 			return false;
 		}
 		if (ignoreCount >= MAX_IGNORES) {
-			messages.addChatMessage("", "Your ignore list is full. Max of 100 hit", 0);
+			messages.addChatMessage("", "Your ignore list is full. Max of 100 hit", ChatMessageType.GAME);
 			return false;
 		}
 		String displayName = TextFormatter.formatDisplayName(Base37.decode(encodedName));
 		for (int index = 0; index < ignoreCount; index++) {
 			if (ignoreEncodedNames[index] == encodedName) {
-				messages.addChatMessage("", displayName + " is already on your ignore list", 0);
+				messages.addChatMessage("", displayName + " is already on your ignore list", ChatMessageType.GAME);
 				return false;
 			}
 		}
 		for (int index = 0; index < friendCount; index++) {
 			if (friendEncodedNames[index] == encodedName) {
-				messages.addChatMessage("", "Please remove " + displayName + " from your friend list first", 0);
+				messages.addChatMessage("", "Please remove " + displayName + " from your friend list first", ChatMessageType.GAME);
 				return false;
 			}
 		}
 
 		ignoreEncodedNames[ignoreCount++] = encodedName;
-		outgoing.writeOpcode(217);
+		outgoing.writeOpcode(OutgoingPacketOpcode.ADD_IGNORE);
 		outgoing.writeLong(encodedName);
 		return true;
 	}
@@ -255,7 +263,7 @@ public final class SocialManager {
 			for (int shift = index; shift < ignoreCount; shift++) {
 				ignoreEncodedNames[shift] = ignoreEncodedNames[shift + 1];
 			}
-			outgoing.writeOpcode(160);
+			outgoing.writeOpcode(OutgoingPacketOpcode.REMOVE_IGNORE);
 			outgoing.writeLong(encodedName);
 			return true;
 		}
@@ -296,10 +304,10 @@ public final class SocialManager {
 				friendWorlds[index] = world;
 				changed = true;
 				if (world > 0) {
-					messages.addChatMessage("", displayName + " has logged in.", 5);
+					messages.addChatMessage("", displayName + " has logged in.", ChatMessageType.PRIVATE_STATUS);
 				}
 				if (world == 0) {
-					messages.addChatMessage("", displayName + " has logged out.", 5);
+					messages.addChatMessage("", displayName + " has logged out.", ChatMessageType.PRIVATE_STATUS);
 				}
 			}
 			displayName = null;

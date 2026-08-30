@@ -23,7 +23,7 @@ public final class ChatPacketEncoder {
 	 * @param tradeMode   the trade mode
 	 */
 	public static void writeChatModes(Buffer outgoing, int publicMode, int privateMode, int tradeMode) {
-		outgoing.writeOpcode(176);
+		outgoing.writeOpcode(OutgoingPacketOpcode.CHAT_MODES);
 		outgoing.writeByte(publicMode);
 		outgoing.writeByte(privateMode);
 		outgoing.writeByte(tradeMode);
@@ -37,7 +37,7 @@ public final class ChatPacketEncoder {
 	 * @param message   the message
 	 */
 	public static void writePrivateMessage(Buffer outgoing, long recipient, String message) {
-		outgoing.writeOpcode(227);
+		outgoing.writeOpcode(OutgoingPacketOpcode.PRIVATE_CHAT);
 		outgoing.writeByte(0);
 		int payloadStart = outgoing.position;
 		outgoing.writeLong(recipient);
@@ -55,7 +55,7 @@ public final class ChatPacketEncoder {
 	 * @param scratch  the scratch
 	 */
 	public static void writePublicMessage(Buffer outgoing, int color, int effect, String message, Buffer scratch) {
-		outgoing.writeOpcode(49);
+		outgoing.writeOpcode(OutgoingPacketOpcode.PUBLIC_CHAT);
 		outgoing.writeByte(0);
 		int payloadStart = outgoing.position;
 		outgoing.writeByteNeg(color);
@@ -73,7 +73,7 @@ public final class ChatPacketEncoder {
 	 * @param commandInput the command input
 	 */
 	public static void writeCommand(Buffer outgoing, String commandInput) {
-		outgoing.writeOpcode(56);
+		outgoing.writeOpcode(OutgoingPacketOpcode.COMMAND);
 		outgoing.writeByte(commandInput.length() - 1);
 		outgoing.writeString(commandInput.substring(2));
 	}

@@ -12,6 +12,24 @@ package rs2.scene;
  */
 public class SceneCluster {
 
+	/** Occluder is a plane perpendicular to the world X axis. */
+	public static final int TYPE_X_PLANE = 1;
+	/** Occluder is a plane perpendicular to the world Y axis. */
+	public static final int TYPE_Y_PLANE = 2;
+	/** Occluder is a horizontal plane. */
+	public static final int TYPE_HORIZONTAL_PLANE = 4;
+
+	/** Camera projects toward the positive-X face of an X-plane occluder. */
+	public static final int PROJECT_POSITIVE_X = 1;
+	/** Camera projects toward the negative-X face of an X-plane occluder. */
+	public static final int PROJECT_NEGATIVE_X = 2;
+	/** Camera projects toward the positive-Y face of a Y-plane occluder. */
+	public static final int PROJECT_POSITIVE_Y = 3;
+	/** Camera projects toward the negative-Y face of a Y-plane occluder. */
+	public static final int PROJECT_NEGATIVE_Y = 4;
+	/** Camera projects downward through a horizontal occluder. */
+	public static final int PROJECT_ABOVE = 5;
+
 	/** Creates a new scene cluster with its default client state. */
 	public SceneCluster() {
 	}

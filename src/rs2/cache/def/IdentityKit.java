@@ -15,6 +15,28 @@ import rs2.net.Buffer;
  * </p>
  */
 public class IdentityKit {
+	/* Cache-format opcode values. */
+	/** Opcode for end. */
+	private static final int OPCODE_END = 0;
+	/** Opcode for body part. */
+	private static final int OPCODE_BODY_PART = 1;
+	/** Opcode for body models. */
+	private static final int OPCODE_BODY_MODELS = 2;
+	/** Opcode for non selectable. */
+	private static final int OPCODE_NON_SELECTABLE = 3;
+	/** First opcode in the recolor source range. */
+	private static final int RECOLOR_SOURCE_FIRST = 40;
+	/** Exclusive upper bound of the recolor source opcode range. */
+	private static final int RECOLOR_SOURCE_LIMIT = 50;
+	/** First opcode in the recolor target range. */
+	private static final int RECOLOR_TARGET_FIRST = 50;
+	/** Exclusive upper bound of the recolor target opcode range. */
+	private static final int RECOLOR_TARGET_LIMIT = 60;
+	/** First opcode in the head model range. */
+	private static final int HEAD_MODEL_FIRST = 60;
+	/** Exclusive upper bound of the head model opcode range. */
+	private static final int HEAD_MODEL_LIMIT = 70;
+
 
 	/** Creates a new identity kit with its default client state. */
 	public IdentityKit() {
@@ -76,24 +98,24 @@ public class IdentityKit {
 	public void decode(Buffer buffer) {
 		while (true) {
 			int opcode = buffer.readUnsignedByte();
-			if (opcode == 0) {
+			if (opcode == OPCODE_END) {
 				return;
-			} else if (opcode == 1) {
+			} else if (opcode == OPCODE_BODY_PART) {
 				bodyPartId = buffer.readUnsignedByte();
-			} else if (opcode == 2) {
+			} else if (opcode == OPCODE_BODY_MODELS) {
 				int modelCount = buffer.readUnsignedByte();
 				bodyModelIds = new int[modelCount];
 				for (int index = 0; index < modelCount; index++) {
 					bodyModelIds[index] = buffer.readUnsignedShort();
 				}
-			} else if (opcode == 3) {
+			} else if (opcode == OPCODE_NON_SELECTABLE) {
 				nonSelectable = true;
-			} else if (opcode >= 40 && opcode < 50) {
-				originalColors[opcode - 40] = buffer.readUnsignedShort();
-			} else if (opcode >= 50 && opcode < 60) {
-				replacementColors[opcode - 50] = buffer.readUnsignedShort();
-			} else if (opcode >= 60 && opcode < 70) {
-				headModelIds[opcode - 60] = buffer.readUnsignedShort();
+			} else if (opcode >= RECOLOR_SOURCE_FIRST && opcode < RECOLOR_SOURCE_LIMIT) {
+				originalColors[opcode - RECOLOR_SOURCE_FIRST] = buffer.readUnsignedShort();
+			} else if (opcode >= RECOLOR_TARGET_FIRST && opcode < RECOLOR_TARGET_LIMIT) {
+				replacementColors[opcode - RECOLOR_TARGET_FIRST] = buffer.readUnsignedShort();
+			} else if (opcode >= HEAD_MODEL_FIRST && opcode < HEAD_MODEL_LIMIT) {
+				headModelIds[opcode - HEAD_MODEL_FIRST] = buffer.readUnsignedShort();
 			} else {
 				System.out.println("Error unrecognised config code: " + opcode);
 			}

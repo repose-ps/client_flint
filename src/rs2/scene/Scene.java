@@ -1,5 +1,6 @@
 package rs2.scene;
 
+import rs2.media.Angle;
 import rs2.collection.NodeDeque;
 import rs2.media.Rasterizer;
 import rs2.media.Rasterizer3D;
@@ -106,7 +107,7 @@ public class Scene {
 				sceneTile2.plane--;
 				for (int loopIndex2 = 0; loopIndex2 < sceneTile2.interactiveObjectCount; loopIndex2++) {
 					InteractiveObject interactiveObject = sceneTile2.interactiveObjects[loopIndex2];
-					if ((interactiveObject.uid >> 29 & 3) == 2 && interactiveObject.tileLeft == x
+					if ((interactiveObject.uid >> SceneUid.ENTITY_TYPE_SHIFT & SceneUid.ENTITY_TYPE_MASK) == SceneUid.TYPE_OBJECT && interactiveObject.tileLeft == x
 							&& interactiveObject.tileTop == y)
 						interactiveObject.plane--;
 				}
@@ -638,7 +639,7 @@ public class Scene {
 			return;
 		for (int loopIndex = 0; loopIndex < sceneTile.interactiveObjectCount; loopIndex++) {
 			InteractiveObject interactiveObject = sceneTile.interactiveObjects[loopIndex];
-			if ((interactiveObject.uid >> 29 & 3) == 2 && interactiveObject.tileLeft == x
+			if ((interactiveObject.uid >> SceneUid.ENTITY_TYPE_SHIFT & SceneUid.ENTITY_TYPE_MASK) == SceneUid.TYPE_OBJECT && interactiveObject.tileLeft == x
 					&& interactiveObject.tileTop == y) {
 				removeInteractiveObjectInternal(interactiveObject);
 				return;
@@ -724,7 +725,7 @@ public class Scene {
 			return null;
 		for (int loopIndex = 0; loopIndex < sceneTile.interactiveObjectCount; loopIndex++) {
 			InteractiveObject interactiveObject = sceneTile.interactiveObjects[loopIndex];
-			if ((interactiveObject.uid >> 29 & 3) == 2 && interactiveObject.tileLeft == x
+			if ((interactiveObject.uid >> SceneUid.ENTITY_TYPE_SHIFT & SceneUid.ENTITY_TYPE_MASK) == SceneUid.TYPE_OBJECT && interactiveObject.tileLeft == x
 					&& interactiveObject.tileTop == y)
 				return interactiveObject;
 		}
@@ -794,7 +795,7 @@ public class Scene {
 			return 0;
 		for (int loopIndex = 0; loopIndex < sceneTile.interactiveObjectCount; loopIndex++) {
 			InteractiveObject interactiveObject = sceneTile.interactiveObjects[loopIndex];
-			if ((interactiveObject.uid >> 29 & 3) == 2 && interactiveObject.tileLeft == x
+			if ((interactiveObject.uid >> SceneUid.ENTITY_TYPE_SHIFT & SceneUid.ENTITY_TYPE_MASK) == SceneUid.TYPE_OBJECT && interactiveObject.tileLeft == x
 					&& interactiveObject.tileTop == y)
 				return interactiveObject.uid;
 		}
@@ -1155,7 +1156,7 @@ public class Scene {
 		viewportCenterY = viewportHeight / 2;
 		boolean aflag[][][][] = new boolean[9][32][53][53];
 		for (int loopIndex = 128; loopIndex <= 384; loopIndex += 32) {
-			for (int loopIndex2 = 0; loopIndex2 < 2048; loopIndex2 += 64) {
+			for (int loopIndex2 = 0; loopIndex2 < Angle.FULL_TURN; loopIndex2 += 64) {
 				pitchSine = Model.SINE[loopIndex];
 				pitchCosine = Model.COSINE[loopIndex];
 				yawSine = Model.SINE[loopIndex2];
@@ -1583,7 +1584,7 @@ public class Scene {
 						if ((wallDecoration.configBits & 0x100) != 0 && intermediateValue12 < intermediateValue11) {
 							int intermediateValue13 = intermediateValue7 + WALL_DECORATION_INSET_X[intermediateValue10];
 							int intermediateValue14 = intermediateValue9 + WALL_DECORATION_INSET_Y[intermediateValue10];
-							wallDecoration.renderable.draw(intermediateValue10 * 512 + 256, pitchSine, pitchCosine,
+							wallDecoration.renderable.draw(intermediateValue10 * Angle.QUARTER_TURN + Angle.EIGHTH_TURN, pitchSine, pitchCosine,
 									yawSine, yawCosine, intermediateValue13, intermediateValue8, intermediateValue14,
 									wallDecoration.uid);
 						}
@@ -1592,7 +1593,7 @@ public class Scene {
 									+ WALL_DECORATION_OUTSET_X[intermediateValue10];
 							int intermediateValue16 = intermediateValue9
 									+ WALL_DECORATION_OUTSET_Y[intermediateValue10];
-							wallDecoration.renderable.draw(intermediateValue10 * 512 + 1280 & 0x7ff, pitchSine,
+							wallDecoration.renderable.draw(intermediateValue10 * Angle.QUARTER_TURN + Angle.FIVE_EIGHTHS_TURN & Angle.MASK, pitchSine,
 									pitchCosine, yawSine, yawCosine, intermediateValue15, intermediateValue8,
 									intermediateValue16, wallDecoration.uid);
 						}
@@ -1830,7 +1831,7 @@ public class Scene {
 									+ WALL_DECORATION_INSET_X[intermediateValue34];
 							int intermediateValue38 = intermediateValue33
 									+ WALL_DECORATION_INSET_Y[intermediateValue34];
-							wallDecoration2.renderable.draw(intermediateValue34 * 512 + 256, pitchSine, pitchCosine,
+							wallDecoration2.renderable.draw(intermediateValue34 * Angle.QUARTER_TURN + Angle.EIGHTH_TURN, pitchSine, pitchCosine,
 									yawSine, yawCosine, intermediateValue37, intermediateValue32, intermediateValue38,
 									wallDecoration2.uid);
 						}
@@ -1839,7 +1840,7 @@ public class Scene {
 									+ WALL_DECORATION_OUTSET_X[intermediateValue34];
 							int intermediateValue40 = intermediateValue33
 									+ WALL_DECORATION_OUTSET_Y[intermediateValue34];
-							wallDecoration2.renderable.draw(intermediateValue34 * 512 + 1280 & 0x7ff, pitchSine,
+							wallDecoration2.renderable.draw(intermediateValue34 * Angle.QUARTER_TURN + Angle.FIVE_EIGHTHS_TURN & Angle.MASK, pitchSine,
 									pitchCosine, yawSine, yawCosine, intermediateValue39, intermediateValue32,
 									intermediateValue40, wallDecoration2.uid);
 						}
@@ -2180,7 +2181,7 @@ public class Scene {
 		activeOccluderCount = 0;
 		for (int loopIndex = 0; loopIndex < intermediateValue; loopIndex++) {
 			SceneCluster sceneCluster = aclass39[loopIndex];
-			if (sceneCluster.type == 1) {
+			if (sceneCluster.type == SceneCluster.TYPE_X_PLANE) {
 				int intermediateValue2 = (sceneCluster.minTileX - cameraTileX) + 25;
 				if (intermediateValue2 < 0 || intermediateValue2 > 50)
 					continue;
@@ -2200,11 +2201,11 @@ public class Scene {
 					continue;
 				int intermediateValue5 = cameraX - sceneCluster.minWorldX;
 				if (intermediateValue5 > 32) {
-					sceneCluster.projectionDirection = 1;
+					sceneCluster.projectionDirection = SceneCluster.PROJECT_POSITIVE_X;
 				} else {
 					if (intermediateValue5 >= -32)
 						continue;
-					sceneCluster.projectionDirection = 2;
+					sceneCluster.projectionDirection = SceneCluster.PROJECT_NEGATIVE_X;
 					intermediateValue5 = -intermediateValue5;
 				}
 				sceneCluster.minYGradient = (sceneCluster.minWorldY - cameraY << 8) / intermediateValue5;
@@ -2214,7 +2215,7 @@ public class Scene {
 				activeOccluders[activeOccluderCount++] = sceneCluster;
 				continue;
 			}
-			if (sceneCluster.type == 2) {
+			if (sceneCluster.type == SceneCluster.TYPE_Y_PLANE) {
 				int intermediateValue6 = (sceneCluster.minTileY - cameraTileY) + 25;
 				if (intermediateValue6 < 0 || intermediateValue6 > 50)
 					continue;
@@ -2234,11 +2235,11 @@ public class Scene {
 					continue;
 				int intermediateValue9 = cameraY - sceneCluster.minWorldY;
 				if (intermediateValue9 > 32) {
-					sceneCluster.projectionDirection = 3;
+					sceneCluster.projectionDirection = SceneCluster.PROJECT_POSITIVE_Y;
 				} else {
 					if (intermediateValue9 >= -32)
 						continue;
-					sceneCluster.projectionDirection = 4;
+					sceneCluster.projectionDirection = SceneCluster.PROJECT_NEGATIVE_Y;
 					intermediateValue9 = -intermediateValue9;
 				}
 				sceneCluster.minXGradient = (sceneCluster.minWorldX - cameraX << 8) / intermediateValue9;
@@ -2246,7 +2247,7 @@ public class Scene {
 				sceneCluster.minZGradient = (sceneCluster.minWorldZ - cameraZ << 8) / intermediateValue9;
 				sceneCluster.maxZGradient = (sceneCluster.maxWorldZ - cameraZ << 8) / intermediateValue9;
 				activeOccluders[activeOccluderCount++] = sceneCluster;
-			} else if (sceneCluster.type == 4) {
+			} else if (sceneCluster.type == SceneCluster.TYPE_HORIZONTAL_PLANE) {
 				int intermediateValue10 = sceneCluster.minWorldZ - cameraZ;
 				if (intermediateValue10 > 128) {
 					int intermediateValue11 = (sceneCluster.minTileY - cameraTileY) + 25;
@@ -2274,7 +2275,7 @@ public class Scene {
 						}
 
 						if (conditionFlag3) {
-							sceneCluster.projectionDirection = 5;
+							sceneCluster.projectionDirection = SceneCluster.PROJECT_ABOVE;
 							sceneCluster.minXGradient = (sceneCluster.minWorldX - cameraX << 8) / intermediateValue10;
 							sceneCluster.maxXGradient = (sceneCluster.maxWorldX - cameraX << 8) / intermediateValue10;
 							sceneCluster.minYGradient = (sceneCluster.minWorldY - cameraY << 8) / intermediateValue10;

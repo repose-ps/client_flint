@@ -1,10 +1,12 @@
 package rs2.game;
 
+import rs2.media.Angle;
 import rs2.cache.def.AnimationSequence;
 import rs2.cache.def.SpotAnimation;
 import rs2.game.entity.Actor;
 import rs2.game.entity.Npc;
 import rs2.game.entity.Player;
+import rs2.scene.SceneConstants;
 
 /**
  * Advances revision-377 actor movement, facing and animation state for one
@@ -18,6 +20,13 @@ import rs2.game.entity.Player;
  * </p>
  */
 public final class ActorUpdater {
+
+	/** Minimum safe local-player tile used before forcing a path reset. */
+	private static final int LOCAL_PLAYER_SAFE_MIN_TILE = 12;
+	/** Exclusive maximum safe local-player tile used before forcing a path reset. */
+	private static final int LOCAL_PLAYER_SAFE_MAX_TILE = 92;
+	/** Largest fine-coordinate delta treated as normal queued path movement. */
+	private static final int MAX_PATH_FINE_DELTA = SceneConstants.TILE_SIZE * 2;
 
 	/** Creates a new actor updater with its default client state. */
 	public ActorUpdater() {
@@ -37,10 +46,15 @@ public final class ActorUpdater {
 	 */
 	public void update(Actor actor, int cycle, Player localPlayer, Player[] players, Npc[] npcs,
 			int localPlayerServerIndex, int localPlayerArrayIndex, int regionBaseX, int regionBaseY) {
-		if (actor.x < 128 || actor.y < 128 || actor.x >= 13184 || actor.y >= 13184) {
+		if (actor.x < SceneConstants.TILE_SIZE || actor.y < SceneConstants.TILE_SIZE
+				|| actor.x >= SceneConstants.MAX_TILE_INDEX * SceneConstants.TILE_SIZE
+				|| actor.y >= SceneConstants.MAX_TILE_INDEX * SceneConstants.TILE_SIZE) {
 			resetToPathStart(actor);
 		}
-		if (actor == localPlayer && (actor.x < 1536 || actor.y < 1536 || actor.x >= 11776 || actor.y >= 11776)) {
+		if (actor == localPlayer && (actor.x < LOCAL_PLAYER_SAFE_MIN_TILE * SceneConstants.TILE_SIZE
+				|| actor.y < LOCAL_PLAYER_SAFE_MIN_TILE * SceneConstants.TILE_SIZE
+				|| actor.x >= LOCAL_PLAYER_SAFE_MAX_TILE * SceneConstants.TILE_SIZE
+				|| actor.y >= LOCAL_PLAYER_SAFE_MAX_TILE * SceneConstants.TILE_SIZE)) {
 			resetToPathStart(actor);
 		}
 
@@ -66,8 +80,8 @@ public final class ActorUpdater {
 		actor.spotAnimation = -1;
 		actor.forceMoveStartCycle = 0;
 		actor.forceMoveEndCycle = 0;
-		actor.x = actor.pathX[0] * 128 + actor.size * 64;
-		actor.y = actor.pathY[0] * 128 + actor.size * 64;
+		actor.x = actor.pathX[0] * SceneConstants.TILE_SIZE + actor.size * SceneConstants.TILE_CENTER;
+		actor.y = actor.pathY[0] * SceneConstants.TILE_SIZE + actor.size * SceneConstants.TILE_CENTER;
 		actor.resetPath();
 	}
 
@@ -78,8 +92,8 @@ public final class ActorUpdater {
 	 */
 	private static void updatePreForcedMovement(Actor actor, int cycle) {
 		int remaining = actor.forceMoveStartCycle - cycle;
-		int targetX = actor.forceMoveStartX * 128 + actor.size * 64;
-		int targetY = actor.forceMoveStartY * 128 + actor.size * 64;
+		int targetX = actor.forceMoveStartX * SceneConstants.TILE_SIZE + actor.size * SceneConstants.TILE_CENTER;
+		int targetY = actor.forceMoveStartY * SceneConstants.TILE_SIZE + actor.size * SceneConstants.TILE_CENTER;
 		actor.x += (targetX - actor.x) / remaining;
 		actor.y += (targetY - actor.y) / remaining;
 		actor.movementDelay = 0;
@@ -97,10 +111,10 @@ public final class ActorUpdater {
 						.getFrameLength(actor.sequenceFrame)) {
 			int duration = actor.forceMoveEndCycle - actor.forceMoveStartCycle;
 			int elapsed = cycle - actor.forceMoveStartCycle;
-			int startX = actor.forceMoveStartX * 128 + actor.size * 64;
-			int startY = actor.forceMoveStartY * 128 + actor.size * 64;
-			int endX = actor.forceMoveEndX * 128 + actor.size * 64;
-			int endY = actor.forceMoveEndY * 128 + actor.size * 64;
+			int startX = actor.forceMoveStartX * SceneConstants.TILE_SIZE + actor.size * SceneConstants.TILE_CENTER;
+			int startY = actor.forceMoveStartY * SceneConstants.TILE_SIZE + actor.size * SceneConstants.TILE_CENTER;
+			int endX = actor.forceMoveEndX * SceneConstants.TILE_SIZE + actor.size * SceneConstants.TILE_CENTER;
+			int endY = actor.forceMoveEndY * SceneConstants.TILE_SIZE + actor.size * SceneConstants.TILE_CENTER;
 			actor.x = (startX * (duration - elapsed) + endX * elapsed) / duration;
 			actor.y = (startY * (duration - elapsed) + endY * elapsed) / duration;
 		}
@@ -116,16 +130,16 @@ public final class ActorUpdater {
 	 */
 	private static void setForcedMovementOrientation(Actor actor) {
 		if (actor.forceMoveDirection == 0) {
-			actor.orientation = 1024;
+			actor.orientation = Angle.HALF_TURN;
 		}
 		if (actor.forceMoveDirection == 1) {
-			actor.orientation = 1536;
+			actor.orientation = Angle.THREE_QUARTER_TURN;
 		}
 		if (actor.forceMoveDirection == 2) {
 			actor.orientation = 0;
 		}
 		if (actor.forceMoveDirection == 3) {
-			actor.orientation = 512;
+			actor.orientation = Angle.QUARTER_TURN;
 		}
 	}
 
@@ -153,10 +167,10 @@ public final class ActorUpdater {
 
 		int currentX = actor.x;
 		int currentY = actor.y;
-		int targetX = actor.pathX[actor.pathLength - 1] * 128 + actor.size * 64;
-		int targetY = actor.pathY[actor.pathLength - 1] * 128 + actor.size * 64;
-		if (targetX - currentX > 256 || targetX - currentX < -256 || targetY - currentY > 256
-				|| targetY - currentY < -256) {
+		int targetX = actor.pathX[actor.pathLength - 1] * SceneConstants.TILE_SIZE + actor.size * SceneConstants.TILE_CENTER;
+		int targetY = actor.pathY[actor.pathLength - 1] * SceneConstants.TILE_SIZE + actor.size * SceneConstants.TILE_CENTER;
+		if (targetX - currentX > MAX_PATH_FINE_DELTA || targetX - currentX < -MAX_PATH_FINE_DELTA
+				|| targetY - currentY > MAX_PATH_FINE_DELTA || targetY - currentY < -MAX_PATH_FINE_DELTA) {
 			actor.x = targetX;
 			actor.y = targetY;
 			return;
@@ -164,36 +178,36 @@ public final class ActorUpdater {
 
 		if (currentX < targetX) {
 			if (currentY < targetY) {
-				actor.orientation = 1280;
+				actor.orientation = Angle.FIVE_EIGHTHS_TURN;
 			} else if (currentY > targetY) {
-				actor.orientation = 1792;
+				actor.orientation = Angle.SEVEN_EIGHTHS_TURN;
 			} else {
-				actor.orientation = 1536;
+				actor.orientation = Angle.THREE_QUARTER_TURN;
 			}
 		} else if (currentX > targetX) {
 			if (currentY < targetY) {
-				actor.orientation = 768;
+				actor.orientation = Angle.THREE_EIGHTHS_TURN;
 			} else if (currentY > targetY) {
-				actor.orientation = 256;
+				actor.orientation = Angle.EIGHTH_TURN;
 			} else {
-				actor.orientation = 512;
+				actor.orientation = Angle.QUARTER_TURN;
 			}
 		} else if (currentY < targetY) {
-			actor.orientation = 1024;
+			actor.orientation = Angle.HALF_TURN;
 		} else {
 			actor.orientation = 0;
 		}
 
-		int deltaRotation = actor.orientation - actor.rotation & 0x7ff;
-		if (deltaRotation > 1024) {
-			deltaRotation -= 2048;
+		int deltaRotation = actor.orientation - actor.rotation & Angle.MASK;
+		if (deltaRotation > Angle.HALF_TURN) {
+			deltaRotation -= Angle.FULL_TURN;
 		}
 		int movementSequence = actor.walkBackSequence;
-		if (deltaRotation >= -256 && deltaRotation <= 256) {
+		if (deltaRotation >= -Angle.EIGHTH_TURN && deltaRotation <= Angle.EIGHTH_TURN) {
 			movementSequence = actor.walkSequence;
-		} else if (deltaRotation >= 256 && deltaRotation < 768) {
+		} else if (deltaRotation >= Angle.EIGHTH_TURN && deltaRotation < Angle.THREE_EIGHTHS_TURN) {
 			movementSequence = actor.walkLeftSequence;
-		} else if (deltaRotation >= -768 && deltaRotation <= -256) {
+		} else if (deltaRotation >= -Angle.THREE_EIGHTHS_TURN && deltaRotation <= -Angle.EIGHTH_TURN) {
 			movementSequence = actor.walkRightSequence;
 		}
 		if (movementSequence == -1) {
@@ -274,7 +288,7 @@ public final class ActorUpdater {
 				int deltaX = actor.x - target.x;
 				int deltaY = actor.y - target.y;
 				if (deltaX != 0 || deltaY != 0) {
-					actor.orientation = (int) (Math.atan2(deltaX, deltaY) * 325.94900000000001D) & 0x7ff;
+					actor.orientation = (int) (Math.atan2(deltaX, deltaY) * Angle.UNITS_PER_RADIAN) & Angle.MASK;
 				}
 			}
 		}
@@ -288,7 +302,7 @@ public final class ActorUpdater {
 				int deltaX = actor.x - target.x;
 				int deltaY = actor.y - target.y;
 				if (deltaX != 0 || deltaY != 0) {
-					actor.orientation = (int) (Math.atan2(deltaX, deltaY) * 325.94900000000001D) & 0x7ff;
+					actor.orientation = (int) (Math.atan2(deltaX, deltaY) * Angle.UNITS_PER_RADIAN) & Angle.MASK;
 				}
 			}
 		}
@@ -296,22 +310,22 @@ public final class ActorUpdater {
 			int deltaX = actor.x - (actor.faceX - regionBaseX - regionBaseX) * 64;
 			int deltaY = actor.y - (actor.faceY - regionBaseY - regionBaseY) * 64;
 			if (deltaX != 0 || deltaY != 0) {
-				actor.orientation = (int) (Math.atan2(deltaX, deltaY) * 325.94900000000001D) & 0x7ff;
+				actor.orientation = (int) (Math.atan2(deltaX, deltaY) * Angle.UNITS_PER_RADIAN) & Angle.MASK;
 			}
 			actor.faceX = 0;
 			actor.faceY = 0;
 		}
 
-		int deltaRotation = actor.orientation - actor.rotation & 0x7ff;
+		int deltaRotation = actor.orientation - actor.rotation & Angle.MASK;
 		if (deltaRotation != 0) {
-			if (deltaRotation < actor.turnSpeed || deltaRotation > 2048 - actor.turnSpeed) {
+			if (deltaRotation < actor.turnSpeed || deltaRotation > Angle.FULL_TURN - actor.turnSpeed) {
 				actor.rotation = actor.orientation;
-			} else if (deltaRotation > 1024) {
+			} else if (deltaRotation > Angle.HALF_TURN) {
 				actor.rotation -= actor.turnSpeed;
 			} else {
 				actor.rotation += actor.turnSpeed;
 			}
-			actor.rotation &= 0x7ff;
+			actor.rotation &= Angle.MASK;
 			if (actor.movementSequence == actor.idleSequence && actor.rotation != actor.orientation) {
 				if (actor.turnSequence != -1) {
 					actor.movementSequence = actor.turnSequence;

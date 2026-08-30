@@ -18,7 +18,7 @@ import rs2.Client;
  *
  * <p>
  * The interface archive is a segmented stream named {@code data}. A record
- * begins with a widget id. The marker {@code 65535} changes the current parent
+ * begins with a widget id. The marker {@code 0xffff} changes the current parent
  * id and is followed by the actual widget id. Each decoded record is also saved
  * with a two-byte parent-id prefix so widgets can be lazily reconstructed
  * without retaining the interface archive. The temporary objects decoded during
@@ -56,6 +56,44 @@ public class Widget {
 	public static final int TYPE_INVENTORY_TEXT = 7;
 	/** Constant value for type tooltip. */
 	public static final int TYPE_TOOLTIP = 8;
+
+	/** Widget has no click-button behavior. */
+	public static final int BUTTON_NONE = 0;
+	/** Standard clickable action button. */
+	public static final int BUTTON_ACTION = 1;
+	/** Spell-selection button. */
+	public static final int BUTTON_SPELL = 2;
+	/** Interface close button. */
+	public static final int BUTTON_CLOSE = 3;
+	/** Button that toggles a client varp. */
+	public static final int BUTTON_TOGGLE_VARP = 4;
+	/** Button that sets a client varp to a fixed value. */
+	public static final int BUTTON_SET_VARP = 5;
+	/** Dialogue or interface continue button. */
+	public static final int BUTTON_CONTINUE = 6;
+
+	/** Widget has no model media source. */
+	public static final int MEDIA_NONE = 0;
+	/** Widget model is loaded directly by model id. */
+	public static final int MEDIA_MODEL = 1;
+	/** Widget model is an NPC head model. */
+	public static final int MEDIA_NPC = 2;
+	/** Widget model is the local player's head model. */
+	public static final int MEDIA_PLAYER = 3;
+	/** Widget model is an item model. */
+	public static final int MEDIA_ITEM = 4;
+	/** Widget model is supplied only through the runtime model cache. */
+	public static final int MEDIA_CACHED_MODEL = 5;
+
+	/** Pixel width and height of one inventory slot. */
+	public static final int INVENTORY_SLOT_SIZE = 32;
+	/** Number of inventory slots that may carry explicit sprite offsets. */
+	public static final int INVENTORY_SPRITE_OFFSET_COUNT = 20;
+	/** Number of cache-defined item or widget actions. */
+	public static final int ACTION_COUNT = 5;
+
+	/** Interface-stream marker that introduces a new parent widget id. */
+	private static final int PARENT_ID_MARKER = 0xffff;
 
 	/** Constant value for sprite cache capacity. */
 	private static final int SPRITE_CACHE_CAPACITY = 50_000;
@@ -272,7 +310,7 @@ public class Widget {
 		int parentId = -1;
 		while (buffer.position < buffer.payload.length) {
 			int id = buffer.readUnsignedShort();
-			if (id == 65535) {
+			if (id == PARENT_ID_MARKER) {
 				parentId = buffer.readUnsignedShort();
 				id = buffer.readUnsignedShort();
 			}
@@ -333,7 +371,7 @@ public class Widget {
 	 */
 	public static void cacheModel(int mediaType, int mediaId, Model model) {
 		modelCache.clear();
-		if (model != null && mediaType != 4) {
+		if (model != null && mediaType != MEDIA_ITEM) {
 			modelCache.put((mediaType << 16) + mediaId, model);
 		}
 	}
@@ -411,7 +449,7 @@ public class Widget {
 	 */
 	private Model getMediaModel(int mediaType, int mediaId) {
 		ItemDefinition itemDefinition = null;
-		if (mediaType == 4) {
+		if (mediaType == MEDIA_ITEM) {
 			itemDefinition = ItemDefinition.lookup(mediaId);
 			modelAmbient += itemDefinition.ambient;
 			modelContrast += itemDefinition.contrast;
@@ -423,19 +461,19 @@ public class Widget {
 			return model;
 		}
 
-		if (mediaType == 1) {
+		if (mediaType == MEDIA_MODEL) {
 			model = Model.getModel(mediaId);
 		}
-		if (mediaType == 2) {
+		if (mediaType == MEDIA_NPC) {
 			model = NpcDefinition.lookup(mediaId).getHeadModel();
 		}
-		if (mediaType == 3) {
+		if (mediaType == MEDIA_PLAYER) {
 			model = Client.localPlayer.getHeadModel();
 		}
-		if (mediaType == 4) {
+		if (mediaType == MEDIA_ITEM) {
 			model = itemDefinition.getUnlitModel(50);
 		}
-		if (mediaType == 5) {
+		if (mediaType == MEDIA_CACHED_MODEL) {
 			model = null;
 		}
 
@@ -471,13 +509,13 @@ public class Widget {
 			widget.mouseoverTargetId = -1;
 		}
 
-		if (widget.contentType == 600) {
+		if (widget.contentType == WidgetContentType.REPORT_ABUSE_NAME) {
 			reportAbuseInterfaceId = parentId;
 		}
-		if (widget.contentType == 650) {
+		if (widget.contentType == WidgetContentType.LEGACY_INTERFACE_MARKER_650) {
 			contentType650InterfaceId = parentId;
 		}
-		if (widget.contentType == 655) {
+		if (widget.contentType == WidgetContentType.LEGACY_INTERFACE_MARKER_655) {
 			contentType655InterfaceId = parentId;
 		}
 
@@ -553,8 +591,8 @@ public class Widget {
 				}
 			}
 
-			widget.actions = new String[5];
-			for (int action = 0; action < 5; action++) {
+			widget.actions = new String[ACTION_COUNT];
+			for (int action = 0; action < ACTION_COUNT; action++) {
 				widget.actions[action] = buffer.readString();
 				if (widget.actions[action].length() == 0) {
 					widget.actions[action] = null;
@@ -609,13 +647,13 @@ public class Widget {
 		if (widget.type == TYPE_MODEL) {
 			int mediaHigh = buffer.readUnsignedByte();
 			if (mediaHigh != 0) {
-				widget.mediaType = 1;
+				widget.mediaType = MEDIA_MODEL;
 				widget.mediaId = ((mediaHigh - 1) << 8) + buffer.readUnsignedByte();
 			}
 
 			mediaHigh = buffer.readUnsignedByte();
 			if (mediaHigh != 0) {
-				widget.activeMediaType = 1;
+				widget.activeMediaType = MEDIA_MODEL;
 				widget.activeMediaId = ((mediaHigh - 1) << 8) + buffer.readUnsignedByte();
 			}
 
@@ -653,8 +691,8 @@ public class Widget {
 			widget.inventorySpritePaddingY = buffer.readSignedShort();
 			widget.inventoryHasOptions = buffer.readUnsignedByte() == 1;
 
-			widget.actions = new String[5];
-			for (int action = 0; action < 5; action++) {
+			widget.actions = new String[ACTION_COUNT];
+			for (int action = 0; action < ACTION_COUNT; action++) {
 				widget.actions[action] = buffer.readString();
 				if (widget.actions[action].length() == 0) {
 					widget.actions[action] = null;
@@ -666,22 +704,22 @@ public class Widget {
 			widget.text = buffer.readString();
 		}
 
-		if (widget.buttonType == 2 || widget.type == TYPE_INVENTORY) {
+		if (widget.buttonType == BUTTON_SPELL || widget.type == TYPE_INVENTORY) {
 			widget.selectedActionName = buffer.readString();
 			widget.spellName = buffer.readString();
 			widget.spellUsableOn = buffer.readUnsignedShort();
 		}
 
-		if (widget.buttonType == 1 || widget.buttonType == 4 || widget.buttonType == 5 || widget.buttonType == 6) {
+		if (widget.buttonType == BUTTON_ACTION || widget.buttonType == BUTTON_TOGGLE_VARP || widget.buttonType == BUTTON_SET_VARP || widget.buttonType == BUTTON_CONTINUE) {
 			widget.tooltip = buffer.readString();
 			if (widget.tooltip.length() == 0) {
-				if (widget.buttonType == 1)
+				if (widget.buttonType == BUTTON_ACTION)
 					widget.tooltip = "Ok";
-				if (widget.buttonType == 4)
+				if (widget.buttonType == BUTTON_TOGGLE_VARP)
 					widget.tooltip = "Select";
-				if (widget.buttonType == 5)
+				if (widget.buttonType == BUTTON_SET_VARP)
 					widget.tooltip = "Select";
-				if (widget.buttonType == 6)
+				if (widget.buttonType == BUTTON_CONTINUE)
 					widget.tooltip = "Continue";
 			}
 		}

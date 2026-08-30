@@ -4,6 +4,8 @@ import rs2.cache.def.NpcDefinition;
 import rs2.game.entity.Actor;
 import rs2.game.entity.Npc;
 import rs2.game.entity.Player;
+import rs2.scene.SceneConstants;
+import rs2.scene.SceneUid;
 
 /**
  * Adds synchronized actors to the Scene using the revision-377 ordering rules.
@@ -15,7 +17,7 @@ public final class SceneEntityRenderer {
 	}
 
 	/** Stores tile render cycles values. */
-	private final int[][] tileRenderCycles = new int[104][104];
+	private final int[][] tileRenderCycles = new int[SceneConstants.SIZE][SceneConstants.SIZE];
 
 	/** Stores the current render cycle. */
 	private int renderCycle;
@@ -39,7 +41,7 @@ public final class SceneEntityRenderer {
 	 */
 	public int beginFrame(Actor localPlayer, int destinationX, int destinationY) {
 		renderCycle++;
-		return localPlayer.x >> 7 == destinationX && localPlayer.y >> 7 == destinationY ? 0 : destinationX;
+		return localPlayer.x >> SceneConstants.TILE_BITS == destinationX && localPlayer.y >> SceneConstants.TILE_BITS == destinationY ? 0 : destinationX;
 	}
 
 	/**
@@ -61,11 +63,11 @@ public final class SceneEntityRenderer {
 			int uid;
 			if (localOnly) {
 				player = localPlayer;
-				uid = ActorSynchronizer.LOCAL_PLAYER_INDEX << 14;
+				uid = ActorSynchronizer.LOCAL_PLAYER_INDEX << SceneUid.ENTITY_ID_SHIFT;
 			} else {
 				int playerIndex = actors.playerIndices[index];
 				player = actors.players[playerIndex];
-				uid = playerIndex << 14;
+				uid = playerIndex << SceneUid.ENTITY_ID_SHIFT;
 			}
 			if (player == null || !player.isVisible()) {
 				continue;
@@ -75,9 +77,9 @@ public final class SceneEntityRenderer {
 					&& player.movementSequence == player.idleSequence) {
 				player.isUnanimated = true;
 			}
-			int tileX = player.x >> 7;
-			int tileY = player.y >> 7;
-			if (tileX < 0 || tileX >= 104 || tileY < 0 || tileY >= 104) {
+			int tileX = player.x >> SceneConstants.TILE_BITS;
+			int tileY = player.y >> SceneConstants.TILE_BITS;
+			if (tileX < 0 || tileX >= SceneConstants.SIZE || tileY < 0 || tileY >= SceneConstants.SIZE) {
 				continue;
 			}
 			if (player.attachedModel != null && cycle >= player.attachedModelStartCycle
@@ -89,7 +91,7 @@ public final class SceneEntityRenderer {
 						player, player.rotation, uid);
 				continue;
 			}
-			if ((player.x & 0x7f) == 64 && (player.y & 0x7f) == 64) {
+			if ((player.x & SceneConstants.TILE_OFFSET_MASK) == SceneConstants.TILE_CENTER && (player.y & SceneConstants.TILE_OFFSET_MASK) == SceneConstants.TILE_CENTER) {
 				if (tileRenderCycles[tileX][tileY] == renderCycle) {
 					continue;
 				}
@@ -113,17 +115,17 @@ public final class SceneEntityRenderer {
 		for (int index = 0; index < actors.npcCount; index++) {
 			int npcIndex = actors.npcIndices[index];
 			Npc npc = actors.npcs[npcIndex];
-			int uid = 0x20000000 + (npcIndex << 14);
+			int uid = SceneUid.NPC_TYPE_BITS + (npcIndex << SceneUid.ENTITY_ID_SHIFT);
 			if (npc == null || !npc.isVisible() || npc.definition.priorityRender != priorityRender
 					|| !npc.definition.isMorphVisible()) {
 				continue;
 			}
-			int tileX = npc.x >> 7;
-			int tileY = npc.y >> 7;
-			if (tileX < 0 || tileX >= 104 || tileY < 0 || tileY >= 104) {
+			int tileX = npc.x >> SceneConstants.TILE_BITS;
+			int tileY = npc.y >> SceneConstants.TILE_BITS;
+			if (tileX < 0 || tileX >= SceneConstants.SIZE || tileY < 0 || tileY >= SceneConstants.SIZE) {
 				continue;
 			}
-			if (npc.size == 1 && (npc.x & 0x7f) == 64 && (npc.y & 0x7f) == 64) {
+			if (npc.size == 1 && (npc.x & SceneConstants.TILE_OFFSET_MASK) == SceneConstants.TILE_CENTER && (npc.y & SceneConstants.TILE_OFFSET_MASK) == SceneConstants.TILE_CENTER) {
 				if (tileRenderCycles[tileX][tileY] == renderCycle) {
 					continue;
 				}
@@ -131,10 +133,10 @@ public final class SceneEntityRenderer {
 			}
 			NpcDefinition definition = npc.definition;
 			if (!definition.clickable) {
-				uid += 0x80000000;
+				uid += SceneUid.NON_INTERACTIVE_FLAG;
 			}
 			world.scene.addEntity(plane, npc.x, npc.y, world.getTileHeight(npc.x, npc.y, plane), npc, uid,
-					(npc.size - 1) * 64 + 60, npc.animationStretches, npc.rotation);
+					(npc.size - 1) * SceneConstants.TILE_CENTER + 60, npc.animationStretches, npc.rotation);
 		}
 	}
 }

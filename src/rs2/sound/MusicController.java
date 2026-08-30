@@ -9,6 +9,9 @@ import rs2.sign.Signlink;
  * state.
  */
 public final class MusicController {
+
+	/** Protocol track id indicating that no music track is selected. */
+	private static final int NO_TRACK_ID = 0xffff;
 	/** Provides requester state and behavior. */
 	@FunctionalInterface
 	public interface Requester {
@@ -116,7 +119,7 @@ public final class MusicController {
 	 * @param requester the requester
 	 */
 	public void selectTrack(int trackId, boolean lowMemory, Requester requester) {
-		if (trackId == 65535)
+		if (trackId == NO_TRACK_ID)
 			trackId = -1;
 		if (trackId != selectedTrackId && enabled && !lowMemory && resumeDelay == 0) {
 			requestedTrackId = trackId;

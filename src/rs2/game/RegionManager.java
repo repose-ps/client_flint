@@ -1,6 +1,8 @@
 package rs2.game;
 
 import java.util.Arrays;
+import rs2.net.IncomingPacketOpcode;
+import rs2.net.OutgoingPacketOpcode;
 
 import rs2.cache.def.GameObjectDefinition;
 import rs2.cache.def.ItemDefinition;
@@ -16,11 +18,32 @@ import rs2.game.entity.Npc;
 import rs2.game.entity.Player;
 import rs2.net.Buffer;
 import rs2.scene.Region;
+import rs2.scene.SceneConstants;
 
 /**
  * Owns revision-377 map-square/instance loading state and local-base shifts.
  */
 public final class RegionManager {
+
+	/** Sentinel used for an empty instanced-region chunk template. */
+	private static final int EMPTY_INSTANCE_TEMPLATE = -1;
+	/** Shift of the source plane in a packed instanced-region template. */
+	private static final int INSTANCE_SOURCE_PLANE_SHIFT = 24;
+	/** Shift of the source chunk X coordinate in a packed template. */
+	private static final int INSTANCE_SOURCE_CHUNK_X_SHIFT = 14;
+	/** Shift of the source chunk Y coordinate in a packed template. */
+	private static final int INSTANCE_SOURCE_CHUNK_Y_SHIFT = 3;
+	/** Shift of the chunk rotation in a packed template. */
+	private static final int INSTANCE_ROTATION_SHIFT = 1;
+	/** Mask for the two-bit source plane and rotation fields. */
+	private static final int INSTANCE_TWO_BIT_MASK = 0x3;
+	/** Mask for the ten-bit source chunk X coordinate. */
+	private static final int INSTANCE_SOURCE_CHUNK_X_MASK = 0x3ff;
+	/** Mask for the eleven-bit source chunk Y coordinate. */
+	private static final int INSTANCE_SOURCE_CHUNK_Y_MASK = 0x7ff;
+	/** Maximum unique source regions representable by a 13x13x4 instance grid. */
+	private static final int MAX_INSTANCE_SOURCE_REGIONS = SceneConstants.INSTANCE_CHUNK_COUNT
+			* SceneConstants.INSTANCE_CHUNK_COUNT * SceneConstants.PLANE_COUNT;
 
 	/** Creates a new region manager with its default client state. */
 	public RegionManager() {
@@ -36,7 +59,7 @@ public final class RegionManager {
 	public static final int STAGE_LOADED = 2;
 
 	/** Stores instance templates values. */
-	public final int[][][] instanceTemplates = new int[4][13][13];
+	public final int[][][] instanceTemplates = new int[SceneConstants.PLANE_COUNT][SceneConstants.INSTANCE_CHUNK_COUNT][SceneConstants.INSTANCE_CHUNK_COUNT];
 
 	/** Stores terrain data values. */
 	public byte[][] terrainData;
@@ -144,17 +167,17 @@ public final class RegionManager {
 		int nextRegionX = regionX;
 		int nextRegionY = regionY;
 
-		if (opcode == 222) {
+		if (opcode == IncomingPacketOpcode.REBUILD_REGION) {
 			nextRegionY = buffer.readUnsignedShort();
 			nextRegionX = buffer.readUnsignedShortAddLE();
 			instanced = false;
 		}
-		if (opcode == 53) {
+		if (opcode == IncomingPacketOpcode.REBUILD_INSTANCED_REGION) {
 			nextRegionX = buffer.readUnsignedShortAdd();
 			buffer.startBitAccess();
-			for (int plane = 0; plane < 4; plane++) {
-				for (int chunkX = 0; chunkX < 13; chunkX++) {
-					for (int chunkY = 0; chunkY < 13; chunkY++) {
+			for (int plane = 0; plane < SceneConstants.PLANE_COUNT; plane++) {
+				for (int chunkX = 0; chunkX < SceneConstants.INSTANCE_CHUNK_COUNT; chunkX++) {
+					for (int chunkY = 0; chunkY < SceneConstants.INSTANCE_CHUNK_COUNT; chunkY++) {
 						if (buffer.readBits(1) == 1) {
 							instanceTemplates[plane][chunkX][chunkY] = buffer.readBits(26);
 						} else {
@@ -174,14 +197,14 @@ public final class RegionManager {
 
 		regionX = nextRegionX;
 		regionY = nextRegionY;
-		baseX = (regionX - 6) * 8;
-		baseY = (regionY - 6) * 8;
+		baseX = (regionX - 6) * SceneConstants.CHUNK_SIZE;
+		baseY = (regionY - 6) * SceneConstants.CHUNK_SIZE;
 
 		specialRegion = false;
-		if ((regionX / 8 == 48 || regionX / 8 == 49) && regionY / 8 == 48) {
+		if ((regionX / SceneConstants.CHUNKS_PER_REGION == 48 || regionX / SceneConstants.CHUNKS_PER_REGION == 49) && regionY / SceneConstants.CHUNKS_PER_REGION == 48) {
 			specialRegion = true;
 		}
-		if (regionX / 8 == 48 && regionY / 8 == 148) {
+		if (regionX / SceneConstants.CHUNKS_PER_REGION == 48 && regionY / SceneConstants.CHUNKS_PER_REGION == 148) {
 			specialRegion = true;
 		}
 
@@ -220,8 +243,8 @@ public final class RegionManager {
 	 */
 	private void prepareNormalRegions(OnDemandFetcher fetcher) {
 		int count = 0;
-		for (int mapX = (regionX - 6) / 8; mapX <= (regionX + 6) / 8; mapX++) {
-			for (int mapY = (regionY - 6) / 8; mapY <= (regionY + 6) / 8; mapY++) {
+		for (int mapX = (regionX - 6) / SceneConstants.CHUNKS_PER_REGION; mapX <= (regionX + 6) / SceneConstants.CHUNKS_PER_REGION; mapX++) {
+			for (int mapY = (regionY - 6) / SceneConstants.CHUNKS_PER_REGION; mapY <= (regionY + 6) / SceneConstants.CHUNKS_PER_REGION; mapY++) {
 				count++;
 			}
 		}
@@ -233,8 +256,8 @@ public final class RegionManager {
 		landscapeArchiveIds = new int[count];
 
 		int index = 0;
-		for (int mapX = (regionX - 6) / 8; mapX <= (regionX + 6) / 8; mapX++) {
-			for (int mapY = (regionY - 6) / 8; mapY <= (regionY + 6) / 8; mapY++) {
+		for (int mapX = (regionX - 6) / SceneConstants.CHUNKS_PER_REGION; mapX <= (regionX + 6) / SceneConstants.CHUNKS_PER_REGION; mapX++) {
+			for (int mapY = (regionY - 6) / SceneConstants.CHUNKS_PER_REGION; mapY <= (regionY + 6) / SceneConstants.CHUNKS_PER_REGION; mapY++) {
 				regionIds[index] = (mapX << 8) + mapY;
 				if (specialRegion
 						&& (mapY == 49 || mapY == 149 || mapY == 147 || mapX == 50 || mapX == 49 && mapY == 47)) {
@@ -244,13 +267,13 @@ public final class RegionManager {
 					continue;
 				}
 
-				terrainArchiveIds[index] = fetcher.getMapFileId(mapX, mapY, 0);
+				terrainArchiveIds[index] = fetcher.getMapFileId(mapX, mapY, OnDemandFetcher.MAP_FILE_TERRAIN);
 				if (terrainArchiveIds[index] != -1) {
-					fetcher.request(3, terrainArchiveIds[index]);
+					fetcher.request(OnDemandFetcher.MAP, terrainArchiveIds[index]);
 				}
-				landscapeArchiveIds[index] = fetcher.getMapFileId(mapX, mapY, 1);
+				landscapeArchiveIds[index] = fetcher.getMapFileId(mapX, mapY, OnDemandFetcher.MAP_FILE_LANDSCAPE);
 				if (landscapeArchiveIds[index] != -1) {
-					fetcher.request(3, landscapeArchiveIds[index]);
+					fetcher.request(OnDemandFetcher.MAP, landscapeArchiveIds[index]);
 				}
 				index++;
 			}
@@ -263,18 +286,18 @@ public final class RegionManager {
 	 * @param fetcher the fetcher
 	 */
 	private void prepareInstancedRegions(OnDemandFetcher fetcher) {
-		int[] uniqueRegions = new int[676];
+		int[] uniqueRegions = new int[MAX_INSTANCE_SOURCE_REGIONS];
 		int count = 0;
-		for (int plane = 0; plane < 4; plane++) {
-			for (int chunkX = 0; chunkX < 13; chunkX++) {
-				for (int chunkY = 0; chunkY < 13; chunkY++) {
+		for (int plane = 0; plane < SceneConstants.PLANE_COUNT; plane++) {
+			for (int chunkX = 0; chunkX < SceneConstants.INSTANCE_CHUNK_COUNT; chunkX++) {
+				for (int chunkY = 0; chunkY < SceneConstants.INSTANCE_CHUNK_COUNT; chunkY++) {
 					int template = instanceTemplates[plane][chunkX][chunkY];
-					if (template == -1) {
+					if (template == EMPTY_INSTANCE_TEMPLATE) {
 						continue;
 					}
-					int sourceChunkX = template >> 14 & 0x3ff;
-					int sourceChunkY = template >> 3 & 0x7ff;
-					int regionId = (sourceChunkX / 8 << 8) + sourceChunkY / 8;
+					int sourceChunkX = template >> INSTANCE_SOURCE_CHUNK_X_SHIFT & INSTANCE_SOURCE_CHUNK_X_MASK;
+					int sourceChunkY = template >> INSTANCE_SOURCE_CHUNK_Y_SHIFT & INSTANCE_SOURCE_CHUNK_Y_MASK;
+					int regionId = (sourceChunkX / SceneConstants.CHUNKS_PER_REGION << 8) + sourceChunkY / SceneConstants.CHUNKS_PER_REGION;
 					boolean duplicate = false;
 					for (int index = 0; index < count; index++) {
 						if (uniqueRegions[index] == regionId) {
@@ -298,13 +321,13 @@ public final class RegionManager {
 			int regionId = regionIds[index];
 			int mapX = regionId >> 8 & 0xff;
 			int mapY = regionId & 0xff;
-			terrainArchiveIds[index] = fetcher.getMapFileId(mapX, mapY, 0);
+			terrainArchiveIds[index] = fetcher.getMapFileId(mapX, mapY, OnDemandFetcher.MAP_FILE_TERRAIN);
 			if (terrainArchiveIds[index] != -1) {
-				fetcher.request(3, terrainArchiveIds[index]);
+				fetcher.request(OnDemandFetcher.MAP, terrainArchiveIds[index]);
 			}
-			landscapeArchiveIds[index] = fetcher.getMapFileId(mapX, mapY, 1);
+			landscapeArchiveIds[index] = fetcher.getMapFileId(mapX, mapY, OnDemandFetcher.MAP_FILE_LANDSCAPE);
 			if (landscapeArchiveIds[index] != -1) {
-				fetcher.request(3, landscapeArchiveIds[index]);
+				fetcher.request(OnDemandFetcher.MAP, landscapeArchiveIds[index]);
 			}
 		}
 	}
@@ -343,8 +366,8 @@ public final class RegionManager {
 			actor.pathX[pathIndex] -= deltaX;
 			actor.pathY[pathIndex] -= deltaY;
 		}
-		actor.x -= deltaX * 128;
-		actor.y -= deltaY * 128;
+		actor.x -= deltaX * SceneConstants.TILE_SIZE;
+		actor.y -= deltaY * SceneConstants.TILE_SIZE;
 	}
 
 	/**
@@ -353,7 +376,7 @@ public final class RegionManager {
 	 * @param request the request
 	 */
 	public void acceptMapFile(OnDemandRequest request) {
-		if (request.type != 3 || loadingStage != STAGE_LOADING || regionIds == null) {
+		if (request.type != OnDemandFetcher.MAP || loadingStage != STAGE_LOADING || regionIds == null) {
 			return;
 		}
 		for (int index = 0; index < regionIds.length; index++) {
@@ -410,8 +433,8 @@ public final class RegionManager {
 		for (int index = 0; index < terrainData.length; index++) {
 			byte[] landscape = landscapeData[index];
 			if (landscape != null) {
-				int x = (regionIds[index] >> 8) * 64 - baseX;
-				int y = (regionIds[index] & 0xff) * 64 - baseY;
+				int x = (regionIds[index] >> 8) * SceneConstants.REGION_SIZE - baseX;
+				int y = (regionIds[index] & 0xff) * SceneConstants.REGION_SIZE - baseY;
 				if (instanced) {
 					x = 10;
 					y = 10;
@@ -447,105 +470,105 @@ public final class RegionManager {
 			clearWorldModelCaches();
 			world.scene.clear();
 			System.gc();
-			for (int plane = 0; plane < 4; plane++) {
+			for (int plane = 0; plane < SceneConstants.PLANE_COUNT; plane++) {
 				world.collisionMaps[plane].reset();
 			}
-			for (int plane = 0; plane < 4; plane++) {
-				for (int x = 0; x < 104; x++) {
-					for (int y = 0; y < 104; y++) {
+			for (int plane = 0; plane < SceneConstants.PLANE_COUNT; plane++) {
+				for (int x = 0; x < SceneConstants.SIZE; x++) {
+					for (int y = 0; y < SceneConstants.SIZE; y++) {
 						world.tileFlags[plane][x][y] = 0;
 					}
 				}
 			}
 
-			Region region = new Region(world.tileHeights, world.tileFlags, 104, 104);
+			Region region = new Region(world.tileHeights, world.tileFlags, SceneConstants.SIZE, SceneConstants.SIZE);
 			int regionCount = terrainData.length;
-			outgoing.writeOpcode(40);
+			outgoing.writeOpcode(OutgoingPacketOpcode.NO_TIMEOUT);
 			if (!instanced) {
 				for (int index = 0; index < regionCount; index++) {
-					int x = (regionIds[index] >> 8) * 64 - baseX;
-					int y = (regionIds[index] & 0xff) * 64 - baseY;
+					int x = (regionIds[index] >> 8) * SceneConstants.REGION_SIZE - baseX;
+					int y = (regionIds[index] & 0xff) * SceneConstants.REGION_SIZE - baseY;
 					byte[] terrain = terrainData[index];
 					if (terrain != null) {
-						region.loadTerrainRegion(terrain, x, y, (regionX - 6) * 8, (regionY - 6) * 8,
+						region.loadTerrainRegion(terrain, x, y, (regionX - 6) * SceneConstants.CHUNK_SIZE, (regionY - 6) * SceneConstants.CHUNK_SIZE,
 								world.collisionMaps);
 					}
 				}
 				for (int index = 0; index < regionCount; index++) {
-					int x = (regionIds[index] >> 8) * 64 - baseX;
-					int y = (regionIds[index] & 0xff) * 64 - baseY;
+					int x = (regionIds[index] >> 8) * SceneConstants.REGION_SIZE - baseX;
+					int y = (regionIds[index] & 0xff) * SceneConstants.REGION_SIZE - baseY;
 					if (terrainData[index] == null && regionY < 800) {
-						region.fillMissingTerrain(x, y, 64, 64);
+						region.fillMissingTerrain(x, y, SceneConstants.REGION_SIZE, SceneConstants.REGION_SIZE);
 					}
 				}
 
-				outgoing.writeOpcode(40);
+				outgoing.writeOpcode(OutgoingPacketOpcode.NO_TIMEOUT);
 				for (int index = 0; index < regionCount; index++) {
 					byte[] landscape = landscapeData[index];
 					if (landscape != null) {
-						int x = (regionIds[index] >> 8) * 64 - baseX;
-						int y = (regionIds[index] & 0xff) * 64 - baseY;
+						int x = (regionIds[index] >> 8) * SceneConstants.REGION_SIZE - baseX;
+						int y = (regionIds[index] & 0xff) * SceneConstants.REGION_SIZE - baseY;
 						region.loadObjectRegion(landscape, x, y, world.collisionMaps, world.scene);
 					}
 				}
 			}
 
 			if (instanced) {
-				for (int destinationPlane = 0; destinationPlane < 4; destinationPlane++) {
-					for (int destinationChunkX = 0; destinationChunkX < 13; destinationChunkX++) {
-						for (int destinationChunkY = 0; destinationChunkY < 13; destinationChunkY++) {
+				for (int destinationPlane = 0; destinationPlane < SceneConstants.PLANE_COUNT; destinationPlane++) {
+					for (int destinationChunkX = 0; destinationChunkX < SceneConstants.INSTANCE_CHUNK_COUNT; destinationChunkX++) {
+						for (int destinationChunkY = 0; destinationChunkY < SceneConstants.INSTANCE_CHUNK_COUNT; destinationChunkY++) {
 							boolean loaded = false;
 							int template = instanceTemplates[destinationPlane][destinationChunkX][destinationChunkY];
 							if (template != -1) {
-								int sourcePlane = template >> 24 & 3;
-								int rotation = template >> 1 & 3;
-								int sourceChunkX = template >> 14 & 0x3ff;
-								int sourceChunkY = template >> 3 & 0x7ff;
-								int regionId = (sourceChunkX / 8 << 8) + sourceChunkY / 8;
+								int sourcePlane = template >> INSTANCE_SOURCE_PLANE_SHIFT & INSTANCE_TWO_BIT_MASK;
+								int rotation = template >> INSTANCE_ROTATION_SHIFT & INSTANCE_TWO_BIT_MASK;
+								int sourceChunkX = template >> INSTANCE_SOURCE_CHUNK_X_SHIFT & INSTANCE_SOURCE_CHUNK_X_MASK;
+								int sourceChunkY = template >> INSTANCE_SOURCE_CHUNK_Y_SHIFT & INSTANCE_SOURCE_CHUNK_Y_MASK;
+								int regionId = (sourceChunkX / SceneConstants.CHUNKS_PER_REGION << 8) + sourceChunkY / SceneConstants.CHUNKS_PER_REGION;
 								for (int index = 0; index < regionIds.length; index++) {
 									if (regionIds[index] == regionId && terrainData[index] != null) {
-										region.loadTerrainChunk(terrainData[index], sourcePlane, (sourceChunkX & 7) * 8,
-												(sourceChunkY & 7) * 8, destinationPlane, destinationChunkX * 8,
-												destinationChunkY * 8, rotation, world.collisionMaps);
+										region.loadTerrainChunk(terrainData[index], sourcePlane, (sourceChunkX & SceneConstants.CHUNK_COORDINATE_MASK) * SceneConstants.CHUNK_SIZE,
+												(sourceChunkY & SceneConstants.CHUNK_COORDINATE_MASK) * SceneConstants.CHUNK_SIZE, destinationPlane, destinationChunkX * SceneConstants.CHUNK_SIZE,
+												destinationChunkY * SceneConstants.CHUNK_SIZE, rotation, world.collisionMaps);
 										loaded = true;
 										break;
 									}
 								}
 							}
 							if (!loaded) {
-								region.clearChunkHeights(destinationPlane, destinationChunkX * 8,
-										destinationChunkY * 8);
+								region.clearChunkHeights(destinationPlane, destinationChunkX * SceneConstants.CHUNK_SIZE,
+										destinationChunkY * SceneConstants.CHUNK_SIZE);
 							}
 						}
 					}
 				}
 
-				for (int chunkX = 0; chunkX < 13; chunkX++) {
-					for (int chunkY = 0; chunkY < 13; chunkY++) {
-						if (instanceTemplates[0][chunkX][chunkY] == -1) {
-							region.fillMissingTerrain(chunkX * 8, chunkY * 8, 8, 8);
+				for (int chunkX = 0; chunkX < SceneConstants.INSTANCE_CHUNK_COUNT; chunkX++) {
+					for (int chunkY = 0; chunkY < SceneConstants.INSTANCE_CHUNK_COUNT; chunkY++) {
+						if (instanceTemplates[0][chunkX][chunkY] == EMPTY_INSTANCE_TEMPLATE) {
+							region.fillMissingTerrain(chunkX * SceneConstants.CHUNK_SIZE, chunkY * SceneConstants.CHUNK_SIZE , SceneConstants.CHUNK_SIZE, SceneConstants.CHUNK_SIZE);
 						}
 					}
 				}
 
-				outgoing.writeOpcode(40);
-				for (int destinationPlane = 0; destinationPlane < 4; destinationPlane++) {
-					for (int destinationChunkX = 0; destinationChunkX < 13; destinationChunkX++) {
-						for (int destinationChunkY = 0; destinationChunkY < 13; destinationChunkY++) {
+				outgoing.writeOpcode(OutgoingPacketOpcode.NO_TIMEOUT);
+				for (int destinationPlane = 0; destinationPlane < SceneConstants.PLANE_COUNT; destinationPlane++) {
+					for (int destinationChunkX = 0; destinationChunkX < SceneConstants.INSTANCE_CHUNK_COUNT; destinationChunkX++) {
+						for (int destinationChunkY = 0; destinationChunkY < SceneConstants.INSTANCE_CHUNK_COUNT; destinationChunkY++) {
 							int template = instanceTemplates[destinationPlane][destinationChunkX][destinationChunkY];
-							if (template == -1) {
+							if (template == EMPTY_INSTANCE_TEMPLATE) {
 								continue;
 							}
-							int sourcePlane = template >> 24 & 3;
-							int rotation = template >> 1 & 3;
-							int sourceChunkX = template >> 14 & 0x3ff;
-							int sourceChunkY = template >> 3 & 0x7ff;
-							int regionId = (sourceChunkX / 8 << 8) + sourceChunkY / 8;
+							int sourcePlane = template >> INSTANCE_SOURCE_PLANE_SHIFT & INSTANCE_TWO_BIT_MASK;
+							int rotation = template >> INSTANCE_ROTATION_SHIFT & INSTANCE_TWO_BIT_MASK;
+							int sourceChunkX = template >> INSTANCE_SOURCE_CHUNK_X_SHIFT & INSTANCE_SOURCE_CHUNK_X_MASK;
+							int sourceChunkY = template >> INSTANCE_SOURCE_CHUNK_Y_SHIFT & INSTANCE_SOURCE_CHUNK_Y_MASK;
+							int regionId = (sourceChunkX / SceneConstants.CHUNKS_PER_REGION << 8) + sourceChunkY / SceneConstants.CHUNKS_PER_REGION;
 							for (int index = 0; index < regionIds.length; index++) {
 								if (regionIds[index] == regionId && landscapeData[index] != null) {
-									region.loadObjectChunk(landscapeData[index], sourcePlane, (sourceChunkX & 7) * 8,
-											(sourceChunkY & 7) * 8, destinationPlane, destinationChunkX * 8,
-											destinationChunkY * 8, rotation, world.collisionMaps, world.scene);
+									region.loadObjectChunk(landscapeData[index], sourcePlane, (sourceChunkX & SceneConstants.CHUNK_COORDINATE_MASK) * SceneConstants.CHUNK_SIZE,
+											(sourceChunkY & SceneConstants.CHUNK_COORDINATE_MASK) * SceneConstants.CHUNK_SIZE, destinationPlane, destinationChunkX * SceneConstants.CHUNK_SIZE,
+											destinationChunkY * SceneConstants.CHUNK_SIZE, rotation, world.collisionMaps, world.scene);
 									break;
 								}
 							}
@@ -554,12 +577,12 @@ public final class RegionManager {
 				}
 			}
 
-			outgoing.writeOpcode(40);
+			outgoing.writeOpcode(OutgoingPacketOpcode.NO_TIMEOUT);
 			region.buildScene(world.collisionMaps, world.scene);
 			if (rebindSceneRaster != null) {
 				rebindSceneRaster.run();
 			}
-			outgoing.writeOpcode(40);
+			outgoing.writeOpcode(OutgoingPacketOpcode.NO_TIMEOUT);
 
 			// Legacy code computed a current-plane-clamped minimum into an unused local.
 			int unusedClampedMinimumPlane = Region.minimumPlane;
@@ -575,8 +598,8 @@ public final class RegionManager {
 			} else {
 				world.scene.setMinPlane(0);
 			}
-			for (int x = 0; x < 104; x++) {
-				for (int y = 0; y < 104; y++) {
+			for (int x = 0; x < SceneConstants.SIZE; x++) {
+				for (int y = 0; y < SceneConstants.SIZE; y++) {
 					world.updateGroundItemPile(currentPlane, x, y);
 				}
 			}
@@ -586,7 +609,7 @@ public final class RegionManager {
 
 		GameObjectDefinition.clearModelCaches();
 		if (standaloneFrame) {
-			outgoing.writeOpcode(78);
+			outgoing.writeOpcode(OutgoingPacketOpcode.REGION_LOAD_CHECK);
 			outgoing.writeInt(0x3f008edd);
 		}
 		if (lowMemory && rs2.sign.Signlink.cacheData != null) {
@@ -622,10 +645,10 @@ public final class RegionManager {
 	 * @param fetcher the fetcher
 	 */
 	private void queueBorderRegions(OnDemandFetcher fetcher) {
-		int minMapX = (regionX - 6) / 8 - 1;
-		int maxMapX = (regionX + 6) / 8 + 1;
-		int minMapY = (regionY - 6) / 8 - 1;
-		int maxMapY = (regionY + 6) / 8 + 1;
+		int minMapX = (regionX - 6) / SceneConstants.CHUNKS_PER_REGION - 1;
+		int maxMapX = (regionX + 6) / SceneConstants.CHUNKS_PER_REGION + 1;
+		int minMapY = (regionY - 6) / SceneConstants.CHUNKS_PER_REGION - 1;
+		int maxMapY = (regionY + 6) / SceneConstants.CHUNKS_PER_REGION + 1;
 		if (specialRegion) {
 			minMapX = 49;
 			maxMapX = 50;
@@ -635,11 +658,11 @@ public final class RegionManager {
 		for (int mapX = minMapX; mapX <= maxMapX; mapX++) {
 			for (int mapY = minMapY; mapY <= maxMapY; mapY++) {
 				if (mapX == minMapX || mapX == maxMapX || mapY == minMapY || mapY == maxMapY) {
-					int terrainId = fetcher.getMapFileId(mapX, mapY, 0);
+					int terrainId = fetcher.getMapFileId(mapX, mapY, OnDemandFetcher.MAP_FILE_TERRAIN);
 					if (terrainId != -1) {
 						fetcher.queueExtraRequest(3, terrainId);
 					}
-					int landscapeId = fetcher.getMapFileId(mapX, mapY, 1);
+					int landscapeId = fetcher.getMapFileId(mapX, mapY, OnDemandFetcher.MAP_FILE_LANDSCAPE);
 					if (landscapeId != -1) {
 						fetcher.queueExtraRequest(3, landscapeId);
 					}

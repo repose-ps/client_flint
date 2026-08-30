@@ -45,6 +45,11 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	/** Defines the map constant. */
 	public static final int MAP = 3;
 
+	/** Map-index selector for terrain files. */
+	public static final int MAP_FILE_TERRAIN = 0;
+	/** Map-index selector for landscape/object files. */
+	public static final int MAP_FILE_LANDSCAPE = 1;
+
 	/** Defines the archive type count constant. */
 	private static final int ARCHIVE_TYPE_COUNT = 4;
 	/** Defines the max active requests constant. */
@@ -66,7 +71,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	/** Defines the update server handshake constant. */
 	private static final int UPDATE_SERVER_HANDSHAKE = 15;
 	/** Defines the location prefetch type constant. */
-	private static final int LOCATION_PREFETCH_TYPE = 93;
+	public static final int LOCATION_PREFETCH = 93;
 
 	/**
 	 * Reads data.
@@ -150,7 +155,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 					}
 					if (!currentRequest.incomplete && currentRequest.type == MAP) {
 						currentRequest.incomplete = true;
-						currentRequest.type = LOCATION_PREFETCH_TYPE;
+						currentRequest.type = LOCATION_PREFETCH;
 					}
 					if (currentRequest.incomplete) {
 						synchronized (completedQueue) {
@@ -836,7 +841,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 		int regionId = (regionX << 8) + regionY;
 		for (int regionIndex = 0; regionIndex < regionIds.length; regionIndex++)
 			if (regionIds[regionIndex] == regionId)
-				if (fileType == 0)
+				if (fileType == MAP_FILE_TERRAIN)
 					return terrainFileIds[regionIndex];
 				else
 					return landscapeFileIds[regionIndex];

@@ -5,12 +5,85 @@ import rs2.cache.def.ItemDefinition;
 import rs2.cache.def.AnimationSequence;
 import rs2.ui.Widget;
 import rs2.game.Skills;
+import rs2.media.Angle;
 
 /**
  * Runtime behavior shared by revision-377 interface widgets: CS1 expression
  * evaluation, CS1 comparisons, model animation updates, and animation reset.
  */
 public final class WidgetRuntime {
+
+	/** CS1 comparison: the evaluated value must equal the target. */
+	private static final int COMPARISON_EQUALS = 1;
+	/** CS1 comparison: the evaluated value must be less than the target. */
+	private static final int COMPARISON_LESS_THAN = 2;
+	/** CS1 comparison: the evaluated value must be greater than the target. */
+	private static final int COMPARISON_GREATER_THAN = 3;
+	/** CS1 comparison: the evaluated value must not equal the target. */
+	private static final int COMPARISON_NOT_EQUALS = 4;
+
+	/** Terminates a CS1 instruction stream and returns the accumulator. */
+	private static final int SCRIPT_END = 0;
+	/** Reads a current skill level. */
+	private static final int SCRIPT_CURRENT_SKILL_LEVEL = 1;
+	/** Reads a base skill level. */
+	private static final int SCRIPT_BASE_SKILL_LEVEL = 2;
+	/** Reads skill experience. */
+	private static final int SCRIPT_SKILL_EXPERIENCE = 3;
+	/** Sums an item's amount in a widget inventory. */
+	private static final int SCRIPT_INVENTORY_ITEM_AMOUNT = 4;
+	/** Reads a varp value. */
+	private static final int SCRIPT_VARP = 5;
+	/** Reads the experience threshold for a base skill level. */
+	private static final int SCRIPT_EXPERIENCE_FOR_LEVEL = 6;
+	/** Converts a varp value to the legacy 0..100 percentage scale. */
+	private static final int SCRIPT_VARP_PERCENT = 7;
+	/** Reads the local player's combat level. */
+	private static final int SCRIPT_COMBAT_LEVEL = 8;
+	/** Sums all enabled base skill levels. */
+	private static final int SCRIPT_TOTAL_LEVEL = 9;
+	/** Tests whether a widget inventory contains an item. */
+	private static final int SCRIPT_INVENTORY_CONTAINS_ITEM = 10;
+	/** Reads run energy. */
+	private static final int SCRIPT_RUN_ENERGY = 11;
+	/** Reads carried weight. */
+	private static final int SCRIPT_WEIGHT = 12;
+	/** Tests one bit in a varp. */
+	private static final int SCRIPT_VARP_BIT = 13;
+	/** Reads a varbit value. */
+	private static final int SCRIPT_VARBIT = 14;
+	/** Selects subtraction for the next value. */
+	private static final int SCRIPT_SET_SUBTRACT = 15;
+	/** Selects division for the next value. */
+	private static final int SCRIPT_SET_DIVIDE = 16;
+	/** Selects multiplication for the next value. */
+	private static final int SCRIPT_SET_MULTIPLY = 17;
+	/** Reads the local player's absolute world X coordinate. */
+	private static final int SCRIPT_PLAYER_WORLD_X = 18;
+	/** Reads the local player's absolute world Y coordinate. */
+	private static final int SCRIPT_PLAYER_WORLD_Y = 19;
+	/** Reads an immediate literal from the instruction stream. */
+	private static final int SCRIPT_LITERAL = 20;
+
+	/** Applies addition to the accumulated CS1 value. */
+	private static final int OPERATION_ADD = 0;
+	/** Applies subtraction to the accumulated CS1 value. */
+	private static final int OPERATION_SUBTRACT = 1;
+	/** Applies division to the accumulated CS1 value. */
+	private static final int OPERATION_DIVIDE = 2;
+	/** Applies multiplication to the accumulated CS1 value. */
+	private static final int OPERATION_MULTIPLY = 3;
+
+	/** Result returned when a widget has no script at the requested index. */
+	private static final int SCRIPT_UNAVAILABLE = -2;
+	/** Result returned when a CS1 script throws while being evaluated. */
+	private static final int SCRIPT_ERROR = -1;
+	/** Legacy sentinel produced by the inventory-contains-item instruction. */
+	private static final int ITEM_PRESENT_VALUE = 999_999_999;
+	/** Percentage numerator used by the legacy varp-percent instruction. */
+	private static final int PERCENT_SCALE = 100;
+	/** Legacy denominator used by the varp-percent instruction. */
+	private static final int VARP_PERCENT_DENOMINATOR = 46_875;
 	/** Provides script context state and behavior. */
 	public interface ScriptContext {
 		/**
@@ -154,8 +227,8 @@ public final class WidgetRuntime {
 				int yawSpeed = (child.modelRotationSpeed << 16) >> 16;
 				pitchSpeed *= deltaCycles;
 				yawSpeed *= deltaCycles;
-				child.modelPitch = child.modelPitch + pitchSpeed & 0x7ff;
-				child.modelYaw = child.modelYaw + yawSpeed & 0x7ff;
+				child.modelPitch = child.modelPitch + pitchSpeed & Angle.MASK;
+				child.modelYaw = child.modelYaw + yawSpeed & Angle.MASK;
 				changed = true;
 			}
 		}
@@ -190,16 +263,16 @@ public final class WidgetRuntime {
 		for (int index = 0; index < widget.cs1Comparisons.length; index++) {
 			int value = evaluateScript(widget, index);
 			int target = widget.cs1ComparisonValues[index];
-			if (widget.cs1Comparisons[index] == 2) {
+			if (widget.cs1Comparisons[index] == COMPARISON_LESS_THAN) {
 				if (value >= target)
 					return false;
-			} else if (widget.cs1Comparisons[index] == 3) {
+			} else if (widget.cs1Comparisons[index] == COMPARISON_GREATER_THAN) {
 				if (value <= target)
 					return false;
-			} else if (widget.cs1Comparisons[index] == 4) {
+			} else if (widget.cs1Comparisons[index] == COMPARISON_NOT_EQUALS) {
 				if (value == target)
 					return false;
-			} else if (value != target) {
+			} else if (widget.cs1Comparisons[index] == COMPARISON_EQUALS && value != target) {
 				return false;
 			}
 		}
@@ -214,25 +287,25 @@ public final class WidgetRuntime {
 	 */
 	public int evaluateScript(Widget widget, int scriptIndex) {
 		if (widget.cs1Instructions == null || scriptIndex >= widget.cs1Instructions.length)
-			return -2;
+			return SCRIPT_UNAVAILABLE;
 		try {
 			int[] instructions = widget.cs1Instructions[scriptIndex];
 			int accumulator = 0;
 			int position = 0;
-			int pendingOperation = 0;
+			int pendingOperation = OPERATION_ADD;
 			do {
 				int opcode = instructions[position++];
 				int value = 0;
-				byte nextOperation = 0;
-				if (opcode == 0)
+				byte nextOperation = OPERATION_ADD;
+				if (opcode == SCRIPT_END)
 					return accumulator;
-				if (opcode == 1)
+				if (opcode == SCRIPT_CURRENT_SKILL_LEVEL)
 					value = context.currentSkillLevel(instructions[position++]);
-				if (opcode == 2)
+				if (opcode == SCRIPT_BASE_SKILL_LEVEL)
 					value = context.baseSkillLevel(instructions[position++]);
-				if (opcode == 3)
+				if (opcode == SCRIPT_SKILL_EXPERIENCE)
 					value = context.skillExperience(instructions[position++]);
-				if (opcode == 4) {
+				if (opcode == SCRIPT_INVENTORY_ITEM_AMOUNT) {
 					Widget inventory = Widget.get(instructions[position++]);
 					int itemId = instructions[position++];
 					if (itemId >= 0 && itemId < ItemDefinition.count
@@ -242,20 +315,20 @@ public final class WidgetRuntime {
 								value += inventory.itemAmounts[slot];
 					}
 				}
-				if (opcode == 5)
+				if (opcode == SCRIPT_VARP)
 					value = context.varp(instructions[position++]);
-				if (opcode == 6)
+				if (opcode == SCRIPT_EXPERIENCE_FOR_LEVEL)
 					value = context.experienceForLevel(context.baseSkillLevel(instructions[position++]) - 1);
-				if (opcode == 7)
-					value = (context.varp(instructions[position++]) * 100) / 46875;
-				if (opcode == 8)
+				if (opcode == SCRIPT_VARP_PERCENT)
+					value = (context.varp(instructions[position++]) * PERCENT_SCALE) / VARP_PERCENT_DENOMINATOR;
+				if (opcode == SCRIPT_COMBAT_LEVEL)
 					value = context.combatLevel();
-				if (opcode == 9) {
+				if (opcode == SCRIPT_TOTAL_LEVEL) {
 					for (int skill = 0; skill < Skills.COUNT; skill++)
 						if (Skills.ENABLED[skill])
 							value += context.baseSkillLevel(skill);
 				}
-				if (opcode == 10) {
+				if (opcode == SCRIPT_INVENTORY_CONTAINS_ITEM) {
 					Widget inventory = Widget.get(instructions[position++]);
 					int encodedItemId = instructions[position++] + 1;
 					if (encodedItemId >= 0 && encodedItemId < ItemDefinition.count
@@ -263,53 +336,53 @@ public final class WidgetRuntime {
 						for (int slot = 0; slot < inventory.itemIds.length; slot++) {
 							if (inventory.itemIds[slot] != encodedItemId)
 								continue;
-							value = 0x3b9ac9ff;
+							value = ITEM_PRESENT_VALUE;
 							break;
 						}
 					}
 				}
-				if (opcode == 11)
+				if (opcode == SCRIPT_RUN_ENERGY)
 					value = context.runEnergy();
-				if (opcode == 12)
+				if (opcode == SCRIPT_WEIGHT)
 					value = context.weight();
-				if (opcode == 13) {
+				if (opcode == SCRIPT_VARP_BIT) {
 					int varp = context.varp(instructions[position++]);
 					int bit = instructions[position++];
 					value = (varp & 1 << bit) == 0 ? 0 : 1;
 				}
-				if (opcode == 14) {
+				if (opcode == SCRIPT_VARBIT) {
 					Varbit varbit = Varbit.definitions[instructions[position++]];
 					int width = varbit.mostSignificantBit - varbit.leastSignificantBit;
 					value = context.varp(varbit.varpId) >> varbit.leastSignificantBit & context.bitMask(width);
 				}
-				if (opcode == 15)
-					nextOperation = 1;
-				if (opcode == 16)
-					nextOperation = 2;
-				if (opcode == 17)
-					nextOperation = 3;
-				if (opcode == 18)
+				if (opcode == SCRIPT_SET_SUBTRACT)
+					nextOperation = OPERATION_SUBTRACT;
+				if (opcode == SCRIPT_SET_DIVIDE)
+					nextOperation = OPERATION_DIVIDE;
+				if (opcode == SCRIPT_SET_MULTIPLY)
+					nextOperation = OPERATION_MULTIPLY;
+				if (opcode == SCRIPT_PLAYER_WORLD_X)
 					value = context.playerWorldX();
-				if (opcode == 19)
+				if (opcode == SCRIPT_PLAYER_WORLD_Y)
 					value = context.playerWorldY();
-				if (opcode == 20)
+				if (opcode == SCRIPT_LITERAL)
 					value = instructions[position++];
-				if (nextOperation == 0) {
-					if (pendingOperation == 0)
+				if (nextOperation == OPERATION_ADD) {
+					if (pendingOperation == OPERATION_ADD)
 						accumulator += value;
-					if (pendingOperation == 1)
+					if (pendingOperation == OPERATION_SUBTRACT)
 						accumulator -= value;
-					if (pendingOperation == 2 && value != 0)
+					if (pendingOperation == OPERATION_DIVIDE && value != 0)
 						accumulator /= value;
-					if (pendingOperation == 3)
+					if (pendingOperation == OPERATION_MULTIPLY)
 						accumulator *= value;
-					pendingOperation = 0;
+					pendingOperation = OPERATION_ADD;
 				} else {
 					pendingOperation = nextOperation;
 				}
 			} while (true);
 		} catch (Exception ignored) {
-			return -1;
+			return SCRIPT_ERROR;
 		}
 	}
 }

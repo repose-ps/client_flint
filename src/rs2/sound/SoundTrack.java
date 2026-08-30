@@ -13,6 +13,9 @@ import rs2.net.Buffer;
  */
 public class SoundTrack {
 
+	/** Archive track-list terminator. */
+	private static final int TRACK_LIST_TERMINATOR = 0xffff;
+
 	/** Constant value for sample rate. */
 	private static final int SAMPLE_RATE = 22050;
 	/** Constant value for wav header size. */
@@ -63,7 +66,7 @@ public class SoundTrack {
 
 		while (true) {
 			int trackId = buffer.readUnsignedShort();
-			if (trackId == 65535) {
+			if (trackId == TRACK_LIST_TERMINATOR) {
 				return;
 			}
 			SoundTrack track = new SoundTrack();

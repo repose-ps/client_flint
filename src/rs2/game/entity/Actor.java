@@ -2,6 +2,7 @@ package rs2.game.entity;
 
 import rs2.cache.def.AnimationSequence;
 import rs2.media.model.Renderable;
+import rs2.scene.SceneConstants;
 
 
 /**
@@ -17,11 +18,28 @@ import rs2.media.model.Renderable;
  */
 public abstract class Actor extends Renderable {
 
+	/** Number of path entries retained by the client. */
+	public static final int PATH_CAPACITY = 10;
+	/** Maximum number of queued steps beyond the current path origin. */
+	public static final int MAX_QUEUED_STEPS = PATH_CAPACITY - 1;
+	/** Maximum tile delta that can be queued without treating movement as a teleport. */
+	public static final int MAX_LOCAL_STEP_DELTA = 8;
+	/** Default lifetime of plain overhead text in client cycles. */
+	public static final int DEFAULT_OVERHEAD_TEXT_CYCLES = 100;
+	/** Lifetime of synchronized player chat overhead text in client cycles. */
+	public static final int CHAT_OVERHEAD_TEXT_CYCLES = 150;
+	/** Lifetime of a visible health bar after a hit update, in client cycles. */
+	public static final int HEALTH_BAR_CYCLES = 300;
+	/** Lifetime of one hit-splat slot, in client cycles. */
+	public static final int HIT_SPLAT_CYCLES = 70;
+	/** Number of concurrent hit-splat slots retained by the legacy client. */
+	public static final int HIT_SPLAT_COUNT = 4;
+
 	/** Text currently displayed above the actor, or {@code null} when absent. */
 	public String overheadText;
 
 	/** Number of client cycles before the current overhead text expires. */
-	public int overheadTextCyclesRemaining = 100;
+	public int overheadTextCyclesRemaining = DEFAULT_OVERHEAD_TEXT_CYCLES;
 
 	/** Protocol color/effect palette index used for overhead text. */
 	public int overheadTextColor;
@@ -33,10 +51,10 @@ public abstract class Actor extends Renderable {
 	public int lastUpdateCycle;
 
 	/** Queued path tile X coordinates, with index zero holding the newest destination. */
-	public final int[] pathX = new int[10];
+	public final int[] pathX = new int[PATH_CAPACITY];
 
 	/** Queued path tile Y coordinates, with index zero holding the newest destination. */
-	public final int[] pathY = new int[10];
+	public final int[] pathY = new int[PATH_CAPACITY];
 
 	/** Sequence identifier currently used for movement animation, or {@code -1}. */
 	public int movementSequence = -1;
@@ -48,7 +66,7 @@ public abstract class Actor extends Renderable {
 	public int movementFrameCycle;
 
 	/** Whether each queued path step should use running movement. */
-	public final boolean[] pathRunning = new boolean[10];
+	public final boolean[] pathRunning = new boolean[PATH_CAPACITY];
 
 	/** Whether the current animation permits model stretching. */
 	public boolean animationStretches;
@@ -171,13 +189,13 @@ public abstract class Actor extends Renderable {
 	public int runSequence = -1;
 
 	/** Damage values for the actor's four timed hit-splat slots. */
-	public final int[] hitDamages = new int[4];
+	public final int[] hitDamages = new int[HIT_SPLAT_COUNT];
 
 	/** Hit-type identifiers for the actor's four timed hit-splat slots. */
-	public final int[] hitTypes = new int[4];
+	public final int[] hitTypes = new int[HIT_SPLAT_COUNT];
 
 	/** Expiry cycle for each of the actor's four timed hit-splat slots. */
-	public final int[] hitCycles = new int[4];
+	public final int[] hitCycles = new int[HIT_SPLAT_COUNT];
 
 	/** Number of queued movement steps currently stored in the path arrays. */
 	public int pathLength;
@@ -251,7 +269,7 @@ public abstract class Actor extends Renderable {
 		}
 
 		cancelMovementBlockingSequence();
-		if (pathLength < 9) {
+		if (pathLength < MAX_QUEUED_STEPS) {
 			pathLength++;
 		}
 		for (int index = pathLength; index > 0; index--) {
@@ -273,11 +291,11 @@ public abstract class Actor extends Renderable {
 	 * @param type   the type
 	 */
 	public void addHit(int cycle, int damage, int type) {
-		for (int slot = 0; slot < 4; slot++) {
+		for (int slot = 0; slot < HIT_SPLAT_COUNT; slot++) {
 			if (hitCycles[slot] <= cycle) {
 				hitDamages[slot] = damage;
 				hitTypes[slot] = type;
-				hitCycles[slot] = cycle + 70;
+				hitCycles[slot] = cycle + HIT_SPLAT_CYCLES;
 				return;
 			}
 		}
@@ -300,8 +318,9 @@ public abstract class Actor extends Renderable {
 		if (!teleport) {
 			int deltaX = tileX - pathX[0];
 			int deltaY = tileY - pathY[0];
-			if (deltaX >= -8 && deltaX <= 8 && deltaY >= -8 && deltaY <= 8) {
-				if (pathLength < 9) {
+			if (deltaX >= -MAX_LOCAL_STEP_DELTA && deltaX <= MAX_LOCAL_STEP_DELTA
+					&& deltaY >= -MAX_LOCAL_STEP_DELTA && deltaY <= MAX_LOCAL_STEP_DELTA) {
+				if (pathLength < MAX_QUEUED_STEPS) {
 					pathLength++;
 				}
 				for (int index = pathLength; index > 0; index--) {
@@ -321,8 +340,8 @@ public abstract class Actor extends Renderable {
 		movementDelay = 0;
 		pathX[0] = tileX;
 		pathY[0] = tileY;
-		x = tileX * 128 + size * 64;
-		y = tileY * 128 + size * 64;
+		x = tileX * SceneConstants.TILE_SIZE + size * SceneConstants.TILE_CENTER;
+		y = tileY * SceneConstants.TILE_SIZE + size * SceneConstants.TILE_CENTER;
 	}
 
 	/**

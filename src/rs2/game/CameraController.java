@@ -1,8 +1,12 @@
 package rs2.game;
 
+import rs2.scene.SceneConstants;
+import rs2.scene.TileFlags;
+import rs2.media.Angle;
 import rs2.game.entity.Actor;
 import rs2.media.model.Model;
 import rs2.net.Buffer;
+import rs2.net.OutgoingPacketOpcode;
 import rs2.sign.Signlink;
 
 /**
@@ -15,11 +19,17 @@ public final class CameraController {
 	public CameraController() {
 	}
 
-	/** Constant value for angle mask. */
-	public static final int ANGLE_MASK = 0x7ff;
-
 	/** Camera-angle units applied for each pixel of middle-mouse movement. */
 	private static final int MOUSE_DRAG_SENSITIVITY = 3;
+
+	/** Lowest legal camera pitch in the client angle system. */
+	private static final int MIN_PITCH = 128;
+
+	/** Highest legal camera pitch in the client angle system. */
+	private static final int MAX_PITCH = 383;
+
+	/** Maximum fine world coordinate accepted by roof/terrain sampling. */
+	private static final int MAX_TERRAIN_SAMPLE_COORDINATE = SceneConstants.INTERIOR_MAX_TILE * SceneConstants.TILE_SIZE;
 
 	/** Stores the current X. */
 	public int x;
@@ -31,13 +41,13 @@ public final class CameraController {
 	public int y;
 
 	/** Stores the current pitch. */
-	public int pitch = 128;
+	public int pitch = MIN_PITCH;
 
 	/** Stores the current yaw. */
 	public int yaw;
 
 	/** Stores the current follow pitch. */
-	public int followPitch = 128;
+	public int followPitch = MIN_PITCH;
 
 	/** Stores the current follow yaw. */
 	public int followYaw;
@@ -174,13 +184,13 @@ public final class CameraController {
 			} else {
 				pitchVelocity /= 2;
 			}
-			followYaw = followYaw + yawVelocity / 2 & ANGLE_MASK;
+			followYaw = followYaw + yawVelocity / 2 & Angle.MASK;
 			followPitch += pitchVelocity / 2;
-			if (followPitch < 128) {
-				followPitch = 128;
+			if (followPitch < MIN_PITCH) {
+				followPitch = MIN_PITCH;
 			}
-			if (followPitch > 383) {
-				followPitch = 383;
+			if (followPitch > MAX_PITCH) {
+				followPitch = MAX_PITCH;
 			}
 
 			int tileX = followTargetX >> 7;
@@ -191,7 +201,7 @@ public final class CameraController {
 				for (int x = tileX - 4; x <= tileX + 4; x++) {
 					for (int y = tileY - 4; y <= tileY + 4; y++) {
 						int effectivePlane = plane;
-						if (effectivePlane < 3 && (world.tileFlags[1][x][y] & 2) == 2) {
+						if (effectivePlane < 3 && (world.tileFlags[1][x][y] & TileFlags.BRIDGE) != 0) {
 							effectivePlane++;
 						}
 						int drop = targetHeight - world.tileHeights[effectivePlane][x][y];
@@ -230,14 +240,14 @@ public final class CameraController {
 		yawVelocity = 0;
 		pitchVelocity = 0;
 
-		followYaw = followYaw - deltaX * MOUSE_DRAG_SENSITIVITY & ANGLE_MASK;
+		followYaw = followYaw - deltaX * MOUSE_DRAG_SENSITIVITY & Angle.MASK;
 		followPitch += deltaY * MOUSE_DRAG_SENSITIVITY;
 
-		if (followPitch < 128) {
-			followPitch = 128;
+		if (followPitch < MIN_PITCH) {
+			followPitch = MIN_PITCH;
 		}
-		if (followPitch > 383) {
-			followPitch = 383;
+		if (followPitch > MAX_PITCH) {
+			followPitch = MAX_PITCH;
 		}
 	}
 
@@ -248,50 +258,50 @@ public final class CameraController {
 	 * @param plane the plane
 	 */
 	public void updateCinematic(WorldState world, int plane) {
-		int targetWorldX = positionTileX * 128 + 64;
-		int targetWorldY = positionTileY * 128 + 64;
+		int targetWorldX = positionTileX * SceneConstants.TILE_SIZE + SceneConstants.TILE_CENTER;
+		int targetWorldY = positionTileY * SceneConstants.TILE_SIZE + SceneConstants.TILE_CENTER;
 		int targetHeight = world.getTileHeight(targetWorldX, targetWorldY, plane) - positionHeightOffset;
 		x = approach(x, targetWorldX, positionBaseSpeed, positionScale);
 		height = approach(height, targetHeight, positionBaseSpeed, positionScale);
 		y = approach(y, targetWorldY, positionBaseSpeed, positionScale);
 
-		int lookWorldX = lookTileX * 128 + 64;
-		int lookWorldY = lookTileY * 128 + 64;
+		int lookWorldX = lookTileX * SceneConstants.TILE_SIZE + SceneConstants.TILE_CENTER;
+		int lookWorldY = lookTileY * SceneConstants.TILE_SIZE + SceneConstants.TILE_CENTER;
 		int lookHeight = world.getTileHeight(lookWorldX, lookWorldY, plane) - lookHeightOffset;
 		int deltaX = lookWorldX - x;
 		int deltaHeight = lookHeight - height;
 		int deltaY = lookWorldY - y;
 		int horizontalDistance = (int) Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-		int targetPitch = (int) (Math.atan2(deltaHeight, horizontalDistance) * 325.94900000000001D) & ANGLE_MASK;
-		int targetYaw = (int) (Math.atan2(deltaX, deltaY) * -325.94900000000001D) & ANGLE_MASK;
-		if (targetPitch < 128) {
-			targetPitch = 128;
+		int targetPitch = (int) (Math.atan2(deltaHeight, horizontalDistance) * Angle.UNITS_PER_RADIAN) & Angle.MASK;
+		int targetYaw = (int) (Math.atan2(deltaX, deltaY) * -Angle.UNITS_PER_RADIAN) & Angle.MASK;
+		if (targetPitch < MIN_PITCH) {
+			targetPitch = MIN_PITCH;
 		}
-		if (targetPitch > 383) {
-			targetPitch = 383;
+		if (targetPitch > MAX_PITCH) {
+			targetPitch = MAX_PITCH;
 		}
 		pitch = approach(pitch, targetPitch, lookBaseSpeed, lookScale);
 
 		int yawDelta = targetYaw - yaw;
-		if (yawDelta > 1024) {
-			yawDelta -= 2048;
+		if (yawDelta > Angle.HALF_TURN) {
+			yawDelta -= Angle.FULL_TURN;
 		}
-		if (yawDelta < -1024) {
-			yawDelta += 2048;
+		if (yawDelta < -Angle.HALF_TURN) {
+			yawDelta += Angle.FULL_TURN;
 		}
 		if (yawDelta > 0) {
 			yaw += lookBaseSpeed + yawDelta * lookScale / 1000;
-			yaw &= ANGLE_MASK;
+			yaw &= Angle.MASK;
 		} else if (yawDelta < 0) {
 			yaw -= lookBaseSpeed + (-yawDelta) * lookScale / 1000;
-			yaw &= ANGLE_MASK;
+			yaw &= Angle.MASK;
 		}
 		int remaining = targetYaw - yaw;
-		if (remaining > 1024) {
-			remaining -= 2048;
+		if (remaining > Angle.HALF_TURN) {
+			remaining -= Angle.FULL_TURN;
 		}
-		if (remaining < -1024) {
-			remaining += 2048;
+		if (remaining < -Angle.HALF_TURN) {
+			remaining += Angle.FULL_TURN;
 		}
 		if (remaining < 0 && yawDelta > 0 || remaining > 0 && yawDelta < 0) {
 			yaw = targetYaw;
@@ -342,8 +352,8 @@ public final class CameraController {
 		positionBaseSpeed = baseSpeed;
 		positionScale = scale;
 		if (scale >= 100) {
-			x = tileX * 128 + 64;
-			y = tileY * 128 + 64;
+			x = tileX * SceneConstants.TILE_SIZE + SceneConstants.TILE_CENTER;
+			y = tileY * SceneConstants.TILE_SIZE + SceneConstants.TILE_CENTER;
 			height = world.getTileHeight(x, y, plane) - heightOffset;
 		}
 	}
@@ -368,20 +378,20 @@ public final class CameraController {
 		lookBaseSpeed = baseSpeed;
 		lookScale = scale;
 		if (scale >= 100) {
-			int lookX = tileX * 128 + 64;
-			int lookY = tileY * 128 + 64;
+			int lookX = tileX * SceneConstants.TILE_SIZE + SceneConstants.TILE_CENTER;
+			int lookY = tileY * SceneConstants.TILE_SIZE + SceneConstants.TILE_CENTER;
 			int lookZ = world.getTileHeight(lookX, lookY, plane) - heightOffset;
 			int dx = lookX - x;
 			int dz = lookZ - height;
 			int dy = lookY - y;
 			int horizontal = (int) Math.sqrt(dx * dx + dy * dy);
-			pitch = (int) (Math.atan2(dz, horizontal) * 325.94900000000001D) & ANGLE_MASK;
-			yaw = (int) (Math.atan2(dx, dy) * -325.94900000000001D) & ANGLE_MASK;
-			if (pitch < 128) {
-				pitch = 128;
+			pitch = (int) (Math.atan2(dz, horizontal) * Angle.UNITS_PER_RADIAN) & Angle.MASK;
+			yaw = (int) (Math.atan2(dx, dy) * -Angle.UNITS_PER_RADIAN) & Angle.MASK;
+			if (pitch < MIN_PITCH) {
+				pitch = MIN_PITCH;
 			}
-			if (pitch > 383) {
-				pitch = 383;
+			if (pitch > MAX_PITCH) {
+				pitch = MAX_PITCH;
 			}
 		}
 	}
@@ -438,8 +448,8 @@ public final class CameraController {
 		if (terrainPitchScale / 256 > minimum) {
 			minimum = terrainPitchScale / 256;
 		}
-		if (shakeEnabled[4] && shakeSineAmplitude[4] + 128 > minimum) {
-			minimum = shakeSineAmplitude[4] + 128;
+		if (shakeEnabled[4] && shakeSineAmplitude[4] + MIN_PITCH > minimum) {
+			minimum = shakeSineAmplitude[4] + MIN_PITCH;
 		}
 		return minimum;
 	}
@@ -484,14 +494,14 @@ public final class CameraController {
 			} else if (index == 2) {
 				y += offset;
 			} else if (index == 3) {
-				yaw = yaw + offset & ANGLE_MASK;
+				yaw = yaw + offset & Angle.MASK;
 			} else {
 				pitch += offset;
-				if (pitch < 128) {
-					pitch = 128;
+				if (pitch < MIN_PITCH) {
+					pitch = MIN_PITCH;
 				}
-				if (pitch > 383) {
-					pitch = 383;
+				if (pitch > MAX_PITCH) {
+					pitch = MAX_PITCH;
 				}
 			}
 		}
@@ -508,8 +518,8 @@ public final class CameraController {
 	 * @param targetY      the target y
 	 */
 	public void positionFromTarget(int targetHeight, int targetX, int pitch, int distance, int yaw, int targetY) {
-		int inversePitch = 2048 - pitch & ANGLE_MASK;
-		int inverseYaw = 2048 - yaw & ANGLE_MASK;
+		int inversePitch = Angle.FULL_TURN - pitch & Angle.MASK;
+		int inverseYaw = Angle.FULL_TURN - yaw & Angle.MASK;
 		int offsetX = 0;
 		int offsetHeight = 0;
 		int offsetY = distance;
@@ -549,7 +559,7 @@ public final class CameraController {
 			roofProbeCounter++;
 			if (roofProbeCounter > 1457) {
 				roofProbeCounter = 0;
-				outgoing.writeOpcode(244);
+				outgoing.writeOpcode(OutgoingPacketOpcode.CAMERA_PROBE);
 				outgoing.writeByte(0);
 				int start = outgoing.position;
 				outgoing.writeByte(219);
@@ -570,7 +580,7 @@ public final class CameraController {
 			int cameraTileY = y >> 7;
 			int playerTileX = localPlayer.x >> 7;
 			int playerTileY = localPlayer.y >> 7;
-			if ((world.tileFlags[currentPlane][cameraTileX][cameraTileY] & 4) != 0) {
+			if ((world.tileFlags[currentPlane][cameraTileX][cameraTileY] & TileFlags.ROOF) != 0) {
 				plane = currentPlane;
 			}
 			int deltaX = Math.abs(playerTileX - cameraTileX);
@@ -580,14 +590,14 @@ public final class CameraController {
 				int accumulator = 32768;
 				while (cameraTileX != playerTileX) {
 					cameraTileX += cameraTileX < playerTileX ? 1 : -1;
-					if ((world.tileFlags[currentPlane][cameraTileX][cameraTileY] & 4) != 0) {
+					if ((world.tileFlags[currentPlane][cameraTileX][cameraTileY] & TileFlags.ROOF) != 0) {
 						plane = currentPlane;
 					}
 					accumulator += step;
 					if (accumulator >= 0x10000) {
 						accumulator -= 0x10000;
 						cameraTileY += cameraTileY < playerTileY ? 1 : cameraTileY > playerTileY ? -1 : 0;
-						if ((world.tileFlags[currentPlane][cameraTileX][cameraTileY] & 4) != 0) {
+						if ((world.tileFlags[currentPlane][cameraTileX][cameraTileY] & TileFlags.ROOF) != 0) {
 							plane = currentPlane;
 						}
 					}
@@ -597,21 +607,21 @@ public final class CameraController {
 				int accumulator = 32768;
 				while (cameraTileY != playerTileY) {
 					cameraTileY += cameraTileY < playerTileY ? 1 : -1;
-					if ((world.tileFlags[currentPlane][cameraTileX][cameraTileY] & 4) != 0) {
+					if ((world.tileFlags[currentPlane][cameraTileX][cameraTileY] & TileFlags.ROOF) != 0) {
 						plane = currentPlane;
 					}
 					accumulator += step;
 					if (accumulator >= 0x10000) {
 						accumulator -= 0x10000;
 						cameraTileX += cameraTileX < playerTileX ? 1 : cameraTileX > playerTileX ? -1 : 0;
-						if ((world.tileFlags[currentPlane][cameraTileX][cameraTileY] & 4) != 0) {
+						if ((world.tileFlags[currentPlane][cameraTileX][cameraTileY] & TileFlags.ROOF) != 0) {
 							plane = currentPlane;
 						}
 					}
 				}
 			}
 		}
-		if ((world.tileFlags[currentPlane][localPlayer.x >> 7][localPlayer.y >> 7] & 4) != 0) {
+		if ((world.tileFlags[currentPlane][localPlayer.x >> 7][localPlayer.y >> 7] & TileFlags.ROOF) != 0) {
 			plane = currentPlane;
 		}
 		return plane;
@@ -626,7 +636,7 @@ public final class CameraController {
 	 */
 	public int selectCinematicRenderPlane(WorldState world, int currentPlane) {
 		int tileHeight = world.getTileHeight(x, y, currentPlane);
-		if (tileHeight - height < 800 && (world.tileFlags[currentPlane][x >> 7][y >> 7] & 4) != 0) {
+		if (tileHeight - height < 800 && (world.tileFlags[currentPlane][x >> 7][y >> 7] & TileFlags.ROOF) != 0) {
 			return currentPlane;
 		}
 		return 3;
@@ -643,7 +653,7 @@ public final class CameraController {
 	 * @param worldY       the world y
 	 */
 	public ScreenPoint project(WorldState world, int plane, int worldX, int heightOffset, int worldY) {
-		if (worldX < 128 || worldY < 128 || worldX > 13056 || worldY > 13056) {
+		if (worldX < SceneConstants.TILE_SIZE || worldY < SceneConstants.TILE_SIZE || worldX > MAX_TERRAIN_SAMPLE_COORDINATE || worldY > MAX_TERRAIN_SAMPLE_COORDINATE) {
 			return ScreenPoint.INVISIBLE;
 		}
 		int projectedHeight = world.getTileHeight(worldX, worldY, plane) - heightOffset;
@@ -673,7 +683,7 @@ public final class CameraController {
 		followOffsetX = (int) (Math.random() * 100D) - 50;
 		followOffsetY = (int) (Math.random() * 110D) - 55;
 		yawOffset = (int) (Math.random() * 80D) - 40;
-		followYaw = (int) (Math.random() * 20D) - 10 & ANGLE_MASK;
+		followYaw = (int) (Math.random() * 20D) - 10 & Angle.MASK;
 	}
 
 	/**

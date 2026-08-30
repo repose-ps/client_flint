@@ -44,15 +44,15 @@ public final class MovementPacketEncoder {
 		int firstY = route.getWaypointY(routeIndex);
 
 		if (movementType == SCREEN) {
-			outgoing.writeOpcode(28);
+			outgoing.writeOpcode(OutgoingPacketOpcode.WALK_SCREEN);
 			outgoing.writeByte(waypointCount + waypointCount + 3);
 		}
 		if (movementType == MINIMAP) {
-			outgoing.writeOpcode(213);
+			outgoing.writeOpcode(OutgoingPacketOpcode.WALK_MINIMAP);
 			outgoing.writeByte(waypointCount + waypointCount + 3 + 14);
 		}
 		if (movementType == INTERACTION) {
-			outgoing.writeOpcode(247);
+			outgoing.writeOpcode(OutgoingPacketOpcode.WALK_INTERACTION);
 			outgoing.writeByte(waypointCount + waypointCount + 3);
 		}
 

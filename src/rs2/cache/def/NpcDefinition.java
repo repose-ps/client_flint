@@ -19,6 +19,62 @@ import rs2.net.Buffer;
  * </p>
  */
 public class NpcDefinition {
+	/* Cache-format opcode values. */
+	/** Opcode for end. */
+	private static final int OPCODE_END = 0;
+	/** Opcode for models. */
+	private static final int OPCODE_MODELS = 1;
+	/** Opcode for name. */
+	private static final int OPCODE_NAME = 2;
+	/** Opcode for description. */
+	private static final int OPCODE_DESCRIPTION = 3;
+	/** Opcode for size. */
+	private static final int OPCODE_SIZE = 12;
+	/** Opcode for idle sequence. */
+	private static final int OPCODE_IDLE_SEQUENCE = 13;
+	/** Opcode for walk sequence. */
+	private static final int OPCODE_WALK_SEQUENCE = 14;
+	/** Opcode for movement sequences. */
+	private static final int OPCODE_MOVEMENT_SEQUENCES = 17;
+	/** Opcode for recolors. */
+	private static final int OPCODE_RECOLORS = 40;
+	/** Opcode for head models. */
+	private static final int OPCODE_HEAD_MODELS = 60;
+	/** Opcode for unknown 90. */
+	private static final int OPCODE_UNKNOWN_90 = 90;
+	/** Opcode for unknown 91. */
+	private static final int OPCODE_UNKNOWN_91 = 91;
+	/** Opcode for unknown 92. */
+	private static final int OPCODE_UNKNOWN_92 = 92;
+	/** Opcode for hide minimap. */
+	private static final int OPCODE_HIDE_MINIMAP = 93;
+	/** Opcode for combat level. */
+	private static final int OPCODE_COMBAT_LEVEL = 95;
+	/** Opcode for scale xz. */
+	private static final int OPCODE_SCALE_XZ = 97;
+	/** Opcode for scale y. */
+	private static final int OPCODE_SCALE_Y = 98;
+	/** Opcode for priority render. */
+	private static final int OPCODE_PRIORITY_RENDER = 99;
+	/** Opcode for ambient. */
+	private static final int OPCODE_AMBIENT = 100;
+	/** Opcode for contrast. */
+	private static final int OPCODE_CONTRAST = 101;
+	/** Opcode for prayer icon. */
+	private static final int OPCODE_PRAYER_ICON = 102;
+	/** Opcode for turn speed. */
+	private static final int OPCODE_TURN_SPEED = 103;
+	/** Opcode for morphs. */
+	private static final int OPCODE_MORPHS = 106;
+	/** Opcode for not clickable. */
+	private static final int OPCODE_NOT_CLICKABLE = 107;
+	/** First opcode in the action range. */
+	private static final int ACTION_OPCODE_FIRST = 30;
+	/** Exclusive upper bound of the action opcode range. */
+	private static final int ACTION_OPCODE_LIMIT = 40;
+	/** Action count. */
+	private static final int ACTION_COUNT = 5;
+
 
 	/** Creates a new NPC definition with its default client state. */
 	public NpcDefinition() {
@@ -120,39 +176,39 @@ public class NpcDefinition {
 	public void decode(Buffer buffer) {
 		while (true) {
 			int opcode = buffer.readUnsignedByte();
-			if (opcode == 0) {
+			if (opcode == OPCODE_END) {
 				return;
 			}
 			switch (opcode) {
-			case 1:
+			case OPCODE_MODELS:
 				int modelCount = buffer.readUnsignedByte();
 				modelIds = new int[modelCount];
 				for (int index = 0; index < modelCount; index++) {
 					modelIds[index] = buffer.readUnsignedShort();
 				}
 				break;
-			case 2:
+			case OPCODE_NAME:
 				name = buffer.readString();
 				break;
-			case 3:
+			case OPCODE_DESCRIPTION:
 				description = buffer.readStringBytes();
 				break;
-			case 12:
+			case OPCODE_SIZE:
 				size = buffer.readSignedByte();
 				break;
-			case 13:
+			case OPCODE_IDLE_SEQUENCE:
 				idleSequence = buffer.readUnsignedShort();
 				break;
-			case 14:
+			case OPCODE_WALK_SEQUENCE:
 				walkSequence = buffer.readUnsignedShort();
 				break;
-			case 17:
+			case OPCODE_MOVEMENT_SEQUENCES:
 				walkSequence = buffer.readUnsignedShort();
 				walkBackSequence = buffer.readUnsignedShort();
 				turn90CwSequence = buffer.readUnsignedShort();
 				turn90CcwSequence = buffer.readUnsignedShort();
 				break;
-			case 40:
+			case OPCODE_RECOLORS:
 				int recolorCount = buffer.readUnsignedByte();
 				recolorFrom = new int[recolorCount];
 				recolorTo = new int[recolorCount];
@@ -161,81 +217,81 @@ public class NpcDefinition {
 					recolorTo[index] = buffer.readUnsignedShort();
 				}
 				break;
-			case 60:
+			case OPCODE_HEAD_MODELS:
 				int headModelCount = buffer.readUnsignedByte();
 				headModelIds = new int[headModelCount];
 				for (int index = 0; index < headModelCount; index++) {
 					headModelIds[index] = buffer.readUnsignedShort();
 				}
 				break;
-			case 90:
+			case OPCODE_UNKNOWN_90:
 				opcode90Value = buffer.readUnsignedShort();
 				break;
-			case 91:
+			case OPCODE_UNKNOWN_91:
 				opcode91Value = buffer.readUnsignedShort();
 				break;
-			case 92:
+			case OPCODE_UNKNOWN_92:
 				opcode92Value = buffer.readUnsignedShort();
 				break;
-			case 93:
+			case OPCODE_HIDE_MINIMAP:
 				visibleOnMinimap = false;
 				break;
-			case 95:
+			case OPCODE_COMBAT_LEVEL:
 				combatLevel = buffer.readUnsignedShort();
 				break;
-			case 97:
+			case OPCODE_SCALE_XZ:
 				scaleXZ = buffer.readUnsignedShort();
 				break;
-			case 98:
+			case OPCODE_SCALE_Y:
 				scaleY = buffer.readUnsignedShort();
 				break;
-			case 99:
+			case OPCODE_PRIORITY_RENDER:
 				priorityRender = true;
 				break;
-			case 100:
+			case OPCODE_AMBIENT:
 				ambient = buffer.readSignedByte();
 				break;
-			case 101:
+			case OPCODE_CONTRAST:
 				contrast = buffer.readSignedByte() * 5;
 				break;
-			case 102:
+			case OPCODE_PRAYER_ICON:
 				prayerIcon = buffer.readUnsignedShort();
 				break;
-			case 103:
+			case OPCODE_TURN_SPEED:
 				turnSpeed = buffer.readUnsignedShort();
 				break;
-			case 106:
+			case OPCODE_MORPHS:
 				varbitId = buffer.readUnsignedShort();
-				if (varbitId == 65535) {
+				if (varbitId == DefinitionConstants.NULL_REFERENCE_ID) {
 					varbitId = -1;
 				}
 				varpId = buffer.readUnsignedShort();
-				if (varpId == 65535) {
+				if (varpId == DefinitionConstants.NULL_REFERENCE_ID) {
 					varpId = -1;
 				}
 				int lastMorphIndex = buffer.readUnsignedByte();
 				morphIds = new int[lastMorphIndex + 1];
 				for (int index = 0; index <= lastMorphIndex; index++) {
 					morphIds[index] = buffer.readUnsignedShort();
-					if (morphIds[index] == 65535) {
+					if (morphIds[index] == DefinitionConstants.NULL_REFERENCE_ID) {
 						morphIds[index] = -1;
 					}
 				}
 				break;
-			case 107:
+			case OPCODE_NOT_CLICKABLE:
 				clickable = false;
 				break;
 			default:
-				if (opcode >= 30 && opcode < 40) {
+				if (opcode >= ACTION_OPCODE_FIRST && opcode < ACTION_OPCODE_LIMIT) {
 					if (actions == null) {
-						actions = new String[5];
+						actions = new String[ACTION_COUNT];
 					}
-					// The supplied 377 decoder accepts 30..39 despite allocating only five
+					// The supplied 377 decoder accepts {@value #ACTION_OPCODE_FIRST}..39 despite allocating only five
 					// slots. Keeping that range intentionally preserves its malformed-input
 					// behavior for opcodes 35..39.
-					actions[opcode - 30] = buffer.readString();
-					if (actions[opcode - 30].equalsIgnoreCase("hidden")) {
-						actions[opcode - 30] = null;
+					actions[opcode - ACTION_OPCODE_FIRST] = buffer.readString();
+					if (actions[opcode - ACTION_OPCODE_FIRST].equalsIgnoreCase("hidden")) {
+						actions[opcode - ACTION_OPCODE_FIRST] = null;
 					}
 				}
 				break;

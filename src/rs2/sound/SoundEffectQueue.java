@@ -1,16 +1,25 @@
 package rs2.sound;
 
 import java.util.function.LongSupplier;
+import rs2.net.OutgoingPacketOpcode;
 
 import rs2.net.Buffer;
 import rs2.sign.Signlink;
 
 /** Revision-377 fixed-capacity queued sound-effect playback state. */
 public final class SoundEffectQueue {
+
+	/** Packet delay value selecting the legacy immediate/raw queue path. */
+	private static final int PACKET_DELAY_SENTINEL = 0xffff;
 	/** Constant value for capacity. */
 	private static final int CAPACITY = 50;
 	/** Constant value for retry delay. */
 	private static final int RETRY_DELAY = -5;
+	/** Low 15 bits carrying the sound-effect definition id. */
+	private static final int SOUND_ID_MASK = 0x7fff;
+
+	/** Sentinel emitted when failed wave playback should not report a sound id. */
+	private static final int NO_SOUND_ID = -1;
 
 	/** Provides sound data provider state and behavior. */
 	@FunctionalInterface
@@ -169,7 +178,7 @@ public final class SoundEffectQueue {
 	 * @param lowMemory whether low-memory mode is active
 	 */
 	public void queuePacketSound(int soundId, int loopCount, int delay, boolean lowMemory) {
-		if (delay == 65535) {
+		if (delay == PACKET_DELAY_SENTINEL) {
 			if (count < CAPACITY) {
 				soundIds[count] = (short) soundId;
 				loopCounts[count] = loopCount;
@@ -235,8 +244,8 @@ public final class SoundEffectQueue {
 						}
 					}
 				} catch (Exception exception) {
-					outgoing.writeOpcode(80);
-					outgoing.writeShort(waveBackend.reportErrors() ? soundIds[index] & 0x7fff : -1);
+					outgoing.writeOpcode(OutgoingPacketOpcode.SOUND_EFFECT_ERROR);
+					outgoing.writeShort(waveBackend.reportErrors() ? soundIds[index] & SOUND_ID_MASK : NO_SOUND_ID);
 				}
 				if (!retry || delays[index] == RETRY_DELAY)
 					remove(index--);

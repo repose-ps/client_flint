@@ -45,13 +45,13 @@ public class Rasterizer3D extends Rasterizer {
 	public static int[] reciprocal15 = new int[8192];
 
 	/** Stores reciprocal16 values. */
-	public static int[] reciprocal16 = new int[2048];
+	public static int[] reciprocal16 = new int[Angle.FULL_TURN];
 
 	/** Constant value for sine. */
-	public static int[] SINE = new int[2048];
+	public static int[] SINE = new int[Angle.FULL_TURN];
 
 	/** Constant value for cosine. */
-	public static int[] COSINE = new int[2048];
+	public static int[] COSINE = new int[Angle.FULL_TURN];
 
 	/** Stores scanline offsets values. */
 	public static int[] scanlineOffsets;
@@ -94,9 +94,9 @@ public class Rasterizer3D extends Rasterizer {
 	static {
 		for (int loopIndex = 1; loopIndex < reciprocal15.length; loopIndex++)
 			reciprocal15[loopIndex] = 32768 / loopIndex;
-		for (int loopIndex2 = 1; loopIndex2 < 2048; loopIndex2++)
+		for (int loopIndex2 = 1; loopIndex2 < Angle.FULL_TURN; loopIndex2++)
 			reciprocal16[loopIndex2] = 0x10000 / loopIndex2;
-		for (int angle = 0; angle < 2048; angle++) {
+		for (int angle = 0; angle < Angle.FULL_TURN; angle++) {
 			SINE[angle] = (int) (65536D * Math.sin(angle * 0.0030679614999999999D));
 			COSINE[angle] = (int) (65536D * Math.cos(angle * 0.0030679614999999999D));
 		}

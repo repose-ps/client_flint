@@ -20,6 +20,40 @@ public class Varp {
 	public Varp() {
 	}
 
+
+	/** Terminates a varp definition record. */
+	private static final int OPCODE_END = 0;
+	/** Stores the first reserved byte attribute. */
+	private static final int OPCODE_RESERVED_BYTE_1 = 1;
+	/** Stores the second reserved byte attribute. */
+	private static final int OPCODE_RESERVED_BYTE_2 = 2;
+	/** Adds the varp to the opcode-3 identifier list. */
+	private static final int OPCODE_TRACK_ID = 3;
+	/** Disables the opcode-4 boolean attribute. */
+	private static final int OPCODE_DISABLE_4 = 4;
+	/** Stores the client behavior selector. */
+	private static final int OPCODE_CLIENT_CODE = 5;
+	/** Enables the opcode-6 boolean attribute. */
+	private static final int OPCODE_ENABLE_6 = 6;
+	/** Stores the reserved opcode-7 integer attribute. */
+	private static final int OPCODE_RESERVED_INT_7 = 7;
+	/** Stores linked-varp state variant one. */
+	private static final int OPCODE_LINKED_VARIANT_1 = 8;
+	/** Stores the optional diagnostic name. */
+	private static final int OPCODE_DEBUG_NAME = 10;
+	/** Marks the varp as linked without an additional payload. */
+	private static final int OPCODE_LINKED = 11;
+	/** Stores the reserved opcode-12 integer attribute. */
+	private static final int OPCODE_RESERVED_INT_12 = 12;
+	/** Stores linked-varp state variant two. */
+	private static final int OPCODE_LINKED_VARIANT_2 = 13;
+	/** Disables the opcode-14 boolean attribute. */
+	private static final int OPCODE_DISABLE_14 = 14;
+	/** Value stored for the first linked-varp state variant. */
+	private static final int LINKED_VARIANT_1 = 1;
+	/** Value stored for the second linked-varp state variant. */
+	private static final int LINKED_VARIANT_2 = 2;
+
 	/** Number of definitions declared by the cache. */
 	public static int count;
 
@@ -99,48 +133,48 @@ public class Varp {
 		while (true) {
 			int opcode = buffer.readUnsignedByte();
 			switch (opcode) {
-			case 0:
+			case OPCODE_END:
 				return;
-			case 1:
+			case OPCODE_RESERVED_BYTE_1:
 				opcode1Value = buffer.readUnsignedByte();
 				break;
-			case 2:
+			case OPCODE_RESERVED_BYTE_2:
 				opcode2Value = buffer.readUnsignedByte();
 				break;
-			case 3:
+			case OPCODE_TRACK_ID:
 				opcode3Enabled = true;
 				opcode3Varps[opcode3Count++] = id;
 				break;
-			case 4:
+			case OPCODE_DISABLE_4:
 				opcode4Enabled = false;
 				break;
-			case 5:
+			case OPCODE_CLIENT_CODE:
 				clientCode = buffer.readUnsignedShort();
 				break;
-			case 6:
+			case OPCODE_ENABLE_6:
 				opcode6Enabled = true;
 				break;
-			case 7:
+			case OPCODE_RESERVED_INT_7:
 				opcode7Value = buffer.readInt();
 				break;
-			case 8:
-				opcode8Or13Value = 1;
+			case OPCODE_LINKED_VARIANT_1:
+				opcode8Or13Value = LINKED_VARIANT_1;
 				varbitLinked = true;
 				break;
-			case 10:
+			case OPCODE_DEBUG_NAME:
 				debugName = buffer.readString();
 				break;
-			case 11:
+			case OPCODE_LINKED:
 				varbitLinked = true;
 				break;
-			case 12:
+			case OPCODE_RESERVED_INT_12:
 				opcode12Value = buffer.readInt();
 				break;
-			case 13:
-				opcode8Or13Value = 2;
+			case OPCODE_LINKED_VARIANT_2:
+				opcode8Or13Value = LINKED_VARIANT_2;
 				varbitLinked = true;
 				break;
-			case 14:
+			case OPCODE_DISABLE_14:
 				opcode14Enabled = false;
 				break;
 			default:

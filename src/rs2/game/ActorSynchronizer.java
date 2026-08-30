@@ -3,11 +3,13 @@ package rs2.game;
 import rs2.cache.def.NpcDefinition;
 import rs2.cache.def.AnimationSequence;
 import rs2.chat.ChatCodec;
+import rs2.chat.ChatMessageType;
 import rs2.chat.Censor;
 import rs2.game.entity.Actor;
 import rs2.game.entity.Npc;
 import rs2.game.entity.Player;
 import rs2.net.Buffer;
+import rs2.net.ProtocolConstants;
 import rs2.sign.Signlink;
 import rs2.text.Base37;
 
@@ -31,7 +33,88 @@ public final class ActorSynchronizer {
 	public static final int LOCAL_PLAYER_INDEX = 2047;
 
 	/** Maximum number of NPC slots representable by the revision-377 protocol. */
-	public static final int MAX_NPCS = 16384;
+	public static final int MAX_NPCS = 16_384;
+
+	/** Sentinel terminating the new-NPC bit block. */
+	private static final int NPC_INDEX_TERMINATOR = MAX_NPCS - 1;
+	/** Mask for the low cycle/delay half of packed spot-animation state. */
+	private static final int PACKED_CYCLE_MASK = 0xffff;
+	/** Capacity of the temporary removal list used by the original client. */
+	private static final int REMOVAL_CAPACITY = 1_000;
+
+	/** One-bit flag width used throughout movement blocks. */
+	private static final int FLAG_BITS = 1;
+	/** Width of movement-type values in bits. */
+	private static final int MOVEMENT_TYPE_BITS = 2;
+	/** Width of walking direction values in bits. */
+	private static final int DIRECTION_BITS = 3;
+	/** Width of local teleport tile coordinates in bits. */
+	private static final int LOCAL_TILE_BITS = 7;
+	/** Width of retained-entity counts in bits. */
+	private static final int RETAINED_COUNT_BITS = 8;
+	/** Width of player indices in the new-player bit block. */
+	private static final int PLAYER_INDEX_BITS = 11;
+	/** Width of NPC indices in the new-NPC bit block. */
+	private static final int NPC_INDEX_BITS = 14;
+	/** Width of signed local entity deltas in bits. */
+	private static final int LOCAL_DELTA_BITS = 5;
+	/** Largest positive value before a five-bit local delta wraps negative. */
+	private static final int LOCAL_DELTA_SIGN_THRESHOLD = 15;
+	/** Modulus used to sign-extend five-bit local entity deltas. */
+	private static final int LOCAL_DELTA_MODULUS = 32;
+	/** Width of NPC definition ids in the new-NPC bit block. */
+	private static final int NPC_DEFINITION_BITS = 13;
+	/** Minimum new-player bit-block size needed before another entry can begin. */
+	private static final int NEW_PLAYER_MIN_BITS = 10;
+	/** Minimum new-NPC bit-block size needed before another entry can begin. */
+	private static final int NEW_NPC_MIN_BITS = 21;
+
+	/** Movement block contains only an update mask. */
+	private static final int MOVEMENT_MASK_ONLY = 0;
+	/** Movement block contains one walking step. */
+	private static final int MOVEMENT_WALK = 1;
+	/** Movement block contains two running steps. */
+	private static final int MOVEMENT_RUN = 2;
+
+	/** Player update-mask extension indicator. */
+	private static final int PLAYER_MASK_EXTENDED = 0x20;
+	/** Player action-sequence update bit. */
+	private static final int PLAYER_MASK_SEQUENCE = 0x08;
+	/** Player forced overhead-text update bit. */
+	private static final int PLAYER_MASK_OVERHEAD_TEXT = 0x10;
+	/** Player forced-movement update bit. */
+	private static final int PLAYER_MASK_FORCED_MOVEMENT = 0x100;
+	/** Player target-index update bit. */
+	private static final int PLAYER_MASK_TARGET = 0x01;
+	/** Player face-location update bit. */
+	private static final int PLAYER_MASK_FACE_LOCATION = 0x02;
+	/** Player spot-animation update bit. */
+	private static final int PLAYER_MASK_SPOT_ANIMATION = 0x200;
+	/** Player appearance update bit. */
+	private static final int PLAYER_MASK_APPEARANCE = 0x04;
+	/** Player secondary hit update bit. */
+	private static final int PLAYER_MASK_HIT_SECONDARY = 0x400;
+	/** Player public-chat update bit. */
+	private static final int PLAYER_MASK_PUBLIC_CHAT = 0x40;
+	/** Player primary hit update bit. */
+	private static final int PLAYER_MASK_HIT_PRIMARY = 0x80;
+
+	/** NPC definition-change update bit. */
+	private static final int NPC_MASK_DEFINITION = 0x01;
+	/** NPC target-index update bit. */
+	private static final int NPC_MASK_TARGET = 0x40;
+	/** NPC primary hit update bit. */
+	private static final int NPC_MASK_HIT_PRIMARY = 0x80;
+	/** NPC spot-animation update bit. */
+	private static final int NPC_MASK_SPOT_ANIMATION = 0x04;
+	/** NPC overhead-text update bit. */
+	private static final int NPC_MASK_OVERHEAD_TEXT = 0x20;
+	/** NPC face-location update bit. */
+	private static final int NPC_MASK_FACE_LOCATION = 0x08;
+	/** NPC action-sequence update bit. */
+	private static final int NPC_MASK_SEQUENCE = 0x02;
+	/** NPC secondary hit update bit. */
+	private static final int NPC_MASK_HIT_SECONDARY = 0x10;
 
 	/** Player registry indexed by protocol player index. */
 	public final Player[] players = new Player[MAX_PLAYERS];
@@ -69,7 +152,7 @@ public final class ActorSynchronizer {
 	private int removedCount;
 
 	/** Entity indices removed from the local synchronization list this packet. */
-	private final int[] removedIndices = new int[1000];
+	private final int[] removedIndices = new int[REMOVAL_CAPACITY];
 
 	/** Local player instance stored in {@link #LOCAL_PLAYER_INDEX}. */
 	public Player localPlayer;
@@ -261,37 +344,37 @@ public final class ActorSynchronizer {
 	 */
 	private int decodeLocalPlayerMovement(Buffer buffer, int currentPlane) {
 		buffer.startBitAccess();
-		int hasUpdate = buffer.readBits(1);
+		int hasUpdate = buffer.readBits(FLAG_BITS);
 		if (hasUpdate == 0) {
 			return currentPlane;
 		}
 
-		int movementType = buffer.readBits(2);
-		if (movementType == 0) {
+		int movementType = buffer.readBits(MOVEMENT_TYPE_BITS);
+		if (movementType == MOVEMENT_MASK_ONLY) {
 			updateIndices[updateCount++] = LOCAL_PLAYER_INDEX;
 			return currentPlane;
 		}
-		if (movementType == 1) {
-			localPlayer.moveInDirection(false, buffer.readBits(3));
-			if (buffer.readBits(1) == 1) {
+		if (movementType == MOVEMENT_WALK) {
+			localPlayer.moveInDirection(false, buffer.readBits(DIRECTION_BITS));
+			if (buffer.readBits(FLAG_BITS) == 1) {
 				updateIndices[updateCount++] = LOCAL_PLAYER_INDEX;
 			}
 			return currentPlane;
 		}
-		if (movementType == 2) {
-			localPlayer.moveInDirection(true, buffer.readBits(3));
-			localPlayer.moveInDirection(true, buffer.readBits(3));
-			if (buffer.readBits(1) == 1) {
+		if (movementType == MOVEMENT_RUN) {
+			localPlayer.moveInDirection(true, buffer.readBits(DIRECTION_BITS));
+			localPlayer.moveInDirection(true, buffer.readBits(DIRECTION_BITS));
+			if (buffer.readBits(FLAG_BITS) == 1) {
 				updateIndices[updateCount++] = LOCAL_PLAYER_INDEX;
 			}
 			return currentPlane;
 		}
 
-		boolean teleport = buffer.readBits(1) == 1;
-		int plane = buffer.readBits(2);
-		int tileY = buffer.readBits(7);
-		int tileX = buffer.readBits(7);
-		if (buffer.readBits(1) == 1) {
+		boolean teleport = buffer.readBits(FLAG_BITS) == 1;
+		int plane = buffer.readBits(MOVEMENT_TYPE_BITS);
+		int tileY = buffer.readBits(LOCAL_TILE_BITS);
+		int tileX = buffer.readBits(LOCAL_TILE_BITS);
+		if (buffer.readBits(FLAG_BITS) == 1) {
 			updateIndices[updateCount++] = LOCAL_PLAYER_INDEX;
 		}
 		localPlayer.setPosition(tileX, tileY, teleport);
@@ -307,7 +390,7 @@ public final class ActorSynchronizer {
 	 * @param username local username used when reporting an invalid player count
 	 */
 	private void decodeExistingPlayers(Buffer buffer, int cycle, String username) {
-		int count = buffer.readBits(8);
+		int count = buffer.readBits(RETAINED_COUNT_BITS);
 		if (count < playerCount) {
 			for (int index = count; index < playerCount; index++) {
 				removedIndices[removedCount++] = playerIndices[index];
@@ -322,30 +405,30 @@ public final class ActorSynchronizer {
 		for (int index = 0; index < count; index++) {
 			int playerIndex = playerIndices[index];
 			Player player = players[playerIndex];
-			if (buffer.readBits(1) == 0) {
+			if (buffer.readBits(FLAG_BITS) == 0) {
 				playerIndices[playerCount++] = playerIndex;
 				player.lastUpdateCycle = cycle;
 				continue;
 			}
 
-			int updateType = buffer.readBits(2);
-			if (updateType == 0) {
+			int updateType = buffer.readBits(MOVEMENT_TYPE_BITS);
+			if (updateType == MOVEMENT_MASK_ONLY) {
 				playerIndices[playerCount++] = playerIndex;
 				player.lastUpdateCycle = cycle;
 				updateIndices[updateCount++] = playerIndex;
-			} else if (updateType == 1) {
+			} else if (updateType == MOVEMENT_WALK) {
 				playerIndices[playerCount++] = playerIndex;
 				player.lastUpdateCycle = cycle;
-				player.moveInDirection(false, buffer.readBits(3));
-				if (buffer.readBits(1) == 1) {
+				player.moveInDirection(false, buffer.readBits(DIRECTION_BITS));
+				if (buffer.readBits(FLAG_BITS) == 1) {
 					updateIndices[updateCount++] = playerIndex;
 				}
-			} else if (updateType == 2) {
+			} else if (updateType == MOVEMENT_RUN) {
 				playerIndices[playerCount++] = playerIndex;
 				player.lastUpdateCycle = cycle;
-				player.moveInDirection(true, buffer.readBits(3));
-				player.moveInDirection(true, buffer.readBits(3));
-				if (buffer.readBits(1) == 1) {
+				player.moveInDirection(true, buffer.readBits(DIRECTION_BITS));
+				player.moveInDirection(true, buffer.readBits(DIRECTION_BITS));
+				if (buffer.readBits(FLAG_BITS) == 1) {
 					updateIndices[updateCount++] = playerIndex;
 				}
 			} else {
@@ -362,9 +445,9 @@ public final class ActorSynchronizer {
 	 * @param cycle      current client cycle written to newly observed players
 	 */
 	private void decodeNewPlayers(Buffer buffer, int packetSize, int cycle) {
-		while (buffer.bitPosition + 10 < packetSize * 8) {
-			int playerIndex = buffer.readBits(11);
-			if (playerIndex == 2047) {
+		while (buffer.bitPosition + NEW_PLAYER_MIN_BITS < packetSize * Byte.SIZE) {
+			int playerIndex = buffer.readBits(PLAYER_INDEX_BITS);
+			if (playerIndex == LOCAL_PLAYER_INDEX) {
 				break;
 			}
 			if (players[playerIndex] == null) {
@@ -377,17 +460,17 @@ public final class ActorSynchronizer {
 			Player player = players[playerIndex];
 			player.lastUpdateCycle = cycle;
 
-			int deltaX = buffer.readBits(5);
-			if (deltaX > 15) {
-				deltaX -= 32;
+			int deltaX = buffer.readBits(LOCAL_DELTA_BITS);
+			if (deltaX > LOCAL_DELTA_SIGN_THRESHOLD) {
+				deltaX -= LOCAL_DELTA_MODULUS;
 			}
-			if (buffer.readBits(1) == 1) {
+			if (buffer.readBits(FLAG_BITS) == 1) {
 				updateIndices[updateCount++] = playerIndex;
 			}
-			boolean teleport = buffer.readBits(1) == 1;
-			int deltaY = buffer.readBits(5);
-			if (deltaY > 15) {
-				deltaY -= 32;
+			boolean teleport = buffer.readBits(FLAG_BITS) == 1;
+			int deltaY = buffer.readBits(LOCAL_DELTA_BITS);
+			if (deltaY > LOCAL_DELTA_SIGN_THRESHOLD) {
+				deltaY -= LOCAL_DELTA_MODULUS;
 			}
 			player.setPosition(localPlayer.pathX[0] + deltaX, localPlayer.pathY[0] + deltaY, teleport);
 		}
@@ -407,7 +490,7 @@ public final class ActorSynchronizer {
 			int playerIndex = updateIndices[index];
 			Player player = players[playerIndex];
 			int mask = buffer.readUnsignedByte();
-			if ((mask & 0x20) != 0) {
+			if ((mask & PLAYER_MASK_EXTENDED) != 0) {
 				mask += buffer.readUnsignedByte() << 8;
 			}
 			decodePlayerMask(buffer, cycle, playerIndex, player, mask, chatScratch, chatHandler);
@@ -427,26 +510,26 @@ public final class ActorSynchronizer {
 	 */
 	private void decodePlayerMask(Buffer buffer, int cycle, int playerIndex, Player player, int mask,
 			Buffer chatScratch, ChatHandler chatHandler) {
-		if ((mask & 8) != 0) {
+		if ((mask & PLAYER_MASK_SEQUENCE) != 0) {
 			int sequence = buffer.readUnsignedShort();
-			if (sequence == 65535) {
+			if (sequence == ProtocolConstants.NULL_ID) {
 				sequence = -1;
 			}
 			applySequence(player, sequence, buffer.readUnsignedByteSub());
 		}
-		if ((mask & 0x10) != 0) {
+		if ((mask & PLAYER_MASK_OVERHEAD_TEXT) != 0) {
 			player.overheadText = buffer.readString();
 			if (player.overheadText.charAt(0) == '~') {
 				player.overheadText = player.overheadText.substring(1);
-				chatHandler.addChatMessage(player.name, player.overheadText, 2);
+				chatHandler.addChatMessage(player.name, player.overheadText, ChatMessageType.PUBLIC);
 			} else if (player == localPlayer) {
-				chatHandler.addChatMessage(player.name, player.overheadText, 2);
+				chatHandler.addChatMessage(player.name, player.overheadText, ChatMessageType.PUBLIC);
 			}
 			player.overheadTextColor = 0;
 			player.overheadTextEffect = 0;
-			player.overheadTextCyclesRemaining = 150;
+			player.overheadTextCyclesRemaining = Actor.CHAT_OVERHEAD_TEXT_CYCLES;
 		}
-		if ((mask & 0x100) != 0) {
+		if ((mask & PLAYER_MASK_FORCED_MOVEMENT) != 0) {
 			player.forceMoveStartX = buffer.readUnsignedByteAdd();
 			player.forceMoveStartY = buffer.readUnsignedByteNeg();
 			player.forceMoveEndX = buffer.readUnsignedByteSub();
@@ -456,31 +539,31 @@ public final class ActorSynchronizer {
 			player.forceMoveDirection = buffer.readUnsignedByte();
 			player.resetPath();
 		}
-		if ((mask & 1) != 0) {
+		if ((mask & PLAYER_MASK_TARGET) != 0) {
 			player.targetIndex = buffer.readUnsignedShortAdd();
-			if (player.targetIndex == 65535) {
+			if (player.targetIndex == ProtocolConstants.NULL_ID) {
 				player.targetIndex = -1;
 			}
 		}
-		if ((mask & 2) != 0) {
+		if ((mask & PLAYER_MASK_FACE_LOCATION) != 0) {
 			player.faceX = buffer.readUnsignedShort();
 			player.faceY = buffer.readUnsignedShort();
 		}
-		if ((mask & 0x200) != 0) {
+		if ((mask & PLAYER_MASK_SPOT_ANIMATION) != 0) {
 			player.spotAnimation = buffer.readUnsignedShortAdd();
 			int packed = buffer.readIntME();
 			player.spotAnimationHeight = packed >> 16;
-			player.spotAnimationStartCycle = cycle + (packed & 0xffff);
+			player.spotAnimationStartCycle = cycle + (packed & PACKED_CYCLE_MASK);
 			player.spotAnimationFrame = 0;
 			player.spotAnimationFrameCycle = 0;
 			if (player.spotAnimationStartCycle > cycle) {
 				player.spotAnimationFrame = -1;
 			}
-			if (player.spotAnimation == 65535) {
+			if (player.spotAnimation == ProtocolConstants.NULL_ID) {
 				player.spotAnimation = -1;
 			}
 		}
-		if ((mask & 4) != 0) {
+		if ((mask & PLAYER_MASK_APPEARANCE) != 0) {
 			int length = buffer.readUnsignedByte();
 			byte[] appearance = new byte[length];
 			Buffer appearanceBuffer = new Buffer(appearance);
@@ -488,15 +571,15 @@ public final class ActorSynchronizer {
 			playerAppearanceBuffers[playerIndex] = appearanceBuffer;
 			player.updateAppearance(appearanceBuffer);
 		}
-		if ((mask & 0x400) != 0) {
+		if ((mask & PLAYER_MASK_HIT_SECONDARY) != 0) {
 			int damage = buffer.readUnsignedByteAdd();
 			int type = buffer.readUnsignedByteSub();
 			player.addHit(cycle, damage, type);
-			player.healthBarCycle = cycle + 300;
+			player.healthBarCycle = cycle + Actor.HEALTH_BAR_CYCLES;
 			player.currentHealth = buffer.readUnsignedByteNeg();
 			player.maxHealth = buffer.readUnsignedByte();
 		}
-		if ((mask & 0x40) != 0) {
+		if ((mask & PLAYER_MASK_PUBLIC_CHAT) != 0) {
 			int textInfo = buffer.readUnsignedShort();
 			int rights = buffer.readUnsignedByteNeg();
 			int length = buffer.readUnsignedByteAdd();
@@ -517,13 +600,13 @@ public final class ActorSynchronizer {
 						player.overheadText = text;
 						player.overheadTextColor = textInfo >> 8;
 						player.overheadTextEffect = textInfo & 0xff;
-						player.overheadTextCyclesRemaining = 150;
+						player.overheadTextCyclesRemaining = Actor.CHAT_OVERHEAD_TEXT_CYCLES;
 						if (rights == 2 || rights == 3) {
-							chatHandler.addChatMessage("@cr2@" + player.name, text, 1);
+							chatHandler.addChatMessage("@cr2@" + player.name, text, ChatMessageType.PUBLIC_PRIVILEGED);
 						} else if (rights == 1) {
-							chatHandler.addChatMessage("@cr1@" + player.name, text, 1);
+							chatHandler.addChatMessage("@cr1@" + player.name, text, ChatMessageType.PUBLIC_PRIVILEGED);
 						} else {
-							chatHandler.addChatMessage(player.name, text, 2);
+							chatHandler.addChatMessage(player.name, text, ChatMessageType.PUBLIC);
 						}
 					} catch (Exception exception) {
 						Signlink.reportError("cde2");
@@ -532,11 +615,11 @@ public final class ActorSynchronizer {
 			}
 			buffer.position = messageStart + length;
 		}
-		if ((mask & 0x80) != 0) {
+		if ((mask & PLAYER_MASK_HIT_PRIMARY) != 0) {
 			int damage = buffer.readUnsignedByteSub();
 			int type = buffer.readUnsignedByteNeg();
 			player.addHit(cycle, damage, type);
-			player.healthBarCycle = cycle + 300;
+			player.healthBarCycle = cycle + Actor.HEALTH_BAR_CYCLES;
 			player.currentHealth = buffer.readUnsignedByteSub();
 			player.maxHealth = buffer.readUnsignedByte();
 		}
@@ -551,7 +634,7 @@ public final class ActorSynchronizer {
 	 */
 	private void decodeExistingNpcs(Buffer buffer, int cycle, String username) {
 		buffer.startBitAccess();
-		int count = buffer.readBits(8);
+		int count = buffer.readBits(RETAINED_COUNT_BITS);
 		if (count < npcCount) {
 			for (int index = count; index < npcCount; index++) {
 				removedIndices[removedCount++] = npcIndices[index];
@@ -566,30 +649,30 @@ public final class ActorSynchronizer {
 		for (int index = 0; index < count; index++) {
 			int npcIndex = npcIndices[index];
 			Npc npc = npcs[npcIndex];
-			if (buffer.readBits(1) == 0) {
+			if (buffer.readBits(FLAG_BITS) == 0) {
 				npcIndices[npcCount++] = npcIndex;
 				npc.lastUpdateCycle = cycle;
 				continue;
 			}
 
-			int updateType = buffer.readBits(2);
-			if (updateType == 0) {
+			int updateType = buffer.readBits(MOVEMENT_TYPE_BITS);
+			if (updateType == MOVEMENT_MASK_ONLY) {
 				npcIndices[npcCount++] = npcIndex;
 				npc.lastUpdateCycle = cycle;
 				updateIndices[updateCount++] = npcIndex;
-			} else if (updateType == 1) {
+			} else if (updateType == MOVEMENT_WALK) {
 				npcIndices[npcCount++] = npcIndex;
 				npc.lastUpdateCycle = cycle;
-				npc.moveInDirection(false, buffer.readBits(3));
-				if (buffer.readBits(1) == 1) {
+				npc.moveInDirection(false, buffer.readBits(DIRECTION_BITS));
+				if (buffer.readBits(FLAG_BITS) == 1) {
 					updateIndices[updateCount++] = npcIndex;
 				}
-			} else if (updateType == 2) {
+			} else if (updateType == MOVEMENT_RUN) {
 				npcIndices[npcCount++] = npcIndex;
 				npc.lastUpdateCycle = cycle;
-				npc.moveInDirection(true, buffer.readBits(3));
-				npc.moveInDirection(true, buffer.readBits(3));
-				if (buffer.readBits(1) == 1) {
+				npc.moveInDirection(true, buffer.readBits(DIRECTION_BITS));
+				npc.moveInDirection(true, buffer.readBits(DIRECTION_BITS));
+				if (buffer.readBits(FLAG_BITS) == 1) {
 					updateIndices[updateCount++] = npcIndex;
 				}
 			} else {
@@ -606,9 +689,9 @@ public final class ActorSynchronizer {
 	 * @param cycle      current client cycle written to newly observed NPCs
 	 */
 	private void decodeNewNpcs(Buffer buffer, int packetSize, int cycle) {
-		while (buffer.bitPosition + 21 < packetSize * 8) {
-			int npcIndex = buffer.readBits(14);
-			if (npcIndex == 16383) {
+		while (buffer.bitPosition + NEW_NPC_MIN_BITS < packetSize * Byte.SIZE) {
+			int npcIndex = buffer.readBits(NPC_INDEX_BITS);
+			if (npcIndex == NPC_INDEX_TERMINATOR) {
 				break;
 			}
 			if (npcs[npcIndex] == null) {
@@ -617,20 +700,20 @@ public final class ActorSynchronizer {
 			Npc npc = npcs[npcIndex];
 			npcIndices[npcCount++] = npcIndex;
 			npc.lastUpdateCycle = cycle;
-			if (buffer.readBits(1) == 1) {
+			if (buffer.readBits(FLAG_BITS) == 1) {
 				updateIndices[updateCount++] = npcIndex;
 			}
 
-			int deltaY = buffer.readBits(5);
-			if (deltaY > 15) {
-				deltaY -= 32;
+			int deltaY = buffer.readBits(LOCAL_DELTA_BITS);
+			if (deltaY > LOCAL_DELTA_SIGN_THRESHOLD) {
+				deltaY -= LOCAL_DELTA_MODULUS;
 			}
-			int deltaX = buffer.readBits(5);
-			if (deltaX > 15) {
-				deltaX -= 32;
+			int deltaX = buffer.readBits(LOCAL_DELTA_BITS);
+			if (deltaX > LOCAL_DELTA_SIGN_THRESHOLD) {
+				deltaX -= LOCAL_DELTA_MODULUS;
 			}
-			boolean teleport = buffer.readBits(1) == 1;
-			applyNpcDefinition(npc, NpcDefinition.lookup(buffer.readBits(13)));
+			boolean teleport = buffer.readBits(FLAG_BITS) == 1;
+			applyNpcDefinition(npc, NpcDefinition.lookup(buffer.readBits(NPC_DEFINITION_BITS)));
 			npc.setPosition(localPlayer.pathX[0] + deltaX, localPlayer.pathY[0] + deltaY, teleport);
 		}
 		buffer.finishBitAccess();
@@ -646,57 +729,57 @@ public final class ActorSynchronizer {
 		for (int index = 0; index < updateCount; index++) {
 			Npc npc = npcs[updateIndices[index]];
 			int mask = buffer.readUnsignedByte();
-			if ((mask & 1) != 0) {
+			if ((mask & NPC_MASK_DEFINITION) != 0) {
 				applyNpcDefinition(npc, NpcDefinition.lookup(buffer.readUnsignedShortAdd()));
 			}
-			if ((mask & 0x40) != 0) {
+			if ((mask & NPC_MASK_TARGET) != 0) {
 				npc.targetIndex = buffer.readUnsignedShortLE();
-				if (npc.targetIndex == 65535) {
+				if (npc.targetIndex == ProtocolConstants.NULL_ID) {
 					npc.targetIndex = -1;
 				}
 			}
-			if ((mask & 0x80) != 0) {
+			if ((mask & NPC_MASK_HIT_PRIMARY) != 0) {
 				int damage = buffer.readUnsignedByteAdd();
 				int type = buffer.readUnsignedByteAdd();
 				npc.addHit(cycle, damage, type);
-				npc.healthBarCycle = cycle + 300;
+				npc.healthBarCycle = cycle + Actor.HEALTH_BAR_CYCLES;
 				npc.currentHealth = buffer.readUnsignedByte();
 				npc.maxHealth = buffer.readUnsignedByteSub();
 			}
-			if ((mask & 4) != 0) {
+			if ((mask & NPC_MASK_SPOT_ANIMATION) != 0) {
 				npc.spotAnimation = buffer.readUnsignedShort();
 				int packed = buffer.readIntME();
 				npc.spotAnimationHeight = packed >> 16;
-				npc.spotAnimationStartCycle = cycle + (packed & 0xffff);
+				npc.spotAnimationStartCycle = cycle + (packed & PACKED_CYCLE_MASK);
 				npc.spotAnimationFrame = 0;
 				npc.spotAnimationFrameCycle = 0;
 				if (npc.spotAnimationStartCycle > cycle) {
 					npc.spotAnimationFrame = -1;
 				}
-				if (npc.spotAnimation == 65535) {
+				if (npc.spotAnimation == ProtocolConstants.NULL_ID) {
 					npc.spotAnimation = -1;
 				}
 			}
-			if ((mask & 0x20) != 0) {
+			if ((mask & NPC_MASK_OVERHEAD_TEXT) != 0) {
 				npc.overheadText = buffer.readString();
-				npc.overheadTextCyclesRemaining = 100;
+				npc.overheadTextCyclesRemaining = Actor.DEFAULT_OVERHEAD_TEXT_CYCLES;
 			}
-			if ((mask & 8) != 0) {
+			if ((mask & NPC_MASK_FACE_LOCATION) != 0) {
 				npc.faceX = buffer.readUnsignedShortAddLE();
 				npc.faceY = buffer.readUnsignedShortLE();
 			}
-			if ((mask & 2) != 0) {
+			if ((mask & NPC_MASK_SEQUENCE) != 0) {
 				int sequence = buffer.readUnsignedShort();
-				if (sequence == 65535) {
+				if (sequence == ProtocolConstants.NULL_ID) {
 					sequence = -1;
 				}
 				applySequence(npc, sequence, buffer.readUnsignedByteSub());
 			}
-			if ((mask & 0x10) != 0) {
+			if ((mask & NPC_MASK_HIT_SECONDARY) != 0) {
 				int damage = buffer.readUnsignedByteSub();
 				int type = buffer.readUnsignedByteSub();
 				npc.addHit(cycle, damage, type);
-				npc.healthBarCycle = cycle + 300;
+				npc.healthBarCycle = cycle + Actor.HEALTH_BAR_CYCLES;
 				npc.currentHealth = buffer.readUnsignedByte();
 				npc.maxHealth = buffer.readUnsignedByteNeg();
 			}

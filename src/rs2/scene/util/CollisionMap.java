@@ -94,16 +94,25 @@ public class CollisionMap {
 	private static final int PROJECTILE_FLAG_SHIFT = 9;
 
 	/** Constant value for access from west blocked. */
-	private static final int ACCESS_FROM_WEST_BLOCKED = 0x1280108;
+	public static final int ACCESS_FROM_WEST_BLOCKED = 0x1280108;
 
 	/** Constant value for access from east blocked. */
-	private static final int ACCESS_FROM_EAST_BLOCKED = 0x1280180;
+	public static final int ACCESS_FROM_EAST_BLOCKED = 0x1280180;
 
 	/** Constant value for access from south blocked. */
-	private static final int ACCESS_FROM_SOUTH_BLOCKED = 0x1280102;
+	public static final int ACCESS_FROM_SOUTH_BLOCKED = 0x1280102;
 
 	/** Constant value for access from north blocked. */
-	private static final int ACCESS_FROM_NORTH_BLOCKED = 0x1280120;
+	public static final int ACCESS_FROM_NORTH_BLOCKED = 0x1280120;
+
+	/** Mask that blocks movement into a tile from the south-west. */
+	public static final int ACCESS_FROM_SOUTH_WEST_BLOCKED = 0x128010e;
+	/** Mask that blocks movement into a tile from the south-east. */
+	public static final int ACCESS_FROM_SOUTH_EAST_BLOCKED = 0x1280183;
+	/** Mask that blocks movement into a tile from the north-west. */
+	public static final int ACCESS_FROM_NORTH_WEST_BLOCKED = 0x1280138;
+	/** Mask that blocks movement into a tile from the north-east. */
+	public static final int ACCESS_FROM_NORTH_EAST_BLOCKED = 0x12801e0;
 
 	/**
 	 * Creates a collision map and initializes its border as impassable.
@@ -285,7 +294,7 @@ public class CollisionMap {
 	public void unmarkBlocked(int x, int y) {
 		x -= insetX;
 		y -= insetY;
-		flags[x][y] &= 0x00dfffff;
+		flags[x][y] &= BORDER_BLOCKED - BLOCK_FLOOR_DECORATION;
 	}
 
 	/**

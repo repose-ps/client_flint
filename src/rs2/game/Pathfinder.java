@@ -2,6 +2,7 @@ package rs2.game;
 
 import java.util.Arrays;
 
+import rs2.scene.SceneConstants;
 import rs2.scene.util.CollisionMap;
 
 /**
@@ -20,7 +21,7 @@ public final class Pathfinder {
 	}
 
 	/** Constant value for map size. */
-	private static final int MAP_SIZE = 104;
+	private static final int MAP_SIZE = SceneConstants.SIZE;
 
 	/** Constant value for queue capacity. */
 	private static final int QUEUE_CAPACITY = 4000;
@@ -119,7 +120,7 @@ public final class Pathfinder {
 			int nextDistance = distances[currentX][currentY] + 1;
 
 			if (currentX > 0 && directions[currentX - 1][currentY] == 0
-					&& (flags[currentX - 1][currentY] & 0x1280108) == 0) {
+					&& (flags[currentX - 1][currentY] & CollisionMap.ACCESS_FROM_WEST_BLOCKED) == 0) {
 				queueX[writeIndex] = currentX - 1;
 				queueY[writeIndex] = currentY;
 				writeIndex = (writeIndex + 1) % queueX.length;
@@ -127,7 +128,7 @@ public final class Pathfinder {
 				distances[currentX - 1][currentY] = nextDistance;
 			}
 			if (currentX < MAP_SIZE - 1 && directions[currentX + 1][currentY] == 0
-					&& (flags[currentX + 1][currentY] & 0x1280180) == 0) {
+					&& (flags[currentX + 1][currentY] & CollisionMap.ACCESS_FROM_EAST_BLOCKED) == 0) {
 				queueX[writeIndex] = currentX + 1;
 				queueY[writeIndex] = currentY;
 				writeIndex = (writeIndex + 1) % queueX.length;
@@ -135,7 +136,7 @@ public final class Pathfinder {
 				distances[currentX + 1][currentY] = nextDistance;
 			}
 			if (currentY > 0 && directions[currentX][currentY - 1] == 0
-					&& (flags[currentX][currentY - 1] & 0x1280102) == 0) {
+					&& (flags[currentX][currentY - 1] & CollisionMap.ACCESS_FROM_SOUTH_BLOCKED) == 0) {
 				queueX[writeIndex] = currentX;
 				queueY[writeIndex] = currentY - 1;
 				writeIndex = (writeIndex + 1) % queueX.length;
@@ -143,7 +144,7 @@ public final class Pathfinder {
 				distances[currentX][currentY - 1] = nextDistance;
 			}
 			if (currentY < MAP_SIZE - 1 && directions[currentX][currentY + 1] == 0
-					&& (flags[currentX][currentY + 1] & 0x1280120) == 0) {
+					&& (flags[currentX][currentY + 1] & CollisionMap.ACCESS_FROM_NORTH_BLOCKED) == 0) {
 				queueX[writeIndex] = currentX;
 				queueY[writeIndex] = currentY + 1;
 				writeIndex = (writeIndex + 1) % queueX.length;
@@ -151,9 +152,9 @@ public final class Pathfinder {
 				distances[currentX][currentY + 1] = nextDistance;
 			}
 			if (currentX > 0 && currentY > 0 && directions[currentX - 1][currentY - 1] == 0
-					&& (flags[currentX - 1][currentY - 1] & 0x128010e) == 0
-					&& (flags[currentX - 1][currentY] & 0x1280108) == 0
-					&& (flags[currentX][currentY - 1] & 0x1280102) == 0) {
+					&& (flags[currentX - 1][currentY - 1] & CollisionMap.ACCESS_FROM_SOUTH_WEST_BLOCKED) == 0
+					&& (flags[currentX - 1][currentY] & CollisionMap.ACCESS_FROM_WEST_BLOCKED) == 0
+					&& (flags[currentX][currentY - 1] & CollisionMap.ACCESS_FROM_SOUTH_BLOCKED) == 0) {
 				queueX[writeIndex] = currentX - 1;
 				queueY[writeIndex] = currentY - 1;
 				writeIndex = (writeIndex + 1) % queueX.length;
@@ -161,9 +162,9 @@ public final class Pathfinder {
 				distances[currentX - 1][currentY - 1] = nextDistance;
 			}
 			if (currentX < MAP_SIZE - 1 && currentY > 0 && directions[currentX + 1][currentY - 1] == 0
-					&& (flags[currentX + 1][currentY - 1] & 0x1280183) == 0
-					&& (flags[currentX + 1][currentY] & 0x1280180) == 0
-					&& (flags[currentX][currentY - 1] & 0x1280102) == 0) {
+					&& (flags[currentX + 1][currentY - 1] & CollisionMap.ACCESS_FROM_SOUTH_EAST_BLOCKED) == 0
+					&& (flags[currentX + 1][currentY] & CollisionMap.ACCESS_FROM_EAST_BLOCKED) == 0
+					&& (flags[currentX][currentY - 1] & CollisionMap.ACCESS_FROM_SOUTH_BLOCKED) == 0) {
 				queueX[writeIndex] = currentX + 1;
 				queueY[writeIndex] = currentY - 1;
 				writeIndex = (writeIndex + 1) % queueX.length;
@@ -171,9 +172,9 @@ public final class Pathfinder {
 				distances[currentX + 1][currentY - 1] = nextDistance;
 			}
 			if (currentX > 0 && currentY < MAP_SIZE - 1 && directions[currentX - 1][currentY + 1] == 0
-					&& (flags[currentX - 1][currentY + 1] & 0x1280138) == 0
-					&& (flags[currentX - 1][currentY] & 0x1280108) == 0
-					&& (flags[currentX][currentY + 1] & 0x1280120) == 0) {
+					&& (flags[currentX - 1][currentY + 1] & CollisionMap.ACCESS_FROM_NORTH_WEST_BLOCKED) == 0
+					&& (flags[currentX - 1][currentY] & CollisionMap.ACCESS_FROM_WEST_BLOCKED) == 0
+					&& (flags[currentX][currentY + 1] & CollisionMap.ACCESS_FROM_NORTH_BLOCKED) == 0) {
 				queueX[writeIndex] = currentX - 1;
 				queueY[writeIndex] = currentY + 1;
 				writeIndex = (writeIndex + 1) % queueX.length;
@@ -181,9 +182,9 @@ public final class Pathfinder {
 				distances[currentX - 1][currentY + 1] = nextDistance;
 			}
 			if (currentX < MAP_SIZE - 1 && currentY < MAP_SIZE - 1 && directions[currentX + 1][currentY + 1] == 0
-					&& (flags[currentX + 1][currentY + 1] & 0x12801e0) == 0
-					&& (flags[currentX + 1][currentY] & 0x1280180) == 0
-					&& (flags[currentX][currentY + 1] & 0x1280120) == 0) {
+					&& (flags[currentX + 1][currentY + 1] & CollisionMap.ACCESS_FROM_NORTH_EAST_BLOCKED) == 0
+					&& (flags[currentX + 1][currentY] & CollisionMap.ACCESS_FROM_EAST_BLOCKED) == 0
+					&& (flags[currentX][currentY + 1] & CollisionMap.ACCESS_FROM_NORTH_BLOCKED) == 0) {
 				queueX[writeIndex] = currentX + 1;
 				queueY[writeIndex] = currentY + 1;
 				writeIndex = (writeIndex + 1) % queueX.length;

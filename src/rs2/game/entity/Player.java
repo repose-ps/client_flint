@@ -1,5 +1,6 @@
 package rs2.game.entity;
 
+import rs2.media.Angle;
 import rs2.Client;
 import rs2.cache.def.AnimationSequence;
 import rs2.cache.def.IdentityKit;
@@ -10,6 +11,7 @@ import rs2.collection.LruCache;
 import rs2.media.AnimationFrame;
 import rs2.media.model.Model;
 import rs2.net.Buffer;
+import rs2.net.ProtocolConstants;
 import rs2.text.Base37;
 import rs2.text.TextFormatter;
 
@@ -20,11 +22,36 @@ import rs2.text.TextFormatter;
  * <p>
  * Appearance slots use the classic encoding: {@code 0} is empty,
  * {@code 256..511} select identity kits, and values {@code >= 512} select item
- * definitions. Slot zero may instead contain {@code 65535}, followed by an NPC
+ * definitions. Slot zero may instead contain {@link ProtocolConstants#NULL_ID}, followed by an NPC
  * id, to transform the player into an NPC.
  * </p>
  */
 public class Player extends Actor {
+
+	/** Number of encoded player equipment/appearance slots. */
+	private static final int EQUIPMENT_SLOT_COUNT = 12;
+	/** Number of player body-colour selections. */
+	private static final int BODY_COLOR_COUNT = 5;
+	/** First appearance value that references an identity-kit definition. */
+	private static final int IDENTITY_KIT_OFFSET = 256;
+	/** First appearance value that references an item definition. */
+	private static final int ITEM_OFFSET = 512;
+	/** Equipment slot overridden by an animation weapon override. */
+	private static final int WEAPON_SLOT = 3;
+	/** Equipment slot overridden by an animation shield override. */
+	private static final int SHIELD_SLOT = 5;
+	/** Equipment slot swapped with the shield slot while hashing appearance. */
+	private static final int APPEARANCE_HASH_SWAP_SLOT = 9;
+	/** Bit position of the shield override contribution to the model-cache key. */
+	private static final int SHIELD_OVERRIDE_HASH_SHIFT = 40;
+	/** Bit position of the weapon override contribution to the model-cache key. */
+	private static final int WEAPON_OVERRIDE_HASH_SHIFT = 48;
+	/** Bits contributed by each encoded equipment value to the appearance hash. */
+	private static final int EQUIPMENT_HASH_BITS = 4;
+	/** Bits contributed by each body-colour selection to the appearance hash. */
+	private static final int BODY_COLOR_HASH_BITS = 3;
+	/** Bits contributed by gender to the appearance hash. */
+	private static final int GENDER_HASH_BITS = 1;
 
 	/** Creates a new player with its default client state. */
 	public Player() {
@@ -55,7 +82,7 @@ public class Player extends Actor {
 	public String name;
 
 	/** Stores equipment values. */
-	public final int[] equipment = new int[12];
+	public final int[] equipment = new int[EQUIPMENT_SLOT_COUNT];
 
 	/** Stores the current combat level. */
 	public int combatLevel;
@@ -80,7 +107,7 @@ public class Player extends Actor {
 	public int skillLevel;
 
 	/** Stores body colors values. */
-	public final int[] bodyColors = new int[5];
+	public final int[] bodyColors = new int[BODY_COLOR_COUNT];
 
 	/**
 	 * Model cache.
@@ -126,29 +153,29 @@ public class Player extends Actor {
 			return npcDefinition.getHeadModel();
 		}
 
-		for (int slot = 0; slot < 12; slot++) {
+		for (int slot = 0; slot < EQUIPMENT_SLOT_COUNT; slot++) {
 			int appearance = equipment[slot];
-			if (appearance >= 256 && appearance < 512
-					&& !IdentityKit.definitions[appearance - 256].areHeadModelsReady()) {
+			if (appearance >= IDENTITY_KIT_OFFSET && appearance < ITEM_OFFSET
+					&& !IdentityKit.definitions[appearance - IDENTITY_KIT_OFFSET].areHeadModelsReady()) {
 				return null;
 			}
-			if (appearance >= 512 && !ItemDefinition.lookup(appearance - 512).areHeadModelsReady(gender)) {
+			if (appearance >= ITEM_OFFSET && !ItemDefinition.lookup(appearance - ITEM_OFFSET).areHeadModelsReady(gender)) {
 				return null;
 			}
 		}
 
-		Model[] parts = new Model[12];
+		Model[] parts = new Model[EQUIPMENT_SLOT_COUNT];
 		int partCount = 0;
-		for (int slot = 0; slot < 12; slot++) {
+		for (int slot = 0; slot < EQUIPMENT_SLOT_COUNT; slot++) {
 			int appearance = equipment[slot];
-			if (appearance >= 256 && appearance < 512) {
-				Model part = IdentityKit.definitions[appearance - 256].buildHeadModel();
+			if (appearance >= IDENTITY_KIT_OFFSET && appearance < ITEM_OFFSET) {
+				Model part = IdentityKit.definitions[appearance - IDENTITY_KIT_OFFSET].buildHeadModel();
 				if (part != null) {
 					parts[partCount++] = part;
 				}
 			}
-			if (appearance >= 512) {
-				Model part = ItemDefinition.lookup(appearance - 512).getHeadModel(gender);
+			if (appearance >= ITEM_OFFSET) {
+				Model part = ItemDefinition.lookup(appearance - ITEM_OFFSET).getHeadModel(gender);
 				if (part != null) {
 					parts[partCount++] = part;
 				}
@@ -189,11 +216,11 @@ public class Player extends Actor {
 			}
 			if (animation.shieldOverride >= 0) {
 				shieldOverride = animation.shieldOverride;
-				cacheKey += (long) (shieldOverride - equipment[5]) << 40;
+				cacheKey += (long) (shieldOverride - equipment[SHIELD_SLOT]) << SHIELD_OVERRIDE_HASH_SHIFT;
 			}
 			if (animation.weaponOverride >= 0) {
 				weaponOverride = animation.weaponOverride;
-				cacheKey += (long) (weaponOverride - equipment[3]) << 48;
+				cacheKey += (long) (weaponOverride - equipment[WEAPON_SLOT]) << WEAPON_OVERRIDE_HASH_SHIFT;
 			}
 		} else if (movementSequence >= 0) {
 			primaryFrameId = AnimationSequence.sequences[movementSequence].primaryFrameIds[movementFrame];
@@ -202,19 +229,19 @@ public class Player extends Actor {
 		Model baseModel = (Model) modelCache.get(cacheKey);
 		if (baseModel == null) {
 			boolean missingModel = false;
-			for (int slot = 0; slot < 12; slot++) {
+			for (int slot = 0; slot < EQUIPMENT_SLOT_COUNT; slot++) {
 				int appearance = equipment[slot];
-				if (weaponOverride >= 0 && slot == 3) {
+				if (weaponOverride >= 0 && slot == WEAPON_SLOT) {
 					appearance = weaponOverride;
 				}
-				if (shieldOverride >= 0 && slot == 5) {
+				if (shieldOverride >= 0 && slot == SHIELD_SLOT) {
 					appearance = shieldOverride;
 				}
-				if (appearance >= 256 && appearance < 512
-						&& !IdentityKit.definitions[appearance - 256].areBodyModelsReady()) {
+				if (appearance >= IDENTITY_KIT_OFFSET && appearance < ITEM_OFFSET
+						&& !IdentityKit.definitions[appearance - IDENTITY_KIT_OFFSET].areBodyModelsReady()) {
 					missingModel = true;
 				}
-				if (appearance >= 512 && !ItemDefinition.lookup(appearance - 512).areWearableModelsReady(gender)) {
+				if (appearance >= ITEM_OFFSET && !ItemDefinition.lookup(appearance - ITEM_OFFSET).areWearableModelsReady(gender)) {
 					missingModel = true;
 				}
 			}
@@ -230,24 +257,24 @@ public class Player extends Actor {
 		}
 
 		if (baseModel == null) {
-			Model[] parts = new Model[12];
+			Model[] parts = new Model[EQUIPMENT_SLOT_COUNT];
 			int partCount = 0;
-			for (int slot = 0; slot < 12; slot++) {
+			for (int slot = 0; slot < EQUIPMENT_SLOT_COUNT; slot++) {
 				int appearance = equipment[slot];
-				if (weaponOverride >= 0 && slot == 3) {
+				if (weaponOverride >= 0 && slot == WEAPON_SLOT) {
 					appearance = weaponOverride;
 				}
-				if (shieldOverride >= 0 && slot == 5) {
+				if (shieldOverride >= 0 && slot == SHIELD_SLOT) {
 					appearance = shieldOverride;
 				}
-				if (appearance >= 256 && appearance < 512) {
-					Model part = IdentityKit.definitions[appearance - 256].buildBodyModel();
+				if (appearance >= IDENTITY_KIT_OFFSET && appearance < ITEM_OFFSET) {
+					Model part = IdentityKit.definitions[appearance - IDENTITY_KIT_OFFSET].buildBodyModel();
 					if (part != null) {
 						parts[partCount++] = part;
 					}
 				}
-				if (appearance >= 512) {
-					Model part = ItemDefinition.lookup(appearance - 512).getWearableModel(gender);
+				if (appearance >= ITEM_OFFSET) {
+					Model part = ItemDefinition.lookup(appearance - ITEM_OFFSET).getWearableModel(gender);
 					if (part != null) {
 						parts[partCount++] = part;
 					}
@@ -327,25 +354,25 @@ public class Player extends Actor {
 			if (Client.gameCycle >= attachedModelStartCycle && Client.gameCycle < attachedModelEndCycle) {
 				Model temporaryModel = attachedModel;
 				temporaryModel.translate(attachedModelX - x, attachedModelHeight - tileHeight, attachedModelY - y);
-				if (orientation == 512) {
+				if (orientation == Angle.QUARTER_TURN) {
 					temporaryModel.rotateY90Ccw();
 					temporaryModel.rotateY90Ccw();
 					temporaryModel.rotateY90Ccw();
-				} else if (orientation == 1024) {
+				} else if (orientation == Angle.HALF_TURN) {
 					temporaryModel.rotateY90Ccw();
 					temporaryModel.rotateY90Ccw();
-				} else if (orientation == 1536) {
+				} else if (orientation == Angle.THREE_QUARTER_TURN) {
 					temporaryModel.rotateY90Ccw();
 				}
 
 				model = new Model(new Model[] { model, temporaryModel }, 2);
 
-				if (orientation == 512) {
+				if (orientation == Angle.QUARTER_TURN) {
 					temporaryModel.rotateY90Ccw();
-				} else if (orientation == 1024) {
+				} else if (orientation == Angle.HALF_TURN) {
 					temporaryModel.rotateY90Ccw();
 					temporaryModel.rotateY90Ccw();
-				} else if (orientation == 1536) {
+				} else if (orientation == Angle.THREE_QUARTER_TURN) {
 					temporaryModel.rotateY90Ccw();
 					temporaryModel.rotateY90Ccw();
 					temporaryModel.rotateY90Ccw();
@@ -382,7 +409,7 @@ public class Player extends Actor {
 		npcDefinition = null;
 		team = 0;
 
-		for (int slot = 0; slot < 12; slot++) {
+		for (int slot = 0; slot < EQUIPMENT_SLOT_COUNT; slot++) {
 			int high = buffer.readUnsignedByte();
 			if (high == 0) {
 				equipment[slot] = 0;
@@ -390,19 +417,19 @@ public class Player extends Actor {
 			}
 			int low = buffer.readUnsignedByte();
 			equipment[slot] = (high << 8) + low;
-			if (slot == 0 && equipment[0] == 65535) {
+			if (slot == 0 && equipment[0] == ProtocolConstants.NULL_ID) {
 				npcDefinition = NpcDefinition.lookup(buffer.readUnsignedShort());
 				break;
 			}
-			if (equipment[slot] >= 512 && equipment[slot] - 512 < ItemDefinition.count) {
-				int itemTeam = ItemDefinition.lookup(equipment[slot] - 512).team;
+			if (equipment[slot] >= ITEM_OFFSET && equipment[slot] - ITEM_OFFSET < ItemDefinition.count) {
+				int itemTeam = ItemDefinition.lookup(equipment[slot] - ITEM_OFFSET).team;
 				if (itemTeam != 0) {
 					team = itemTeam;
 				}
 			}
 		}
 
-		for (int index = 0; index < 5; index++) {
+		for (int index = 0; index < BODY_COLOR_COUNT; index++) {
 			int color = buffer.readUnsignedByte();
 			if (color < 0 || color >= Client.bodyColorPalettes[index].length) {
 				color = 0;
@@ -425,32 +452,32 @@ public class Player extends Actor {
 		// Revision-377 swaps slots 5 and 9 only while calculating this hash. The
 		// appearance
 		// array itself is restored before returning.
-		int slot5 = equipment[5];
-		int slot9 = equipment[9];
-		equipment[5] = slot9;
-		equipment[9] = slot5;
+		int shieldSlotAppearance = equipment[SHIELD_SLOT];
+		int swapSlotAppearance = equipment[APPEARANCE_HASH_SWAP_SLOT];
+		equipment[SHIELD_SLOT] = swapSlotAppearance;
+		equipment[APPEARANCE_HASH_SWAP_SLOT] = shieldSlotAppearance;
 
 		appearanceHash = 0L;
-		for (int slot = 0; slot < 12; slot++) {
-			appearanceHash <<= 4;
-			if (equipment[slot] >= 256) {
-				appearanceHash += equipment[slot] - 256;
+		for (int slot = 0; slot < EQUIPMENT_SLOT_COUNT; slot++) {
+			appearanceHash <<= EQUIPMENT_HASH_BITS;
+			if (equipment[slot] >= IDENTITY_KIT_OFFSET) {
+				appearanceHash += equipment[slot] - IDENTITY_KIT_OFFSET;
 			}
 		}
-		if (equipment[0] >= 256) {
-			appearanceHash += equipment[0] - 256 >> 4;
+		if (equipment[0] >= IDENTITY_KIT_OFFSET) {
+			appearanceHash += equipment[0] - IDENTITY_KIT_OFFSET >> 4;
 		}
-		if (equipment[1] >= 256) {
-			appearanceHash += equipment[1] - 256 >> 8;
+		if (equipment[1] >= IDENTITY_KIT_OFFSET) {
+			appearanceHash += equipment[1] - IDENTITY_KIT_OFFSET >> 8;
 		}
 
-		equipment[5] = slot5;
-		equipment[9] = slot9;
-		for (int index = 0; index < 5; index++) {
-			appearanceHash <<= 3;
+		equipment[SHIELD_SLOT] = shieldSlotAppearance;
+		equipment[APPEARANCE_HASH_SWAP_SLOT] = swapSlotAppearance;
+		for (int index = 0; index < BODY_COLOR_COUNT; index++) {
+			appearanceHash <<= BODY_COLOR_HASH_BITS;
 			appearanceHash += bodyColors[index];
 		}
-		appearanceHash <<= 1;
+		appearanceHash <<= GENDER_HASH_BITS;
 		appearanceHash += gender;
 	}
 
@@ -462,7 +489,7 @@ public class Player extends Actor {
 	 */
 	private static int readSequence(Buffer buffer) {
 		int sequence = buffer.readUnsignedShort();
-		return sequence == 65535 ? -1 : sequence;
+		return sequence == ProtocolConstants.NULL_ID ? -1 : sequence;
 	}
 
 	/**
@@ -471,7 +498,7 @@ public class Player extends Actor {
 	 * @param model the model
 	 */
 	private void recolorAppearance(Model model) {
-		for (int index = 0; index < 5; index++) {
+		for (int index = 0; index < BODY_COLOR_COUNT; index++) {
 			if (bodyColors[index] != 0) {
 				model.recolor(Client.bodyColorPalettes[index][0], Client.bodyColorPalettes[index][bodyColors[index]]);
 				if (index == 1) {

@@ -26,29 +26,97 @@ public final class ClientLayout {
     public static final int FIXED_VIEWPORT_HEIGHT = 334;
 
     /** Constant value for minimap width. */
-    private static final int MINIMAP_WIDTH = 172;
+    public static final int MINIMAP_WIDTH = 172;
     /** Constant value for minimap height. */
-    private static final int MINIMAP_HEIGHT = 156;
+    public static final int MINIMAP_HEIGHT = 156;
     /** Constant value for sidebar width. */
-    private static final int SIDEBAR_WIDTH = 190;
+    public static final int SIDEBAR_WIDTH = 190;
     /** Constant value for sidebar height. */
-    private static final int SIDEBAR_HEIGHT = 261;
+    public static final int SIDEBAR_HEIGHT = 261;
     /** Constant value for top tabs width. */
-    private static final int TOP_TABS_WIDTH = 249;
+    public static final int TOP_TABS_WIDTH = 249;
     /** Constant value for top tabs height. */
-    private static final int TOP_TABS_HEIGHT = 45;
+    public static final int TOP_TABS_HEIGHT = 45;
     /** Constant value for bottom tabs width. */
-    private static final int BOTTOM_TABS_WIDTH = 269;
+    public static final int BOTTOM_TABS_WIDTH = 269;
     /** Constant value for bottom tabs height. */
-    private static final int BOTTOM_TABS_HEIGHT = 37;
+    public static final int BOTTOM_TABS_HEIGHT = 37;
     /** Constant value for chatbox width. */
-    private static final int CHATBOX_WIDTH = 479;
+    public static final int CHATBOX_WIDTH = 479;
     /** Constant value for chatbox height. */
-    private static final int CHATBOX_HEIGHT = 96;
+    public static final int CHATBOX_HEIGHT = 96;
     /** Constant value for chat modes width. */
-    private static final int CHAT_MODES_WIDTH = 496;
+    public static final int CHAT_MODES_WIDTH = 496;
     /** Constant value for chat modes height. */
-    private static final int CHAT_MODES_HEIGHT = 50;
+    public static final int CHAT_MODES_HEIGHT = 50;
+
+
+    /** Fixed-layout X origin of the world viewport. */
+    public static final int VIEWPORT_X = 4;
+    /** Fixed-layout Y origin of the world viewport. */
+    public static final int VIEWPORT_Y = 4;
+    /** Fixed-layout X origin of the minimap dock. */
+    public static final int MINIMAP_X = 550;
+    /** Fixed-layout Y origin of the minimap dock. */
+    public static final int MINIMAP_Y = 4;
+    /** Fixed-layout X origin of the top tab strip. */
+    public static final int TOP_TABS_X = 516;
+    /** Fixed-layout Y origin of the top tab strip. */
+    public static final int TOP_TABS_Y = 160;
+    /** Fixed-layout X origin of the sidebar content area. */
+    public static final int SIDEBAR_X = 553;
+    /** Fixed-layout Y origin of the sidebar content area. */
+    public static final int SIDEBAR_Y = 205;
+    /** Fixed-layout X origin of the bottom tab strip. */
+    public static final int BOTTOM_TABS_X = 496;
+    /** Fixed-layout Y origin of the bottom tab strip. */
+    public static final int BOTTOM_TABS_Y = 466;
+    /** Fixed-layout X origin of the chatbox. */
+    public static final int CHATBOX_X = 17;
+    /** Fixed-layout Y origin of the chatbox. */
+    public static final int CHATBOX_Y = 357;
+    /** Fixed-layout X origin of the chat-mode strip. */
+    public static final int CHAT_MODES_X = 0;
+    /** Fixed-layout Y origin of the chat-mode strip. */
+    public static final int CHAT_MODES_Y = 453;
+    /** Fixed-layout X coordinate of the middle frame border. */
+    public static final int MIDDLE_BORDER_X = 516;
+    /** Fixed-layout Y coordinate of the lower frame border. */
+    public static final int LOWER_BORDER_Y = 338;
+
+    /** Number of classic sidebar tabs. */
+    public static final int TAB_COUNT = 14;
+
+    /** Chat-mode button identifier for public chat. */
+    public static final int CHAT_MODE_PUBLIC = 0;
+    /** Chat-mode button identifier for private chat. */
+    public static final int CHAT_MODE_PRIVATE = 1;
+    /** Chat-mode button identifier for trade/compete requests. */
+    public static final int CHAT_MODE_TRADE = 2;
+    /** Chat-mode button identifier for Report Abuse. */
+    public static final int CHAT_MODE_REPORT_ABUSE = 3;
+    /** Value returned when no fixed chat-mode button contains the point. */
+    public static final int NO_CHAT_MODE_BUTTON = -1;
+
+    /**
+     * Classic sidebar-tab hit rectangles as {left, rightExclusive, top, bottomExclusive}.
+     * The slightly overlapping bounds are retained exactly from the fixed client.
+     */
+    private static final int[][] TAB_HITBOXES = {
+            { 539, 574, 169, 205 }, { 569, 600, 168, 205 }, { 597, 628, 168, 205 },
+            { 625, 670, 168, 203 }, { 666, 697, 168, 205 }, { 694, 725, 168, 205 },
+            { 722, 757, 169, 205 }, { 540, 575, 466, 502 }, { 572, 603, 466, 503 },
+            { 599, 630, 466, 503 }, { 627, 672, 467, 502 }, { 669, 700, 466, 503 },
+            { 696, 727, 466, 503 }, { 724, 759, 466, 502 }
+    };
+
+    /**
+     * Classic chat-mode hit rectangles as {left, rightExclusive, top, bottomExclusive}.
+     */
+    private static final int[][] CHAT_MODE_HITBOXES = {
+            { 6, 107, 467, 500 }, { 135, 236, 467, 500 },
+            { 273, 374, 467, 500 }, { 412, 513, 467, 500 }
+    };
 
     /** Stores the current width. */
     private int width = FIXED_WIDTH;
@@ -104,13 +172,13 @@ public final class ClientLayout {
      *
      * @return the viewport X
      */
-    public int viewportX() { return 4; }
+    public int viewportX() { return VIEWPORT_X; }
     /**
      * Returns the viewport Y coordinate.
      *
      * @return the viewport Y
      */
-    public int viewportY() { return 4; }
+    public int viewportY() { return VIEWPORT_Y; }
 
     /**
      * The fixed client keeps its original 512x334 viewport exactly. Once either
@@ -155,52 +223,52 @@ public final class ClientLayout {
      *
      * @return the minimap X coordinate
      */
-    public int minimapX() { return 550 + extraWidth(); }
+    public int minimapX() { return MINIMAP_X + extraWidth(); }
     /**
      * Returns the minimap Y coordinate.
      *
      * @return the minimap Y
      */
-    public int minimapY() { return 4; }
+    public int minimapY() { return MINIMAP_Y; }
 
     /**
      * Returns the left edge of the top tab strip.
      *
      * @return the top-tab X coordinate
      */
-    public int topTabsX() { return 516 + extraWidth(); }
+    public int topTabsX() { return TOP_TABS_X + extraWidth(); }
     /**
      * Returns the top tabs Y coordinate.
      *
      * @return the converted value
      */
-    public int topTabsY() { return 160; }
+    public int topTabsY() { return TOP_TABS_Y; }
 
     /**
      * Returns the left edge of the sidebar content area.
      *
      * @return the sidebar X coordinate
      */
-    public int sidebarX() { return 553 + extraWidth(); }
+    public int sidebarX() { return SIDEBAR_X + extraWidth(); }
     /**
      * Returns the sidebar Y coordinate.
      *
      * @return the sidebar Y
      */
-    public int sidebarY() { return 205; }
+    public int sidebarY() { return SIDEBAR_Y; }
 
     /**
      * Returns the left edge of the bottom tab strip.
      *
      * @return the bottom-tab X coordinate
      */
-    public int bottomTabsX() { return 496 + extraWidth(); }
+    public int bottomTabsX() { return BOTTOM_TABS_X + extraWidth(); }
     /**
      * Returns the bottom tabs Y coordinate.
      *
      * @return the bottom tabs Y
      */
-    public int bottomTabsY() { return 466; }
+    public int bottomTabsY() { return BOTTOM_TABS_Y; }
 
     /* Bottom HUD: preserve the original horizontal geometry, anchor only Y. */
     /**
@@ -208,39 +276,39 @@ public final class ClientLayout {
      *
      * @return the chatbox X
      */
-    public int chatboxX() { return 17; }
+    public int chatboxX() { return CHATBOX_X; }
     /**
      * Returns the top edge of the bottom-anchored chatbox.
      *
      * @return the chatbox Y coordinate
      */
-    public int chatboxY() { return 357 + extraHeight(); }
+    public int chatboxY() { return CHATBOX_Y + extraHeight(); }
 
     /**
      * Returns the chat modes X coordinate.
      *
      * @return the chat modes X
      */
-    public int chatModesX() { return 0; }
+    public int chatModesX() { return CHAT_MODES_X; }
     /**
      * Returns the top edge of the bottom-anchored chat-mode strip.
      *
      * @return the chat-mode Y coordinate
      */
-    public int chatModesY() { return 453 + extraHeight(); }
+    public int chatModesY() { return CHAT_MODES_Y + extraHeight(); }
 
     /**
      * Returns the X coordinate of the classic middle frame border.
      *
      * @return the middle-border X coordinate
      */
-    public int middleBorderX() { return 516 + extraWidth(); }
+    public int middleBorderX() { return MIDDLE_BORDER_X + extraWidth(); }
     /**
      * Returns the Y coordinate of the classic lower frame border.
      *
      * @return the lower-border Y coordinate
      */
-    public int lowerBorderY() { return 338 + extraHeight(); }
+    public int lowerBorderY() { return LOWER_BORDER_Y + extraHeight(); }
 
     /**
      * Returns the viewport-local X origin for a modal/root interface. Fixed mode
@@ -301,6 +369,55 @@ public final class ClientLayout {
     private boolean contains(int x, int y, int left, int top, int regionWidth, int regionHeight) {
         return regionWidth > 0 && regionHeight > 0
                 && x >= left && y >= top && x < left + regionWidth && y < top + regionHeight;
+    }
+
+    /**
+     * Tests whether the supplied screen coordinate falls within one classic
+     * sidebar-tab hitbox.
+     *
+     * @param tab tab index 0..13
+     * @param x screen X coordinate
+     * @param y screen Y coordinate
+     * @return whether the point lies in that tab's original fixed-layout hitbox
+     */
+    public boolean isTabHit(int tab, int x, int y) {
+        if (tab < 0 || tab >= TAB_HITBOXES.length)
+            return false;
+        int[] bounds = TAB_HITBOXES[tab];
+        int fixedX = x - extraWidth();
+        return containsExclusive(fixedX, y, bounds[0], bounds[2], bounds[1], bounds[3]);
+    }
+
+    /**
+     * Returns the fixed chat-mode button at the supplied screen coordinate.
+     *
+     * @param x screen X coordinate
+     * @param y screen Y coordinate
+     * @return one of the {@code CHAT_MODE_*} constants, or {@link #NO_CHAT_MODE_BUTTON}
+     */
+    public int chatModeButtonAt(int x, int y) {
+        int fixedY = y - extraHeight();
+        for (int button = 0; button < CHAT_MODE_HITBOXES.length; button++) {
+            int[] bounds = CHAT_MODE_HITBOXES[button];
+            if (containsExclusive(x, fixedY, bounds[0], bounds[2], bounds[1], bounds[3]))
+                return button;
+        }
+        return NO_CHAT_MODE_BUTTON;
+    }
+
+    /**
+     * Tests a rectangle expressed using exclusive right/bottom edges.
+     *
+     * @param x point X coordinate
+     * @param y point Y coordinate
+     * @param left inclusive left edge
+     * @param top inclusive top edge
+     * @param right exclusive right edge
+     * @param bottom exclusive bottom edge
+     * @return whether the point lies inside the rectangle
+     */
+    private boolean containsExclusive(int x, int y, int left, int top, int right, int bottom) {
+        return x >= left && y >= top && x < right && y < bottom;
     }
 
     /**

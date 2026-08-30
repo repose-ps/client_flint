@@ -14,6 +14,32 @@ import rs2.net.Buffer;
  * </p>
  */
 public class SpotAnimation {
+	/* Cache-format opcode values. */
+	/** Opcode for end. */
+	private static final int OPCODE_END = 0;
+	/** Opcode for model. */
+	private static final int OPCODE_MODEL = 1;
+	/** Opcode for animation. */
+	private static final int OPCODE_ANIMATION = 2;
+	/** Opcode for resize xy. */
+	private static final int OPCODE_RESIZE_XY = 4;
+	/** Opcode for resize z. */
+	private static final int OPCODE_RESIZE_Z = 5;
+	/** Opcode for rotation. */
+	private static final int OPCODE_ROTATION = 6;
+	/** Opcode for ambient. */
+	private static final int OPCODE_AMBIENT = 7;
+	/** Opcode for contrast. */
+	private static final int OPCODE_CONTRAST = 8;
+	/** First opcode in the recolor source range. */
+	private static final int RECOLOR_SOURCE_FIRST = 40;
+	/** Exclusive upper bound of the recolor source opcode range. */
+	private static final int RECOLOR_SOURCE_LIMIT = 50;
+	/** First opcode in the recolor target range. */
+	private static final int RECOLOR_TARGET_FIRST = 50;
+	/** Exclusive upper bound of the recolor target opcode range. */
+	private static final int RECOLOR_TARGET_LIMIT = 60;
+
 
 	/** Creates a new spot animation with its default client state. */
 	public SpotAnimation() {
@@ -81,29 +107,29 @@ public class SpotAnimation {
 	public void decode(Buffer buffer) {
 		while (true) {
 			int opcode = buffer.readUnsignedByte();
-			if (opcode == 0) {
+			if (opcode == OPCODE_END) {
 				return;
-			} else if (opcode == 1) {
+			} else if (opcode == OPCODE_MODEL) {
 				modelId = buffer.readUnsignedShort();
-			} else if (opcode == 2) {
+			} else if (opcode == OPCODE_ANIMATION) {
 				animationId = buffer.readUnsignedShort();
 				if (AnimationSequence.sequences != null) {
 					sequence = AnimationSequence.sequences[animationId];
 				}
-			} else if (opcode == 4) {
+			} else if (opcode == OPCODE_RESIZE_XY) {
 				resizeXY = buffer.readUnsignedShort();
-			} else if (opcode == 5) {
+			} else if (opcode == OPCODE_RESIZE_Z) {
 				resizeZ = buffer.readUnsignedShort();
-			} else if (opcode == 6) {
+			} else if (opcode == OPCODE_ROTATION) {
 				rotation = buffer.readUnsignedShort();
-			} else if (opcode == 7) {
+			} else if (opcode == OPCODE_AMBIENT) {
 				ambient = buffer.readUnsignedByte();
-			} else if (opcode == 8) {
+			} else if (opcode == OPCODE_CONTRAST) {
 				contrast = buffer.readUnsignedByte();
-			} else if (opcode >= 40 && opcode < 50) {
-				originalColors[opcode - 40] = buffer.readUnsignedShort();
-			} else if (opcode >= 50 && opcode < 60) {
-				replacementColors[opcode - 50] = buffer.readUnsignedShort();
+			} else if (opcode >= RECOLOR_SOURCE_FIRST && opcode < RECOLOR_SOURCE_LIMIT) {
+				originalColors[opcode - RECOLOR_SOURCE_FIRST] = buffer.readUnsignedShort();
+			} else if (opcode >= RECOLOR_TARGET_FIRST && opcode < RECOLOR_TARGET_LIMIT) {
+				replacementColors[opcode - RECOLOR_TARGET_FIRST] = buffer.readUnsignedShort();
 			} else {
 				System.out.println("Error unrecognised spotanim config code: " + opcode);
 			}

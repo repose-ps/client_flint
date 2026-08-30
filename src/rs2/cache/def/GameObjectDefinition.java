@@ -30,6 +30,80 @@ import rs2.net.Buffer;
  * </p>
  */
 public class GameObjectDefinition {
+	/* Cache-format opcode values. */
+	/** Opcode for end. */
+	private static final int OPCODE_END = 0;
+	/** Opcode for typed models. */
+	private static final int OPCODE_TYPED_MODELS = 1;
+	/** Opcode for name. */
+	private static final int OPCODE_NAME = 2;
+	/** Opcode for description. */
+	private static final int OPCODE_DESCRIPTION = 3;
+	/** Opcode for models. */
+	private static final int OPCODE_MODELS = 5;
+	/** Opcode for size x. */
+	private static final int OPCODE_SIZE_X = 14;
+	/** Opcode for size y. */
+	private static final int OPCODE_SIZE_Y = 15;
+	/** Opcode for allow walking. */
+	private static final int OPCODE_ALLOW_WALKING = 17;
+	/** Opcode for allow projectiles. */
+	private static final int OPCODE_ALLOW_PROJECTILES = 18;
+	/** Opcode for interactive. */
+	private static final int OPCODE_INTERACTIVE = 19;
+	/** Opcode for contoured ground. */
+	private static final int OPCODE_CONTOURED_GROUND = 21;
+	/** Opcode for non flat shading. */
+	private static final int OPCODE_NON_FLAT_SHADING = 22;
+	/** Opcode for model clipped. */
+	private static final int OPCODE_MODEL_CLIPPED = 23;
+	/** Opcode for animation. */
+	private static final int OPCODE_ANIMATION = 24;
+	/** Opcode for decor displacement. */
+	private static final int OPCODE_DECOR_DISPLACEMENT = 28;
+	/** Opcode for ambient. */
+	private static final int OPCODE_AMBIENT = 29;
+	/** Opcode for contrast. */
+	private static final int OPCODE_CONTRAST = 39;
+	/** Opcode for recolors. */
+	private static final int OPCODE_RECOLORS = 40;
+	/** Opcode for map function. */
+	private static final int OPCODE_MAP_FUNCTION = 60;
+	/** Opcode for rotated. */
+	private static final int OPCODE_ROTATED = 62;
+	/** Opcode for disable shadow. */
+	private static final int OPCODE_DISABLE_SHADOW = 64;
+	/** Opcode for scale x. */
+	private static final int OPCODE_SCALE_X = 65;
+	/** Opcode for scale y. */
+	private static final int OPCODE_SCALE_Y = 66;
+	/** Opcode for scale z. */
+	private static final int OPCODE_SCALE_Z = 67;
+	/** Opcode for map scene. */
+	private static final int OPCODE_MAP_SCENE = 68;
+	/** Opcode for surroundings. */
+	private static final int OPCODE_SURROUNDINGS = 69;
+	/** Opcode for translate x. */
+	private static final int OPCODE_TRANSLATE_X = 70;
+	/** Opcode for translate y. */
+	private static final int OPCODE_TRANSLATE_Y = 71;
+	/** Opcode for translate z. */
+	private static final int OPCODE_TRANSLATE_Z = 72;
+	/** Opcode for obstructs ground. */
+	private static final int OPCODE_OBSTRUCTS_GROUND = 73;
+	/** Opcode for hollow. */
+	private static final int OPCODE_HOLLOW = 74;
+	/** Opcode for support items. */
+	private static final int OPCODE_SUPPORT_ITEMS = 75;
+	/** Opcode for morphs. */
+	private static final int OPCODE_MORPHS = 77;
+	/** First opcode in the action range. */
+	private static final int ACTION_OPCODE_FIRST = 30;
+	/** Exclusive upper bound of the action opcode range. */
+	private static final int ACTION_OPCODE_LIMIT = 39;
+	/** Action count. */
+	private static final int ACTION_COUNT = 5;
+
 
 	/** Creates a new game object definition with its default client state. */
 	public GameObjectDefinition() {
@@ -517,10 +591,10 @@ public class GameObjectDefinition {
 		int explicitInteractive = -1;
 		while (true) {
 			int opcode = buffer.readUnsignedByte();
-			if (opcode == 0) {
+			if (opcode == OPCODE_END) {
 				break;
 			}
-			if (opcode == 1) {
+			if (opcode == OPCODE_TYPED_MODELS) {
 				int length = buffer.readUnsignedByte();
 				if (length > 0) {
 					if (modelIds == null || lowMemory) {
@@ -534,11 +608,11 @@ public class GameObjectDefinition {
 						buffer.position += length * 3;
 					}
 				}
-			} else if (opcode == 2) {
+			} else if (opcode == OPCODE_NAME) {
 				name = buffer.readString();
-			} else if (opcode == 3) {
+			} else if (opcode == OPCODE_DESCRIPTION) {
 				description = buffer.readStringBytes();
-			} else if (opcode == 5) {
+			} else if (opcode == OPCODE_MODELS) {
 				int length = buffer.readUnsignedByte();
 				if (length > 0) {
 					if (modelIds == null || lowMemory) {
@@ -551,45 +625,45 @@ public class GameObjectDefinition {
 						buffer.position += length * 2;
 					}
 				}
-			} else if (opcode == 14) {
+			} else if (opcode == OPCODE_SIZE_X) {
 				sizeX = buffer.readUnsignedByte();
-			} else if (opcode == 15) {
+			} else if (opcode == OPCODE_SIZE_Y) {
 				sizeY = buffer.readUnsignedByte();
-			} else if (opcode == 17) {
+			} else if (opcode == OPCODE_ALLOW_WALKING) {
 				blocksMovement = false;
-			} else if (opcode == 18) {
+			} else if (opcode == OPCODE_ALLOW_PROJECTILES) {
 				blocksProjectiles = false;
-			} else if (opcode == 19) {
+			} else if (opcode == OPCODE_INTERACTIVE) {
 				explicitInteractive = buffer.readUnsignedByte();
 				if (explicitInteractive == 1) {
 					interactive = true;
 				}
-			} else if (opcode == 21) {
+			} else if (opcode == OPCODE_CONTOURED_GROUND) {
 				contouredGround = true;
-			} else if (opcode == 22) {
+			} else if (opcode == OPCODE_NON_FLAT_SHADING) {
 				nonFlatShading = true;
-			} else if (opcode == 23) {
+			} else if (opcode == OPCODE_MODEL_CLIPPED) {
 				modelClipped = true;
-			} else if (opcode == 24) {
+			} else if (opcode == OPCODE_ANIMATION) {
 				animationId = buffer.readUnsignedShort();
-				if (animationId == 65535) {
+				if (animationId == DefinitionConstants.NULL_REFERENCE_ID) {
 					animationId = -1;
 				}
-			} else if (opcode == 28) {
+			} else if (opcode == OPCODE_DECOR_DISPLACEMENT) {
 				decorDisplacement = buffer.readUnsignedByte();
-			} else if (opcode == 29) {
+			} else if (opcode == OPCODE_AMBIENT) {
 				ambient = buffer.readSignedByte();
-			} else if (opcode == 39) {
+			} else if (opcode == OPCODE_CONTRAST) {
 				contrast = buffer.readSignedByte();
-			} else if (opcode >= 30 && opcode < 39) {
+			} else if (opcode >= ACTION_OPCODE_FIRST && opcode < ACTION_OPCODE_LIMIT) {
 				if (actions == null) {
-					actions = new String[5];
+					actions = new String[ACTION_COUNT];
 				}
-				actions[opcode - 30] = buffer.readString();
-				if (actions[opcode - 30].equalsIgnoreCase("hidden")) {
-					actions[opcode - 30] = null;
+				actions[opcode - ACTION_OPCODE_FIRST] = buffer.readString();
+				if (actions[opcode - ACTION_OPCODE_FIRST].equalsIgnoreCase("hidden")) {
+					actions[opcode - ACTION_OPCODE_FIRST] = null;
 				}
-			} else if (opcode == 40) {
+			} else if (opcode == OPCODE_RECOLORS) {
 				int length = buffer.readUnsignedByte();
 				recolorFrom = new int[length];
 				recolorTo = new int[length];
@@ -597,48 +671,48 @@ public class GameObjectDefinition {
 					recolorFrom[recolorIndex] = buffer.readUnsignedShort();
 					recolorTo[recolorIndex] = buffer.readUnsignedShort();
 				}
-			} else if (opcode == 60) {
+			} else if (opcode == OPCODE_MAP_FUNCTION) {
 				mapFunctionId = buffer.readUnsignedShort();
-			} else if (opcode == 62) {
+			} else if (opcode == OPCODE_ROTATED) {
 				rotated = true;
-			} else if (opcode == 64) {
+			} else if (opcode == OPCODE_DISABLE_SHADOW) {
 				castsShadow = false;
-			} else if (opcode == 65) {
+			} else if (opcode == OPCODE_SCALE_X) {
 				scaleX = buffer.readUnsignedShort();
-			} else if (opcode == 66) {
+			} else if (opcode == OPCODE_SCALE_Y) {
 				scaleY = buffer.readUnsignedShort();
-			} else if (opcode == 67) {
+			} else if (opcode == OPCODE_SCALE_Z) {
 				scaleZ = buffer.readUnsignedShort();
-			} else if (opcode == 68) {
+			} else if (opcode == OPCODE_MAP_SCENE) {
 				mapSceneId = buffer.readUnsignedShort();
-			} else if (opcode == 69) {
+			} else if (opcode == OPCODE_SURROUNDINGS) {
 				surroundings = buffer.readUnsignedByte();
-			} else if (opcode == 70) {
+			} else if (opcode == OPCODE_TRANSLATE_X) {
 				translateX = buffer.readSignedShort();
-			} else if (opcode == 71) {
+			} else if (opcode == OPCODE_TRANSLATE_Y) {
 				translateY = buffer.readSignedShort();
-			} else if (opcode == 72) {
+			} else if (opcode == OPCODE_TRANSLATE_Z) {
 				translateZ = buffer.readSignedShort();
-			} else if (opcode == 73) {
+			} else if (opcode == OPCODE_OBSTRUCTS_GROUND) {
 				obstructsGround = true;
-			} else if (opcode == 74) {
+			} else if (opcode == OPCODE_HOLLOW) {
 				hollow = true;
-			} else if (opcode == 75) {
+			} else if (opcode == OPCODE_SUPPORT_ITEMS) {
 				supportItems = buffer.readUnsignedByte();
-			} else if (opcode == 77) {
+			} else if (opcode == OPCODE_MORPHS) {
 				varbitId = buffer.readUnsignedShort();
-				if (varbitId == 65535) {
+				if (varbitId == DefinitionConstants.NULL_REFERENCE_ID) {
 					varbitId = -1;
 				}
 				varpId = buffer.readUnsignedShort();
-				if (varpId == 65535) {
+				if (varpId == DefinitionConstants.NULL_REFERENCE_ID) {
 					varpId = -1;
 				}
 				int lastIndex = buffer.readUnsignedByte();
 				morphIds = new int[lastIndex + 1];
 				for (int morphIndex = 0; morphIndex <= lastIndex; morphIndex++) {
 					morphIds[morphIndex] = buffer.readUnsignedShort();
-					if (morphIds[morphIndex] == 65535) {
+					if (morphIds[morphIndex] == DefinitionConstants.NULL_REFERENCE_ID) {
 						morphIds[morphIndex] = -1;
 					}
 				}

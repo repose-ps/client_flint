@@ -1,5 +1,6 @@
 package rs2.scene.entity;
 
+import rs2.media.Angle;
 import rs2.cache.def.SpotAnimation;
 import rs2.media.AnimationFrame;
 import rs2.media.model.Model;
@@ -165,8 +166,8 @@ public class Projectile extends Renderable {
 		y += speedY * cycles;
 		z += speedZ * cycles + 0.5D * accelerationZ * cycles * cycles;
 		speedZ += accelerationZ * cycles;
-		yaw = (int) (Math.atan2(speedX, speedY) * 325.94900000000001D) + 1024 & 0x7ff;
-		pitch = (int) (Math.atan2(speedZ, speed) * 325.94900000000001D) & 0x7ff;
+		yaw = (int) (Math.atan2(speedX, speedY) * Angle.UNITS_PER_RADIAN) + Angle.HALF_TURN & Angle.MASK;
+		pitch = (int) (Math.atan2(speedZ, speed) * Angle.UNITS_PER_RADIAN) & Angle.MASK;
 
 		if (spotAnimation.sequence != null) {
 			for (frameCycle += cycles; frameCycle > spotAnimation.sequence.getFrameLength(frame);) {

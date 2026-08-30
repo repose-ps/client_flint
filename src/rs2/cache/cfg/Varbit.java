@@ -17,6 +17,22 @@ public class Varbit {
 	public Varbit() {
 	}
 
+
+	/** Terminates a varbit definition record. */
+	private static final int OPCODE_END = 0;
+	/** Defines the backing varp and inclusive/exclusive bit range. */
+	private static final int OPCODE_BIT_RANGE = 1;
+	/** Marks the backing varp as linked to a varbit. */
+	private static final int OPCODE_LINK_VARP = 2;
+	/** Stores the first reserved integer attribute. */
+	private static final int OPCODE_RESERVED_INT_3 = 3;
+	/** Stores the second reserved integer attribute. */
+	private static final int OPCODE_RESERVED_INT_4 = 4;
+	/** Disables the opcode-5 boolean attribute. */
+	private static final int OPCODE_DISABLE_5 = 5;
+	/** Stores the optional diagnostic name. */
+	private static final int OPCODE_DEBUG_NAME = 10;
+
 	/** Number of definitions declared by the cache. */
 	public static int count;
 
@@ -83,26 +99,26 @@ public class Varbit {
 		while (true) {
 			int opcode = buffer.readUnsignedByte();
 			switch (opcode) {
-			case 0:
+			case OPCODE_END:
 				return;
-			case 1:
+			case OPCODE_BIT_RANGE:
 				varpId = buffer.readUnsignedShort();
 				leastSignificantBit = buffer.readUnsignedByte();
 				mostSignificantBit = buffer.readUnsignedByte();
 				break;
-			case 2:
+			case OPCODE_LINK_VARP:
 				linkVarp = true;
 				break;
-			case 3:
+			case OPCODE_RESERVED_INT_3:
 				opcode3Value = buffer.readInt();
 				break;
-			case 4:
+			case OPCODE_RESERVED_INT_4:
 				opcode4Value = buffer.readInt();
 				break;
-			case 5:
+			case OPCODE_DISABLE_5:
 				opcode5Enabled = false;
 				break;
-			case 10:
+			case OPCODE_DEBUG_NAME:
 				debugName = buffer.readString();
 				break;
 			default:
