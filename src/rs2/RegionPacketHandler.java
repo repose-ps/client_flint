@@ -1,6 +1,14 @@
 package rs2;
 
+import java.util.function.Supplier;
+
+import rs2.cache.ondemand.OnDemandFetcher;
+import rs2.game.ActorSynchronizer;
+import rs2.game.CameraController;
 import rs2.game.RegionManager;
+import rs2.game.WorldState;
+import rs2.game.ZoneUpdateHandler;
+import rs2.game.entity.Player;
 import rs2.net.Buffer;
 import rs2.net.IncomingPacketOpcode;
 
@@ -13,16 +21,100 @@ import rs2.net.IncomingPacketOpcode;
  */
 final class RegionPacketHandler {
 
-	/** Client runtime receiving decoded packet effects. */
-	private final Client client;
+	/** Region-rebuild owner. */
+	private final RegionManager regions;
+	/** Supplies the asynchronous on-demand resource service. */
+	private final Supplier<OnDemandFetcher> resources;
+	/** Actor synchronization owner used by rebuild and zone packets. */
+	private final ActorSynchronizer actors;
+	/** Supplies world state created during client startup. */
+	private final Supplier<WorldState> world;
+	/** Supplies zone-update state created during client startup. */
+	private final Supplier<ZoneUpdateHandler> zoneUpdates;
+	/** Camera owner reset after a region shift. */
+	private final CameraController camera;
+	/** Narrow mutable client state required by region packets. */
+	private final State state;
+	/** Localized-area-sound callback. */
+	private final ZoneUpdateHandler.AreaSoundHandler areaSounds;
+	/** Displays the region-loading message after a rebuild shift. */
+	private final Runnable showLoadingMessage;
 
 	/**
-	 * Creates the region packet handler.
-	 *
-	 * @param client client runtime receiving packet effects
+	 * Narrow mutable state consumed by region packets.
 	 */
-	RegionPacketHandler(Client client) {
-		this.client = client;
+	interface State {
+		/** Returns the current scene plane.
+		 * @return current scene plane
+		 */
+		int currentPlane();
+
+		/** Returns the current game cycle.
+		 * @return current game cycle
+		 */
+		int gameCycle();
+
+		/** Returns the local player's server index.
+		 * @return local player's server index
+		 */
+		int localPlayerServerIndex();
+
+		/** Returns the current local player.
+		 * @return current local player
+		 */
+		Player localPlayer();
+
+		/** Returns the current destination X coordinate.
+		 * @return current destination X coordinate
+		 */
+		int destinationX();
+
+		/** Returns the current destination Y coordinate.
+		 * @return current destination Y coordinate
+		 */
+		int destinationY();
+
+		/**
+		 * Updates the destination marker.
+		 *
+		 * @param x destination X
+		 * @param y destination Y
+		 */
+		void setDestination(int x, int y);
+
+		/**
+		 * Updates the multi-combat overlay state.
+		 *
+		 * @param value multi-combat state
+		 */
+		void setMultiCombatZone(int value);
+	}
+
+	/**
+	 * Creates the region packet handler from its exact application capabilities.
+	 *
+	 * @param regions region-rebuild owner
+	 * @param resources on-demand resource supplier
+	 * @param actors actor synchronization owner
+	 * @param world world-state supplier
+	 * @param zoneUpdates zone-update-state supplier
+	 * @param camera camera owner
+	 * @param state narrow region packet state
+	 * @param areaSounds localized-area-sound callback
+	 * @param showLoadingMessage loading-message callback
+	 */
+	RegionPacketHandler(RegionManager regions, Supplier<OnDemandFetcher> resources, ActorSynchronizer actors,
+			Supplier<WorldState> world, Supplier<ZoneUpdateHandler> zoneUpdates, CameraController camera, State state,
+			ZoneUpdateHandler.AreaSoundHandler areaSounds, Runnable showLoadingMessage) {
+		this.regions = regions;
+		this.resources = resources;
+		this.actors = actors;
+		this.world = world;
+		this.zoneUpdates = zoneUpdates;
+		this.camera = camera;
+		this.state = state;
+		this.areaSounds = areaSounds;
+		this.showLoadingMessage = showLoadingMessage;
 	}
 
 	/**
@@ -36,39 +128,38 @@ final class RegionPacketHandler {
 	 */
 	boolean handle(int opcode, Buffer buffer, int packetSize) {
 		if (opcode == IncomingPacketOpcode.SET_MULTI_COMBAT) {
-			client.multiCombatZone = buffer.readUnsignedByte();
+			state.setMultiCombatZone(buffer.readUnsignedByte());
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.CLEAR_DESTINATION) {
-			client.destinationX = 0;
+			state.setDestination(0, state.destinationY());
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.CLEAR_ZONE) {
 			int zoneBaseY = buffer.readUnsignedByteSub();
 			int zoneBaseX = buffer.readUnsignedByteNeg();
-			client.packetZoneUpdates().setZoneBase(zoneBaseX, zoneBaseY);
-			client.packetWorldState().clearZone(client.currentPlane, zoneBaseX, zoneBaseY);
+			zoneUpdates.get().setZoneBase(zoneBaseX, zoneBaseY);
+			world.get().clearZone(state.currentPlane(), zoneBaseX, zoneBaseY);
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.BATCH_ZONE_UPDATES) {
-			client.packetZoneUpdates().setZoneBase(buffer.readUnsignedByte(),
+			zoneUpdates.get().setZoneBase(buffer.readUnsignedByte(),
 					buffer.readUnsignedByteAdd());
 			while (buffer.position < packetSize) {
 				int updateType = buffer.readUnsignedByte();
-				client.packetZoneUpdates().decode(buffer, updateType, client.currentPlane, client.gameCycle, client.localPlayerServerIndex,
-						client.localPlayer, client.packetActorSynchronizer(), client::queueAreaSound);
+				zoneUpdates.get().decode(buffer, updateType, state.currentPlane(), state.gameCycle(), state.localPlayerServerIndex(),
+						state.localPlayer(), actors, areaSounds);
 			}
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.REBUILD_REGION || opcode == IncomingPacketOpcode.REBUILD_INSTANCED_REGION) {
-			RegionManager.RegionShift shift = client.packetRegionManager().decodeRebuild(buffer,
-					opcode, client.packetOnDemandFetcher(), client.packetActorSynchronizer(), client.packetWorldState(), client.destinationX,
-					client.destinationY);
+			RegionManager.RegionShift shift = regions.decodeRebuild(buffer,
+					opcode, resources.get(), actors, world.get(), state.destinationX(),
+					state.destinationY());
 			if (shift.changed) {
-				client.destinationX = shift.destinationX;
-				client.destinationY = shift.destinationY;
-				client.packetCameraController().cinematic = false;
-				client.drawGameLoadingMessage(null, "Loading - please wait.");
+				state.setDestination(shift.destinationX, shift.destinationY);
+				camera.cinematic = false;
+				showLoadingMessage.run();
 			}
 			return true;
 		}
@@ -78,12 +169,12 @@ final class RegionPacketHandler {
 				|| opcode == IncomingPacketOpcode.REMOVE_GROUND_ITEM || opcode == IncomingPacketOpcode.ADD_GROUND_ITEM
 				|| opcode == IncomingPacketOpcode.ANIMATE_GAME_OBJECT || opcode == IncomingPacketOpcode.REMOVE_GAME_OBJECT
 				|| opcode == IncomingPacketOpcode.ADD_GAME_OBJECT) {
-			client.packetZoneUpdates().decode(buffer, opcode, client.currentPlane, client.gameCycle,
-					client.localPlayerServerIndex, client.localPlayer, client.packetActorSynchronizer(), client::queueAreaSound);
+			zoneUpdates.get().decode(buffer, opcode, state.currentPlane(), state.gameCycle(),
+					state.localPlayerServerIndex(), state.localPlayer(), actors, areaSounds);
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_ZONE_BASE) {
-			client.packetZoneUpdates().setZoneBase(buffer.readUnsignedByteNeg(),
+			zoneUpdates.get().setZoneBase(buffer.readUnsignedByteNeg(),
 					buffer.readUnsignedByteAdd());
 			return true;
 		}

@@ -1,5 +1,11 @@
 package rs2;
 
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
+
+import rs2.cache.ondemand.OnDemandFetcher;
+import rs2.sound.MusicController;
+import rs2.sound.SoundEffectQueue;
 import rs2.net.Buffer;
 import rs2.net.IncomingPacketOpcode;
 
@@ -12,16 +18,29 @@ import rs2.net.IncomingPacketOpcode;
  */
 final class AudioPacketHandler {
 
-	/** Client runtime receiving decoded packet effects. */
-	private final Client client;
+	/** Queues decoded sound effects. */
+	private final SoundEffectQueue sounds;
+	/** Owns music selection and temporary-track playback. */
+	private final MusicController music;
+	/** Supplies the asynchronous resource fetcher used for music data. */
+	private final Supplier<OnDemandFetcher> resources;
+	/** Supplies the current low-memory configuration. */
+	private final BooleanSupplier lowMemory;
 
 	/**
-	 * Creates the audio packet handler.
+	 * Creates the audio packet handler from its exact application capabilities.
 	 *
-	 * @param client client runtime receiving packet effects
+	 * @param sounds sound-effect queue
+	 * @param music music controller
+	 * @param resources on-demand resource supplier
+	 * @param lowMemory low-memory configuration supplier
 	 */
-	AudioPacketHandler(Client client) {
-		this.client = client;
+	AudioPacketHandler(SoundEffectQueue sounds, MusicController music, Supplier<OnDemandFetcher> resources,
+			BooleanSupplier lowMemory) {
+		this.sounds = sounds;
+		this.music = music;
+		this.resources = resources;
+		this.lowMemory = lowMemory;
 	}
 
 	/**
@@ -38,18 +57,18 @@ final class AudioPacketHandler {
 			int soundId = buffer.readUnsignedShort();
 			int loopCount = buffer.readUnsignedByte();
 			int delay = buffer.readUnsignedShort();
-			client.packetSoundEffectQueue().queuePacketSound(soundId, loopCount, delay, client.lowMemory);
+			sounds.queuePacketSound(soundId, loopCount, delay, lowMemory.getAsBoolean());
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.PLAY_MUSIC) {
 			int trackId = buffer.readUnsignedShortLEAdd();
-			client.packetMusicController().selectTrack(trackId, client.lowMemory, client.packetOnDemandFetcher()::request);
+			music.selectTrack(trackId, lowMemory.getAsBoolean(), resources.get()::request);
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.PLAY_TEMPORARY_MUSIC) {
 			int trackId = buffer.readUnsignedShortLE();
 			int resumeDelay = buffer.readMediumME();
-			client.packetMusicController().playTemporaryTrack(trackId, resumeDelay, client.lowMemory, client.packetOnDemandFetcher()::request);
+			music.playTemporaryTrack(trackId, resumeDelay, lowMemory.getAsBoolean(), resources.get()::request);
 			return true;
 		}
 		throw new IllegalArgumentException("Opcode " + opcode + " is not a audio packet");

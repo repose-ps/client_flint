@@ -1,5 +1,10 @@
 package rs2;
 
+import java.util.function.IntSupplier;
+import java.util.function.Supplier;
+
+import rs2.game.CameraController;
+import rs2.game.WorldState;
 import rs2.net.Buffer;
 import rs2.net.IncomingPacketOpcode;
 
@@ -12,16 +17,65 @@ import rs2.net.IncomingPacketOpcode;
  */
 final class CameraPacketHandler {
 
-	/** Client runtime receiving decoded packet effects. */
-	private final Client client;
+	/** Camera owner receiving cinematic and shake packets. */
+	private final CameraController camera;
+	/** Supplies world state used for terrain-height camera positioning. */
+	private final Supplier<WorldState> world;
+	/** Supplies the current scene plane. */
+	private final IntSupplier currentPlane;
+	/** Receives hint-target packet effects. */
+	private final HintSink hints;
 
 	/**
-	 * Creates the camera packet handler.
-	 *
-	 * @param client client runtime receiving packet effects
+	 * Receives the narrow mutable hint-target state decoded by camera packets.
 	 */
-	CameraPacketHandler(Client client) {
-		this.client = client;
+	interface HintSink {
+		/**
+		 * Sets the raw hint target type.
+		 *
+		 * @param type hint target type
+		 */
+		void setType(int type);
+
+		/**
+		 * Sets the hinted NPC index.
+		 *
+		 * @param index NPC index
+		 */
+		void setNpcIndex(int index);
+
+		/**
+		 * Sets a world-tile hint and normalizes its type to the tile-hint form.
+		 *
+		 * @param tileX absolute tile X
+		 * @param tileY absolute tile Y
+		 * @param height hint height
+		 * @param offsetX fine X offset inside the tile
+		 * @param offsetY fine Y offset inside the tile
+		 */
+		void setTileHint(int tileX, int tileY, int height, int offsetX, int offsetY);
+
+		/**
+		 * Sets the hinted player index.
+		 *
+		 * @param index player index
+		 */
+		void setPlayerIndex(int index);
+	}
+
+	/**
+	 * Creates the camera packet handler from its exact application capabilities.
+	 *
+	 * @param camera camera owner
+	 * @param world world-state supplier
+	 * @param currentPlane current-plane supplier
+	 * @param hints hint-target sink
+	 */
+	CameraPacketHandler(CameraController camera, Supplier<WorldState> world, IntSupplier currentPlane, HintSink hints) {
+		this.camera = camera;
+		this.world = world;
+		this.currentPlane = currentPlane;
+		this.hints = hints;
 	}
 
 	/**
@@ -35,37 +89,28 @@ final class CameraPacketHandler {
 	 */
 	boolean handle(int opcode, Buffer buffer, int packetSize) {
 		if (opcode == IncomingPacketOpcode.SET_HINT_ICON) {
-			client.hintIconType = buffer.readUnsignedByte();
-			if (client.hintIconType == 1)
-				client.hintNpcIndex = buffer.readUnsignedShort();
-			if (client.hintIconType >= 2 && client.hintIconType <= 6) {
-				if (client.hintIconType == 2) {
-					client.hintOffsetX = 64;
-					client.hintOffsetY = 64;
-				}
-				if (client.hintIconType == 3) {
-					client.hintOffsetX = 0;
-					client.hintOffsetY = 64;
-				}
-				if (client.hintIconType == 4) {
-					client.hintOffsetX = 128;
-					client.hintOffsetY = 64;
-				}
-				if (client.hintIconType == 5) {
-					client.hintOffsetX = 64;
-					client.hintOffsetY = 0;
-				}
-				if (client.hintIconType == 6) {
-					client.hintOffsetX = 64;
-					client.hintOffsetY = 128;
-				}
-				client.hintIconType = 2;
-				client.hintTileX = buffer.readUnsignedShort();
-				client.hintTileY = buffer.readUnsignedShort();
-				client.hintHeight = buffer.readUnsignedByte();
+			int hintType = buffer.readUnsignedByte();
+			hints.setType(hintType);
+			if (hintType == 1)
+				hints.setNpcIndex(buffer.readUnsignedShort());
+			if (hintType >= 2 && hintType <= 6) {
+				int offsetX = 64;
+				int offsetY = 64;
+				if (hintType == 3)
+					offsetX = 0;
+				if (hintType == 4)
+					offsetX = 128;
+				if (hintType == 5)
+					offsetY = 0;
+				if (hintType == 6)
+					offsetY = 128;
+				int tileX = buffer.readUnsignedShort();
+				int tileY = buffer.readUnsignedShort();
+				int height = buffer.readUnsignedByte();
+				hints.setTileHint(tileX, tileY, height, offsetX, offsetY);
 			}
-			if (client.hintIconType == 10)
-				client.hintPlayerIndex = buffer.readUnsignedShort();
+			if (hintType == 10)
+				hints.setPlayerIndex(buffer.readUnsignedShort());
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_CINEMATIC_CAMERA_LOOK_AT) {
@@ -74,7 +119,7 @@ final class CameraPacketHandler {
 			int heightOffset = buffer.readUnsignedShort();
 			int baseSpeed = buffer.readUnsignedByte();
 			int scale = buffer.readUnsignedByte();
-			client.packetCameraController().setCinematicLookAt(tileX, tileY, heightOffset, baseSpeed, scale, client.packetWorldState(), client.currentPlane);
+			camera.setCinematicLookAt(tileX, tileY, heightOffset, baseSpeed, scale, world.get(), currentPlane.getAsInt());
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.CAMERA_SHAKE) {
@@ -82,7 +127,7 @@ final class CameraPacketHandler {
 			int randomAmplitude = buffer.readUnsignedByte();
 			int sineAmplitude = buffer.readUnsignedByte();
 			int frequency = buffer.readUnsignedByte();
-			client.packetCameraController().configureShake(shakeIndex, randomAmplitude, sineAmplitude, frequency);
+			camera.configureShake(shakeIndex, randomAmplitude, sineAmplitude, frequency);
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_CINEMATIC_CAMERA_POSITION) {
@@ -91,12 +136,12 @@ final class CameraPacketHandler {
 			int heightOffset = buffer.readUnsignedShort();
 			int baseSpeed = buffer.readUnsignedByte();
 			int scale = buffer.readUnsignedByte();
-			client.packetCameraController().setCinematicPosition(tileX, tileY, heightOffset, baseSpeed, scale, client.packetWorldState(),
-					client.currentPlane);
+			camera.setCinematicPosition(tileX, tileY, heightOffset, baseSpeed, scale, world.get(),
+					currentPlane.getAsInt());
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.RESET_CAMERA) {
-			client.packetCameraController().stopCinematic();
+			camera.stopCinematic();
 			return true;
 		}
 		throw new IllegalArgumentException("Opcode " + opcode + " is not a camera packet");

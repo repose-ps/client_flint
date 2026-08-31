@@ -1,9 +1,11 @@
 package rs2.ui;
 
 /**
- * Mutable Client-side state for revision-377 interfaces and inventory-widget
- * interaction. Protocol/menu code remains in the Client until its own refactor
- * steps; this class only owns the state those systems coordinate through.
+ * Mutable revision-377 interface and inventory-widget interaction state.
+ *
+ * <p>{@link InterfaceController} owns lifecycle and interaction behavior, while
+ * packet and menu domains coordinate through this state without moving those
+ * responsibilities back into the top-level client coordinator.</p>
  */
 public final class InterfaceState {
 

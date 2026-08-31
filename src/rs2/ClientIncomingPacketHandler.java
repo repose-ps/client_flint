@@ -3,6 +3,7 @@ package rs2;
 import rs2.net.Buffer;
 import rs2.net.IncomingPacketHandler;
 import rs2.net.IncomingPacketOpcode;
+import rs2.net.NetworkSession;
 import rs2.sign.Signlink;
 
 /**
@@ -14,8 +15,10 @@ import rs2.sign.Signlink;
  */
 final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 
-	/** Client runtime used for logout and unknown-packet recovery. */
-	private final Client client;
+	/** Network state used only for unknown-packet diagnostics. */
+	private final NetworkSession networkSession;
+	/** Closes the active session after logout or fatal packet routing errors. */
+	private final Runnable logout;
 	/** Applies interface, widget, tab, and input-dialog packets to client UI state. */
 	private final InterfacePacketHandler interfacePackets;
 	/** Applies chat, social-list, private-message, and account-status packets. */
@@ -32,19 +35,32 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 	private final ClientStatePacketHandler clientStatePackets;
 
 	/**
-	 * Creates the incoming packet application router.
+	 * Creates the incoming packet application router from already-wired domains.
 	 *
-	 * @param client client runtime receiving packet effects
+	 * @param networkSession network session used for packet diagnostics
+	 * @param logout logout callback
+	 * @param interfacePackets interface packet domain
+	 * @param socialPackets social packet domain
+	 * @param regionPackets region packet domain
+	 * @param cameraPackets camera packet domain
+	 * @param audioPackets audio packet domain
+	 * @param actorPackets actor packet domain
+	 * @param clientStatePackets client-state packet domain
 	 */
-	ClientIncomingPacketHandler(Client client) {
-		this.client = client;
-		this.interfacePackets = new InterfacePacketHandler(client);
-		this.socialPackets = new SocialPacketHandler(client);
-		this.regionPackets = new RegionPacketHandler(client);
-		this.cameraPackets = new CameraPacketHandler(client);
-		this.audioPackets = new AudioPacketHandler(client);
-		this.actorPackets = new ActorPacketHandler(client);
-		this.clientStatePackets = new ClientStatePacketHandler(client);
+	ClientIncomingPacketHandler(NetworkSession networkSession, Runnable logout,
+			InterfacePacketHandler interfacePackets, SocialPacketHandler socialPackets,
+			RegionPacketHandler regionPackets, CameraPacketHandler cameraPackets,
+			AudioPacketHandler audioPackets, ActorPacketHandler actorPackets,
+			ClientStatePacketHandler clientStatePackets) {
+		this.networkSession = networkSession;
+		this.logout = logout;
+		this.interfacePackets = interfacePackets;
+		this.socialPackets = socialPackets;
+		this.regionPackets = regionPackets;
+		this.cameraPackets = cameraPackets;
+		this.audioPackets = audioPackets;
+		this.actorPackets = actorPackets;
+		this.clientStatePackets = clientStatePackets;
 	}
 
 	@Override
@@ -125,13 +141,13 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 				IncomingPacketOpcode.UPDATE_RUN_ENERGY,
 				IncomingPacketOpcode.SYNCHRONIZE_VARPS -> clientStatePackets.handle(opcode, buffer, packetSize);
 			case IncomingPacketOpcode.LOGOUT -> {
-				client.logout();
+				logout.run();
 				yield false;
 			}
 			default -> {
 				Signlink.reportError("T1 - " + opcode + "," + packetSize + " - "
-						+ client.networkSession.secondLastOpcode + "," + client.networkSession.thirdLastOpcode);
-				client.logout();
+						+ networkSession.secondLastOpcode + "," + networkSession.thirdLastOpcode);
+				logout.run();
 				yield true;
 			}
 		};

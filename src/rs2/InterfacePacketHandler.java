@@ -1,10 +1,17 @@
 package rs2;
 
+import java.util.function.IntConsumer;
+import java.util.function.Supplier;
+
 import rs2.cache.def.ItemDefinition;
+import rs2.chat.ChatController;
+import rs2.game.entity.Player;
 import rs2.net.Buffer;
 import rs2.net.IncomingPacketOpcode;
 import rs2.net.ProtocolConstants;
+import rs2.ui.InterfaceController;
 import rs2.ui.Widget;
+import rs2.ui.WidgetRuntime;
 
 /**
  * Applies interface, widget, tab, and input-dialog packets to client UI state.
@@ -15,16 +22,46 @@ import rs2.ui.Widget;
  */
 final class InterfacePacketHandler {
 
-	/** Client runtime receiving decoded packet effects. */
-	private final Client client;
+	/** Interface state mutated by interface packets. */
+	private final InterfaceController interfaces;
+	/** Widget runtime used to reset cache-defined interface animations. */
+	private final WidgetRuntime widgets;
+	/** Chat/input state mutated by interface packets. */
+	private final ChatController chat;
+	/** Supplies the current local player for player-model widget packets. */
+	private final Supplier<Player> localPlayer;
+	/** Player interaction labels updated by server packets. */
+	private final String[] playerActions;
+	/** Low-priority flags paired with {@link #playerActions}. */
+	private final boolean[] playerActionLowPriority;
+	/** Unloads cache-defined interface groups no longer displayed. */
+	private final IntConsumer unloadInterface;
+	/** Receives redraw requests caused by interface packet effects. */
+	private final InterfaceController.RedrawSink redraw;
 
 	/**
-	 * Creates the interface packet handler.
+	 * Creates the interface packet handler from its exact application capabilities.
 	 *
-	 * @param client client runtime receiving packet effects
+	 * @param interfaces interface state owner
+	 * @param widgets widget runtime
+	 * @param chat chat/input state owner
+	 * @param localPlayer current local-player supplier
+	 * @param playerActions player interaction labels
+	 * @param playerActionLowPriority player interaction priority flags
+	 * @param unloadInterface interface-unload callback
+	 * @param redraw redraw callback
 	 */
-	InterfacePacketHandler(Client client) {
-		this.client = client;
+	InterfacePacketHandler(InterfaceController interfaces, WidgetRuntime widgets, ChatController chat,
+			Supplier<Player> localPlayer, String[] playerActions, boolean[] playerActionLowPriority,
+			IntConsumer unloadInterface, InterfaceController.RedrawSink redraw) {
+		this.interfaces = interfaces;
+		this.widgets = widgets;
+		this.chat = chat;
+		this.localPlayer = localPlayer;
+		this.playerActions = playerActions;
+		this.playerActionLowPriority = playerActionLowPriority;
+		this.unloadInterface = unloadInterface;
+		this.redraw = redraw;
 	}
 
 	/**
@@ -72,37 +109,37 @@ final class InterfacePacketHandler {
 		}
 		if (opcode == IncomingPacketOpcode.OPEN_CHATBOX_INTERFACE) {
 			int chatboxInterfaceId = buffer.readUnsignedShort();
-			client.packetWidgetRuntime().resetAnimations(chatboxInterfaceId);
-			if (client.packetInterfaceController().state().sidebarOverlayInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().sidebarOverlayInterfaceId);
-				client.requestSidebarRedraw();
-				client.requestTabAreaRedraw();
+			widgets.resetAnimations(chatboxInterfaceId);
+			if (interfaces.state().sidebarOverlayInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().sidebarOverlayInterfaceId);
+				redraw.redrawSidebar();
+				redraw.redrawTabs();
 			}
-			if (client.packetInterfaceController().state().fullscreenInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().fullscreenInterfaceId);
-				client.requestGameScreenRedraw();
+			if (interfaces.state().fullscreenInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().fullscreenInterfaceId);
+				redraw.redrawGameScreen();
 			}
-			if (client.packetInterfaceController().state().fullscreenOverlayInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().fullscreenOverlayInterfaceId);
+			if (interfaces.state().fullscreenOverlayInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().fullscreenOverlayInterfaceId);
 			}
-			if (client.packetInterfaceController().state().openInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().openInterfaceId);
+			if (interfaces.state().openInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().openInterfaceId);
 			}
-			if (client.packetInterfaceController().state().chatboxInterfaceId != chatboxInterfaceId) {
-				client.unloadInterface(client.packetInterfaceController().state().chatboxInterfaceId);
-				client.packetInterfaceController().state().chatboxInterfaceId = chatboxInterfaceId;
+			if (interfaces.state().chatboxInterfaceId != chatboxInterfaceId) {
+				unloadInterface.accept(interfaces.state().chatboxInterfaceId);
+				interfaces.state().chatboxInterfaceId = chatboxInterfaceId;
 			}
-			client.packetInterfaceController().setActionPending(false);
-			client.requestChatboxRedraw();
+			interfaces.setActionPending(false);
+			redraw.redrawChatbox();
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_DIALOGUE_INTERFACE) {
 			int dialogueInterfaceId = buffer.readSignedShortLE();
-			if (dialogueInterfaceId != client.packetInterfaceController().state().dialogueInterfaceId) {
-				client.unloadInterface(client.packetInterfaceController().state().dialogueInterfaceId);
-				client.packetInterfaceController().state().dialogueInterfaceId = dialogueInterfaceId;
+			if (dialogueInterfaceId != interfaces.state().dialogueInterfaceId) {
+				unloadInterface.accept(interfaces.state().dialogueInterfaceId);
+				interfaces.state().dialogueInterfaceId = dialogueInterfaceId;
 			}
-			client.requestChatboxRedraw();
+			redraw.redrawChatbox();
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_WIDGET_COLOR) {
@@ -123,50 +160,50 @@ final class InterfacePacketHandler {
 			if (actionSlot >= 1 && actionSlot <= 5) {
 				if (actionText.equalsIgnoreCase("null"))
 					actionText = null;
-				client.playerActions[actionSlot - 1] = actionText;
-				client.playerActionLowPriority[actionSlot - 1] = priorityFlag == 0;
+				playerActions[actionSlot - 1] = actionText;
+				playerActionLowPriority[actionSlot - 1] = priorityFlag == 0;
 			}
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.OPEN_NAME_INPUT_DIALOG) {
-			client.packetChatController().openInputDialog(2);
-			client.requestChatboxRedraw();
+			chat.openInputDialog(2);
+			redraw.redrawChatbox();
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.CLOSE_INTERFACES) {
-			if (client.packetInterfaceController().state().sidebarOverlayInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().sidebarOverlayInterfaceId);
-				client.requestSidebarRedraw();
-				client.requestTabAreaRedraw();
+			if (interfaces.state().sidebarOverlayInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().sidebarOverlayInterfaceId);
+				redraw.redrawSidebar();
+				redraw.redrawTabs();
 			}
-			if (client.packetInterfaceController().state().chatboxInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().chatboxInterfaceId);
-				client.requestChatboxRedraw();
+			if (interfaces.state().chatboxInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().chatboxInterfaceId);
+				redraw.redrawChatbox();
 			}
-			if (client.packetInterfaceController().state().fullscreenInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().fullscreenInterfaceId);
-				client.requestGameScreenRedraw();
+			if (interfaces.state().fullscreenInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().fullscreenInterfaceId);
+				redraw.redrawGameScreen();
 			}
-			if (client.packetInterfaceController().state().fullscreenOverlayInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().fullscreenOverlayInterfaceId);
+			if (interfaces.state().fullscreenOverlayInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().fullscreenOverlayInterfaceId);
 			}
-			if (client.packetInterfaceController().state().openInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().openInterfaceId);
+			if (interfaces.state().openInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().openInterfaceId);
 			}
-			if (client.packetChatController().inputDialogState() != 0) {
-				client.packetChatController().setInputDialogState(0);
-				client.requestChatboxRedraw();
+			if (chat.inputDialogState() != 0) {
+				chat.setInputDialogState(0);
+				redraw.redrawChatbox();
 			}
-			client.packetInterfaceController().setActionPending(false);
+			interfaces.setActionPending(false);
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_WALKABLE_INTERFACE) {
 			int walkableInterfaceId = buffer.readSignedShort();
 			if (walkableInterfaceId >= 0)
-				client.packetWidgetRuntime().resetAnimations(walkableInterfaceId);
-			if (walkableInterfaceId != client.packetInterfaceController().state().walkableInterfaceId) {
-				client.unloadInterface(client.packetInterfaceController().state().walkableInterfaceId);
-				client.packetInterfaceController().state().walkableInterfaceId = walkableInterfaceId;
+				widgets.resetAnimations(walkableInterfaceId);
+			if (walkableInterfaceId != interfaces.state().walkableInterfaceId) {
+				unloadInterface.accept(interfaces.state().walkableInterfaceId);
+				interfaces.state().walkableInterfaceId = walkableInterfaceId;
 			}
 			return true;
 		}
@@ -179,36 +216,36 @@ final class InterfacePacketHandler {
 		if (opcode == IncomingPacketOpcode.OPEN_MAIN_AND_SIDEBAR_INTERFACES) {
 			int openInterfaceId = buffer.readUnsignedShortAdd();
 			int sidebarOverlayInterfaceId = buffer.readUnsignedShortLEAdd();
-			if (client.packetInterfaceController().state().chatboxInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().chatboxInterfaceId);
-				client.requestChatboxRedraw();
+			if (interfaces.state().chatboxInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().chatboxInterfaceId);
+				redraw.redrawChatbox();
 			}
-			if (client.packetInterfaceController().state().fullscreenInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().fullscreenInterfaceId);
-				client.requestGameScreenRedraw();
+			if (interfaces.state().fullscreenInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().fullscreenInterfaceId);
+				redraw.redrawGameScreen();
 			}
-			if (client.packetInterfaceController().state().fullscreenOverlayInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().fullscreenOverlayInterfaceId);
+			if (interfaces.state().fullscreenOverlayInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().fullscreenOverlayInterfaceId);
 			}
-			if (client.packetInterfaceController().state().openInterfaceId != openInterfaceId) {
-				client.unloadInterface(client.packetInterfaceController().state().openInterfaceId);
-				client.packetInterfaceController().state().openInterfaceId = openInterfaceId;
+			if (interfaces.state().openInterfaceId != openInterfaceId) {
+				unloadInterface.accept(interfaces.state().openInterfaceId);
+				interfaces.state().openInterfaceId = openInterfaceId;
 			}
-			if (client.packetInterfaceController().state().sidebarOverlayInterfaceId != sidebarOverlayInterfaceId) {
-				client.unloadInterface(client.packetInterfaceController().state().sidebarOverlayInterfaceId);
-				client.packetInterfaceController().state().sidebarOverlayInterfaceId = sidebarOverlayInterfaceId;
+			if (interfaces.state().sidebarOverlayInterfaceId != sidebarOverlayInterfaceId) {
+				unloadInterface.accept(interfaces.state().sidebarOverlayInterfaceId);
+				interfaces.state().sidebarOverlayInterfaceId = sidebarOverlayInterfaceId;
 			}
-			if (client.packetChatController().inputDialogState() != 0) {
-				client.packetChatController().setInputDialogState(0);
-				client.requestChatboxRedraw();
+			if (chat.inputDialogState() != 0) {
+				chat.setInputDialogState(0);
+				redraw.redrawChatbox();
 			}
-			client.requestSidebarRedraw();
-			client.requestTabAreaRedraw();
-			client.packetInterfaceController().setActionPending(false);
+			redraw.redrawSidebar();
+			redraw.redrawTabs();
+			interfaces.setActionPending(false);
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.UPDATE_WIDGET_ITEMS_PARTIAL) {
-			client.requestSidebarRedraw();
+			redraw.redrawSidebar();
 			int widgetId7 = buffer.readUnsignedShort();
 			Widget inventoryWidget = Widget.get(widgetId7);
 			while (buffer.position < packetSize) {
@@ -225,89 +262,89 @@ final class InterfacePacketHandler {
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.OPEN_AMOUNT_INPUT_DIALOG) {
-			client.packetChatController().openInputDialog(1);
-			client.requestChatboxRedraw();
+			chat.openInputDialog(1);
+			redraw.redrawChatbox();
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_SELECTED_TAB) {
-			client.packetInterfaceController().state().selectedTab = buffer.readUnsignedByteNeg();
-			client.requestSidebarRedraw();
-			client.requestTabAreaRedraw();
+			interfaces.state().selectedTab = buffer.readUnsignedByteNeg();
+			redraw.redrawSidebar();
+			redraw.redrawTabs();
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_WIDGET_PLAYER_MODEL) {
 			int widgetId8 = buffer.readUnsignedShortLEAdd();
 			Widget.get(widgetId8).mediaType = Widget.MEDIA_PLAYER;
-			if (client.localPlayer.npcDefinition == null)
-				Widget.get(widgetId8).mediaId = (client.localPlayer.bodyColors[0] << 25) + (client.localPlayer.bodyColors[4] << 20)
-						+ (client.localPlayer.equipment[0] << 15) + (client.localPlayer.equipment[8] << 10)
-						+ (client.localPlayer.equipment[11] << 5) + client.localPlayer.equipment[1];
+			if (localPlayer.get().npcDefinition == null)
+				Widget.get(widgetId8).mediaId = (localPlayer.get().bodyColors[0] << 25) + (localPlayer.get().bodyColors[4] << 20)
+						+ (localPlayer.get().equipment[0] << 15) + (localPlayer.get().equipment[8] << 10)
+						+ (localPlayer.get().equipment[11] << 5) + localPlayer.get().equipment[1];
 			else
-				Widget.get(widgetId8).mediaId = (int) (0x12345678L + client.localPlayer.npcDefinition.id);
+				Widget.get(widgetId8).mediaId = (int) (0x12345678L + localPlayer.get().npcDefinition.id);
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.OPEN_MAIN_INTERFACE) {
 			int openInterfaceId2 = buffer.readUnsignedShortLEAdd();
-			client.packetWidgetRuntime().resetAnimations(openInterfaceId2);
-			if (client.packetInterfaceController().state().sidebarOverlayInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().sidebarOverlayInterfaceId);
-				client.requestSidebarRedraw();
-				client.requestTabAreaRedraw();
+			widgets.resetAnimations(openInterfaceId2);
+			if (interfaces.state().sidebarOverlayInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().sidebarOverlayInterfaceId);
+				redraw.redrawSidebar();
+				redraw.redrawTabs();
 			}
-			if (client.packetInterfaceController().state().chatboxInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().chatboxInterfaceId);
-				client.requestChatboxRedraw();
+			if (interfaces.state().chatboxInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().chatboxInterfaceId);
+				redraw.redrawChatbox();
 			}
-			if (client.packetInterfaceController().state().fullscreenInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().fullscreenInterfaceId);
-				client.requestGameScreenRedraw();
+			if (interfaces.state().fullscreenInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().fullscreenInterfaceId);
+				redraw.redrawGameScreen();
 			}
-			if (client.packetInterfaceController().state().fullscreenOverlayInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().fullscreenOverlayInterfaceId);
+			if (interfaces.state().fullscreenOverlayInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().fullscreenOverlayInterfaceId);
 			}
-			if (client.packetInterfaceController().state().openInterfaceId != openInterfaceId2) {
-				client.unloadInterface(client.packetInterfaceController().state().openInterfaceId);
-				client.packetInterfaceController().state().openInterfaceId = openInterfaceId2;
+			if (interfaces.state().openInterfaceId != openInterfaceId2) {
+				unloadInterface.accept(interfaces.state().openInterfaceId);
+				interfaces.state().openInterfaceId = openInterfaceId2;
 			}
-			if (client.packetChatController().inputDialogState() != 0) {
-				client.packetChatController().setInputDialogState(0);
-				client.requestChatboxRedraw();
+			if (chat.inputDialogState() != 0) {
+				chat.setInputDialogState(0);
+				redraw.redrawChatbox();
 			}
-			client.packetInterfaceController().setActionPending(false);
+			interfaces.setActionPending(false);
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.OPEN_SIDEBAR_INTERFACE) {
 			int sidebarOverlayInterfaceId2 = buffer.readUnsignedShortLEAdd();
-			client.packetWidgetRuntime().resetAnimations(sidebarOverlayInterfaceId2);
-			if (client.packetInterfaceController().state().chatboxInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().chatboxInterfaceId);
-				client.requestChatboxRedraw();
+			widgets.resetAnimations(sidebarOverlayInterfaceId2);
+			if (interfaces.state().chatboxInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().chatboxInterfaceId);
+				redraw.redrawChatbox();
 			}
-			if (client.packetInterfaceController().state().fullscreenInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().fullscreenInterfaceId);
-				client.requestGameScreenRedraw();
+			if (interfaces.state().fullscreenInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().fullscreenInterfaceId);
+				redraw.redrawGameScreen();
 			}
-			if (client.packetInterfaceController().state().fullscreenOverlayInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().fullscreenOverlayInterfaceId);
+			if (interfaces.state().fullscreenOverlayInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().fullscreenOverlayInterfaceId);
 			}
-			if (client.packetInterfaceController().state().openInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().openInterfaceId);
+			if (interfaces.state().openInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().openInterfaceId);
 			}
-			if (client.packetInterfaceController().state().sidebarOverlayInterfaceId != sidebarOverlayInterfaceId2) {
-				client.unloadInterface(client.packetInterfaceController().state().sidebarOverlayInterfaceId);
-				client.packetInterfaceController().state().sidebarOverlayInterfaceId = sidebarOverlayInterfaceId2;
+			if (interfaces.state().sidebarOverlayInterfaceId != sidebarOverlayInterfaceId2) {
+				unloadInterface.accept(interfaces.state().sidebarOverlayInterfaceId);
+				interfaces.state().sidebarOverlayInterfaceId = sidebarOverlayInterfaceId2;
 			}
-			if (client.packetChatController().inputDialogState() != 0) {
-				client.packetChatController().setInputDialogState(0);
-				client.requestChatboxRedraw();
+			if (chat.inputDialogState() != 0) {
+				chat.setInputDialogState(0);
+				redraw.redrawChatbox();
 			}
-			client.requestSidebarRedraw();
-			client.requestTabAreaRedraw();
-			client.packetInterfaceController().setActionPending(false);
+			redraw.redrawSidebar();
+			redraw.redrawTabs();
+			interfaces.setActionPending(false);
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.UPDATE_WIDGET_ITEMS) {
-			client.requestSidebarRedraw();
+			redraw.redrawSidebar();
 			int widgetId9 = buffer.readUnsignedShort();
 			Widget inventoryWidget2 = Widget.get(widgetId9);
 			int itemCount = buffer.readUnsignedShort();
@@ -358,12 +395,12 @@ final class InterfacePacketHandler {
 			int interfaceId = buffer.readUnsignedShortAdd();
 			if (interfaceId == ProtocolConstants.NULL_ID)
 				interfaceId = -1;
-			if (client.packetInterfaceController().state().tabInterfaceIds[tabIndex] != interfaceId) {
-				client.unloadInterface(client.packetInterfaceController().state().tabInterfaceIds[tabIndex]);
-				client.packetInterfaceController().state().tabInterfaceIds[tabIndex] = interfaceId;
+			if (interfaces.state().tabInterfaceIds[tabIndex] != interfaceId) {
+				unloadInterface.accept(interfaces.state().tabInterfaceIds[tabIndex]);
+				interfaces.state().tabInterfaceIds[tabIndex] = interfaceId;
 			}
-			client.requestSidebarRedraw();
-			client.requestTabAreaRedraw();
+			redraw.redrawSidebar();
+			redraw.redrawTabs();
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.CLEAR_WIDGET_ITEMS) {
@@ -376,40 +413,40 @@ final class InterfacePacketHandler {
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.FLASH_TAB) {
-			client.packetInterfaceController().state().flashingTab = buffer.readUnsignedByte();
-			if (client.packetInterfaceController().state().flashingTab == client.packetInterfaceController().state().selectedTab) {
-				if (client.packetInterfaceController().state().flashingTab == 3)
-					client.packetInterfaceController().state().selectedTab = 1;
+			interfaces.state().flashingTab = buffer.readUnsignedByte();
+			if (interfaces.state().flashingTab == interfaces.state().selectedTab) {
+				if (interfaces.state().flashingTab == 3)
+					interfaces.state().selectedTab = 1;
 				else
-					client.requestSidebarRedraw();
+					redraw.redrawSidebar();
 			}
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.OPEN_FULLSCREEN_INTERFACES) {
 			int fullscreenOverlayInterfaceId = buffer.readUnsignedShortLE();
 			int fullscreenInterfaceId = buffer.readUnsignedShortAdd();
-			client.packetWidgetRuntime().resetAnimations(fullscreenInterfaceId);
+			widgets.resetAnimations(fullscreenInterfaceId);
 			if (fullscreenOverlayInterfaceId != -1)
-				client.packetWidgetRuntime().resetAnimations(fullscreenOverlayInterfaceId);
-			if (client.packetInterfaceController().state().openInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().openInterfaceId);
+				widgets.resetAnimations(fullscreenOverlayInterfaceId);
+			if (interfaces.state().openInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().openInterfaceId);
 			}
-			if (client.packetInterfaceController().state().sidebarOverlayInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().sidebarOverlayInterfaceId);
+			if (interfaces.state().sidebarOverlayInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().sidebarOverlayInterfaceId);
 			}
-			if (client.packetInterfaceController().state().chatboxInterfaceId != -1) {
-				client.unloadInterface(client.packetInterfaceController().state().chatboxInterfaceId);
+			if (interfaces.state().chatboxInterfaceId != -1) {
+				unloadInterface.accept(interfaces.state().chatboxInterfaceId);
 			}
-			if (client.packetInterfaceController().state().fullscreenInterfaceId != fullscreenInterfaceId) {
-				client.unloadInterface(client.packetInterfaceController().state().fullscreenInterfaceId);
-				client.packetInterfaceController().state().fullscreenInterfaceId = fullscreenInterfaceId;
+			if (interfaces.state().fullscreenInterfaceId != fullscreenInterfaceId) {
+				unloadInterface.accept(interfaces.state().fullscreenInterfaceId);
+				interfaces.state().fullscreenInterfaceId = fullscreenInterfaceId;
 			}
-			if (client.packetInterfaceController().state().fullscreenOverlayInterfaceId != fullscreenInterfaceId) {
-				client.unloadInterface(client.packetInterfaceController().state().fullscreenOverlayInterfaceId);
-				client.packetInterfaceController().state().fullscreenOverlayInterfaceId = fullscreenOverlayInterfaceId;
+			if (interfaces.state().fullscreenOverlayInterfaceId != fullscreenInterfaceId) {
+				unloadInterface.accept(interfaces.state().fullscreenOverlayInterfaceId);
+				interfaces.state().fullscreenOverlayInterfaceId = fullscreenOverlayInterfaceId;
 			}
-			client.packetChatController().setInputDialogState(0);
-			client.packetInterfaceController().setActionPending(false);
+			chat.setInputDialogState(0);
+			interfaces.setActionPending(false);
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_WIDGET_MODEL_ROTATION_SPEED) {
@@ -423,8 +460,8 @@ final class InterfacePacketHandler {
 			int widgetId14 = buffer.readUnsignedShortLEAdd();
 			String widgetText = buffer.readString();
 			Widget.get(widgetId14).text = widgetText;
-			if (Widget.get(widgetId14).parentId == client.packetInterfaceController().state().tabInterfaceIds[client.packetInterfaceController().state().selectedTab])
-				client.requestSidebarRedraw();
+			if (Widget.get(widgetId14).parentId == interfaces.state().tabInterfaceIds[interfaces.state().selectedTab])
+				redraw.redrawSidebar();
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_WIDGET_SCROLL_POSITION) {

@@ -1,8 +1,12 @@
 package rs2;
 
+import java.util.function.IntSupplier;
+
 import rs2.chat.ChatCodec;
+import rs2.chat.ChatController;
 import rs2.chat.ChatMessageType;
 import rs2.chat.Censor;
+import rs2.chat.SocialManager;
 import rs2.net.Buffer;
 import rs2.net.IncomingPacketOpcode;
 import rs2.net.Ipv4Address;
@@ -19,16 +23,70 @@ import rs2.text.TextFormatter;
  */
 final class SocialPacketHandler {
 
-	/** Client runtime receiving decoded packet effects. */
-	private final Client client;
+	/** Social-list owner mutated by social packets. */
+	private final SocialManager social;
+	/** Chat modes/history owner mutated by social packets. */
+	private final ChatController chat;
+	/** Supplies tutorial-area suppression state. */
+	private final IntSupplier tutorialIslandFlag;
+	/** Supplies the current world identifier used by friend status ordering. */
+	private final IntSupplier currentWorldId;
+	/** Receives chat-history messages produced by social packets. */
+	private final SocialManager.MessageSink messages;
+	/** Receives the decoded account-status snapshot. */
+	private final AccountInfoSink accountInfo;
+	/** Requests chat-mode-strip redraws. */
+	private final Runnable redrawChatModes;
+	/** Requests chatbox redraws. */
+	private final Runnable redrawChatbox;
+	/** Requests sidebar redraws. */
+	private final Runnable redrawSidebar;
 
 	/**
-	 * Creates the social packet handler.
-	 *
-	 * @param client client runtime receiving packet effects
+	 * Receives account-status values decoded from one server packet.
 	 */
-	SocialPacketHandler(Client client) {
-		this.client = client;
+	@FunctionalInterface
+	interface AccountInfoSink {
+		/**
+		 * Applies the decoded account-status snapshot.
+		 *
+		 * @param lastPasswordChangeDate last password-change day
+		 * @param accountCurrentDay account current day
+		 * @param unreadMessageCount unread message count
+		 * @param lastLoginDay last-login day
+		 * @param membershipDays remaining membership days
+		 * @param lastLoginIp last-login IPv4 address
+		 * @param recoveryQuestionsDate recovery-question date
+		 */
+		void update(int lastPasswordChangeDate, int accountCurrentDay, int unreadMessageCount, int lastLoginDay,
+				int membershipDays, int lastLoginIp, int recoveryQuestionsDate);
+	}
+
+	/**
+	 * Creates the social packet handler from its exact application capabilities.
+	 *
+	 * @param social social-list owner
+	 * @param chat chat modes/history owner
+	 * @param tutorialIslandFlag tutorial-area state supplier
+	 * @param currentWorldId current-world supplier
+	 * @param messages chat-message sink
+	 * @param accountInfo account-status sink
+	 * @param redrawChatModes chat-mode redraw callback
+	 * @param redrawChatbox chatbox redraw callback
+	 * @param redrawSidebar sidebar redraw callback
+	 */
+	SocialPacketHandler(SocialManager social, ChatController chat,
+			IntSupplier tutorialIslandFlag, IntSupplier currentWorldId, SocialManager.MessageSink messages,
+			AccountInfoSink accountInfo, Runnable redrawChatModes, Runnable redrawChatbox, Runnable redrawSidebar) {
+		this.social = social;
+		this.chat = chat;
+		this.tutorialIslandFlag = tutorialIslandFlag;
+		this.currentWorldId = currentWorldId;
+		this.messages = messages;
+		this.accountInfo = accountInfo;
+		this.redrawChatModes = redrawChatModes;
+		this.redrawChatbox = redrawChatbox;
+		this.redrawSidebar = redrawSidebar;
 	}
 
 	/**
@@ -42,26 +100,28 @@ final class SocialPacketHandler {
 	 */
 	boolean handle(int opcode, Buffer buffer, int packetSize) {
 		if (opcode == IncomingPacketOpcode.SET_CHAT_MODES) {
-			client.packetChatController().setPublicMode(buffer.readUnsignedByte());
-			client.packetChatController().setPrivateMode(buffer.readUnsignedByte());
-			client.packetChatController().setTradeMode(buffer.readUnsignedByte());
-			client.requestChatModesRedraw();
-			client.requestChatboxRedraw();
+			chat.setPublicMode(buffer.readUnsignedByte());
+			chat.setPrivateMode(buffer.readUnsignedByte());
+			chat.setTradeMode(buffer.readUnsignedByte());
+			redrawChatModes.run();
+			redrawChatbox.run();
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.ACCOUNT_INFO) {
-			client.lastPasswordChangeDate = buffer.readUnsignedShortLE();
+			int lastPasswordChangeDate = buffer.readUnsignedShortLE();
 			buffer.readUnsignedShortLEAdd();
 			buffer.readUnsignedShort();
 			buffer.readUnsignedShort();
-			client.accountCurrentDay = buffer.readUnsignedShortLE();
-			client.unreadMessageCount = buffer.readUnsignedShortAdd();
-			client.lastLoginDay = buffer.readUnsignedShortAdd();
-			client.membershipDays = buffer.readUnsignedShort();
-			client.lastLoginIp = buffer.readIntLE();
-			client.recoveryQuestionsDate = buffer.readUnsignedShortLEAdd();
+			int accountCurrentDay = buffer.readUnsignedShortLE();
+			int unreadMessageCount = buffer.readUnsignedShortAdd();
+			int lastLoginDay = buffer.readUnsignedShortAdd();
+			int membershipDays = buffer.readUnsignedShort();
+			int lastLoginIp = buffer.readIntLE();
+			int recoveryQuestionsDate = buffer.readUnsignedShortLEAdd();
 			buffer.readUnsignedByteAdd();
-			Signlink.lookupDns(Ipv4Address.format(client.lastLoginIp));
+			accountInfo.update(lastPasswordChangeDate, accountCurrentDay, unreadMessageCount, lastLoginDay,
+					membershipDays, lastLoginIp, recoveryQuestionsDate);
+			Signlink.lookupDns(Ipv4Address.format(lastLoginIp));
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SERVER_MESSAGE) {
@@ -69,59 +129,59 @@ final class SocialPacketHandler {
 			if (serverMessage.endsWith(":tradereq:")) {
 				String tradeRequester = serverMessage.substring(0, serverMessage.indexOf(":"));
 				long tradeRequesterEncoded = Base37.encode(tradeRequester);
-				boolean ignored = client.packetSocialManager().isIgnored(tradeRequesterEncoded);
-				if (!ignored && client.tutorialIslandFlag == 0)
-					client.addChatMessage(tradeRequester, "wishes to trade with you.", ChatMessageType.TRADE_REQUEST);
+				boolean ignored = social.isIgnored(tradeRequesterEncoded);
+				if (!ignored && tutorialIslandFlag.getAsInt() == 0)
+					messages.addChatMessage(tradeRequester, "wishes to trade with you.", ChatMessageType.TRADE_REQUEST);
 			} else if (serverMessage.endsWith(":duelreq:")) {
 				String duelRequester = serverMessage.substring(0, serverMessage.indexOf(":"));
 				long duelRequesterEncoded = Base37.encode(duelRequester);
-				boolean ignored = client.packetSocialManager().isIgnored(duelRequesterEncoded);
-				if (!ignored && client.tutorialIslandFlag == 0)
-					client.addChatMessage(duelRequester, "wishes to duel with you.", ChatMessageType.CHALLENGE_REQUEST);
+				boolean ignored = social.isIgnored(duelRequesterEncoded);
+				if (!ignored && tutorialIslandFlag.getAsInt() == 0)
+					messages.addChatMessage(duelRequester, "wishes to duel with you.", ChatMessageType.CHALLENGE_REQUEST);
 			} else if (serverMessage.endsWith(":chalreq:")) {
 				String challengeRequester = serverMessage.substring(0, serverMessage.indexOf(":"));
 				long challengeRequesterEncoded = Base37.encode(challengeRequester);
-				boolean ignored = client.packetSocialManager().isIgnored(challengeRequesterEncoded);
-				if (!ignored && client.tutorialIslandFlag == 0) {
+				boolean ignored = social.isIgnored(challengeRequesterEncoded);
+				if (!ignored && tutorialIslandFlag.getAsInt() == 0) {
 					String challengeText = serverMessage.substring(serverMessage.indexOf(":") + 1,
 							serverMessage.length() - 9);
-					client.addChatMessage(challengeRequester, challengeText, ChatMessageType.CHALLENGE_REQUEST);
+					messages.addChatMessage(challengeRequester, challengeText, ChatMessageType.CHALLENGE_REQUEST);
 				}
 			} else {
-				client.addChatMessage("", serverMessage, ChatMessageType.GAME);
+				messages.addChatMessage("", serverMessage, ChatMessageType.GAME);
 			}
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.FRIEND_STATUS) {
 			long encodedName = buffer.readLong();
 			int world = buffer.readUnsignedByte();
-			if (client.packetSocialManager().updateFriend(encodedName, world, client.currentWorldId, client::addChatMessage))
-				client.requestSidebarRedraw();
+			if (social.updateFriend(encodedName, world, currentWorldId.getAsInt(), messages))
+				redrawSidebar.run();
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.PRIVATE_MESSAGE) {
 			long senderEncodedName = buffer.readLong();
 			int privateMessageId = buffer.readInt();
 			int senderRights = buffer.readUnsignedByte();
-			boolean duplicateOrIgnored = client.packetChatController().history().hasRecentPrivateMessage(privateMessageId);
+			boolean duplicateOrIgnored = chat.history().hasRecentPrivateMessage(privateMessageId);
 
-			if (senderRights <= 1 && client.packetSocialManager().isIgnored(senderEncodedName))
+			if (senderRights <= 1 && social.isIgnored(senderEncodedName))
 				duplicateOrIgnored = true;
-			if (!duplicateOrIgnored && client.tutorialIslandFlag == 0)
+			if (!duplicateOrIgnored && tutorialIslandFlag.getAsInt() == 0)
 				try {
-					client.packetChatController().history().rememberPrivateMessage(privateMessageId);
+					chat.history().rememberPrivateMessage(privateMessageId);
 					String privateMessage = ChatCodec.decode(buffer,
 							packetSize - 13);
 					if (senderRights != 3)
 						privateMessage = Censor.censor(privateMessage);
 					if (senderRights == 2 || senderRights == 3)
-						client.addChatMessage("@cr2@" + TextFormatter.formatDisplayName(Base37.decode(senderEncodedName)),
+						messages.addChatMessage("@cr2@" + TextFormatter.formatDisplayName(Base37.decode(senderEncodedName)),
 								privateMessage, 7);
 					else if (senderRights == 1)
-						client.addChatMessage("@cr1@" + TextFormatter.formatDisplayName(Base37.decode(senderEncodedName)),
+						messages.addChatMessage("@cr1@" + TextFormatter.formatDisplayName(Base37.decode(senderEncodedName)),
 								privateMessage, 7);
 					else
-						client.addChatMessage(TextFormatter.formatDisplayName(Base37.decode(senderEncodedName)),
+						messages.addChatMessage(TextFormatter.formatDisplayName(Base37.decode(senderEncodedName)),
 								privateMessage, 3);
 				} catch (Exception exception1) {
 					Signlink.reportError("cde1");
@@ -129,12 +189,12 @@ final class SocialPacketHandler {
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.UPDATE_IGNORE_LIST) {
-			client.packetSocialManager().replaceIgnoreList(buffer, packetSize);
+			social.replaceIgnoreList(buffer, packetSize);
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_FRIEND_LIST_STATUS) {
-			client.packetSocialManager().friendListStatus = buffer.readUnsignedByte();
-			client.requestSidebarRedraw();
+			social.friendListStatus = buffer.readUnsignedByte();
+			redrawSidebar.run();
 			return true;
 		}
 		throw new IllegalArgumentException("Opcode " + opcode + " is not a social packet");

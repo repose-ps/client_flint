@@ -361,10 +361,6 @@ public class Client extends GameShell {
 		return menuController.buildSocialWidgetMenu(widget);
 	}
 
-	/** Resets appearance-kit selections for the currently selected sex. */
-	public void resetCharacterAppearance() {
-		appearanceEditor.resetKits();
-	}
 
 	/**
 	 * Enables the original high-memory configuration across rendering and region
@@ -1022,15 +1018,6 @@ public class Client extends GameShell {
 		return true;
 	}
 
-	/**
-	 * Returns the explicit standalone game host used in place of the removed Applet
-	 * code-base lookup.
-	 *
-	 * @return the resulting text
-	 */
-	public String getConfiguredHost() {
-		return serverHost;
-	}
 
 	/**
 	 * Configures the hostname used by all standalone game/update/archive sockets.
@@ -1083,7 +1070,7 @@ public class Client extends GameShell {
 	 *
 	 * @param interfaceId interface group identifier
 	 */
-	public void unloadInterface(int interfaceId) {
+	private void unloadInterface(int interfaceId) {
 		interfaceController.unload(interfaceId);
 	}
 
@@ -1094,7 +1081,7 @@ public class Client extends GameShell {
 	 * @param message the message text
 	 * @param type    the chat message type
 	 */
-	public void addChatMessage(String sender, String message, int type) {
+	private void addChatMessage(String sender, String message, int type) {
 		if (type == 0 && interfaceController.state().dialogueInterfaceId != -1) {
 			chatController.setClickToContinueMessage(message);
 			super.clickButton = 0;
@@ -2058,101 +2045,119 @@ public class Client extends GameShell {
 	}
 
 
-	/**
-	 * Returns social state to the application packet adapter.
-	 * @return social manager
-	 */
-	SocialManager packetSocialManager() { return socialManager; }
 
 	/**
-	 * Returns chat state to the application packet adapter.
-	 * @return chat controller
+	 * Wires the incoming packet router from narrow domain capabilities.
+	 *
+	 * @return fully wired application packet router
 	 */
-	ChatController packetChatController() { return chatController; }
+	private ClientIncomingPacketHandler createIncomingPacketHandler() {
+		InterfacePacketHandler interfacePackets = new InterfacePacketHandler(interfaceController, widgetRuntime,
+				chatController, () -> localPlayer, playerActions, playerActionLowPriority, this::unloadInterface,
+				interfaceRedrawSink);
 
-	/**
-	 * Returns interface state to the application packet adapter.
-	 * @return interface controller
-	 */
-	InterfaceController packetInterfaceController() { return interfaceController; }
+		SocialPacketHandler socialPackets = new SocialPacketHandler(socialManager, chatController,
+				() -> tutorialIslandFlag, () -> currentWorldId, this::addChatMessage,
+				(lastPasswordChange, currentDay, unreadMessages, loginDay, memberDays, loginIp, recoveryDate) -> {
+					lastPasswordChangeDate = lastPasswordChange;
+					accountCurrentDay = currentDay;
+					unreadMessageCount = unreadMessages;
+					lastLoginDay = loginDay;
+					membershipDays = memberDays;
+					lastLoginIp = loginIp;
+					recoveryQuestionsDate = recoveryDate;
+				}, gameRenderer::requestChatModesRedraw, gameRenderer::requestChatboxRedraw,
+				gameRenderer::requestSidebarRedraw);
 
-	/**
-	 * Returns the current login username to the application packet adapter.
-	 * @return login username
-	 */
-	String packetLoginUsername() { return loginScreen.username; }
+		RegionPacketHandler regionPackets = new RegionPacketHandler(regionManager, lifecycle::onDemandFetcher,
+				actorSynchronizer, () -> worldState, () -> zoneUpdates, cameraController, new RegionPacketHandler.State() {
+					@Override
+					public int currentPlane() {
+						return Client.this.currentPlane;
+					}
 
-	/**
-	 * Returns sound-effect state to the application packet adapter.
-	 * @return sound-effect queue
-	 */
-	SoundEffectQueue packetSoundEffectQueue() { return soundEffectQueue; }
+					@Override
+					public int gameCycle() {
+						return Client.gameCycle;
+					}
 
-	/**
-	 * Returns music state to the application packet adapter.
-	 * @return music controller
-	 */
-	MusicController packetMusicController() { return musicController; }
+					@Override
+					public int localPlayerServerIndex() {
+						return Client.this.localPlayerServerIndex;
+					}
 
-	/**
-	 * Returns widget runtime state to the application packet adapter.
-	 * @return widget runtime
-	 */
-	WidgetRuntime packetWidgetRuntime() { return widgetRuntime; }
+					@Override
+					public Player localPlayer() {
+						return Client.localPlayer;
+					}
 
-	/**
-	 * Returns the on-demand resource service to the application packet adapter.
-	 * @return on-demand fetcher
-	 */
-	OnDemandFetcher packetOnDemandFetcher() { return lifecycle.onDemandFetcher(); }
+					@Override
+					public int destinationX() {
+						return Client.this.destinationX;
+					}
 
-	/**
-	 * Returns actor synchronization state to the application packet adapter.
-	 * @return actor synchronizer
-	 */
-	ActorSynchronizer packetActorSynchronizer() { return actorSynchronizer; }
+					@Override
+					public int destinationY() {
+						return Client.this.destinationY;
+					}
 
-	/**
-	 * Returns camera state to the application packet adapter.
-	 * @return camera controller
-	 */
-	CameraController packetCameraController() { return cameraController; }
+					@Override
+					public void setDestination(int x, int y) {
+						Client.this.destinationX = x;
+						Client.this.destinationY = y;
+					}
 
-	/**
-	 * Returns minimap state to the application packet adapter.
-	 * @return minimap renderer
-	 */
-	MinimapRenderer packetMinimapRenderer() { return minimapRenderer; }
+					@Override
+					public void setMultiCombatZone(int value) {
+						Client.this.multiCombatZone = value;
+					}
+				}, (soundId, loops, radius, tileX, tileY) -> soundEffectQueue.queueAreaSound(soundId, loops, radius,
+						tileX, tileY, localPlayer.pathX[0], localPlayer.pathY[0], lowMemory),
+				() -> drawGameLoadingMessage(null, "Loading - please wait."));
 
-	/**
-	 * Returns region state to the application packet adapter.
-	 * @return region manager
-	 */
-	RegionManager packetRegionManager() { return regionManager; }
+		CameraPacketHandler cameraPackets = new CameraPacketHandler(cameraController, () -> worldState,
+				() -> currentPlane, new CameraPacketHandler.HintSink() {
+					@Override
+					public void setType(int type) {
+						hintIconType = type;
+					}
 
-	/**
-	 * Returns varp state to the application packet adapter.
-	 * @return varp state
-	 */
-	VarpState packetVarpState() { return varpState; }
+					@Override
+					public void setNpcIndex(int index) {
+						hintNpcIndex = index;
+					}
 
-	/**
-	 * Returns world state to the application packet adapter.
-	 * @return world state
-	 */
-	WorldState packetWorldState() { return worldState; }
+					@Override
+					public void setTileHint(int tileX, int tileY, int height, int offsetX, int offsetY) {
+						hintIconType = 2;
+						hintTileX = tileX;
+						hintTileY = tileY;
+						hintHeight = height;
+						hintOffsetX = offsetX;
+						hintOffsetY = offsetY;
+					}
 
-	/**
-	 * Returns zone-update state to the application packet adapter.
-	 * @return zone-update handler
-	 */
-	ZoneUpdateHandler packetZoneUpdates() { return zoneUpdates; }
+					@Override
+					public void setPlayerIndex(int index) {
+						hintPlayerIndex = index;
+					}
+				});
 
-	/**
-	 * Returns the actor chat callback to the application packet adapter.
-	 * @return actor chat handler
-	 */
-	ActorSynchronizer.ChatHandler packetActorChatHandler() { return actorChatHandler; }
+		AudioPacketHandler audioPackets = new AudioPacketHandler(soundEffectQueue, musicController,
+				lifecycle::onDemandFetcher, () -> lowMemory);
+
+		ActorPacketHandler actorPackets = new ActorPacketHandler(actorSynchronizer, regionManager, () -> gameCycle,
+				() -> currentPlane, value -> currentPlane = value, () -> loginScreen.username, chatBuffer,
+				actorChatHandler, value -> accountMembershipStatus = value, value -> localPlayerServerIndex = value);
+
+		ClientStatePacketHandler clientStatePackets = new ClientStatePacketHandler(varpState, interfaceController,
+				minimapRenderer, this::applyVarp, gameRenderer::requestSidebarRedraw, gameRenderer::requestChatboxRedraw,
+				value -> weight = value, skillExperiences, currentSkillLevels, baseSkillLevels, experienceTable,
+				value -> systemUpdateTimer = value, value -> runEnergy = value);
+
+		return new ClientIncomingPacketHandler(networkSession, this::logout, interfacePackets, socialPackets,
+				regionPackets, cameraPackets, audioPackets, actorPackets, clientStatePackets);
+	}
 
 	/** Initializes world/zone state during one-time client bootstrap. */
 	void initializeWorldForStartup() {
@@ -2216,7 +2221,7 @@ public class Client extends GameShell {
 	 *
 	 * @param varpId the varp identifier
 	 */
-	public void applyVarp(int varpId) {
+	private void applyVarp(int varpId) {
 		int clientCode = Varp.definitions[varpId].clientCode;
 		if (clientCode == 0)
 			return;
@@ -3192,10 +3197,6 @@ public class Client extends GameShell {
 				worldState.scene.setClick(cmd2 - layout.viewportX(), cmd3 - layout.viewportY());
 	}
 
-	/** Draws actor-associated viewport overlays through the dedicated renderer. */
-	public void drawActorOverlays() {
-		actorOverlayRenderer.drawActors(createActorOverlayContext());
-	}
 
 	/** Builds the current actor-overlay rendering context.
 	 * @return current actor-overlay frame context
@@ -3300,7 +3301,7 @@ public class Client extends GameShell {
 	 * Closes the session and resets world, cache, login, and music state for the
 	 * login screen.
 	 */
-	public void logout() {
+	private void logout() {
 		networkSession.closeConnection();
 		loggedIn = false;
 		loginScreen.resetForLogout();
@@ -3320,7 +3321,7 @@ public class Client extends GameShell {
 	 * @param secondaryMessage the secondary message
 	 * @param primaryMessage   the primary message
 	 */
-	public void drawGameLoadingMessage(String secondaryMessage, String primaryMessage) {
+	private void drawGameLoadingMessage(String secondaryMessage, String primaryMessage) {
 		if (gameRenderer.viewportBuffer() != null) {
 			gameRenderer.viewportBuffer().bindRaster();
 			gameRenderer.bindViewport();
@@ -3368,10 +3369,6 @@ public class Client extends GameShell {
 		return menuController.state().isAddFriendAction(menuIndex);
 	}
 
-	/** Draws the flashing world-coordinate hint icon through the overlay renderer. */
-	public void drawWorldHintIcon() {
-		actorOverlayRenderer.drawWorldHint(createActorOverlayContext());
-	}
 
 	/** Runs one render cycle in logged-in mode or title/login mode. */
 	public void processDrawing() {
@@ -3724,21 +3721,6 @@ public class Client extends GameShell {
 	}
 
 	/**
-	 * Queues a localized area sound if it falls within the original player-centered
-	 * radius check.
-	 *
-	 * @param soundId the sound-effect identifier
-	 * @param loops   the sound-effect loop count
-	 * @param radius  the area-sound radius
-	 * @param tileX   the local scene-tile X coordinate
-	 * @param tileY   the local scene-tile Y coordinate
-	 */
-	void queueAreaSound(int soundId, int loops, int radius, int tileX, int tileY) {
-		soundEffectQueue.queueAreaSound(soundId, loops, radius, tileX, tileY, localPlayer.pathX[0],
-				localPlayer.pathY[0], lowMemory);
-	}
-
-	/**
 	 * Advances region-loading state and rebuilds the region when all required
 	 * resources are ready.
 	 */
@@ -3822,31 +3804,6 @@ public class Client extends GameShell {
 		titleRightCenterBuffer = null;
 		gameRenderer.clearGameScreenBuffers();
 		super.gameBuffer = new GraphicsBuffer(getGameComponent(), ClientLayout.FIXED_WIDTH, ClientLayout.FIXED_HEIGHT);
-		gameRenderer.requestGameScreenRedraw();
-	}
-
-	/** Requests sidebar rerasterization from application/protocol adapters. */
-	void requestSidebarRedraw() {
-		gameRenderer.requestSidebarRedraw();
-	}
-
-	/** Requests chatbox rerasterization from application/protocol adapters. */
-	void requestChatboxRedraw() {
-		gameRenderer.requestChatboxRedraw();
-	}
-
-	/** Requests tab-strip rerasterization from application/protocol adapters. */
-	void requestTabAreaRedraw() {
-		gameRenderer.requestTabAreaRedraw();
-	}
-
-	/** Requests chat-mode-strip rerasterization from application/protocol adapters. */
-	void requestChatModesRedraw() {
-		gameRenderer.requestChatModesRedraw();
-	}
-
-	/** Requests the legacy whole-game-screen redraw event. */
-	void requestGameScreenRedraw() {
 		gameRenderer.requestGameScreenRedraw();
 	}
 
@@ -3944,7 +3901,6 @@ public class Client extends GameShell {
 		crossSprites = new ImageRGB[8];
 		minimapMaskWidths = new int[151];
 		networkSession = new NetworkSession();
-		incomingPacketDispatcher = new IncomingPacketDispatcher(networkSession, new ClientIncomingPacketHandler(this));
 		socialManager = new SocialManager();
 		chatController = new ChatController();
 		interfaceController = new InterfaceController();
@@ -4049,58 +4005,59 @@ public class Client extends GameShell {
 		compassMaskWidths = new int[33];
 		scrollbarShadowColor = 0x332d25;
 		skullIconSprites = new ImageRGB[32];
+		incomingPacketDispatcher = new IncomingPacketDispatcher(networkSession, createIncomingPacketHandler());
 	}
 
 	/** The client state for report abuse name. */
 	/** The RSA modulus used by the revision-377 login handshake. */
-	public static BigInteger RSA_MODULUS = new BigInteger(
+	private static BigInteger RSA_MODULUS = new BigInteger(
 			"7162900525229798032761816791230527296329313291232324290237849263501208207972894053929065636522363163621000728841182238772712427862772219676577293600221789");
 
 	/** Stores overhead text colors values. */
-	public int overheadTextColors[] = { 0xffff00, 0xff0000, 65280, 65535, 0xff00ff, 0xffffff };
+	private int overheadTextColors[] = { 0xffff00, 0xff0000, 65280, 65535, 0xff00ff, 0xffffff };
 
 	/** Stores skill experiences values. */
-	public int skillExperiences[];
+	private int skillExperiences[];
 	/** The client state for hint tile x. */
-	public int hintTileX;
+	private int hintTileX;
 	/** The client state for hint tile y. */
-	public int hintTileY;
+	private int hintTileY;
 	/** The client state for hint height. */
-	public int hintHeight;
+	private int hintHeight;
 	/** The client state for hint offset x. */
-	public int hintOffsetX;
+	private int hintOffsetX;
 	/** The client state for hint offset y. */
-	public int hintOffsetY;
+	private int hintOffsetY;
 	/** The client state for item search query. */
-	public String itemSearchQuery;
+	private String itemSearchQuery;
 	/** The current number of item search result entries. */
-	public int itemSearchResultCount;
+	private int itemSearchResultCount;
 
 	/** Stores item search result names values. */
-	public String itemSearchResultNames[];
+	private String itemSearchResultNames[];
 
 	/** Stores item search result IDs values. */
-	public int itemSearchResultIds[];
+	private int itemSearchResultIds[];
 	/** The client state for item search scroll offset. */
-	public int itemSearchScrollOffset;
+	private int itemSearchScrollOffset;
 	/** The client state for player rights. */
-	public int playerRights;
+	private int playerRights;
 	/** Whether show fps is currently active or requested. */
-	public static boolean showFps;
+	private static boolean showFps;
 	/** Tracks the current logout timer in client ticks/cycles where applicable. */
-	public int logoutTimer;
+	private int logoutTimer;
 	/** The client state for redstone1. */
-	public IndexedImage redstone1;
+	IndexedImage redstone1;
 	/** The client state for redstone2. */
-	public IndexedImage redstone2;
+	IndexedImage redstone2;
 	/** The client state for redstone3. */
-	public IndexedImage redstone3;
+	IndexedImage redstone3;
 	/** The client state for redstone1 horizontal. */
-	public IndexedImage redstone1Horizontal;
+	IndexedImage redstone1Horizontal;
 	/** The client state for redstone2 horizontal. */
-	public IndexedImage redstone2Horizontal;
+	IndexedImage redstone2Horizontal;
 	/** The client state for title archive. */
-	public Archive titleArchive;
+	Archive titleArchive;
 	/**
 	 * Tracks the current tooltip hover ticks in client ticks/cycles where
 	 * applicable.
@@ -4109,29 +4066,29 @@ public class Client extends GameShell {
 	 * Counts system update keepalive events for the original client timing/protocol
 	 * behavior.
 	 */
-	public static int systemUpdateKeepaliveCounter;
+	private static int systemUpdateKeepaliveCounter;
 
 	/** Stores cross sprites values. */
-	public ImageRGB crossSprites[];
+	ImageRGB crossSprites[];
 	/** The client state for last click time. */
-	public long lastClickTime;
+	private long lastClickTime;
 	/** The current current hovered widget id. */
 
 	/** Stores minimap mask widths values. */
-	public int minimapMaskWidths[];
+	int minimapMaskWidths[];
 	/** The current current world id. */
-	public static int currentWorldId = 10;
+	private static int currentWorldId = 10;
 	/** The client state for port offset. */
-	public static int portOffset;
+	static int portOffset;
 
 	/** Host used by every standalone socket opened through Signlink. */
 	private static String serverHost = "127.0.0.1";
 	/** Whether members world is currently active or requested. */
-	public static boolean membersWorld = true;
+	static boolean membersWorld = true;
 	/** Whether low memory is currently active or requested. */
-	public static boolean lowMemory;
+	static boolean lowMemory;
 	/** The client state for scrollbar track color. */
-	public int scrollbarTrackColor;
+	private int scrollbarTrackColor;
 
 
 
@@ -4141,19 +4098,19 @@ public class Client extends GameShell {
 
 
 	/** The client state for animation cycle delta. */
-	public int animationCycleDelta;
+	private int animationCycleDelta;
 
 	/** Stores experience table values. */
-	public static int experienceTable[];
+	private static int experienceTable[];
 
 	/** Stores hint icon sprites values. */
-	public ImageRGB hintIconSprites[];
+	ImageRGB hintIconSprites[];
 	/** The client state for inventory rearrange mode. */
-	public int inventoryRearrangeMode;
+	private int inventoryRearrangeMode;
 	/** Whether account flagged is currently active or requested. */
-	public static boolean accountFlagged;
+	private static boolean accountFlagged;
 	/** The client state for network session. */
-	public final NetworkSession networkSession;
+	final NetworkSession networkSession;
 	/** Coordinates framed incoming packets with the application packet adapter. */
 	private final IncomingPacketDispatcher incomingPacketDispatcher;
 	/** The client state for social manager. */
@@ -4266,32 +4223,32 @@ public class Client extends GameShell {
 		}
 	};
 	/** The client state for local player server index. */
-	public int localPlayerServerIndex;
+	private int localPlayerServerIndex;
 	/** The client state for local player. */
-	public static Player localPlayer;
+	static Player localPlayer;
 	/** The client state for chat modes background. */
-	public IndexedImage chatModesBackground;
+	IndexedImage chatModesBackground;
 	/** The client state for bottom tab background. */
-	public IndexedImage bottomTabBackground;
+	IndexedImage bottomTabBackground;
 	/** The client state for top tab background. */
-	public IndexedImage topTabBackground;
+	IndexedImage topTabBackground;
 
 	/** Stores sidebar icons values. */
-	public IndexedImage sidebarIcons[];
+	IndexedImage sidebarIcons[];
 	/** The client state for redstone1 vertical. */
-	public IndexedImage redstone1Vertical;
+	IndexedImage redstone1Vertical;
 	/** The client state for redstone2 vertical. */
-	public IndexedImage redstone2Vertical;
+	IndexedImage redstone2Vertical;
 	/** The client state for redstone3 vertical. */
-	public IndexedImage redstone3Vertical;
+	IndexedImage redstone3Vertical;
 	/** The client state for redstone1 both. */
-	public IndexedImage redstone1Both;
+	IndexedImage redstone1Both;
 	/** The client state for redstone2 both. */
-	public IndexedImage redstone2Both;
+	IndexedImage redstone2Both;
 	/** The client state for membership days. */
-	public int membershipDays;
+	private int membershipDays;
 	/** The client state for chat effects. */
-	public int chatEffects;
+	private int chatEffects;
 
 	/** Stores chatbox scanline offsets values. */
 
@@ -4302,253 +4259,253 @@ public class Client extends GameShell {
 
 
 	/** The client state for last recorded mouse x. */
-	public int lastRecordedMouseX;
+	private int lastRecordedMouseX;
 	/** The client state for last recorded mouse y. */
-	public int lastRecordedMouseY;
+	private int lastRecordedMouseY;
 	/** Whether duplicate client error is currently active or requested. */
-	public boolean duplicateClientError;
+	boolean duplicateClientError;
 
 	/** Stores minimap mask offsets values. */
-	public int minimapMaskOffsets[];
+	int minimapMaskOffsets[];
 	/** The client state for cross x. */
-	public int crossX;
+	private int crossX;
 	/** The client state for cross y. */
-	public int crossY;
+	private int crossY;
 	/** Tracks the current cross cycle in client ticks/cycles where applicable. */
-	public int crossCycle;
+	private int crossCycle;
 	/** The client state for cross type. */
-	public int crossType;
+	private int crossType;
 	/** The client state for loading message. */
-	public String loadingMessage;
+	String loadingMessage;
 
 	/** Stores current skill levels values. */
-	public int currentSkillLevels[];
+	private int currentSkillLevels[];
 	/** The client state for weight. */
-	public int weight;
+	private int weight;
 
 	/** Stores map function sprites values. */
-	public ImageRGB mapFunctionSprites[];
+	ImageRGB mapFunctionSprites[];
 	/** The client state for recovery questions date. */
-	public int recoveryQuestionsDate;
+	private int recoveryQuestionsDate;
 	/** The client state for destination map marker. */
-	public ImageRGB destinationMapMarker;
+	ImageRGB destinationMapMarker;
 	/** The client state for hint map marker. */
-	public ImageRGB hintMapMarker;
+	ImageRGB hintMapMarker;
 
 	/** The current sidebar tooltip widget id. */
 	/**
 	 * Counts ground item action684 events for the original client timing/protocol
 	 * behavior.
 	 */
-	public static int groundItemAction684Counter;
+	private static int groundItemAction684Counter;
 
 	/** Stores base skill levels values. */
-	public int baseSkillLevels[];
+	private int baseSkillLevels[];
 	/**
 	 * Tracks the current system update timer in client ticks/cycles where
 	 * applicable.
 	 */
-	public int systemUpdateTimer;
+	private int systemUpdateTimer;
 	/** The font used for small font. */
-	public TypeFace smallFont;
+	TypeFace smallFont;
 	/** The font used for plain font. */
-	public TypeFace plainFont;
+	TypeFace plainFont;
 	/** The font used for bold font. */
-	public TypeFace boldFont;
+	TypeFace boldFont;
 	/** The font used for fancy font. */
-	public TypeFace fancyFont;
+	TypeFace fancyFont;
 	/** The client state for account membership status. */
-	public int accountMembershipStatus;
+	private int accountMembershipStatus;
 
 	/** Stores player actions values. */
-	public String playerActions[];
+	private String playerActions[];
 
 	/** Whether player action low priority is enabled or active. */
-	public boolean playerActionLowPriority[];
+	private boolean playerActionLowPriority[];
 
 	/** Stores prayer icon sprites values. */
-	public ImageRGB prayerIconSprites[];
+	ImageRGB prayerIconSprites[];
 	/** The client state for scrollbar thumb color. */
-	public int scrollbarThumbColor;
+	private int scrollbarThumbColor;
 	/** The client state for last password change date. */
-	public int lastPasswordChangeDate;
+	private int lastPasswordChangeDate;
 
 
 	/** The client state for multi combat overlay. */
-	public ImageRGB multiCombatOverlay;
+	ImageRGB multiCombatOverlay;
 	/** The client state for current plane. */
-	public int currentPlane;
+	private int currentPlane;
 	/**
 	 * Tracks the current mouse button hold ticks in client ticks/cycles where
 	 * applicable.
 	 */
-	public int mouseButtonHoldTicks;
+	private int mouseButtonHoldTicks;
 	/** The client state for scrollbar top. */
-	public IndexedImage scrollbarTop;
+	IndexedImage scrollbarTop;
 	/** The client state for scrollbar bottom. */
-	public IndexedImage scrollbarBottom;
+	IndexedImage scrollbarBottom;
 	/** Whether invalid host error is currently active or requested. */
-	public boolean invalidHostError;
+	private boolean invalidHostError;
 	/** Whether report abuse mute player is currently active or requested. */
 
 	/**
 	 * Counts ground item action26 events for the original client timing/protocol
 	 * behavior.
 	 */
-	public static int groundItemAction26Counter;
+	private static int groundItemAction26Counter;
 	/**
 	 * Tracks the current title flame cycle in client ticks/cycles where applicable.
 	 */
-	public int titleFlameCycle;
+	private int titleFlameCycle;
 	/** The current chatbox hovered widget id. */
 	/** The sprite resource used for compass sprite. */
-	public ImageRGB compassSprite;
+	ImageRGB compassSprite;
 
 	/** The client state for destination x. */
-	public int destinationX;
+	private int destinationX;
 	/** The client state for destination y. */
-	public int destinationY;
+	private int destinationY;
 	/** The client state for alternative route. */
-	public int alternativeRoute;
+	private int alternativeRoute;
 	/** Whether scrollbar dragging is currently active or requested. */
 	/** The current viewport tooltip widget id. */
 	/** The graphics or protocol buffer used for chat buffer. */
-	public Buffer chatBuffer;
+	Buffer chatBuffer;
 	/** The client state for scrollbar highlight color. */
-	public int scrollbarHighlightColor;
+	private int scrollbarHighlightColor;
 	/** Whether logged in is currently active or requested. */
-	public volatile boolean loggedIn;
+	volatile boolean loggedIn;
 	/**
 	 * Counts inventory action961 events for the original client timing/protocol
 	 * behavior.
 	 */
-	public static int inventoryAction961Counter;
+	private static int inventoryAction961Counter;
 
 	/** Stores moderator icons values. */
-	public IndexedImage moderatorIcons[];
+	IndexedImage moderatorIcons[];
 	/** The client state for hint player index. */
-	public int hintPlayerIndex;
+	private int hintPlayerIndex;
 
 	/** Stores map scene sprites values. */
-	public IndexedImage mapSceneSprites[];
+	IndexedImage mapSceneSprites[];
 	/** Whether inventory drag moved is currently active or requested. */
-	public boolean inventoryDragMoved;
+	private boolean inventoryDragMoved;
 	/**
 	 * Counts inventory action227 events for the original client timing/protocol
 	 * behavior.
 	 */
-	public static int inventoryAction227Counter;
+	private static int inventoryAction227Counter;
 
 	/** The client state for account current day. */
-	public int accountCurrentDay;
+	private int accountCurrentDay;
 
 
 
 	/** Stores compass mask offsets values. */
-	public int compassMaskOffsets[];
+	int compassMaskOffsets[];
 
 	/** Stores hitmark sprites values. */
-	public ImageRGB hitmarkSprites[];
+	ImageRGB hitmarkSprites[];
 	/** The client state for sidebar background. */
-	public IndexedImage sidebarBackground;
+	IndexedImage sidebarBackground;
 	/** The client state for minimap background. */
-	public IndexedImage minimapBackground;
+	IndexedImage minimapBackground;
 	/** The client state for chatbox background. */
-	public IndexedImage chatboxBackground;
+	IndexedImage chatboxBackground;
 	/** The client state for ground item map dot. */
-	public ImageRGB groundItemMapDot;
+	ImageRGB groundItemMapDot;
 	/** The client state for npc map dot. */
-	public ImageRGB npcMapDot;
+	ImageRGB npcMapDot;
 	/** The client state for player map dot. */
-	public ImageRGB playerMapDot;
+	ImageRGB playerMapDot;
 	/** The client state for friend map dot. */
-	public ImageRGB friendMapDot;
+	ImageRGB friendMapDot;
 	/** The client state for team map dot. */
-	public ImageRGB teamMapDot;
+	ImageRGB teamMapDot;
 	/** The client state for hint icon type. */
-	public int hintIconType;
+	private int hintIconType;
 	/** The graphics or protocol buffer used for title top buffer. */
-	public GraphicsBuffer titleTopBuffer;
+	GraphicsBuffer titleTopBuffer;
 	/** The graphics or protocol buffer used for title bottom buffer. */
-	public GraphicsBuffer titleBottomBuffer;
+	GraphicsBuffer titleBottomBuffer;
 	/** The graphics or protocol buffer used for login box buffer. */
-	public GraphicsBuffer loginBoxBuffer;
+	GraphicsBuffer loginBoxBuffer;
 	/** The graphics or protocol buffer used for title left flame buffer. */
-	public GraphicsBuffer titleLeftFlameBuffer;
+	GraphicsBuffer titleLeftFlameBuffer;
 	/** The graphics or protocol buffer used for title right flame buffer. */
-	public GraphicsBuffer titleRightFlameBuffer;
+	GraphicsBuffer titleRightFlameBuffer;
 	/** The graphics or protocol buffer used for title left bottom buffer. */
-	public GraphicsBuffer titleLeftBottomBuffer;
+	GraphicsBuffer titleLeftBottomBuffer;
 	/** The graphics or protocol buffer used for title right bottom buffer. */
-	public GraphicsBuffer titleRightBottomBuffer;
+	GraphicsBuffer titleRightBottomBuffer;
 	/** The graphics or protocol buffer used for title left center buffer. */
-	public GraphicsBuffer titleLeftCenterBuffer;
+	GraphicsBuffer titleLeftCenterBuffer;
 	/** The graphics or protocol buffer used for title right center buffer. */
-	public GraphicsBuffer titleRightCenterBuffer;
+	GraphicsBuffer titleRightCenterBuffer;
 
 	/** The client state for last login day. */
-	public int lastLoginDay;
+	private int lastLoginDay;
 	/** The client state for jaggrab socket. */
-	public Socket jaggrabSocket;
+	private Socket jaggrabSocket;
 	/** The client state for hint npc index. */
-	public int hintNpcIndex;
+	private int hintNpcIndex;
 	/**
 	 * Counts npc action118 events for the original client timing/protocol behavior.
 	 */
-	public static int npcAction118Counter;
+	private static int npcAction118Counter;
 	/**
 	 * Counts screen redraw keepalive events for the original client timing/protocol
 	 * behavior.
 	 */
-	public static int screenRedrawKeepaliveCounter;
+	private static int screenRedrawKeepaliveCounter;
 	/** Whether interface action pending is currently active or requested. */
 	/** The client state for last login ip. */
-	public int lastLoginIp;
+	private int lastLoginIp;
 
 	/** The client state for tutorial island flag. */
-	public int tutorialIslandFlag;
+	private int tutorialIslandFlag;
 	/** The client state for minimap edge arrow. */
-	public ImageRGB minimapEdgeArrow;
+	ImageRGB minimapEdgeArrow;
 	/** The client state for mouse recorder. */
-	public MouseRecorder mouseRecorder;
+	MouseRecorder mouseRecorder;
 	/** The client state for chatbox scroll widget. */
-	public Widget chatboxScrollWidget;
+	private Widget chatboxScrollWidget;
 	/** The client state for camera packet cooldown. */
-	public int cameraPacketCooldown;
+	private int cameraPacketCooldown;
 	/** Whether camera orientation changed is currently active or requested. */
-	public boolean cameraOrientationChanged;
+	private boolean cameraOrientationChanged;
 
 	/** The current number of unread message entries. */
-	public int unreadMessageCount;
+	private int unreadMessageCount;
 	/** Whether window focus reported is currently active or requested. */
-	public boolean windowFocusReported;
+	private boolean windowFocusReported;
 	/** The client state for last minimap plane. */
-	public int lastMinimapPlane;
+	private int lastMinimapPlane;
 	/** The current sidebar hovered widget id. */
 	/** Whether loading error is currently active or requested. */
-	public boolean loadingError;
+	boolean loadingError;
 	/** The current chatbox tooltip widget id. */
 
 	/** Stores compass mask widths values. */
-	public int compassMaskWidths[];
+	int compassMaskWidths[];
 	/** The client state for scrollbar shadow color. */
-	public int scrollbarShadowColor;
+	private int scrollbarShadowColor;
 
 	/** Stores skull icon sprites values. */
-	public ImageRGB skullIconSprites[];
+	ImageRGB skullIconSprites[];
 
 	/** The client state for title box image. */
-	public IndexedImage titleBoxImage;
+	private IndexedImage titleBoxImage;
 	/** The client state for title button image. */
-	public IndexedImage titleButtonImage;
+	private IndexedImage titleButtonImage;
 	/** The current number of mouse telemetry repeat entries. */
-	public int mouseTelemetryRepeatCount;
+	private int mouseTelemetryRepeatCount;
 	/** The client state for one button mouse mode. */
-	public int oneButtonMouseMode;
+	private int oneButtonMouseMode;
 	/** The current viewport hovered widget id. */
 	/** The client state for scrollbar drag padding. */
 	/** Tracks the current draw cycle in client ticks/cycles where applicable. */
-	public static int drawCycle;
+	private static int drawCycle;
 
 
 
@@ -4556,23 +4513,23 @@ public class Client extends GameShell {
 	/** The current current tooltip widget id. */
 
 	/** The RSA public exponent used by the revision-377 login handshake. */
-	public static BigInteger RSA_EXPONENT = new BigInteger(
+	private static BigInteger RSA_EXPONENT = new BigInteger(
 			"58778699976184461502525193738213253649000149147835990136706041084440742975821");
 
 	/** The client state for multi combat zone. */
-	public int multiCombatZone;
+	private int multiCombatZone;
 	/** The client state for loading percent. */
-	public int loadingPercent;
+	int loadingPercent;
 	/** The client state for run energy. */
-	public int runEnergy;
+	private int runEnergy;
 	/** Tracks the current game cycle in client ticks/cycles where applicable. */
-	public static int gameCycle;
+	private static int gameCycle;
 
 	/**
 	 * Tracks the current inventory click cycle in client ticks/cycles where
 	 * applicable.
 	 */
-	public int inventoryClickCycle;
+	private int inventoryClickCycle;
 	static {
 		experienceTable = new int[99];
 		int accumulatedExperience = 0;
