@@ -98,22 +98,32 @@ public final class WidgetRenderer {
      * @param y Y coordinate
      */
     public void drawScrollbar(RenderContext context, int scrollY, int x, int height, int scrollHeight, int y) {
+            int arrowHeight = ClientLayout.SCROLLBAR_ARROW_HEIGHT;
+            int scrollbarWidth = ClientLayout.SCROLLBAR_WIDTH;
+            int trackHeight = height - arrowHeight * 2;
             context.scrollbarTop().draw(x, y);
-            context.scrollbarBottom().draw(x, (y + height) - 16);
-            Rasterizer.drawFilledRectangle(x, y + 16, 16, height - 32, context.scrollbarTrackColor());
-            int thumbHeight = ((height - 32) * height) / scrollHeight;
-            if (thumbHeight < 8)
-                thumbHeight = 8;
-            int thumbY = ((height - 32 - thumbHeight) * scrollY) / (scrollHeight - height);
-            Rasterizer.drawFilledRectangle(x, y + 16 + thumbY, 16, thumbHeight, context.scrollbarThumbColor());
-            Rasterizer.drawVerticalLine(x, y + 16 + thumbY, thumbHeight, context.scrollbarHighlightColor());
-            Rasterizer.drawVerticalLine(x + 1, y + 16 + thumbY, thumbHeight, context.scrollbarHighlightColor());
-            Rasterizer.drawHorizontalLine(x, y + 16 + thumbY, 16, context.scrollbarHighlightColor());
-            Rasterizer.drawHorizontalLine(x, y + 17 + thumbY, 16, context.scrollbarHighlightColor());
-            Rasterizer.drawVerticalLine(x + 15, y + 16 + thumbY, thumbHeight, context.scrollbarShadowColor());
-            Rasterizer.drawVerticalLine(x + 14, y + 17 + thumbY, thumbHeight - 1, context.scrollbarShadowColor());
-            Rasterizer.drawHorizontalLine(x, y + 15 + thumbY + thumbHeight, 16, context.scrollbarShadowColor());
-            Rasterizer.drawHorizontalLine(x + 1, y + 14 + thumbY + thumbHeight, 15, context.scrollbarShadowColor());
+            context.scrollbarBottom().draw(x, (y + height) - arrowHeight);
+            Rasterizer.drawFilledRectangle(x, y + arrowHeight, scrollbarWidth, trackHeight,
+                    context.scrollbarTrackColor());
+            int thumbHeight = (trackHeight * height) / scrollHeight;
+            if (thumbHeight < ClientLayout.SCROLLBAR_MIN_THUMB_HEIGHT)
+                thumbHeight = ClientLayout.SCROLLBAR_MIN_THUMB_HEIGHT;
+            int thumbY = ((trackHeight - thumbHeight) * scrollY) / (scrollHeight - height);
+            Rasterizer.drawFilledRectangle(x, y + arrowHeight + thumbY, scrollbarWidth, thumbHeight,
+                    context.scrollbarThumbColor());
+            Rasterizer.drawVerticalLine(x, y + arrowHeight + thumbY, thumbHeight, context.scrollbarHighlightColor());
+            Rasterizer.drawVerticalLine(x + 1, y + arrowHeight + thumbY, thumbHeight, context.scrollbarHighlightColor());
+            Rasterizer.drawHorizontalLine(x, y + arrowHeight + thumbY, scrollbarWidth, context.scrollbarHighlightColor());
+            Rasterizer.drawHorizontalLine(x, y + arrowHeight + 1 + thumbY, scrollbarWidth,
+                    context.scrollbarHighlightColor());
+            Rasterizer.drawVerticalLine(x + scrollbarWidth - 1, y + arrowHeight + thumbY, thumbHeight,
+                    context.scrollbarShadowColor());
+            Rasterizer.drawVerticalLine(x + scrollbarWidth - 2, y + arrowHeight + 1 + thumbY, thumbHeight - 1,
+                    context.scrollbarShadowColor());
+            Rasterizer.drawHorizontalLine(x, y + arrowHeight - 1 + thumbY + thumbHeight, scrollbarWidth,
+                    context.scrollbarShadowColor());
+            Rasterizer.drawHorizontalLine(x + 1, y + arrowHeight - 2 + thumbY + thumbHeight, scrollbarWidth - 1,
+                    context.scrollbarShadowColor());
         }
 
     /**

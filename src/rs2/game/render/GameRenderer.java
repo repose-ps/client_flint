@@ -162,15 +162,15 @@ public final class GameRenderer {
             return false;
         }
         chatboxBuffer = new GraphicsBuffer(component, ClientLayout.CHATBOX_WIDTH, ClientLayout.CHATBOX_HEIGHT);
-        minimapBuffer = new GraphicsBuffer(component, 172, 156);
+        minimapBuffer = new GraphicsBuffer(component, ClientLayout.MINIMAP_WIDTH, ClientLayout.MINIMAP_HEIGHT);
         Rasterizer.resetPixels();
         minimapBackground.draw(0, 0);
         sidebarBuffer = new GraphicsBuffer(component, ClientLayout.SIDEBAR_WIDTH, ClientLayout.SIDEBAR_HEIGHT);
         viewportBuffer = new GraphicsBuffer(component, layout.viewportWidth(), layout.viewportHeight());
         Rasterizer.resetPixels();
-        chatModesBuffer = new GraphicsBuffer(component, 496, 50);
-        bottomTabsBuffer = new GraphicsBuffer(component, 269, 37);
-        topTabsBuffer = new GraphicsBuffer(component, 249, 45);
+        chatModesBuffer = new GraphicsBuffer(component, ClientLayout.CHAT_MODES_WIDTH, ClientLayout.CHAT_MODES_HEIGHT);
+        bottomTabsBuffer = new GraphicsBuffer(component, ClientLayout.BOTTOM_TABS_WIDTH, ClientLayout.BOTTOM_TABS_HEIGHT);
+        topTabsBuffer = new GraphicsBuffer(component, ClientLayout.TOP_TABS_WIDTH, ClientLayout.TOP_TABS_HEIGHT);
         gameScreenRedraw = true;
         bindViewport();
         return true;
@@ -202,15 +202,15 @@ public final class GameRenderer {
      * @param layout current fixed/resizable layout
      */
     public void drawFrameDecorations(Graphics graphics, ClientLayout layout) {
-        backLeft1Buffer.draw(graphics, 0, 4);
-        backLeft2Buffer.draw(graphics, 0, layout.bottomAnchoredY(357));
+        backLeft1Buffer.draw(graphics, 0, layout.viewportY());
+        backLeft2Buffer.draw(graphics, 0, layout.chatboxY());
         backTop1Buffer.draw(graphics, 0, 0);
         backHorizontalMiddle2Buffer.draw(graphics, 0, layout.lowerBorderY());
-        backRight1Buffer.draw(graphics, layout.rightAnchoredX(722), 4);
-        backRight2Buffer.draw(graphics, layout.rightAnchoredX(743), 205);
-        backVerticalMiddle1Buffer.draw(graphics, layout.middleBorderX(), 4);
-        backVerticalMiddle2Buffer.draw(graphics, layout.middleBorderX(), 205);
-        backVerticalMiddle3Buffer.draw(graphics, layout.rightAnchoredX(496), 357);
+        backRight1Buffer.draw(graphics, layout.rightFrameTopX(), layout.viewportY());
+        backRight2Buffer.draw(graphics, layout.rightFrameMiddleX(), layout.sidebarY());
+        backVerticalMiddle1Buffer.draw(graphics, layout.middleBorderX(), layout.viewportY());
+        backVerticalMiddle2Buffer.draw(graphics, layout.middleBorderX(), layout.sidebarY());
+        backVerticalMiddle3Buffer.draw(graphics, layout.bottomTabsX(), layout.lowerVerticalMiddleY());
     }
 
     /** Releases the classic frame-decoration surfaces. */

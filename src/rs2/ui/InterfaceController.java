@@ -2,6 +2,7 @@ package rs2.ui;
 
 import java.util.function.IntConsumer;
 
+import rs2.ClientLayout;
 import rs2.chat.ChatController;
 import rs2.chat.SocialManager;
 import rs2.net.Buffer;
@@ -450,25 +451,30 @@ public final class InterfaceController {
      */
     public void handleScrollbarInput(int scrollHeight, int y, Widget widget, int mouseY, int redrawArea, int mouseX,
             int height, int x, int mouseButtonHoldTicks, RedrawSink redraw) {
-        scrollbarDragPadding = scrollbarDragging ? 32 : 0;
+        scrollbarDragPadding = scrollbarDragging ? ClientLayout.SCROLLBAR_DRAG_PADDING : 0;
         scrollbarDragging = false;
-        if (mouseX >= x && mouseX < x + 16 && mouseY >= y && mouseY < y + 16) {
+        if (mouseX >= x && mouseX < x + ClientLayout.SCROLLBAR_WIDTH
+                && mouseY >= y && mouseY < y + ClientLayout.SCROLLBAR_ARROW_HEIGHT) {
             widget.scrollY -= mouseButtonHoldTicks * 4;
             requestScrollRedraw(redrawArea, redraw);
             return;
         }
-        if (mouseX >= x && mouseX < x + 16 && mouseY >= (y + height) - 16 && mouseY < y + height) {
+        if (mouseX >= x && mouseX < x + ClientLayout.SCROLLBAR_WIDTH
+                && mouseY >= (y + height) - ClientLayout.SCROLLBAR_ARROW_HEIGHT && mouseY < y + height) {
             widget.scrollY += mouseButtonHoldTicks * 4;
             requestScrollRedraw(redrawArea, redraw);
             return;
         }
-        if (mouseX >= x - scrollbarDragPadding && mouseX < x + 16 + scrollbarDragPadding && mouseY >= y + 16
-                && mouseY < (y + height) - 16 && mouseButtonHoldTicks > 0) {
-            int thumbHeight = ((height - 32) * height) / scrollHeight;
-            if (thumbHeight < 8)
-                thumbHeight = 8;
-            int dragOffset = mouseY - y - 16 - thumbHeight / 2;
-            int dragRange = height - 32 - thumbHeight;
+        if (mouseX >= x - scrollbarDragPadding
+                && mouseX < x + ClientLayout.SCROLLBAR_WIDTH + scrollbarDragPadding
+                && mouseY >= y + ClientLayout.SCROLLBAR_ARROW_HEIGHT
+                && mouseY < (y + height) - ClientLayout.SCROLLBAR_ARROW_HEIGHT && mouseButtonHoldTicks > 0) {
+            int trackHeight = height - ClientLayout.SCROLLBAR_ARROW_HEIGHT * 2;
+            int thumbHeight = (trackHeight * height) / scrollHeight;
+            if (thumbHeight < ClientLayout.SCROLLBAR_MIN_THUMB_HEIGHT)
+                thumbHeight = ClientLayout.SCROLLBAR_MIN_THUMB_HEIGHT;
+            int dragOffset = mouseY - y - ClientLayout.SCROLLBAR_ARROW_HEIGHT - thumbHeight / 2;
+            int dragRange = trackHeight - thumbHeight;
             widget.scrollY = ((scrollHeight - height) * dragOffset) / dragRange;
             requestScrollRedraw(redrawArea, redraw);
             scrollbarDragging = true;

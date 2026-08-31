@@ -541,8 +541,7 @@ public final class MenuController {
             if (interfaces.state().inventoryDragArea != 0)
                 return;
                     if (interfaces.state().spellSelected == 1
-                    && clickX >= layout.topTabsX() && clickY >= layout.topTabsY()
-                    && clickX <= layout.topTabsX() + 249 && clickY <= layout.topTabsY() + 45)
+                    && layout.isTopTabsSpellBlockPoint(clickX, clickY))
                 clickButton = 0;
             if (state.open) {
                 if (clickButton != 1) {
@@ -560,9 +559,10 @@ public final class MenuController {
                         menuMouseX -= layout.chatboxX();
                         menuMouseY -= layout.chatboxY();
                     }
-                    if (menuMouseX < state.offsetX - 10 || menuMouseX > state.offsetX + state.width + 10
-                            || menuMouseY < state.offsetY - 10
-                            || menuMouseY > state.offsetY + state.height + 10) {
+                    if (menuMouseX < state.offsetX - ClientLayout.CONTEXT_MENU_CLOSE_PADDING
+                            || menuMouseX > state.offsetX + state.width + ClientLayout.CONTEXT_MENU_CLOSE_PADDING
+                            || menuMouseY < state.offsetY - ClientLayout.CONTEXT_MENU_CLOSE_PADDING
+                            || menuMouseY > state.offsetY + state.height + ClientLayout.CONTEXT_MENU_CLOSE_PADDING) {
                         state.open = false;
                         if (state.screenArea == 1)
                             redrawSink.redrawSidebar();
@@ -590,8 +590,8 @@ public final class MenuController {
                     }
                     int selectedEntry = -1;
                     for (int entryIndex = 0; entryIndex < state.count; entryIndex++) {
-                        int entryY = menuY + 31 + (state.count - 1 - entryIndex) * 15;
-                        if (menuClickX > menuX && menuClickX < menuX + menuWidth && menuClickY > entryY - 13 && menuClickY < entryY + 3)
+                        int entryY = layout.contextMenuEntryY(menuY, state.count, entryIndex);
+                        if (layout.isContextMenuEntryHit(menuClickX, menuClickY, menuX, menuWidth, entryY))
                             selectedEntry = entryIndex;
                     }
 
@@ -655,8 +655,8 @@ public final class MenuController {
                     textWidth = textWidth2;
             }
 
-            textWidth += 8;
-            int menuHeight = 15 * state.count + 21;
+            textWidth += ClientLayout.CONTEXT_MENU_WIDTH_PADDING;
+            int menuHeight = layout.contextMenuClampHeight(state.count);
             if (layout.isViewportInteractionPoint(clickX, clickY)) {
                 int menuX = clickX - layout.viewportX() - textWidth / 2;
                 if (menuX + textWidth > layout.viewportWidth())
@@ -673,10 +673,9 @@ public final class MenuController {
                 state.offsetX = menuX;
                 state.offsetY = menuY;
                 state.width = textWidth;
-                state.height = 15 * state.count + 22;
+                state.height = layout.contextMenuHeight(state.count);
             }
-            if (clickX > layout.sidebarX() && clickY > layout.sidebarY()
-                    && clickX < layout.sidebarX() + ClientLayout.SIDEBAR_WIDTH && clickY < layout.sidebarY() + ClientLayout.SIDEBAR_HEIGHT) {
+            if (layout.isSidebarInteractionPoint(clickX, clickY)) {
                 int clickX2 = clickX - layout.sidebarX() - textWidth / 2;
                 if (clickX2 < 0)
                     clickX2 = 0;
@@ -692,10 +691,9 @@ public final class MenuController {
                 state.offsetX = clickX2;
                 state.offsetY = clickY2;
                 state.width = textWidth;
-                state.height = 15 * state.count + 22;
+                state.height = layout.contextMenuHeight(state.count);
             }
-            if (clickX > layout.chatboxX() && clickY > layout.chatboxY()
-                    && clickX < layout.chatboxX() + ClientLayout.CHATBOX_WIDTH && clickY < layout.chatboxY() + ClientLayout.CHATBOX_HEIGHT) {
+            if (layout.isChatboxInteractionPoint(clickX, clickY)) {
                 int clickX3 = clickX - layout.chatboxX() - textWidth / 2;
                 if (clickX3 < 0)
                     clickX3 = 0;
@@ -711,7 +709,7 @@ public final class MenuController {
                 state.offsetX = clickX3;
                 state.offsetY = clickY3;
                 state.width = textWidth;
-                state.height = 15 * state.count + 22;
+                state.height = layout.contextMenuHeight(state.count);
             }
         }
 
@@ -986,7 +984,9 @@ public final class MenuController {
                 if (chatController.history().messages[messageIndex] == null)
                     continue;
                 int messageType = chatController.history().types[messageIndex];
-                int lineY = (70 - visibleLine * 14) + chatController.scrollOffset() + 4;
+                int lineY = (ClientLayout.CHATBOX_MESSAGE_BASELINE_Y
+                        - visibleLine * ClientLayout.CHATBOX_MESSAGE_LINE_HEIGHT)
+                        + chatController.scrollOffset() + ClientLayout.CHATBOX_MESSAGE_MENU_BASELINE_OFFSET;
                 if (lineY < -20)
                     break;
                 String sender = chatController.history().senders[messageIndex];
@@ -1000,7 +1000,7 @@ public final class MenuController {
                     visibleLine++;
                 if ((messageType == ChatMessageType.PUBLIC_PRIVILEGED || messageType == ChatMessageType.PUBLIC)
                         && (messageType == ChatMessageType.PUBLIC_PRIVILEGED || chatController.publicMode() == ChatMode.ON || chatController.publicMode() == ChatMode.FRIENDS && socialManager.isFriendOrSelf(sender, localPlayerName))) {
-                    if (mouseY > lineY - 14 && mouseY <= lineY && !sender.equals(localPlayerName)) {
+                    if (mouseY > lineY - ClientLayout.CHATBOX_MESSAGE_LINE_HEIGHT && mouseY <= lineY && !sender.equals(localPlayerName)) {
                         if (playerRights >= 1) {
                             state.actionNames[state.count] = "Report abuse @whi@" + sender;
                             state.actionIds[state.count] = MenuState.REPORT_ABUSE;
@@ -1017,7 +1017,7 @@ public final class MenuController {
                 }
                 if ((messageType == ChatMessageType.PRIVATE_RECEIVED || messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED) && chatController.splitPrivateChat() == 0
                         && (messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED || chatController.privateMode() == ChatMode.ON || chatController.privateMode() == ChatMode.FRIENDS && socialManager.isFriendOrSelf(sender, localPlayerName))) {
-                    if (mouseY > lineY - 14 && mouseY <= lineY) {
+                    if (mouseY > lineY - ClientLayout.CHATBOX_MESSAGE_LINE_HEIGHT && mouseY <= lineY) {
                         if (playerRights >= 1) {
                             state.actionNames[state.count] = "Report abuse @whi@" + sender;
                             state.actionIds[state.count] = MenuState.REPORT_ABUSE;
@@ -1033,7 +1033,7 @@ public final class MenuController {
                     visibleLine++;
                 }
                 if (messageType == ChatMessageType.TRADE_REQUEST && (chatController.tradeMode() == ChatMode.ON || chatController.tradeMode() == ChatMode.FRIENDS && socialManager.isFriendOrSelf(sender, localPlayerName))) {
-                    if (mouseY > lineY - 14 && mouseY <= lineY) {
+                    if (mouseY > lineY - ClientLayout.CHATBOX_MESSAGE_LINE_HEIGHT && mouseY <= lineY) {
                         state.actionNames[state.count] = "Accept trade @whi@" + sender;
                         state.actionIds[state.count] = MenuState.ACCEPT_TRADE;
                         state.count++;
@@ -1043,7 +1043,7 @@ public final class MenuController {
                 if ((messageType == ChatMessageType.PRIVATE_STATUS || messageType == ChatMessageType.PRIVATE_SENT) && chatController.splitPrivateChat() == 0 && chatController.privateMode() < ChatMode.OFF)
                     visibleLine++;
                 if (messageType == ChatMessageType.CHALLENGE_REQUEST && (chatController.tradeMode() == ChatMode.ON || chatController.tradeMode() == ChatMode.FRIENDS && socialManager.isFriendOrSelf(sender, localPlayerName))) {
-                    if (mouseY > lineY - 14 && mouseY <= lineY) {
+                    if (mouseY > lineY - ClientLayout.CHATBOX_MESSAGE_LINE_HEIGHT && mouseY <= lineY) {
                         state.actionNames[state.count] = "Accept challenge @whi@" + sender;
                         state.actionIds[state.count] = MenuState.ACCEPT_CHALLENGE;
                         state.count++;
@@ -1104,8 +1104,7 @@ public final class MenuController {
                 interfaces.setViewportTooltipWidgetId(interfaces.currentTooltipWidgetId());
             interfaces.setCurrentHoveredWidgetId(0);
             interfaces.setCurrentTooltipWidgetId(0);
-            if (mouseX > layout.sidebarX() && mouseY > layout.sidebarY()
-                    && mouseX < layout.sidebarX() + ClientLayout.SIDEBAR_WIDTH && mouseY < layout.sidebarY() + ClientLayout.SIDEBAR_HEIGHT)
+            if (layout.isSidebarInteractionPoint(mouseX, mouseY))
                 if (interfaces.state().sidebarOverlayInterfaceId != -1)
                     buildInterfaceMenu(layout.sidebarY(), Widget.get(interfaces.state().sidebarOverlayInterfaceId), 1, 0,
                             layout.sidebarX(), mouseX, mouseY);
@@ -1122,15 +1121,14 @@ public final class MenuController {
             }
             interfaces.setCurrentHoveredWidgetId(0);
             interfaces.setCurrentTooltipWidgetId(0);
-            if (mouseX > layout.chatboxX() && mouseY > layout.chatboxY()
-                    && mouseX < layout.chatboxX() + ClientLayout.CHATBOX_WIDTH && mouseY < layout.chatboxY() + ClientLayout.CHATBOX_HEIGHT)
+            if (layout.isChatboxInteractionPoint(mouseX, mouseY))
                 if (interfaces.state().chatboxInterfaceId != -1)
                     buildInterfaceMenu(layout.chatboxY(), Widget.get(interfaces.state().chatboxInterfaceId), 2, 0,
                             layout.chatboxX(), mouseX, mouseY);
                 else if (interfaces.state().dialogueInterfaceId != -1)
                     buildInterfaceMenu(layout.chatboxY(), Widget.get(interfaces.state().dialogueInterfaceId), 3, 0,
                             layout.chatboxX(), mouseX, mouseY);
-                else if (mouseY < layout.chatboxY() + 77 && mouseX < 426 && chatController.inputDialogState() == 0)
+                else if (layout.isChatboxMessageMenuPoint(mouseX, mouseY) && chatController.inputDialogState() == 0)
                     buildChatboxMessageMenu(mouseY - layout.chatboxY(), playerRights, localPlayer.name);
             if ((interfaces.state().chatboxInterfaceId != -1 || interfaces.state().dialogueInterfaceId != -1)
                     && interfaces.currentHoveredWidgetId() != interfaces.chatboxHoveredWidgetId()) {

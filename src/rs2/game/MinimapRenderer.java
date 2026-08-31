@@ -617,14 +617,14 @@ public final class MinimapRenderer {
 	 * Performs transform click.
 	 *
 	 * @return the resulting click
-	 * @param clickX      the click x
-	 * @param clickY      the click y
+	 * @param clickX      minimap-local click X coordinate
+	 * @param clickY      minimap-local click Y coordinate
 	 * @param localPlayer the local player
 	 * @param cameraYaw   the camera yaw
 	 */
 	public Click transformClick(int clickX, int clickY, Player localPlayer, int cameraYaw) {
-		int x = clickX - VIEW_X - 550;
-		int y = clickY - VIEW_Y - 4;
+		int x = clickX - VIEW_X;
+		int y = clickY - VIEW_Y;
 		if (x < 0 || y < 0 || x >= VIEW_WIDTH || y >= VIEW_HEIGHT)
 			return null;
 		x -= VIEW_CENTER_X;

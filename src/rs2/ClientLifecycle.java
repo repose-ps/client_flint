@@ -332,10 +332,10 @@ public final class ClientLifecycle {
 			client.compassMaskWidths[row] = endX - startX;
 		}
 
-		for (int row = 5; row < 156; row++) {
+		for (int row = 5; row < ClientLayout.MINIMAP_HEIGHT; row++) {
 			int startX = 999;
 			int endX = 0;
-			for (int x = 25; x < 172; x++) {
+			for (int x = 25; x < ClientLayout.MINIMAP_WIDTH; x++) {
 				if (client.minimapBackground.pixels[x + row * client.minimapBackground.width] == 0
 						&& (x > 34 || row > 34)) {
 					if (startX == 999) {

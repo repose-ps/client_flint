@@ -1351,31 +1351,32 @@ public class Client extends GameShell {
 			gameRenderer.clearSidebarRedraw();
 		}
 		if (interfaceController.state().chatboxInterfaceId == -1 && chatController.inputDialogState() == 0) {
-			chatboxScrollWidget.scrollY = chatController.contentHeight() - chatController.scrollOffset() - 77;
-			if (super.mouseX > 448 && super.mouseX < 560 && super.mouseY > layout.chatboxY() - 25)
-				handleScrollbarInput(chatController.contentHeight(), 0, chatboxScrollWidget, super.mouseY - layout.chatboxY(), -1,
-						super.mouseX - layout.chatboxX(), 77, 463);
-			int chatScrollOffsetFromBottom = chatController.contentHeight() - 77 - chatboxScrollWidget.scrollY;
+			chatboxScrollWidget.scrollY = chatController.contentHeight() - chatController.scrollOffset() - ClientLayout.CHATBOX_MESSAGE_HEIGHT;
+			if (layout.isChatboxScrollbarInputCandidate(super.mouseX, super.mouseY))
+				handleScrollbarInput(chatController.contentHeight(), 0, chatboxScrollWidget, layout.chatboxLocalY(super.mouseY), -1,
+						layout.chatboxLocalX(super.mouseX), ClientLayout.CHATBOX_MESSAGE_HEIGHT, ClientLayout.CHATBOX_SCROLLBAR_X);
+			int chatScrollOffsetFromBottom = chatController.contentHeight() - ClientLayout.CHATBOX_MESSAGE_HEIGHT - chatboxScrollWidget.scrollY;
 			if (chatScrollOffsetFromBottom < 0)
 				chatScrollOffsetFromBottom = 0;
-			if (chatScrollOffsetFromBottom > chatController.contentHeight() - 77)
-				chatScrollOffsetFromBottom = chatController.contentHeight() - 77;
+			if (chatScrollOffsetFromBottom > chatController.contentHeight() - ClientLayout.CHATBOX_MESSAGE_HEIGHT)
+				chatScrollOffsetFromBottom = chatController.contentHeight() - ClientLayout.CHATBOX_MESSAGE_HEIGHT;
 			if (chatController.scrollOffset() != chatScrollOffsetFromBottom) {
 				chatController.setScrollOffset(chatScrollOffsetFromBottom);
 				gameRenderer.requestChatboxRedraw();
 			}
 		}
 		if (interfaceController.state().chatboxInterfaceId == -1 && chatController.inputDialogState() == 3) {
-			int searchContentHeight = itemSearchResultCount * 14 + 7;
+			int searchContentHeight = itemSearchResultCount * ClientLayout.CHATBOX_MESSAGE_LINE_HEIGHT
+					+ ClientLayout.CHATBOX_CONTENT_HEIGHT_PADDING;
 			chatboxScrollWidget.scrollY = itemSearchScrollOffset;
-			if (super.mouseX > 448 && super.mouseX < 560 && super.mouseY > layout.chatboxY() - 25)
-				handleScrollbarInput(searchContentHeight, 0, chatboxScrollWidget, super.mouseY - layout.chatboxY(), -1,
-						super.mouseX - layout.chatboxX(), 77, 463);
+			if (layout.isChatboxScrollbarInputCandidate(super.mouseX, super.mouseY))
+				handleScrollbarInput(searchContentHeight, 0, chatboxScrollWidget, layout.chatboxLocalY(super.mouseY), -1,
+						layout.chatboxLocalX(super.mouseX), ClientLayout.CHATBOX_MESSAGE_HEIGHT, ClientLayout.CHATBOX_SCROLLBAR_X);
 			int clampedSearchScroll = chatboxScrollWidget.scrollY;
 			if (clampedSearchScroll < 0)
 				clampedSearchScroll = 0;
-			if (clampedSearchScroll > searchContentHeight - 77)
-				clampedSearchScroll = searchContentHeight - 77;
+			if (clampedSearchScroll > searchContentHeight - ClientLayout.CHATBOX_MESSAGE_HEIGHT)
+				clampedSearchScroll = searchContentHeight - ClientLayout.CHATBOX_MESSAGE_HEIGHT;
 			if (itemSearchScrollOffset != clampedSearchScroll) {
 				itemSearchScrollOffset = clampedSearchScroll;
 				gameRenderer.requestChatboxRedraw();
@@ -1416,34 +1417,34 @@ public class Client extends GameShell {
 			if (interfaceController.state().sidebarOverlayInterfaceId == -1) {
 				if (interfaceController.state().tabInterfaceIds[interfaceController.state().selectedTab] != -1) {
 					if (interfaceController.state().selectedTab == 0)
-						redstone1.draw(22, 10);
+						redstone1.draw(layout.tabHighlightX(0), layout.tabHighlightY(0));
 					if (interfaceController.state().selectedTab == 1)
-						redstone2.draw(54, 8);
+						redstone2.draw(layout.tabHighlightX(1), layout.tabHighlightY(1));
 					if (interfaceController.state().selectedTab == 2)
-						redstone2.draw(82, 8);
+						redstone2.draw(layout.tabHighlightX(2), layout.tabHighlightY(2));
 					if (interfaceController.state().selectedTab == 3)
-						redstone3.draw(110, 8);
+						redstone3.draw(layout.tabHighlightX(3), layout.tabHighlightY(3));
 					if (interfaceController.state().selectedTab == 4)
-						redstone2Horizontal.draw(153, 8);
+						redstone2Horizontal.draw(layout.tabHighlightX(4), layout.tabHighlightY(4));
 					if (interfaceController.state().selectedTab == 5)
-						redstone2Horizontal.draw(181, 8);
+						redstone2Horizontal.draw(layout.tabHighlightX(5), layout.tabHighlightY(5));
 					if (interfaceController.state().selectedTab == 6)
-						redstone1Horizontal.draw(209, 9);
+						redstone1Horizontal.draw(layout.tabHighlightX(6), layout.tabHighlightY(6));
 				}
 				if (interfaceController.state().tabInterfaceIds[0] != -1 && (interfaceController.state().flashingTab != 0 || gameCycle % 20 < 10))
-					sidebarIcons[0].draw(29, 13);
+					sidebarIcons[0].draw(layout.tabIconX(0), layout.tabIconY(0));
 				if (interfaceController.state().tabInterfaceIds[1] != -1 && (interfaceController.state().flashingTab != 1 || gameCycle % 20 < 10))
-					sidebarIcons[1].draw(53, 11);
+					sidebarIcons[1].draw(layout.tabIconX(1), layout.tabIconY(1));
 				if (interfaceController.state().tabInterfaceIds[2] != -1 && (interfaceController.state().flashingTab != 2 || gameCycle % 20 < 10))
-					sidebarIcons[2].draw(82, 11);
+					sidebarIcons[2].draw(layout.tabIconX(2), layout.tabIconY(2));
 				if (interfaceController.state().tabInterfaceIds[3] != -1 && (interfaceController.state().flashingTab != 3 || gameCycle % 20 < 10))
-					sidebarIcons[3].draw(115, 12);
+					sidebarIcons[3].draw(layout.tabIconX(3), layout.tabIconY(3));
 				if (interfaceController.state().tabInterfaceIds[4] != -1 && (interfaceController.state().flashingTab != 4 || gameCycle % 20 < 10))
-					sidebarIcons[4].draw(153, 13);
+					sidebarIcons[4].draw(layout.tabIconX(4), layout.tabIconY(4));
 				if (interfaceController.state().tabInterfaceIds[5] != -1 && (interfaceController.state().flashingTab != 5 || gameCycle % 20 < 10))
-					sidebarIcons[5].draw(180, 11);
+					sidebarIcons[5].draw(layout.tabIconX(5), layout.tabIconY(5));
 				if (interfaceController.state().tabInterfaceIds[6] != -1 && (interfaceController.state().flashingTab != 6 || gameCycle % 20 < 10))
-					sidebarIcons[6].draw(208, 13);
+					sidebarIcons[6].draw(layout.tabIconX(6), layout.tabIconY(6));
 			}
 			gameRenderer.topTabsBuffer().draw(super.graphics, layout.topTabsX(), layout.topTabsY());
 			gameRenderer.bottomTabsBuffer().bindRaster();
@@ -1451,36 +1452,36 @@ public class Client extends GameShell {
 			if (interfaceController.state().sidebarOverlayInterfaceId == -1) {
 				if (interfaceController.state().tabInterfaceIds[interfaceController.state().selectedTab] != -1) {
 					if (interfaceController.state().selectedTab == 7)
-						redstone1Vertical.draw(42, 0);
+						redstone1Vertical.draw(layout.tabHighlightX(7), layout.tabHighlightY(7));
 					if (interfaceController.state().selectedTab == 8)
-						redstone2Vertical.draw(74, 0);
+						redstone2Vertical.draw(layout.tabHighlightX(8), layout.tabHighlightY(8));
 					if (interfaceController.state().selectedTab == 9)
-						redstone2Vertical.draw(102, 0);
+						redstone2Vertical.draw(layout.tabHighlightX(9), layout.tabHighlightY(9));
 					if (interfaceController.state().selectedTab == 10)
-						redstone3Vertical.draw(130, 1);
+						redstone3Vertical.draw(layout.tabHighlightX(10), layout.tabHighlightY(10));
 					if (interfaceController.state().selectedTab == 11)
-						redstone2Both.draw(173, 0);
+						redstone2Both.draw(layout.tabHighlightX(11), layout.tabHighlightY(11));
 					if (interfaceController.state().selectedTab == 12)
-						redstone2Both.draw(201, 0);
+						redstone2Both.draw(layout.tabHighlightX(12), layout.tabHighlightY(12));
 					if (interfaceController.state().selectedTab == 13)
-						redstone1Both.draw(229, 0);
+						redstone1Both.draw(layout.tabHighlightX(13), layout.tabHighlightY(13));
 				}
 				if (interfaceController.state().tabInterfaceIds[8] != -1 && (interfaceController.state().flashingTab != 8 || gameCycle % 20 < 10))
-					sidebarIcons[7].draw(74, 2);
+					sidebarIcons[7].draw(layout.tabIconX(8), layout.tabIconY(8));
 				if (interfaceController.state().tabInterfaceIds[9] != -1 && (interfaceController.state().flashingTab != 9 || gameCycle % 20 < 10))
-					sidebarIcons[8].draw(102, 3);
+					sidebarIcons[8].draw(layout.tabIconX(9), layout.tabIconY(9));
 				if (interfaceController.state().tabInterfaceIds[10] != -1
 						&& (interfaceController.state().flashingTab != 10 || gameCycle % 20 < 10))
-					sidebarIcons[9].draw(137, 4);
+					sidebarIcons[9].draw(layout.tabIconX(10), layout.tabIconY(10));
 				if (interfaceController.state().tabInterfaceIds[11] != -1
 						&& (interfaceController.state().flashingTab != 11 || gameCycle % 20 < 10))
-					sidebarIcons[10].draw(174, 2);
+					sidebarIcons[10].draw(layout.tabIconX(11), layout.tabIconY(11));
 				if (interfaceController.state().tabInterfaceIds[12] != -1
 						&& (interfaceController.state().flashingTab != 12 || gameCycle % 20 < 10))
-					sidebarIcons[11].draw(201, 2);
+					sidebarIcons[11].draw(layout.tabIconX(12), layout.tabIconY(12));
 				if (interfaceController.state().tabInterfaceIds[13] != -1
 						&& (interfaceController.state().flashingTab != 13 || gameCycle % 20 < 10))
-					sidebarIcons[12].draw(226, 2);
+					sidebarIcons[12].draw(layout.tabIconX(13), layout.tabIconY(13));
 			}
 			gameRenderer.bottomTabsBuffer().draw(super.graphics, layout.bottomTabsX(), layout.bottomTabsY());
 			gameRenderer.viewportBuffer().bindRaster();
@@ -1490,30 +1491,30 @@ public class Client extends GameShell {
 			gameRenderer.clearChatModesRedraw();
 			gameRenderer.chatModesBuffer().bindRaster();
 			chatModesBackground.draw(0, 0);
-			plainFont.drawCenteredTextWithTags("Public chat", 55, 28, 0xffffff, true);
+			plainFont.drawCenteredTextWithTags("Public chat", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC), layout.chatModeLabelY(ClientLayout.CHAT_MODE_PUBLIC), 0xffffff, true);
 			if (chatController.publicMode() == ChatMode.ON)
-				plainFont.drawCenteredTextWithTags("On", 55, 41, 65280, true);
+				plainFont.drawCenteredTextWithTags("On", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC), layout.chatModeStatusY(), 65280, true);
 			if (chatController.publicMode() == ChatMode.FRIENDS)
-				plainFont.drawCenteredTextWithTags("Friends", 55, 41, 0xffff00, true);
+				plainFont.drawCenteredTextWithTags("Friends", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC), layout.chatModeStatusY(), 0xffff00, true);
 			if (chatController.publicMode() == ChatMode.OFF)
-				plainFont.drawCenteredTextWithTags("Off", 55, 41, 0xff0000, true);
+				plainFont.drawCenteredTextWithTags("Off", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC), layout.chatModeStatusY(), 0xff0000, true);
 			if (chatController.publicMode() == ChatMode.HIDE)
-				plainFont.drawCenteredTextWithTags("Hide", 55, 41, 65535, true);
-			plainFont.drawCenteredTextWithTags("Private chat", 184, 28, 0xffffff, true);
+				plainFont.drawCenteredTextWithTags("Hide", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC), layout.chatModeStatusY(), 65535, true);
+			plainFont.drawCenteredTextWithTags("Private chat", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PRIVATE), layout.chatModeLabelY(ClientLayout.CHAT_MODE_PRIVATE), 0xffffff, true);
 			if (chatController.privateMode() == ChatMode.ON)
-				plainFont.drawCenteredTextWithTags("On", 184, 41, 65280, true);
+				plainFont.drawCenteredTextWithTags("On", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PRIVATE), layout.chatModeStatusY(), 65280, true);
 			if (chatController.privateMode() == ChatMode.FRIENDS)
-				plainFont.drawCenteredTextWithTags("Friends", 184, 41, 0xffff00, true);
+				plainFont.drawCenteredTextWithTags("Friends", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PRIVATE), layout.chatModeStatusY(), 0xffff00, true);
 			if (chatController.privateMode() == ChatMode.OFF)
-				plainFont.drawCenteredTextWithTags("Off", 184, 41, 0xff0000, true);
-			plainFont.drawCenteredTextWithTags("Trade/compete", 324, 28, 0xffffff, true);
+				plainFont.drawCenteredTextWithTags("Off", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PRIVATE), layout.chatModeStatusY(), 0xff0000, true);
+			plainFont.drawCenteredTextWithTags("Trade/compete", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_TRADE), layout.chatModeLabelY(ClientLayout.CHAT_MODE_TRADE), 0xffffff, true);
 			if (chatController.tradeMode() == ChatMode.ON)
-				plainFont.drawCenteredTextWithTags("On", 324, 41, 65280, true);
+				plainFont.drawCenteredTextWithTags("On", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_TRADE), layout.chatModeStatusY(), 65280, true);
 			if (chatController.tradeMode() == ChatMode.FRIENDS)
-				plainFont.drawCenteredTextWithTags("Friends", 324, 41, 0xffff00, true);
+				plainFont.drawCenteredTextWithTags("Friends", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_TRADE), layout.chatModeStatusY(), 0xffff00, true);
 			if (chatController.tradeMode() == ChatMode.OFF)
-				plainFont.drawCenteredTextWithTags("Off", 324, 41, 0xff0000, true);
-			plainFont.drawCenteredTextWithTags("Report abuse", 458, 33, 0xffffff, true);
+				plainFont.drawCenteredTextWithTags("Off", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_TRADE), layout.chatModeStatusY(), 0xff0000, true);
+			plainFont.drawCenteredTextWithTags("Report abuse", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_REPORT_ABUSE), layout.chatModeLabelY(ClientLayout.CHAT_MODE_REPORT_ABUSE), 0xffffff, true);
 			gameRenderer.chatModesBuffer().draw(super.graphics, layout.chatModesX(), layout.chatModesY());
 			gameRenderer.viewportBuffer().bindRaster();
 			gameRenderer.bindViewport();
@@ -1755,39 +1756,41 @@ public class Client extends GameShell {
 		gameRenderer.bindChatbox();
 		chatboxBackground.draw(0, 0);
 		if (chatController.isPromptRaised()) {
-			boldFont.drawCenteredText(chatController.promptMessage(), 239, 40, 0);
-			boldFont.drawCenteredText(chatController.promptInput() + "*", 239, 60, 128);
+			boldFont.drawCenteredText(chatController.promptMessage(), ClientLayout.CHATBOX_TEXT_CENTER_X, 40, 0);
+			boldFont.drawCenteredText(chatController.promptInput() + "*", ClientLayout.CHATBOX_TEXT_CENTER_X, 60, 128);
 		} else if (chatController.inputDialogState() == 1) {
-			boldFont.drawCenteredText("Enter amount:", 239, 40, 0);
-			boldFont.drawCenteredText(chatController.inputDialogText() + "*", 239, 60, 128);
+			boldFont.drawCenteredText("Enter amount:", ClientLayout.CHATBOX_TEXT_CENTER_X, 40, 0);
+			boldFont.drawCenteredText(chatController.inputDialogText() + "*", ClientLayout.CHATBOX_TEXT_CENTER_X, 60, 128);
 		} else if (chatController.inputDialogState() == 2) {
-			boldFont.drawCenteredText("Enter name:", 239, 40, 0);
-			boldFont.drawCenteredText(chatController.inputDialogText() + "*", 239, 60, 128);
+			boldFont.drawCenteredText("Enter name:", ClientLayout.CHATBOX_TEXT_CENTER_X, 40, 0);
+			boldFont.drawCenteredText(chatController.inputDialogText() + "*", ClientLayout.CHATBOX_TEXT_CENTER_X, 60, 128);
 		} else if (chatController.inputDialogState() == 3) {
 			if (chatController.inputDialogText() != itemSearchQuery) {
 				searchItems(chatController.inputDialogText());
 				itemSearchQuery = chatController.inputDialogText();
 			}
 			TypeFace searchFont = plainFont;
-			Rasterizer.setCoordinates(0, 0, 463, 77);
+			Rasterizer.setCoordinates(0, 0, ClientLayout.CHATBOX_MESSAGE_CLIP_WIDTH, ClientLayout.CHATBOX_MESSAGE_HEIGHT);
 			for (int resultIndex = 0; resultIndex < itemSearchResultCount; resultIndex++) {
 				int resultY = (18 + resultIndex * 14) - itemSearchScrollOffset;
 				if (resultY > 0 && resultY < 110)
-					searchFont.drawCenteredText(itemSearchResultNames[resultIndex], 239, resultY, 0);
+					searchFont.drawCenteredText(itemSearchResultNames[resultIndex], ClientLayout.CHATBOX_TEXT_CENTER_X, resultY, 0);
 			}
 
 			Rasterizer.resetCoordinates();
 			if (itemSearchResultCount > 5)
-				drawScrollbar(itemSearchScrollOffset, 463, 77, itemSearchResultCount * 14 + 7, 0);
+				drawScrollbar(itemSearchScrollOffset, ClientLayout.CHATBOX_SCROLLBAR_X, ClientLayout.CHATBOX_MESSAGE_HEIGHT,
+						itemSearchResultCount * ClientLayout.CHATBOX_MESSAGE_LINE_HEIGHT + ClientLayout.CHATBOX_CONTENT_HEIGHT_PADDING, 0);
 			if (chatController.inputDialogText().length() == 0)
-				boldFont.drawCenteredText("Enter object name", 239, 40, 255);
+				boldFont.drawCenteredText("Enter object name", ClientLayout.CHATBOX_TEXT_CENTER_X, 40, 255);
 			else if (itemSearchResultCount == 0)
-				boldFont.drawCenteredText("No matching objects found, please shorten search", 239, 40, 0);
-			searchFont.drawCenteredText(chatController.inputDialogText() + "*", 239, 90, 0);
-			Rasterizer.drawHorizontalLine(0, 77, 479, 0);
+				boldFont.drawCenteredText("No matching objects found, please shorten search", ClientLayout.CHATBOX_TEXT_CENTER_X, 40, 0);
+			searchFont.drawCenteredText(chatController.inputDialogText() + "*", ClientLayout.CHATBOX_TEXT_CENTER_X,
+					ClientLayout.CHATBOX_INPUT_BASELINE_Y, 0);
+			Rasterizer.drawHorizontalLine(0, ClientLayout.CHATBOX_MESSAGE_HEIGHT, ClientLayout.CHATBOX_DIVIDER_WIDTH, 0);
 		} else if (chatController.clickToContinueMessage() != null) {
-			boldFont.drawCenteredText(chatController.clickToContinueMessage(), 239, 40, 0);
-			boldFont.drawCenteredText("Click to continue", 239, 60, 128);
+			boldFont.drawCenteredText(chatController.clickToContinueMessage(), ClientLayout.CHATBOX_TEXT_CENTER_X, 40, 0);
+			boldFont.drawCenteredText("Click to continue", ClientLayout.CHATBOX_TEXT_CENTER_X, 60, 128);
 		} else if (interfaceController.state().chatboxInterfaceId != -1)
 			drawInterface(0, 0, Widget.get(interfaceController.state().chatboxInterfaceId), 0);
 		else if (interfaceController.state().dialogueInterfaceId != -1) {
@@ -1795,11 +1798,12 @@ public class Client extends GameShell {
 		} else {
 			TypeFace chatFont = plainFont;
 			int visibleLine = 0;
-			Rasterizer.setCoordinates(0, 0, 463, 77);
+			Rasterizer.setCoordinates(0, 0, ClientLayout.CHATBOX_MESSAGE_CLIP_WIDTH, ClientLayout.CHATBOX_MESSAGE_HEIGHT);
 			for (int messageIndex = 0; messageIndex < 100; messageIndex++)
 				if (chatController.history().messages[messageIndex] != null) {
 					int messageType = chatController.history().types[messageIndex];
-					int lineY = (70 - visibleLine * 14) + chatController.scrollOffset();
+					int lineY = (ClientLayout.CHATBOX_MESSAGE_BASELINE_Y
+								- visibleLine * ClientLayout.CHATBOX_MESSAGE_LINE_HEIGHT) + chatController.scrollOffset();
 					String sender = chatController.history().senders[messageIndex];
 					byte rightsIcon = 0;
 					if (sender != null && sender.startsWith("@cr1@")) {
@@ -1879,19 +1883,21 @@ public class Client extends GameShell {
 				}
 
 			Rasterizer.resetCoordinates();
-			chatController.setContentHeight(visibleLine * 14 + 7);
+			chatController.setContentHeight(visibleLine * ClientLayout.CHATBOX_MESSAGE_LINE_HEIGHT
+					+ ClientLayout.CHATBOX_CONTENT_HEIGHT_PADDING);
 			if (chatController.contentHeight() < ChatController.MIN_CONTENT_HEIGHT)
 				chatController.setContentHeight(ChatController.MIN_CONTENT_HEIGHT);
-			drawScrollbar(chatController.contentHeight() - chatController.scrollOffset() - 77, 463, 77,
-					chatController.contentHeight(), 0);
+			drawScrollbar(chatController.contentHeight() - chatController.scrollOffset() - ClientLayout.CHATBOX_MESSAGE_HEIGHT,
+					ClientLayout.CHATBOX_SCROLLBAR_X, ClientLayout.CHATBOX_MESSAGE_HEIGHT, chatController.contentHeight(), 0);
 			String localDisplayName;
 			if (localPlayer != null && localPlayer.name != null)
 				localDisplayName = localPlayer.name;
 			else
 				localDisplayName = TextFormatter.formatDisplayName(loginScreen.username);
-			chatFont.drawText(localDisplayName + ":", 4, 90, 0);
-			chatFont.drawText(chatController.input() + "*", 6 + chatFont.getFormattedTextWidth(localDisplayName + ": "), 90, 255);
-			Rasterizer.drawHorizontalLine(0, 77, 479, 0);
+			chatFont.drawText(localDisplayName + ":", 4, ClientLayout.CHATBOX_INPUT_BASELINE_Y, 0);
+			chatFont.drawText(chatController.input() + "*", 6 + chatFont.getFormattedTextWidth(localDisplayName + ": "),
+					ClientLayout.CHATBOX_INPUT_BASELINE_Y, 255);
+			Rasterizer.drawHorizontalLine(0, ClientLayout.CHATBOX_MESSAGE_HEIGHT, ClientLayout.CHATBOX_DIVIDER_WIDTH, 0);
 		}
 		if (menuController.state().open && menuController.state().screenArea == 2)
 			drawContextMenu();
@@ -3660,9 +3666,9 @@ public class Client extends GameShell {
 			mouseY -= layout.chatboxY();
 		}
 		for (int entryIndex = 0; entryIndex < menuController.state().count; entryIndex++) {
-			int entryY = menuY + 31 + (menuController.state().count - 1 - entryIndex) * 15;
+			int entryY = layout.contextMenuEntryY(menuY, menuController.state().count, entryIndex);
 			int entryColor = 0xffffff;
-			if (mouseX > menuX && mouseX < menuX + menuWidth && mouseY > entryY - 13 && mouseY < entryY + 3)
+			if (layout.isContextMenuEntryHit(mouseX, mouseY, menuX, menuWidth, entryY))
 				entryColor = 0xffff00;
 			boldFont.drawTextWithTags(menuController.state().actionNames[entryIndex], menuX + 3, entryY, entryColor, true);
 		}
@@ -4012,8 +4018,8 @@ public class Client extends GameShell {
 		if (minimapRenderer.state != 0 || clickButton != 1) {
 			return;
 		}
-		MinimapRenderer.Click click = minimapRenderer.transformClick(clickX - layout.extraWidth(), clickY, localPlayer,
-				cameraController.followYaw);
+		MinimapRenderer.Click click = minimapRenderer.transformClick(layout.minimapLocalX(clickX),
+				layout.minimapLocalY(clickY), localPlayer, cameraController.followYaw);
 		if (click == null) {
 			return;
 		}

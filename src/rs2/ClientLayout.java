@@ -50,6 +50,60 @@ public final class ClientLayout {
     /** Constant value for chat modes height. */
     public static final int CHAT_MODES_HEIGHT = 50;
 
+    /** Width of the clipped chat-message text area inside the chatbox. */
+    public static final int CHATBOX_MESSAGE_CLIP_WIDTH = 463;
+    /** Height of the scrollable chat-message area inside the chatbox. */
+    public static final int CHATBOX_MESSAGE_HEIGHT = 77;
+    /** Width of the chatbox divider drawn above the input line. */
+    public static final int CHATBOX_DIVIDER_WIDTH = 479;
+    /** X coordinate of the chatbox scrollbar inside the chatbox buffer. */
+    public static final int CHATBOX_SCROLLBAR_X = 463;
+    /** Fixed client-space right edge used by chat-message menu hit testing. */
+    public static final int CHATBOX_MESSAGE_MENU_RIGHT_X = 426;
+    /** Fixed client-space left edge of the legacy chat scrollbar input gate. */
+    public static final int CHATBOX_SCROLL_INPUT_LEFT_X = 448;
+    /** Fixed client-space right edge of the legacy chat scrollbar input gate. */
+    public static final int CHATBOX_SCROLL_INPUT_RIGHT_X = 560;
+    /** Pixels above the chatbox accepted by the legacy scrollbar input gate. */
+    public static final int CHATBOX_SCROLL_INPUT_TOP_MARGIN = 25;
+    /** Horizontal center used by chatbox prompt and dialog text. */
+    public static final int CHATBOX_TEXT_CENTER_X = 239;
+    /** Baseline of the normal chat input line. */
+    public static final int CHATBOX_INPUT_BASELINE_Y = 90;
+    /** Baseline of the newest visible normal chat message. */
+    public static final int CHATBOX_MESSAGE_BASELINE_Y = 70;
+    /** Vertical spacing between normal chat-message lines. */
+    public static final int CHATBOX_MESSAGE_LINE_HEIGHT = 14;
+    /** Additional baseline offset used by chat-message menu hit testing. */
+    public static final int CHATBOX_MESSAGE_MENU_BASELINE_OFFSET = 4;
+    /** Padding added after visible chat lines when computing scroll content height. */
+    public static final int CHATBOX_CONTENT_HEIGHT_PADDING = 7;
+
+    /** Width of the classic widget scrollbar. */
+    public static final int SCROLLBAR_WIDTH = 16;
+    /** Height of each classic scrollbar arrow cap. */
+    public static final int SCROLLBAR_ARROW_HEIGHT = 16;
+    /** Minimum height of the draggable classic scrollbar thumb. */
+    public static final int SCROLLBAR_MIN_THUMB_HEIGHT = 8;
+    /** Extra horizontal hit padding retained while dragging a scrollbar. */
+    public static final int SCROLLBAR_DRAG_PADDING = 32;
+
+    /** Vertical spacing between context-menu entries. */
+    public static final int CONTEXT_MENU_ROW_HEIGHT = 15;
+    /** Baseline offset of the first context-menu entry. */
+    public static final int CONTEXT_MENU_FIRST_ENTRY_BASELINE = 31;
+    /** Pixels above an entry baseline included in its hit area. */
+    public static final int CONTEXT_MENU_ENTRY_HIT_TOP = 13;
+    /** Pixels below an entry baseline included in its hit area. */
+    public static final int CONTEXT_MENU_ENTRY_HIT_BOTTOM = 3;
+    /** Horizontal padding added to the widest context-menu label. */
+    public static final int CONTEXT_MENU_WIDTH_PADDING = 8;
+    /** Extra height used while clamping an opening context menu. */
+    public static final int CONTEXT_MENU_CLAMP_HEIGHT_PADDING = 21;
+    /** Extra height stored on an opened context menu. */
+    public static final int CONTEXT_MENU_HEIGHT_PADDING = 22;
+    /** Mouse distance outside an open menu that closes it. */
+    public static final int CONTEXT_MENU_CLOSE_PADDING = 10;
 
     /** Fixed-layout X origin of the world viewport. */
     public static final int VIEWPORT_X = 4;
@@ -83,6 +137,12 @@ public final class ClientLayout {
     public static final int MIDDLE_BORDER_X = 516;
     /** Fixed-layout Y coordinate of the lower frame border. */
     public static final int LOWER_BORDER_Y = 338;
+    /** Fixed Y coordinate of the lower vertical middle frame decoration. */
+    public static final int LOWER_VERTICAL_MIDDLE_Y = 357;
+    /** Fixed-layout X coordinate of the upper-right frame decoration. */
+    public static final int RIGHT_FRAME_TOP_X = 722;
+    /** Fixed-layout X coordinate of the middle-right frame decoration. */
+    public static final int RIGHT_FRAME_MIDDLE_X = 743;
 
     /** Number of classic sidebar tabs. */
     public static final int TAB_COUNT = 14;
@@ -99,24 +159,53 @@ public final class ClientLayout {
     public static final int NO_CHAT_MODE_BUTTON = -1;
 
     /**
-     * Classic sidebar-tab hit rectangles as {left, rightExclusive, top, bottomExclusive}.
-     * The slightly overlapping bounds are retained exactly from the fixed client.
+     * Classic sidebar-tab hit rectangles as panel-local
+     * {left, rightExclusive, top, bottomExclusive} bounds. Tabs 0..6 are local
+     * to the top strip; tabs 7..13 are local to the bottom strip.
      */
     private static final int[][] TAB_HITBOXES = {
-            { 539, 574, 169, 205 }, { 569, 600, 168, 205 }, { 597, 628, 168, 205 },
-            { 625, 670, 168, 203 }, { 666, 697, 168, 205 }, { 694, 725, 168, 205 },
-            { 722, 757, 169, 205 }, { 540, 575, 466, 502 }, { 572, 603, 466, 503 },
-            { 599, 630, 466, 503 }, { 627, 672, 467, 502 }, { 669, 700, 466, 503 },
-            { 696, 727, 466, 503 }, { 724, 759, 466, 502 }
+            { 23, 58, 9, 45 }, { 53, 84, 8, 45 }, { 81, 112, 8, 45 },
+            { 109, 154, 8, 43 }, { 150, 181, 8, 45 }, { 178, 209, 8, 45 },
+            { 206, 241, 9, 45 }, { 44, 79, 0, 36 }, { 76, 107, 0, 37 },
+            { 103, 134, 0, 37 }, { 131, 176, 1, 36 }, { 173, 204, 0, 37 },
+            { 200, 231, 0, 37 }, { 228, 263, 0, 36 }
+    };
+
+    /** Selected-tab highlight X coordinates inside the tab-strip buffers. */
+    private static final int[] TAB_HIGHLIGHT_X = {
+            22, 54, 82, 110, 153, 181, 209, 42, 74, 102, 130, 173, 201, 229
+    };
+
+    /** Selected-tab highlight Y coordinates inside the tab-strip buffers. */
+    private static final int[] TAB_HIGHLIGHT_Y = {
+            10, 8, 8, 8, 8, 8, 9, 0, 0, 0, 1, 0, 0, 0
+    };
+
+    /** Sidebar icon X coordinates indexed by tab; tab 7 intentionally has no icon. */
+    private static final int[] TAB_ICON_X = {
+            29, 53, 82, 115, 153, 180, 208, -1, 74, 102, 137, 174, 201, 226
+    };
+
+    /** Sidebar icon Y coordinates indexed by tab; tab 7 intentionally has no icon. */
+    private static final int[] TAB_ICON_Y = {
+            13, 11, 11, 12, 13, 11, 13, -1, 2, 3, 4, 2, 2, 2
     };
 
     /**
-     * Classic chat-mode hit rectangles as {left, rightExclusive, top, bottomExclusive}.
+     * Classic chat-mode hit rectangles as chat-mode-buffer-local
+     * {left, rightExclusive, top, bottomExclusive} bounds.
      */
     private static final int[][] CHAT_MODE_HITBOXES = {
-            { 6, 107, 467, 500 }, { 135, 236, 467, 500 },
-            { 273, 374, 467, 500 }, { 412, 513, 467, 500 }
+            { 6, 107, 14, 47 }, { 135, 236, 14, 47 },
+            { 273, 374, 14, 47 }, { 412, 513, 14, 47 }
     };
+
+    /** Text center X coordinates for the four chat-mode buttons. */
+    private static final int[] CHAT_MODE_TEXT_CENTER_X = { 55, 184, 324, 458 };
+    /** Label baselines for the four chat-mode buttons. */
+    private static final int[] CHAT_MODE_LABEL_Y = { 28, 28, 28, 33 };
+    /** Status baselines for public/private/trade chat-mode buttons. */
+    private static final int CHAT_MODE_STATUS_Y = 41;
 
     /** Stores the current width. */
     private int width = FIXED_WIDTH;
@@ -310,6 +399,45 @@ public final class ClientLayout {
      */
     public int lowerBorderY() { return LOWER_BORDER_Y + extraHeight(); }
 
+    /** Returns the fixed lower vertical-middle decoration Y coordinate.
+     * @return the lower vertical-middle decoration Y coordinate
+     */
+    public int lowerVerticalMiddleY() { return LOWER_VERTICAL_MIDDLE_Y; }
+
+    /** Returns the upper-right frame-decoration X coordinate.
+     * @return the upper-right frame-decoration X coordinate
+     */
+    public int rightFrameTopX() { return rightAnchoredX(RIGHT_FRAME_TOP_X); }
+
+    /** Returns the middle-right frame-decoration X coordinate.
+     * @return the middle-right frame-decoration X coordinate
+     */
+    public int rightFrameMiddleX() { return rightAnchoredX(RIGHT_FRAME_MIDDLE_X); }
+
+    /** Converts a client-space X coordinate to minimap-buffer space.
+     * @param x client-space X coordinate
+     * @return minimap-local X coordinate
+     */
+    public int minimapLocalX(int x) { return x - minimapX(); }
+
+    /** Converts a client-space Y coordinate to minimap-buffer space.
+     * @param y client-space Y coordinate
+     * @return minimap-local Y coordinate
+     */
+    public int minimapLocalY(int y) { return y - minimapY(); }
+
+    /** Converts a client-space X coordinate to chatbox-buffer space.
+     * @param x client-space X coordinate
+     * @return chatbox-local X coordinate
+     */
+    public int chatboxLocalX(int x) { return x - chatboxX(); }
+
+    /** Converts a client-space Y coordinate to chatbox-buffer space.
+     * @param y client-space Y coordinate
+     * @return chatbox-local Y coordinate
+     */
+    public int chatboxLocalY(int y) { return y - chatboxY(); }
+
     /**
      * Returns the viewport-local X origin for a modal/root interface. Fixed mode
      * preserves the original (0,0) placement; resizable mode centers the root in
@@ -334,6 +462,58 @@ public final class ClientLayout {
         if (!isResizableMode())
             return 0;
         return Math.max(0, (unobscuredViewportHeight() - interfaceHeight) / 2);
+    }
+
+    /**
+     * Tests the legacy inclusive top-tab strip bounds used while a spell is
+     * selected. The inclusive right/bottom edges intentionally preserve the
+     * original fixed-client behavior.
+     * @param x client-space X coordinate
+     * @param y client-space Y coordinate
+     * @return whether the point lies in the spell-selection tab region
+     */
+    public boolean isTopTabsSpellBlockPoint(int x, int y) {
+        return x >= topTabsX() && y >= topTabsY()
+                && x <= topTabsX() + TOP_TABS_WIDTH && y <= topTabsY() + TOP_TABS_HEIGHT;
+    }
+
+    /** Tests the strict interior bounds used for sidebar menu interaction.
+     * @param x client-space X coordinate
+     * @param y client-space Y coordinate
+     * @return whether the point lies in the sidebar interaction region
+     */
+    public boolean isSidebarInteractionPoint(int x, int y) {
+        return containsStrict(x, y, sidebarX(), sidebarY(), SIDEBAR_WIDTH, SIDEBAR_HEIGHT);
+    }
+
+    /** Tests the strict interior bounds used for chatbox menu interaction.
+     * @param x client-space X coordinate
+     * @param y client-space Y coordinate
+     * @return whether the point lies in the chatbox interaction region
+     */
+    public boolean isChatboxInteractionPoint(int x, int y) {
+        return containsStrict(x, y, chatboxX(), chatboxY(), CHATBOX_WIDTH, CHATBOX_HEIGHT);
+    }
+
+    /** Tests the normal chat-message subregion used to build player-name menus.
+     * @param x client-space X coordinate
+     * @param y client-space Y coordinate
+     * @return whether the point lies in the chat-message menu region
+     */
+    public boolean isChatboxMessageMenuPoint(int x, int y) {
+        return isChatboxInteractionPoint(x, y)
+                && y < chatboxY() + CHATBOX_MESSAGE_HEIGHT
+                && x < CHATBOX_MESSAGE_MENU_RIGHT_X;
+    }
+
+    /** Tests the original broad gate around chatbox scrollbar interaction.
+     * @param x client-space X coordinate
+     * @param y client-space Y coordinate
+     * @return whether scrollbar processing should inspect the point
+     */
+    public boolean isChatboxScrollbarInputCandidate(int x, int y) {
+        return x > CHATBOX_SCROLL_INPUT_LEFT_X && x < CHATBOX_SCROLL_INPUT_RIGHT_X
+                && y > chatboxY() - CHATBOX_SCROLL_INPUT_TOP_MARGIN;
     }
 
     /**
@@ -371,6 +551,20 @@ public final class ClientLayout {
                 && x >= left && y >= top && x < left + regionWidth && y < top + regionHeight;
     }
 
+    /** Tests strict interior rectangle bounds used by legacy menu regions.
+     * @param x point X coordinate
+     * @param y point Y coordinate
+     * @param left rectangle left edge
+     * @param top rectangle top edge
+     * @param regionWidth rectangle width
+     * @param regionHeight rectangle height
+     * @return whether the point lies strictly inside the rectangle
+     */
+    private boolean containsStrict(int x, int y, int left, int top, int regionWidth, int regionHeight) {
+        return regionWidth > 0 && regionHeight > 0
+                && x > left && y > top && x < left + regionWidth && y < top + regionHeight;
+    }
+
     /**
      * Tests whether the supplied screen coordinate falls within one classic
      * sidebar-tab hitbox.
@@ -384,9 +578,34 @@ public final class ClientLayout {
         if (tab < 0 || tab >= TAB_HITBOXES.length)
             return false;
         int[] bounds = TAB_HITBOXES[tab];
-        int fixedX = x - extraWidth();
-        return containsExclusive(fixedX, y, bounds[0], bounds[2], bounds[1], bounds[3]);
+        int localX = x - (tab < 7 ? topTabsX() : bottomTabsX());
+        int localY = y - (tab < 7 ? topTabsY() : bottomTabsY());
+        return containsExclusive(localX, localY, bounds[0], bounds[2], bounds[1], bounds[3]);
     }
+
+    /** Returns the selected-tab highlight X coordinate inside its strip buffer.
+     * @param tab tab index 0..13
+     * @return highlight X coordinate
+     */
+    public int tabHighlightX(int tab) { return TAB_HIGHLIGHT_X[requireTab(tab)]; }
+
+    /** Returns the selected-tab highlight Y coordinate inside its strip buffer.
+     * @param tab tab index 0..13
+     * @return highlight Y coordinate
+     */
+    public int tabHighlightY(int tab) { return TAB_HIGHLIGHT_Y[requireTab(tab)]; }
+
+    /** Returns the sidebar icon X coordinate for a tab, or -1 when none exists.
+     * @param tab tab index 0..13
+     * @return icon X coordinate, or -1
+     */
+    public int tabIconX(int tab) { return TAB_ICON_X[requireTab(tab)]; }
+
+    /** Returns the sidebar icon Y coordinate for a tab, or -1 when none exists.
+     * @param tab tab index 0..13
+     * @return icon Y coordinate, or -1
+     */
+    public int tabIconY(int tab) { return TAB_ICON_Y[requireTab(tab)]; }
 
     /**
      * Returns the fixed chat-mode button at the supplied screen coordinate.
@@ -396,14 +615,32 @@ public final class ClientLayout {
      * @return one of the {@code CHAT_MODE_*} constants, or {@link #NO_CHAT_MODE_BUTTON}
      */
     public int chatModeButtonAt(int x, int y) {
-        int fixedY = y - extraHeight();
+        int localX = x - chatModesX();
+        int localY = y - chatModesY();
         for (int button = 0; button < CHAT_MODE_HITBOXES.length; button++) {
             int[] bounds = CHAT_MODE_HITBOXES[button];
-            if (containsExclusive(x, fixedY, bounds[0], bounds[2], bounds[1], bounds[3]))
+            if (containsExclusive(localX, localY, bounds[0], bounds[2], bounds[1], bounds[3]))
                 return button;
         }
         return NO_CHAT_MODE_BUTTON;
     }
+
+    /** Returns the local text center for one chat-mode button.
+     * @param button chat-mode button identifier
+     * @return local text center X coordinate
+     */
+    public int chatModeTextCenterX(int button) { return CHAT_MODE_TEXT_CENTER_X[requireChatModeButton(button)]; }
+
+    /** Returns the local label baseline for one chat-mode button.
+     * @param button chat-mode button identifier
+     * @return local label baseline Y coordinate
+     */
+    public int chatModeLabelY(int button) { return CHAT_MODE_LABEL_Y[requireChatModeButton(button)]; }
+
+    /** Returns the local status baseline shared by public/private/trade modes.
+     * @return local status baseline Y coordinate
+     */
+    public int chatModeStatusY() { return CHAT_MODE_STATUS_Y; }
 
     /**
      * Tests a rectangle expressed using exclusive right/bottom edges.
@@ -418,6 +655,67 @@ public final class ClientLayout {
      */
     private boolean containsExclusive(int x, int y, int left, int top, int right, int bottom) {
         return x >= left && y >= top && x < right && y < bottom;
+    }
+
+    /** Returns the baseline for one context-menu entry.
+     * @param menuY menu-local top coordinate
+     * @param entryCount number of entries
+     * @param entryIndex entry index in insertion order
+     * @return entry text baseline Y coordinate
+     */
+    public int contextMenuEntryY(int menuY, int entryCount, int entryIndex) {
+        return menuY + CONTEXT_MENU_FIRST_ENTRY_BASELINE
+                + (entryCount - 1 - entryIndex) * CONTEXT_MENU_ROW_HEIGHT;
+    }
+
+    /** Tests whether a menu-local point hits one context-menu entry.
+     * @param x point X coordinate
+     * @param y point Y coordinate
+     * @param menuX menu X coordinate
+     * @param menuWidth menu width
+     * @param entryY entry baseline Y coordinate
+     * @return whether the point hits the entry
+     */
+    public boolean isContextMenuEntryHit(int x, int y, int menuX, int menuWidth, int entryY) {
+        return x > menuX && x < menuX + menuWidth
+                && y > entryY - CONTEXT_MENU_ENTRY_HIT_TOP
+                && y < entryY + CONTEXT_MENU_ENTRY_HIT_BOTTOM;
+    }
+
+    /** Returns the height used when clamping a context menu to a panel.
+     * @param entryCount number of entries
+     * @return clamp height
+     */
+    public int contextMenuClampHeight(int entryCount) {
+        return CONTEXT_MENU_ROW_HEIGHT * entryCount + CONTEXT_MENU_CLAMP_HEIGHT_PADDING;
+    }
+
+    /** Returns the stored/drawn height of a context menu.
+     * @param entryCount number of entries
+     * @return menu height
+     */
+    public int contextMenuHeight(int entryCount) {
+        return CONTEXT_MENU_ROW_HEIGHT * entryCount + CONTEXT_MENU_HEIGHT_PADDING;
+    }
+
+    /** Validates one tab index.
+     * @param tab tab index
+     * @return the validated tab index
+     */
+    private int requireTab(int tab) {
+        if (tab < 0 || tab >= TAB_COUNT)
+            throw new IllegalArgumentException("tab out of range: " + tab);
+        return tab;
+    }
+
+    /** Validates one chat-mode button identifier.
+     * @param button chat-mode button identifier
+     * @return the validated button identifier
+     */
+    private int requireChatModeButton(int button) {
+        if (button < 0 || button >= CHAT_MODE_HITBOXES.length)
+            throw new IllegalArgumentException("chat-mode button out of range: " + button);
+        return button;
     }
 
     /**
