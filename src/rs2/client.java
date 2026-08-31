@@ -2297,16 +2297,25 @@ public class Client extends GameShell {
 			gameRenderer.requestChatboxRedraw();
 		}
 
-		dispatchPlayerMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
-		dispatchNpcMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
-		dispatchObjectMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
-		dispatchGroundItemMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
-		if (dispatchInventoryMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex))
-			return;
-		if (dispatchWidgetMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex))
-			return;
-		dispatchSocialMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
-		dispatchMiscMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
+		switch (MenuState.actionDomain(actionId)) {
+		case PLAYER -> dispatchPlayerMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
+		case NPC -> dispatchNpcMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
+		case OBJECT -> dispatchObjectMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
+		case GROUND_ITEM -> dispatchGroundItemMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
+		case INVENTORY -> {
+			if (dispatchInventoryMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex))
+				return;
+		}
+		case WIDGET -> {
+			if (dispatchWidgetMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex))
+				return;
+		}
+		case SOCIAL -> dispatchSocialMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
+		case WALK -> dispatchMiscMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
+		case CANCEL, UNKNOWN -> {
+			// Preserve the original no-op action path before selection cleanup below.
+		}
+		}
 
 		interfaceController.state().itemSelected = 0;
 		interfaceController.state().spellSelected = 0;

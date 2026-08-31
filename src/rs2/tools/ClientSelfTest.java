@@ -20,7 +20,7 @@ import rs2.ui.menu.MenuState;
 /**
  * Permanent executable regression gate for core revision-377 client behavior.
  *
- * <p>The suite runs architecture, protocol, layout, renderer, widget-content,
+ * <p>The suite runs architecture, action-dispatch, protocol, layout, renderer, widget-content,
  * naming/chat, varp, menu and scene-geometry checks without requiring JUnit or a separate build system.
  * Supplying a revision-377 cache directory additionally enables the real-cache
  * renderer texture check.</p>
@@ -45,6 +45,7 @@ public final class ClientSelfTest {
 
         int checks = runCoreClientChecks();
         checks += ArchitectureSelfTest.run();
+        checks += ActionDispatchSelfTest.run();
         checks += WidgetContentSelfTest.run();
         checks += ProtocolSelfTest.run();
         checks += LayoutSelfTest.run();

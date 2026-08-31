@@ -342,6 +342,39 @@ public final class MenuState {
 	}
 
 	/**
+	 * Returns the application domain that owns a menu action. Priority-encoded
+	 * actions are normalized before classification.
+	 *
+	 * @param actionId normal or low-priority revision-377 action identifier
+	 * @return owning action domain, or {@link MenuActionDomain#UNKNOWN}
+	 */
+	public static MenuActionDomain actionDomain(int actionId) {
+		return switch (normalizeActionId(actionId)) {
+		case PLAYER_OPTION_1, PLAYER_OPTION_2, PLAYER_OPTION_3, PLAYER_OPTION_4, PLAYER_OPTION_5,
+				USE_ITEM_ON_PLAYER, CAST_SPELL_ON_PLAYER -> MenuActionDomain.PLAYER;
+		case NPC_OPTION_1, NPC_OPTION_2, NPC_OPTION_3, NPC_OPTION_4, NPC_OPTION_5, USE_ITEM_ON_NPC,
+				CAST_SPELL_ON_NPC, EXAMINE_NPC -> MenuActionDomain.NPC;
+		case OBJECT_OPTION_1, OBJECT_OPTION_2, OBJECT_OPTION_3, OBJECT_OPTION_4, OBJECT_OPTION_5,
+				USE_ITEM_ON_OBJECT, CAST_SPELL_ON_OBJECT, EXAMINE_OBJECT -> MenuActionDomain.OBJECT;
+		case GROUND_ITEM_OPTION_1, GROUND_ITEM_OPTION_2, GROUND_ITEM_OPTION_3, GROUND_ITEM_OPTION_4,
+				GROUND_ITEM_OPTION_5, USE_ITEM_ON_GROUND_ITEM, CAST_SPELL_ON_GROUND_ITEM,
+				EXAMINE_GROUND_ITEM -> MenuActionDomain.GROUND_ITEM;
+		case INVENTORY_ITEM_OPTION_1, INVENTORY_ITEM_OPTION_2, INVENTORY_ITEM_OPTION_3,
+				INVENTORY_ITEM_OPTION_4, INVENTORY_ITEM_OPTION_5, SELECT_ITEM, USE_ITEM_ON_INVENTORY_ITEM,
+				CAST_SPELL_ON_INVENTORY_ITEM, EXAMINE_INVENTORY_ITEM, WIDGET_ITEM_OPTION_1,
+				WIDGET_ITEM_OPTION_2, WIDGET_ITEM_OPTION_3, WIDGET_ITEM_OPTION_4,
+				WIDGET_ITEM_OPTION_5 -> MenuActionDomain.INVENTORY;
+		case WIDGET_BUTTON, SELECT_SPELL, CLOSE_DIALOGUE, CLOSE_INTERFACE, WIDGET_TOGGLE_VARP,
+				WIDGET_SET_VARP, WIDGET_CONTINUE -> MenuActionDomain.WIDGET;
+		case ADD_FRIEND, ADD_IGNORE, REMOVE_FRIEND, REMOVE_IGNORE, MESSAGE_FRIEND, REPORT_ABUSE,
+				ACCEPT_TRADE, ACCEPT_CHALLENGE -> MenuActionDomain.SOCIAL;
+		case WALK_HERE -> MenuActionDomain.WALK;
+		case CANCEL_ACTION -> MenuActionDomain.CANCEL;
+		default -> MenuActionDomain.UNKNOWN;
+		};
+	}
+
+	/**
 	 * Normalizes a menu action identifier by removing the priority offset.
 	 *
 	 * @param actionId the action ID
