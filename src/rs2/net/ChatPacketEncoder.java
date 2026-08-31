@@ -42,7 +42,7 @@ public final class ChatPacketEncoder {
 		int payloadStart = outgoing.position;
 		outgoing.writeLong(recipient);
 		ChatCodec.encode(message, outgoing);
-		outgoing.writeLength(outgoing.position - payloadStart);
+		outgoing.writeLengthByte(outgoing.position - payloadStart);
 	}
 
 	/**
@@ -63,7 +63,7 @@ public final class ChatPacketEncoder {
 		scratch.position = 0;
 		ChatCodec.encode(message, scratch);
 		outgoing.writeBytes(scratch.payload, 0, scratch.position);
-		outgoing.writeLength(outgoing.position - payloadStart);
+		outgoing.writeLengthByte(outgoing.position - payloadStart);
 	}
 
 	/**

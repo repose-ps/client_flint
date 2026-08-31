@@ -200,15 +200,15 @@ public final class ZoneUpdateHandler {
 			int type = typeAndOrientation >> LOCATION_TYPE_SHIFT;
 			int orientation = typeAndOrientation & SceneConfig.ORIENTATION_MASK;
 			int sceneLayer = SCENE_LAYERS_BY_TYPE[type];
-			byte maxXOffset = buffer.readByteNeg();
+			byte maxXOffset = buffer.readSignedByteNeg();
 			int packedTile = buffer.readUnsignedByteAdd();
 			int tileX = zoneBaseX + (packedTile >> 4 & SceneConstants.CHUNK_COORDINATE_MASK);
 			int tileY = zoneBaseY + (packedTile & SceneConstants.CHUNK_COORDINATE_MASK);
-			byte minXOffset = buffer.readByteAdd();
+			byte minXOffset = buffer.readSignedByteAdd();
 			int endDelay = buffer.readUnsignedShortAdd();
 			int playerIndex = buffer.readUnsignedShortLE();
 			byte maxYOffset = buffer.readSignedByte();
-			byte minYOffset = buffer.readByteAdd();
+			byte minYOffset = buffer.readSignedByteAdd();
 			int startDelay = buffer.readUnsignedShort();
 			Player player = playerIndex == localPlayerServerIndex ? localPlayer : actors.players[playerIndex];
 			if (player != null) {
@@ -257,7 +257,7 @@ public final class ZoneUpdateHandler {
 			int packedTile = buffer.readUnsignedByteAdd();
 			int tileX = zoneBaseX + (packedTile >> 4 & SceneConstants.CHUNK_COORDINATE_MASK);
 			int tileY = zoneBaseY + (packedTile & SceneConstants.CHUNK_COORDINATE_MASK);
-			int amount = buffer.readUnsignedShortAddLE();
+			int amount = buffer.readUnsignedShortLEAdd();
 			int itemId = buffer.readUnsignedShortAdd();
 			int ownerIndex = buffer.readUnsignedShortAdd();
 			if (tileX >= 0 && tileY >= 0 && tileX < SceneConstants.SIZE && tileY < SceneConstants.SIZE && ownerIndex != localPlayerServerIndex) {
@@ -436,7 +436,7 @@ public final class ZoneUpdateHandler {
 			int type = typeAndOrientation >> LOCATION_TYPE_SHIFT;
 			int orientation = typeAndOrientation & SceneConfig.ORIENTATION_MASK;
 			int sceneLayer = SCENE_LAYERS_BY_TYPE[type];
-			int objectId = buffer.readUnsignedShortAddLE();
+			int objectId = buffer.readUnsignedShortLEAdd();
 			int packedTile = buffer.readUnsignedByteAdd();
 			int tileX = zoneBaseX + (packedTile >> 4 & SceneConstants.CHUNK_COORDINATE_MASK);
 			int tileY = zoneBaseY + (packedTile & SceneConstants.CHUNK_COORDINATE_MASK);

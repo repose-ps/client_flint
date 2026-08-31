@@ -56,9 +56,9 @@ public final class MovementPacketEncoder {
 			outgoing.writeByte(waypointCount + waypointCount + 3);
 		}
 
-		outgoing.writeShortAddLE(firstX + baseX);
+		outgoing.writeShortLEAdd(firstX + baseX);
 		outgoing.writeByte(running ? 1 : 0);
-		outgoing.writeShortAddLE(firstY + baseY);
+		outgoing.writeShortLEAdd(firstY + baseY);
 
 		for (int waypoint = 1; waypoint < waypointCount; waypoint++) {
 			routeIndex--;

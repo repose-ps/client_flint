@@ -42,8 +42,8 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 	@Override
 	public boolean handle(int opcode, Buffer buffer, int packetSize) {
 		if (opcode == IncomingPacketOpcode.SET_WIDGET_POSITION) {
-			int widgetYOffset = buffer.readShortLE();
-			int widgetXOffset = buffer.readShortLE();
+			int widgetYOffset = buffer.readSignedShortLE();
+			int widgetXOffset = buffer.readSignedShortLE();
 			int widgetId = buffer.readUnsignedShort();
 			Widget widget = Widget.get(widgetId);
 			widget.xOffset = widgetXOffset;
@@ -52,7 +52,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 		}
 		if (opcode == IncomingPacketOpcode.SET_WIDGET_MODEL_TRANSFORM) {
 			int modelPitch = buffer.readUnsignedShortAdd();
-			int widgetId2 = buffer.readUnsignedShortAddLE();
+			int widgetId2 = buffer.readUnsignedShortLEAdd();
 			int modelZoom = buffer.readUnsignedShortAdd();
 			int modelYaw = buffer.readUnsignedShortLE();
 			Widget.get(widgetId2).modelPitch = modelPitch;
@@ -61,8 +61,8 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_WIDGET_MODEL) {
-			int mediaId = buffer.readUnsignedShortAddLE();
-			int widgetId3 = buffer.readUnsignedShortAddLE();
+			int mediaId = buffer.readUnsignedShortLEAdd();
+			int widgetId3 = buffer.readUnsignedShortLEAdd();
 			Widget.get(widgetId3).mediaType = Widget.MEDIA_MODEL;
 			Widget.get(widgetId3).mediaId = mediaId;
 			return true;
@@ -77,7 +77,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 		}
 		if (opcode == IncomingPacketOpcode.SET_VARP_SMALL) {
 			int varpId = buffer.readUnsignedShortAdd();
-			byte varpValue = buffer.readByteSub();
+			byte varpValue = buffer.readSignedByteSub();
 			if (client.packetVarpState().acceptServerValue(varpId, varpValue)) {
 				client.applyVarp(varpId);
 				client.requestSidebarRedraw();
@@ -135,7 +135,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 		}
 		/* Opcode 220: select background MIDI track. */
 		if (opcode == IncomingPacketOpcode.PLAY_MUSIC) {
-			int trackId = buffer.readUnsignedShortAddLE();
+			int trackId = buffer.readUnsignedShortLEAdd();
 			client.packetMusicController().selectTrack(trackId, client.lowMemory, client.packetOnDemandFetcher()::request);
 			return true;
 		}
@@ -147,7 +147,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_DIALOGUE_INTERFACE) {
-			int dialogueInterfaceId = buffer.readShortLE();
+			int dialogueInterfaceId = buffer.readSignedShortLE();
 			if (dialogueInterfaceId != client.packetInterfaceController().state().dialogueInterfaceId) {
 				client.unloadInterface(client.packetInterfaceController().state().dialogueInterfaceId);
 				client.packetInterfaceController().state().dialogueInterfaceId = dialogueInterfaceId;
@@ -279,7 +279,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 		}
 		if (opcode == IncomingPacketOpcode.ACCOUNT_INFO) {
 			client.lastPasswordChangeDate = buffer.readUnsignedShortLE();
-			buffer.readUnsignedShortAddLE();
+			buffer.readUnsignedShortLEAdd();
 			buffer.readUnsignedShort();
 			buffer.readUnsignedShort();
 			client.accountCurrentDay = buffer.readUnsignedShortLE();
@@ -287,7 +287,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			client.lastLoginDay = buffer.readUnsignedShortAdd();
 			client.membershipDays = buffer.readUnsignedShort();
 			client.lastLoginIp = buffer.readIntLE();
-			client.recoveryQuestionsDate = buffer.readUnsignedShortAddLE();
+			client.recoveryQuestionsDate = buffer.readUnsignedShortLEAdd();
 			buffer.readUnsignedByteAdd();
 			Signlink.lookupDns(Ipv4Address.format(client.lastLoginIp));
 			return true;
@@ -352,7 +352,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 		}
 		if (opcode == IncomingPacketOpcode.OPEN_MAIN_AND_SIDEBAR_INTERFACES) {
 			int openInterfaceId = buffer.readUnsignedShortAdd();
-			int sidebarOverlayInterfaceId = buffer.readUnsignedShortAddLE();
+			int sidebarOverlayInterfaceId = buffer.readUnsignedShortLEAdd();
 			if (client.packetInterfaceController().state().chatboxInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().chatboxInterfaceId);
 				client.requestChatboxRedraw();
@@ -432,7 +432,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_WIDGET_PLAYER_MODEL) {
-			int widgetId8 = buffer.readUnsignedShortAddLE();
+			int widgetId8 = buffer.readUnsignedShortLEAdd();
 			Widget.get(widgetId8).mediaType = Widget.MEDIA_PLAYER;
 			if (client.localPlayer.npcDefinition == null)
 				Widget.get(widgetId8).mediaId = (client.localPlayer.bodyColors[0] << 25) + (client.localPlayer.bodyColors[4] << 20)
@@ -482,7 +482,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.OPEN_MAIN_INTERFACE) {
-			int openInterfaceId2 = buffer.readUnsignedShortAddLE();
+			int openInterfaceId2 = buffer.readUnsignedShortLEAdd();
 			client.packetWidgetRuntime().resetAnimations(openInterfaceId2);
 			if (client.packetInterfaceController().state().sidebarOverlayInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().sidebarOverlayInterfaceId);
@@ -512,7 +512,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.OPEN_SIDEBAR_INTERFACE) {
-			int sidebarOverlayInterfaceId2 = buffer.readUnsignedShortAddLE();
+			int sidebarOverlayInterfaceId2 = buffer.readUnsignedShortLEAdd();
 			client.packetWidgetRuntime().resetAnimations(sidebarOverlayInterfaceId2);
 			if (client.packetInterfaceController().state().chatboxInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().chatboxInterfaceId);
@@ -560,7 +560,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			Widget inventoryWidget2 = Widget.get(widgetId9);
 			int itemCount = buffer.readUnsignedShort();
 			for (int slot2 = 0; slot2 < itemCount; slot2++) {
-				inventoryWidget2.itemIds[slot2] = buffer.readUnsignedShortAddLE();
+				inventoryWidget2.itemIds[slot2] = buffer.readUnsignedShortLEAdd();
 				int amount2 = buffer.readUnsignedByteNeg();
 				if (amount2 == 255)
 					amount2 = buffer.readIntLE();
@@ -608,7 +608,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 		if (opcode == IncomingPacketOpcode.SET_WIDGET_ITEM_MODEL) {
 			int zoomDivisor = buffer.readUnsignedShort();
 			int itemId2 = buffer.readUnsignedShortLE();
-			int widgetId10 = buffer.readUnsignedShortAddLE();
+			int widgetId10 = buffer.readUnsignedShortLEAdd();
 			if (itemId2 == ProtocolConstants.NULL_ID) {
 				Widget.get(widgetId10).mediaType = Widget.MEDIA_NONE;
 				return true;
@@ -634,8 +634,8 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 		}
 
 		if (opcode == IncomingPacketOpcode.SET_WIDGET_ANIMATION) {
-			int widgetId11 = buffer.readUnsignedShortAddLE();
-			int animationId = buffer.readShortAdd();
+			int widgetId11 = buffer.readUnsignedShortLEAdd();
+			int animationId = buffer.readSignedShortAdd();
 			Widget animationWidget = Widget.get(widgetId11);
 			if (animationWidget.animationId != animationId || animationId == -1) {
 				animationWidget.animationId = animationId;
@@ -752,7 +752,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_WIDGET_TEXT) {
-			int widgetId14 = buffer.readUnsignedShortAddLE();
+			int widgetId14 = buffer.readUnsignedShortLEAdd();
 			String widgetText = buffer.readString();
 			Widget.get(widgetId14).text = widgetText;
 			if (Widget.get(widgetId14).parentId == client.packetInterfaceController().state().tabInterfaceIds[client.packetInterfaceController().state().selectedTab])
@@ -761,7 +761,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 		}
 		if (opcode == IncomingPacketOpcode.SET_WIDGET_SCROLL_POSITION) {
 			int widgetId15 = buffer.readUnsignedShort();
-			int scrollY = buffer.readUnsignedShortAddLE();
+			int scrollY = buffer.readUnsignedShortLEAdd();
 			Widget scrollWidget = Widget.get(widgetId15);
 			if (scrollWidget != null && scrollWidget.type == Widget.TYPE_CONTAINER) {
 				if (scrollY < 0)

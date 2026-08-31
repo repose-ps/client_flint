@@ -574,7 +574,7 @@ public final class CameraController {
 				}
 				outgoing.writeByte(97);
 				outgoing.writeByte((int) (Math.random() * 256D));
-				outgoing.writeLength(outgoing.position - start);
+				outgoing.writeLengthByte(outgoing.position - start);
 			}
 			int cameraTileX = x >> 7;
 			int cameraTileY = y >> 7;

@@ -178,12 +178,12 @@ public final class RegionManager {
 
 		if (opcode == IncomingPacketOpcode.REBUILD_REGION) {
 			nextRegionY = buffer.readUnsignedShort();
-			nextRegionX = buffer.readUnsignedShortAddLE();
+			nextRegionX = buffer.readUnsignedShortLEAdd();
 			instanced = false;
 		}
 		if (opcode == IncomingPacketOpcode.REBUILD_INSTANCED_REGION) {
 			nextRegionX = buffer.readUnsignedShortAdd();
-			buffer.startBitAccess();
+			buffer.beginBitAccess();
 			for (int plane = 0; plane < SceneConstants.PLANE_COUNT; plane++) {
 				for (int chunkX = 0; chunkX < SceneConstants.INSTANCE_CHUNK_COUNT; chunkX++) {
 					for (int chunkY = 0; chunkY < SceneConstants.INSTANCE_CHUNK_COUNT; chunkY++) {

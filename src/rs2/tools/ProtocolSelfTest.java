@@ -96,9 +96,14 @@ public final class ProtocolSelfTest {
         variable.writeByte(0xaa);
         variable.writeByte(0xbb);
         variable.writeByte(0xcc);
-        variable.writeLength(variable.position - payloadStart);
+        variable.writeLengthByte(variable.position - payloadStart);
         test.bytes(Arrays.copyOf(variable.payload, variable.position),
-                new byte[] { 3, (byte) 0xaa, (byte) 0xbb, (byte) 0xcc }, "variable-length backpatch");
+                new byte[] { 3, (byte) 0xaa, (byte) 0xbb, (byte) 0xcc }, "one-byte length backpatch");
+
+        Buffer opcode = new Buffer(1);
+        opcode.opcodeCipher = new IsaacCipher(new int[] { 1, 2, 3, 4 });
+        opcode.writeOpcode(0x4d);
+        test.equal(opcode.payload[0] & 0xff, 0x8b, "ISAAC-obfuscated opcode byte");
     }
 
     /** Verifies primitive and bulk buffer reads.
@@ -116,6 +121,7 @@ public final class ProtocolSelfTest {
                 4, 5, 6
         });
         test.equal(buffer.readUnsignedByte(), 254, "unsigned byte");
+        test.equal(new Buffer(new byte[] { (byte) 0x80 }).readSignedByte(), -128, "signed byte");
         test.equal(buffer.readUnsignedShort(), 0x1234, "unsigned short");
         test.equal(buffer.readSignedShort(), -2, "signed short");
         test.equal(buffer.readMedium(), 0x012345, "medium");
@@ -134,21 +140,64 @@ public final class ProtocolSelfTest {
      * @param test assertion sink
      */
     private static void testBufferTransforms(SelfTestSupport test) {
-        Buffer writes = new Buffer(32);
-        writes.writeByteAdd(0x12);
-        writes.writeByteNeg(0x12);
-        writes.writeByteSub(0x12);
-        writes.writeShortAdd(0x1234);
-        writes.writeShortAddLE(0x1234);
-        test.bytes(Arrays.copyOf(writes.payload, writes.position), new byte[] {
-                (byte) 0x92, (byte) 0xee, 0x6e,
-                0x12, (byte) 0xb4,
-                (byte) 0xb4, 0x12
-        }, "transformed write bytes");
+        Buffer byteWrites = new Buffer(16);
+        for (int value : new int[] { 0x00, 0x7f, 0x80, 0xff }) {
+            byteWrites.writeByteAdd(value);
+        }
+        test.bytes(Arrays.copyOf(byteWrites.payload, byteWrites.position),
+                new byte[] { (byte) 0x80, (byte) 0xff, 0x00, 0x7f }, "byte Add write known bytes");
 
-        Buffer reads = new Buffer(new byte[] {
-                (byte) 0x92, (byte) 0xee, 0x6e,
-                (byte) 0x92, (byte) 0xee, 0x6e,
+        byteWrites.position = 0;
+        for (int value : new int[] { 0x00, 0x7f, 0x80, 0xff }) {
+            byteWrites.writeByteNeg(value);
+        }
+        test.bytes(Arrays.copyOf(byteWrites.payload, byteWrites.position),
+                new byte[] { 0x00, (byte) 0x81, (byte) 0x80, 0x01 }, "byte Neg write known bytes");
+
+        byteWrites.position = 0;
+        for (int value : new int[] { 0x00, 0x7f, 0x80, 0xff }) {
+            byteWrites.writeByteSub(value);
+        }
+        test.bytes(Arrays.copyOf(byteWrites.payload, byteWrites.position),
+                new byte[] { (byte) 0x80, 0x01, 0x00, (byte) 0x81 }, "byte Sub write known bytes");
+
+        Buffer shortWrites = new Buffer(8);
+        shortWrites.writeShortAdd(0x1234);
+        shortWrites.writeShortLEAdd(0x1234);
+        test.bytes(Arrays.copyOf(shortWrites.payload, shortWrites.position),
+                new byte[] { 0x12, (byte) 0xb4, (byte) 0xb4, 0x12 }, "short Add write known bytes");
+
+        Buffer unsignedBytes = new Buffer(new byte[] {
+                (byte) 0x80, (byte) 0xff, 0x00, 0x7f,
+                0x00, (byte) 0x81, (byte) 0x80, 0x01,
+                (byte) 0x80, 0x01, 0x00, (byte) 0x81
+        });
+        for (int expected : new int[] { 0x00, 0x7f, 0x80, 0xff }) {
+            test.equal(unsignedBytes.readUnsignedByteAdd(), expected, "unsigned byte Add value " + expected);
+        }
+        for (int expected : new int[] { 0x00, 0x7f, 0x80, 0xff }) {
+            test.equal(unsignedBytes.readUnsignedByteNeg(), expected, "unsigned byte Neg value " + expected);
+        }
+        for (int expected : new int[] { 0x00, 0x7f, 0x80, 0xff }) {
+            test.equal(unsignedBytes.readUnsignedByteSub(), expected, "unsigned byte Sub value " + expected);
+        }
+
+        Buffer signedBytes = new Buffer(new byte[] {
+                0x00, 0x7f, (byte) 0x80, (byte) 0xff,
+                (byte) 0x80, 0x01, 0x00, (byte) 0x81,
+                0x00, (byte) 0x81, (byte) 0x80, 0x01
+        });
+        for (int expected : new int[] { -128, -1, 0, 127 }) {
+            test.equal(signedBytes.readSignedByteAdd(), expected, "signed byte Add value " + expected);
+        }
+        for (int expected : new int[] { -128, -1, 0, 127 }) {
+            test.equal(signedBytes.readSignedByteNeg(), expected, "signed byte Neg value " + expected);
+        }
+        for (int expected : new int[] { -128, -1, 0, 127 }) {
+            test.equal(signedBytes.readSignedByteSub(), expected, "signed byte Sub value " + expected);
+        }
+
+        Buffer multiByteReads = new Buffer(new byte[] {
                 0x34, 0x12,
                 0x12, (byte) 0xb4,
                 (byte) 0xb4, 0x12,
@@ -157,29 +206,27 @@ public final class ProtocolSelfTest {
                 0x56, 0x78, 0x12, 0x34,
                 0x34, 0x12, 0x78, 0x56
         });
-        test.equal(reads.readUnsignedByteAdd(), 0x12, "unsigned byte add");
-        test.equal(reads.readUnsignedByteNeg(), 0x12, "unsigned byte neg");
-        test.equal(reads.readUnsignedByteSub(), 0x12, "unsigned byte sub");
-        test.equal(reads.readByteAdd(), 0x12, "signed byte add");
-        test.equal(reads.readByteNeg(), 0x12, "signed byte neg");
-        test.equal(reads.readByteSub(), 0x12, "signed byte sub");
-        test.equal(reads.readUnsignedShortLE(), 0x1234, "unsigned short LE");
-        test.equal(reads.readUnsignedShortAdd(), 0x1234, "unsigned short Add");
-        test.equal(reads.readUnsignedShortAddLE(), 0x1234, "unsigned short LE Add");
-        test.equal(reads.readMediumME(), 0x123456, "middle-endian medium");
-        test.equal(reads.readIntLE(), 0x12345678, "int LE");
-        test.equal(reads.readIntME(), 0x12345678, "int ME");
-        test.equal(reads.readIntIME(), 0x12345678, "int IME");
+        test.equal(multiByteReads.readUnsignedShortLE(), 0x1234, "unsigned short LE known bytes");
+        test.equal(multiByteReads.readUnsignedShortAdd(), 0x1234, "unsigned short Add known bytes");
+        test.equal(multiByteReads.readUnsignedShortLEAdd(), 0x1234, "unsigned short LE Add known bytes");
+        test.equal(multiByteReads.readMediumME(), 0x123456, "medium ME known bytes");
+        test.equal(multiByteReads.readIntLE(), 0x12345678, "int LE known bytes");
+        test.equal(multiByteReads.readIntME(), 0x12345678, "int ME known bytes");
+        test.equal(multiByteReads.readIntIME(), 0x12345678, "int IME known bytes");
 
-        Buffer signed = new Buffer(new byte[] { (byte) 0xff, 0x7f, (byte) 0xff, (byte) 0xff });
-        test.equal(signed.readShortLE(), 32767, "signed short LE positive");
-        test.equal(signed.readShortAdd(), -129, "signed short Add negative");
+        Buffer signedShorts = new Buffer(new byte[] {
+                (byte) 0xfe, (byte) 0xff,
+                (byte) 0xff, (byte) 0xff
+        });
+        test.equal(signedShorts.readSignedShortLE(), -2, "signed short LE negative known bytes");
+        test.equal(signedShorts.readSignedShortAdd(), -129, "signed short Add negative known bytes");
 
         Buffer reverse = new Buffer(new byte[] { 1, 2, 3, (byte) 0x81, (byte) 0x82, (byte) 0x83 });
         byte[] destination = new byte[6];
         reverse.readBytesReverse(destination, 1, 3);
+        test.bytes(destination, new byte[] { 0, 3, 2, 1, 0, 0 }, "reverse bulk read known bytes");
         reverse.readBytesAdd(destination, 3, 3);
-        test.bytes(destination, new byte[] { 0, 3, 2, 1, 2, 3 }, "reverse/add bulk reads");
+        test.bytes(destination, new byte[] { 0, 3, 2, 1, 2, 3 }, "bulk Add read known bytes");
     }
 
     /** Verifies bit access and signed/unsigned smart decoding.
@@ -187,7 +234,7 @@ public final class ProtocolSelfTest {
      */
     private static void testBitAndSmartReads(SelfTestSupport test) {
         Buffer bits = new Buffer(new byte[] { (byte) 0xac, 0x72 });
-        bits.startBitAccess();
+        bits.beginBitAccess();
         test.equal(bits.readBits(3), 5, "first bit field");
         test.equal(bits.readBits(5), 12, "second bit field");
         test.equal(bits.readBits(4), 7, "third bit field");

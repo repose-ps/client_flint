@@ -354,7 +354,7 @@ public final class ActorSynchronizer {
 	 * @return the unchanged plane or the newly decoded teleport plane
 	 */
 	private int decodeLocalPlayerMovement(Buffer buffer, int currentPlane) {
-		buffer.startBitAccess();
+		buffer.beginBitAccess();
 		int hasUpdate = buffer.readBits(FLAG_BITS);
 		if (hasUpdate == 0) {
 			return currentPlane;
@@ -644,7 +644,7 @@ public final class ActorSynchronizer {
 	 * @param username local username used when reporting an invalid NPC count
 	 */
 	private void decodeExistingNpcs(Buffer buffer, int cycle, String username) {
-		buffer.startBitAccess();
+		buffer.beginBitAccess();
 		int count = buffer.readBits(RETAINED_COUNT_BITS);
 		if (count < npcCount) {
 			for (int index = count; index < npcCount; index++) {
@@ -776,7 +776,7 @@ public final class ActorSynchronizer {
 				npc.overheadTextCyclesRemaining = Actor.DEFAULT_OVERHEAD_TEXT_CYCLES;
 			}
 			if ((mask & NPC_MASK_FACE_LOCATION) != 0) {
-				npc.faceX = buffer.readUnsignedShortAddLE();
+				npc.faceX = buffer.readUnsignedShortLEAdd();
 				npc.faceY = buffer.readUnsignedShortLE();
 			}
 			if ((mask & NPC_MASK_SEQUENCE) != 0) {

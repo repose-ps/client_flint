@@ -9,10 +9,24 @@ import rs2.collection.DualNode;
  * A cursor-based byte buffer for the revision 377 cache and game protocols.
  *
  * <p>
- * Primitive methods use network byte order (big-endian) unless their name ends
- * in {@code LE}, {@code ME}, or {@code IME}. The Add, Neg, and Sub suffixes
- * identify RuneScape's byte transformations and are part of the wire format,
- * not arithmetic conveniences.
+ * Primitive methods use network byte order (big-endian) unless their names
+ * explicitly identify another byte order. Suffixes are part of the protocol
+ * contract:
+ * </p>
+ *
+ * <ul>
+ * <li>{@code LE}: least-significant byte first.</li>
+ * <li>{@code ME}/{@code IME}: revision-377 mixed-endian integer byte orders,
+ * documented on the individual methods.</li>
+ * <li>{@code Add}: the transmitted low byte is offset by {@code +128}.</li>
+ * <li>{@code Neg}: the transmitted byte is negated.</li>
+ * <li>{@code Sub}: the transmitted byte is {@code 128 - value}.</li>
+ * </ul>
+ *
+ * <p>
+ * {@code Signed} and {@code Unsigned} describe the decoded value returned to
+ * the caller. For transformed multi-byte values, the transformation applies to
+ * the least-significant byte regardless of byte order.
  * </p>
  *
  * <p>
@@ -219,12 +233,13 @@ public class Buffer extends DualNode {
 	 * <ol>
 	 * <li>Write a placeholder byte.</li>
 	 * <li>Write the variable-length payload.</li>
-	 * <li>Call this method with the number of payload bytes written.</li>
+	 * <li>Call this method with the number of payload bytes written; the value is
+	 * stored in the preceding one-byte length field.</li>
 	 * </ol>
 	 *
 	 * @param length the length
 	 */
-	public void writeLength(int length) {
+	public void writeLengthByte(int length) {
 		payload[position - length - 1] = (byte) length;
 	}
 
@@ -335,7 +350,7 @@ public class Buffer extends DualNode {
 	/**
 	 * Switches from byte reads to most-significant-bit-first bit reads.
 	 */
-	public void startBitAccess() {
+	public void beginBitAccess() {
 		bitPosition = position * 8;
 	}
 
@@ -343,7 +358,7 @@ public class Buffer extends DualNode {
 	 * Reads up to 32 bits, most-significant bit first.
 	 *
 	 * <p>
-	 * Call {@link #startBitAccess()} before the first bit read and
+	 * Call {@link #beginBitAccess()} before the first bit read and
 	 * {@link #finishBitAccess()} before returning to byte reads.
 	 * </p>
 	 *
@@ -491,26 +506,29 @@ public class Buffer extends DualNode {
 	}
 
 	/**
-	 * Reads a byte with the add transformation.
-	 * @return the decoded byte add value
+	 * Reads a signed byte with the Add transformation.
+	 *
+	 * @return the decoded signed byte value
 	 */
-	public byte readByteAdd() {
+	public byte readSignedByteAdd() {
 		return (byte) (payload[position++] - 128);
 	}
 
 	/**
-	 * Reads a byte with the neg transformation.
-	 * @return the decoded byte neg value
+	 * Reads a signed byte with the Neg transformation.
+	 *
+	 * @return the decoded signed byte value
 	 */
-	public byte readByteNeg() {
+	public byte readSignedByteNeg() {
 		return (byte) (-payload[position++]);
 	}
 
 	/**
-	 * Reads a byte with the sub transformation.
-	 * @return the decoded byte sub value
+	 * Reads a signed byte with the Sub transformation.
+	 *
+	 * @return the decoded signed byte value
 	 */
-	public byte readByteSub() {
+	public byte readSignedByteSub() {
 		return (byte) (128 - payload[position++]);
 	}
 
@@ -529,7 +547,7 @@ public class Buffer extends DualNode {
 	 *
 	 * @param inputValue the input value
 	 */
-	public void writeShortAddLE(int inputValue) {
+	public void writeShortLEAdd(int inputValue) {
 		payload[position++] = (byte) (inputValue + 128);
 		payload[position++] = (byte) (inputValue >> 8);
 	}
@@ -559,9 +577,10 @@ public class Buffer extends DualNode {
 	/**
 	 * Reads a little-endian unsigned short whose low byte has the Add
 	 * transformation.
-	 * @return the decoded unsigned short add le value
+	 *
+	 * @return the decoded unsigned short value
 	 */
-	public int readUnsignedShortAddLE() {
+	public int readUnsignedShortLEAdd() {
 		int low = (payload[position++] - 128) & 0xff;
 		int high = readUnsignedByte();
 
@@ -569,20 +588,21 @@ public class Buffer extends DualNode {
 	}
 
 	/**
-	 * Reads short le.
+	 * Reads a signed little-endian 16-bit value.
 	 *
-	 * @return the resulting int
+	 * @return the decoded signed short value
 	 */
-	public int readShortLE() {
+	public int readSignedShortLE() {
 		int value = readUnsignedShortLE();
 		return value > 32767 ? value - 65536 : value;
 	}
 
 	/**
 	 * Reads a signed big-endian short whose low byte has the Add transformation.
-	 * @return the decoded short add value
+	 *
+	 * @return the decoded signed short value
 	 */
-	public int readShortAdd() {
+	public int readSignedShortAdd() {
 		int value = readUnsignedShortAdd();
 		return value > 32767 ? value - 65536 : value;
 	}
@@ -600,9 +620,9 @@ public class Buffer extends DualNode {
 	}
 
 	/**
-	 * Reads int le.
+	 * Reads a little-endian 32-bit value.
 	 *
-	 * @return the resulting int
+	 * @return the decoded int value
 	 */
 	public int readIntLE() {
 		return readUnsignedByte() | (readUnsignedByte() << 8) | (readUnsignedByte() << 16) | (readUnsignedByte() << 24);

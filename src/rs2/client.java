@@ -448,7 +448,7 @@ public class Client extends GameShell {
 						}
 					}
 
-					networkSession.outgoing.writeLength(networkSession.outgoing.position - packetStart);
+					networkSession.outgoing.writeLengthByte(networkSession.outgoing.position - packetStart);
 					if (encodedSampleCount >= mouseRecorder.sampleCount) {
 						mouseRecorder.sampleCount = 0;
 					} else {
@@ -588,7 +588,7 @@ public class Client extends GameShell {
 									interfaceController.state().draggedInventorySlot);
 						}
 						networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.REORDER_INVENTORY_ITEM);
-						networkSession.outgoing.writeShortAddLE(interfaceController.state().hoveredInventorySlot);
+						networkSession.outgoing.writeShortLEAdd(interfaceController.state().hoveredInventorySlot);
 						networkSession.outgoing.writeByteAdd(insertionMode);
 						networkSession.outgoing.writeShortAdd(interfaceController.state().draggedInventoryWidgetId);
 						networkSession.outgoing.writeShortLE(interfaceController.state().draggedInventorySlot);
@@ -2662,7 +2662,7 @@ public class Client extends GameShell {
 				crossType = 2;
 				crossCycle = 0;
 				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.PLAYER_OPTION_1);
-				networkSession.outgoing.writeShortAddLE(cmd1);
+				networkSession.outgoing.writeShortLEAdd(cmd1);
 			}
 		}
 		if (actionId == MenuState.PLAYER_OPTION_5) {
@@ -2729,7 +2729,7 @@ public class Client extends GameShell {
 				crossCycle = 0;
 				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.USE_ITEM_ON_PLAYER);
 				networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemId);
-				networkSession.outgoing.writeShortAddLE(interfaceController.state().selectedItemSlot);
+				networkSession.outgoing.writeShortLEAdd(interfaceController.state().selectedItemSlot);
 				networkSession.outgoing.writeShort(interfaceController.state().selectedItemWidgetId);
 				networkSession.outgoing.writeShortAdd(cmd1);
 			}
@@ -2798,7 +2798,7 @@ public class Client extends GameShell {
 				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.USE_ITEM_ON_NPC);
 				networkSession.outgoing.writeShort(cmd1);
 				networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemId);
-				networkSession.outgoing.writeShortAddLE(interfaceController.state().selectedItemWidgetId);
+				networkSession.outgoing.writeShortLEAdd(interfaceController.state().selectedItemWidgetId);
 				networkSession.outgoing.writeShort(interfaceController.state().selectedItemSlot);
 			}
 		}
@@ -2818,7 +2818,7 @@ public class Client extends GameShell {
 					npcAction118Counter = 0;
 				}
 				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.NPC_OPTION_3);
-				networkSession.outgoing.writeShortAddLE(cmd1);
+				networkSession.outgoing.writeShortLEAdd(cmd1);
 			}
 		}
 		if (actionId == MenuState.NPC_OPTION_5) {
@@ -2897,7 +2897,7 @@ public class Client extends GameShell {
 			networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemId);
 			networkSession.outgoing.writeShortLE(cmd3 + regionManager.baseY);
 			networkSession.outgoing.writeShort(interfaceController.state().selectedItemSlot);
-			networkSession.outgoing.writeShortAddLE(cmd2 + regionManager.baseX);
+			networkSession.outgoing.writeShortLEAdd(cmd2 + regionManager.baseX);
 		}
 		if (actionId == MenuState.CAST_SPELL_ON_OBJECT && walkToGameObject(cmd3, cmd2, cmd1)) {
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.CAST_SPELL_ON_OBJECT);
@@ -2925,7 +2925,7 @@ public class Client extends GameShell {
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.OBJECT_OPTION_3);
 			networkSession.outgoing.writeShortAdd(cmd3 + regionManager.baseY);
 			networkSession.outgoing.writeShortLE(cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
-			networkSession.outgoing.writeShortAddLE(cmd2 + regionManager.baseX);
+			networkSession.outgoing.writeShortLEAdd(cmd2 + regionManager.baseX);
 		}
 		if (actionId == MenuState.EXAMINE_OBJECT) {
 			int objectId = cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK;
@@ -2988,7 +2988,7 @@ public class Client extends GameShell {
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.GROUND_ITEM_OPTION_1);
 			networkSession.outgoing.writeShortAdd(cmd2 + regionManager.baseX);
 			networkSession.outgoing.writeShort(cmd3 + regionManager.baseY);
-			networkSession.outgoing.writeShortAddLE(cmd1);
+			networkSession.outgoing.writeShortLEAdd(cmd1);
 		}
 		if (actionId == MenuState.GROUND_ITEM_OPTION_3) {
 			boolean routeFound3 = walkTo(false, cmd2, cmd3, 0, 0, MovementPacketEncoder.INTERACTION, 0, 0, 0);
@@ -3006,8 +3006,8 @@ public class Client extends GameShell {
 				groundItemAction684Counter = 0;
 			}
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.GROUND_ITEM_OPTION_3);
-			networkSession.outgoing.writeShortAddLE(cmd1);
-			networkSession.outgoing.writeShortAddLE(cmd2 + regionManager.baseX);
+			networkSession.outgoing.writeShortLEAdd(cmd1);
+			networkSession.outgoing.writeShortLEAdd(cmd2 + regionManager.baseX);
 			networkSession.outgoing.writeShortAdd(cmd3 + regionManager.baseY);
 		}
 		if (actionId == MenuState.GROUND_ITEM_OPTION_5) {
@@ -3032,10 +3032,10 @@ public class Client extends GameShell {
 			crossType = 2;
 			crossCycle = 0;
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.USE_ITEM_ON_GROUND_ITEM);
-			networkSession.outgoing.writeShortAddLE(interfaceController.state().selectedItemSlot);
+			networkSession.outgoing.writeShortLEAdd(interfaceController.state().selectedItemSlot);
 			networkSession.outgoing.writeShortAdd(interfaceController.state().selectedItemId);
-			networkSession.outgoing.writeShortAddLE(cmd3 + regionManager.baseY);
-			networkSession.outgoing.writeShortAddLE(cmd2 + regionManager.baseX);
+			networkSession.outgoing.writeShortLEAdd(cmd3 + regionManager.baseY);
+			networkSession.outgoing.writeShortLEAdd(cmd2 + regionManager.baseX);
 			networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemWidgetId);
 			networkSession.outgoing.writeShortLE(cmd1);
 		}
@@ -3056,7 +3056,7 @@ public class Client extends GameShell {
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.GROUND_ITEM_OPTION_2);
 			networkSession.outgoing.writeShort(cmd2 + regionManager.baseX);
 			networkSession.outgoing.writeShortAdd(cmd3 + regionManager.baseY);
-			networkSession.outgoing.writeShortAddLE(cmd1);
+			networkSession.outgoing.writeShortLEAdd(cmd1);
 		}
 		if (actionId == MenuState.CAST_SPELL_ON_GROUND_ITEM) {
 			boolean routeFound7 = walkTo(false, cmd2, cmd3, 0, 0, MovementPacketEncoder.INTERACTION, 0, 0, 0);
@@ -3070,7 +3070,7 @@ public class Client extends GameShell {
 			networkSession.outgoing.writeShortLE(cmd1);
 			networkSession.outgoing.writeShort(cmd3 + regionManager.baseY);
 			networkSession.outgoing.writeShortLE(interfaceController.state().selectedSpellWidgetId);
-			networkSession.outgoing.writeShortAddLE(cmd2 + regionManager.baseX);
+			networkSession.outgoing.writeShortLEAdd(cmd2 + regionManager.baseX);
 		}
 		if (actionId == MenuState.EXAMINE_GROUND_ITEM) {
 			ItemDefinition itemDefinition = ItemDefinition.lookup(cmd1);
@@ -3157,7 +3157,7 @@ public class Client extends GameShell {
 			networkSession.outgoing.writeShort(cmd1);
 			networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemSlot);
 			networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemId);
-			networkSession.outgoing.writeShortAddLE(interfaceController.state().selectedItemWidgetId);
+			networkSession.outgoing.writeShortLEAdd(interfaceController.state().selectedItemWidgetId);
 			networkSession.outgoing.writeShortAdd(cmd2);
 			networkSession.outgoing.writeShortAdd(cmd3);
 			markInventoryInteraction(cmd3, cmd2);
@@ -3180,21 +3180,21 @@ public class Client extends GameShell {
 		if (actionId == MenuState.INVENTORY_ITEM_OPTION_5) {
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.INVENTORY_ITEM_OPTION_5);
 			networkSession.outgoing.writeShortLE(cmd2);
-			networkSession.outgoing.writeShortAddLE(cmd1);
-			networkSession.outgoing.writeShortAddLE(cmd3);
+			networkSession.outgoing.writeShortLEAdd(cmd1);
+			networkSession.outgoing.writeShortLEAdd(cmd3);
 			markInventoryInteraction(cmd3, cmd2);
 		}
 		if (actionId == MenuState.WIDGET_ITEM_OPTION_5) {
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_ITEM_OPTION_5);
-			networkSession.outgoing.writeShortAddLE(cmd2);
-			networkSession.outgoing.writeShortAddLE(cmd1);
+			networkSession.outgoing.writeShortLEAdd(cmd2);
+			networkSession.outgoing.writeShortLEAdd(cmd1);
 			networkSession.outgoing.writeShortLE(cmd3);
 			markInventoryInteraction(cmd3, cmd2);
 		}
 		if (actionId == MenuState.INVENTORY_ITEM_OPTION_3) {
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.INVENTORY_ITEM_OPTION_3);
-			networkSession.outgoing.writeShortAddLE(cmd2);
-			networkSession.outgoing.writeShortAddLE(cmd1);
+			networkSession.outgoing.writeShortLEAdd(cmd2);
+			networkSession.outgoing.writeShortLEAdd(cmd1);
 			networkSession.outgoing.writeShortLE(cmd3);
 			markInventoryInteraction(cmd3, cmd2);
 		}
@@ -3213,13 +3213,13 @@ public class Client extends GameShell {
 		if (actionId == MenuState.WIDGET_ITEM_OPTION_3) {
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_ITEM_OPTION_3);
 			networkSession.outgoing.writeShortLE(cmd1);
-			networkSession.outgoing.writeShortAddLE(cmd2);
+			networkSession.outgoing.writeShortLEAdd(cmd2);
 			networkSession.outgoing.writeShort(cmd3);
 			markInventoryInteraction(cmd3, cmd2);
 		}
 		if (actionId == MenuState.WIDGET_ITEM_OPTION_4) {
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_ITEM_OPTION_4);
-			networkSession.outgoing.writeShortAddLE(cmd3);
+			networkSession.outgoing.writeShortLEAdd(cmd3);
 			networkSession.outgoing.writeShortLE(cmd2);
 			networkSession.outgoing.writeShort(cmd1);
 			markInventoryInteraction(cmd3, cmd2);
@@ -3363,7 +3363,7 @@ public class Client extends GameShell {
 					}
 					if (actionId == MenuState.ACCEPT_CHALLENGE) {
 						networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.PLAYER_OPTION_1);
-						networkSession.outgoing.writeShortAddLE(actorSynchronizer.playerIndices[activePlayerIndex]);
+						networkSession.outgoing.writeShortLEAdd(actorSynchronizer.playerIndices[activePlayerIndex]);
 					}
 					playerFound = true;
 					break;
