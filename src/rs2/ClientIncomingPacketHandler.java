@@ -80,9 +80,9 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			byte varpValue = buffer.readByteSub();
 			if (client.packetVarpState().acceptServerValue(varpId, varpValue)) {
 				client.applyVarp(varpId);
-				client.sidebarRedraw = true;
+				client.requestSidebarRedraw();
 				if (client.packetInterfaceController().state().dialogueInterfaceId != -1)
-					client.chatboxRedraw = true;
+					client.requestChatboxRedraw();
 			}
 			return true;
 		}
@@ -112,12 +112,12 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			client.packetWidgetRuntime().resetAnimations(chatboxInterfaceId);
 			if (client.packetInterfaceController().state().sidebarOverlayInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().sidebarOverlayInterfaceId);
-				client.sidebarRedraw = true;
-				client.tabAreaRedraw = true;
+				client.requestSidebarRedraw();
+				client.requestTabAreaRedraw();
 			}
 			if (client.packetInterfaceController().state().fullscreenInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().fullscreenInterfaceId);
-				client.gameScreenRedraw = true;
+				client.requestGameScreenRedraw();
 			}
 			if (client.packetInterfaceController().state().fullscreenOverlayInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().fullscreenOverlayInterfaceId);
@@ -130,20 +130,20 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 				client.packetInterfaceController().state().chatboxInterfaceId = chatboxInterfaceId;
 			}
 			client.packetInterfaceController().setActionPending(false);
-			client.chatboxRedraw = true;
+			client.requestChatboxRedraw();
 			return true;
 		}
 		/* Opcode 220: select background MIDI track. */
 		if (opcode == IncomingPacketOpcode.PLAY_MUSIC) {
 			int trackId = buffer.readUnsignedShortAddLE();
-			client.packetMusicController().selectTrack(trackId, client.lowMemory, client.onDemandFetcher::request);
+			client.packetMusicController().selectTrack(trackId, client.lowMemory, client.packetOnDemandFetcher()::request);
 			return true;
 		}
 		/* Opcode 249: temporary MIDI track followed by delayed resume. */
 		if (opcode == IncomingPacketOpcode.PLAY_TEMPORARY_MUSIC) {
 			int trackId = buffer.readUnsignedShortLE();
 			int resumeDelay = buffer.readMediumME();
-			client.packetMusicController().playTemporaryTrack(trackId, resumeDelay, client.lowMemory, client.onDemandFetcher::request);
+			client.packetMusicController().playTemporaryTrack(trackId, resumeDelay, client.lowMemory, client.packetOnDemandFetcher()::request);
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_DIALOGUE_INTERFACE) {
@@ -152,7 +152,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 				client.unloadInterface(client.packetInterfaceController().state().dialogueInterfaceId);
 				client.packetInterfaceController().state().dialogueInterfaceId = dialogueInterfaceId;
 			}
-			client.chatboxRedraw = true;
+			client.requestChatboxRedraw();
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_WIDGET_COLOR) {
@@ -180,15 +180,15 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 		}
 		if (opcode == IncomingPacketOpcode.OPEN_NAME_INPUT_DIALOG) {
 			client.packetChatController().openInputDialog(2);
-			client.chatboxRedraw = true;
+			client.requestChatboxRedraw();
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_CHAT_MODES) {
 			client.packetChatController().setPublicMode(buffer.readUnsignedByte());
 			client.packetChatController().setPrivateMode(buffer.readUnsignedByte());
 			client.packetChatController().setTradeMode(buffer.readUnsignedByte());
-			client.chatModesRedraw = true;
-			client.chatboxRedraw = true;
+			client.requestChatModesRedraw();
+			client.requestChatboxRedraw();
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_HINT_ICON) {
@@ -244,25 +244,25 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			int varpId2 = buffer.readUnsignedShortLE();
 			if (client.packetVarpState().acceptServerValue(varpId2, varpValue2)) {
 				client.applyVarp(varpId2);
-				client.sidebarRedraw = true;
+				client.requestSidebarRedraw();
 				if (client.packetInterfaceController().state().dialogueInterfaceId != -1)
-					client.chatboxRedraw = true;
+					client.requestChatboxRedraw();
 			}
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.CLOSE_INTERFACES) {
 			if (client.packetInterfaceController().state().sidebarOverlayInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().sidebarOverlayInterfaceId);
-				client.sidebarRedraw = true;
-				client.tabAreaRedraw = true;
+				client.requestSidebarRedraw();
+				client.requestTabAreaRedraw();
 			}
 			if (client.packetInterfaceController().state().chatboxInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().chatboxInterfaceId);
-				client.chatboxRedraw = true;
+				client.requestChatboxRedraw();
 			}
 			if (client.packetInterfaceController().state().fullscreenInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().fullscreenInterfaceId);
-				client.gameScreenRedraw = true;
+				client.requestGameScreenRedraw();
 			}
 			if (client.packetInterfaceController().state().fullscreenOverlayInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().fullscreenOverlayInterfaceId);
@@ -272,7 +272,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			}
 			if (client.packetChatController().inputDialogState() != 0) {
 				client.packetChatController().setInputDialogState(0);
-				client.chatboxRedraw = true;
+				client.requestChatboxRedraw();
 			}
 			client.packetInterfaceController().setActionPending(false);
 			return true;
@@ -338,7 +338,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 		}
 		if (opcode == IncomingPacketOpcode.UPDATE_WEIGHT) {
 			if (client.packetInterfaceController().state().selectedTab == 12)
-				client.sidebarRedraw = true;
+				client.requestSidebarRedraw();
 			client.weight = buffer.readSignedShort();
 			return true;
 		}
@@ -355,11 +355,11 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			int sidebarOverlayInterfaceId = buffer.readUnsignedShortAddLE();
 			if (client.packetInterfaceController().state().chatboxInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().chatboxInterfaceId);
-				client.chatboxRedraw = true;
+				client.requestChatboxRedraw();
 			}
 			if (client.packetInterfaceController().state().fullscreenInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().fullscreenInterfaceId);
-				client.gameScreenRedraw = true;
+				client.requestGameScreenRedraw();
 			}
 			if (client.packetInterfaceController().state().fullscreenOverlayInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().fullscreenOverlayInterfaceId);
@@ -374,10 +374,10 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			}
 			if (client.packetChatController().inputDialogState() != 0) {
 				client.packetChatController().setInputDialogState(0);
-				client.chatboxRedraw = true;
+				client.requestChatboxRedraw();
 			}
-			client.sidebarRedraw = true;
-			client.tabAreaRedraw = true;
+			client.requestSidebarRedraw();
+			client.requestTabAreaRedraw();
 			client.packetInterfaceController().setActionPending(false);
 			return true;
 		}
@@ -390,7 +390,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.UPDATE_WIDGET_ITEMS_PARTIAL) {
-			client.sidebarRedraw = true;
+			client.requestSidebarRedraw();
 			int widgetId7 = buffer.readUnsignedShort();
 			Widget inventoryWidget = Widget.get(widgetId7);
 			while (buffer.position < packetSize) {
@@ -410,18 +410,18 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			long encodedName = buffer.readLong();
 			int world = buffer.readUnsignedByte();
 			if (client.packetSocialManager().updateFriend(encodedName, world, client.currentWorldId, client::addChatMessage))
-				client.sidebarRedraw = true;
+				client.requestSidebarRedraw();
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.OPEN_AMOUNT_INPUT_DIALOG) {
 			client.packetChatController().openInputDialog(1);
-			client.chatboxRedraw = true;
+			client.requestChatboxRedraw();
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_SELECTED_TAB) {
 			client.packetInterfaceController().state().selectedTab = buffer.readUnsignedByteNeg();
-			client.sidebarRedraw = true;
-			client.tabAreaRedraw = true;
+			client.requestSidebarRedraw();
+			client.requestTabAreaRedraw();
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.CLEAR_ZONE) {
@@ -486,16 +486,16 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			client.packetWidgetRuntime().resetAnimations(openInterfaceId2);
 			if (client.packetInterfaceController().state().sidebarOverlayInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().sidebarOverlayInterfaceId);
-				client.sidebarRedraw = true;
-				client.tabAreaRedraw = true;
+				client.requestSidebarRedraw();
+				client.requestTabAreaRedraw();
 			}
 			if (client.packetInterfaceController().state().chatboxInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().chatboxInterfaceId);
-				client.chatboxRedraw = true;
+				client.requestChatboxRedraw();
 			}
 			if (client.packetInterfaceController().state().fullscreenInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().fullscreenInterfaceId);
-				client.gameScreenRedraw = true;
+				client.requestGameScreenRedraw();
 			}
 			if (client.packetInterfaceController().state().fullscreenOverlayInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().fullscreenOverlayInterfaceId);
@@ -506,7 +506,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			}
 			if (client.packetChatController().inputDialogState() != 0) {
 				client.packetChatController().setInputDialogState(0);
-				client.chatboxRedraw = true;
+				client.requestChatboxRedraw();
 			}
 			client.packetInterfaceController().setActionPending(false);
 			return true;
@@ -516,11 +516,11 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			client.packetWidgetRuntime().resetAnimations(sidebarOverlayInterfaceId2);
 			if (client.packetInterfaceController().state().chatboxInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().chatboxInterfaceId);
-				client.chatboxRedraw = true;
+				client.requestChatboxRedraw();
 			}
 			if (client.packetInterfaceController().state().fullscreenInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().fullscreenInterfaceId);
-				client.gameScreenRedraw = true;
+				client.requestGameScreenRedraw();
 			}
 			if (client.packetInterfaceController().state().fullscreenOverlayInterfaceId != -1) {
 				client.unloadInterface(client.packetInterfaceController().state().fullscreenOverlayInterfaceId);
@@ -534,15 +534,15 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			}
 			if (client.packetChatController().inputDialogState() != 0) {
 				client.packetChatController().setInputDialogState(0);
-				client.chatboxRedraw = true;
+				client.requestChatboxRedraw();
 			}
-			client.sidebarRedraw = true;
-			client.tabAreaRedraw = true;
+			client.requestSidebarRedraw();
+			client.requestTabAreaRedraw();
 			client.packetInterfaceController().setActionPending(false);
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.UPDATE_SKILL) {
-			client.sidebarRedraw = true;
+			client.requestSidebarRedraw();
 			int skillId = buffer.readUnsignedByteNeg();
 			int currentLevel = buffer.readUnsignedByte();
 			int experience = buffer.readInt();
@@ -555,7 +555,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.UPDATE_WIDGET_ITEMS) {
-			client.sidebarRedraw = true;
+			client.requestSidebarRedraw();
 			int widgetId9 = buffer.readUnsignedShort();
 			Widget inventoryWidget2 = Widget.get(widgetId9);
 			int itemCount = buffer.readUnsignedShort();
@@ -575,7 +575,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 		}
 		if (opcode == IncomingPacketOpcode.REBUILD_REGION || opcode == IncomingPacketOpcode.REBUILD_INSTANCED_REGION) {
 			RegionManager.RegionShift shift = client.packetRegionManager().decodeRebuild(buffer,
-					opcode, client.onDemandFetcher, client.packetActorSynchronizer(), client.packetWorldState(), client.destinationX,
+					opcode, client.packetOnDemandFetcher(), client.packetActorSynchronizer(), client.packetWorldState(), client.destinationX,
 					client.destinationY);
 			if (shift.changed) {
 				client.destinationX = shift.destinationX;
@@ -601,7 +601,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 		}
 		if (opcode == IncomingPacketOpcode.UPDATE_RUN_ENERGY) {
 			if (client.packetInterfaceController().state().selectedTab == 12)
-				client.sidebarRedraw = true;
+				client.requestSidebarRedraw();
 			client.runEnergy = buffer.readUnsignedByte();
 			return true;
 		}
@@ -662,8 +662,8 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 				client.unloadInterface(client.packetInterfaceController().state().tabInterfaceIds[tabIndex]);
 				client.packetInterfaceController().state().tabInterfaceIds[tabIndex] = interfaceId;
 			}
-			client.sidebarRedraw = true;
-			client.tabAreaRedraw = true;
+			client.requestSidebarRedraw();
+			client.requestTabAreaRedraw();
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.CLEAR_WIDGET_ITEMS) {
@@ -681,7 +681,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 				if (client.packetInterfaceController().state().flashingTab == 3)
 					client.packetInterfaceController().state().selectedTab = 1;
 				else
-					client.sidebarRedraw = true;
+					client.requestSidebarRedraw();
 			}
 			return true;
 		}
@@ -728,7 +728,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 		}
 		if (opcode == IncomingPacketOpcode.SET_FRIEND_LIST_STATUS) {
 			client.packetSocialManager().friendListStatus = buffer.readUnsignedByte();
-			client.sidebarRedraw = true;
+			client.requestSidebarRedraw();
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_WIDGET_MODEL_ROTATION_SPEED) {
@@ -747,7 +747,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 		if (opcode == IncomingPacketOpcode.SYNCHRONIZE_VARPS) {
 			client.packetVarpState().synchronizeToShadow(varpId3 -> {
 				client.applyVarp(varpId3);
-				client.sidebarRedraw = true;
+				client.requestSidebarRedraw();
 			});
 			return true;
 		}
@@ -756,7 +756,7 @@ final class ClientIncomingPacketHandler implements IncomingPacketHandler {
 			String widgetText = buffer.readString();
 			Widget.get(widgetId14).text = widgetText;
 			if (Widget.get(widgetId14).parentId == client.packetInterfaceController().state().tabInterfaceIds[client.packetInterfaceController().state().selectedTab])
-				client.sidebarRedraw = true;
+				client.requestSidebarRedraw();
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_WIDGET_SCROLL_POSITION) {

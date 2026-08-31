@@ -1,11 +1,12 @@
 /**
- * Provides access to revision-377 cache archives, cache indexes, and resource
- * loading infrastructure.
+ * Provides revision-377 cache archives, cache indexes, bootstrap validation,
+ * and resource-lifecycle infrastructure.
  *
  * <p>
- * Format-specific definitions and assets are decoded by the cache
- * subpackages; this package contains the common archive and storage layer they
- * build upon.
+ * {@code ClientResourceManager} owns the bootstrap {@code ResourceLoader} and
+ * the asynchronous on-demand service as one lifecycle. Format-specific
+ * definitions and assets are decoded by the cache subpackages and higher-level
+ * application bootstrap code.
  * </p>
  */
 package rs2.cache;

@@ -7,10 +7,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.function.BooleanSupplier;
 import java.util.zip.CRC32;
 import java.util.zip.GZIPInputStream;
 
-import rs2.Client;
 import rs2.cache.Archive;
 import rs2.cache.ResourceLoader;
 import rs2.collection.DualNodeDeque;
@@ -35,6 +35,19 @@ import rs2.sign.Signlink;
  * </p>
  */
 public class OnDemandFetcher extends OnDemandProvider implements Runnable {
+
+	/** Opens the update-server socket used by the on-demand protocol. */
+	@FunctionalInterface
+	public interface SocketOpener {
+		/**
+		 * Opens a socket to the supplied port.
+		 *
+		 * @param port update-server port
+		 * @return connected socket
+		 * @throws IOException when the connection cannot be opened
+		 */
+		Socket open(int port) throws IOException;
+	}
 
 	/** Defines the model constant. */
 	public static final int MODEL = 0;
@@ -440,7 +453,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 					idleCycles = 0;
 					statusString = "";
 				}
-				if (clientInstance.loggedIn && socket != null && outputStream != null
+				if (loggedInSupplier.getAsBoolean() && socket != null && outputStream != null
 						&& (highestPriority > 0 || !resourceLoader.hasCache())) {
 					keepAliveCycles++;
 					if (keepAliveCycles > KEEP_ALIVE_AFTER_CYCLES) {
@@ -549,11 +562,14 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	 * {@code anim_index}, and {@code midi_index}.
 	 * </p>
 	 *
-	 * @param archive        the archive
-	 * @param clientInstance the client instance
-	 * @param resourceLoader the resource loader
+	 * @param archive the version-list archive
+	 * @param resourceLoader cache owner used for local reads and writes
+	 * @param socketOpener update-server socket opener
+	 * @param loggedInSupplier supplies the current login state for request priority
+	 * @param updateServerPort update-server port
 	 */
-	public void start(Archive archive, Client clientInstance, ResourceLoader resourceLoader) {
+	public void start(Archive archive, ResourceLoader resourceLoader, SocketOpener socketOpener,
+			BooleanSupplier loggedInSupplier, int updateServerPort) {
 		String[] versionNames = { "model_version", "anim_version", "midi_version", "map_version" };
 		for (int type = 0; type < ARCHIVE_TYPE_COUNT; type++) {
 			byte[] bytes = archive.read(versionNames[type]);
@@ -609,8 +625,10 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 			midiPreloadFlags[id] = buffer.readUnsignedByte();
 		}
 
-		this.clientInstance = clientInstance;
 		this.resourceLoader = resourceLoader;
+		this.socketOpener = socketOpener;
+		this.loggedInSupplier = loggedInSupplier;
+		this.updateServerPort = updateServerPort;
 		running = true;
 		Thread thread = new Thread(this, "rs2-on-demand");
 		thread.setDaemon(true);
@@ -787,7 +805,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 					return;
 				}
 				lastSocketOpenTime = now;
-				socket = clientInstance.openSocket(43594 + Client.portOffset);
+				socket = socketOpener.open(updateServerPort);
 				inputStream = socket.getInputStream();
 				outputStream = socket.getOutputStream();
 				outputStream.write(UPDATE_SERVER_HANDSHAKE);
@@ -804,7 +822,7 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 			ioBuffer[2] = (byte) request.id;
 			if (request.incomplete) {
 				ioBuffer[3] = 2;
-			} else if (!clientInstance.loggedIn) {
+			} else if (!loggedInSupplier.getAsBoolean()) {
 				ioBuffer[3] = 1;
 			} else {
 				ioBuffer[3] = 0;
@@ -962,11 +980,17 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	/** Stores the current request. */
 	private OnDemandRequest currentRequest;
 
-	/** Stores the current client instance. */
-	private Client clientInstance;
-
 	/** Stores the current resource loader. */
 	private ResourceLoader resourceLoader;
+
+	/** Opens update-server sockets without depending on the application client. */
+	private SocketOpener socketOpener;
+
+	/** Supplies whether the game session is currently logged in. */
+	private BooleanSupplier loggedInSupplier;
+
+	/** Update-server port used for revision-377 on-demand connections. */
+	private int updateServerPort;
 
 	/** Stores the current network requests. */
 	private NodeDeque networkRequests;
