@@ -7,10 +7,10 @@ import java.net.Socket;
  * Owns the live game-server transport and revision-377 packet framing state.
  *
  * <p>
- * The client still owns packet <em>dispatch</em>: this class only turns the
- * byte stream into complete opcode/length/payload frames and provides the
- * shared outgoing buffer. Keeping dispatch out of this class prevents network
- * code from depending on world, UI, chat, or actor state.
+ * This class turns the byte stream into complete opcode/length/payload frames
+ * and provides the shared outgoing buffer. Application dispatch is coordinated
+ * separately by {@link IncomingPacketDispatcher}, keeping transport code
+ * independent of world, UI, chat, and actor state.
  * </p>
  *
  * <p>

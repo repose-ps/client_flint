@@ -16,7 +16,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Calendar;
 import java.util.Date;
-import rs2.net.IncomingPacketOpcode;
+import rs2.net.IncomingPacketDispatcher;
 import rs2.net.OutgoingPacketOpcode;
 import rs2.net.ProtocolConstants;
 import rs2.ui.WidgetContentType;
@@ -72,6 +72,7 @@ import rs2.net.Buffer;
 import rs2.net.ChatPacketEncoder;
 import rs2.net.BufferedConnection;
 import rs2.net.Ipv4Address;
+import rs2.net.LoginSession;
 import rs2.net.NetworkSession;
 import rs2.net.MovementPacketEncoder;
 import rs2.scene.Region;
@@ -386,7 +387,6 @@ public class Client extends GameShell {
 		hintIconSprites = null;
 		crossSprites = null;
 		musicController.stop();
-		loginBuffer = null;
 		sidebarBuffer = null;
 		minimapBuffer = null;
 		viewportBuffer = null;
@@ -1047,9 +1047,7 @@ public class Client extends GameShell {
 	 */
 	public boolean processIncomingPacket() {
 		try {
-			if (!networkSession.readIncomingPacket())
-				return false;
-			return dispatchIncomingPacket();
+			return incomingPacketDispatcher.process();
 		} catch (IOException ignored) {
 			reconnect();
 		} catch (Exception exception) {
@@ -1067,819 +1065,6 @@ public class Client extends GameShell {
 		return true;
 	}
 
-	/**
-	 * Handles the currently framed incoming packet while preserving revision-377
-	 * opcode-specific reads and side effects.
-	 *
-	 * @return true when the requested condition/action succeeds; otherwise false
-	 */
-	private boolean dispatchIncomingPacket() {
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_WIDGET_POSITION) {
-			int widgetYOffset = networkSession.incoming.readShortLE();
-			int widgetXOffset = networkSession.incoming.readShortLE();
-			int widgetId = networkSession.incoming.readUnsignedShort();
-			Widget widget = Widget.get(widgetId);
-			widget.xOffset = widgetXOffset;
-			widget.yOffset = widgetYOffset;
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_WIDGET_MODEL_TRANSFORM) {
-			int modelPitch = networkSession.incoming.readUnsignedShortAdd();
-			int widgetId2 = networkSession.incoming.readUnsignedShortAddLE();
-			int modelZoom = networkSession.incoming.readUnsignedShortAdd();
-			int modelYaw = networkSession.incoming.readUnsignedShortLE();
-			Widget.get(widgetId2).modelPitch = modelPitch;
-			Widget.get(widgetId2).modelYaw = modelYaw;
-			Widget.get(widgetId2).modelZoom = modelZoom;
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_WIDGET_MODEL) {
-			int mediaId = networkSession.incoming.readUnsignedShortAddLE();
-			int widgetId3 = networkSession.incoming.readUnsignedShortAddLE();
-			Widget.get(widgetId3).mediaType = Widget.MEDIA_MODEL;
-			Widget.get(widgetId3).mediaId = mediaId;
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		/* Opcode 26: queued sound effect (soundId, loopCount, delay). */
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.PLAY_SOUND_EFFECT) {
-			int soundId = networkSession.incoming.readUnsignedShort();
-			int loopCount = networkSession.incoming.readUnsignedByte();
-			int delay = networkSession.incoming.readUnsignedShort();
-			soundEffectQueue.queuePacketSound(soundId, loopCount, delay, lowMemory);
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_VARP_SMALL) {
-			int varpId = networkSession.incoming.readUnsignedShortAdd();
-			byte varpValue = networkSession.incoming.readByteSub();
-			if (varpState.acceptServerValue(varpId, varpValue)) {
-				applyVarp(varpId);
-				sidebarRedraw = true;
-				if (interfaceController.state().dialogueInterfaceId != -1)
-					chatboxRedraw = true;
-			}
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.RESET_ENTITY_ANIMATIONS) {
-			for (int playerIndex = 0; playerIndex < actorSynchronizer.players.length; playerIndex++)
-				if (actorSynchronizer.players[playerIndex] != null)
-					actorSynchronizer.players[playerIndex].sequence = -1;
-
-			for (int npcIndex = 0; npcIndex < actorSynchronizer.npcs.length; npcIndex++)
-				if (actorSynchronizer.npcs[npcIndex] != null)
-					actorSynchronizer.npcs[npcIndex].sequence = -1;
-
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_MINIMAP_STATE) {
-			minimapRenderer.state = networkSession.incoming.readUnsignedByte();
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_WIDGET_NPC_MODEL) {
-			int npcId = networkSession.incoming.readUnsignedShortAdd();
-			int widgetId4 = networkSession.incoming.readUnsignedShortLE();
-			Widget.get(widgetId4).mediaType = Widget.MEDIA_NPC;
-			Widget.get(widgetId4).mediaId = npcId;
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.OPEN_CHATBOX_INTERFACE) {
-			int chatboxInterfaceId = networkSession.incoming.readUnsignedShort();
-			widgetRuntime.resetAnimations(chatboxInterfaceId);
-			if (interfaceController.state().sidebarOverlayInterfaceId != -1) {
-				unloadInterface(interfaceController.state().sidebarOverlayInterfaceId);
-				sidebarRedraw = true;
-				tabAreaRedraw = true;
-			}
-			if (interfaceController.state().fullscreenInterfaceId != -1) {
-				unloadInterface(interfaceController.state().fullscreenInterfaceId);
-				gameScreenRedraw = true;
-			}
-			if (interfaceController.state().fullscreenOverlayInterfaceId != -1) {
-				unloadInterface(interfaceController.state().fullscreenOverlayInterfaceId);
-			}
-			if (interfaceController.state().openInterfaceId != -1) {
-				unloadInterface(interfaceController.state().openInterfaceId);
-			}
-			if (interfaceController.state().chatboxInterfaceId != chatboxInterfaceId) {
-				unloadInterface(interfaceController.state().chatboxInterfaceId);
-				interfaceController.state().chatboxInterfaceId = chatboxInterfaceId;
-			}
-			interfaceController.setActionPending(false);
-			chatboxRedraw = true;
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		/* Opcode 220: select background MIDI track. */
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.PLAY_MUSIC) {
-			int trackId = networkSession.incoming.readUnsignedShortAddLE();
-			musicController.selectTrack(trackId, lowMemory, onDemandFetcher::request);
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		/* Opcode 249: temporary MIDI track followed by delayed resume. */
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.PLAY_TEMPORARY_MUSIC) {
-			int trackId = networkSession.incoming.readUnsignedShortLE();
-			int resumeDelay = networkSession.incoming.readMediumME();
-			musicController.playTemporaryTrack(trackId, resumeDelay, lowMemory, onDemandFetcher::request);
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_DIALOGUE_INTERFACE) {
-			int dialogueInterfaceId = networkSession.incoming.readShortLE();
-			if (dialogueInterfaceId != interfaceController.state().dialogueInterfaceId) {
-				unloadInterface(interfaceController.state().dialogueInterfaceId);
-				interfaceController.state().dialogueInterfaceId = dialogueInterfaceId;
-			}
-			chatboxRedraw = true;
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_WIDGET_COLOR) {
-			int widgetId5 = networkSession.incoming.readUnsignedShort();
-			int packedColor = networkSession.incoming.readUnsignedShortAdd();
-			int red5 = packedColor >> 10 & 0x1f;
-			int green5 = packedColor >> 5 & 0x1f;
-			int blue5 = packedColor & 0x1f;
-			Widget.get(widgetId5).color = (red5 << 19) + (green5 << 11) + (blue5 << 3);
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_PLAYER_ACTION) {
-			int actionSlot = networkSession.incoming.readUnsignedByteNeg();
-			String actionText = networkSession.incoming.readString();
-			// Protocol flag name is unknown; zero marks the player action as low-priority
-			// in this revision.
-			int priorityFlag = networkSession.incoming.readUnsignedByte();
-			if (actionSlot >= 1 && actionSlot <= 5) {
-				if (actionText.equalsIgnoreCase("null"))
-					actionText = null;
-				playerActions[actionSlot - 1] = actionText;
-				playerActionLowPriority[actionSlot - 1] = priorityFlag == 0;
-			}
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.OPEN_NAME_INPUT_DIALOG) {
-			chatController.openInputDialog(2);
-			chatboxRedraw = true;
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_CHAT_MODES) {
-			chatController.setPublicMode(networkSession.incoming.readUnsignedByte());
-			chatController.setPrivateMode(networkSession.incoming.readUnsignedByte());
-			chatController.setTradeMode(networkSession.incoming.readUnsignedByte());
-			chatModesRedraw = true;
-			chatboxRedraw = true;
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_HINT_ICON) {
-			hintIconType = networkSession.incoming.readUnsignedByte();
-			if (hintIconType == 1)
-				hintNpcIndex = networkSession.incoming.readUnsignedShort();
-			if (hintIconType >= 2 && hintIconType <= 6) {
-				if (hintIconType == 2) {
-					hintOffsetX = 64;
-					hintOffsetY = 64;
-				}
-				if (hintIconType == 3) {
-					hintOffsetX = 0;
-					hintOffsetY = 64;
-				}
-				if (hintIconType == 4) {
-					hintOffsetX = 128;
-					hintOffsetY = 64;
-				}
-				if (hintIconType == 5) {
-					hintOffsetX = 64;
-					hintOffsetY = 0;
-				}
-				if (hintIconType == 6) {
-					hintOffsetX = 64;
-					hintOffsetY = 128;
-				}
-				hintIconType = 2;
-				hintTileX = networkSession.incoming.readUnsignedShort();
-				hintTileY = networkSession.incoming.readUnsignedShort();
-				hintHeight = networkSession.incoming.readUnsignedByte();
-			}
-			if (hintIconType == 10)
-				hintPlayerIndex = networkSession.incoming.readUnsignedShort();
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_CINEMATIC_CAMERA_LOOK_AT) {
-			int tileX = networkSession.incoming.readUnsignedByte();
-			int tileY = networkSession.incoming.readUnsignedByte();
-			int heightOffset = networkSession.incoming.readUnsignedShort();
-			int baseSpeed = networkSession.incoming.readUnsignedByte();
-			int scale = networkSession.incoming.readUnsignedByte();
-			cameraController.setCinematicLookAt(tileX, tileY, heightOffset, baseSpeed, scale, worldState, currentPlane);
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.LOGOUT) {
-			logout();
-			networkSession.incomingOpcode = -1;
-			return false;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_VARP_LARGE) {
-			int varpValue2 = networkSession.incoming.readIntIME();
-			int varpId2 = networkSession.incoming.readUnsignedShortLE();
-			if (varpState.acceptServerValue(varpId2, varpValue2)) {
-				applyVarp(varpId2);
-				sidebarRedraw = true;
-				if (interfaceController.state().dialogueInterfaceId != -1)
-					chatboxRedraw = true;
-			}
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.CLOSE_INTERFACES) {
-			if (interfaceController.state().sidebarOverlayInterfaceId != -1) {
-				unloadInterface(interfaceController.state().sidebarOverlayInterfaceId);
-				sidebarRedraw = true;
-				tabAreaRedraw = true;
-			}
-			if (interfaceController.state().chatboxInterfaceId != -1) {
-				unloadInterface(interfaceController.state().chatboxInterfaceId);
-				chatboxRedraw = true;
-			}
-			if (interfaceController.state().fullscreenInterfaceId != -1) {
-				unloadInterface(interfaceController.state().fullscreenInterfaceId);
-				gameScreenRedraw = true;
-			}
-			if (interfaceController.state().fullscreenOverlayInterfaceId != -1) {
-				unloadInterface(interfaceController.state().fullscreenOverlayInterfaceId);
-			}
-			if (interfaceController.state().openInterfaceId != -1) {
-				unloadInterface(interfaceController.state().openInterfaceId);
-			}
-			if (chatController.inputDialogState() != 0) {
-				chatController.setInputDialogState(0);
-				chatboxRedraw = true;
-			}
-			interfaceController.setActionPending(false);
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.ACCOUNT_INFO) {
-			lastPasswordChangeDate = networkSession.incoming.readUnsignedShortLE();
-			networkSession.incoming.readUnsignedShortAddLE();
-			networkSession.incoming.readUnsignedShort();
-			networkSession.incoming.readUnsignedShort();
-			accountCurrentDay = networkSession.incoming.readUnsignedShortLE();
-			unreadMessageCount = networkSession.incoming.readUnsignedShortAdd();
-			lastLoginDay = networkSession.incoming.readUnsignedShortAdd();
-			membershipDays = networkSession.incoming.readUnsignedShort();
-			lastLoginIp = networkSession.incoming.readIntLE();
-			recoveryQuestionsDate = networkSession.incoming.readUnsignedShortAddLE();
-			networkSession.incoming.readUnsignedByteAdd();
-			Signlink.lookupDns(Ipv4Address.format(lastLoginIp));
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SERVER_MESSAGE) {
-			String serverMessage = networkSession.incoming.readString();
-			if (serverMessage.endsWith(":tradereq:")) {
-				String tradeRequester = serverMessage.substring(0, serverMessage.indexOf(":"));
-				long tradeRequesterEncoded = Base37.encode(tradeRequester);
-				boolean ignored = socialManager.isIgnored(tradeRequesterEncoded);
-				if (!ignored && tutorialIslandFlag == 0)
-					addChatMessage(tradeRequester, "wishes to trade with you.", ChatMessageType.TRADE_REQUEST);
-			} else if (serverMessage.endsWith(":duelreq:")) {
-				String duelRequester = serverMessage.substring(0, serverMessage.indexOf(":"));
-				long duelRequesterEncoded = Base37.encode(duelRequester);
-				boolean ignored = socialManager.isIgnored(duelRequesterEncoded);
-				if (!ignored && tutorialIslandFlag == 0)
-					addChatMessage(duelRequester, "wishes to duel with you.", ChatMessageType.CHALLENGE_REQUEST);
-			} else if (serverMessage.endsWith(":chalreq:")) {
-				String challengeRequester = serverMessage.substring(0, serverMessage.indexOf(":"));
-				long challengeRequesterEncoded = Base37.encode(challengeRequester);
-				boolean ignored = socialManager.isIgnored(challengeRequesterEncoded);
-				if (!ignored && tutorialIslandFlag == 0) {
-					String challengeText = serverMessage.substring(serverMessage.indexOf(":") + 1,
-							serverMessage.length() - 9);
-					addChatMessage(challengeRequester, challengeText, ChatMessageType.CHALLENGE_REQUEST);
-				}
-			} else {
-				addChatMessage("", serverMessage, ChatMessageType.GAME);
-			}
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_WALKABLE_INTERFACE) {
-			int walkableInterfaceId = networkSession.incoming.readSignedShort();
-			if (walkableInterfaceId >= 0)
-				widgetRuntime.resetAnimations(walkableInterfaceId);
-			if (walkableInterfaceId != interfaceController.state().walkableInterfaceId) {
-				unloadInterface(interfaceController.state().walkableInterfaceId);
-				interfaceController.state().walkableInterfaceId = walkableInterfaceId;
-			}
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_WIDGET_MOUSEOVER) {
-			boolean mouseoverTriggered = networkSession.incoming.readUnsignedByte() == 1;
-			int widgetId6 = networkSession.incoming.readUnsignedShort();
-			Widget.get(widgetId6).mouseoverTriggered = mouseoverTriggered;
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.UPDATE_WEIGHT) {
-			if (interfaceController.state().selectedTab == 12)
-				sidebarRedraw = true;
-			weight = networkSession.incoming.readSignedShort();
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_MULTI_COMBAT) {
-			multiCombatZone = networkSession.incoming.readUnsignedByte();
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.CLEAR_DESTINATION) {
-			destinationX = 0;
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.OPEN_MAIN_AND_SIDEBAR_INTERFACES) {
-			int openInterfaceId = networkSession.incoming.readUnsignedShortAdd();
-			int sidebarOverlayInterfaceId = networkSession.incoming.readUnsignedShortAddLE();
-			if (interfaceController.state().chatboxInterfaceId != -1) {
-				unloadInterface(interfaceController.state().chatboxInterfaceId);
-				chatboxRedraw = true;
-			}
-			if (interfaceController.state().fullscreenInterfaceId != -1) {
-				unloadInterface(interfaceController.state().fullscreenInterfaceId);
-				gameScreenRedraw = true;
-			}
-			if (interfaceController.state().fullscreenOverlayInterfaceId != -1) {
-				unloadInterface(interfaceController.state().fullscreenOverlayInterfaceId);
-			}
-			if (interfaceController.state().openInterfaceId != openInterfaceId) {
-				unloadInterface(interfaceController.state().openInterfaceId);
-				interfaceController.state().openInterfaceId = openInterfaceId;
-			}
-			if (interfaceController.state().sidebarOverlayInterfaceId != sidebarOverlayInterfaceId) {
-				unloadInterface(interfaceController.state().sidebarOverlayInterfaceId);
-				interfaceController.state().sidebarOverlayInterfaceId = sidebarOverlayInterfaceId;
-			}
-			if (chatController.inputDialogState() != 0) {
-				chatController.setInputDialogState(0);
-				chatboxRedraw = true;
-			}
-			sidebarRedraw = true;
-			tabAreaRedraw = true;
-			interfaceController.setActionPending(false);
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.CAMERA_SHAKE) {
-			int shakeIndex = networkSession.incoming.readUnsignedByte();
-			int randomAmplitude = networkSession.incoming.readUnsignedByte();
-			int sineAmplitude = networkSession.incoming.readUnsignedByte();
-			int frequency = networkSession.incoming.readUnsignedByte();
-			cameraController.configureShake(shakeIndex, randomAmplitude, sineAmplitude, frequency);
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.UPDATE_WIDGET_ITEMS_PARTIAL) {
-			sidebarRedraw = true;
-			int widgetId7 = networkSession.incoming.readUnsignedShort();
-			Widget inventoryWidget = Widget.get(widgetId7);
-			while (networkSession.incoming.position < networkSession.incomingLength) {
-				int slot = networkSession.incoming.readUnsignedSmart();
-				int itemId = networkSession.incoming.readUnsignedShort();
-				int amount = networkSession.incoming.readUnsignedByte();
-				if (amount == 255)
-					amount = networkSession.incoming.readInt();
-				if (slot >= 0 && slot < inventoryWidget.itemIds.length) {
-					inventoryWidget.itemIds[slot] = itemId;
-					inventoryWidget.itemAmounts[slot] = amount;
-				}
-			}
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.FRIEND_STATUS) {
-			long encodedName = networkSession.incoming.readLong();
-			int world = networkSession.incoming.readUnsignedByte();
-			if (socialManager.updateFriend(encodedName, world, currentWorldId, this::addChatMessage))
-				sidebarRedraw = true;
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.OPEN_AMOUNT_INPUT_DIALOG) {
-			chatController.openInputDialog(1);
-			chatboxRedraw = true;
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_SELECTED_TAB) {
-			interfaceController.state().selectedTab = networkSession.incoming.readUnsignedByteNeg();
-			sidebarRedraw = true;
-			tabAreaRedraw = true;
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.CLEAR_ZONE) {
-			int zoneBaseY = networkSession.incoming.readUnsignedByteSub();
-			int zoneBaseX = networkSession.incoming.readUnsignedByteNeg();
-			zoneUpdates.setZoneBase(zoneBaseX, zoneBaseY);
-			worldState.clearZone(currentPlane, zoneBaseX, zoneBaseY);
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_WIDGET_PLAYER_MODEL) {
-			int widgetId8 = networkSession.incoming.readUnsignedShortAddLE();
-			Widget.get(widgetId8).mediaType = Widget.MEDIA_PLAYER;
-			if (localPlayer.npcDefinition == null)
-				Widget.get(widgetId8).mediaId = (localPlayer.bodyColors[0] << 25) + (localPlayer.bodyColors[4] << 20)
-						+ (localPlayer.equipment[0] << 15) + (localPlayer.equipment[8] << 10)
-						+ (localPlayer.equipment[11] << 5) + localPlayer.equipment[1];
-			else
-				Widget.get(widgetId8).mediaId = (int) (0x12345678L + localPlayer.npcDefinition.id);
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.PRIVATE_MESSAGE) {
-			long senderEncodedName = networkSession.incoming.readLong();
-			int privateMessageId = networkSession.incoming.readInt();
-			int senderRights = networkSession.incoming.readUnsignedByte();
-			boolean duplicateOrIgnored = chatController.history().hasRecentPrivateMessage(privateMessageId);
-
-			if (senderRights <= 1 && socialManager.isIgnored(senderEncodedName))
-				duplicateOrIgnored = true;
-			if (!duplicateOrIgnored && tutorialIslandFlag == 0)
-				try {
-					chatController.history().rememberPrivateMessage(privateMessageId);
-					String privateMessage = ChatCodec.decode(networkSession.incoming,
-							networkSession.incomingLength - 13);
-					if (senderRights != 3)
-						privateMessage = Censor.censor(privateMessage);
-					if (senderRights == 2 || senderRights == 3)
-						addChatMessage("@cr2@" + TextFormatter.formatDisplayName(Base37.decode(senderEncodedName)),
-								privateMessage, 7);
-					else if (senderRights == 1)
-						addChatMessage("@cr1@" + TextFormatter.formatDisplayName(Base37.decode(senderEncodedName)),
-								privateMessage, 7);
-					else
-						addChatMessage(TextFormatter.formatDisplayName(Base37.decode(senderEncodedName)),
-								privateMessage, 3);
-				} catch (Exception exception1) {
-					Signlink.reportError("cde1");
-				}
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.BATCH_ZONE_UPDATES) {
-			zoneUpdates.setZoneBase(networkSession.incoming.readUnsignedByte(),
-					networkSession.incoming.readUnsignedByteAdd());
-			while (networkSession.incoming.position < networkSession.incomingLength) {
-				int updateType = networkSession.incoming.readUnsignedByte();
-				zoneUpdates.decode(networkSession.incoming, updateType, currentPlane, gameCycle, localPlayerServerIndex,
-						localPlayer, actorSynchronizer, this::queueAreaSound);
-			}
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.OPEN_MAIN_INTERFACE) {
-			int openInterfaceId2 = networkSession.incoming.readUnsignedShortAddLE();
-			widgetRuntime.resetAnimations(openInterfaceId2);
-			if (interfaceController.state().sidebarOverlayInterfaceId != -1) {
-				unloadInterface(interfaceController.state().sidebarOverlayInterfaceId);
-				sidebarRedraw = true;
-				tabAreaRedraw = true;
-			}
-			if (interfaceController.state().chatboxInterfaceId != -1) {
-				unloadInterface(interfaceController.state().chatboxInterfaceId);
-				chatboxRedraw = true;
-			}
-			if (interfaceController.state().fullscreenInterfaceId != -1) {
-				unloadInterface(interfaceController.state().fullscreenInterfaceId);
-				gameScreenRedraw = true;
-			}
-			if (interfaceController.state().fullscreenOverlayInterfaceId != -1) {
-				unloadInterface(interfaceController.state().fullscreenOverlayInterfaceId);
-			}
-			if (interfaceController.state().openInterfaceId != openInterfaceId2) {
-				unloadInterface(interfaceController.state().openInterfaceId);
-				interfaceController.state().openInterfaceId = openInterfaceId2;
-			}
-			if (chatController.inputDialogState() != 0) {
-				chatController.setInputDialogState(0);
-				chatboxRedraw = true;
-			}
-			interfaceController.setActionPending(false);
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.OPEN_SIDEBAR_INTERFACE) {
-			int sidebarOverlayInterfaceId2 = networkSession.incoming.readUnsignedShortAddLE();
-			widgetRuntime.resetAnimations(sidebarOverlayInterfaceId2);
-			if (interfaceController.state().chatboxInterfaceId != -1) {
-				unloadInterface(interfaceController.state().chatboxInterfaceId);
-				chatboxRedraw = true;
-			}
-			if (interfaceController.state().fullscreenInterfaceId != -1) {
-				unloadInterface(interfaceController.state().fullscreenInterfaceId);
-				gameScreenRedraw = true;
-			}
-			if (interfaceController.state().fullscreenOverlayInterfaceId != -1) {
-				unloadInterface(interfaceController.state().fullscreenOverlayInterfaceId);
-			}
-			if (interfaceController.state().openInterfaceId != -1) {
-				unloadInterface(interfaceController.state().openInterfaceId);
-			}
-			if (interfaceController.state().sidebarOverlayInterfaceId != sidebarOverlayInterfaceId2) {
-				unloadInterface(interfaceController.state().sidebarOverlayInterfaceId);
-				interfaceController.state().sidebarOverlayInterfaceId = sidebarOverlayInterfaceId2;
-			}
-			if (chatController.inputDialogState() != 0) {
-				chatController.setInputDialogState(0);
-				chatboxRedraw = true;
-			}
-			sidebarRedraw = true;
-			tabAreaRedraw = true;
-			interfaceController.setActionPending(false);
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.UPDATE_SKILL) {
-			sidebarRedraw = true;
-			int skillId = networkSession.incoming.readUnsignedByteNeg();
-			int currentLevel = networkSession.incoming.readUnsignedByte();
-			int experience = networkSession.incoming.readInt();
-			skillExperiences[skillId] = experience;
-			currentSkillLevels[skillId] = currentLevel;
-			baseSkillLevels[skillId] = 1;
-			for (int levelIndex = 0; levelIndex < 98; levelIndex++)
-				if (experience >= experienceTable[levelIndex])
-					baseSkillLevels[skillId] = levelIndex + 2;
-
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.UPDATE_WIDGET_ITEMS) {
-			sidebarRedraw = true;
-			int widgetId9 = networkSession.incoming.readUnsignedShort();
-			Widget inventoryWidget2 = Widget.get(widgetId9);
-			int itemCount = networkSession.incoming.readUnsignedShort();
-			for (int slot2 = 0; slot2 < itemCount; slot2++) {
-				inventoryWidget2.itemIds[slot2] = networkSession.incoming.readUnsignedShortAddLE();
-				int amount2 = networkSession.incoming.readUnsignedByteNeg();
-				if (amount2 == 255)
-					amount2 = networkSession.incoming.readIntLE();
-				inventoryWidget2.itemAmounts[slot2] = amount2;
-			}
-
-			for (int slot3 = itemCount; slot3 < inventoryWidget2.itemIds.length; slot3++) {
-				inventoryWidget2.itemIds[slot3] = 0;
-				inventoryWidget2.itemAmounts[slot3] = 0;
-			}
-
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.REBUILD_REGION || networkSession.incomingOpcode == IncomingPacketOpcode.REBUILD_INSTANCED_REGION) {
-			RegionManager.RegionShift shift = regionManager.decodeRebuild(networkSession.incoming,
-					networkSession.incomingOpcode, onDemandFetcher, actorSynchronizer, worldState, destinationX,
-					destinationY);
-			if (shift.changed) {
-				destinationX = shift.destinationX;
-				destinationY = shift.destinationY;
-				cameraController.cinematic = false;
-				drawGameLoadingMessage(null, "Loading - please wait.");
-			}
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_SYSTEM_UPDATE_TIMER) {
-			systemUpdateTimer = networkSession.incoming.readUnsignedShortLE() * 30;
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.PLAY_AREA_SOUND || networkSession.incomingOpcode == IncomingPacketOpcode.UPDATE_GROUND_ITEM_AMOUNT
-				|| networkSession.incomingOpcode == IncomingPacketOpcode.ATTACH_OBJECT_TO_PLAYER || networkSession.incomingOpcode == IncomingPacketOpcode.ADD_GROUND_ITEM_FOR_OTHER_PLAYER
-				|| networkSession.incomingOpcode == IncomingPacketOpcode.ADD_GRAPHICS_OBJECT || networkSession.incomingOpcode == IncomingPacketOpcode.ADD_PROJECTILE
-				|| networkSession.incomingOpcode == IncomingPacketOpcode.REMOVE_GROUND_ITEM || networkSession.incomingOpcode == IncomingPacketOpcode.ADD_GROUND_ITEM
-				|| networkSession.incomingOpcode == IncomingPacketOpcode.ANIMATE_GAME_OBJECT || networkSession.incomingOpcode == IncomingPacketOpcode.REMOVE_GAME_OBJECT
-				|| networkSession.incomingOpcode == IncomingPacketOpcode.ADD_GAME_OBJECT) {
-			zoneUpdates.decode(networkSession.incoming, networkSession.incomingOpcode, currentPlane, gameCycle,
-					localPlayerServerIndex, localPlayer, actorSynchronizer, this::queueAreaSound);
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.UPDATE_RUN_ENERGY) {
-			if (interfaceController.state().selectedTab == 12)
-				sidebarRedraw = true;
-			runEnergy = networkSession.incoming.readUnsignedByte();
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_WIDGET_ITEM_MODEL) {
-			int zoomDivisor = networkSession.incoming.readUnsignedShort();
-			int itemId2 = networkSession.incoming.readUnsignedShortLE();
-			int widgetId10 = networkSession.incoming.readUnsignedShortAddLE();
-			if (itemId2 == ProtocolConstants.NULL_ID) {
-				Widget.get(widgetId10).mediaType = Widget.MEDIA_NONE;
-				networkSession.incomingOpcode = -1;
-				return true;
-			} else {
-				ItemDefinition itemDefinition = ItemDefinition.lookup(itemId2);
-				Widget.get(widgetId10).mediaType = Widget.MEDIA_ITEM;
-				Widget.get(widgetId10).mediaId = itemId2;
-				Widget.get(widgetId10).modelPitch = itemDefinition.xan2d;
-				Widget.get(widgetId10).modelYaw = itemDefinition.yan2d;
-				Widget.get(widgetId10).modelZoom = (itemDefinition.zoom2d * 100) / zoomDivisor;
-				networkSession.incomingOpcode = -1;
-				return true;
-			}
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_CINEMATIC_CAMERA_POSITION) {
-			int tileX = networkSession.incoming.readUnsignedByte();
-			int tileY = networkSession.incoming.readUnsignedByte();
-			int heightOffset = networkSession.incoming.readUnsignedShort();
-			int baseSpeed = networkSession.incoming.readUnsignedByte();
-			int scale = networkSession.incoming.readUnsignedByte();
-			cameraController.setCinematicPosition(tileX, tileY, heightOffset, baseSpeed, scale, worldState,
-					currentPlane);
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_WIDGET_ANIMATION) {
-			int widgetId11 = networkSession.incoming.readUnsignedShortAddLE();
-			int animationId = networkSession.incoming.readShortAdd();
-			Widget animationWidget = Widget.get(widgetId11);
-			if (animationWidget.animationId != animationId || animationId == -1) {
-				animationWidget.animationId = animationId;
-				animationWidget.animationFrame = 0;
-				animationWidget.animationCycle = 0;
-			}
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.NPC_UPDATE) {
-			actorSynchronizer.decodeNpcUpdate(networkSession.incoming, networkSession.incomingLength, gameCycle,
-					loginScreen.username);
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.UPDATE_IGNORE_LIST) {
-			socialManager.replaceIgnoreList(networkSession.incoming, networkSession.incomingLength);
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_TAB_INTERFACE) {
-			int tabIndex = networkSession.incoming.readUnsignedByteSub();
-			int interfaceId = networkSession.incoming.readUnsignedShortAdd();
-			if (interfaceId == ProtocolConstants.NULL_ID)
-				interfaceId = -1;
-			if (interfaceController.state().tabInterfaceIds[tabIndex] != interfaceId) {
-				unloadInterface(interfaceController.state().tabInterfaceIds[tabIndex]);
-				interfaceController.state().tabInterfaceIds[tabIndex] = interfaceId;
-			}
-			sidebarRedraw = true;
-			tabAreaRedraw = true;
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.CLEAR_WIDGET_ITEMS) {
-			int widgetId12 = networkSession.incoming.readUnsignedShortLE();
-			Widget inventoryWidget3 = Widget.get(widgetId12);
-			for (int slot4 = 0; slot4 < inventoryWidget3.itemIds.length; slot4++) {
-				inventoryWidget3.itemIds[slot4] = -1;
-				inventoryWidget3.itemIds[slot4] = 0;
-			}
-
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.FLASH_TAB) {
-			interfaceController.state().flashingTab = networkSession.incoming.readUnsignedByte();
-			if (interfaceController.state().flashingTab == interfaceController.state().selectedTab) {
-				if (interfaceController.state().flashingTab == 3)
-					interfaceController.state().selectedTab = 1;
-				else
-					sidebarRedraw = true;
-			}
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.RESET_CAMERA) {
-			cameraController.stopCinematic();
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_LOCAL_PLAYER_INDEX) {
-			accountMembershipStatus = networkSession.incoming.readUnsignedByte();
-			localPlayerServerIndex = networkSession.incoming.readUnsignedShortLE();
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_ZONE_BASE) {
-			zoneUpdates.setZoneBase(networkSession.incoming.readUnsignedByteNeg(),
-					networkSession.incoming.readUnsignedByteAdd());
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.OPEN_FULLSCREEN_INTERFACES) {
-			int fullscreenOverlayInterfaceId = networkSession.incoming.readUnsignedShortLE();
-			int fullscreenInterfaceId = networkSession.incoming.readUnsignedShortAdd();
-			widgetRuntime.resetAnimations(fullscreenInterfaceId);
-			if (fullscreenOverlayInterfaceId != -1)
-				widgetRuntime.resetAnimations(fullscreenOverlayInterfaceId);
-			if (interfaceController.state().openInterfaceId != -1) {
-				unloadInterface(interfaceController.state().openInterfaceId);
-			}
-			if (interfaceController.state().sidebarOverlayInterfaceId != -1) {
-				unloadInterface(interfaceController.state().sidebarOverlayInterfaceId);
-			}
-			if (interfaceController.state().chatboxInterfaceId != -1) {
-				unloadInterface(interfaceController.state().chatboxInterfaceId);
-			}
-			if (interfaceController.state().fullscreenInterfaceId != fullscreenInterfaceId) {
-				unloadInterface(interfaceController.state().fullscreenInterfaceId);
-				interfaceController.state().fullscreenInterfaceId = fullscreenInterfaceId;
-			}
-			if (interfaceController.state().fullscreenOverlayInterfaceId != fullscreenInterfaceId) {
-				unloadInterface(interfaceController.state().fullscreenOverlayInterfaceId);
-				interfaceController.state().fullscreenOverlayInterfaceId = fullscreenOverlayInterfaceId;
-			}
-			chatController.setInputDialogState(0);
-			interfaceController.setActionPending(false);
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_FRIEND_LIST_STATUS) {
-			socialManager.friendListStatus = networkSession.incoming.readUnsignedByte();
-			sidebarRedraw = true;
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_WIDGET_MODEL_ROTATION_SPEED) {
-			int pitchRotationSpeed = networkSession.incoming.readUnsignedShort();
-			int widgetId13 = networkSession.incoming.readUnsignedShortAdd();
-			int yawRotationSpeed = networkSession.incoming.readUnsignedShortLE();
-			Widget.get(widgetId13).modelRotationSpeed = (pitchRotationSpeed << 16) + yawRotationSpeed;
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.PLAYER_UPDATE) {
-			currentPlane = actorSynchronizer.decodePlayerUpdate(networkSession.incoming, networkSession.incomingLength,
-					gameCycle, currentPlane, loginScreen.username, chatBuffer, actorChatHandler);
-			regionManager.playerUpdateReceived();
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SYNCHRONIZE_VARPS) {
-			varpState.synchronizeToShadow(varpId3 -> {
-				applyVarp(varpId3);
-				sidebarRedraw = true;
-			});
-
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_WIDGET_TEXT) {
-			int widgetId14 = networkSession.incoming.readUnsignedShortAddLE();
-			String widgetText = networkSession.incoming.readString();
-			Widget.get(widgetId14).text = widgetText;
-			if (Widget.get(widgetId14).parentId == interfaceController.state().tabInterfaceIds[interfaceController.state().selectedTab])
-				sidebarRedraw = true;
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		if (networkSession.incomingOpcode == IncomingPacketOpcode.SET_WIDGET_SCROLL_POSITION) {
-			int widgetId15 = networkSession.incoming.readUnsignedShort();
-			int scrollY = networkSession.incoming.readUnsignedShortAddLE();
-			Widget scrollWidget = Widget.get(widgetId15);
-			if (scrollWidget != null && scrollWidget.type == Widget.TYPE_CONTAINER) {
-				if (scrollY < 0)
-					scrollY = 0;
-				if (scrollY > scrollWidget.scrollHeight - scrollWidget.height)
-					scrollY = scrollWidget.scrollHeight - scrollWidget.height;
-				scrollWidget.scrollY = scrollY;
-			}
-			networkSession.incomingOpcode = -1;
-			return true;
-		}
-		Signlink.reportError("T1 - " + networkSession.incomingOpcode + "," + networkSession.incomingLength + " - "
-				+ networkSession.secondLastOpcode + "," + networkSession.thirdLastOpcode);
-		logout();
-		return true;
-	}
 
 	/**
 	 * Draws the contextual action tooltip shown when the context menu is closed.
@@ -2093,7 +1278,7 @@ public class Client extends GameShell {
 		destinationX = 0;
 		BufferedConnection previousConnection = networkSession.getConnection();
 		loggedIn = false;
-		loginFailures = 0;
+		loginSession.resetFailures();
 		login(loginScreen.username, loginScreen.password, true);
 		if (!loggedIn)
 			logout();
@@ -2951,276 +2136,76 @@ public class Client extends GameShell {
 	 * @param reconnecting  the reconnecting
 	 */
 	public void login(String loginUsername, String loginPassword, boolean reconnecting) {
-		try {
-			if (!reconnecting) {
-				loginScreen.message1 = "";
-				loginScreen.message2 = "Connecting to server...";
-				drawLoginScreen(true);
-			}
-			networkSession.connect(openSocket(43594 + portOffset));
-			long encodedUsername = Base37.encode(loginUsername);
-			// Five-bit username hash partition used by the legacy login handshake.
-			int usernameHashPart = (int) (encodedUsername >> 16 & 31L);
-			networkSession.outgoing.position = 0;
-			networkSession.outgoing.writeByte(14);
-			networkSession.outgoing.writeByte(usernameHashPart);
-			networkSession.write(networkSession.outgoing.payload, 0, 2);
-			for (int handshakeByteIndex = 0; handshakeByteIndex < 8; handshakeByteIndex++)
-				networkSession.read();
+		loginSession.login(loginUsername, loginPassword, reconnecting, lowMemory);
+	}
 
-			int responseCode = networkSession.read();
-			int initialResponseCode = responseCode;
-			if (responseCode == 0) {
-				networkSession.readFully(networkSession.incoming.payload, 0, 8);
-				networkSession.incoming.position = 0;
-				serverSessionKey = networkSession.incoming.readLong();
-				int isaacSeed[] = new int[4];
-				isaacSeed[0] = (int) (Math.random() * 99999999D);
-				isaacSeed[1] = (int) (Math.random() * 99999999D);
-				isaacSeed[2] = (int) (serverSessionKey >> 32);
-				isaacSeed[3] = (int) serverSessionKey;
-				networkSession.outgoing.position = 0;
-				networkSession.outgoing.writeByte(10);
-				networkSession.outgoing.writeInt(isaacSeed[0]);
-				networkSession.outgoing.writeInt(isaacSeed[1]);
-				networkSession.outgoing.writeInt(isaacSeed[2]);
-				networkSession.outgoing.writeInt(isaacSeed[3]);
-				networkSession.outgoing.writeInt(Signlink.uid);
-				networkSession.outgoing.writeString(loginUsername);
-				networkSession.outgoing.writeString(loginPassword);
-				networkSession.outgoing.encryptRsa(RSA_EXPONENT, RSA_MODULUS);
-				loginBuffer.position = 0;
-				if (reconnecting)
-					loginBuffer.writeByte(18);
-				else
-					loginBuffer.writeByte(16);
-				loginBuffer.writeByte(networkSession.outgoing.position + 36 + 1 + 1 + 2);
-				loginBuffer.writeByte(255);
-				loginBuffer.writeShort(377);
-				loginBuffer.writeByte(lowMemory ? 1 : 0);
-				for (int crcIndex = 0; crcIndex < 9; crcIndex++)
-					loginBuffer.writeInt(resourceLoader.getArchiveCrc(crcIndex));
+	/**
+	 * Applies the runtime reset associated with a full successful login response.
+	 *
+	 * @param rights server-supplied player rights
+	 * @param flagged whether the account is flagged
+	 */
+	private void handleFullLogin(int rights, boolean flagged) {
+		playerRights = rights;
+		accountFlagged = flagged;
+		lastClickTime = 0L;
+		mouseTelemetryRepeatCount = 0;
+		mouseRecorder.sampleCount = 0;
+		super.hasFocus = true;
+		windowFocusReported = true;
+		loggedIn = true;
+		networkSession.resetPacketState();
+		systemUpdateTimer = 0;
+		logoutTimer = 0;
+		hintIconType = 0;
+		menuController.state().count = 0;
+		super.idleCycles = 0;
 
-				loginBuffer.writeBytes(networkSession.outgoing.payload, 0, networkSession.outgoing.position);
-				networkSession.initializeOpcodeCiphers(isaacSeed);
-				networkSession.write(loginBuffer.payload, 0, loginBuffer.position);
-				responseCode = networkSession.read();
-			}
-			if (responseCode == 1) {
-				try {
-					Thread.sleep(2000L);
-				} catch (Exception ignored) {
-				}
-				login(loginUsername, loginPassword, reconnecting);
-				return;
-			}
-			if (responseCode == 2) {
-				playerRights = networkSession.read();
-				accountFlagged = networkSession.read() == 1;
-				lastClickTime = 0L;
-				mouseTelemetryRepeatCount = 0;
-				mouseRecorder.sampleCount = 0;
-				super.hasFocus = true;
-				windowFocusReported = true;
-				loggedIn = true;
-				networkSession.resetPacketState();
-				systemUpdateTimer = 0;
-				logoutTimer = 0;
-				hintIconType = 0;
-				menuController.state().count = 0;
-				super.idleCycles = 0;
+		interfaceController.state().itemSelected = 0;
+		interfaceController.state().spellSelected = 0;
+		regionManager.loadingStage = RegionManager.STAGE_UNLOADED;
+		soundEffectQueue.resetForLogin();
+		cameraController.randomizeLoginOffsets();
+		minimapRenderer.randomizeLoginOffsets();
+		minimapRenderer.state = 0;
+		lastMinimapPlane = -1;
+		destinationX = 0;
+		destinationY = 0;
+		localPlayer = actorSynchronizer.reset();
+		worldState.resetTransientState();
+		socialManager.resetForLogin();
+		unloadInterface(interfaceController.state().dialogueInterfaceId);
+		unloadInterface(interfaceController.state().chatboxInterfaceId);
+		unloadInterface(interfaceController.state().openInterfaceId);
+		unloadInterface(interfaceController.state().fullscreenInterfaceId);
+		unloadInterface(interfaceController.state().fullscreenOverlayInterfaceId);
+		unloadInterface(interfaceController.state().sidebarOverlayInterfaceId);
+		unloadInterface(interfaceController.state().walkableInterfaceId);
+		interfaceController.setActionPending(false);
+		chatController.resetForLogin();
+		multiCombatZone = 0;
+		appearanceEditor.resetForLogin();
 
-				interfaceController.state().itemSelected = 0;
-				interfaceController.state().spellSelected = 0;
-				regionManager.loadingStage = RegionManager.STAGE_UNLOADED;
-				soundEffectQueue.resetForLogin();
-				cameraController.randomizeLoginOffsets();
-				minimapRenderer.randomizeLoginOffsets();
-				minimapRenderer.state = 0;
-				lastMinimapPlane = -1;
-				destinationX = 0;
-				destinationY = 0;
-				localPlayer = actorSynchronizer.reset();
-				worldState.resetTransientState();
-				socialManager.resetForLogin();
-				unloadInterface(interfaceController.state().dialogueInterfaceId);
-				unloadInterface(interfaceController.state().chatboxInterfaceId);
-				unloadInterface(interfaceController.state().openInterfaceId);
-				unloadInterface(interfaceController.state().fullscreenInterfaceId);
-				unloadInterface(interfaceController.state().fullscreenOverlayInterfaceId);
-				unloadInterface(interfaceController.state().sidebarOverlayInterfaceId);
-				unloadInterface(interfaceController.state().walkableInterfaceId);
-				interfaceController.setActionPending(false);
-				chatController.resetForLogin();
-				multiCombatZone = 0;
-				appearanceEditor.resetForLogin();
-
-				for (int actionIndex = 0; actionIndex < 5; actionIndex++) {
-					playerActions[actionIndex] = null;
-					playerActionLowPriority[actionIndex] = false;
-				}
-
-				groundItemAction26Counter = 0;
-				inventoryAction227Counter = 0;
-				npcAction118Counter = 0;
-				groundItemAction684Counter = 0;
-				inventoryAction961Counter = 0;
-				createGameScreenBuffers();
-				return;
-			}
-			if (responseCode == 3) {
-				loginScreen.message1 = "";
-				loginScreen.message2 = "Invalid username or password.";
-				return;
-			}
-			if (responseCode == 4) {
-				loginScreen.message1 = "Your account has been disabled.";
-				loginScreen.message2 = "Please check your message-centre for details.";
-				return;
-			}
-			if (responseCode == 5) {
-				loginScreen.message1 = "Your account is already logged in.";
-				loginScreen.message2 = "Try again in 60 secs...";
-				return;
-			}
-			if (responseCode == 6) {
-				loginScreen.message1 = "RuneScape has been updated!";
-				loginScreen.message2 = "Please reload this page.";
-				return;
-			}
-			if (responseCode == 7) {
-				loginScreen.message1 = "This world is full.";
-				loginScreen.message2 = "Please use a different world.";
-				return;
-			}
-			if (responseCode == 8) {
-				loginScreen.message1 = "Unable to connect.";
-				loginScreen.message2 = "Login server offline.";
-				return;
-			}
-			if (responseCode == 9) {
-				loginScreen.message1 = "Login limit exceeded.";
-				loginScreen.message2 = "Too many connections from your address.";
-				return;
-			}
-			if (responseCode == 10) {
-				loginScreen.message1 = "Unable to connect.";
-				loginScreen.message2 = "Bad session id.";
-				return;
-			}
-			if (responseCode == 12) {
-				loginScreen.message1 = "You need a members account to login to this world.";
-				loginScreen.message2 = "Please subscribe, or use a different world.";
-				return;
-			}
-			if (responseCode == 13) {
-				loginScreen.message1 = "Could not complete login.";
-				loginScreen.message2 = "Please try using a different world.";
-				return;
-			}
-			if (responseCode == 14) {
-				loginScreen.message1 = "The server is being updated.";
-				loginScreen.message2 = "Please wait 1 minute and try again.";
-				return;
-			}
-			if (responseCode == 15) {
-				loggedIn = true;
-				networkSession.resetPacketState();
-				systemUpdateTimer = 0;
-				menuController.state().count = 0;
-				regionManager.loadingStartTime = System.currentTimeMillis();
-				return;
-			}
-			if (responseCode == 16) {
-				loginScreen.message1 = "Login attempts exceeded.";
-				loginScreen.message2 = "Please wait 1 minute and try again.";
-				return;
-			}
-			if (responseCode == 17) {
-				loginScreen.message1 = "You are standing in a members-only area.";
-				loginScreen.message2 = "To play on this world move to a free area first";
-				return;
-			}
-			if (responseCode == 18) {
-				loginScreen.message1 = "Account locked as we suspect it has been stolen.";
-				loginScreen.message2 = "Press 'recover a locked account' on front page.";
-				return;
-			}
-			if (responseCode == 20) {
-				loginScreen.message1 = "Invalid loginserver requested";
-				loginScreen.message2 = "Please try using a different world.";
-				return;
-			}
-			if (responseCode == 21) {
-				int transferSeconds = networkSession.read();
-				for (transferSeconds += 3; transferSeconds >= 0; transferSeconds--) {
-					loginScreen.message1 = "You have only just left another world";
-					loginScreen.message2 = "Your profile will be transferred in: " + transferSeconds;
-					drawLoginScreen(true);
-					try {
-						Thread.sleep(1200L);
-					} catch (Exception ignored2) {
-					}
-				}
-
-				login(loginUsername, loginPassword, reconnecting);
-				return;
-			}
-			if (responseCode == 22) {
-				loginScreen.message1 = "Malformed login packet.";
-				loginScreen.message2 = "Please try again.";
-				return;
-			}
-			if (responseCode == 23) {
-				loginScreen.message1 = "No reply from loginserver.";
-				loginScreen.message2 = "Please try again.";
-				return;
-			}
-			if (responseCode == 24) {
-				loginScreen.message1 = "Error loading your profile.";
-				loginScreen.message2 = "Please contact customer support.";
-				return;
-			}
-			if (responseCode == 25) {
-				loginScreen.message1 = "Unexpected loginserver response.";
-				loginScreen.message2 = "Please try using a different world.";
-				return;
-			}
-			if (responseCode == 26) {
-				loginScreen.message1 = "This computers address has been blocked";
-				loginScreen.message2 = "as it was used to break our rules";
-				return;
-			}
-			if (responseCode == -1) {
-				if (initialResponseCode == 0) {
-					if (loginFailures < 2) {
-						try {
-							Thread.sleep(2000L);
-						} catch (Exception ignored3) {
-						}
-						loginFailures++;
-						login(loginUsername, loginPassword, reconnecting);
-						return;
-					} else {
-						loginScreen.message1 = "No response from loginserver";
-						loginScreen.message2 = "Please wait 1 minute and try again.";
-						return;
-					}
-				} else {
-					loginScreen.message1 = "No response from server";
-					loginScreen.message2 = "Please try using a different world.";
-					return;
-				}
-			} else {
-				System.out.println("response:" + responseCode);
-				loginScreen.message1 = "Unexpected server response";
-				loginScreen.message2 = "Please try using a different world.";
-				return;
-			}
-		} catch (IOException ignored4) {
-			loginScreen.message1 = "";
+		for (int actionIndex = 0; actionIndex < 5; actionIndex++) {
+			playerActions[actionIndex] = null;
+			playerActionLowPriority[actionIndex] = false;
 		}
-		loginScreen.message2 = "Error connecting to server.";
+
+		groundItemAction26Counter = 0;
+		inventoryAction227Counter = 0;
+		npcAction118Counter = 0;
+		groundItemAction684Counter = 0;
+		inventoryAction961Counter = 0;
+		createGameScreenBuffers();
+	}
+
+	/** Applies the partial reset associated with login response code 15. */
+	private void handleReconnectAccepted() {
+		loggedIn = true;
+		networkSession.resetPacketState();
+		systemUpdateTimer = 0;
+		menuController.state().count = 0;
+		regionManager.loadingStartTime = System.currentTimeMillis();
 	}
 
 	/**
@@ -3834,6 +2819,96 @@ public class Client extends GameShell {
 			return dayOfMonth + "-" + monthNames[monthIndex] + "-" + year;
 		}
 	}
+
+	/**
+	 * Returns social state to the application packet adapter.
+	 * @return social manager
+	 */
+	SocialManager packetSocialManager() { return socialManager; }
+
+	/**
+	 * Returns chat state to the application packet adapter.
+	 * @return chat controller
+	 */
+	ChatController packetChatController() { return chatController; }
+
+	/**
+	 * Returns interface state to the application packet adapter.
+	 * @return interface controller
+	 */
+	InterfaceController packetInterfaceController() { return interfaceController; }
+
+	/**
+	 * Returns the current login username to the application packet adapter.
+	 * @return login username
+	 */
+	String packetLoginUsername() { return loginScreen.username; }
+
+	/**
+	 * Returns sound-effect state to the application packet adapter.
+	 * @return sound-effect queue
+	 */
+	SoundEffectQueue packetSoundEffectQueue() { return soundEffectQueue; }
+
+	/**
+	 * Returns music state to the application packet adapter.
+	 * @return music controller
+	 */
+	MusicController packetMusicController() { return musicController; }
+
+	/**
+	 * Returns widget runtime state to the application packet adapter.
+	 * @return widget runtime
+	 */
+	WidgetRuntime packetWidgetRuntime() { return widgetRuntime; }
+
+	/**
+	 * Returns actor synchronization state to the application packet adapter.
+	 * @return actor synchronizer
+	 */
+	ActorSynchronizer packetActorSynchronizer() { return actorSynchronizer; }
+
+	/**
+	 * Returns camera state to the application packet adapter.
+	 * @return camera controller
+	 */
+	CameraController packetCameraController() { return cameraController; }
+
+	/**
+	 * Returns minimap state to the application packet adapter.
+	 * @return minimap renderer
+	 */
+	MinimapRenderer packetMinimapRenderer() { return minimapRenderer; }
+
+	/**
+	 * Returns region state to the application packet adapter.
+	 * @return region manager
+	 */
+	RegionManager packetRegionManager() { return regionManager; }
+
+	/**
+	 * Returns varp state to the application packet adapter.
+	 * @return varp state
+	 */
+	VarpState packetVarpState() { return varpState; }
+
+	/**
+	 * Returns world state to the application packet adapter.
+	 * @return world state
+	 */
+	WorldState packetWorldState() { return worldState; }
+
+	/**
+	 * Returns zone-update state to the application packet adapter.
+	 * @return zone-update handler
+	 */
+	ZoneUpdateHandler packetZoneUpdates() { return zoneUpdates; }
+
+	/**
+	 * Returns the actor chat callback to the application packet adapter.
+	 * @return actor chat handler
+	 */
+	ActorSynchronizer.ChatHandler packetActorChatHandler() { return actorChatHandler; }
 
 	/**
 	 * Returns one current client varp value for definition morphing.
@@ -5696,7 +4771,7 @@ public class Client extends GameShell {
 	 * @param tileX   the local scene-tile X coordinate
 	 * @param tileY   the local scene-tile Y coordinate
 	 */
-	private void queueAreaSound(int soundId, int loops, int radius, int tileX, int tileY) {
+	void queueAreaSound(int soundId, int loops, int radius, int tileX, int tileY) {
 		soundEffectQueue.queueAreaSound(soundId, loops, radius, tileX, tileY, localPlayer.pathX[0],
 				localPlayer.pathY[0], lowMemory);
 	}
@@ -5728,7 +4803,7 @@ public class Client extends GameShell {
 				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.REGION_LOADED);
 			} else if (System.currentTimeMillis() - regionManager.loadingStartTime > 0x57e40L) {
 				Signlink.reportError(
-						loginScreen.username + " glcfb " + serverSessionKey + "," + status + "," + lowMemory + ","
+						loginScreen.username + " glcfb " + loginSession.getServerSessionKey() + "," + status + "," + lowMemory + ","
 								+ resourceLoader.getCacheIndex(0) + "," + onDemandFetcher.getOutstandingRequestCount()
 								+ "," + currentPlane + "," + regionManager.regionX + "," + regionManager.regionY);
 				regionManager.loadingStartTime = System.currentTimeMillis();
@@ -5839,7 +4914,7 @@ public class Client extends GameShell {
 				buttonY2 += 20;
 				if (super.clickButton == 1 && super.clickX >= buttonX2 - 75 && super.clickX <= buttonX2 + 75
 						&& super.clickY >= buttonY2 - 20 && super.clickY <= buttonY2 + 20) {
-					loginFailures = 0;
+					loginSession.resetFailures();
 					login(loginScreen.username, loginScreen.password, false);
 					if (loggedIn)
 						return;
@@ -5921,6 +4996,7 @@ public class Client extends GameShell {
 		crossSprites = new ImageRGB[8];
 		minimapMaskWidths = new int[151];
 		networkSession = new NetworkSession();
+		incomingPacketDispatcher = new IncomingPacketDispatcher(networkSession, new ClientIncomingPacketHandler(this));
 		socialManager = new SocialManager();
 		chatController = new ChatController();
 		interfaceController = new InterfaceController();
@@ -5929,6 +5005,29 @@ public class Client extends GameShell {
 		titleFlameAnimator = new TitleFlameAnimator();
 		appearanceEditor = new AppearanceEditor();
 		resourceLoader = new ResourceLoader();
+		loginSession = new LoginSession(networkSession, this::openSocket, resourceLoader::getArchiveCrc,
+				new LoginSession.StatusSink() {
+					@Override
+					public void setMessage(String line1, String line2) {
+						loginScreen.message1 = line1;
+						loginScreen.message2 = line2;
+					}
+
+					@Override
+					public void redraw() {
+						drawLoginScreen(true);
+					}
+				}, new LoginSession.Listener() {
+					@Override
+					public void onFullLogin(int rights, boolean flagged) {
+						handleFullLogin(rights, flagged);
+					}
+
+					@Override
+					public void onReconnectAccepted() {
+						handleReconnectAccepted();
+					}
+				}, RSA_EXPONENT, RSA_MODULUS, 43594 + portOffset);
 		soundEffectQueue = new SoundEffectQueue();
 		musicController = new MusicController();
 		pathfinder = new Pathfinder();
@@ -5954,7 +5053,6 @@ public class Client extends GameShell {
 				() -> membersWorld);
 		widgetRuntime = new WidgetRuntime(scriptContext);
 		widgetRenderer = new WidgetRenderer(interfaceController, widgetRuntime, this::updateWidgetContent);
-		loginBuffer = new Buffer(new byte[5000]);
 		scrollbarTrackColor = 0x23201b;
 		projectedX = -1;
 		projectedY = -1;
@@ -6030,8 +5128,6 @@ public class Client extends GameShell {
 	public int hintOffsetX;
 	/** The client state for hint offset y. */
 	public int hintOffsetY;
-	/** The client state for login failures. */
-	public int loginFailures;
 	/** The client state for item search query. */
 	public String itemSearchQuery;
 	/** The current number of item search result entries. */
@@ -6109,10 +5205,6 @@ public class Client extends GameShell {
 	public static boolean membersWorld = true;
 	/** Whether low memory is currently active or requested. */
 	public static boolean lowMemory;
-	/** The graphics or protocol buffer used for login buffer. */
-	public Buffer loginBuffer;
-	/** The client state for server session key. */
-	public long serverSessionKey;
 	/** The client state for scrollbar track color. */
 	public int scrollbarTrackColor;
 	/** The client state for projected x. */
@@ -6163,6 +5255,8 @@ public class Client extends GameShell {
 	public static boolean accountFlagged;
 	/** The client state for network session. */
 	public NetworkSession networkSession;
+	/** Coordinates framed incoming packets with the application packet adapter. */
+	private final IncomingPacketDispatcher incomingPacketDispatcher;
 	/** The client state for social manager. */
 	private final SocialManager socialManager;
 	/** Owns chat history, modes, text input, prompts, and chat scrolling. */
@@ -6195,6 +5289,8 @@ public class Client extends GameShell {
 	private final MenuController menuController;
 	/** The client state for login screen. */
 	private final LoginScreen loginScreen;
+	/** Owns the revision-377 login handshake, retries, and login session key. */
+	private final LoginSession loginSession;
 	/** Owns title-flame simulation state and its animation worker. */
 	private final TitleFlameAnimator titleFlameAnimator;
 	/** Character-design interface state and preview owner. */
