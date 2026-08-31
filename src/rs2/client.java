@@ -13,8 +13,6 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.Calendar;
-import java.util.Date;
 import rs2.net.IncomingPacketDispatcher;
 import rs2.net.OutgoingPacketOpcode;
 import rs2.net.ProtocolConstants;
@@ -90,6 +88,7 @@ import rs2.ui.ClientScriptContext;
 import rs2.ui.InterfaceController;
 import rs2.ui.WidgetRuntime;
 import rs2.ui.WidgetRenderer;
+import rs2.ui.WidgetContentController;
 import rs2.ui.menu.MenuState;
 import rs2.ui.menu.MenuController;
 import rs2.ui.menu.MenuEntry;
@@ -2058,241 +2057,6 @@ public class Client extends GameShell {
 			gameRenderer.requestSidebarRedraw();
 	}
 
-	/**
-	 * Populates dynamic widget content such as social lists, appearance preview,
-	 * and account status.
-	 *
-	 * @param widget the widget being processed
-	 */
-	public void updateWidgetContent(Widget widget) {
-		int contentType = widget.contentType;
-		if (contentType >= WidgetContentType.FRIEND_NAME_FIRST && contentType <= WidgetContentType.FRIEND_NAME_LAST || contentType >= WidgetContentType.FRIEND_NAME_ALTERNATE_FIRST && contentType <= WidgetContentType.FRIEND_NAME_ALTERNATE_LAST) {
-			if (contentType == WidgetContentType.FRIEND_NAME_FIRST && socialManager.friendListStatus == SocialManager.FRIEND_LIST_LOADING) {
-				widget.text = "Loading friend list";
-				widget.buttonType = Widget.BUTTON_NONE;
-				return;
-			}
-			if (contentType == WidgetContentType.FRIEND_NAME_FIRST && socialManager.friendListStatus == SocialManager.FRIEND_LIST_CONNECTING) {
-				widget.text = "Connecting to friendserver";
-				widget.buttonType = Widget.BUTTON_NONE;
-				return;
-			}
-			if (contentType == WidgetContentType.FRIEND_NAME_SECOND && socialManager.friendListStatus != SocialManager.FRIEND_LIST_READY) {
-				widget.text = "Please wait...";
-				widget.buttonType = Widget.BUTTON_NONE;
-				return;
-			}
-			int friendCount = socialManager.friendCount;
-			if (socialManager.friendListStatus != SocialManager.FRIEND_LIST_READY)
-				friendCount = 0;
-			if (contentType >= WidgetContentType.FRIEND_NAME_ALTERNATE_FIRST)
-				contentType -= WidgetContentType.FRIEND_NAME_ALTERNATE_INDEX_OFFSET;
-			else
-				contentType -= WidgetContentType.FRIEND_NAME_FIRST;
-			if (contentType >= friendCount) {
-				widget.text = "";
-				widget.buttonType = Widget.BUTTON_NONE;
-				return;
-			} else {
-				widget.text = socialManager.friendNames[contentType];
-				widget.buttonType = Widget.BUTTON_ACTION;
-				return;
-			}
-		}
-		if (contentType >= WidgetContentType.FRIEND_WORLD_FIRST && contentType <= WidgetContentType.FRIEND_WORLD_LAST || contentType >= WidgetContentType.FRIEND_WORLD_ALTERNATE_FIRST && contentType <= WidgetContentType.FRIEND_WORLD_ALTERNATE_LAST) {
-			int friendCount2 = socialManager.friendCount;
-			if (socialManager.friendListStatus != SocialManager.FRIEND_LIST_READY)
-				friendCount2 = 0;
-			if (contentType > WidgetContentType.FRIEND_NAME_ALTERNATE_LAST)
-				contentType -= WidgetContentType.FRIEND_WORLD_ALTERNATE_INDEX_OFFSET;
-			else
-				contentType -= WidgetContentType.FRIEND_WORLD_FIRST;
-			if (contentType >= friendCount2) {
-				widget.text = "";
-				widget.buttonType = Widget.BUTTON_NONE;
-				return;
-			}
-			if (socialManager.friendWorlds[contentType] == 0)
-				widget.text = "@red@Offline";
-			else if (socialManager.friendWorlds[contentType] < 200) {
-				if (socialManager.friendWorlds[contentType] == currentWorldId)
-					widget.text = "@gre@World" + (socialManager.friendWorlds[contentType] - 9);
-				else
-					widget.text = "@yel@World" + (socialManager.friendWorlds[contentType] - 9);
-			} else if (socialManager.friendWorlds[contentType] == currentWorldId)
-				widget.text = "@gre@Classic" + (socialManager.friendWorlds[contentType] - 219);
-			else
-				widget.text = "@yel@Classic" + (socialManager.friendWorlds[contentType] - 219);
-			widget.buttonType = Widget.BUTTON_ACTION;
-			return;
-		}
-		if (contentType == WidgetContentType.FRIEND_LIST_SCROLL) {
-			int friendCount3 = socialManager.friendCount;
-			if (socialManager.friendListStatus != SocialManager.FRIEND_LIST_READY)
-				friendCount3 = 0;
-			widget.scrollHeight = friendCount3 * 15 + 20;
-			if (widget.scrollHeight <= widget.height)
-				widget.scrollHeight = widget.height + 1;
-			return;
-		}
-		if (contentType >= WidgetContentType.IGNORE_NAME_FIRST && contentType <= WidgetContentType.IGNORE_NAME_LAST) {
-			if ((contentType -= WidgetContentType.IGNORE_NAME_FIRST) == 0 && socialManager.friendListStatus == SocialManager.FRIEND_LIST_LOADING) {
-				widget.text = "Loading ignore list";
-				widget.buttonType = Widget.BUTTON_NONE;
-				return;
-			}
-			if (contentType == WidgetContentType.FRIEND_NAME_FIRST && socialManager.friendListStatus == SocialManager.FRIEND_LIST_LOADING) {
-				widget.text = "Please wait...";
-				widget.buttonType = Widget.BUTTON_NONE;
-				return;
-			}
-			int ignoreCount = socialManager.ignoreCount;
-			if (socialManager.friendListStatus == SocialManager.FRIEND_LIST_LOADING)
-				ignoreCount = 0;
-			if (contentType >= ignoreCount) {
-				widget.text = "";
-				widget.buttonType = Widget.BUTTON_NONE;
-				return;
-			} else {
-				widget.text = TextFormatter
-						.formatDisplayName(Base37.decode(socialManager.ignoreEncodedNames[contentType]));
-				widget.buttonType = Widget.BUTTON_ACTION;
-				return;
-			}
-		}
-		if (contentType == WidgetContentType.IGNORE_LIST_SCROLL) {
-			widget.scrollHeight = socialManager.ignoreCount * 15 + 20;
-			if (widget.scrollHeight <= widget.height)
-				widget.scrollHeight = widget.height + 1;
-			return;
-		}
-		if (contentType == WidgetContentType.APPEARANCE_PREVIEW) {
-			appearanceEditor.updatePreview(widget, gameCycle, localPlayer);
-			return;
-		}
-		if (contentType == WidgetContentType.SELECT_MALE_APPEARANCE) {
-			appearanceEditor.updateGenderButton(widget, true);
-			return;
-		}
-		if (contentType == WidgetContentType.SELECT_FEMALE_APPEARANCE) {
-			appearanceEditor.updateGenderButton(widget, false);
-			return;
-		}
-		if (contentType == WidgetContentType.REPORT_ABUSE_NAME) {
-			widget.text = interfaceController.reportAbuseName();
-			if (gameCycle % 20 < 10) {
-				widget.text += "|";
-				return;
-			} else {
-				widget.text += " ";
-				return;
-			}
-		}
-		if (contentType == WidgetContentType.REPORT_ABUSE_MUTE)
-			if (playerRights >= 1) {
-				if (interfaceController.reportAbuseMutePlayer()) {
-					widget.color = 0xff0000;
-					widget.text = "Moderator option: Mute player for 48 hours: <ON>";
-				} else {
-					widget.color = 0xffffff;
-					widget.text = "Moderator option: Mute player for 48 hours: <OFF>";
-				}
-			} else {
-				widget.text = "";
-			}
-		if (contentType == WidgetContentType.ACCOUNT_LAST_LOGIN) {
-			int daysSinceLogin = accountCurrentDay - lastLoginDay;
-			String lastLoginText;
-			if (daysSinceLogin <= 0)
-				lastLoginText = "earlier today";
-			else if (daysSinceLogin == 1)
-				lastLoginText = "yesterday";
-			else
-				lastLoginText = daysSinceLogin + " days ago";
-			widget.text = "You last logged in @red@" + lastLoginText + "@bla@ from: @red@" + Signlink.dns;
-		}
-		if (contentType == WidgetContentType.ACCOUNT_RECOVERY_QUESTIONS)
-			if (recoveryQuestionsDate == 0)
-				widget.text = "\\nYou have not yet set any recovery questions.\\nIt is @lre@strongly@yel@ recommended that you do so.\\n\\nIf you don't you will be @lre@unable to recover your\\n@lre@password@yel@ if you forget it, or it is stolen.";
-			else if (recoveryQuestionsDate <= accountCurrentDay) {
-				widget.text = "\\n\\nRecovery Questions Last Set:\\n@gre@" + formatAccountDate(recoveryQuestionsDate);
-			} else {
-				int daysUntilRecoveryChange = (accountCurrentDay + 14) - recoveryQuestionsDate;
-				String recoveryChangeText;
-				if (daysUntilRecoveryChange <= 0)
-					recoveryChangeText = "Earlier today";
-				else if (daysUntilRecoveryChange == 1)
-					recoveryChangeText = "Yesterday";
-				else
-					recoveryChangeText = daysUntilRecoveryChange + " days ago";
-				widget.text = recoveryChangeText
-						+ " you requested@lre@ new recovery\\n@lre@questions.@yel@ The requested change will occur\\non: @lre@"
-						+ formatAccountDate(recoveryQuestionsDate)
-						+ "\\n\\nIf you do not remember making this request\\ncancel it immediately, and change your password.";
-			}
-		if (contentType == WidgetContentType.ACCOUNT_UNREAD_MESSAGES) {
-			String messageSummary;
-			if (unreadMessageCount == 0)
-				messageSummary = "@yel@0 unread messages";
-			else if (unreadMessageCount == 1)
-				messageSummary = "@gre@1 unread message";
-			else
-				messageSummary = "@gre@" + unreadMessageCount + " unread messages";
-			widget.text = "You have " + messageSummary + "\\nin your message centre.";
-		}
-		if (contentType == WidgetContentType.ACCOUNT_PASSWORD_CHANGE)
-			if (lastPasswordChangeDate <= 0 || lastPasswordChangeDate > accountCurrentDay + 10)
-				widget.text = "Last password change:\\n@gre@Never changed";
-			else
-				widget.text = "Last password change:\\n@gre@" + formatAccountDate(lastPasswordChangeDate);
-		if (contentType == WidgetContentType.ACCOUNT_MEMBERSHIP_STATUS)
-			if (membershipDays > 2 && !membersWorld)
-				widget.text = "This is a non-members\\nworld. To enjoy your\\nmembers benefits we\\nrecommend you play on a\\nmembers world instead.";
-			else if (membershipDays > 2)
-				widget.text = "\\n\\nYou have @gre@" + membershipDays + "@yel@ days of\\nmember credit remaining.";
-			else if (membershipDays > 0)
-				widget.text = "You have @gre@" + membershipDays
-						+ "@yel@ days of\\nmember credit remaining.\\n\\n@lre@Credit low! Renew now\\n@lre@to avoid losing members.";
-			else
-				widget.text = "You are not a member.\\n\\nChoose to subscribe and\\nyou'll get loads of extra\\nbenefits and features.";
-		if (contentType == WidgetContentType.ACCOUNT_MEMBERSHIP_HELP)
-			if (membershipDays > 2 && !membersWorld)
-				widget.text = "To switch to a members-only world:\\n1) Logout and return to the world selection page.\\n2) Choose one of the members world with a gold star next to it's name.\\n\\nIf you prefer you can continue to use this world,\\nbut members only features will be unavailable here.";
-			else if (membershipDays > 0)
-				widget.text = "To extend or cancel a subscription:\\n1) Logout and return to the frontpage of this website.\\n2)Choose the relevant option from the 'membership' section.\\n\\nNote: If you are a credit card subscriber a top-up payment will\\nautomatically be taken when 3 days credit remain.\\n(unless you cancel your subscription, which can be done at any time.)";
-			else
-				widget.text = "To start a subscripton:\\n1) Logout and return to the frontpage of this website.\\n2) Choose 'Start a new subscription'";
-		if (contentType == WidgetContentType.ACCOUNT_RECOVERY_HELP) {
-			if (recoveryQuestionsDate > accountCurrentDay) {
-				widget.text = "To cancel this request:\\n1) Logout and return to the frontpage of this website.\\n2) Choose 'Cancel recovery questions'.";
-				return;
-			}
-			widget.text = "To change your recovery questions:\\n1) Logout and return to the frontpage of this website.\\n2) Choose 'Set new recovery questions'.";
-		}
-	}
-
-	/**
-	 * Formats an account-status day count using the original client calendar
-	 * convention.
-	 *
-	 * @param dayValue the day value
-	 * @return the resulting text
-	 */
-	public String formatAccountDate(int dayValue) {
-		if (dayValue > accountCurrentDay + 10) {
-			return "Unknown";
-		} else {
-			long timestampMillis = ((long) dayValue + 11745L) * 0x5265c00L;
-			Calendar calendar = Calendar.getInstance();
-			calendar.setTime(new Date(timestampMillis));
-			int dayOfMonth = calendar.get(5);
-			int monthIndex = calendar.get(2);
-			int year = calendar.get(1);
-			String monthNames[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov",
-					"Dec" };
-			return dayOfMonth + "-" + monthNames[monthIndex] + "-" + year;
-		}
-	}
 
 	/**
 	 * Returns social state to the application packet adapter.
@@ -4239,7 +4003,11 @@ public class Client extends GameShell {
 				() -> (localPlayer.y >> 7) + regionManager.baseY,
 				() -> membersWorld);
 		widgetRuntime = new WidgetRuntime(scriptContext);
-		widgetRenderer = new WidgetRenderer(interfaceController, widgetRuntime, this::updateWidgetContent);
+		WidgetContentController widgetContentController = new WidgetContentController(socialManager, appearanceEditor,
+				interfaceController, () -> gameCycle, () -> localPlayer, () -> currentWorldId, () -> playerRights,
+				() -> new WidgetContentController.AccountStatus(accountCurrentDay, lastLoginDay, recoveryQuestionsDate,
+						unreadMessageCount, lastPasswordChangeDate, membershipDays, membersWorld, Signlink.dns));
+		widgetRenderer = new WidgetRenderer(interfaceController, widgetRuntime, widgetContentController);
 		scrollbarTrackColor = 0x23201b;
 		gameRenderer.clearTabAreaRedraw();
 		hintIconSprites = new ImageRGB[32];

@@ -1,7 +1,5 @@
 package rs2.ui;
 
-import java.util.function.Consumer;
-
 import rs2.ClientLayout;
 import rs2.cache.def.AnimationSequence;
 import rs2.cache.def.ItemDefinition;
@@ -57,21 +55,21 @@ public final class WidgetRenderer {
     private final InterfaceController interfaceController;
     /** Widget CS1 evaluator and active-state helper. */
     private final WidgetRuntime widgetRuntime;
-    /** Refreshes dynamic widget content before each child is rendered. */
-    private final Consumer<Widget> contentUpdater;
+    /** Owns dynamic application content applied before each child is rendered. */
+    private final WidgetContentController contentController;
 
     /**
      * Creates a widget renderer.
      *
      * @param interfaceController interface interaction-state owner
      * @param widgetRuntime widget CS1/runtime evaluator
-     * @param contentUpdater callback that refreshes dynamic widget content
+     * @param contentController dynamic widget-content owner
      */
     public WidgetRenderer(InterfaceController interfaceController, WidgetRuntime widgetRuntime,
-            Consumer<Widget> contentUpdater) {
+            WidgetContentController contentController) {
         this.interfaceController = interfaceController;
         this.widgetRuntime = widgetRuntime;
-        this.contentUpdater = contentUpdater;
+        this.contentController = contentController;
     }
 
     /**
@@ -155,7 +153,7 @@ public final class WidgetRenderer {
                 childX += childWidget.xOffset;
                 childY += childWidget.yOffset;
                 if (childWidget.contentType > WidgetContentType.NONE)
-                    contentUpdater.accept(childWidget);
+                    contentController.update(childWidget);
                 if (childWidget.type == Widget.TYPE_CONTAINER) {
                     if (childWidget.scrollY > childWidget.scrollHeight - childWidget.height)
                         childWidget.scrollY = childWidget.scrollHeight - childWidget.height;
