@@ -1,4 +1,4 @@
-package rs2;
+package rs2.packet;
 
 import java.util.function.IntConsumer;
 import java.util.function.Supplier;
@@ -17,7 +17,7 @@ import rs2.ui.WidgetRuntime;
  * Applies interface, widget, tab, and input-dialog packets to client UI state.
  *
  * <p>This application-layer domain handler is invoked only after
- * {@link ClientIncomingPacketHandler} has explicitly routed a recognized
+ * {@link PacketDomainDispatcher} has explicitly routed a recognized
  * revision-377 opcode to it.</p>
  */
 final class InterfacePacketHandler {

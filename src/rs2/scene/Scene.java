@@ -1,5 +1,8 @@
 package rs2.scene;
 
+import rs2.scene.tile.GroundItemTile;
+import rs2.scene.tile.InteractiveObject;
+
 import rs2.media.Angle;
 import rs2.collection.NodeDeque;
 import rs2.media.Rasterizer;

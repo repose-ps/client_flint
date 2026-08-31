@@ -1,5 +1,8 @@
 package rs2.game;
 
+import rs2.scene.tile.GroundItemTile;
+import rs2.scene.tile.InteractiveObject;
+
 import rs2.scene.TileFlags;
 import rs2.scene.SceneConfig;
 import rs2.cache.def.GameObjectDefinition;

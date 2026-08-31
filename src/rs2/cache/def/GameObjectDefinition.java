@@ -1,12 +1,14 @@
 package rs2.cache.def;
 
+import rs2.media.animation.AnimationFrame;
+
 import rs2.cache.Archive;
 import rs2.cache.cfg.BitMasks;
 import rs2.cache.cfg.Varbit;
 import rs2.cache.cfg.VarpProvider;
 import rs2.cache.ondemand.OnDemandFetcher;
 import rs2.collection.LruCache;
-import rs2.media.AnimationFrame;
+import rs2.media.animation.AnimationFrame;
 import rs2.media.model.Model;
 import rs2.net.Buffer;
 

@@ -1,4 +1,4 @@
-package rs2.scene;
+package rs2.scene.tile;
 
 import rs2.media.model.Renderable;
 

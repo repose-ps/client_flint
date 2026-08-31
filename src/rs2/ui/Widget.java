@@ -1,5 +1,7 @@
 package rs2.ui;
 
+import rs2.media.animation.AnimationFrame;
+
 import java.util.function.Supplier;
 
 import rs2.cache.Archive;
@@ -8,7 +10,7 @@ import rs2.cache.def.ItemDefinition;
 import rs2.cache.def.NpcDefinition;
 import rs2.media.sprite.ImageRGB;
 import rs2.collection.LruCache;
-import rs2.media.AnimationFrame;
+import rs2.media.animation.AnimationFrame;
 import rs2.media.TypeFace;
 import rs2.media.model.Model;
 import rs2.net.Buffer;

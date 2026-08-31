@@ -1,4 +1,4 @@
-package rs2;
+package rs2.packet;
 
 import java.util.function.Supplier;
 
@@ -16,7 +16,7 @@ import rs2.net.IncomingPacketOpcode;
  * Applies region rebuild, zone update, and world-location packets.
  *
  * <p>This application-layer domain handler is invoked only after
- * {@link ClientIncomingPacketHandler} has explicitly routed a recognized
+ * {@link PacketDomainDispatcher} has explicitly routed a recognized
  * revision-377 opcode to it.</p>
  */
 final class RegionPacketHandler {
@@ -34,61 +34,12 @@ final class RegionPacketHandler {
 	/** Camera owner reset after a region shift. */
 	private final CameraController camera;
 	/** Narrow mutable client state required by region packets. */
-	private final State state;
+	private final PacketDomainDispatcher.RegionState state;
 	/** Localized-area-sound callback. */
 	private final ZoneUpdateHandler.AreaSoundHandler areaSounds;
 	/** Displays the region-loading message after a rebuild shift. */
 	private final Runnable showLoadingMessage;
 
-	/**
-	 * Narrow mutable state consumed by region packets.
-	 */
-	interface State {
-		/** Returns the current scene plane.
-		 * @return current scene plane
-		 */
-		int currentPlane();
-
-		/** Returns the current game cycle.
-		 * @return current game cycle
-		 */
-		int gameCycle();
-
-		/** Returns the local player's server index.
-		 * @return local player's server index
-		 */
-		int localPlayerServerIndex();
-
-		/** Returns the current local player.
-		 * @return current local player
-		 */
-		Player localPlayer();
-
-		/** Returns the current destination X coordinate.
-		 * @return current destination X coordinate
-		 */
-		int destinationX();
-
-		/** Returns the current destination Y coordinate.
-		 * @return current destination Y coordinate
-		 */
-		int destinationY();
-
-		/**
-		 * Updates the destination marker.
-		 *
-		 * @param x destination X
-		 * @param y destination Y
-		 */
-		void setDestination(int x, int y);
-
-		/**
-		 * Updates the multi-combat overlay state.
-		 *
-		 * @param value multi-combat state
-		 */
-		void setMultiCombatZone(int value);
-	}
 
 	/**
 	 * Creates the region packet handler from its exact application capabilities.
@@ -104,7 +55,7 @@ final class RegionPacketHandler {
 	 * @param showLoadingMessage loading-message callback
 	 */
 	RegionPacketHandler(RegionManager regions, Supplier<OnDemandFetcher> resources, ActorSynchronizer actors,
-			Supplier<WorldState> world, Supplier<ZoneUpdateHandler> zoneUpdates, CameraController camera, State state,
+			Supplier<WorldState> world, Supplier<ZoneUpdateHandler> zoneUpdates, CameraController camera, PacketDomainDispatcher.RegionState state,
 			ZoneUpdateHandler.AreaSoundHandler areaSounds, Runnable showLoadingMessage) {
 		this.regions = regions;
 		this.resources = resources;

@@ -1,8 +1,10 @@
 package rs2.game.render;
 
+import rs2.ui.ClientLayout;
+
 import java.util.function.Predicate;
 
-import rs2.ClientLayout;
+import rs2.ui.ClientLayout;
 import rs2.cache.def.NpcDefinition;
 import rs2.chat.ChatMode;
 import rs2.game.ActorSynchronizer;

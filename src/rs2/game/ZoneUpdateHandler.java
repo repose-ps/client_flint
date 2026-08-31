@@ -1,5 +1,7 @@
 package rs2.game;
 
+import rs2.scene.tile.InteractiveObject;
+
 import rs2.cache.def.GameObjectDefinition;
 import rs2.collection.NodeDeque;
 import rs2.scene.entity.DynamicObjectFactory;
@@ -12,7 +14,7 @@ import rs2.net.Buffer;
 import rs2.net.IncomingPacketOpcode;
 import rs2.net.ProtocolConstants;
 import rs2.scene.tile.FloorDecoration;
-import rs2.scene.InteractiveObject;
+import rs2.scene.tile.InteractiveObject;
 import rs2.scene.SceneConfig;
 import rs2.scene.SceneConstants;
 import rs2.scene.SceneUid;

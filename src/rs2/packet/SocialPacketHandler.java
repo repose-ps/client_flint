@@ -1,4 +1,4 @@
-package rs2;
+package rs2.packet;
 
 import java.util.function.IntSupplier;
 
@@ -18,7 +18,7 @@ import rs2.text.TextFormatter;
  * Applies chat, social-list, private-message, and account-status packets.
  *
  * <p>This application-layer domain handler is invoked only after
- * {@link ClientIncomingPacketHandler} has explicitly routed a recognized
+ * {@link PacketDomainDispatcher} has explicitly routed a recognized
  * revision-377 opcode to it.</p>
  */
 final class SocialPacketHandler {
@@ -34,7 +34,7 @@ final class SocialPacketHandler {
 	/** Receives chat-history messages produced by social packets. */
 	private final SocialManager.MessageSink messages;
 	/** Receives the decoded account-status snapshot. */
-	private final AccountInfoSink accountInfo;
+	private final PacketDomainDispatcher.AccountInfoSink accountInfo;
 	/** Requests chat-mode-strip redraws. */
 	private final Runnable redrawChatModes;
 	/** Requests chatbox redraws. */
@@ -42,25 +42,6 @@ final class SocialPacketHandler {
 	/** Requests sidebar redraws. */
 	private final Runnable redrawSidebar;
 
-	/**
-	 * Receives account-status values decoded from one server packet.
-	 */
-	@FunctionalInterface
-	interface AccountInfoSink {
-		/**
-		 * Applies the decoded account-status snapshot.
-		 *
-		 * @param lastPasswordChangeDate last password-change day
-		 * @param accountCurrentDay account current day
-		 * @param unreadMessageCount unread message count
-		 * @param lastLoginDay last-login day
-		 * @param membershipDays remaining membership days
-		 * @param lastLoginIp last-login IPv4 address
-		 * @param recoveryQuestionsDate recovery-question date
-		 */
-		void update(int lastPasswordChangeDate, int accountCurrentDay, int unreadMessageCount, int lastLoginDay,
-				int membershipDays, int lastLoginIp, int recoveryQuestionsDate);
-	}
 
 	/**
 	 * Creates the social packet handler from its exact application capabilities.
@@ -77,7 +58,7 @@ final class SocialPacketHandler {
 	 */
 	SocialPacketHandler(SocialManager social, ChatController chat,
 			IntSupplier tutorialIslandFlag, IntSupplier currentWorldId, SocialManager.MessageSink messages,
-			AccountInfoSink accountInfo, Runnable redrawChatModes, Runnable redrawChatbox, Runnable redrawSidebar) {
+			PacketDomainDispatcher.AccountInfoSink accountInfo, Runnable redrawChatModes, Runnable redrawChatbox, Runnable redrawSidebar) {
 		this.social = social;
 		this.chat = chat;
 		this.tutorialIslandFlag = tutorialIslandFlag;

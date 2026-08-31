@@ -1,5 +1,8 @@
 package rs2;
 
+import rs2.media.animation.AnimationFrame;
+import rs2.ui.ClientLayout;
+
 import rs2.cache.Archive;
 import rs2.cache.ClientResourceManager;
 import rs2.cache.CacheIndex;
@@ -15,7 +18,7 @@ import rs2.cache.cfg.Varp;
 import rs2.cache.ondemand.OnDemandFetcher;
 import rs2.chat.Censor;
 import rs2.game.entity.Player;
-import rs2.media.AnimationFrame;
+import rs2.media.animation.AnimationFrame;
 import rs2.media.Rasterizer3D;
 import rs2.media.TypeFace;
 import rs2.media.model.Model;
@@ -477,7 +480,7 @@ public final class ClientLifecycle {
 		SpotAnimation.definitions = null;
 		SpotAnimation.modelCache = null;
 		Varp.definitions = null;
-		client.gameBuffer = null;
+		client.lifecycleClearGameBuffer();
 		Player.modelCache = null;
 		Rasterizer3D.clear();
 		Scene.clearStatic();

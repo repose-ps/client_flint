@@ -1,6 +1,6 @@
 /**
- * Contains revision-377 interface lifecycle, interaction state, widget runtime
- * processing, and widget rendering.
+ * Contains revision-377 client layout geometry, interface lifecycle, interaction
+ * state, widget runtime processing, and widget rendering.
  *
  * <p>
  * {@link rs2.ui.InterfaceController} owns interface selection, hover/tooltip,

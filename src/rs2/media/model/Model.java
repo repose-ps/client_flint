@@ -1,10 +1,13 @@
 package rs2.media.model;
 
-import rs2.media.AnimationFrame;
+import rs2.media.animation.AnimationFrame;
+import rs2.media.animation.Skeleton;
+
+import rs2.media.animation.AnimationFrame;
 import rs2.media.Rasterizer;
 import rs2.media.Rasterizer3D;
 import rs2.cache.ondemand.OnDemandProvider;
-import rs2.media.Skeleton;
+import rs2.media.animation.Skeleton;
 import rs2.media.model.VertexNormal;
 
 import rs2.net.Buffer;

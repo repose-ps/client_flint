@@ -1,5 +1,7 @@
 package rs2.game.entity;
 
+import rs2.media.animation.AnimationFrame;
+
 import java.util.function.IntSupplier;
 
 import rs2.media.Angle;
@@ -9,7 +11,7 @@ import rs2.cache.def.ItemDefinition;
 import rs2.cache.def.NpcDefinition;
 import rs2.cache.def.SpotAnimation;
 import rs2.collection.LruCache;
-import rs2.media.AnimationFrame;
+import rs2.media.animation.AnimationFrame;
 import rs2.media.model.Model;
 import rs2.net.Buffer;
 import rs2.net.ProtocolConstants;

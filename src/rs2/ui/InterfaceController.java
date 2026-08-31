@@ -2,7 +2,7 @@ package rs2.ui;
 
 import java.util.function.IntConsumer;
 
-import rs2.ClientLayout;
+import rs2.ui.ClientLayout;
 import rs2.chat.ChatController;
 import rs2.chat.SocialManager;
 import rs2.net.Buffer;

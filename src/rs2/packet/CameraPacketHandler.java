@@ -1,4 +1,4 @@
-package rs2;
+package rs2.packet;
 
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
@@ -12,7 +12,7 @@ import rs2.net.IncomingPacketOpcode;
  * Applies cinematic camera, camera shake, reset, and world-hint packets.
  *
  * <p>This application-layer domain handler is invoked only after
- * {@link ClientIncomingPacketHandler} has explicitly routed a recognized
+ * {@link PacketDomainDispatcher} has explicitly routed a recognized
  * revision-377 opcode to it.</p>
  */
 final class CameraPacketHandler {
@@ -24,44 +24,8 @@ final class CameraPacketHandler {
 	/** Supplies the current scene plane. */
 	private final IntSupplier currentPlane;
 	/** Receives hint-target packet effects. */
-	private final HintSink hints;
+	private final PacketDomainDispatcher.HintSink hints;
 
-	/**
-	 * Receives the narrow mutable hint-target state decoded by camera packets.
-	 */
-	interface HintSink {
-		/**
-		 * Sets the raw hint target type.
-		 *
-		 * @param type hint target type
-		 */
-		void setType(int type);
-
-		/**
-		 * Sets the hinted NPC index.
-		 *
-		 * @param index NPC index
-		 */
-		void setNpcIndex(int index);
-
-		/**
-		 * Sets a world-tile hint and normalizes its type to the tile-hint form.
-		 *
-		 * @param tileX absolute tile X
-		 * @param tileY absolute tile Y
-		 * @param height hint height
-		 * @param offsetX fine X offset inside the tile
-		 * @param offsetY fine Y offset inside the tile
-		 */
-		void setTileHint(int tileX, int tileY, int height, int offsetX, int offsetY);
-
-		/**
-		 * Sets the hinted player index.
-		 *
-		 * @param index player index
-		 */
-		void setPlayerIndex(int index);
-	}
 
 	/**
 	 * Creates the camera packet handler from its exact application capabilities.
@@ -71,7 +35,7 @@ final class CameraPacketHandler {
 	 * @param currentPlane current-plane supplier
 	 * @param hints hint-target sink
 	 */
-	CameraPacketHandler(CameraController camera, Supplier<WorldState> world, IntSupplier currentPlane, HintSink hints) {
+	CameraPacketHandler(CameraController camera, Supplier<WorldState> world, IntSupplier currentPlane, PacketDomainDispatcher.HintSink hints) {
 		this.camera = camera;
 		this.world = world;
 		this.currentPlane = currentPlane;

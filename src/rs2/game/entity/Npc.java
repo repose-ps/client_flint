@@ -1,9 +1,11 @@
 package rs2.game.entity;
 
+import rs2.media.animation.AnimationFrame;
+
 import rs2.cache.def.AnimationSequence;
 import rs2.cache.def.NpcDefinition;
 import rs2.cache.def.SpotAnimation;
-import rs2.media.AnimationFrame;
+import rs2.media.animation.AnimationFrame;
 import rs2.media.model.Model;
 
 

@@ -1,6 +1,8 @@
 package rs2.input;
 
-import rs2.GameShell;
+import rs2.shell.GameShell;
+
+import rs2.shell.GameShell;
 
 /**
  * Samples the game shell's mouse position every 50 ms for movement telemetry.

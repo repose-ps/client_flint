@@ -1,4 +1,4 @@
-package rs2;
+package rs2.packet;
 
 import java.util.function.IntConsumer;
 
@@ -12,7 +12,7 @@ import rs2.net.IncomingPacketOpcode;
  * Applies varp, skill, run-energy, minimap, weight, and timer state packets.
  *
  * <p>This application-layer domain handler is invoked only after
- * {@link ClientIncomingPacketHandler} has explicitly routed a recognized
+ * {@link PacketDomainDispatcher} has explicitly routed a recognized
  * revision-377 opcode to it.</p>
  */
 final class ClientStatePacketHandler {

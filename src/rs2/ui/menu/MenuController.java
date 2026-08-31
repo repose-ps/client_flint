@@ -1,9 +1,11 @@
 package rs2.ui.menu;
 
+import rs2.ui.ClientLayout;
+
 import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
 
-import rs2.ClientLayout;
+import rs2.ui.ClientLayout;
 import rs2.cache.def.ItemDefinition;
 import rs2.cache.def.GameObjectDefinition;
 import rs2.collection.NodeDeque;

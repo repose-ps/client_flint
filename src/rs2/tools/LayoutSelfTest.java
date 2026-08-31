@@ -1,6 +1,8 @@
 package rs2.tools;
 
-import rs2.ClientLayout;
+import rs2.ui.ClientLayout;
+
+import rs2.ui.ClientLayout;
 import rs2.game.MinimapRenderer;
 import rs2.game.entity.Player;
 

@@ -1,7 +1,9 @@
 package rs2.cache.def;
 
+import rs2.media.animation.AnimationFrame;
+
 import rs2.cache.Archive;
-import rs2.media.AnimationFrame;
+import rs2.media.animation.AnimationFrame;
 import rs2.net.Buffer;
 
 /**

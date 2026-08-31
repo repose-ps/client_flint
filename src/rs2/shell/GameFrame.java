@@ -1,4 +1,4 @@
-package rs2;
+package rs2.shell;
 
 import java.awt.Dimension;
 import java.awt.Frame;

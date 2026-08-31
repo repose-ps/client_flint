@@ -1,5 +1,7 @@
 package rs2.game;
 
+import rs2.media.animation.AnimationFrame;
+
 import rs2.media.Angle;
 import rs2.cache.def.AnimationSequence;
 import rs2.cache.def.SpotAnimation;

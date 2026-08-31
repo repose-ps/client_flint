@@ -1,4 +1,4 @@
-package rs2;
+package rs2.ui;
 
 /**
  * Computes screen-space positions for the classic revision-377 interface in a

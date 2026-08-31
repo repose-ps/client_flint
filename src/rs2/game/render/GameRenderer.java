@@ -1,11 +1,13 @@
 package rs2.game.render;
 
+import rs2.ui.ClientLayout;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 
-import rs2.ClientLayout;
+import rs2.ui.ClientLayout;
 import rs2.cache.Archive;
 import rs2.game.ActorSynchronizer;
 import rs2.game.CameraController;

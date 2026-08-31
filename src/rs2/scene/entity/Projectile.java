@@ -1,8 +1,10 @@
 package rs2.scene.entity;
 
+import rs2.media.animation.AnimationFrame;
+
 import rs2.media.Angle;
 import rs2.cache.def.SpotAnimation;
-import rs2.media.AnimationFrame;
+import rs2.media.animation.AnimationFrame;
 import rs2.media.model.Model;
 import rs2.media.model.Renderable;
 

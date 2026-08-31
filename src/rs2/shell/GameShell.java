@@ -1,4 +1,4 @@
-package rs2;
+package rs2.shell;
 
 import java.awt.Canvas;
 import java.awt.Color;

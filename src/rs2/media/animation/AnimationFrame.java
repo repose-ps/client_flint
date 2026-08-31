@@ -1,4 +1,4 @@
-package rs2.media;
+package rs2.media.animation;
 
 import java.util.Arrays;
 

@@ -1,5 +1,7 @@
 package rs2.game;
 
+import rs2.media.animation.AnimationFrame;
+
 import java.util.Objects;
 import java.util.function.IntSupplier;
 

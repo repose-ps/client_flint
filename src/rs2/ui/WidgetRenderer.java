@@ -1,6 +1,6 @@
 package rs2.ui;
 
-import rs2.ClientLayout;
+import rs2.ui.ClientLayout;
 import rs2.cache.def.AnimationSequence;
 import rs2.cache.def.ItemDefinition;
 import rs2.media.Rasterizer;

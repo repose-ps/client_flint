@@ -24,6 +24,29 @@ public final class ArchitectureSelfTest {
 
     /** Packet application classes that must not retain the application coordinator. */
     private static final String[] PACKET_HANDLER_CLASSES = {
+            "rs2.packet.PacketDomainDispatcher",
+            "rs2.packet.InterfacePacketHandler",
+            "rs2.packet.SocialPacketHandler",
+            "rs2.packet.RegionPacketHandler",
+            "rs2.packet.CameraPacketHandler",
+            "rs2.packet.AudioPacketHandler",
+            "rs2.packet.ActorPacketHandler",
+            "rs2.packet.ClientStatePacketHandler"
+    };
+
+    /** Classes moved during the post-Phase-6 package cohesion sweep. */
+    private static final String[] PACKAGED_CLASSES = {
+            "rs2.shell.GameShell",
+            "rs2.shell.GameFrame",
+            "rs2.ui.ClientLayout",
+            "rs2.media.animation.AnimationFrame",
+            "rs2.media.animation.Skeleton",
+            "rs2.scene.tile.GroundItemTile",
+            "rs2.scene.tile.InteractiveObject"
+    };
+
+    /** Obsolete pre-sweep class names that must not reappear. */
+    private static final String[] OBSOLETE_CLASS_NAMES = {
             "rs2.ClientIncomingPacketHandler",
             "rs2.InterfacePacketHandler",
             "rs2.SocialPacketHandler",
@@ -31,7 +54,14 @@ public final class ArchitectureSelfTest {
             "rs2.CameraPacketHandler",
             "rs2.AudioPacketHandler",
             "rs2.ActorPacketHandler",
-            "rs2.ClientStatePacketHandler"
+            "rs2.ClientStatePacketHandler",
+            "rs2.GameShell",
+            "rs2.GameFrame",
+            "rs2.ClientLayout",
+            "rs2.media.AnimationFrame",
+            "rs2.media.Skeleton",
+            "rs2.scene.GroundItemTile",
+            "rs2.scene.InteractiveObject"
     };
 
     /** Transitional packet bridge methods removed from {@link Client}. */
@@ -104,6 +134,8 @@ public final class ArchitectureSelfTest {
         SelfTestSupport test = new SelfTestSupport();
         testClientFieldVisibility(test);
         testPacketHandlerBoundaries(test);
+        testPacketAdapterBoundary(test);
+        testPackageCohesion(test);
         testRemovedClientBridges(test);
         testWidgetRendererBoundary(test);
         testMenuEntryState(test);
@@ -137,6 +169,40 @@ public final class ArchitectureSelfTest {
             for (Constructor<?> constructor : handler.getDeclaredConstructors()) {
                 test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == Client.class),
                         className + " constructor does not accept Client");
+            }
+        }
+    }
+
+
+    /**
+     * Verifies that the sole root packet adapter is package-private and intentionally owns the Client boundary.
+     *
+     * @param test assertion sink
+     * @throws ClassNotFoundException if the adapter class is missing
+     */
+    private static void testPacketAdapterBoundary(SelfTestSupport test) throws ClassNotFoundException {
+        Class<?> adapter = Class.forName("rs2.ClientPacketDispatcher");
+        test.check(!Modifier.isPublic(adapter.getModifiers()), "ClientPacketDispatcher stays package-private");
+        long clientFields = Arrays.stream(adapter.getDeclaredFields()).filter(field -> field.getType() == Client.class).count();
+        test.check(clientFields == 1, "ClientPacketDispatcher is the single intentional packet Client boundary");
+    }
+
+    /**
+     * Verifies the package-only moves performed by the cohesion sweep.
+     *
+     * @param test assertion sink
+     * @throws ClassNotFoundException if a moved class is missing
+     */
+    private static void testPackageCohesion(SelfTestSupport test) throws ClassNotFoundException {
+        for (String className : PACKAGED_CLASSES) {
+            test.check(Class.forName(className) != null, "packaged class is present: " + className);
+        }
+        for (String className : OBSOLETE_CLASS_NAMES) {
+            try {
+                Class.forName(className);
+                test.check(false, "obsolete class name stays absent: " + className);
+            } catch (ClassNotFoundException expected) {
+                test.check(true, "obsolete class name stays absent: " + className);
             }
         }
     }
