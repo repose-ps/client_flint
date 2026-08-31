@@ -3,8 +3,9 @@ package rs2.ui.menu;
 /**
  * Fixed-size revision-377 context-menu state.
  *
- * The parallel arrays deliberately mirror the original client representation.
- * Menu action IDs are not renumbered: values >= 2000 are the original
+ * Menu entries retain the original fixed-size representation and numeric action
+ * semantics without exposing the classic five parallel arrays. Menu action IDs are
+ * not renumbered: values >= 2000 are the original
  * low-priority variants and are normalized only when an action is dispatched.
  */
 public final class MenuState {
@@ -156,16 +157,8 @@ public final class MenuState {
 	/** Accept a duel/challenge request from a named player. */
 	public static final int ACCEPT_CHALLENGE = 695;
 
-	/** Stores action names values. */
-	public String[] actionNames = new String[CAPACITY];
-	/** Stores action IDs values. */
-	public int[] actionIds = new int[CAPACITY];
-	/** Stores action cmd1 values. */
-	public int[] actionCmd1 = new int[CAPACITY];
-	/** Stores action cmd2 values. */
-	public int[] actionCmd2 = new int[CAPACITY];
-	/** Stores action cmd3 values. */
-	public int[] actionCmd3 = new int[CAPACITY];
+	/** Fixed-capacity menu entries. */
+	private MenuEntry[] entries = new MenuEntry[CAPACITY];
 	/** Stores the current count. */
 	public int count;
 
@@ -184,9 +177,37 @@ public final class MenuState {
 
 	/** Restores the one-entry default menu used before each rebuild. */
 	public void reset() {
-		actionNames[0] = "Cancel";
-		actionIds[0] = CANCEL_ACTION;
+		entries[0] = new MenuEntry("Cancel", CANCEL_ACTION, 0, 0, 0);
 		count = 1;
+	}
+
+	/**
+	 * Returns the menu entry at an active index.
+	 *
+	 * @param index the menu index
+	 * @return the menu entry
+	 */
+	public MenuEntry entry(int index) {
+		return entries[index];
+	}
+
+	/**
+	 * Appends a complete menu entry.
+	 *
+	 * @param entry the entry to append
+	 */
+	public void add(MenuEntry entry) {
+		entries[count++] = entry;
+	}
+
+	/**
+	 * Replaces one existing menu entry.
+	 *
+	 * @param index the menu index
+	 * @param entry replacement entry
+	 */
+	void replace(int index, MenuEntry entry) {
+		entries[index] = entry;
 	}
 
 	/**
@@ -197,7 +218,7 @@ public final class MenuState {
 		for (boolean sorted = false; !sorted;) {
 			sorted = true;
 			for (int index = 0; index < count - 1; index++) {
-				if (actionIds[index] < PRIORITY_SORT_THRESHOLD && actionIds[index + 1] > PRIORITY_SORT_THRESHOLD) {
+				if (entries[index].action() < PRIORITY_SORT_THRESHOLD && entries[index + 1].action() > PRIORITY_SORT_THRESHOLD) {
 					swap(index, index + 1);
 					sorted = false;
 				}
@@ -214,8 +235,110 @@ public final class MenuState {
 	public boolean isAddFriendAction(int index) {
 		if (index < 0)
 			return false;
-		int actionId = normalizeActionId(actionIds[index]);
+		int actionId = normalizeActionId(entries[index].action());
 		return actionId == ADD_FRIEND;
+	}
+
+	/**
+	 * Returns the player-option action ID for a zero-based option index.
+	 *
+	 * @param index option index
+	 * @return revision-377 action ID
+	 */
+	public static int playerOptionAction(int index) {
+		return switch (index) {
+		case 0 -> PLAYER_OPTION_1;
+		case 1 -> PLAYER_OPTION_2;
+		case 2 -> PLAYER_OPTION_3;
+		case 3 -> PLAYER_OPTION_4;
+		case 4 -> PLAYER_OPTION_5;
+		default -> throw new IllegalArgumentException("player option index: " + index);
+		};
+	}
+
+	/**
+	 * Returns the item-definition inventory action ID for a zero-based option index.
+	 *
+	 * @param index option index
+	 * @return revision-377 action ID
+	 */
+	public static int inventoryItemOptionAction(int index) {
+		return switch (index) {
+		case 0 -> INVENTORY_ITEM_OPTION_1;
+		case 1 -> INVENTORY_ITEM_OPTION_2;
+		case 2 -> INVENTORY_ITEM_OPTION_3;
+		case 3 -> INVENTORY_ITEM_OPTION_4;
+		case 4 -> INVENTORY_ITEM_OPTION_5;
+		default -> throw new IllegalArgumentException("inventory option index: " + index);
+		};
+	}
+
+	/**
+	 * Returns the widget inventory action ID for a zero-based option index.
+	 *
+	 * @param index option index
+	 * @return revision-377 action ID
+	 */
+	public static int widgetItemOptionAction(int index) {
+		return switch (index) {
+		case 0 -> WIDGET_ITEM_OPTION_1;
+		case 1 -> WIDGET_ITEM_OPTION_2;
+		case 2 -> WIDGET_ITEM_OPTION_3;
+		case 3 -> WIDGET_ITEM_OPTION_4;
+		case 4 -> WIDGET_ITEM_OPTION_5;
+		default -> throw new IllegalArgumentException("widget item option index: " + index);
+		};
+	}
+
+	/**
+	 * Returns the NPC-option action ID for a zero-based option index.
+	 *
+	 * @param index option index
+	 * @return revision-377 action ID
+	 */
+	public static int npcOptionAction(int index) {
+		return switch (index) {
+		case 0 -> NPC_OPTION_1;
+		case 1 -> NPC_OPTION_2;
+		case 2 -> NPC_OPTION_3;
+		case 3 -> NPC_OPTION_4;
+		case 4 -> NPC_OPTION_5;
+		default -> throw new IllegalArgumentException("NPC option index: " + index);
+		};
+	}
+
+	/**
+	 * Returns the object-option action ID for a zero-based option index.
+	 *
+	 * @param index option index
+	 * @return revision-377 action ID
+	 */
+	public static int objectOptionAction(int index) {
+		return switch (index) {
+		case 0 -> OBJECT_OPTION_1;
+		case 1 -> OBJECT_OPTION_2;
+		case 2 -> OBJECT_OPTION_3;
+		case 3 -> OBJECT_OPTION_4;
+		case 4 -> OBJECT_OPTION_5;
+		default -> throw new IllegalArgumentException("object option index: " + index);
+		};
+	}
+
+	/**
+	 * Returns the ground-item option action ID for a zero-based option index.
+	 *
+	 * @param index option index
+	 * @return revision-377 action ID
+	 */
+	public static int groundItemOptionAction(int index) {
+		return switch (index) {
+		case 0 -> GROUND_ITEM_OPTION_1;
+		case 1 -> GROUND_ITEM_OPTION_2;
+		case 2 -> GROUND_ITEM_OPTION_3;
+		case 3 -> GROUND_ITEM_OPTION_4;
+		case 4 -> GROUND_ITEM_OPTION_5;
+		default -> throw new IllegalArgumentException("ground-item option index: " + index);
+		};
 	}
 
 	/**
@@ -238,13 +361,9 @@ public final class MenuState {
 		return actionId + LOW_PRIORITY_OFFSET;
 	}
 
-	/** Match the original quit-time nulling of the five menu arrays. */
+	/** Match the original quit-time release of menu entry storage. */
 	public void clearReferencesForQuit() {
-		actionNames = null;
-		actionIds = null;
-		actionCmd1 = null;
-		actionCmd2 = null;
-		actionCmd3 = null;
+		entries = null;
 	}
 
 	/**
@@ -254,24 +373,8 @@ public final class MenuState {
 	 * @param second the second
 	 */
 	private void swap(int first, int second) {
-		String name = actionNames[first];
-		actionNames[first] = actionNames[second];
-		actionNames[second] = name;
-
-		int value = actionIds[first];
-		actionIds[first] = actionIds[second];
-		actionIds[second] = value;
-
-		value = actionCmd1[first];
-		actionCmd1[first] = actionCmd1[second];
-		actionCmd1[second] = value;
-
-		value = actionCmd2[first];
-		actionCmd2[first] = actionCmd2[second];
-		actionCmd2[second] = value;
-
-		value = actionCmd3[first];
-		actionCmd3[first] = actionCmd3[second];
-		actionCmd3[second] = value;
+		MenuEntry entry = entries[first];
+		entries[first] = entries[second];
+		entries[second] = entry;
 	}
 }

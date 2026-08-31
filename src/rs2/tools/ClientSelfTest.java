@@ -14,6 +14,7 @@ import rs2.scene.SceneConstants;
 import rs2.scene.SceneUid;
 import rs2.scene.util.TiledUtils;
 import rs2.text.Base37;
+import rs2.ui.menu.MenuEntry;
 import rs2.ui.menu.MenuState;
 
 /**
@@ -127,36 +128,65 @@ public final class ClientSelfTest {
         test.equal(BitMasks.get(31), -1, "bit mask index 31");
     }
 
-    /** Verifies the original stable menu-priority partition and parallel state.
+    /** Verifies the original stable menu-priority partition and entry cohesion.
      * @param test assertion sink
      */
     private static void testMenuPriority(SelfTestSupport test) {
         MenuState menu = new MenuState();
-        menu.count = 5;
         int[] ids = { 500, 1500, 1000, 2001, 999 };
-        for (int index = 0; index < ids.length; index++) {
-            menu.actionIds[index] = ids[index];
-            menu.actionNames[index] = "entry-" + index;
-            menu.actionCmd1[index] = 10 + index;
-            menu.actionCmd2[index] = 20 + index;
-            menu.actionCmd3[index] = 30 + index;
-        }
+        for (int index = 0; index < ids.length; index++)
+            menu.add(new MenuEntry("entry-" + index, ids[index], 10 + index, 20 + index, 30 + index));
         menu.prioritizeActions();
 
         int[] expectedOrder = { 1, 0, 2, 3, 4 };
         int[] expectedIds = { 1500, 500, 1000, 2001, 999 };
         for (int index = 0; index < expectedOrder.length; index++) {
             int original = expectedOrder[index];
-            test.equal(menu.actionIds[index], expectedIds[index], "menu priority ID " + index);
-            test.equal(menu.actionNames[index], "entry-" + original, "menu priority name " + index);
-            test.equal(menu.actionCmd1[index], 10 + original, "menu priority argument 0 " + index);
-            test.equal(menu.actionCmd2[index], 20 + original, "menu priority argument 1 " + index);
-            test.equal(menu.actionCmd3[index], 30 + original, "menu priority argument 2 " + index);
+            test.equal(menu.entry(index).action(), expectedIds[index], "menu priority ID " + index);
+            test.equal(menu.entry(index).text(), "entry-" + original, "menu priority name " + index);
+            test.equal(menu.entry(index).argument0(), 10 + original, "menu priority argument 0 " + index);
+            test.equal(menu.entry(index).argument1(), 20 + original, "menu priority argument 1 " + index);
+            test.equal(menu.entry(index).argument2(), 30 + original, "menu priority argument 2 " + index);
         }
         test.equal(MenuState.lowPriority(MenuState.ADD_FRIEND), 2762, "menu low-priority encoding");
         test.equal(MenuState.normalizeActionId(2762), MenuState.ADD_FRIEND, "menu low-priority normalization");
         test.equal(MenuState.normalizeActionId(MenuState.ADD_FRIEND), MenuState.ADD_FRIEND,
                 "menu normal action normalization");
+
+        int[] playerOptions = { MenuState.PLAYER_OPTION_1, MenuState.PLAYER_OPTION_2, MenuState.PLAYER_OPTION_3,
+                MenuState.PLAYER_OPTION_4, MenuState.PLAYER_OPTION_5 };
+        int[] inventoryOptions = { MenuState.INVENTORY_ITEM_OPTION_1, MenuState.INVENTORY_ITEM_OPTION_2,
+                MenuState.INVENTORY_ITEM_OPTION_3, MenuState.INVENTORY_ITEM_OPTION_4, MenuState.INVENTORY_ITEM_OPTION_5 };
+        int[] widgetOptions = { MenuState.WIDGET_ITEM_OPTION_1, MenuState.WIDGET_ITEM_OPTION_2,
+                MenuState.WIDGET_ITEM_OPTION_3, MenuState.WIDGET_ITEM_OPTION_4, MenuState.WIDGET_ITEM_OPTION_5 };
+        int[] npcOptions = { MenuState.NPC_OPTION_1, MenuState.NPC_OPTION_2, MenuState.NPC_OPTION_3,
+                MenuState.NPC_OPTION_4, MenuState.NPC_OPTION_5 };
+        int[] objectOptions = { MenuState.OBJECT_OPTION_1, MenuState.OBJECT_OPTION_2, MenuState.OBJECT_OPTION_3,
+                MenuState.OBJECT_OPTION_4, MenuState.OBJECT_OPTION_5 };
+        int[] groundOptions = { MenuState.GROUND_ITEM_OPTION_1, MenuState.GROUND_ITEM_OPTION_2,
+                MenuState.GROUND_ITEM_OPTION_3, MenuState.GROUND_ITEM_OPTION_4, MenuState.GROUND_ITEM_OPTION_5 };
+        for (int index = 0; index < 5; index++) {
+            test.equal(MenuState.playerOptionAction(index), playerOptions[index], "player menu action mapping " + index);
+            test.equal(MenuState.inventoryItemOptionAction(index), inventoryOptions[index],
+                    "inventory menu action mapping " + index);
+            test.equal(MenuState.widgetItemOptionAction(index), widgetOptions[index],
+                    "widget menu action mapping " + index);
+            test.equal(MenuState.npcOptionAction(index), npcOptions[index], "NPC menu action mapping " + index);
+            test.equal(MenuState.objectOptionAction(index), objectOptions[index], "object menu action mapping " + index);
+            test.equal(MenuState.groundItemOptionAction(index), groundOptions[index],
+                    "ground-item menu action mapping " + index);
+        }
+
+        MenuState resetMenu = new MenuState();
+        resetMenu.add(new MenuEntry("friend", MenuState.lowPriority(MenuState.ADD_FRIEND), 41, 42, 43));
+        test.check(resetMenu.isAddFriendAction(0), "menu entry low-priority friend action");
+        resetMenu.reset();
+        test.equal(resetMenu.count, 1, "menu reset count");
+        test.equal(resetMenu.entry(0).text(), "Cancel", "menu reset text");
+        test.equal(resetMenu.entry(0).action(), MenuState.CANCEL_ACTION, "menu reset action");
+        test.equal(resetMenu.entry(0).argument0(), 0, "menu reset argument 0");
+        test.equal(resetMenu.entry(0).argument1(), 0, "menu reset argument 1");
+        test.equal(resetMenu.entry(0).argument2(), 0, "menu reset argument 2");
     }
 
     /** Verifies packed scene configuration and UID fields.

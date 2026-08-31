@@ -92,6 +92,7 @@ import rs2.ui.WidgetRuntime;
 import rs2.ui.WidgetRenderer;
 import rs2.ui.menu.MenuState;
 import rs2.ui.menu.MenuController;
+import rs2.ui.menu.MenuEntry;
 import rs2.ui.login.LoginScreen;
 import rs2.ui.login.TitleFlameAnimator;
 
@@ -981,7 +982,7 @@ public class Client extends GameShell {
 		else if (interfaceController.state().spellSelected == 1 && menuController.state().count < 2)
 			tooltip = interfaceController.state().selectedSpellAction + "...";
 		else
-			tooltip = menuController.state().actionNames[menuController.state().count - 1];
+			tooltip = menuController.state().entry(menuController.state().count - 1).text();
 		if (menuController.state().count > 2)
 			tooltip = tooltip + "@whi@ / " + (menuController.state().count - 2) + " more options";
 		boldFont.drawRandomizedTextWithTags(tooltip, 4, 15, 0xffffff, gameCycle / 1000, true);
@@ -2622,10 +2623,11 @@ public class Client extends GameShell {
 	public void dispatchMenuAction(int menuIndex) {
 		if (menuIndex < 0)
 			return;
-		int cmd2 = menuController.state().actionCmd2[menuIndex];
-		int cmd3 = menuController.state().actionCmd3[menuIndex];
-		int actionId = MenuState.normalizeActionId(menuController.state().actionIds[menuIndex]);
-		int cmd1 = menuController.state().actionCmd1[menuIndex];
+		MenuEntry entry = menuController.state().entry(menuIndex);
+		int cmd2 = entry.argument1();
+		int cmd3 = entry.argument2();
+		int actionId = MenuState.normalizeActionId(entry.action());
+		int cmd1 = entry.argument0();
 		if (chatController.inputDialogState() != 0 && actionId != MenuState.CANCEL_ACTION) {
 			chatController.setInputDialogState(0);
 			gameRenderer.requestChatboxRedraw();
@@ -3336,7 +3338,7 @@ public class Client extends GameShell {
 	 */
 	private void dispatchSocialMenuAction(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
 		if (actionId == MenuState.ADD_FRIEND || actionId == MenuState.ADD_IGNORE || actionId == MenuState.REMOVE_FRIEND || actionId == MenuState.REMOVE_IGNORE) {
-			String actionText = menuController.state().actionNames[menuIndex];
+			String actionText = menuController.state().entry(menuIndex).text();
 			int markerIndex = actionText.indexOf("@whi@");
 			if (markerIndex != -1) {
 				long encodedName = Base37.encode(actionText.substring(markerIndex + 5).trim());
@@ -3351,7 +3353,7 @@ public class Client extends GameShell {
 			}
 		}
 		if (actionId == MenuState.ACCEPT_TRADE || actionId == MenuState.ACCEPT_CHALLENGE) {
-			String actionText2 = menuController.state().actionNames[menuIndex];
+			String actionText2 = menuController.state().entry(menuIndex).text();
 			int markerIndex2 = actionText2.indexOf("@whi@");
 			if (markerIndex2 != -1) {
 				actionText2 = actionText2.substring(markerIndex2 + 5).trim();
@@ -3380,7 +3382,7 @@ public class Client extends GameShell {
 			}
 		}
 		if (actionId == MenuState.REPORT_ABUSE) {
-			String actionText3 = menuController.state().actionNames[menuIndex];
+			String actionText3 = menuController.state().entry(menuIndex).text();
 			int markerIndex3 = actionText3.indexOf("@whi@");
 			if (markerIndex3 != -1)
 				if (interfaceController.state().openInterfaceId == -1) {
@@ -3393,7 +3395,7 @@ public class Client extends GameShell {
 				}
 		}
 		if (actionId == MenuState.MESSAGE_FRIEND) {
-			String actionText4 = menuController.state().actionNames[menuIndex];
+			String actionText4 = menuController.state().entry(menuIndex).text();
 			int markerIndex4 = actionText4.indexOf("@whi@");
 			if (markerIndex4 != -1) {
 				long encodedName3 = Base37.encode(actionText4.substring(markerIndex4 + 5).trim());
@@ -3670,7 +3672,7 @@ public class Client extends GameShell {
 			int entryColor = 0xffffff;
 			if (layout.isContextMenuEntryHit(mouseX, mouseY, menuX, menuWidth, entryY))
 				entryColor = 0xffff00;
-			boldFont.drawTextWithTags(menuController.state().actionNames[entryIndex], menuX + 3, entryY, entryColor, true);
+			boldFont.drawTextWithTags(menuController.state().entry(entryIndex).text(), menuX + 3, entryY, entryColor, true);
 		}
 
 	}

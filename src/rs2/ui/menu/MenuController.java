@@ -96,18 +96,12 @@ public final class MenuController {
                     contentType -= WidgetContentType.FRIEND_WORLD_FIRST;
                 else
                     contentType--;
-                state.actionNames[state.count] = "Remove @whi@" + socialManager.friendNames[contentType];
-                state.actionIds[state.count] = MenuState.REMOVE_FRIEND;
-                state.count++;
-                state.actionNames[state.count] = "Message @whi@" + socialManager.friendNames[contentType];
-                state.actionIds[state.count] = MenuState.MESSAGE_FRIEND;
-                state.count++;
+                state.add(new MenuEntry("Remove @whi@" + socialManager.friendNames[contentType], MenuState.REMOVE_FRIEND, 0, 0, 0));
+                state.add(new MenuEntry("Message @whi@" + socialManager.friendNames[contentType], MenuState.MESSAGE_FRIEND, 0, 0, 0));
                 return true;
             }
             if (contentType >= WidgetContentType.IGNORE_NAME_FIRST && contentType <= WidgetContentType.IGNORE_NAME_LAST) {
-                state.actionNames[state.count] = "Remove @whi@" + widget.text;
-                state.actionIds[state.count] = MenuState.REMOVE_IGNORE;
-                state.count++;
+                state.add(new MenuEntry("Remove @whi@" + widget.text, MenuState.REMOVE_IGNORE, 0, 0, 0));
                 return true;
             } else {
                 return false;
@@ -138,26 +132,15 @@ public final class MenuController {
             else
                 displayName = player.name + " (skill-" + player.skillLevel + ")";
             if (interfaces.state().itemSelected == 1) {
-                state.actionNames[state.count] = "Use " + interfaces.state().selectedItemName + " with @whi@"
-                        + displayName;
-                state.actionIds[state.count] = MenuState.USE_ITEM_ON_PLAYER;
-                state.actionCmd1[state.count] = playerIndex;
-                state.actionCmd2[state.count] = tileX;
-                state.actionCmd3[state.count] = tileY;
-                state.count++;
+                state.add(new MenuEntry("Use " + interfaces.state().selectedItemName + " with @whi@"
+                        + displayName, MenuState.USE_ITEM_ON_PLAYER, playerIndex, tileX, tileY));
             } else if (interfaces.state().spellSelected == 1) {
                 if ((interfaces.state().selectedSpellTargetMask & 8) == 8) {
-                    state.actionNames[state.count] = interfaces.state().selectedSpellAction + " @whi@" + displayName;
-                    state.actionIds[state.count] = MenuState.CAST_SPELL_ON_PLAYER;
-                    state.actionCmd1[state.count] = playerIndex;
-                    state.actionCmd2[state.count] = tileX;
-                    state.actionCmd3[state.count] = tileY;
-                    state.count++;
+                    state.add(new MenuEntry(interfaces.state().selectedSpellAction + " @whi@" + displayName, MenuState.CAST_SPELL_ON_PLAYER, playerIndex, tileX, tileY));
                 }
             } else {
                 for (int actionIndex = 4; actionIndex >= 0; actionIndex--)
                     if (playerActions[actionIndex] != null) {
-                        state.actionNames[state.count] = playerActions[actionIndex] + " @whi@" + displayName;
                         int priorityOffset = 0;
                         if (playerActions[actionIndex].equalsIgnoreCase("attack")) {
                             if (player.combatLevel > localPlayer.combatLevel)
@@ -169,26 +152,15 @@ public final class MenuController {
                                     priorityOffset = 0;
                         } else if (playerActionLowPriority[actionIndex])
                             priorityOffset = MenuState.LOW_PRIORITY_OFFSET;
-                        if (actionIndex == 0)
-                            state.actionIds[state.count] = MenuState.PLAYER_OPTION_1 + priorityOffset;
-                        if (actionIndex == 1)
-                            state.actionIds[state.count] = MenuState.PLAYER_OPTION_2 + priorityOffset;
-                        if (actionIndex == 2)
-                            state.actionIds[state.count] = MenuState.PLAYER_OPTION_3 + priorityOffset;
-                        if (actionIndex == 3)
-                            state.actionIds[state.count] = MenuState.PLAYER_OPTION_4 + priorityOffset;
-                        if (actionIndex == 4)
-                            state.actionIds[state.count] = MenuState.PLAYER_OPTION_5 + priorityOffset;
-                        state.actionCmd1[state.count] = playerIndex;
-                        state.actionCmd2[state.count] = tileX;
-                        state.actionCmd3[state.count] = tileY;
-                        state.count++;
+                        int actionId = MenuState.playerOptionAction(actionIndex) + priorityOffset;
+                        state.add(new MenuEntry(playerActions[actionIndex] + " @whi@" + displayName, actionId,
+                                playerIndex, tileX, tileY));
                     }
 
             }
             for (int menuIndex = 0; menuIndex < state.count; menuIndex++)
-                if (state.actionIds[menuIndex] == MenuState.WALK_HERE) {
-                    state.actionNames[menuIndex] = "Walk here @whi@" + displayName;
+                if (state.entry(menuIndex).action() == MenuState.WALK_HERE) {
+                    state.replace(menuIndex, state.entry(menuIndex).withText("Walk here @whi@" + displayName));
                     return;
                 }
 
@@ -239,10 +211,7 @@ public final class MenuController {
                         if (childWidget.contentType != WidgetContentType.NONE)
                             contentHandled = buildSocialWidgetMenu(childWidget);
                         if (!contentHandled) {
-                            state.actionNames[state.count] = childWidget.tooltip;
-                            state.actionIds[state.count] = MenuState.WIDGET_BUTTON;
-                            state.actionCmd3[state.count] = childWidget.id;
-                            state.count++;
+                            state.add(new MenuEntry(childWidget.tooltip, MenuState.WIDGET_BUTTON, 0, 0, childWidget.id));
                         }
                     }
                     if (childWidget.buttonType == Widget.BUTTON_SPELL && interfaces.state().spellSelected == 0 && mouseX >= childX
@@ -251,41 +220,24 @@ public final class MenuController {
                         String spellAction = childWidget.selectedActionName;
                         if (spellAction.indexOf(" ") != -1)
                             spellAction = spellAction.substring(0, spellAction.indexOf(" "));
-                        state.actionNames[state.count] = spellAction + " @gre@" + childWidget.spellName;
-                        state.actionIds[state.count] = MenuState.SELECT_SPELL;
-                        state.actionCmd3[state.count] = childWidget.id;
-                        state.count++;
+                        state.add(new MenuEntry(spellAction + " @gre@" + childWidget.spellName, MenuState.SELECT_SPELL, 0, 0, childWidget.id));
                     }
                     if (childWidget.buttonType == Widget.BUTTON_CLOSE && mouseX >= childX && mouseY >= childY
                             && mouseX < childX + childWidget.width && mouseY < childY + childWidget.height) {
-                        state.actionNames[state.count] = "Close";
-                        if (screenArea == 3)
-                            state.actionIds[state.count] = MenuState.CLOSE_DIALOGUE;
-                        else
-                            state.actionIds[state.count] = MenuState.CLOSE_INTERFACE;
-                        state.actionCmd3[state.count] = childWidget.id;
-                        state.count++;
+                        int closeAction = screenArea == 3 ? MenuState.CLOSE_DIALOGUE : MenuState.CLOSE_INTERFACE;
+                        state.add(new MenuEntry("Close", closeAction, 0, 0, childWidget.id));
                     }
                     if (childWidget.buttonType == Widget.BUTTON_TOGGLE_VARP && mouseX >= childX && mouseY >= childY
                             && mouseX < childX + childWidget.width && mouseY < childY + childWidget.height) {
-                        state.actionNames[state.count] = childWidget.tooltip;
-                        state.actionIds[state.count] = MenuState.WIDGET_TOGGLE_VARP;
-                        state.actionCmd3[state.count] = childWidget.id;
-                        state.count++;
+                        state.add(new MenuEntry(childWidget.tooltip, MenuState.WIDGET_TOGGLE_VARP, 0, 0, childWidget.id));
                     }
                     if (childWidget.buttonType == Widget.BUTTON_SET_VARP && mouseX >= childX && mouseY >= childY
                             && mouseX < childX + childWidget.width && mouseY < childY + childWidget.height) {
-                        state.actionNames[state.count] = childWidget.tooltip;
-                        state.actionIds[state.count] = MenuState.WIDGET_SET_VARP;
-                        state.actionCmd3[state.count] = childWidget.id;
-                        state.count++;
+                        state.add(new MenuEntry(childWidget.tooltip, MenuState.WIDGET_SET_VARP, 0, 0, childWidget.id));
                     }
                     if (childWidget.buttonType == Widget.BUTTON_CONTINUE && !interfaces.actionPending() && mouseX >= childX && mouseY >= childY
                             && mouseX < childX + childWidget.width && mouseY < childY + childWidget.height) {
-                        state.actionNames[state.count] = childWidget.tooltip;
-                        state.actionIds[state.count] = MenuState.WIDGET_CONTINUE;
-                        state.actionCmd3[state.count] = childWidget.id;
-                        state.count++;
+                        state.add(new MenuEntry(childWidget.tooltip, MenuState.WIDGET_CONTINUE, 0, 0, childWidget.id));
                     }
                     if (childWidget.type == Widget.TYPE_INVENTORY) {
                         int slot = 0;
@@ -306,106 +258,55 @@ public final class MenuController {
                                         if (interfaces.state().itemSelected == 1 && childWidget.inventoryHasOptions) {
                                             if (childWidget.id != interfaces.state().selectedItemWidgetId
                                                     || slot != interfaces.state().selectedItemSlot) {
-                                                state.actionNames[state.count] = "Use "
+                                                state.add(new MenuEntry("Use "
                                                         + interfaces.state().selectedItemName + " with @lre@"
-                                                        + itemDefinition.name;
-                                                state.actionIds[state.count] = MenuState.USE_ITEM_ON_INVENTORY_ITEM;
-                                                state.actionCmd1[state.count] = itemDefinition.id;
-                                                state.actionCmd2[state.count] = slot;
-                                                state.actionCmd3[state.count] = childWidget.id;
-                                                state.count++;
+                                                        + itemDefinition.name, MenuState.USE_ITEM_ON_INVENTORY_ITEM, itemDefinition.id, slot, childWidget.id));
                                             }
                                         } else if (interfaces.state().spellSelected == 1 && childWidget.inventoryHasOptions) {
                                             if ((interfaces.state().selectedSpellTargetMask & 0x10) == 16) {
-                                                state.actionNames[state.count] = interfaces.state().selectedSpellAction
-                                                        + " @lre@" + itemDefinition.name;
-                                                state.actionIds[state.count] = MenuState.CAST_SPELL_ON_INVENTORY_ITEM;
-                                                state.actionCmd1[state.count] = itemDefinition.id;
-                                                state.actionCmd2[state.count] = slot;
-                                                state.actionCmd3[state.count] = childWidget.id;
-                                                state.count++;
+                                                state.add(new MenuEntry(interfaces.state().selectedSpellAction
+                                                        + " @lre@" + itemDefinition.name, MenuState.CAST_SPELL_ON_INVENTORY_ITEM, itemDefinition.id, slot, childWidget.id));
                                             }
                                         } else {
                                             if (childWidget.inventoryHasOptions) {
                                                 for (int inventoryActionIndex = 4; inventoryActionIndex >= 3; inventoryActionIndex--)
                                                     if (itemDefinition.inventoryActions != null
                                                             && itemDefinition.inventoryActions[inventoryActionIndex] != null) {
-                                                        state.actionNames[state.count] = itemDefinition.inventoryActions[inventoryActionIndex]
-                                                                + " @lre@" + itemDefinition.name;
-                                                        if (inventoryActionIndex == 3)
-                                                            state.actionIds[state.count] = MenuState.INVENTORY_ITEM_OPTION_4;
-                                                        if (inventoryActionIndex == 4)
-                                                            state.actionIds[state.count] = MenuState.INVENTORY_ITEM_OPTION_5;
-                                                        state.actionCmd1[state.count] = itemDefinition.id;
-                                                        state.actionCmd2[state.count] = slot;
-                                                        state.actionCmd3[state.count] = childWidget.id;
-                                                        state.count++;
+                                                        int actionId = MenuState.inventoryItemOptionAction(inventoryActionIndex);
+                                                        state.add(new MenuEntry(itemDefinition.inventoryActions[inventoryActionIndex]
+                                                                + " @lre@" + itemDefinition.name, actionId, itemDefinition.id,
+                                                                slot, childWidget.id));
                                                     } else if (inventoryActionIndex == 4) {
-                                                        state.actionNames[state.count] = "Drop @lre@"
-                                                                + itemDefinition.name;
-                                                        state.actionIds[state.count] = MenuState.INVENTORY_ITEM_OPTION_5;
-                                                        state.actionCmd1[state.count] = itemDefinition.id;
-                                                        state.actionCmd2[state.count] = slot;
-                                                        state.actionCmd3[state.count] = childWidget.id;
-                                                        state.count++;
+                                                        state.add(new MenuEntry("Drop @lre@"
+                                                                + itemDefinition.name, MenuState.INVENTORY_ITEM_OPTION_5, itemDefinition.id, slot, childWidget.id));
                                                     }
 
                                             }
                                             if (childWidget.inventoryUsableItems) {
-                                                state.actionNames[state.count] = "Use @lre@" + itemDefinition.name;
-                                                state.actionIds[state.count] = MenuState.SELECT_ITEM;
-                                                state.actionCmd1[state.count] = itemDefinition.id;
-                                                state.actionCmd2[state.count] = slot;
-                                                state.actionCmd3[state.count] = childWidget.id;
-                                                state.count++;
+                                                state.add(new MenuEntry("Use @lre@" + itemDefinition.name, MenuState.SELECT_ITEM, itemDefinition.id, slot, childWidget.id));
                                             }
                                             if (childWidget.inventoryHasOptions
                                                     && itemDefinition.inventoryActions != null) {
                                                 for (int inventoryActionIndex2 = 2; inventoryActionIndex2 >= 0; inventoryActionIndex2--)
                                                     if (itemDefinition.inventoryActions[inventoryActionIndex2] != null) {
-                                                        state.actionNames[state.count] = itemDefinition.inventoryActions[inventoryActionIndex2]
-                                                                + " @lre@" + itemDefinition.name;
-                                                        if (inventoryActionIndex2 == 0)
-                                                            state.actionIds[state.count] = MenuState.INVENTORY_ITEM_OPTION_1;
-                                                        if (inventoryActionIndex2 == 1)
-                                                            state.actionIds[state.count] = MenuState.INVENTORY_ITEM_OPTION_2;
-                                                        if (inventoryActionIndex2 == 2)
-                                                            state.actionIds[state.count] = MenuState.INVENTORY_ITEM_OPTION_3;
-                                                        state.actionCmd1[state.count] = itemDefinition.id;
-                                                        state.actionCmd2[state.count] = slot;
-                                                        state.actionCmd3[state.count] = childWidget.id;
-                                                        state.count++;
+                                                        int actionId = MenuState.inventoryItemOptionAction(inventoryActionIndex2);
+                                                        state.add(new MenuEntry(itemDefinition.inventoryActions[inventoryActionIndex2]
+                                                                + " @lre@" + itemDefinition.name, actionId, itemDefinition.id,
+                                                                slot, childWidget.id));
                                                     }
 
                                             }
                                             if (childWidget.actions != null) {
                                                 for (int widgetActionIndex = 4; widgetActionIndex >= 0; widgetActionIndex--)
                                                     if (childWidget.actions[widgetActionIndex] != null) {
-                                                        state.actionNames[state.count] = childWidget.actions[widgetActionIndex]
-                                                                + " @lre@" + itemDefinition.name;
-                                                        if (widgetActionIndex == 0)
-                                                            state.actionIds[state.count] = MenuState.WIDGET_ITEM_OPTION_1;
-                                                        if (widgetActionIndex == 1)
-                                                            state.actionIds[state.count] = MenuState.WIDGET_ITEM_OPTION_2;
-                                                        if (widgetActionIndex == 2)
-                                                            state.actionIds[state.count] = MenuState.WIDGET_ITEM_OPTION_3;
-                                                        if (widgetActionIndex == 3)
-                                                            state.actionIds[state.count] = MenuState.WIDGET_ITEM_OPTION_4;
-                                                        if (widgetActionIndex == 4)
-                                                            state.actionIds[state.count] = MenuState.WIDGET_ITEM_OPTION_5;
-                                                        state.actionCmd1[state.count] = itemDefinition.id;
-                                                        state.actionCmd2[state.count] = slot;
-                                                        state.actionCmd3[state.count] = childWidget.id;
-                                                        state.count++;
+                                                        int actionId = MenuState.widgetItemOptionAction(widgetActionIndex);
+                                                        state.add(new MenuEntry(childWidget.actions[widgetActionIndex]
+                                                                + " @lre@" + itemDefinition.name, actionId, itemDefinition.id,
+                                                                slot, childWidget.id));
                                                     }
 
                                             }
-                                            state.actionNames[state.count] = "Examine @lre@" + itemDefinition.name;
-                                            state.actionIds[state.count] = MenuState.EXAMINE_INVENTORY_ITEM;
-                                            state.actionCmd1[state.count] = itemDefinition.id;
-                                            state.actionCmd2[state.count] = slot;
-                                            state.actionCmd3[state.count] = childWidget.id;
-                                            state.count++;
+                                            state.add(new MenuEntry("Examine @lre@" + itemDefinition.name, MenuState.EXAMINE_INVENTORY_ITEM, itemDefinition.id, slot, childWidget.id));
                                         }
                                     }
                                 }
@@ -443,23 +344,13 @@ public final class MenuController {
                 displayName = displayName + getCombatLevelColorTag(definition.combatLevel, localPlayer.combatLevel)
                         + " (level-" + definition.combatLevel + ")";
             if (interfaces.state().itemSelected == 1) {
-                state.actionNames[state.count] = "Use " + interfaces.state().selectedItemName + " with @yel@"
-                        + displayName;
-                state.actionIds[state.count] = MenuState.USE_ITEM_ON_NPC;
-                state.actionCmd1[state.count] = npcIndex;
-                state.actionCmd2[state.count] = tileX;
-                state.actionCmd3[state.count] = tileY;
-                state.count++;
+                state.add(new MenuEntry("Use " + interfaces.state().selectedItemName + " with @yel@"
+                        + displayName, MenuState.USE_ITEM_ON_NPC, npcIndex, tileX, tileY));
                 return;
             }
             if (interfaces.state().spellSelected == 1) {
                 if ((interfaces.state().selectedSpellTargetMask & 2) == 2) {
-                    state.actionNames[state.count] = interfaces.state().selectedSpellAction + " @yel@" + displayName;
-                    state.actionIds[state.count] = MenuState.CAST_SPELL_ON_NPC;
-                    state.actionCmd1[state.count] = npcIndex;
-                    state.actionCmd2[state.count] = tileX;
-                    state.actionCmd3[state.count] = tileY;
-                    state.count++;
+                    state.add(new MenuEntry(interfaces.state().selectedSpellAction + " @yel@" + displayName, MenuState.CAST_SPELL_ON_NPC, npcIndex, tileX, tileY));
                     return;
                 }
             } else {
@@ -467,22 +358,9 @@ public final class MenuController {
                     for (int actionIndex = 4; actionIndex >= 0; actionIndex--)
                         if (definition.actions[actionIndex] != null
                                 && !definition.actions[actionIndex].equalsIgnoreCase("attack")) {
-                            state.actionNames[state.count] = definition.actions[actionIndex] + " @yel@"
-                                    + displayName;
-                            if (actionIndex == 0)
-                                state.actionIds[state.count] = MenuState.NPC_OPTION_1;
-                            if (actionIndex == 1)
-                                state.actionIds[state.count] = MenuState.NPC_OPTION_2;
-                            if (actionIndex == 2)
-                                state.actionIds[state.count] = MenuState.NPC_OPTION_3;
-                            if (actionIndex == 3)
-                                state.actionIds[state.count] = MenuState.NPC_OPTION_4;
-                            if (actionIndex == 4)
-                                state.actionIds[state.count] = MenuState.NPC_OPTION_5;
-                            state.actionCmd1[state.count] = npcIndex;
-                            state.actionCmd2[state.count] = tileX;
-                            state.actionCmd3[state.count] = tileY;
-                            state.count++;
+                            int actionId = MenuState.npcOptionAction(actionIndex);
+                            state.add(new MenuEntry(definition.actions[actionIndex] + " @yel@" + displayName, actionId,
+                                    npcIndex, tileX, tileY));
                         }
 
                 }
@@ -493,31 +371,13 @@ public final class MenuController {
                             int priorityOffset = 0;
                             if (definition.combatLevel > localPlayer.combatLevel)
                                 priorityOffset = MenuState.LOW_PRIORITY_OFFSET;
-                            state.actionNames[state.count] = definition.actions[actionIndex2] + " @yel@"
-                                    + displayName;
-                            if (actionIndex2 == 0)
-                                state.actionIds[state.count] = MenuState.NPC_OPTION_1 + priorityOffset;
-                            if (actionIndex2 == 1)
-                                state.actionIds[state.count] = MenuState.NPC_OPTION_2 + priorityOffset;
-                            if (actionIndex2 == 2)
-                                state.actionIds[state.count] = MenuState.NPC_OPTION_3 + priorityOffset;
-                            if (actionIndex2 == 3)
-                                state.actionIds[state.count] = MenuState.NPC_OPTION_4 + priorityOffset;
-                            if (actionIndex2 == 4)
-                                state.actionIds[state.count] = MenuState.NPC_OPTION_5 + priorityOffset;
-                            state.actionCmd1[state.count] = npcIndex;
-                            state.actionCmd2[state.count] = tileX;
-                            state.actionCmd3[state.count] = tileY;
-                            state.count++;
+                            int actionId = MenuState.npcOptionAction(actionIndex2) + priorityOffset;
+                            state.add(new MenuEntry(definition.actions[actionIndex2] + " @yel@" + displayName, actionId,
+                                    npcIndex, tileX, tileY));
                         }
 
                 }
-                state.actionNames[state.count] = "Examine @yel@" + displayName;
-                state.actionIds[state.count] = MenuState.EXAMINE_NPC;
-                state.actionCmd1[state.count] = npcIndex;
-                state.actionCmd2[state.count] = tileX;
-                state.actionCmd3[state.count] = tileY;
-                state.count++;
+                state.add(new MenuEntry("Examine @yel@" + displayName, MenuState.EXAMINE_NPC, npcIndex, tileX, tileY));
             }
         }
 
@@ -607,12 +467,12 @@ public final class MenuController {
                 }
             } else {
                 if (clickButton == 1 && state.count > 0) {
-                    int actionId = state.actionIds[state.count - 1];
+                    int actionId = state.entry(state.count - 1).action();
                     if (actionId == MenuState.WIDGET_ITEM_OPTION_1 || actionId == MenuState.WIDGET_ITEM_OPTION_2 || actionId == MenuState.WIDGET_ITEM_OPTION_3 || actionId == MenuState.WIDGET_ITEM_OPTION_4 || actionId == MenuState.WIDGET_ITEM_OPTION_5
                             || actionId == MenuState.INVENTORY_ITEM_OPTION_1 || actionId == MenuState.INVENTORY_ITEM_OPTION_2 || actionId == MenuState.INVENTORY_ITEM_OPTION_3 || actionId == MenuState.INVENTORY_ITEM_OPTION_4 || actionId == MenuState.INVENTORY_ITEM_OPTION_5
                             || actionId == MenuState.SELECT_ITEM || actionId == MenuState.EXAMINE_INVENTORY_ITEM) {
-                        int slot = state.actionCmd2[state.count - 1];
-                        int widgetId = state.actionCmd3[state.count - 1];
+                        int slot = state.entry(state.count - 1).argument1();
+                        int widgetId = state.entry(state.count - 1).argument2();
                         Widget inventoryWidget = Widget.get(widgetId);
                         if (inventoryWidget.inventoryAllowSwap || inventoryWidget.inventoryReplaceItems) {
                             resetInventoryDragMoved.run();
@@ -650,7 +510,7 @@ public final class MenuController {
         public void openContextMenu(TypeFace boldFont, int clickX, int clickY) {
             int textWidth = boldFont.getFormattedTextWidth("Choose Option");
             for (int menuIndex = 0; menuIndex < state.count; menuIndex++) {
-                int textWidth2 = boldFont.getFormattedTextWidth(state.actionNames[menuIndex]);
+                int textWidth2 = boldFont.getFormattedTextWidth(state.entry(menuIndex).text());
                 if (textWidth2 > textWidth)
                     textWidth = textWidth2;
             }
@@ -728,11 +588,7 @@ public final class MenuController {
         public void buildViewportMenu(WorldState worldState, ActorSynchronizer actorSynchronizer, int currentPlane,
                 Player localPlayer, String[] playerActions, boolean[] playerActionLowPriority, int mouseX, int mouseY) {
             if (interfaces.state().itemSelected == 0 && interfaces.state().spellSelected == 0) {
-                state.actionNames[state.count] = "Walk here";
-                state.actionIds[state.count] = MenuState.WALK_HERE;
-                state.actionCmd2[state.count] = mouseX;
-                state.actionCmd3[state.count] = mouseY;
-                state.count++;
+                state.add(new MenuEntry("Walk here", MenuState.WALK_HERE, 0, mouseX, mouseY));
             }
             int previousUid = -1;
             for (int pickedIndex = 0; pickedIndex < Model.pickedCount; pickedIndex++) {
@@ -751,52 +607,24 @@ public final class MenuController {
                     if (objectDefinition == null)
                         continue;
                     if (interfaces.state().itemSelected == 1) {
-                        state.actionNames[state.count] = "Use " + interfaces.state().selectedItemName + " with @cya@"
-                                + objectDefinition.name;
-                        state.actionIds[state.count] = MenuState.USE_ITEM_ON_OBJECT;
-                        state.actionCmd1[state.count] = packedUid;
-                        state.actionCmd2[state.count] = tileX;
-                        state.actionCmd3[state.count] = tileY;
-                        state.count++;
+                        state.add(new MenuEntry("Use " + interfaces.state().selectedItemName + " with @cya@"
+                                + objectDefinition.name, MenuState.USE_ITEM_ON_OBJECT, packedUid, tileX, tileY));
                     } else if (interfaces.state().spellSelected == 1) {
                         if ((interfaces.state().selectedSpellTargetMask & 4) == 4) {
-                            state.actionNames[state.count] = interfaces.state().selectedSpellAction + " @cya@"
-                                    + objectDefinition.name;
-                            state.actionIds[state.count] = MenuState.CAST_SPELL_ON_OBJECT;
-                            state.actionCmd1[state.count] = packedUid;
-                            state.actionCmd2[state.count] = tileX;
-                            state.actionCmd3[state.count] = tileY;
-                            state.count++;
+                            state.add(new MenuEntry(interfaces.state().selectedSpellAction + " @cya@"
+                                    + objectDefinition.name, MenuState.CAST_SPELL_ON_OBJECT, packedUid, tileX, tileY));
                         }
                     } else {
                         if (objectDefinition.actions != null) {
                             for (int objectActionIndex = 4; objectActionIndex >= 0; objectActionIndex--)
                                 if (objectDefinition.actions[objectActionIndex] != null) {
-                                    state.actionNames[state.count] = objectDefinition.actions[objectActionIndex]
-                                            + " @cya@" + objectDefinition.name;
-                                    if (objectActionIndex == 0)
-                                        state.actionIds[state.count] = MenuState.OBJECT_OPTION_1;
-                                    if (objectActionIndex == 1)
-                                        state.actionIds[state.count] = MenuState.OBJECT_OPTION_2;
-                                    if (objectActionIndex == 2)
-                                        state.actionIds[state.count] = MenuState.OBJECT_OPTION_3;
-                                    if (objectActionIndex == 3)
-                                        state.actionIds[state.count] = MenuState.OBJECT_OPTION_4;
-                                    if (objectActionIndex == 4)
-                                        state.actionIds[state.count] = MenuState.OBJECT_OPTION_5;
-                                    state.actionCmd1[state.count] = packedUid;
-                                    state.actionCmd2[state.count] = tileX;
-                                    state.actionCmd3[state.count] = tileY;
-                                    state.count++;
+                                    int actionId = MenuState.objectOptionAction(objectActionIndex);
+                                    state.add(new MenuEntry(objectDefinition.actions[objectActionIndex]
+                                            + " @cya@" + objectDefinition.name, actionId, packedUid, tileX, tileY));
                                 }
 
                         }
-                        state.actionNames[state.count] = "Examine @cya@" + objectDefinition.name;
-                        state.actionIds[state.count] = MenuState.EXAMINE_OBJECT;
-                        state.actionCmd1[state.count] = objectDefinition.id << 14;
-                        state.actionCmd2[state.count] = tileX;
-                        state.actionCmd3[state.count] = tileY;
-                        state.count++;
+                        state.add(new MenuEntry("Examine @cya@" + objectDefinition.name, MenuState.EXAMINE_OBJECT, objectDefinition.id << 14, tileX, tileY));
                     }
                 }
                 if (entityType == 1) {
@@ -849,58 +677,25 @@ public final class MenuController {
                                 .last(); groundItem != null; groundItem = (GroundItem) groundItems.previous()) {
                             ItemDefinition itemDefinition = ItemDefinition.lookup(groundItem.id);
                             if (interfaces.state().itemSelected == 1) {
-                                state.actionNames[state.count] = "Use " + interfaces.state().selectedItemName
-                                        + " with @lre@" + itemDefinition.name;
-                                state.actionIds[state.count] = MenuState.USE_ITEM_ON_GROUND_ITEM;
-                                state.actionCmd1[state.count] = groundItem.id;
-                                state.actionCmd2[state.count] = tileX;
-                                state.actionCmd3[state.count] = tileY;
-                                state.count++;
+                                state.add(new MenuEntry("Use " + interfaces.state().selectedItemName
+                                        + " with @lre@" + itemDefinition.name, MenuState.USE_ITEM_ON_GROUND_ITEM, groundItem.id, tileX, tileY));
                             } else if (interfaces.state().spellSelected == 1) {
                                 if ((interfaces.state().selectedSpellTargetMask & 1) == 1) {
-                                    state.actionNames[state.count] = interfaces.state().selectedSpellAction + " @lre@"
-                                            + itemDefinition.name;
-                                    state.actionIds[state.count] = MenuState.CAST_SPELL_ON_GROUND_ITEM;
-                                    state.actionCmd1[state.count] = groundItem.id;
-                                    state.actionCmd2[state.count] = tileX;
-                                    state.actionCmd3[state.count] = tileY;
-                                    state.count++;
+                                    state.add(new MenuEntry(interfaces.state().selectedSpellAction + " @lre@"
+                                            + itemDefinition.name, MenuState.CAST_SPELL_ON_GROUND_ITEM, groundItem.id, tileX, tileY));
                                 }
                             } else {
                                 for (int groundActionIndex = 4; groundActionIndex >= 0; groundActionIndex--)
                                     if (itemDefinition.groundActions != null
                                             && itemDefinition.groundActions[groundActionIndex] != null) {
-                                        state.actionNames[state.count] = itemDefinition.groundActions[groundActionIndex]
-                                                + " @lre@" + itemDefinition.name;
-                                        if (groundActionIndex == 0)
-                                            state.actionIds[state.count] = MenuState.GROUND_ITEM_OPTION_1;
-                                        if (groundActionIndex == 1)
-                                            state.actionIds[state.count] = MenuState.GROUND_ITEM_OPTION_2;
-                                        if (groundActionIndex == 2)
-                                            state.actionIds[state.count] = MenuState.GROUND_ITEM_OPTION_3;
-                                        if (groundActionIndex == 3)
-                                            state.actionIds[state.count] = MenuState.GROUND_ITEM_OPTION_4;
-                                        if (groundActionIndex == 4)
-                                            state.actionIds[state.count] = MenuState.GROUND_ITEM_OPTION_5;
-                                        state.actionCmd1[state.count] = groundItem.id;
-                                        state.actionCmd2[state.count] = tileX;
-                                        state.actionCmd3[state.count] = tileY;
-                                        state.count++;
+                                        int actionId = MenuState.groundItemOptionAction(groundActionIndex);
+                                        state.add(new MenuEntry(itemDefinition.groundActions[groundActionIndex]
+                                                + " @lre@" + itemDefinition.name, actionId, groundItem.id, tileX, tileY));
                                     } else if (groundActionIndex == 2) {
-                                        state.actionNames[state.count] = "Take @lre@" + itemDefinition.name;
-                                        state.actionIds[state.count] = MenuState.GROUND_ITEM_OPTION_3;
-                                        state.actionCmd1[state.count] = groundItem.id;
-                                        state.actionCmd2[state.count] = tileX;
-                                        state.actionCmd3[state.count] = tileY;
-                                        state.count++;
+                                        state.add(new MenuEntry("Take @lre@" + itemDefinition.name, MenuState.GROUND_ITEM_OPTION_3, groundItem.id, tileX, tileY));
                                     }
 
-                                state.actionNames[state.count] = "Examine @lre@" + itemDefinition.name;
-                                state.actionIds[state.count] = MenuState.EXAMINE_GROUND_ITEM;
-                                state.actionCmd1[state.count] = groundItem.id;
-                                state.actionCmd2[state.count] = tileX;
-                                state.actionCmd3[state.count] = tileY;
-                                state.count++;
+                                state.add(new MenuEntry("Examine @lre@" + itemDefinition.name, MenuState.EXAMINE_GROUND_ITEM, groundItem.id, tileX, tileY));
                             }
                         }
 
@@ -949,16 +744,10 @@ public final class MenuController {
                                 messageWidth = 450;
                             if (mouseX < layout.viewportX() + messageWidth) {
                                 if (playerRights >= 1) {
-                                    state.actionNames[state.count] = "Report abuse @whi@" + sender;
-                                    state.actionIds[state.count] = MenuState.lowPriority(MenuState.REPORT_ABUSE);
-                                    state.count++;
+                                    state.add(new MenuEntry("Report abuse @whi@" + sender, MenuState.lowPriority(MenuState.REPORT_ABUSE), 0, 0, 0));
                                 }
-                                state.actionNames[state.count] = "Add ignore @whi@" + sender;
-                                state.actionIds[state.count] = MenuState.lowPriority(MenuState.ADD_IGNORE);
-                                state.count++;
-                                state.actionNames[state.count] = "Add friend @whi@" + sender;
-                                state.actionIds[state.count] = MenuState.lowPriority(MenuState.ADD_FRIEND);
-                                state.count++;
+                                state.add(new MenuEntry("Add ignore @whi@" + sender, MenuState.lowPriority(MenuState.ADD_IGNORE), 0, 0, 0));
+                                state.add(new MenuEntry("Add friend @whi@" + sender, MenuState.lowPriority(MenuState.ADD_FRIEND), 0, 0, 0));
                             }
                         }
                         if (++visibleLine >= 5)
@@ -1002,16 +791,10 @@ public final class MenuController {
                         && (messageType == ChatMessageType.PUBLIC_PRIVILEGED || chatController.publicMode() == ChatMode.ON || chatController.publicMode() == ChatMode.FRIENDS && socialManager.isFriendOrSelf(sender, localPlayerName))) {
                     if (mouseY > lineY - ClientLayout.CHATBOX_MESSAGE_LINE_HEIGHT && mouseY <= lineY && !sender.equals(localPlayerName)) {
                         if (playerRights >= 1) {
-                            state.actionNames[state.count] = "Report abuse @whi@" + sender;
-                            state.actionIds[state.count] = MenuState.REPORT_ABUSE;
-                            state.count++;
+                            state.add(new MenuEntry("Report abuse @whi@" + sender, MenuState.REPORT_ABUSE, 0, 0, 0));
                         }
-                        state.actionNames[state.count] = "Add ignore @whi@" + sender;
-                        state.actionIds[state.count] = MenuState.ADD_IGNORE;
-                        state.count++;
-                        state.actionNames[state.count] = "Add friend @whi@" + sender;
-                        state.actionIds[state.count] = MenuState.ADD_FRIEND;
-                        state.count++;
+                        state.add(new MenuEntry("Add ignore @whi@" + sender, MenuState.ADD_IGNORE, 0, 0, 0));
+                        state.add(new MenuEntry("Add friend @whi@" + sender, MenuState.ADD_FRIEND, 0, 0, 0));
                     }
                     visibleLine++;
                 }
@@ -1019,24 +802,16 @@ public final class MenuController {
                         && (messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED || chatController.privateMode() == ChatMode.ON || chatController.privateMode() == ChatMode.FRIENDS && socialManager.isFriendOrSelf(sender, localPlayerName))) {
                     if (mouseY > lineY - ClientLayout.CHATBOX_MESSAGE_LINE_HEIGHT && mouseY <= lineY) {
                         if (playerRights >= 1) {
-                            state.actionNames[state.count] = "Report abuse @whi@" + sender;
-                            state.actionIds[state.count] = MenuState.REPORT_ABUSE;
-                            state.count++;
+                            state.add(new MenuEntry("Report abuse @whi@" + sender, MenuState.REPORT_ABUSE, 0, 0, 0));
                         }
-                        state.actionNames[state.count] = "Add ignore @whi@" + sender;
-                        state.actionIds[state.count] = MenuState.ADD_IGNORE;
-                        state.count++;
-                        state.actionNames[state.count] = "Add friend @whi@" + sender;
-                        state.actionIds[state.count] = MenuState.ADD_FRIEND;
-                        state.count++;
+                        state.add(new MenuEntry("Add ignore @whi@" + sender, MenuState.ADD_IGNORE, 0, 0, 0));
+                        state.add(new MenuEntry("Add friend @whi@" + sender, MenuState.ADD_FRIEND, 0, 0, 0));
                     }
                     visibleLine++;
                 }
                 if (messageType == ChatMessageType.TRADE_REQUEST && (chatController.tradeMode() == ChatMode.ON || chatController.tradeMode() == ChatMode.FRIENDS && socialManager.isFriendOrSelf(sender, localPlayerName))) {
                     if (mouseY > lineY - ClientLayout.CHATBOX_MESSAGE_LINE_HEIGHT && mouseY <= lineY) {
-                        state.actionNames[state.count] = "Accept trade @whi@" + sender;
-                        state.actionIds[state.count] = MenuState.ACCEPT_TRADE;
-                        state.count++;
+                        state.add(new MenuEntry("Accept trade @whi@" + sender, MenuState.ACCEPT_TRADE, 0, 0, 0));
                     }
                     visibleLine++;
                 }
@@ -1044,9 +819,7 @@ public final class MenuController {
                     visibleLine++;
                 if (messageType == ChatMessageType.CHALLENGE_REQUEST && (chatController.tradeMode() == ChatMode.ON || chatController.tradeMode() == ChatMode.FRIENDS && socialManager.isFriendOrSelf(sender, localPlayerName))) {
                     if (mouseY > lineY - ClientLayout.CHATBOX_MESSAGE_LINE_HEIGHT && mouseY <= lineY) {
-                        state.actionNames[state.count] = "Accept challenge @whi@" + sender;
-                        state.actionIds[state.count] = MenuState.ACCEPT_CHALLENGE;
-                        state.count++;
+                        state.add(new MenuEntry("Accept challenge @whi@" + sender, MenuState.ACCEPT_CHALLENGE, 0, 0, 0));
                     }
                     visibleLine++;
                 }
