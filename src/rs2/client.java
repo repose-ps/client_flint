@@ -1,5 +1,6 @@
 package rs2;
 
+import rs2.action.ClientActionDispatcher;
 import rs2.media.animation.AnimationFrame;
 import rs2.shell.GameShell;
 import rs2.ui.ClientLayout;
@@ -2279,47 +2280,12 @@ public class Client extends GameShell {
 	}
 
 	/**
-	 * Normalizes and dispatches one menu action while preserving its numeric
-	 * revision-377 action ID.
+	 * Dispatches one menu action through the application action boundary.
 	 *
 	 * @param menuIndex the menu index
 	 */
 	public void dispatchMenuAction(int menuIndex) {
-		if (menuIndex < 0)
-			return;
-		MenuEntry entry = menuController.state().entry(menuIndex);
-		int cmd2 = entry.argument1();
-		int cmd3 = entry.argument2();
-		int actionId = MenuState.normalizeActionId(entry.action());
-		int cmd1 = entry.argument0();
-		if (chatController.inputDialogState() != 0 && actionId != MenuState.CANCEL_ACTION) {
-			chatController.setInputDialogState(0);
-			gameRenderer.requestChatboxRedraw();
-		}
-
-		switch (MenuState.actionDomain(actionId)) {
-		case PLAYER -> dispatchPlayerMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
-		case NPC -> dispatchNpcMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
-		case OBJECT -> dispatchObjectMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
-		case GROUND_ITEM -> dispatchGroundItemMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
-		case INVENTORY -> {
-			if (dispatchInventoryMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex))
-				return;
-		}
-		case WIDGET -> {
-			if (dispatchWidgetMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex))
-				return;
-		}
-		case SOCIAL -> dispatchSocialMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
-		case WALK -> dispatchMiscMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
-		case CANCEL, UNKNOWN -> {
-			// Preserve the original no-op action path before selection cleanup below.
-		}
-		}
-
-		interfaceController.state().itemSelected = 0;
-		interfaceController.state().spellSelected = 0;
-		gameRenderer.requestSidebarRedraw();
+		actionDispatcher.dispatch(menuIndex);
 	}
 
 	// Player target actions: 200, 408, 493, 596, 677, 876, 918.
@@ -3847,6 +3813,32 @@ public class Client extends GameShell {
 		sceneEntityRenderer = new SceneEntityRenderer();
 		actorOverlayRenderer = new ActorOverlayRenderer();
 		gameRenderer = new GameRenderer();
+		actionDispatcher = new ClientActionDispatcher(menuController, chatController, interfaceController, gameRenderer,
+				(actionId, cmd1, cmd2, cmd3, menuIndex) -> {
+					dispatchPlayerMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
+					return false;
+				},
+				(actionId, cmd1, cmd2, cmd3, menuIndex) -> {
+					dispatchNpcMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
+					return false;
+				},
+				(actionId, cmd1, cmd2, cmd3, menuIndex) -> {
+					dispatchObjectMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
+					return false;
+				},
+				(actionId, cmd1, cmd2, cmd3, menuIndex) -> {
+					dispatchGroundItemMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
+					return false;
+				},
+				this::dispatchInventoryMenuAction, this::dispatchWidgetMenuAction,
+				(actionId, cmd1, cmd2, cmd3, menuIndex) -> {
+					dispatchSocialMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
+					return false;
+				},
+				(actionId, cmd1, cmd2, cmd3, menuIndex) -> {
+					dispatchMiscMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
+					return false;
+				});
 		minimapRenderer = new MinimapRenderer();
 		regionManager = new RegionManager(dynamicObjects);
 		ClientScriptContext scriptContext = new ClientScriptContext(
@@ -4047,6 +4039,8 @@ public class Client extends GameShell {
 	};
 	/** The client state for menu state. */
 	private final MenuController menuController;
+	/** Owns normalized menu-action routing and shared selection cleanup. */
+	private final ClientActionDispatcher actionDispatcher;
 	/** The client state for login screen. */
 	final LoginScreen loginScreen;
 	/** Owns the revision-377 login handshake, retries, and login session key. */

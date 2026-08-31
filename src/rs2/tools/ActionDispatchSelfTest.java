@@ -6,7 +6,15 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import rs2.action.ClientActionDispatcher;
+import rs2.chat.ChatController;
+import rs2.chat.SocialManager;
+import rs2.game.render.GameRenderer;
+import rs2.ui.ClientLayout;
+import rs2.ui.InterfaceController;
 import rs2.ui.menu.MenuActionDomain;
+import rs2.ui.menu.MenuController;
+import rs2.ui.menu.MenuEntry;
 import rs2.ui.menu.MenuState;
 
 /**
@@ -95,6 +103,7 @@ public final class ActionDispatchSelfTest {
         Set<Integer> expectedIds = testDomainRoutes(test);
         testMenuStateActionSurface(test, expectedIds);
         testUnknownActions(test);
+        testDispatcherContract(test);
         return test.checks();
     }
 
@@ -172,4 +181,192 @@ public final class ActionDispatchSelfTest {
         test.check(MenuState.actionDomain(MenuState.LOW_PRIORITY_OFFSET) == MenuActionDomain.UNKNOWN,
                 "priority offset alone is not an action");
     }
+    /**
+     * Verifies the extracted dispatcher owns normalization, single-domain routing,
+     * input-dialog cancellation, early-return preservation, and shared cleanup.
+     *
+     * @param test assertion sink
+     */
+    private static void testDispatcherContract(SelfTestSupport test) {
+        InterfaceController interfaces = new InterfaceController();
+        ChatController chat = new ChatController();
+        GameRenderer renderer = new GameRenderer();
+        MenuController menus = new MenuController(new ClientLayout(), interfaces, new SocialManager(), chat, () -> 0,
+                new InterfaceController.RedrawSink() {
+                    @Override
+                    public void redrawSidebar() {
+                    }
+
+                    @Override
+                    public void redrawTabs() {
+                    }
+
+                    @Override
+                    public void redrawChatbox() {
+                    }
+
+                    @Override
+                    public void redrawGameScreen() {
+                    }
+                });
+        int[] calls = new int[8];
+        int[] last = new int[5];
+        ClientActionDispatcher.ActionHandler player = recordingHandler(calls, 0, last, interfaces, false);
+        ClientActionDispatcher.ActionHandler npc = recordingHandler(calls, 1, last, interfaces, false);
+        ClientActionDispatcher.ActionHandler object = recordingHandler(calls, 2, last, interfaces, false);
+        ClientActionDispatcher.ActionHandler ground = recordingHandler(calls, 3, last, interfaces, false);
+        ClientActionDispatcher.ActionHandler inventory = (actionId, argument0, argument1, argument2, menuIndex) -> {
+            record(calls, 4, last, actionId, argument0, argument1, argument2, menuIndex);
+            if (actionId == MenuState.SELECT_ITEM) {
+                interfaces.state().itemSelected = 1;
+                interfaces.state().spellSelected = 0;
+                return true;
+            }
+            return false;
+        };
+        ClientActionDispatcher.ActionHandler widget = (actionId, argument0, argument1, argument2, menuIndex) -> {
+            record(calls, 5, last, actionId, argument0, argument1, argument2, menuIndex);
+            if (actionId == MenuState.SELECT_SPELL) {
+                interfaces.state().itemSelected = 0;
+                interfaces.state().spellSelected = 1;
+                return true;
+            }
+            return false;
+        };
+        ClientActionDispatcher.ActionHandler social = recordingHandler(calls, 6, last, interfaces, false);
+        ClientActionDispatcher.ActionHandler walk = recordingHandler(calls, 7, last, interfaces, false);
+        ClientActionDispatcher dispatcher = new ClientActionDispatcher(menus, chat, interfaces, renderer, player, npc,
+                object, ground, inventory, widget, social, walk);
+
+        dispatcher.dispatch(-1);
+        test.equal(total(calls), 0, "negative menu index performs no dispatch");
+        test.check(!renderer.sidebarRedrawPending(), "negative menu index performs no cleanup redraw");
+
+        int playerIndex = add(menus, MenuState.lowPriority(MenuState.PLAYER_OPTION_2), 11, 22, 33);
+        chat.setInputDialogState(1);
+        interfaces.state().itemSelected = 1;
+        interfaces.state().spellSelected = 1;
+        dispatcher.dispatch(playerIndex);
+        test.equal(calls[0], 1, "player action reaches player callback once");
+        test.equal(total(calls), 1, "player action reaches exactly one domain callback");
+        test.equal(last[0], MenuState.PLAYER_OPTION_2, "dispatcher normalizes low-priority action ID");
+        test.equal(last[1], 11, "dispatcher preserves argument 0");
+        test.equal(last[2], 22, "dispatcher preserves argument 1");
+        test.equal(last[3], 33, "dispatcher preserves argument 2");
+        test.equal(last[4], playerIndex, "dispatcher preserves menu index");
+        test.equal(chat.inputDialogState(), 0, "non-cancel action closes input dialog");
+        test.check(renderer.chatboxRedrawPending(), "input-dialog cancellation requests chatbox redraw");
+        test.equal(interfaces.state().itemSelected, 0, "normal action clears item selection");
+        test.equal(interfaces.state().spellSelected, 0, "normal action clears spell selection");
+        test.check(renderer.sidebarRedrawPending(), "normal action requests sidebar redraw");
+
+        renderer.clearChatboxRedraw();
+        renderer.clearSidebarRedraw();
+        chat.setInputDialogState(2);
+        interfaces.state().itemSelected = 1;
+        interfaces.state().spellSelected = 1;
+        int cancelIndex = add(menus, MenuState.CANCEL_ACTION, 0, 0, 0);
+        dispatcher.dispatch(cancelIndex);
+        test.equal(chat.inputDialogState(), 2, "cancel preserves open input dialog");
+        test.equal(total(calls), 1, "cancel does not invoke a domain callback");
+        test.equal(interfaces.state().itemSelected, 0, "cancel clears item selection");
+        test.equal(interfaces.state().spellSelected, 0, "cancel clears spell selection");
+        test.check(renderer.sidebarRedrawPending(), "cancel still requests shared sidebar redraw");
+        test.check(!renderer.chatboxRedrawPending(), "cancel does not request dialog-cancellation redraw");
+
+        renderer.clearSidebarRedraw();
+        int selectItemIndex = add(menus, MenuState.SELECT_ITEM, 44, 55, 66);
+        dispatcher.dispatch(selectItemIndex);
+        test.equal(calls[4], 1, "select-item reaches inventory callback");
+        test.equal(interfaces.state().itemSelected, 1, "select-item preserves item selection");
+        test.equal(interfaces.state().spellSelected, 0, "select-item preserves inventory handler spell state");
+        test.check(!renderer.sidebarRedrawPending(), "dispatcher skips shared redraw after select-item early return");
+
+        int selectSpellIndex = add(menus, MenuState.SELECT_SPELL, 77, 88, 99);
+        dispatcher.dispatch(selectSpellIndex);
+        test.equal(calls[5], 1, "select-spell reaches widget callback");
+        test.equal(interfaces.state().itemSelected, 0, "select-spell preserves widget handler item state");
+        test.equal(interfaces.state().spellSelected, 1, "select-spell preserves spell selection");
+        test.check(!renderer.sidebarRedrawPending(), "dispatcher skips shared redraw after select-spell early return");
+
+        renderer.clearSidebarRedraw();
+        chat.setInputDialogState(3);
+        interfaces.state().itemSelected = 1;
+        interfaces.state().spellSelected = 1;
+        int unknownIndex = add(menus, 123_456, 1, 2, 3);
+        dispatcher.dispatch(unknownIndex);
+        test.equal(total(calls), 3, "unknown action invokes no domain callback");
+        test.equal(chat.inputDialogState(), 0, "unknown non-cancel action closes input dialog");
+        test.equal(interfaces.state().itemSelected, 0, "unknown action performs shared item cleanup");
+        test.equal(interfaces.state().spellSelected, 0, "unknown action performs shared spell cleanup");
+        test.check(renderer.sidebarRedrawPending(), "unknown action requests shared sidebar redraw");
+    }
+
+    /**
+     * Creates a callback that records one domain invocation.
+     *
+     * @param calls per-domain counters
+     * @param domain domain index
+     * @param last last dispatched action/arguments
+     * @param interfaces interface state owner
+     * @param preserve whether the callback preserves selection
+     * @return recording action callback
+     */
+    private static ClientActionDispatcher.ActionHandler recordingHandler(int[] calls, int domain, int[] last,
+            InterfaceController interfaces, boolean preserve) {
+        return (actionId, argument0, argument1, argument2, menuIndex) -> {
+            record(calls, domain, last, actionId, argument0, argument1, argument2, menuIndex);
+            if (preserve) {
+                interfaces.state().itemSelected = 1;
+            }
+            return preserve;
+        };
+    }
+
+    /** Records one callback invocation.
+     * @param calls per-domain counters
+     * @param domain domain index
+     * @param last last dispatched action/arguments
+     * @param actionId normalized action ID
+     * @param argument0 first argument
+     * @param argument1 second argument
+     * @param argument2 third argument
+     * @param menuIndex menu index
+     */
+    private static void record(int[] calls, int domain, int[] last, int actionId, int argument0, int argument1,
+            int argument2, int menuIndex) {
+        calls[domain]++;
+        last[0] = actionId;
+        last[1] = argument0;
+        last[2] = argument1;
+        last[3] = argument2;
+        last[4] = menuIndex;
+    }
+
+    /** Appends one test menu entry.
+     * @param menus menu owner
+     * @param action action ID
+     * @param argument0 first argument
+     * @param argument1 second argument
+     * @param argument2 third argument
+     * @return appended menu index
+     */
+    private static int add(MenuController menus, int action, int argument0, int argument1, int argument2) {
+        int index = menus.state().count;
+        menus.state().add(new MenuEntry("test", action, argument0, argument1, argument2));
+        return index;
+    }
+
+    /** Returns the total callback count.
+     * @param calls per-domain counters
+     * @return total callback count
+     */
+    private static int total(int[] calls) {
+        int total = 0;
+        for (int count : calls) {
+            total += count;
+        }
+        return total;
+    }
+
 }

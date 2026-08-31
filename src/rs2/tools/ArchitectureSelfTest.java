@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import rs2.Client;
+import rs2.action.ClientActionDispatcher;
 import rs2.net.Buffer;
 import rs2.ui.WidgetRenderer;
 import rs2.ui.menu.MenuEntry;
@@ -36,6 +37,7 @@ public final class ArchitectureSelfTest {
 
     /** Classes moved during the post-Phase-6 package cohesion sweep. */
     private static final String[] PACKAGED_CLASSES = {
+            "rs2.action.ClientActionDispatcher",
             "rs2.shell.GameShell",
             "rs2.shell.GameFrame",
             "rs2.ui.ClientLayout",
@@ -47,6 +49,7 @@ public final class ArchitectureSelfTest {
 
     /** Obsolete pre-sweep class names that must not reappear. */
     private static final String[] OBSOLETE_CLASS_NAMES = {
+            "rs2.ClientActionDispatcher",
             "rs2.ClientIncomingPacketHandler",
             "rs2.InterfacePacketHandler",
             "rs2.SocialPacketHandler",
@@ -135,6 +138,7 @@ public final class ArchitectureSelfTest {
         testClientFieldVisibility(test);
         testPacketHandlerBoundaries(test);
         testPacketAdapterBoundary(test);
+        testActionDispatcherBoundary(test);
         testPackageCohesion(test);
         testRemovedClientBridges(test);
         testWidgetRendererBoundary(test);
@@ -185,6 +189,30 @@ public final class ArchitectureSelfTest {
         test.check(!Modifier.isPublic(adapter.getModifiers()), "ClientPacketDispatcher stays package-private");
         long clientFields = Arrays.stream(adapter.getDeclaredFields()).filter(field -> field.getType() == Client.class).count();
         test.check(clientFields == 1, "ClientPacketDispatcher is the single intentional packet Client boundary");
+    }
+
+    /**
+     * Verifies that menu-action routing has a dedicated boundary that does not
+     * retain the application coordinator.
+     *
+     * @param test assertion sink
+     */
+    private static void testActionDispatcherBoundary(SelfTestSupport test) {
+        Class<?> dispatcher = ClientActionDispatcher.class;
+        test.check(Modifier.isPublic(dispatcher.getModifiers()),
+                "ClientActionDispatcher is the public rs2.action routing facade");
+        for (Field field : dispatcher.getDeclaredFields()) {
+            test.check(field.getType() != Client.class,
+                    "ClientActionDispatcher field does not retain Client: " + field.getName());
+        }
+        for (Constructor<?> constructor : dispatcher.getDeclaredConstructors()) {
+            test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == Client.class),
+                    "ClientActionDispatcher constructor does not accept Client");
+        }
+        long clientFields = Arrays.stream(Client.class.getDeclaredFields())
+                .filter(field -> field.getType() == ClientActionDispatcher.class)
+                .count();
+        test.check(clientFields == 1, "Client owns exactly one ClientActionDispatcher boundary");
     }
 
     /**
