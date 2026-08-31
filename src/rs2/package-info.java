@@ -5,9 +5,9 @@
  *
  * <p>
  * Most protocol transport, cache, scene, rendering, UI, and gameplay concerns
- * live in dedicated subpackages. {@code ClientIncomingPacketHandler} bridges
- * decoded packets into those runtime subsystems without making {@code rs2.net}
- * depend on the client coordinator, while {@code ClientLifecycle} and
+ * live in dedicated subpackages. {@code ClientIncomingPacketHandler} routes
+ * decoded packets into cohesive application-domain handlers without making
+ * {@code rs2.net} depend on the client coordinator, while {@code ClientLifecycle} and
  * {@code ClientBootstrap} own one-time startup and final shutdown ordering.
  * </p>
  */
