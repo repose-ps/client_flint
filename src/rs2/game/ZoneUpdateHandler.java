@@ -2,7 +2,7 @@ package rs2.game;
 
 import rs2.cache.def.GameObjectDefinition;
 import rs2.collection.NodeDeque;
-import rs2.scene.entity.DynamicObject;
+import rs2.scene.entity.DynamicObjectFactory;
 import rs2.scene.entity.GraphicsObject;
 import rs2.scene.entity.GroundItem;
 import rs2.media.model.Model;
@@ -117,6 +117,9 @@ public final class ZoneUpdateHandler {
 	/** Stores the current world. */
 	private final WorldState world;
 
+	/** Creates animated/morphing locations for zone animation updates. */
+	private final DynamicObjectFactory dynamicObjects;
+
 	/** Stores the current zone base X. */
 	private int zoneBaseX;
 
@@ -127,9 +130,11 @@ public final class ZoneUpdateHandler {
 	 * Creates a new zone update handler.
 	 *
 	 * @param world the world
+	 * @param dynamicObjects dynamic-location factory
 	 */
-	public ZoneUpdateHandler(WorldState world) {
+	public ZoneUpdateHandler(WorldState world, DynamicObjectFactory dynamicObjects) {
 		this.world = world;
+		this.dynamicObjects = dynamicObjects;
 	}
 
 	/**
@@ -287,12 +292,12 @@ public final class ZoneUpdateHandler {
 					if (wall != null) {
 						int objectId = wall.uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK;
 						if (type == CORNER_WALL_TYPE) {
-							wall.primary = new DynamicObject(objectId, CORNER_WALL_TYPE, CORNER_WALL_SECONDARY_ORIENTATION_OFFSET + orientation, southWestHeight,
+							wall.primary = dynamicObjects.create(objectId, CORNER_WALL_TYPE, CORNER_WALL_SECONDARY_ORIENTATION_OFFSET + orientation, southWestHeight,
 									southEastHeight, northEastHeight, northWestHeight, animationId, false);
-							wall.secondary = new DynamicObject(objectId, CORNER_WALL_TYPE, orientation + 1 & SceneConfig.ORIENTATION_MASK, southWestHeight,
+							wall.secondary = dynamicObjects.create(objectId, CORNER_WALL_TYPE, orientation + 1 & SceneConfig.ORIENTATION_MASK, southWestHeight,
 									southEastHeight, northEastHeight, northWestHeight, animationId, false);
 						} else {
-							wall.primary = new DynamicObject(objectId, type, orientation, southWestHeight,
+							wall.primary = dynamicObjects.create(objectId, type, orientation, southWestHeight,
 									southEastHeight, northEastHeight, northWestHeight, animationId, false);
 						}
 					}
@@ -300,7 +305,7 @@ public final class ZoneUpdateHandler {
 				if (sceneLayer == SCENE_LAYER_WALL_DECORATION) {
 					WallDecoration decoration = world.scene.getWallDecoration(currentPlane, tileX, tileY);
 					if (decoration != null) {
-						decoration.renderable = new DynamicObject(decoration.uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK, WALL_DECORATION_MODEL_TYPE, 0, southWestHeight,
+						decoration.renderable = dynamicObjects.create(decoration.uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK, WALL_DECORATION_MODEL_TYPE, 0, southWestHeight,
 								southEastHeight, northEastHeight, northWestHeight, animationId, false);
 					}
 				}
@@ -310,14 +315,14 @@ public final class ZoneUpdateHandler {
 						type = INTERACTIVE_OBJECT_TYPE;
 					}
 					if (object != null) {
-						object.renderable = new DynamicObject(object.uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK, type, orientation,
+						object.renderable = dynamicObjects.create(object.uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK, type, orientation,
 								southWestHeight, southEastHeight, northEastHeight, northWestHeight, animationId, false);
 					}
 				}
 				if (sceneLayer == SCENE_LAYER_FLOOR_DECORATION) {
 					FloorDecoration decoration = world.scene.getFloorDecoration(currentPlane, tileX, tileY);
 					if (decoration != null) {
-						decoration.renderable = new DynamicObject(decoration.uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK, FLOOR_DECORATION_TYPE, orientation,
+						decoration.renderable = dynamicObjects.create(decoration.uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK, FLOOR_DECORATION_TYPE, orientation,
 								southWestHeight, southEastHeight, northEastHeight, northWestHeight, animationId, false);
 					}
 				}

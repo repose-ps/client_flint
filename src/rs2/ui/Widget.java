@@ -1,5 +1,7 @@
 package rs2.ui;
 
+import java.util.function.Supplier;
+
 import rs2.cache.Archive;
 import rs2.cache.ResourceNameHash;
 import rs2.cache.def.ItemDefinition;
@@ -10,7 +12,6 @@ import rs2.media.AnimationFrame;
 import rs2.media.TypeFace;
 import rs2.media.model.Model;
 import rs2.net.Buffer;
-import rs2.Client;
 
 /**
  * A revision-377 interface widget definition and its small amount of mutable UI
@@ -108,6 +109,9 @@ public class Widget {
 	public int[] spriteYOffsets;
 	/** Stores the current sprite archive. */
 	private static Archive spriteArchive;
+
+	/** Supplies the current local-player head model for player-media widgets. */
+	private static Supplier<Model> playerHeadModelProvider;
 	/** Stores the current ID. */
 	public int id;
 	/** Stores widgets values. */
@@ -296,11 +300,14 @@ public class Widget {
 	 * @param mediaArchive     archive used by sprite references embedded in widgets
 	 * @param typeFaces        font table indexed by the one-byte font ids in
 	 *                         widgets
+	 * @param currentPlayerHeadModel supplies the local player's current head model
 	 */
-	public static void load(Archive interfaceArchive, Archive mediaArchive, TypeFace[] typeFaces) {
+	public static void load(Archive interfaceArchive, Archive mediaArchive, TypeFace[] typeFaces,
+			Supplier<Model> currentPlayerHeadModel) {
 		spriteCache = new LruCache(SPRITE_CACHE_CAPACITY);
 		spriteArchive = mediaArchive;
 		fonts = typeFaces;
+		playerHeadModelProvider = currentPlayerHeadModel;
 
 		Buffer buffer = new Buffer(interfaceArchive.read("data"));
 		int widgetCount = buffer.readUnsignedShort();
@@ -355,6 +362,7 @@ public class Widget {
 	 * matching the original method.
 	 */
 	public static void clear() {
+		playerHeadModelProvider = null;
 		widgets = null;
 		spriteArchive = null;
 		spriteCache = null;
@@ -468,7 +476,7 @@ public class Widget {
 			model = NpcDefinition.lookup(mediaId).getHeadModel();
 		}
 		if (mediaType == MEDIA_PLAYER) {
-			model = Client.localPlayer.getHeadModel();
+			model = playerHeadModelProvider.get();
 		}
 		if (mediaType == MEDIA_ITEM) {
 			model = itemDefinition.getUnlitModel(50);

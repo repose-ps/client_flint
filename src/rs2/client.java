@@ -21,6 +21,7 @@ import rs2.net.ProtocolConstants;
 import rs2.ui.WidgetContentType;
 
 import rs2.cache.Archive;
+import rs2.cache.cfg.BitMasks;
 import rs2.cache.cfg.Varbit;
 import rs2.cache.cfg.Varp;
 import rs2.cache.def.FloorDefinition;
@@ -63,7 +64,7 @@ import rs2.media.Rasterizer;
 import rs2.media.Rasterizer3D;
 import rs2.media.TypeFace;
 import rs2.game.entity.Actor;
-import rs2.scene.entity.DynamicObject;
+import rs2.scene.entity.DynamicObjectFactory;
 import rs2.scene.entity.GroundItem;
 import rs2.media.model.Model;
 import rs2.game.entity.Npc;
@@ -2384,12 +2385,17 @@ public class Client extends GameShell {
 
 	/** Initializes world/zone state during one-time client bootstrap. */
 	void initializeWorldForStartup() {
-		worldState = new WorldState();
-		zoneUpdates = new ZoneUpdateHandler(worldState);
+		worldState = new WorldState(dynamicObjects);
+		zoneUpdates = new ZoneUpdateHandler(worldState, dynamicObjects);
 		minimapRenderer.initializeMapImage();
 	}
 
 
+
+	/** Returns current varp state to the lifecycle coordinator.
+	 * @return varp state
+	 */
+	VarpState lifecycleVarpState() { return varpState; }
 
 	/** Returns rendering ownership to the lifecycle coordinator.
 	 * @return game renderer
@@ -2431,16 +2437,6 @@ public class Client extends GameShell {
 	void clearRuntimeWorldForShutdown() {
 		worldState = null;
 		zoneUpdates = null;
-	}
-
-	/**
-	 * Returns one current client varp value for definition morphing.
-	 *
-	 * @param varpId varp identifier
-	 * @return current varp value
-	 */
-	public int getVarp(int varpId) {
-		return varpState.get(varpId);
 	}
 
 	/**
@@ -4211,22 +4207,23 @@ public class Client extends GameShell {
 		soundEffectQueue = new SoundEffectQueue();
 		musicController = new MusicController();
 		pathfinder = new Pathfinder();
-		actorSynchronizer = new ActorSynchronizer();
+		varpState = new VarpState();
+		dynamicObjects = new DynamicObjectFactory(varpState::get, () -> gameCycle);
+		actorSynchronizer = new ActorSynchronizer(() -> gameCycle);
 		actorUpdater = new ActorUpdater();
 		cameraController = new CameraController();
 		sceneEntityRenderer = new SceneEntityRenderer();
 		actorOverlayRenderer = new ActorOverlayRenderer();
 		gameRenderer = new GameRenderer();
 		minimapRenderer = new MinimapRenderer();
-		regionManager = new RegionManager();
-		varpState = new VarpState();
+		regionManager = new RegionManager(dynamicObjects);
 		ClientScriptContext scriptContext = new ClientScriptContext(
 				skill -> currentSkillLevels[skill],
 				skill -> baseSkillLevels[skill],
 				skill -> skillExperiences[skill],
 				varpState::get,
 				levelIndex -> experienceTable[levelIndex],
-				width -> bitMasks[width],
+				BitMasks::get,
 				() -> runEnergy,
 				() -> weight,
 				() -> localPlayer.combatLevel,
@@ -4451,6 +4448,8 @@ public class Client extends GameShell {
 	private final RegionManager regionManager;
 	/** Current and server-shadow client varp state. */
 	private final VarpState varpState;
+	/** Creates dynamic locations with the narrow runtime state they require. */
+	private final DynamicObjectFactory dynamicObjects;
 	/** The client state for world state. */
 	private WorldState worldState;
 	/** The client state for zone updates. */
@@ -4711,8 +4710,6 @@ public class Client extends GameShell {
 	/** The graphics or protocol buffer used for title right center buffer. */
 	public GraphicsBuffer titleRightCenterBuffer;
 
-	/** Stores bit masks values. */
-	public static int bitMasks[];
 	/** The client state for last login day. */
 	public int lastLoginDay;
 	/** The client state for jaggrab socket. */
@@ -4808,13 +4805,6 @@ public class Client extends GameShell {
 			int experienceDelta = (int) ((double) level + 300D * Math.pow(2D, (double) level / 7D));
 			accumulatedExperience += experienceDelta;
 			experienceTable[levelIndex] = accumulatedExperience / 4;
-		}
-
-		bitMasks = new int[32];
-		accumulatedExperience = 2;
-		for (int bitIndex = 0; bitIndex < 32; bitIndex++) {
-			bitMasks[bitIndex] = accumulatedExperience - 1;
-			accumulatedExperience += accumulatedExperience;
 		}
 
 	}

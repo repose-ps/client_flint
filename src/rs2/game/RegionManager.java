@@ -19,6 +19,7 @@ import rs2.game.entity.Player;
 import rs2.net.Buffer;
 import rs2.scene.Region;
 import rs2.scene.SceneConstants;
+import rs2.scene.entity.DynamicObjectFactory;
 
 /**
  * Owns revision-377 map-square/instance loading state and local-base shifts.
@@ -45,8 +46,16 @@ public final class RegionManager {
 	private static final int MAX_INSTANCE_SOURCE_REGIONS = SceneConstants.INSTANCE_CHUNK_COUNT
 			* SceneConstants.INSTANCE_CHUNK_COUNT * SceneConstants.PLANE_COUNT;
 
-	/** Creates a new region manager with its default client state. */
-	public RegionManager() {
+	/** Creates animated/morphing scene locations during region builds. */
+	private final DynamicObjectFactory dynamicObjects;
+
+	/**
+	 * Creates a new region manager.
+	 *
+	 * @param dynamicObjects dynamic-location factory
+	 */
+	public RegionManager(DynamicObjectFactory dynamicObjects) {
+		this.dynamicObjects = dynamicObjects;
 	}
 
 	/** Constant value for stage unloaded. */
@@ -481,7 +490,8 @@ public final class RegionManager {
 				}
 			}
 
-			Region region = new Region(world.tileHeights, world.tileFlags, SceneConstants.SIZE, SceneConstants.SIZE);
+			Region region = new Region(world.tileHeights, world.tileFlags, SceneConstants.SIZE, SceneConstants.SIZE,
+				dynamicObjects);
 			int regionCount = terrainData.length;
 			outgoing.writeOpcode(OutgoingPacketOpcode.NO_TIMEOUT);
 			if (!instanced) {

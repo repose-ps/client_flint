@@ -1,8 +1,9 @@
 package rs2.cache.def;
 
-import rs2.Client;
 import rs2.cache.Archive;
+import rs2.cache.cfg.BitMasks;
 import rs2.cache.cfg.Varbit;
+import rs2.cache.cfg.VarpProvider;
 import rs2.collection.LruCache;
 import rs2.media.AnimationFrame;
 import rs2.media.model.Model;
@@ -95,8 +96,8 @@ public class NpcDefinition {
 	public int opcode91Value = -1;
 	/** Stores the current ID. */
 	public long id = -1L;
-	/** Stores the current client instance. */
-	public static Client clientInstance;
+	/** Current varp values used to select morph definitions. */
+	private static VarpProvider varpProvider;
 	/** Stores the current scale Y. */
 	public int scaleY = 128;
 	/** Whether clickable is enabled or active. */
@@ -301,6 +302,7 @@ public class NpcDefinition {
 
 	/** Releases the definition and base-model caches. */
 	public static void clear() {
+		varpProvider = null;
 		modelCache = null;
 		offsets = null;
 		cache = null;
@@ -352,8 +354,10 @@ public class NpcDefinition {
 	/**
 	 * Loads the indexed NPC definition table from {@code npc.dat}/{@code npc.idx}.
 	 * @param archive the source archive
+	 * @param currentVarps current varp values used by morph definitions
 	 */
-	public static void load(Archive archive) {
+	public static void load(Archive archive, VarpProvider currentVarps) {
+		varpProvider = currentVarps;
 		dataBuffer = new Buffer(archive.read("npc.dat"));
 		Buffer indexBuffer = new Buffer(archive.read("npc.idx"));
 		count = indexBuffer.readUnsignedShort();
@@ -467,11 +471,11 @@ public class NpcDefinition {
 			int varp = varbit.varpId;
 			int leastBit = varbit.leastSignificantBit;
 			int mostBit = varbit.mostSignificantBit;
-			int mask = Client.bitMasks[mostBit - leastBit];
-			return clientInstance.getVarp(varp) >> leastBit & mask;
+			int mask = BitMasks.get(mostBit - leastBit);
+			return varpProvider.getVarp(varp) >> leastBit & mask;
 		}
 		if (varpId != -1) {
-			return clientInstance.getVarp(varpId);
+			return varpProvider.getVarp(varpId);
 		}
 		return -1;
 	}

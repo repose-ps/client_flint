@@ -1,8 +1,9 @@
 package rs2.cache.def;
 
-import rs2.Client;
 import rs2.cache.Archive;
+import rs2.cache.cfg.BitMasks;
 import rs2.cache.cfg.Varbit;
+import rs2.cache.cfg.VarpProvider;
 import rs2.cache.ondemand.OnDemandFetcher;
 import rs2.collection.LruCache;
 import rs2.media.AnimationFrame;
@@ -143,8 +144,8 @@ public class GameObjectDefinition {
 	/** Tracks whether contoured ground. */
 	public boolean contouredGround;
 
-	/** Stores the current client instance. */
-	public static Client clientInstance;
+	/** Current varp values used to select morph definitions. */
+	private static VarpProvider varpProvider;
 
 	/** Stores model parts values. */
 	private static final Model[] modelParts = new Model[4];
@@ -250,8 +251,10 @@ public class GameObjectDefinition {
 	 * Loads the indexed location-definition archive.
 	 *
 	 * @param archive the archive
+	 * @param currentVarps current varp values used by morph definitions
 	 */
-	public static void load(Archive archive) {
+	public static void load(Archive archive, VarpProvider currentVarps) {
+		varpProvider = currentVarps;
 		dataBuffer = new Buffer(archive.read("loc.dat"));
 		Buffer index = new Buffer(archive.read("loc.idx"));
 		count = index.readUnsignedShort();
@@ -291,6 +294,7 @@ public class GameObjectDefinition {
 
 	/** Releases definition/model caches and indexed archive state. */
 	public static void clear() {
+		varpProvider = null;
 		rawModelCache = null;
 		modelCache = null;
 		offsets = null;
@@ -377,10 +381,10 @@ public class GameObjectDefinition {
 		int morphIndex = -1;
 		if (varbitId != -1) {
 			Varbit varbit = Varbit.definitions[varbitId];
-			int mask = Client.bitMasks[varbit.mostSignificantBit - varbit.leastSignificantBit];
-			morphIndex = clientInstance.getVarp(varbit.varpId) >> varbit.leastSignificantBit & mask;
+			int mask = BitMasks.get(varbit.mostSignificantBit - varbit.leastSignificantBit);
+			morphIndex = varpProvider.getVarp(varbit.varpId) >> varbit.leastSignificantBit & mask;
 		} else if (varpId != -1) {
-			morphIndex = clientInstance.getVarp(varpId);
+			morphIndex = varpProvider.getVarp(varpId);
 		}
 		if (morphIndex < 0 || morphIndex >= morphIds.length || morphIds[morphIndex] == -1) {
 			return null;

@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import rs2.chat.ChatCodec;
+import rs2.cache.cfg.BitMasks;
 import rs2.game.VarpState;
 import rs2.net.Buffer;
 import rs2.scene.SceneConfig;
@@ -58,6 +59,7 @@ public final class ClientSelfTest {
         testBase37(test);
         testChatCodec(test);
         testVarpState(test);
+        testBitMasks(test);
         testMenuPriority(test);
         testScenePacking(test);
         testChunkGeometry(test);
@@ -111,6 +113,18 @@ public final class ClientSelfTest {
         test.check(changed.equals(List.of(10)), "varp synchronization reports changed ID");
         test.check(state.acceptServerValue(11, 3), "new authoritative varp reports change");
         test.equal(state.get(11), 3, "authoritative varp updates current value");
+    }
+
+    /** Verifies the extracted revision-377 bit-mask table.
+     * @param test assertion sink
+     */
+    private static void testBitMasks(SelfTestSupport test) {
+        test.equal(BitMasks.get(0), 0x1, "bit mask index 0");
+        test.equal(BitMasks.get(1), 0x3, "bit mask index 1");
+        test.equal(BitMasks.get(7), 0xff, "bit mask index 7");
+        test.equal(BitMasks.get(15), 0xffff, "bit mask index 15");
+        test.equal(BitMasks.get(30), 0x7fffffff, "bit mask index 30");
+        test.equal(BitMasks.get(31), -1, "bit mask index 31");
     }
 
     /** Verifies the original stable menu-priority partition and parallel state.

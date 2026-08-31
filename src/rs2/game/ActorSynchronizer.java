@@ -1,5 +1,8 @@
 package rs2.game;
 
+import java.util.Objects;
+import java.util.function.IntSupplier;
+
 import rs2.cache.def.NpcDefinition;
 import rs2.cache.def.AnimationSequence;
 import rs2.chat.ChatCodec;
@@ -157,6 +160,9 @@ public final class ActorSynchronizer {
 	/** Local player instance stored in {@link #LOCAL_PLAYER_INDEX}. */
 	public Player localPlayer;
 
+	/** Current client cycle supplied to player model timing. */
+	private final IntSupplier gameCycleProvider;
+
 	/**
 	 * Callback boundary for the chat/social behavior embedded in player update
 	 * masks.
@@ -187,8 +193,13 @@ public final class ActorSynchronizer {
 		void addChatMessage(String sender, String message, int type);
 	}
 
-	/** Creates an empty actor synchronizer; call {@link #reset()} before decoding updates. */
-	public ActorSynchronizer() {
+	/**
+	 * Creates an empty actor synchronizer; call {@link #reset()} before decoding updates.
+	 *
+	 * @param gameCycleProvider current client-cycle source used by player models
+	 */
+	public ActorSynchronizer(IntSupplier gameCycleProvider) {
+		this.gameCycleProvider = Objects.requireNonNull(gameCycleProvider, "gameCycleProvider");
 	}
 
 	/**
@@ -208,7 +219,7 @@ public final class ActorSynchronizer {
 		for (int index = 0; index < MAX_NPCS; index++) {
 			npcs[index] = null;
 		}
-		localPlayer = new Player();
+		localPlayer = new Player(gameCycleProvider);
 		players[LOCAL_PLAYER_INDEX] = localPlayer;
 		return localPlayer;
 	}
@@ -451,7 +462,7 @@ public final class ActorSynchronizer {
 				break;
 			}
 			if (players[playerIndex] == null) {
-				players[playerIndex] = new Player();
+				players[playerIndex] = new Player(gameCycleProvider);
 				if (playerAppearanceBuffers[playerIndex] != null) {
 					players[playerIndex].updateAppearance(playerAppearanceBuffers[playerIndex]);
 				}

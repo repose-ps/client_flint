@@ -1,7 +1,8 @@
 package rs2.game.entity;
 
+import java.util.function.IntSupplier;
+
 import rs2.media.Angle;
-import rs2.Client;
 import rs2.cache.def.AnimationSequence;
 import rs2.cache.def.IdentityKit;
 import rs2.cache.def.ItemDefinition;
@@ -53,8 +54,16 @@ public class Player extends Actor {
 	/** Bits contributed by gender to the appearance hash. */
 	private static final int GENDER_HASH_BITS = 1;
 
-	/** Creates a new player with its default client state. */
-	public Player() {
+	/** Current client cycle used by attached-model timing. */
+	private final IntSupplier gameCycleProvider;
+
+	/**
+	 * Creates a player.
+	 *
+	 * @param gameCycleProvider current client-cycle source
+	 */
+	public Player(IntSupplier gameCycleProvider) {
+		this.gameCycleProvider = gameCycleProvider;
 	}
 
 	/** Stores the current attached model X. */
@@ -348,10 +357,11 @@ public class Player extends Actor {
 		}
 
 		if (attachedModel != null) {
-			if (Client.gameCycle >= attachedModelEndCycle) {
+			int gameCycle = gameCycleProvider.getAsInt();
+			if (gameCycle >= attachedModelEndCycle) {
 				attachedModel = null;
 			}
-			if (Client.gameCycle >= attachedModelStartCycle && Client.gameCycle < attachedModelEndCycle) {
+			if (gameCycle >= attachedModelStartCycle && gameCycle < attachedModelEndCycle) {
 				Model temporaryModel = attachedModel;
 				temporaryModel.translate(attachedModelX - x, attachedModelHeight - tileHeight, attachedModelY - y);
 				if (orientation == Angle.QUARTER_TURN) {

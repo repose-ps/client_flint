@@ -1,8 +1,11 @@
 
 package rs2.scene.entity;
 
-import rs2.Client;
+import java.util.function.IntSupplier;
+
+import rs2.cache.cfg.BitMasks;
 import rs2.cache.cfg.Varbit;
+import rs2.cache.cfg.VarpProvider;
 import rs2.cache.def.AnimationSequence;
 import rs2.cache.def.GameObjectDefinition;
 import rs2.media.model.Model;
@@ -42,8 +45,11 @@ public class DynamicObject extends Renderable {
 	/** Stores the current orientation. */
 	public int orientation;
 
-	/** Stores the current client instance. */
-	public static Client clientInstance;
+	/** Current varp values used by location morphing. */
+	private final VarpProvider varpProvider;
+
+	/** Current client cycle used by animation timing. */
+	private final IntSupplier gameCycleProvider;
 
 	/** Stores the current sequence. */
 	public AnimationSequence sequence;
@@ -77,9 +83,12 @@ public class DynamicObject extends Renderable {
 	 * @param northWestHeight the north west height
 	 * @param animationId the animation ID
 	 * @param randomizeAnimation the randomize animation
+	 * @param varpProvider current varp source used by morphing locations
+	 * @param gameCycleProvider current client-cycle source used by animations
 	 */
-	public DynamicObject(int objectId, int type, int orientation, int southWestHeight, int southEastHeight,
-			int northEastHeight, int northWestHeight, int animationId, boolean randomizeAnimation) {
+	DynamicObject(int objectId, int type, int orientation, int southWestHeight, int southEastHeight,
+			int northEastHeight, int northWestHeight, int animationId, boolean randomizeAnimation,
+			VarpProvider varpProvider, IntSupplier gameCycleProvider) {
 		this.objectId = objectId;
 		this.type = type;
 		this.orientation = orientation;
@@ -87,11 +96,13 @@ public class DynamicObject extends Renderable {
 		this.southEastHeight = southEastHeight;
 		this.northEastHeight = northEastHeight;
 		this.northWestHeight = northWestHeight;
+		this.varpProvider = varpProvider;
+		this.gameCycleProvider = gameCycleProvider;
 
 		if (animationId != -1) {
 			sequence = AnimationSequence.sequences[animationId];
 			frame = 0;
-			animationCycleStart = Client.gameCycle - 1;
+			animationCycleStart = gameCycleProvider.getAsInt() - 1;
 			if (randomizeAnimation && sequence.frameStep != -1) {
 				frame = (int) (Math.random() * sequence.frameCount);
 				animationCycleStart -= (int) (Math.random() * sequence.getFrameLength(frame));
@@ -113,10 +124,10 @@ public class DynamicObject extends Renderable {
 		int morphIndex = -1;
 		if (varbitId != -1) {
 			Varbit varbit = Varbit.definitions[varbitId];
-			int mask = Client.bitMasks[varbit.mostSignificantBit - varbit.leastSignificantBit];
-			morphIndex = clientInstance.getVarp(varbit.varpId) >> varbit.leastSignificantBit & mask;
+			int mask = BitMasks.get(varbit.mostSignificantBit - varbit.leastSignificantBit);
+			morphIndex = varpProvider.getVarp(varbit.varpId) >> varbit.leastSignificantBit & mask;
 		} else if (varpId != -1) {
-			morphIndex = clientInstance.getVarp(varpId);
+			morphIndex = varpProvider.getVarp(varpId);
 		}
 
 		if (morphIndex < 0 || morphIndex >= morphIds.length || morphIds[morphIndex] == -1) {
@@ -134,7 +145,8 @@ public class DynamicObject extends Renderable {
 	protected Model getModel() {
 		int frameId = -1;
 		if (sequence != null) {
-			int elapsed = Client.gameCycle - animationCycleStart;
+			int gameCycle = gameCycleProvider.getAsInt();
+			int elapsed = gameCycle - animationCycleStart;
 			if (elapsed > 100 && sequence.frameStep > 0) {
 				elapsed = 100;
 			}
@@ -151,7 +163,7 @@ public class DynamicObject extends Renderable {
 				sequence = null;
 				break;
 			}
-			animationCycleStart = Client.gameCycle - elapsed;
+			animationCycleStart = gameCycle - elapsed;
 			if (sequence != null) {
 				frameId = sequence.primaryFrameIds[frame];
 			}

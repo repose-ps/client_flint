@@ -14,6 +14,7 @@ import rs2.scene.Region;
 import rs2.scene.Scene;
 import rs2.scene.SceneUid;
 import rs2.scene.SceneConstants;
+import rs2.scene.entity.DynamicObjectFactory;
 import rs2.scene.entity.GraphicsObject;
 import rs2.scene.entity.GroundItem;
 import rs2.scene.entity.Projectile;
@@ -72,10 +73,16 @@ public final class WorldState {
 	/** Stores the current projectile keepalive cycles. */
 	private int projectileKeepaliveCycles;
 
+	/** Creates animated/morphing scene locations for runtime object changes. */
+	private final DynamicObjectFactory dynamicObjects;
+
 	/**
 	 * Creates a new world state.
+	 *
+	 * @param dynamicObjects dynamic-location factory
 	 */
-	public WorldState() {
+	public WorldState(DynamicObjectFactory dynamicObjects) {
+		this.dynamicObjects = dynamicObjects;
 		for (int plane = 0; plane < PLANE_COUNT; plane++) {
 			collisionMaps[plane] = new CollisionMap(SIZE, SIZE);
 		}
@@ -274,7 +281,7 @@ public final class WorldState {
 				heightPlane++;
 			}
 			Region.addLocation(objectId, heightPlane, type, orientation, x, y, plane, collisionMaps[plane], scene,
-					tileHeights);
+					tileHeights, dynamicObjects);
 		}
 	}
 

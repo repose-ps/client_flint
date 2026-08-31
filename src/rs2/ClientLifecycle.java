@@ -24,7 +24,6 @@ import rs2.media.sprite.ItemSpriteFactory;
 import rs2.media.sprite.IndexedImage;
 import rs2.net.Buffer;
 import rs2.scene.Scene;
-import rs2.scene.entity.DynamicObject;
 import rs2.sign.Signlink;
 import rs2.sound.SoundTrack;
 import rs2.ui.Widget;
@@ -242,10 +241,10 @@ public final class ClientLifecycle {
 	private void unpackConfig(Archive configArchive) {
 		client.drawLoadingText(86, "Unpacking config");
 		AnimationSequence.load(configArchive);
-		GameObjectDefinition.load(configArchive);
+		GameObjectDefinition.load(configArchive, client.lifecycleVarpState()::get);
 		FloorDefinition.load(configArchive);
 		ItemDefinition.load(configArchive);
-		NpcDefinition.load(configArchive);
+		NpcDefinition.load(configArchive, client.lifecycleVarpState()::get);
 		IdentityKit.load(configArchive);
 		SpotAnimation.load(configArchive);
 		Varp.load(configArchive);
@@ -275,7 +274,8 @@ public final class ClientLifecycle {
 	private void unpackInterfaces(Archive interfaceArchive, Archive mediaArchive) {
 		client.drawLoadingText(95, "Unpacking interfaces");
 		Widget.load(interfaceArchive, mediaArchive,
-				new TypeFace[] { client.smallFont, client.plainFont, client.boldFont, client.fancyFont });
+				new TypeFace[] { client.smallFont, client.plainFont, client.boldFont, client.fancyFont },
+				() -> client.localPlayer.getHeadModel());
 	}
 
 	/**
@@ -290,9 +290,6 @@ public final class ClientLifecycle {
 		Censor.load(wordEncodingArchive);
 		client.mouseRecorder = new rs2.input.MouseRecorder(client);
 		client.mouseRecorder.start(10);
-		DynamicObject.clientInstance = client;
-		GameObjectDefinition.clientInstance = client;
-		NpcDefinition.clientInstance = client;
 	}
 
 	/** Applies the original small random palette shift to map-function/scene sprites. */

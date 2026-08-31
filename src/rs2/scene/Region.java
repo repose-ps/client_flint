@@ -5,7 +5,7 @@ import rs2.cache.def.FloorDefinition;
 import rs2.cache.def.GameObjectDefinition;
 import rs2.cache.ondemand.OnDemandFetcher;
 import rs2.media.Rasterizer3D;
-import rs2.scene.entity.DynamicObject;
+import rs2.scene.entity.DynamicObjectFactory;
 import rs2.media.model.Model;
 import rs2.media.model.Renderable;
 import rs2.scene.util.TerrainNoise;
@@ -112,6 +112,9 @@ public class Region {
 
 	/** Stores occlusion flags values. */
 	private final int[][][] occlusionFlags;
+
+	/** Creates animated/morphing scene locations with narrow runtime dependencies. */
+	private final DynamicObjectFactory dynamicObjects;
 	/**
 	 * Whether low memory.
 	 */
@@ -147,14 +150,16 @@ public class Region {
 	 * @param southEastHeight the south east height
 	 * @param northEastHeight the north east height
 	 * @param northWestHeight the north west height
+	 * @param dynamicObjects dynamic-location factory
 	 */
 	private static Renderable createRenderable(GameObjectDefinition definition, int objectId, int type, int orientation,
-			int southWestHeight, int southEastHeight, int northEastHeight, int northWestHeight) {
+			int southWestHeight, int southEastHeight, int northEastHeight, int northWestHeight,
+			DynamicObjectFactory dynamicObjects) {
 		if (definition.animationId == -1 && definition.morphIds == null) {
 			return definition.getModelAt(type, orientation, southWestHeight, southEastHeight, northEastHeight,
 					northWestHeight, -1);
 		}
-		return new DynamicObject(objectId, type, orientation, southWestHeight, southEastHeight, northEastHeight,
+		return dynamicObjects.create(objectId, type, orientation, southWestHeight, southEastHeight, northEastHeight,
 				northWestHeight, definition.animationId, true);
 	}
 
@@ -176,9 +181,10 @@ public class Region {
 	 * @param collisionMap the collision map
 	 * @param scene        the scene
 	 * @param heights      the heights
+	 * @param dynamicObjects dynamic-location factory
 	 */
 	public static void addLocation(int objectId, int heightPlane, int type, int orientation, int x, int y,
-			int scenePlane, CollisionMap collisionMap, Scene scene, int[][][] heights) {
+			int scenePlane, CollisionMap collisionMap, Scene scene, int[][][] heights, DynamicObjectFactory dynamicObjects) {
 		int southWestHeight = heights[heightPlane][x][y];
 		int southEastHeight = heights[heightPlane][x + 1][y];
 		int northEastHeight = heights[heightPlane][x + 1][y + 1];
@@ -194,7 +200,7 @@ public class Region {
 
 		if (type == 22) {
 			Renderable renderable = createRenderable(definition, objectId, 22, orientation, southWestHeight,
-					southEastHeight, northEastHeight, northWestHeight);
+					southEastHeight, northEastHeight, northWestHeight, dynamicObjects);
 			scene.addFloorDecoration(scenePlane, x, y, averageHeight, uid, config, renderable);
 			if (definition.blocksMovement && definition.interactive) {
 				collisionMap.markBlocked(x, y);
@@ -204,7 +210,7 @@ public class Region {
 
 		if (type == 10 || type == 11) {
 			Renderable renderable = createRenderable(definition, objectId, 10, orientation, southWestHeight,
-					southEastHeight, northEastHeight, northWestHeight);
+					southEastHeight, northEastHeight, northWestHeight, dynamicObjects);
 			if (renderable != null) {
 				int extraFlags = type == 11 ? 256 : 0;
 				int footprintX = (orientation == 1 || orientation == 3) ? definition.sizeY : definition.sizeX;
@@ -221,7 +227,7 @@ public class Region {
 
 		if (type >= 12) {
 			Renderable renderable = createRenderable(definition, objectId, type, orientation, southWestHeight,
-					southEastHeight, northEastHeight, northWestHeight);
+					southEastHeight, northEastHeight, northWestHeight, dynamicObjects);
 			scene.addGameObject(scenePlane, x, y, 1, 1, averageHeight, renderable, 0, uid, config);
 			if (definition.blocksMovement) {
 				collisionMap.markSolidOccupant(x, y, definition.sizeX, definition.sizeY, orientation,
@@ -232,7 +238,7 @@ public class Region {
 
 		if (type == 0) {
 			Renderable renderable = createRenderable(definition, objectId, 0, orientation, southWestHeight,
-					southEastHeight, northEastHeight, northWestHeight);
+					southEastHeight, northEastHeight, northWestHeight, dynamicObjects);
 			scene.addWall(scenePlane, x, y, averageHeight, uid, config, renderable, null,
 					WALL_ORIENTATION_FLAGS[orientation], 0);
 			if (definition.blocksMovement) {
@@ -243,7 +249,7 @@ public class Region {
 
 		if (type == 1) {
 			Renderable renderable = createRenderable(definition, objectId, 1, orientation, southWestHeight,
-					southEastHeight, northEastHeight, northWestHeight);
+					southEastHeight, northEastHeight, northWestHeight, dynamicObjects);
 			scene.addWall(scenePlane, x, y, averageHeight, uid, config, renderable, null,
 					DIAGONAL_WALL_ORIENTATION_FLAGS[orientation], 0);
 			if (definition.blocksMovement) {
@@ -255,9 +261,9 @@ public class Region {
 		if (type == 2) {
 			int nextOrientation = orientation + 1 & 0x3;
 			Renderable primary = createRenderable(definition, objectId, 2, orientation + 4, southWestHeight,
-					southEastHeight, northEastHeight, northWestHeight);
+					southEastHeight, northEastHeight, northWestHeight, dynamicObjects);
 			Renderable secondary = createRenderable(definition, objectId, 2, nextOrientation, southWestHeight,
-					southEastHeight, northEastHeight, northWestHeight);
+					southEastHeight, northEastHeight, northWestHeight, dynamicObjects);
 			scene.addWall(scenePlane, x, y, averageHeight, uid, config, primary, secondary,
 					WALL_ORIENTATION_FLAGS[orientation], WALL_ORIENTATION_FLAGS[nextOrientation]);
 			if (definition.blocksMovement) {
@@ -268,7 +274,7 @@ public class Region {
 
 		if (type == 3) {
 			Renderable renderable = createRenderable(definition, objectId, 3, orientation, southWestHeight,
-					southEastHeight, northEastHeight, northWestHeight);
+					southEastHeight, northEastHeight, northWestHeight, dynamicObjects);
 			scene.addWall(scenePlane, x, y, averageHeight, uid, config, renderable, null,
 					DIAGONAL_WALL_ORIENTATION_FLAGS[orientation], 0);
 			if (definition.blocksMovement) {
@@ -279,7 +285,7 @@ public class Region {
 
 		if (type == 9) {
 			Renderable renderable = createRenderable(definition, objectId, 9, orientation, southWestHeight,
-					southEastHeight, northEastHeight, northWestHeight);
+					southEastHeight, northEastHeight, northWestHeight, dynamicObjects);
 			scene.addGameObject(scenePlane, x, y, 1, 1, averageHeight, renderable, 0, uid, config);
 			if (definition.blocksMovement) {
 				collisionMap.markSolidOccupant(x, y, definition.sizeX, definition.sizeY, orientation,
@@ -312,7 +318,7 @@ public class Region {
 		}
 
 		Renderable decoration = createRenderable(definition, objectId, 4, 0, southWestHeight, southEastHeight,
-				northEastHeight, northWestHeight);
+				northEastHeight, northWestHeight, dynamicObjects);
 		if (type == 4) {
 			scene.addWallDecoration(scenePlane, x, y, averageHeight, 0, 0, orientation * Angle.QUARTER_TURN, uid, config,
 					WALL_ORIENTATION_FLAGS[orientation], decoration);
@@ -1065,7 +1071,7 @@ public class Region {
 		if (type == 22) {
 			if (!lowMemory || definition.interactive || definition.obstructsGround) {
 				Renderable renderable = createRenderable(definition, objectId, 22, orientation, southWestHeight,
-						southEastHeight, northEastHeight, northWestHeight);
+						southEastHeight, northEastHeight, northWestHeight, dynamicObjects);
 				scene.addFloorDecoration(plane, x, y, averageHeight, uid, config, renderable);
 				if (definition.blocksMovement && definition.interactive && collisionMap != null) {
 					collisionMap.markBlocked(x, y);
@@ -1076,7 +1082,7 @@ public class Region {
 
 		if (type == 10 || type == 11) {
 			Renderable renderable = createRenderable(definition, objectId, 10, orientation, southWestHeight,
-					southEastHeight, northEastHeight, northWestHeight);
+					southEastHeight, northEastHeight, northWestHeight, dynamicObjects);
 			if (renderable != null) {
 				int extraFlags = type == 11 ? 256 : 0;
 				int footprintX = (orientation == 1 || orientation == 3) ? definition.sizeY : definition.sizeX;
@@ -1111,7 +1117,7 @@ public class Region {
 
 		if (type >= 12) {
 			Renderable renderable = createRenderable(definition, objectId, type, orientation, southWestHeight,
-					southEastHeight, northEastHeight, northWestHeight);
+					southEastHeight, northEastHeight, northWestHeight, dynamicObjects);
 			scene.addGameObject(plane, x, y, 1, 1, averageHeight, renderable, 0, uid, config);
 			if (type >= 12 && type <= 17 && type != 13 && plane > 0) {
 				occlusionFlags[plane][x][y] |= 0x924;
@@ -1125,7 +1131,7 @@ public class Region {
 
 		if (type == 0) {
 			Renderable renderable = createRenderable(definition, objectId, 0, orientation, southWestHeight,
-					southEastHeight, northEastHeight, northWestHeight);
+					southEastHeight, northEastHeight, northWestHeight, dynamicObjects);
 			scene.addWall(plane, x, y, averageHeight, uid, config, renderable, null,
 					WALL_ORIENTATION_FLAGS[orientation], 0);
 			if (orientation == 0) {
@@ -1172,7 +1178,7 @@ public class Region {
 
 		if (type == 1) {
 			Renderable renderable = createRenderable(definition, objectId, 1, orientation, southWestHeight,
-					southEastHeight, northEastHeight, northWestHeight);
+					southEastHeight, northEastHeight, northWestHeight, dynamicObjects);
 			scene.addWall(plane, x, y, averageHeight, uid, config, renderable, null,
 					DIAGONAL_WALL_ORIENTATION_FLAGS[orientation], 0);
 			if (definition.castsShadow) {
@@ -1195,9 +1201,9 @@ public class Region {
 		if (type == 2) {
 			int nextOrientation = orientation + 1 & 0x3;
 			Renderable primary = createRenderable(definition, objectId, 2, orientation + 4, southWestHeight,
-					southEastHeight, northEastHeight, northWestHeight);
+					southEastHeight, northEastHeight, northWestHeight, dynamicObjects);
 			Renderable secondary = createRenderable(definition, objectId, 2, nextOrientation, southWestHeight,
-					southEastHeight, northEastHeight, northWestHeight);
+					southEastHeight, northEastHeight, northWestHeight, dynamicObjects);
 			scene.addWall(plane, x, y, averageHeight, uid, config, primary, secondary,
 					WALL_ORIENTATION_FLAGS[orientation], WALL_ORIENTATION_FLAGS[nextOrientation]);
 			if (definition.modelClipped) {
@@ -1226,7 +1232,7 @@ public class Region {
 
 		if (type == 3) {
 			Renderable renderable = createRenderable(definition, objectId, 3, orientation, southWestHeight,
-					southEastHeight, northEastHeight, northWestHeight);
+					southEastHeight, northEastHeight, northWestHeight, dynamicObjects);
 			scene.addWall(plane, x, y, averageHeight, uid, config, renderable, null,
 					DIAGONAL_WALL_ORIENTATION_FLAGS[orientation], 0);
 			if (definition.castsShadow) {
@@ -1248,7 +1254,7 @@ public class Region {
 
 		if (type == 9) {
 			Renderable renderable = createRenderable(definition, objectId, 9, orientation, southWestHeight,
-					southEastHeight, northEastHeight, northWestHeight);
+					southEastHeight, northEastHeight, northWestHeight, dynamicObjects);
 			scene.addGameObject(plane, x, y, 1, 1, averageHeight, renderable, 0, uid, config);
 			if (definition.blocksMovement && collisionMap != null) {
 				collisionMap.markSolidOccupant(x, y, definition.sizeX, definition.sizeY, orientation,
@@ -1281,7 +1287,7 @@ public class Region {
 		}
 
 		Renderable decoration = createRenderable(definition, objectId, 4, 0, southWestHeight, southEastHeight,
-				northEastHeight, northWestHeight);
+				northEastHeight, northWestHeight, dynamicObjects);
 		if (type == 4) {
 			scene.addWallDecoration(plane, x, y, averageHeight, 0, 0, orientation * Angle.QUARTER_TURN, uid, config,
 					WALL_ORIENTATION_FLAGS[orientation], decoration);
@@ -1344,13 +1350,16 @@ public class Region {
 	 * @param tileFlags the tile flags
 	 * @param width the width in pixels
 	 * @param height the height in pixels
+	 * @param dynamicObjects dynamic-location factory
 	 */
-	public Region(int[][][] tileHeights, byte[][][] tileFlags, int width, int height) {
+	public Region(int[][][] tileHeights, byte[][][] tileFlags, int width, int height,
+			DynamicObjectFactory dynamicObjects) {
 		minimumPlane = 99;
 		this.width = width;
 		this.height = height;
 		this.tileHeights = tileHeights;
 		this.tileFlags = tileFlags;
+		this.dynamicObjects = dynamicObjects;
 		underlayIds = new byte[4][width][height];
 		overlayIds = new byte[4][width][height];
 		overlayShapes = new byte[4][width][height];
