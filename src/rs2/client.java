@@ -1,5 +1,6 @@
 package rs2;
 
+import rs2.action.ActionPacketEncoder;
 import rs2.action.ClientActionDispatcher;
 import rs2.action.GroundItemActionHandler;
 import rs2.action.InventoryActionHandler;
@@ -252,7 +253,8 @@ public class Client extends GameShell {
 
 	/** Closes all open interface groups through {@link InterfaceController}. */
 	public void closeInterfaces() {
-		interfaceController.closeAll(networkSession.outgoing, interfaceRedrawSink);
+		networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.CLOSE_INTERFACES);
+		interfaceController.closeAll(interfaceRedrawSink);
 	}
 
 	/**
@@ -3030,23 +3032,25 @@ public class Client extends GameShell {
 				Client.this.removeIgnore(encodedName);
 			}
 		};
-		PlayerActionHandler playerActionsHandler = new PlayerActionHandler(actorSynchronizer, networkSession.outgoing,
+		ActionPacketEncoder actionPackets = new ActionPacketEncoder(networkSession.outgoing);
+		PlayerActionHandler playerActionsHandler = new PlayerActionHandler(actorSynchronizer, actionPackets,
 				interfaceController, actionMovement, interactionCrosshair);
-		NpcActionHandler npcActionsHandler = new NpcActionHandler(actorSynchronizer, networkSession.outgoing,
+		NpcActionHandler npcActionsHandler = new NpcActionHandler(actorSynchronizer, actionPackets,
 				interfaceController, actionMovement, interactionCrosshair, this::addChatMessage);
-		ObjectActionHandler objectActionsHandler = new ObjectActionHandler(networkSession.outgoing, interfaceController,
+		ObjectActionHandler objectActionsHandler = new ObjectActionHandler(actionPackets, interfaceController,
 				regionManager, () -> worldState, () -> currentPlane, actionMovement, interactionCrosshair,
 				this::addChatMessage);
-		GroundItemActionHandler groundItemActionsHandler = new GroundItemActionHandler(networkSession.outgoing,
+		GroundItemActionHandler groundItemActionsHandler = new GroundItemActionHandler(actionPackets,
 				interfaceController, regionManager, actionMovement, interactionCrosshair, this::addChatMessage);
-		InventoryActionHandler inventoryActionsHandler = new InventoryActionHandler(networkSession.outgoing, interfaceController,
+		InventoryActionHandler inventoryActionsHandler = new InventoryActionHandler(actionPackets, interfaceController,
 				gameRenderer, () -> inventoryClickCycle = 0, this::addChatMessage);
-		WidgetActionHandler widgetActionsHandler = new WidgetActionHandler(networkSession.outgoing, interfaceController, varpState,
-				gameRenderer, this::applyVarp, socialManager, chatController, appearanceEditor, interfaceRedrawSink,
+		WidgetActionHandler widgetActionsHandler = new WidgetActionHandler(actionPackets, interfaceController, varpState,
+				gameRenderer, this::applyVarp, socialManager, chatController, appearanceEditor,
+				() -> appearanceEditor.writeUpdate(networkSession.outgoing), this::closeInterfaces,
 				value -> logoutTimer = value);
 		SocialActionHandler socialActionsHandler = new SocialActionHandler(menuController, socialManager,
-				actorSynchronizer, networkSession.outgoing, interfaceController, gameRenderer, chatController, actionMovement,
-				this::addChatMessage, socialListActions, interfaceRedrawSink);
+				actorSynchronizer, actionPackets, interfaceController, gameRenderer, chatController, actionMovement,
+				this::addChatMessage, socialListActions, this::closeInterfaces);
 		WalkActionHandler walkActionsHandler = new WalkActionHandler(menuController, () -> worldState, layout,
 				() -> super.clickX, () -> super.clickY);
 		actionDispatcher = new ClientActionDispatcher(menuController, chatController, interfaceController, gameRenderer,

@@ -9,9 +9,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import rs2.Client;
+import rs2.action.ActionPacketEncoder;
 import rs2.action.ClientActionDispatcher;
 import rs2.net.Buffer;
 import rs2.net.NetworkSession;
+import rs2.ui.InterfaceController;
 import rs2.ui.WidgetRenderer;
 import rs2.ui.menu.MenuEntry;
 import rs2.ui.menu.MenuState;
@@ -163,6 +165,7 @@ public final class ArchitectureSelfTest {
         testPacketHandlerBoundaries(test);
         testPacketAdapterBoundary(test);
         testActionDispatcherBoundary(test);
+        testActionPacketBoundary(test);
         testPackageCohesion(test);
         testRemovedClientBridges(test);
         testWidgetRendererBoundary(test);
@@ -243,12 +246,16 @@ public final class ArchitectureSelfTest {
                             className + " field does not retain Client: " + field.getName());
                     test.check(field.getType() != NetworkSession.class,
                             className + " field does not retain NetworkSession: " + field.getName());
+                    test.check(field.getType() != Buffer.class,
+                            className + " field does not retain raw Buffer: " + field.getName());
                 }
                 for (Constructor<?> constructor : handler.getDeclaredConstructors()) {
                     test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == Client.class),
                             className + " constructor does not accept Client");
                     test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == NetworkSession.class),
                             className + " constructor does not accept NetworkSession");
+                    test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == Buffer.class),
+                            className + " constructor does not accept raw Buffer");
                 }
             } catch (ClassNotFoundException exception) {
                 test.check(false, "action handler is present: " + className);
@@ -265,6 +272,44 @@ public final class ArchitectureSelfTest {
                 .filter(field -> field.getType() == ClientActionDispatcher.class)
                 .count();
         test.check(clientFields == 1, "Client owns exactly one ClientActionDispatcher boundary");
+    }
+
+    /**
+     * Verifies that menu-action wire encoding is centralized in one protocol-only
+     * encoder and does not leak a raw outgoing buffer back into action/UI owners.
+     *
+     * @param test assertion sink
+     */
+    private static void testActionPacketBoundary(SelfTestSupport test) {
+        Class<?> encoder = ActionPacketEncoder.class;
+        long bufferFields = Arrays.stream(encoder.getDeclaredFields())
+                .filter(field -> field.getType() == Buffer.class)
+                .count();
+        test.check(bufferFields == 1, "ActionPacketEncoder owns exactly one outgoing Buffer");
+        for (Field field : encoder.getDeclaredFields()) {
+            test.check(field.getType() != Client.class,
+                    "ActionPacketEncoder field does not retain Client: " + field.getName());
+            test.check(field.getType() != NetworkSession.class,
+                    "ActionPacketEncoder field does not retain NetworkSession: " + field.getName());
+        }
+        for (Constructor<?> constructor : encoder.getDeclaredConstructors()) {
+            test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == Client.class),
+                    "ActionPacketEncoder constructor does not accept Client");
+            test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == NetworkSession.class),
+                    "ActionPacketEncoder constructor does not accept NetworkSession");
+        }
+        for (Field field : InterfaceController.class.getDeclaredFields()) {
+            test.check(field.getType() != Buffer.class,
+                    "InterfaceController field does not retain raw Buffer: " + field.getName());
+        }
+        for (Constructor<?> constructor : InterfaceController.class.getDeclaredConstructors()) {
+            test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == Buffer.class),
+                    "InterfaceController constructor does not accept raw Buffer");
+        }
+        for (Method method : InterfaceController.class.getDeclaredMethods()) {
+            test.check(Arrays.stream(method.getParameterTypes()).noneMatch(type -> type == Buffer.class),
+                    "InterfaceController method does not accept raw Buffer: " + method.getName());
+        }
     }
 
     /**

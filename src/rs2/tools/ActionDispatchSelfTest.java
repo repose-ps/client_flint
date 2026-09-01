@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import rs2.action.ActionPacketEncoder;
 import rs2.action.ClientActionDispatcher;
 import rs2.action.PlayerActionHandler;
 import rs2.chat.ChatController;
@@ -362,7 +363,7 @@ public final class ActionDispatchSelfTest {
         InterfaceController interfaces = new InterfaceController();
         int[] movement = new int[9];
         int[] crosshair = new int[1];
-        PlayerActionHandler handler = new PlayerActionHandler(actors, network.outgoing, interfaces,
+        PlayerActionHandler handler = new PlayerActionHandler(actors, new ActionPacketEncoder(network.outgoing), interfaces,
                 (allowAlternative, targetX, targetY, targetWidth, targetHeight, movementType, interactionType,
                         orientation, accessMask) -> {
                     movement[0]++;

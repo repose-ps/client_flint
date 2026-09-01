@@ -8,8 +8,6 @@ import rs2.chat.ChatMessageType;
 import rs2.chat.SocialManager;
 import rs2.game.WorldState;
 import rs2.net.MovementPacketEncoder;
-import rs2.net.Buffer;
-import rs2.net.OutgoingPacketOpcode;
 import rs2.scene.SceneConfig;
 import rs2.scene.SceneUid;
 import rs2.ui.InterfaceController;
@@ -18,8 +16,8 @@ import rs2.game.RegionManager;
 
 /** Applies revision-377 menu actions targeting scene objects. */
 public final class ObjectActionHandler implements ClientActionDispatcher.ActionHandler {
-    /** Outgoing network session. */
-    private final Buffer outgoing;
+    /** Revision-377 action packet encoder. */
+    private final ActionPacketEncoder packets;
     /** Current item/spell selection state. */
     private final InterfaceController interfaces;
     /** Region base coordinates used by object packets. */
@@ -38,7 +36,7 @@ public final class ObjectActionHandler implements ClientActionDispatcher.ActionH
     /**
      * Creates the object action handler.
      *
-     * @param outgoing outgoing revision-377 packet buffer
+     * @param packets revision-377 action packet encoder
      * @param interfaces interface state owner
      * @param regionManager region/base-coordinate owner
      * @param worldState active world supplier
@@ -47,10 +45,10 @@ public final class ObjectActionHandler implements ClientActionDispatcher.ActionH
      * @param markInteractionCrosshair interaction-crosshair callback
      * @param messages chat-message sink
      */
-    public ObjectActionHandler(Buffer outgoing, InterfaceController interfaces, RegionManager regionManager,
+    public ObjectActionHandler(ActionPacketEncoder packets, InterfaceController interfaces, RegionManager regionManager,
             Supplier<WorldState> worldState, IntSupplier currentPlane, ClientActionDispatcher.Movement movement,
             Runnable markInteractionCrosshair, SocialManager.MessageSink messages) {
-        this.outgoing = outgoing;
+        this.packets = packets;
         this.interfaces = interfaces;
         this.regionManager = regionManager;
         this.worldState = worldState;
@@ -64,41 +62,25 @@ public final class ObjectActionHandler implements ClientActionDispatcher.ActionH
     @Override
     public boolean dispatch(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
         if (actionId == MenuState.USE_ITEM_ON_OBJECT && walkToGameObject(cmd3, cmd2, cmd1)) {
-            outgoing.writeOpcode(OutgoingPacketOpcode.USE_ITEM_ON_OBJECT);
-            outgoing.writeShortLE(cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
-            outgoing.writeShortLE(interfaces.state().selectedItemWidgetId);
-            outgoing.writeShortLE(interfaces.state().selectedItemId);
-            outgoing.writeShortLE(cmd3 + regionManager.baseY);
-            outgoing.writeShort(interfaces.state().selectedItemSlot);
-            outgoing.writeShortLEAdd(cmd2 + regionManager.baseX);
+            packets.useItemOnObject(objectId(cmd1), interfaces.state().selectedItemWidgetId,
+                    interfaces.state().selectedItemId, cmd3 + regionManager.baseY,
+                    interfaces.state().selectedItemSlot, cmd2 + regionManager.baseX);
         }
         if (actionId == MenuState.CAST_SPELL_ON_OBJECT && walkToGameObject(cmd3, cmd2, cmd1)) {
-            outgoing.writeOpcode(OutgoingPacketOpcode.CAST_SPELL_ON_OBJECT);
-            outgoing.writeShort(interfaces.state().selectedSpellWidgetId);
-            outgoing.writeShortLE(cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
-            outgoing.writeShortAdd(cmd2 + regionManager.baseX);
-            outgoing.writeShortLE(cmd3 + regionManager.baseY);
+            packets.castSpellOnObject(interfaces.state().selectedSpellWidgetId, objectId(cmd1),
+                    cmd2 + regionManager.baseX, cmd3 + regionManager.baseY);
         }
         if (actionId == MenuState.OBJECT_OPTION_5) {
             walkToGameObject(cmd3, cmd2, cmd1);
-            outgoing.writeOpcode(OutgoingPacketOpcode.OBJECT_OPTION_5);
-            outgoing.writeShortLE(cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
-            outgoing.writeShortLE(cmd3 + regionManager.baseY);
-            outgoing.writeShort(cmd2 + regionManager.baseX);
+            packets.objectOption5(objectId(cmd1), cmd2 + regionManager.baseX, cmd3 + regionManager.baseY);
         }
         if (actionId == MenuState.OBJECT_OPTION_1) {
             walkToGameObject(cmd3, cmd2, cmd1);
-            outgoing.writeOpcode(OutgoingPacketOpcode.OBJECT_OPTION_1);
-            outgoing.writeShortAdd(cmd2 + regionManager.baseX);
-            outgoing.writeShortLE(cmd3 + regionManager.baseY);
-            outgoing.writeShortLE(cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
+            packets.objectOption1(objectId(cmd1), cmd2 + regionManager.baseX, cmd3 + regionManager.baseY);
         }
         if (actionId == MenuState.OBJECT_OPTION_3) {
             walkToGameObject(cmd3, cmd2, cmd1);
-            outgoing.writeOpcode(OutgoingPacketOpcode.OBJECT_OPTION_3);
-            outgoing.writeShortAdd(cmd3 + regionManager.baseY);
-            outgoing.writeShortLE(cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
-            outgoing.writeShortLEAdd(cmd2 + regionManager.baseX);
+            packets.objectOption3(objectId(cmd1), cmd2 + regionManager.baseX, cmd3 + regionManager.baseY);
         }
         if (actionId == MenuState.EXAMINE_OBJECT) {
             int objectId = cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK;
@@ -113,19 +95,21 @@ public final class ObjectActionHandler implements ClientActionDispatcher.ActionH
         }
         if (actionId == MenuState.OBJECT_OPTION_4) {
             walkToGameObject(cmd3, cmd2, cmd1);
-            outgoing.writeOpcode(OutgoingPacketOpcode.OBJECT_OPTION_4);
-            outgoing.writeShort(cmd2 + regionManager.baseX);
-            outgoing.writeShortLE(cmd3 + regionManager.baseY);
-            outgoing.writeShort(cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
+            packets.objectOption4(objectId(cmd1), cmd2 + regionManager.baseX, cmd3 + regionManager.baseY);
         }
         if (actionId == MenuState.OBJECT_OPTION_2) {
             walkToGameObject(cmd3, cmd2, cmd1);
-            outgoing.writeOpcode(OutgoingPacketOpcode.OBJECT_OPTION_2);
-            outgoing.writeShort(cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
-            outgoing.writeShort(cmd2 + regionManager.baseX);
-            outgoing.writeShortAdd(cmd3 + regionManager.baseY);
+            packets.objectOption2(objectId(cmd1), cmd2 + regionManager.baseX, cmd3 + regionManager.baseY);
         }
         return false;
+    }
+
+    /** Returns the object definition ID encoded in a scene UID.
+     * @param uid packed scene UID
+     * @return object definition ID
+     */
+    private static int objectId(int uid) {
+        return uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK;
     }
 
     /**

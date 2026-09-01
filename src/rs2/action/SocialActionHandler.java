@@ -8,8 +8,6 @@ import rs2.game.entity.Actor;
 import rs2.game.entity.Player;
 import rs2.game.render.GameRenderer;
 import rs2.net.MovementPacketEncoder;
-import rs2.net.Buffer;
-import rs2.net.OutgoingPacketOpcode;
 import rs2.text.Base37;
 import rs2.text.TextFormatter;
 import rs2.ui.InterfaceController;
@@ -25,8 +23,8 @@ public final class SocialActionHandler implements ClientActionDispatcher.ActionH
     private final SocialManager socialManager;
     /** Actor state used for name-based trade/challenge targeting. */
     private final ActorSynchronizer actors;
-    /** Outgoing network session. */
-    private final Buffer outgoing;
+    /** Revision-377 action packet encoder. */
+    private final ActionPacketEncoder packets;
     /** Interface/report-abuse state owner. */
     private final InterfaceController interfaces;
     /** Renderer invalidation owner. */
@@ -39,8 +37,8 @@ public final class SocialActionHandler implements ClientActionDispatcher.ActionH
     private final SocialManager.MessageSink messages;
     /** Existing social-list mutation entry points. */
     private final ClientActionDispatcher.SocialListActions listActions;
-    /** Shared interface redraw callbacks. */
-    private final InterfaceController.RedrawSink redrawSink;
+    /** Shared interface-close operation. */
+    private final Runnable closeInterfaces;
 
     /**
      * Creates the social action handler.
@@ -48,30 +46,30 @@ public final class SocialActionHandler implements ClientActionDispatcher.ActionH
      * @param menuController menu-state owner
      * @param socialManager social-list owner
      * @param actors actor state
-     * @param outgoing outgoing revision-377 packet buffer
+     * @param packets revision-377 action packet encoder
      * @param interfaces interface/report-abuse owner
      * @param gameRenderer renderer invalidation owner
      * @param chatController chat/prompt owner
      * @param movement interaction movement capability
      * @param messages chat-message sink
      * @param listActions social-list mutation capability
-     * @param redrawSink interface redraw callbacks
+     * @param closeInterfaces shared interface-close operation
      */
     public SocialActionHandler(MenuController menuController, SocialManager socialManager, ActorSynchronizer actors,
-            Buffer outgoing, InterfaceController interfaces, GameRenderer gameRenderer,
+            ActionPacketEncoder packets, InterfaceController interfaces, GameRenderer gameRenderer,
             ChatController chatController, ClientActionDispatcher.Movement movement, SocialManager.MessageSink messages,
-            ClientActionDispatcher.SocialListActions listActions, InterfaceController.RedrawSink redrawSink) {
+            ClientActionDispatcher.SocialListActions listActions, Runnable closeInterfaces) {
         this.menuController = menuController;
         this.socialManager = socialManager;
         this.actors = actors;
-        this.outgoing = outgoing;
+        this.packets = packets;
         this.interfaces = interfaces;
         this.gameRenderer = gameRenderer;
         this.chatController = chatController;
         this.movement = movement;
         this.messages = messages;
         this.listActions = listActions;
-        this.redrawSink = redrawSink;
+        this.closeInterfaces = closeInterfaces;
     }
 
     /** {@inheritDoc} */
@@ -112,12 +110,10 @@ public final class SocialActionHandler implements ClientActionDispatcher.ActionH
                     movement.walkTo(false, ((Actor) player).pathX[0], ((Actor) player).pathY[0], 1, 1,
                             MovementPacketEncoder.INTERACTION, 0, 0, 0);
                     if (actionId == MenuState.ACCEPT_TRADE) {
-                        outgoing.writeOpcode(OutgoingPacketOpcode.PLAYER_OPTION_4);
-                        outgoing.writeShortLE(actors.playerIndices[activePlayerIndex]);
+                        packets.acceptTrade(actors.playerIndices[activePlayerIndex]);
                     }
                     if (actionId == MenuState.ACCEPT_CHALLENGE) {
-                        outgoing.writeOpcode(OutgoingPacketOpcode.PLAYER_OPTION_1);
-                        outgoing.writeShortLEAdd(actors.playerIndices[activePlayerIndex]);
+                        packets.acceptChallenge(actors.playerIndices[activePlayerIndex]);
                     }
                     playerFound = true;
                     break;
@@ -133,7 +129,7 @@ public final class SocialActionHandler implements ClientActionDispatcher.ActionH
             int markerIndex3 = actionText3.indexOf("@whi@");
             if (markerIndex3 != -1) {
                 if (interfaces.state().openInterfaceId == -1) {
-                    interfaces.closeAll(outgoing, redrawSink);
+                    closeInterfaces.run();
                     interfaces.setReportAbuseName(actionText3.substring(markerIndex3 + 5).trim());
                     interfaces.setReportAbuseMutePlayer(false);
                     interfaces.state().reportAbuseInterfaceId = interfaces.state().openInterfaceId = Widget.reportAbuseInterfaceId;

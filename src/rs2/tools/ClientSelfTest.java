@@ -46,6 +46,7 @@ public final class ClientSelfTest {
         int checks = runCoreClientChecks();
         checks += ArchitectureSelfTest.run();
         checks += ActionDispatchSelfTest.run();
+        checks += ActionPacketSelfTest.run();
         checks += WidgetContentSelfTest.run();
         checks += ProtocolSelfTest.run();
         checks += LayoutSelfTest.run();

@@ -4,8 +4,6 @@ import rs2.cache.def.ItemDefinition;
 import rs2.chat.ChatMessageType;
 import rs2.chat.SocialManager;
 import rs2.game.render.GameRenderer;
-import rs2.net.Buffer;
-import rs2.net.OutgoingPacketOpcode;
 import rs2.ui.InterfaceController;
 import rs2.ui.Widget;
 import rs2.ui.menu.MenuState;
@@ -17,8 +15,8 @@ public final class InventoryActionHandler implements ClientActionDispatcher.Acti
     /** Legacy anti-cheat accumulator for inventory item option 1. */
     private static int inventoryOption1Counter;
 
-    /** Outgoing network session. */
-    private final Buffer outgoing;
+    /** Revision-377 action packet encoder. */
+    private final ActionPacketEncoder packets;
     /** Current interface/inventory selection state. */
     private final InterfaceController interfaces;
     /** Renderer invalidation owner. */
@@ -31,15 +29,15 @@ public final class InventoryActionHandler implements ClientActionDispatcher.Acti
     /**
      * Creates the inventory action handler.
      *
-     * @param outgoing outgoing revision-377 packet buffer
+     * @param packets revision-377 action packet encoder
      * @param interfaces interface state owner
      * @param gameRenderer renderer invalidation owner
      * @param resetInventoryClickCycle inventory-click timer reset callback
      * @param messages chat-message sink
      */
-    public InventoryActionHandler(Buffer outgoing, InterfaceController interfaces,
+    public InventoryActionHandler(ActionPacketEncoder packets, InterfaceController interfaces,
             GameRenderer gameRenderer, Runnable resetInventoryClickCycle, SocialManager.MessageSink messages) {
-        this.outgoing = outgoing;
+        this.packets = packets;
         this.interfaces = interfaces;
         this.gameRenderer = gameRenderer;
         this.resetInventoryClickCycle = resetInventoryClickCycle;
@@ -52,87 +50,52 @@ public final class InventoryActionHandler implements ClientActionDispatcher.Acti
         if (actionId == MenuState.INVENTORY_ITEM_OPTION_4) {
             inventoryOption4Counter++;
             if (inventoryOption4Counter >= 62) {
-                outgoing.writeOpcode(OutgoingPacketOpcode.ANTI_CHEAT_INVENTORY_ITEM_OPTION_4);
-                outgoing.writeByte(206);
+                packets.inventoryItemOption4AntiCheat();
                 inventoryOption4Counter = 0;
             }
-            outgoing.writeOpcode(OutgoingPacketOpcode.INVENTORY_ITEM_OPTION_4);
-            outgoing.writeShortLE(cmd2);
-            outgoing.writeShortAdd(cmd1);
-            outgoing.writeShort(cmd3);
+            packets.inventoryItemOption4(cmd1, cmd2, cmd3);
             markInventoryInteraction(cmd3, cmd2);
         }
         if (actionId == MenuState.INVENTORY_ITEM_OPTION_1) {
             inventoryOption1Counter += cmd1;
             if (inventoryOption1Counter >= 115) {
-                outgoing.writeOpcode(OutgoingPacketOpcode.ANTI_CHEAT_INVENTORY_ITEM_OPTION_1);
-                outgoing.writeByte(125);
+                packets.inventoryItemOption1AntiCheat();
                 inventoryOption1Counter = 0;
             }
-            outgoing.writeOpcode(OutgoingPacketOpcode.INVENTORY_ITEM_OPTION_1);
-            outgoing.writeShortAdd(cmd3);
-            outgoing.writeShortLE(cmd2);
-            outgoing.writeShortLE(cmd1);
+            packets.inventoryItemOption1(cmd1, cmd2, cmd3);
             markInventoryInteraction(cmd3, cmd2);
         }
         if (actionId == MenuState.WIDGET_ITEM_OPTION_1) {
-            outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_ITEM_OPTION_1);
-            outgoing.writeShortAdd(cmd1);
-            outgoing.writeShort(cmd3);
-            outgoing.writeShort(cmd2);
+            packets.widgetItemOption1(cmd1, cmd2, cmd3);
             markInventoryInteraction(cmd3, cmd2);
         }
         if (actionId == MenuState.INVENTORY_ITEM_OPTION_2) {
-            outgoing.writeOpcode(OutgoingPacketOpcode.INVENTORY_ITEM_OPTION_2);
-            outgoing.writeShortLE(cmd3);
-            outgoing.writeShortLE(cmd1);
-            outgoing.writeShortAdd(cmd2);
+            packets.inventoryItemOption2(cmd1, cmd2, cmd3);
             markInventoryInteraction(cmd3, cmd2);
         }
         if (actionId == MenuState.USE_ITEM_ON_INVENTORY_ITEM) {
-            outgoing.writeOpcode(OutgoingPacketOpcode.USE_ITEM_ON_INVENTORY_ITEM);
-            outgoing.writeShort(cmd1);
-            outgoing.writeShortLE(interfaces.state().selectedItemSlot);
-            outgoing.writeShortLE(interfaces.state().selectedItemId);
-            outgoing.writeShortLEAdd(interfaces.state().selectedItemWidgetId);
-            outgoing.writeShortAdd(cmd2);
-            outgoing.writeShortAdd(cmd3);
+            packets.useItemOnInventoryItem(cmd1, interfaces.state().selectedItemSlot,
+                    interfaces.state().selectedItemId, interfaces.state().selectedItemWidgetId, cmd2, cmd3);
             markInventoryInteraction(cmd3, cmd2);
         }
         if (actionId == MenuState.CAST_SPELL_ON_INVENTORY_ITEM) {
-            outgoing.writeOpcode(OutgoingPacketOpcode.CAST_SPELL_ON_INVENTORY_ITEM);
-            outgoing.writeShort(interfaces.state().selectedSpellWidgetId);
-            outgoing.writeShortAdd(cmd3);
-            outgoing.writeShortAdd(cmd2);
-            outgoing.writeShortAdd(cmd1);
+            packets.castSpellOnInventoryItem(interfaces.state().selectedSpellWidgetId, cmd3, cmd2, cmd1);
             markInventoryInteraction(cmd3, cmd2);
         }
         if (actionId == MenuState.WIDGET_ITEM_OPTION_2) {
-            outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_ITEM_OPTION_2);
-            outgoing.writeShortAdd(cmd2);
-            outgoing.writeShortLE(cmd1);
-            outgoing.writeShortLE(cmd3);
+            packets.widgetItemOption2(cmd1, cmd2, cmd3);
             markInventoryInteraction(cmd3, cmd2);
         }
         if (actionId == MenuState.INVENTORY_ITEM_OPTION_5) {
-            outgoing.writeOpcode(OutgoingPacketOpcode.INVENTORY_ITEM_OPTION_5);
-            outgoing.writeShortLE(cmd2);
-            outgoing.writeShortLEAdd(cmd1);
-            outgoing.writeShortLEAdd(cmd3);
+            packets.inventoryItemOption5(cmd1, cmd2, cmd3);
             markInventoryInteraction(cmd3, cmd2);
         }
         if (actionId == MenuState.WIDGET_ITEM_OPTION_5) {
-            outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_ITEM_OPTION_5);
-            outgoing.writeShortLEAdd(cmd2);
-            outgoing.writeShortLEAdd(cmd1);
-            outgoing.writeShortLE(cmd3);
+            packets.widgetItemOption5(cmd1, cmd2, cmd3);
             markInventoryInteraction(cmd3, cmd2);
         }
         if (actionId == MenuState.INVENTORY_ITEM_OPTION_3) {
-            outgoing.writeOpcode(OutgoingPacketOpcode.INVENTORY_ITEM_OPTION_3);
-            outgoing.writeShortLEAdd(cmd2);
-            outgoing.writeShortLEAdd(cmd1);
-            outgoing.writeShortLE(cmd3);
+            packets.inventoryItemOption3(cmd1, cmd2, cmd3);
             markInventoryInteraction(cmd3, cmd2);
         }
         if (actionId == MenuState.EXAMINE_INVENTORY_ITEM) {
@@ -149,17 +112,11 @@ public final class InventoryActionHandler implements ClientActionDispatcher.Acti
             messages.addChatMessage("", description, ChatMessageType.GAME);
         }
         if (actionId == MenuState.WIDGET_ITEM_OPTION_3) {
-            outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_ITEM_OPTION_3);
-            outgoing.writeShortLE(cmd1);
-            outgoing.writeShortLEAdd(cmd2);
-            outgoing.writeShort(cmd3);
+            packets.widgetItemOption3(cmd1, cmd2, cmd3);
             markInventoryInteraction(cmd3, cmd2);
         }
         if (actionId == MenuState.WIDGET_ITEM_OPTION_4) {
-            outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_ITEM_OPTION_4);
-            outgoing.writeShortLEAdd(cmd3);
-            outgoing.writeShortLE(cmd2);
-            outgoing.writeShort(cmd1);
+            packets.widgetItemOption4(cmd1, cmd2, cmd3);
             markInventoryInteraction(cmd3, cmd2);
         }
         if (actionId == MenuState.SELECT_ITEM) {

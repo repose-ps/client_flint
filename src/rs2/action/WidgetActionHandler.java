@@ -6,8 +6,6 @@ import rs2.chat.ChatController;
 import rs2.chat.SocialManager;
 import rs2.game.VarpState;
 import rs2.game.render.GameRenderer;
-import rs2.net.Buffer;
-import rs2.net.OutgoingPacketOpcode;
 import rs2.ui.AppearanceEditor;
 import rs2.ui.InterfaceController;
 import rs2.ui.Widget;
@@ -16,8 +14,8 @@ import rs2.ui.menu.MenuState;
 
 /** Applies revision-377 menu actions targeting widgets and widget config state. */
 public final class WidgetActionHandler implements ClientActionDispatcher.ActionHandler {
-    /** Outgoing network session. */
-    private final Buffer outgoing;
+    /** Revision-377 action packet encoder. */
+    private final ActionPacketEncoder packets;
     /** Interface state/action owner. */
     private final InterfaceController interfaces;
     /** Client varp state. */
@@ -32,15 +30,17 @@ public final class WidgetActionHandler implements ClientActionDispatcher.ActionH
     private final ChatController chatController;
     /** Appearance-editing owner used by content-type widget actions. */
     private final AppearanceEditor appearanceEditor;
-    /** Shared interface redraw callbacks. */
-    private final InterfaceController.RedrawSink redrawSink;
+    /** Writes the appearance-update packet owned by the appearance editor. */
+    private final Runnable submitAppearance;
+    /** Shared interface-close operation. */
+    private final Runnable closeInterfaces;
     /** Updates the client logout countdown. */
     private final IntConsumer setLogoutTimer;
 
     /**
      * Creates the widget action handler.
      *
-     * @param outgoing outgoing revision-377 packet buffer
+     * @param packets revision-377 action packet encoder
      * @param interfaces interface state/action owner
      * @param varpState varp state
      * @param gameRenderer renderer invalidation owner
@@ -48,13 +48,15 @@ public final class WidgetActionHandler implements ClientActionDispatcher.ActionH
      * @param socialManager social-list owner
      * @param chatController chat/prompt owner
      * @param appearanceEditor appearance-editing owner
-     * @param redrawSink interface redraw callbacks
+     * @param submitAppearance appearance-update submission
+     * @param closeInterfaces shared interface-close operation
      * @param setLogoutTimer logout-countdown setter
      */
-    public WidgetActionHandler(Buffer outgoing, InterfaceController interfaces, VarpState varpState,
+    public WidgetActionHandler(ActionPacketEncoder packets, InterfaceController interfaces, VarpState varpState,
             GameRenderer gameRenderer, IntConsumer applyVarp, SocialManager socialManager, ChatController chatController,
-            AppearanceEditor appearanceEditor, InterfaceController.RedrawSink redrawSink, IntConsumer setLogoutTimer) {
-        this.outgoing = outgoing;
+            AppearanceEditor appearanceEditor, Runnable submitAppearance, Runnable closeInterfaces,
+            IntConsumer setLogoutTimer) {
+        this.packets = packets;
         this.interfaces = interfaces;
         this.varpState = varpState;
         this.gameRenderer = gameRenderer;
@@ -62,7 +64,8 @@ public final class WidgetActionHandler implements ClientActionDispatcher.ActionH
         this.socialManager = socialManager;
         this.chatController = chatController;
         this.appearanceEditor = appearanceEditor;
-        this.redrawSink = redrawSink;
+        this.submitAppearance = submitAppearance;
+        this.closeInterfaces = closeInterfaces;
         this.setLogoutTimer = setLogoutTimer;
     }
 
@@ -70,8 +73,7 @@ public final class WidgetActionHandler implements ClientActionDispatcher.ActionH
     @Override
     public boolean dispatch(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
         if (actionId == MenuState.WIDGET_TOGGLE_VARP) {
-            outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_CLICK);
-            outgoing.writeShort(cmd3);
+            packets.widgetClick(cmd3);
             Widget widget = Widget.get(cmd3);
             if (widget.cs1Instructions != null && widget.cs1Instructions[0][0] == 5) {
                 int varpId = widget.cs1Instructions[0][1];
@@ -81,7 +83,7 @@ public final class WidgetActionHandler implements ClientActionDispatcher.ActionH
             }
         }
         if (actionId == MenuState.CLOSE_INTERFACE) {
-            interfaces.closeAll(outgoing, redrawSink);
+            closeInterfaces.run();
         }
         if (actionId == MenuState.SELECT_SPELL) {
             Widget spellWidget = Widget.get(cmd3);
@@ -112,18 +114,15 @@ public final class WidgetActionHandler implements ClientActionDispatcher.ActionH
                 sendWidgetClick = handleWidgetContentAction(actionWidget);
             }
             if (sendWidgetClick) {
-                outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_CLICK);
-                outgoing.writeShort(cmd3);
+                packets.widgetClick(cmd3);
             }
         }
         if (actionId == MenuState.WIDGET_CONTINUE && !interfaces.actionPending()) {
-            outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_CONTINUE);
-            outgoing.writeShort(cmd3);
+            packets.widgetContinue(cmd3);
             interfaces.setActionPending(true);
         }
         if (actionId == MenuState.WIDGET_SET_VARP) {
-            outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_CLICK);
-            outgoing.writeShort(cmd3);
+            packets.widgetClick(cmd3);
             Widget configWidget = Widget.get(cmd3);
             if (configWidget.cs1Instructions != null && configWidget.cs1Instructions[0][0] == 5) {
                 int varpId2 = configWidget.cs1Instructions[0][1];
@@ -149,7 +148,7 @@ public final class WidgetActionHandler implements ClientActionDispatcher.ActionH
      */
     private boolean handleWidgetContentAction(Widget widget) {
         return interfaces.handleContentAction(widget, socialManager, chatController, appearanceEditor,
-                outgoing, () -> interfaces.closeAll(outgoing, redrawSink),
-                gameRenderer::requestChatboxRedraw, setLogoutTimer);
+                submitAppearance, packets::reportAbuse, closeInterfaces, gameRenderer::requestChatboxRedraw,
+                setLogoutTimer);
     }
 }

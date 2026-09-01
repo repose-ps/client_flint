@@ -5,8 +5,6 @@ import java.util.function.IntConsumer;
 import rs2.ui.ClientLayout;
 import rs2.chat.ChatController;
 import rs2.chat.SocialManager;
-import rs2.net.Buffer;
-import rs2.net.OutgoingPacketOpcode;
 import rs2.text.Base37;
 
 /**
@@ -18,6 +16,19 @@ import rs2.text.Base37;
  * "please wait" interface action flag.</p>
  */
 public final class InterfaceController {
+
+    /** Sends one report-abuse submission after interface validation. */
+    @FunctionalInterface
+    public interface ReportAbuseSender {
+        /**
+         * Sends a report-abuse request.
+         *
+         * @param encodedName Base-37 encoded reported player name
+         * @param rule zero-based rule index
+         * @param mute whether the moderator mute option is selected
+         */
+        void send(long encodedName, int rule, boolean mute);
+    }
 
     /** Receives redraw requests caused by opening/closing interface groups. */
     public interface RedrawSink {
@@ -89,14 +100,12 @@ public final class InterfaceController {
     }
 
     /**
-     * Closes all currently open interface groups and writes the matching client
-     * packet.
+     * Closes all currently open interface groups after the caller has emitted the
+     * matching protocol request.
      *
-     * @param outgoing outgoing revision-377 packet buffer
      * @param redraw redraw callbacks for affected fixed UI regions
      */
-    public void closeAll(Buffer outgoing, RedrawSink redraw) {
-        outgoing.writeOpcode(OutgoingPacketOpcode.CLOSE_INTERFACES);
+    public void closeAll(RedrawSink redraw) {
         if (state.sidebarOverlayInterfaceId != -1) {
             unload(state.sidebarOverlayInterfaceId);
             redraw.redrawSidebar();
@@ -373,15 +382,16 @@ public final class InterfaceController {
      * @param socialManager social-list owner
      * @param chatController chat/prompt owner
      * @param appearanceEditor character-design owner
-     * @param outgoing outgoing packet buffer
+     * @param submitAppearance callback that sends the current appearance selection
+     * @param reportAbuseSender report-abuse packet callback
      * @param closeInterfaces callback that closes open interfaces
      * @param redrawChatbox callback that marks the chatbox dirty
      * @param setLogoutTimer callback that updates the logout countdown
      * @return whether the generic widget-click packet should be sent
      */
     public boolean handleContentAction(Widget widget, SocialManager socialManager, ChatController chatController,
-            AppearanceEditor appearanceEditor, Buffer outgoing, Runnable closeInterfaces, Runnable redrawChatbox,
-                IntConsumer setLogoutTimer) {
+            AppearanceEditor appearanceEditor, Runnable submitAppearance, ReportAbuseSender reportAbuseSender,
+            Runnable closeInterfaces, Runnable redrawChatbox, IntConsumer setLogoutTimer) {
             int contentType = widget.contentType;
             if (socialManager.friendListStatus == SocialManager.FRIEND_LIST_READY) {
                 if (contentType == WidgetContentType.ADD_FRIEND) {
@@ -418,7 +428,7 @@ public final class InterfaceController {
             if (contentType == WidgetContentType.SELECT_FEMALE_APPEARANCE)
                 appearanceEditor.selectFemale();
             if (contentType == WidgetContentType.ACCEPT_APPEARANCE) {
-                appearanceEditor.writeUpdate(outgoing);
+                submitAppearance.run();
                 return true;
             }
             if (contentType == WidgetContentType.REPORT_ABUSE_MUTE)
@@ -426,10 +436,8 @@ public final class InterfaceController {
             if (contentType >= WidgetContentType.REPORT_ABUSE_RULE_FIRST && contentType <= WidgetContentType.REPORT_ABUSE_RULE_LAST) {
                 closeInterfaces.run();
                 if (reportAbuseName().length() > 0) {
-                    outgoing.writeOpcode(OutgoingPacketOpcode.REPORT_ABUSE);
-                    outgoing.writeLong(Base37.encode(reportAbuseName()));
-                    outgoing.writeByte(contentType - WidgetContentType.REPORT_ABUSE_RULE_FIRST);
-                    outgoing.writeByte(reportAbuseMutePlayer() ? 1 : 0);
+                    reportAbuseSender.send(Base37.encode(reportAbuseName()),
+                            contentType - WidgetContentType.REPORT_ABUSE_RULE_FIRST, reportAbuseMutePlayer());
                 }
             }
             return false;

@@ -7,8 +7,6 @@ import rs2.game.ActorSynchronizer;
 import rs2.game.entity.Actor;
 import rs2.game.entity.Npc;
 import rs2.net.MovementPacketEncoder;
-import rs2.net.Buffer;
-import rs2.net.OutgoingPacketOpcode;
 import rs2.ui.InterfaceController;
 import rs2.ui.menu.MenuState;
 
@@ -19,8 +17,8 @@ public final class NpcActionHandler implements ClientActionDispatcher.ActionHand
 
     /** Actor state used to resolve NPC indices. */
     private final ActorSynchronizer actors;
-    /** Outgoing network session. */
-    private final Buffer outgoing;
+    /** Revision-377 action packet encoder. */
+    private final ActionPacketEncoder packets;
     /** Current item/spell selection state. */
     private final InterfaceController interfaces;
     /** Movement capability supplied by the application coordinator. */
@@ -34,17 +32,17 @@ public final class NpcActionHandler implements ClientActionDispatcher.ActionHand
      * Creates the NPC action handler.
      *
      * @param actors actor state
-     * @param outgoing outgoing revision-377 packet buffer
+     * @param packets revision-377 action packet encoder
      * @param interfaces interface state owner
      * @param movement interaction movement capability
      * @param markInteractionCrosshair interaction-crosshair callback
      * @param messages chat-message sink
      */
-    public NpcActionHandler(ActorSynchronizer actors, Buffer outgoing, InterfaceController interfaces,
+    public NpcActionHandler(ActorSynchronizer actors, ActionPacketEncoder packets, InterfaceController interfaces,
             ClientActionDispatcher.Movement movement, Runnable markInteractionCrosshair,
             SocialManager.MessageSink messages) {
         this.actors = actors;
-        this.outgoing = outgoing;
+        this.packets = packets;
         this.interfaces = interfaces;
         this.movement = movement;
         this.markInteractionCrosshair = markInteractionCrosshair;
@@ -58,27 +56,22 @@ public final class NpcActionHandler implements ClientActionDispatcher.ActionHand
             Npc npc = actors.npcs[cmd1];
             if (npc != null) {
                 walkTo(npc);
-                outgoing.writeOpcode(OutgoingPacketOpcode.NPC_OPTION_2);
-                outgoing.writeShortAdd(cmd1);
+                packets.npcOption2(cmd1);
             }
         }
         if (actionId == MenuState.NPC_OPTION_4) {
             Npc npc2 = actors.npcs[cmd1];
             if (npc2 != null) {
                 walkTo(npc2);
-                outgoing.writeOpcode(OutgoingPacketOpcode.NPC_OPTION_4);
-                outgoing.writeShortLE(cmd1);
+                packets.npcOption4(cmd1);
             }
         }
         if (actionId == MenuState.USE_ITEM_ON_NPC) {
             Npc npc3 = actors.npcs[cmd1];
             if (npc3 != null) {
                 walkTo(npc3);
-                outgoing.writeOpcode(OutgoingPacketOpcode.USE_ITEM_ON_NPC);
-                outgoing.writeShort(cmd1);
-                outgoing.writeShortLE(interfaces.state().selectedItemId);
-                outgoing.writeShortLEAdd(interfaces.state().selectedItemWidgetId);
-                outgoing.writeShort(interfaces.state().selectedItemSlot);
+                packets.useItemOnNpc(cmd1, interfaces.state().selectedItemId,
+                        interfaces.state().selectedItemWidgetId, interfaces.state().selectedItemSlot);
             }
         }
         if (actionId == MenuState.NPC_OPTION_3) {
@@ -87,29 +80,24 @@ public final class NpcActionHandler implements ClientActionDispatcher.ActionHand
                 walkTo(npc4);
                 npcOption3Counter += cmd1;
                 if (npcOption3Counter >= 143) {
-                    outgoing.writeOpcode(OutgoingPacketOpcode.ANTI_CHEAT_NPC_OPTION_3);
-                    outgoing.writeInt(0);
+                    packets.npcOption3AntiCheat();
                     npcOption3Counter = 0;
                 }
-                outgoing.writeOpcode(OutgoingPacketOpcode.NPC_OPTION_3);
-                outgoing.writeShortLEAdd(cmd1);
+                packets.npcOption3(cmd1);
             }
         }
         if (actionId == MenuState.NPC_OPTION_5) {
             Npc npc5 = actors.npcs[cmd1];
             if (npc5 != null) {
                 walkTo(npc5);
-                outgoing.writeOpcode(OutgoingPacketOpcode.NPC_OPTION_5);
-                outgoing.writeShortLE(cmd1);
+                packets.npcOption5(cmd1);
             }
         }
         if (actionId == MenuState.CAST_SPELL_ON_NPC) {
             Npc npc6 = actors.npcs[cmd1];
             if (npc6 != null) {
                 walkTo(npc6);
-                outgoing.writeOpcode(OutgoingPacketOpcode.CAST_SPELL_ON_NPC);
-                outgoing.writeShortAdd(interfaces.state().selectedSpellWidgetId);
-                outgoing.writeShortLE(cmd1);
+                packets.castSpellOnNpc(cmd1, interfaces.state().selectedSpellWidgetId);
             }
         }
         if (actionId == MenuState.EXAMINE_NPC) {
@@ -134,8 +122,7 @@ public final class NpcActionHandler implements ClientActionDispatcher.ActionHand
             Npc npc8 = actors.npcs[cmd1];
             if (npc8 != null) {
                 walkTo(npc8);
-                outgoing.writeOpcode(OutgoingPacketOpcode.NPC_OPTION_1);
-                outgoing.writeShortLE(cmd1);
+                packets.npcOption1(cmd1);
             }
         }
         return false;

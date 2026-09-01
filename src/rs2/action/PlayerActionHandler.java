@@ -4,8 +4,6 @@ import rs2.game.ActorSynchronizer;
 import rs2.game.entity.Actor;
 import rs2.game.entity.Player;
 import rs2.net.MovementPacketEncoder;
-import rs2.net.Buffer;
-import rs2.net.OutgoingPacketOpcode;
 import rs2.ui.InterfaceController;
 import rs2.ui.menu.MenuState;
 
@@ -13,8 +11,8 @@ import rs2.ui.menu.MenuState;
 public final class PlayerActionHandler implements ClientActionDispatcher.ActionHandler {
     /** Actor state used to resolve player indices. */
     private final ActorSynchronizer actors;
-    /** Outgoing network session. */
-    private final Buffer outgoing;
+    /** Revision-377 action packet encoder. */
+    private final ActionPacketEncoder packets;
     /** Current item/spell selection state. */
     private final InterfaceController interfaces;
     /** Movement capability supplied by the application coordinator. */
@@ -26,15 +24,15 @@ public final class PlayerActionHandler implements ClientActionDispatcher.ActionH
      * Creates the player action handler.
      *
      * @param actors actor state
-     * @param outgoing outgoing revision-377 packet buffer
+     * @param packets revision-377 action packet encoder
      * @param interfaces interface state owner
      * @param movement interaction movement capability
      * @param markInteractionCrosshair interaction-crosshair callback
      */
-    public PlayerActionHandler(ActorSynchronizer actors, Buffer outgoing, InterfaceController interfaces,
+    public PlayerActionHandler(ActorSynchronizer actors, ActionPacketEncoder packets, InterfaceController interfaces,
             ClientActionDispatcher.Movement movement, Runnable markInteractionCrosshair) {
         this.actors = actors;
-        this.outgoing = outgoing;
+        this.packets = packets;
         this.interfaces = interfaces;
         this.movement = movement;
         this.markInteractionCrosshair = markInteractionCrosshair;
@@ -47,60 +45,50 @@ public final class PlayerActionHandler implements ClientActionDispatcher.ActionH
             Player player = actors.players[cmd1];
             if (player != null) {
                 walkTo(player);
-                outgoing.writeOpcode(OutgoingPacketOpcode.PLAYER_OPTION_1);
-                outgoing.writeShortLEAdd(cmd1);
+                packets.playerOption1(cmd1);
             }
         }
         if (actionId == MenuState.PLAYER_OPTION_5) {
             Player player2 = actors.players[cmd1];
             if (player2 != null) {
                 walkTo(player2);
-                outgoing.writeOpcode(OutgoingPacketOpcode.PLAYER_OPTION_5);
-                outgoing.writeShortAdd(cmd1);
+                packets.playerOption5(cmd1);
             }
         }
         if (actionId == MenuState.PLAYER_OPTION_4) {
             Player player3 = actors.players[cmd1];
             if (player3 != null) {
                 walkTo(player3);
-                outgoing.writeOpcode(OutgoingPacketOpcode.PLAYER_OPTION_4);
-                outgoing.writeShortLE(cmd1);
+                packets.playerOption4(cmd1);
             }
         }
         if (actionId == MenuState.PLAYER_OPTION_2) {
             Player player4 = actors.players[cmd1];
             if (player4 != null) {
                 walkTo(player4);
-                outgoing.writeOpcode(OutgoingPacketOpcode.PLAYER_OPTION_2);
-                outgoing.writeShortAdd(cmd1);
+                packets.playerOption2(cmd1);
             }
         }
         if (actionId == MenuState.CAST_SPELL_ON_PLAYER) {
             Player player5 = actors.players[cmd1];
             if (player5 != null) {
                 walkTo(player5);
-                outgoing.writeOpcode(OutgoingPacketOpcode.CAST_SPELL_ON_PLAYER);
-                outgoing.writeShort(cmd1);
-                outgoing.writeShortLE(interfaces.state().selectedSpellWidgetId);
+                packets.castSpellOnPlayer(cmd1, interfaces.state().selectedSpellWidgetId);
             }
         }
         if (actionId == MenuState.USE_ITEM_ON_PLAYER) {
             Player player6 = actors.players[cmd1];
             if (player6 != null) {
                 walkTo(player6);
-                outgoing.writeOpcode(OutgoingPacketOpcode.USE_ITEM_ON_PLAYER);
-                outgoing.writeShortLE(interfaces.state().selectedItemId);
-                outgoing.writeShortLEAdd(interfaces.state().selectedItemSlot);
-                outgoing.writeShort(interfaces.state().selectedItemWidgetId);
-                outgoing.writeShortAdd(cmd1);
+                packets.useItemOnPlayer(cmd1, interfaces.state().selectedItemId,
+                        interfaces.state().selectedItemSlot, interfaces.state().selectedItemWidgetId);
             }
         }
         if (actionId == MenuState.PLAYER_OPTION_3) {
             Player player7 = actors.players[cmd1];
             if (player7 != null) {
                 walkTo(player7);
-                outgoing.writeOpcode(OutgoingPacketOpcode.PLAYER_OPTION_3);
-                outgoing.writeShortLE(cmd1);
+                packets.playerOption3(cmd1);
             }
         }
         return false;
