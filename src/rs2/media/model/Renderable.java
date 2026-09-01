@@ -1,7 +1,6 @@
 package rs2.media.model;
 
 import rs2.collection.DualNode;
-import rs2.media.model.VertexNormal;
 
 /**
  * Base type for objects that can supply a software-rendered model to the scene.

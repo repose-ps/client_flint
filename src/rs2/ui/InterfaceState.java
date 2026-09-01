@@ -3,15 +3,18 @@ package rs2.ui;
 /**
  * Mutable revision-377 interface and inventory-widget interaction state.
  *
- * <p>{@link InterfaceController} owns lifecycle and interaction behavior, while
+ * <p>
+ * {@link InterfaceController} owns lifecycle and interaction behavior, while
  * packet and menu domains coordinate through this state without moving those
- * responsibilities back into the top-level client coordinator.</p>
+ * responsibilities back into the top-level client coordinator.
+ * </p>
  */
 public final class InterfaceState {
 
 	/** Creates a new interface state with its default client state. */
 	public InterfaceState() {
 	}
+
 	/** Stores the current open interface ID. */
 	public int openInterfaceId = -1;
 	/** Stores the current walkable interface ID. */

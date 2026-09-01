@@ -3,9 +3,11 @@ package rs2.net;
 /**
  * Revision-377 client-to-server packet opcodes.
  *
- * <p>The names describe the packet's semantic role in this client. Numeric
- * values are protocol constants and must not be changed without changing the
- * revision-377 wire protocol.</p>
+ * <p>
+ * The names describe the packet's semantic role in this client. Numeric values
+ * are protocol constants and must not be changed without changing the
+ * revision-377 wire protocol.
+ * </p>
  */
 public final class OutgoingPacketOpcode {
 

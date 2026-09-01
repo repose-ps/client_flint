@@ -17,7 +17,6 @@ public class Varbit {
 	public Varbit() {
 	}
 
-
 	/** Terminates a varbit definition record. */
 	private static final int OPCODE_END = 0;
 	/** Defines the backing varp and inclusive/exclusive bit range. */
@@ -65,6 +64,7 @@ public class Varbit {
 
 	/**
 	 * Loads every varbit definition from {@code varbit.dat}.
+	 * 
 	 * @param archive the source archive
 	 */
 	public static void load(Archive archive) {
@@ -93,6 +93,7 @@ public class Varbit {
 
 	/**
 	 * Decodes one opcode-delimited varbit definition.
+	 * 
 	 * @param buffer the source buffer
 	 */
 	public void decode(Buffer buffer) {

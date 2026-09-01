@@ -4,17 +4,19 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import rs2.cache.ondemand.OnDemandFetcher;
-import rs2.sound.MusicController;
-import rs2.sound.SoundEffectQueue;
 import rs2.net.Buffer;
 import rs2.net.IncomingPacketOpcode;
+import rs2.sound.MusicController;
+import rs2.sound.SoundEffectQueue;
 
 /**
  * Applies global sound-effect and music-selection packets.
  *
- * <p>This application-layer domain handler is invoked only after
+ * <p>
+ * This application-layer domain handler is invoked only after
  * {@link PacketDomainDispatcher} has explicitly routed a recognized
- * revision-377 opcode to it.</p>
+ * revision-377 opcode to it.
+ * </p>
  */
 final class AudioPacketHandler {
 
@@ -30,8 +32,8 @@ final class AudioPacketHandler {
 	/**
 	 * Creates the audio packet handler from its exact application capabilities.
 	 *
-	 * @param sounds sound-effect queue
-	 * @param music music controller
+	 * @param sounds    sound-effect queue
+	 * @param music     music controller
 	 * @param resources on-demand resource supplier
 	 * @param lowMemory low-memory configuration supplier
 	 */
@@ -46,8 +48,8 @@ final class AudioPacketHandler {
 	/**
 	 * Applies one packet already routed to this domain.
 	 *
-	 * @param opcode decoded revision-377 opcode
-	 * @param buffer payload buffer positioned at zero
+	 * @param opcode     decoded revision-377 opcode
+	 * @param buffer     payload buffer positioned at zero
 	 * @param packetSize payload length in bytes
 	 * @return always {@code true}; routed domain packets continue processing
 	 * @throws IllegalArgumentException if the opcode was routed to the wrong domain

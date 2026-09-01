@@ -1,12 +1,12 @@
 package rs2.game;
 
-import rs2.scene.SceneConstants;
-import rs2.scene.TileFlags;
-import rs2.media.Angle;
 import rs2.game.entity.Actor;
+import rs2.media.Angle;
 import rs2.media.model.Model;
 import rs2.net.Buffer;
 import rs2.net.OutgoingPacketOpcode;
+import rs2.scene.SceneConstants;
+import rs2.scene.TileFlags;
 import rs2.sign.Signlink;
 
 /**
@@ -29,7 +29,8 @@ public final class CameraController {
 	private static final int MAX_PITCH = 383;
 
 	/** Maximum fine world coordinate accepted by roof/terrain sampling. */
-	private static final int MAX_TERRAIN_SAMPLE_COORDINATE = SceneConstants.INTERIOR_MAX_TILE * SceneConstants.TILE_SIZE;
+	private static final int MAX_TERRAIN_SAMPLE_COORDINATE = SceneConstants.INTERIOR_MAX_TILE
+			* SceneConstants.TILE_SIZE;
 
 	/** Stores the current X. */
 	public int x;
@@ -653,7 +654,8 @@ public final class CameraController {
 	 * @param worldY       the world y
 	 */
 	public ScreenPoint project(WorldState world, int plane, int worldX, int heightOffset, int worldY) {
-		if (worldX < SceneConstants.TILE_SIZE || worldY < SceneConstants.TILE_SIZE || worldX > MAX_TERRAIN_SAMPLE_COORDINATE || worldY > MAX_TERRAIN_SAMPLE_COORDINATE) {
+		if (worldX < SceneConstants.TILE_SIZE || worldY < SceneConstants.TILE_SIZE
+				|| worldX > MAX_TERRAIN_SAMPLE_COORDINATE || worldY > MAX_TERRAIN_SAMPLE_COORDINATE) {
 			return ScreenPoint.INVISIBLE;
 		}
 		int projectedHeight = world.getTileHeight(worldX, worldY, plane) - heightOffset;
@@ -739,11 +741,11 @@ public final class CameraController {
 		/**
 		 * Creates a new snapshot.
 		 *
-		 * @param x the X coordinate
+		 * @param x      the X coordinate
 		 * @param height the height in pixels
-		 * @param y the Y coordinate
-		 * @param pitch the pitch
-		 * @param yaw the yaw
+		 * @param y      the Y coordinate
+		 * @param pitch  the pitch
+		 * @param yaw    the yaw
 		 */
 		private Snapshot(int x, int height, int y, int pitch, int yaw) {
 			this.x = x;

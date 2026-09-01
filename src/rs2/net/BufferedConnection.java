@@ -162,6 +162,7 @@ public class BufferedConnection implements Runnable, Closeable {
 
 	/**
 	 * Returns the number of bytes that can currently be read without blocking.
+	 * 
 	 * @return the number of bytes currently available to read
 	 * @throws IOException if an I/O operation fails
 	 */
@@ -417,6 +418,7 @@ public class BufferedConnection implements Runnable, Closeable {
 
 	/**
 	 * Performs ensure open.
+	 * 
 	 * @throws IOException if an I/O operation fails
 	 */
 	private void ensureOpen() throws IOException {
@@ -427,6 +429,7 @@ public class BufferedConnection implements Runnable, Closeable {
 
 	/**
 	 * Performs check writer failure.
+	 * 
 	 * @throws IOException if an I/O operation fails
 	 */
 	private void checkWriterFailure() throws IOException {
@@ -437,6 +440,7 @@ public class BufferedConnection implements Runnable, Closeable {
 
 	/**
 	 * Calculates the number of bytes waiting in the circular buffer.
+	 * 
 	 * @return the number of bytes waiting in the write ring buffer
 	 */
 	private int pendingBytes() {

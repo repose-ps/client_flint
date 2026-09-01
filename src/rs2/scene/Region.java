@@ -1,22 +1,24 @@
 package rs2.scene;
 
-import rs2.media.Angle;
 import rs2.cache.def.FloorDefinition;
 import rs2.cache.def.GameObjectDefinition;
 import rs2.cache.ondemand.OnDemandFetcher;
+import rs2.media.Angle;
 import rs2.media.Rasterizer3D;
-import rs2.scene.entity.DynamicObjectFactory;
 import rs2.media.model.Model;
 import rs2.media.model.Renderable;
-import rs2.scene.util.TerrainNoise;
 import rs2.net.Buffer;
+import rs2.scene.entity.DynamicObjectFactory;
 import rs2.scene.util.CollisionMap;
+import rs2.scene.util.TerrainNoise;
 import rs2.scene.util.TiledUtils;
 
 /** Provides region state and behavior. */
 public class Region {
 
-	/** Terrain opcode that derives height from procedural noise or the lower plane. */
+	/**
+	 * Terrain opcode that derives height from procedural noise or the lower plane.
+	 */
 	private static final int TERRAIN_OPCODE_DEFAULT_HEIGHT = 0;
 	/** Terrain opcode that supplies an explicit one-byte height offset. */
 	private static final int TERRAIN_OPCODE_EXPLICIT_HEIGHT = 1;
@@ -113,7 +115,9 @@ public class Region {
 	/** Stores occlusion flags values. */
 	private final int[][][] occlusionFlags;
 
-	/** Creates animated/morphing scene locations with narrow runtime dependencies. */
+	/**
+	 * Creates animated/morphing scene locations with narrow runtime dependencies.
+	 */
 	private final DynamicObjectFactory dynamicObjects;
 	/**
 	 * Whether low memory.
@@ -150,7 +154,7 @@ public class Region {
 	 * @param southEastHeight the south east height
 	 * @param northEastHeight the north east height
 	 * @param northWestHeight the north west height
-	 * @param dynamicObjects dynamic-location factory
+	 * @param dynamicObjects  dynamic-location factory
 	 */
 	private static Renderable createRenderable(GameObjectDefinition definition, int objectId, int type, int orientation,
 			int southWestHeight, int southEastHeight, int northEastHeight, int northWestHeight,
@@ -171,20 +175,21 @@ public class Region {
 	 * modify the region shadow/occlusion work arrays or minimum-plane state.
 	 * </p>
 	 *
-	 * @param objectId     the object id
-	 * @param heightPlane  the height plane
-	 * @param type         the type
-	 * @param orientation  the orientation
-	 * @param x            the x
-	 * @param y            the y
-	 * @param scenePlane   the scene plane
-	 * @param collisionMap the collision map
-	 * @param scene        the scene
-	 * @param heights      the heights
+	 * @param objectId       the object id
+	 * @param heightPlane    the height plane
+	 * @param type           the type
+	 * @param orientation    the orientation
+	 * @param x              the x
+	 * @param y              the y
+	 * @param scenePlane     the scene plane
+	 * @param collisionMap   the collision map
+	 * @param scene          the scene
+	 * @param heights        the heights
 	 * @param dynamicObjects dynamic-location factory
 	 */
 	public static void addLocation(int objectId, int heightPlane, int type, int orientation, int x, int y,
-			int scenePlane, CollisionMap collisionMap, Scene scene, int[][][] heights, DynamicObjectFactory dynamicObjects) {
+			int scenePlane, CollisionMap collisionMap, Scene scene, int[][][] heights,
+			DynamicObjectFactory dynamicObjects) {
 		int southWestHeight = heights[heightPlane][x][y];
 		int southEastHeight = heights[heightPlane][x + 1][y];
 		int northEastHeight = heights[heightPlane][x + 1][y + 1];
@@ -320,18 +325,19 @@ public class Region {
 		Renderable decoration = createRenderable(definition, objectId, 4, 0, southWestHeight, southEastHeight,
 				northEastHeight, northWestHeight, dynamicObjects);
 		if (type == 4) {
-			scene.addWallDecoration(scenePlane, x, y, averageHeight, 0, 0, orientation * Angle.QUARTER_TURN, uid, config,
-					WALL_ORIENTATION_FLAGS[orientation], decoration);
+			scene.addWallDecoration(scenePlane, x, y, averageHeight, 0, 0, orientation * Angle.QUARTER_TURN, uid,
+					config, WALL_ORIENTATION_FLAGS[orientation], decoration);
 		} else if (type == 5) {
 			int displacement = 16;
 			int wallUid = scene.getWallUid(scenePlane, x, y);
 			if (wallUid > 0) {
-				displacement = GameObjectDefinition.lookup(wallUid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK).decorDisplacement;
+				displacement = GameObjectDefinition
+						.lookup(wallUid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK).decorDisplacement;
 			}
 			scene.addWallDecoration(scenePlane, x, y, averageHeight,
 					WALL_DECORATION_X_OFFSETS[orientation] * displacement,
-					WALL_DECORATION_Y_OFFSETS[orientation] * displacement, orientation * Angle.QUARTER_TURN, uid, config,
-					WALL_ORIENTATION_FLAGS[orientation], decoration);
+					WALL_DECORATION_Y_OFFSETS[orientation] * displacement, orientation * Angle.QUARTER_TURN, uid,
+					config, WALL_ORIENTATION_FLAGS[orientation], decoration);
 		} else if (type == 6) {
 			scene.addWallDecoration(scenePlane, x, y, averageHeight, 0, 0, orientation, uid, config, 256, decoration);
 		} else if (type == 7) {
@@ -652,7 +658,8 @@ public class Region {
 	 */
 	private boolean shouldBuildTile(int plane, int x, int y) {
 		return !lowMemory || (tileFlags[0][x][y] & TileFlags.BRIDGE) != 0
-				|| ((tileFlags[plane][x][y] & TileFlags.LOW_MEMORY_HIDDEN) == 0 && getEffectivePlane(plane, x, y) == currentPlane);
+				|| ((tileFlags[plane][x][y] & TileFlags.LOW_MEMORY_HIDDEN) == 0
+						&& getEffectivePlane(plane, x, y) == currentPlane);
 	}
 
 	/**
@@ -759,7 +766,9 @@ public class Region {
 		}
 		int upperZ = tileHeights[maxPlane][x][minY] - TERRAIN_PLANE_HEIGHT;
 		int lowerZ = tileHeights[minPlane][x][minY];
-		Scene.addOccluder(targetPlane, x * SceneConstants.TILE_SIZE, upperZ, x * SceneConstants.TILE_SIZE, maxY * SceneConstants.TILE_SIZE + SceneConstants.TILE_SIZE, lowerZ, minY * SceneConstants.TILE_SIZE, SceneCluster.TYPE_X_PLANE);
+		Scene.addOccluder(targetPlane, x * SceneConstants.TILE_SIZE, upperZ, x * SceneConstants.TILE_SIZE,
+				maxY * SceneConstants.TILE_SIZE + SceneConstants.TILE_SIZE, lowerZ, minY * SceneConstants.TILE_SIZE,
+				SceneCluster.TYPE_X_PLANE);
 		for (int plane = minPlane; plane <= maxPlane; plane++) {
 			for (int tileY = minY; tileY <= maxY; tileY++) {
 				occlusionFlags[plane][x][tileY] &= ~mask;
@@ -809,7 +818,9 @@ public class Region {
 		}
 		int upperZ = tileHeights[maxPlane][minX][y] - TERRAIN_PLANE_HEIGHT;
 		int lowerZ = tileHeights[minPlane][minX][y];
-		Scene.addOccluder(targetPlane, minX * SceneConstants.TILE_SIZE, upperZ, maxX * SceneConstants.TILE_SIZE + SceneConstants.TILE_SIZE, y * SceneConstants.TILE_SIZE, lowerZ, y * SceneConstants.TILE_SIZE, SceneCluster.TYPE_Y_PLANE);
+		Scene.addOccluder(targetPlane, minX * SceneConstants.TILE_SIZE, upperZ,
+				maxX * SceneConstants.TILE_SIZE + SceneConstants.TILE_SIZE, y * SceneConstants.TILE_SIZE, lowerZ,
+				y * SceneConstants.TILE_SIZE, SceneCluster.TYPE_Y_PLANE);
 		for (int plane = minPlane; plane <= maxPlane; plane++) {
 			for (int tileX = minX; tileX <= maxX; tileX++) {
 				occlusionFlags[plane][tileX][y] &= ~mask;
@@ -857,7 +868,10 @@ public class Region {
 			return;
 		}
 		int worldZ = tileHeights[plane][minX][minY];
-		Scene.addOccluder(targetPlane, minX * SceneConstants.TILE_SIZE, worldZ, maxX * SceneConstants.TILE_SIZE + SceneConstants.TILE_SIZE, maxY * SceneConstants.TILE_SIZE + SceneConstants.TILE_SIZE, worldZ, minY * SceneConstants.TILE_SIZE, SceneCluster.TYPE_HORIZONTAL_PLANE);
+		Scene.addOccluder(targetPlane, minX * SceneConstants.TILE_SIZE, worldZ,
+				maxX * SceneConstants.TILE_SIZE + SceneConstants.TILE_SIZE,
+				maxY * SceneConstants.TILE_SIZE + SceneConstants.TILE_SIZE, worldZ, minY * SceneConstants.TILE_SIZE,
+				SceneCluster.TYPE_HORIZONTAL_PLANE);
 		for (int tileX = minX; tileX <= maxX; tileX++) {
 			for (int tileY = minY; tileY <= maxY; tileY++) {
 				occlusionFlags[plane][tileX][tileY] &= ~mask;
@@ -896,8 +910,12 @@ public class Region {
 			for (int x = 0; x < SceneConstants.REGION_SIZE; x++) {
 				for (int y = 0; y < SceneConstants.REGION_SIZE; y++) {
 					if (plane == sourcePlane && x >= sourceX && x < sourceX + 8 && y >= sourceY && y < sourceY + 8) {
-						int targetX = destinationX + TiledUtils.getRotatedMapChunkX(x & SceneConstants.CHUNK_COORDINATE_MASK, y & SceneConstants.CHUNK_COORDINATE_MASK, rotation);
-						int targetY = destinationY + TiledUtils.getRotatedMapChunkY(x & SceneConstants.CHUNK_COORDINATE_MASK, y & SceneConstants.CHUNK_COORDINATE_MASK, rotation);
+						int targetX = destinationX
+								+ TiledUtils.getRotatedMapChunkX(x & SceneConstants.CHUNK_COORDINATE_MASK,
+										y & SceneConstants.CHUNK_COORDINATE_MASK, rotation);
+						int targetY = destinationY
+								+ TiledUtils.getRotatedMapChunkY(x & SceneConstants.CHUNK_COORDINATE_MASK,
+										y & SceneConstants.CHUNK_COORDINATE_MASK, rotation);
 						decodeTile(buffer, destinationPlane, targetX, targetY, 0, 0, rotation);
 					} else {
 						decodeTile(buffer, 0, -1, -1, 0, 0, 0);
@@ -1013,10 +1031,12 @@ public class Region {
 				}
 
 				GameObjectDefinition definition = GameObjectDefinition.lookup(objectId);
-				int x = destinationX + TiledUtils.getRotatedLandscapeChunkX(localX & SceneConstants.CHUNK_COORDINATE_MASK, localY & SceneConstants.CHUNK_COORDINATE_MASK, definition.sizeX,
-						definition.sizeY, orientation, rotation);
-				int y = destinationY + TiledUtils.getRotatedLandscapeChunkY(localX & SceneConstants.CHUNK_COORDINATE_MASK, localY & SceneConstants.CHUNK_COORDINATE_MASK, definition.sizeX,
-						definition.sizeY, orientation, rotation);
+				int x = destinationX + TiledUtils.getRotatedLandscapeChunkX(
+						localX & SceneConstants.CHUNK_COORDINATE_MASK, localY & SceneConstants.CHUNK_COORDINATE_MASK,
+						definition.sizeX, definition.sizeY, orientation, rotation);
+				int y = destinationY + TiledUtils.getRotatedLandscapeChunkY(
+						localX & SceneConstants.CHUNK_COORDINATE_MASK, localY & SceneConstants.CHUNK_COORDINATE_MASK,
+						definition.sizeX, definition.sizeY, orientation, rotation);
 				if (x < SceneConstants.INTERIOR_MIN_TILE || y < SceneConstants.INTERIOR_MIN_TILE
 						|| x >= SceneConstants.INTERIOR_MAX_TILE || y >= SceneConstants.INTERIOR_MAX_TILE) {
 					continue;
@@ -1048,7 +1068,8 @@ public class Region {
 	private void placeLocation(int objectId, int type, int orientation, int plane, int x, int y,
 			CollisionMap collisionMap, Scene scene) {
 		if (lowMemory && (tileFlags[0][x][y] & TileFlags.BRIDGE) == 0) {
-			if ((tileFlags[plane][x][y] & TileFlags.LOW_MEMORY_HIDDEN) != 0 || getEffectivePlane(plane, x, y) != currentPlane) {
+			if ((tileFlags[plane][x][y] & TileFlags.LOW_MEMORY_HIDDEN) != 0
+					|| getEffectivePlane(plane, x, y) != currentPlane) {
 				return;
 			}
 		}
@@ -1295,11 +1316,12 @@ public class Region {
 			int displacement = 16;
 			int wallUid = scene.getWallUid(plane, x, y);
 			if (wallUid > 0) {
-				displacement = GameObjectDefinition.lookup(wallUid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK).decorDisplacement;
+				displacement = GameObjectDefinition
+						.lookup(wallUid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK).decorDisplacement;
 			}
 			scene.addWallDecoration(plane, x, y, averageHeight, WALL_DECORATION_X_OFFSETS[orientation] * displacement,
-					WALL_DECORATION_Y_OFFSETS[orientation] * displacement, orientation * Angle.QUARTER_TURN, uid, config,
-					WALL_ORIENTATION_FLAGS[orientation], decoration);
+					WALL_DECORATION_Y_OFFSETS[orientation] * displacement, orientation * Angle.QUARTER_TURN, uid,
+					config, WALL_ORIENTATION_FLAGS[orientation], decoration);
 		} else if (type == 6) {
 			scene.addWallDecoration(plane, x, y, averageHeight, 0, 0, orientation, uid, config, 256, decoration);
 		} else if (type == 7) {
@@ -1327,7 +1349,8 @@ public class Region {
 					int targetX = baseX + x;
 					int targetY = baseY + y;
 					if (targetX >= SceneConstants.INTERIOR_MIN_TILE && targetX < SceneConstants.INTERIOR_MAX_TILE
-						&& targetY >= SceneConstants.INTERIOR_MIN_TILE && targetY < SceneConstants.INTERIOR_MAX_TILE) {
+							&& targetY >= SceneConstants.INTERIOR_MIN_TILE
+							&& targetY < SceneConstants.INTERIOR_MAX_TILE) {
 						collisionMaps[plane].flags[targetX][targetY] &= ~0x1000000;
 					}
 				}
@@ -1346,10 +1369,10 @@ public class Region {
 	/**
 	 * Creates a new region.
 	 *
-	 * @param tileHeights the tile heights
-	 * @param tileFlags the tile flags
-	 * @param width the width in pixels
-	 * @param height the height in pixels
+	 * @param tileHeights    the tile heights
+	 * @param tileFlags      the tile flags
+	 * @param width          the width in pixels
+	 * @param height         the height in pixels
 	 * @param dynamicObjects dynamic-location factory
 	 */
 	public Region(int[][][] tileHeights, byte[][][] tileFlags, int width, int height,
@@ -1554,8 +1577,8 @@ public class Region {
 				int opcode = buffer.readUnsignedByte();
 				if (opcode == TERRAIN_OPCODE_DEFAULT_HEIGHT) {
 					if (plane == 0) {
-						tileHeights[0][x][y] = -TerrainNoise.calculateHeight(TERRAIN_NOISE_X_SEED + x + noiseX, TERRAIN_NOISE_Y_SEED + y + noiseY)
-								* TERRAIN_HEIGHT_SCALE;
+						tileHeights[0][x][y] = -TerrainNoise.calculateHeight(TERRAIN_NOISE_X_SEED + x + noiseX,
+								TERRAIN_NOISE_Y_SEED + y + noiseY) * TERRAIN_HEIGHT_SCALE;
 					} else {
 						tileHeights[plane][x][y] = tileHeights[plane - 1][x][y] - TERRAIN_PLANE_HEIGHT;
 					}
@@ -1575,8 +1598,10 @@ public class Region {
 				}
 				if (opcode <= TERRAIN_OVERLAY_OPCODE_LAST) {
 					overlayIds[plane][x][y] = buffer.readSignedByte();
-					overlayShapes[plane][x][y] = (byte) ((opcode - TERRAIN_OVERLAY_OPCODE_FIRST) / TERRAIN_OVERLAY_ROTATION_COUNT);
-					overlayRotations[plane][x][y] = (byte) (opcode - TERRAIN_OVERLAY_OPCODE_FIRST + rotation & SceneConfig.ORIENTATION_MASK);
+					overlayShapes[plane][x][y] = (byte) ((opcode - TERRAIN_OVERLAY_OPCODE_FIRST)
+							/ TERRAIN_OVERLAY_ROTATION_COUNT);
+					overlayRotations[plane][x][y] = (byte) (opcode - TERRAIN_OVERLAY_OPCODE_FIRST + rotation
+							& SceneConfig.ORIENTATION_MASK);
 				} else if (opcode <= TERRAIN_FLAGS_OPCODE_LAST) {
 					tileFlags[plane][x][y] = (byte) (opcode - TERRAIN_FLAGS_OPCODE_BASE);
 				} else {

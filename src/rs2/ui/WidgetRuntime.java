@@ -1,9 +1,8 @@
 package rs2.ui;
 
 import rs2.cache.cfg.Varbit;
-import rs2.cache.def.ItemDefinition;
 import rs2.cache.def.AnimationSequence;
-import rs2.ui.Widget;
+import rs2.cache.def.ItemDefinition;
 import rs2.game.Skills;
 import rs2.media.Angle;
 
@@ -84,6 +83,7 @@ public final class WidgetRuntime {
 	private static final int PERCENT_SCALE = 100;
 	/** Legacy denominator used by the varp-percent instruction. */
 	private static final int VARP_PERCENT_DENOMINATOR = 46_875;
+
 	/** Provides script context state and behavior. */
 	public interface ScriptContext {
 		/**
@@ -191,6 +191,7 @@ public final class WidgetRuntime {
 
 	/**
 	 * Advances model-widget animation and rotation state recursively.
+	 * 
 	 * @param deltaCycles the delta cycles
 	 * @param interfaceId the interface ID
 	 * @return whether update animations
@@ -237,6 +238,7 @@ public final class WidgetRuntime {
 
 	/**
 	 * Resets animation frames for an interface tree.
+	 * 
 	 * @param interfaceId the interface ID
 	 */
 	public void resetAnimations(int interfaceId) {
@@ -254,6 +256,7 @@ public final class WidgetRuntime {
 
 	/**
 	 * Evaluates a widget's CS1 comparisons to determine its active state.
+	 * 
 	 * @param widget the widget
 	 * @return whether active
 	 */
@@ -280,10 +283,13 @@ public final class WidgetRuntime {
 	}
 
 	/**
-	 * Evaluates one revision-377 CS1 integer script, returning -1 on evaluation failure.
-	 * @param widget the widget
+	 * Evaluates one revision-377 CS1 integer script, returning -1 on evaluation
+	 * failure.
+	 * 
+	 * @param widget      the widget
 	 * @param scriptIndex the script index
-	 * @return the script result, or a negative sentinel when evaluation cannot complete
+	 * @return the script result, or a negative sentinel when evaluation cannot
+	 *         complete
 	 */
 	public int evaluateScript(Widget widget, int scriptIndex) {
 		if (widget.cs1Instructions == null || scriptIndex >= widget.cs1Instructions.length)

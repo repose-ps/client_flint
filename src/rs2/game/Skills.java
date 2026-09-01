@@ -16,6 +16,7 @@ public final class Skills {
 	/** Creates a new skills with its default client state. */
 	public Skills() {
 	}
+
 	/** Number of skill slots allocated by the client. */
 	public static final int COUNT = 25;
 

@@ -3,8 +3,10 @@ package rs2.net;
 /**
  * Revision-377 server-to-client packet opcodes handled by the client.
  *
- * <p>These constants name protocol values only; packet lengths remain defined
- * by {@link IncomingPacketLengths}.</p>
+ * <p>
+ * These constants name protocol values only; packet lengths remain defined by
+ * {@link IncomingPacketLengths}.
+ * </p>
  */
 public final class IncomingPacketOpcode {
 

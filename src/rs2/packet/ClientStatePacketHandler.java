@@ -4,16 +4,18 @@ import java.util.function.IntConsumer;
 
 import rs2.game.MinimapRenderer;
 import rs2.game.VarpState;
-import rs2.ui.InterfaceController;
 import rs2.net.Buffer;
 import rs2.net.IncomingPacketOpcode;
+import rs2.ui.InterfaceController;
 
 /**
  * Applies varp, skill, run-energy, minimap, weight, and timer state packets.
  *
- * <p>This application-layer domain handler is invoked only after
+ * <p>
+ * This application-layer domain handler is invoked only after
  * {@link PacketDomainDispatcher} has explicitly routed a recognized
- * revision-377 opcode to it.</p>
+ * revision-377 opcode to it.
+ * </p>
  */
 final class ClientStatePacketHandler {
 
@@ -45,21 +47,22 @@ final class ClientStatePacketHandler {
 	private final IntConsumer setRunEnergy;
 
 	/**
-	 * Creates the client-state packet handler from its exact application capabilities.
+	 * Creates the client-state packet handler from its exact application
+	 * capabilities.
 	 *
-	 * @param varps varp owner
-	 * @param interfaces interface state owner
-	 * @param minimap minimap owner
-	 * @param applyVarp varp-effect callback
-	 * @param redrawSidebar sidebar redraw callback
-	 * @param redrawChatbox chatbox redraw callback
-	 * @param setWeight weight sink
-	 * @param skillExperiences skill experience array
-	 * @param currentSkillLevels current skill-level array
-	 * @param baseSkillLevels base skill-level array
-	 * @param experienceTable experience threshold table
+	 * @param varps                varp owner
+	 * @param interfaces           interface state owner
+	 * @param minimap              minimap owner
+	 * @param applyVarp            varp-effect callback
+	 * @param redrawSidebar        sidebar redraw callback
+	 * @param redrawChatbox        chatbox redraw callback
+	 * @param setWeight            weight sink
+	 * @param skillExperiences     skill experience array
+	 * @param currentSkillLevels   current skill-level array
+	 * @param baseSkillLevels      base skill-level array
+	 * @param experienceTable      experience threshold table
 	 * @param setSystemUpdateTimer system-update timer sink
-	 * @param setRunEnergy run-energy sink
+	 * @param setRunEnergy         run-energy sink
 	 */
 	ClientStatePacketHandler(VarpState varps, InterfaceController interfaces, MinimapRenderer minimap,
 			IntConsumer applyVarp, Runnable redrawSidebar, Runnable redrawChatbox, IntConsumer setWeight,
@@ -83,8 +86,8 @@ final class ClientStatePacketHandler {
 	/**
 	 * Applies one packet already routed to this domain.
 	 *
-	 * @param opcode decoded revision-377 opcode
-	 * @param buffer payload buffer positioned at zero
+	 * @param opcode     decoded revision-377 opcode
+	 * @param buffer     payload buffer positioned at zero
 	 * @param packetSize payload length in bytes
 	 * @return always {@code true}; routed domain packets continue processing
 	 * @throws IllegalArgumentException if the opcode was routed to the wrong domain

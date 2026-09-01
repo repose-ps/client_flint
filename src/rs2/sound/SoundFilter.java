@@ -51,8 +51,8 @@ public class SoundFilter {
 	/**
 	 * Interpolates attenuation.
 	 *
-	 * @param direction the movement direction
-	 * @param pair the pair
+	 * @param direction     the movement direction
+	 * @param pair          the pair
 	 * @param interpolation the interpolation
 	 * @return the interpolated attenuation value
 	 */
@@ -77,8 +77,8 @@ public class SoundFilter {
 	/**
 	 * Interpolates frequency.
 	 *
-	 * @param direction the movement direction
-	 * @param pair the pair
+	 * @param direction     the movement direction
+	 * @param pair          the pair
 	 * @param interpolation the interpolation
 	 * @return the interpolated normalized frequency
 	 */
@@ -92,7 +92,7 @@ public class SoundFilter {
 	/**
 	 * Computes coefficients for one filter direction at an envelope position.
 	 *
-	 * @param direction the movement direction
+	 * @param direction     the movement direction
 	 * @param interpolation the interpolation
 	 * @return twice the number of pole pairs, which is the coefficient count
 	 */
@@ -143,8 +143,9 @@ public class SoundFilter {
 
 	/**
 	 * Decodes pair parameters and any envelope-controlled alternate values.
+	 * 
 	 * @param envelope the envelope
-	 * @param buffer the source buffer
+	 * @param buffer   the source buffer
 	 */
 	public void decode(SoundTrackEnvelope envelope, Buffer buffer) {
 		int packedPairCount = buffer.readUnsignedByte();

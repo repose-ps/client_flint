@@ -303,10 +303,10 @@ public final class Pathfinder {
 		/**
 		 * Creates a new route.
 		 *
-		 * @param x the X coordinate
-		 * @param y the Y coordinate
+		 * @param x             the X coordinate
+		 * @param y             the Y coordinate
 		 * @param waypointCount the waypoint count
-		 * @param alternative the alternative
+		 * @param alternative   the alternative
 		 */
 		private Route(int[] x, int[] y, int waypointCount, boolean alternative) {
 			this.x = x;

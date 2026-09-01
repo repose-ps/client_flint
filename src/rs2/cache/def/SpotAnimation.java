@@ -40,7 +40,6 @@ public class SpotAnimation {
 	/** Exclusive upper bound of the recolor target opcode range. */
 	private static final int RECOLOR_TARGET_LIMIT = 60;
 
-
 	/** Creates a new spot animation with its default client state. */
 	public SpotAnimation() {
 	}
@@ -81,6 +80,7 @@ public class SpotAnimation {
 
 	/**
 	 * Loads all spot-animation definitions from {@code spotanim.dat}.
+	 * 
 	 * @param archive the source archive
 	 */
 	public static void load(Archive archive) {
@@ -102,6 +102,7 @@ public class SpotAnimation {
 
 	/**
 	 * Decodes one opcode-delimited spot-animation definition.
+	 * 
 	 * @param buffer the source buffer
 	 */
 	public void decode(Buffer buffer) {
@@ -138,6 +139,7 @@ public class SpotAnimation {
 
 	/**
 	 * Returns the cached base model, loading and recolouring it when necessary.
+	 * 
 	 * @return the model
 	 */
 	public Model getModel() {

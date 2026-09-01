@@ -1,11 +1,10 @@
 package rs2;
 
-import rs2.media.animation.AnimationFrame;
-import rs2.ui.ClientLayout;
-
 import rs2.cache.Archive;
-import rs2.cache.ClientResourceManager;
 import rs2.cache.CacheIndex;
+import rs2.cache.ClientResourceManager;
+import rs2.cache.cfg.Varbit;
+import rs2.cache.cfg.Varp;
 import rs2.cache.def.AnimationSequence;
 import rs2.cache.def.FloorDefinition;
 import rs2.cache.def.GameObjectDefinition;
@@ -13,22 +12,21 @@ import rs2.cache.def.IdentityKit;
 import rs2.cache.def.ItemDefinition;
 import rs2.cache.def.NpcDefinition;
 import rs2.cache.def.SpotAnimation;
-import rs2.cache.cfg.Varbit;
-import rs2.cache.cfg.Varp;
 import rs2.cache.ondemand.OnDemandFetcher;
 import rs2.chat.Censor;
 import rs2.game.entity.Player;
-import rs2.media.animation.AnimationFrame;
 import rs2.media.Rasterizer3D;
 import rs2.media.TypeFace;
+import rs2.media.animation.AnimationFrame;
 import rs2.media.model.Model;
 import rs2.media.sprite.ImageRGB;
-import rs2.media.sprite.ItemSpriteFactory;
 import rs2.media.sprite.IndexedImage;
+import rs2.media.sprite.ItemSpriteFactory;
 import rs2.net.Buffer;
 import rs2.scene.Scene;
 import rs2.sign.Signlink;
 import rs2.sound.SoundTrack;
+import rs2.ui.ClientLayout;
 import rs2.ui.Widget;
 
 /**
@@ -44,7 +42,10 @@ import rs2.ui.Widget;
  */
 public final class ClientLifecycle {
 
-	/** Prevents more than one client startup in the same JVM, matching legacy behavior. */
+	/**
+	 * Prevents more than one client startup in the same JVM, matching legacy
+	 * behavior.
+	 */
 	private static boolean startupStarted;
 
 	/** Client whose lifecycle is coordinated. */
@@ -272,7 +273,7 @@ public final class ClientLifecycle {
 	 * Loads interface definitions using the four title fonts.
 	 *
 	 * @param interfaceArchive loaded interface archive
-	 * @param mediaArchive loaded 2D media archive used by widget sprites
+	 * @param mediaArchive     loaded 2D media archive used by widget sprites
 	 */
 	private void unpackInterfaces(Archive interfaceArchive, Archive mediaArchive) {
 		client.drawLoadingText(95, "Unpacking interfaces");
@@ -282,7 +283,8 @@ public final class ClientLifecycle {
 	}
 
 	/**
-	 * Prepares minimap masks, projection state, chat filtering, and runtime workers.
+	 * Prepares minimap masks, projection state, chat filtering, and runtime
+	 * workers.
 	 *
 	 * @param wordEncodingArchive loaded chat word-encoding archive
 	 */
@@ -295,7 +297,10 @@ public final class ClientLifecycle {
 		client.mouseRecorder.start(10);
 	}
 
-	/** Applies the original small random palette shift to map-function/scene sprites. */
+	/**
+	 * Applies the original small random palette shift to map-function/scene
+	 * sprites.
+	 */
 	private void randomizeMapSprites() {
 		int redOffset = (int) (Math.random() * 21D) - 10;
 		int greenOffset = (int) (Math.random() * 21D) - 10;
@@ -307,13 +312,16 @@ public final class ClientLifecycle {
 						blueOffset + brightnessOffset);
 			}
 			if (client.mapSceneSprites[index] != null) {
-				client.mapSceneSprites[index].adjustPalette(redOffset + brightnessOffset, greenOffset + brightnessOffset,
-						blueOffset + brightnessOffset);
+				client.mapSceneSprites[index].adjustPalette(redOffset + brightnessOffset,
+						greenOffset + brightnessOffset, blueOffset + brightnessOffset);
 			}
 		}
 	}
 
-	/** Builds the compass and circular minimap clipping masks from the map background. */
+	/**
+	 * Builds the compass and circular minimap clipping masks from the map
+	 * background.
+	 */
 	private void buildMinimapMasks() {
 		for (int row = 0; row < 33; row++) {
 			int startX = 999;
@@ -361,7 +369,7 @@ public final class ClientLifecycle {
 	 * Returns a horizontally flipped redstone sprite.
 	 *
 	 * @param mediaArchive loaded media archive
-	 * @param name sprite group name
+	 * @param name         sprite group name
 	 * @return flipped sprite
 	 */
 	private static IndexedImage flippedHorizontal(Archive mediaArchive, String name) {
@@ -374,7 +382,7 @@ public final class ClientLifecycle {
 	 * Returns a vertically flipped redstone sprite.
 	 *
 	 * @param mediaArchive loaded media archive
-	 * @param name sprite group name
+	 * @param name         sprite group name
 	 * @return flipped sprite
 	 */
 	private static IndexedImage flippedVertical(Archive mediaArchive, String name) {
@@ -387,7 +395,7 @@ public final class ClientLifecycle {
 	 * Returns a horizontally and vertically flipped redstone sprite.
 	 *
 	 * @param mediaArchive loaded media archive
-	 * @param name sprite group name
+	 * @param name         sprite group name
 	 * @return flipped sprite
 	 */
 	private static IndexedImage flippedBoth(Archive mediaArchive, String name) {

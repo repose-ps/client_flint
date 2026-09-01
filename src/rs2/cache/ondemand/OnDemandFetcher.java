@@ -188,10 +188,11 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	/**
 	 * Fills a requested region or reports peer EOF rather than allowing a
 	 * decrementing/never-completing legacy read loop.
-	 * @param input the input data
+	 * 
+	 * @param input       the input data
 	 * @param destination the destination
-	 * @param offset the starting offset
-	 * @param length the number of elements or bytes
+	 * @param offset      the starting offset
+	 * @param length      the number of elements or bytes
 	 * @throws IOException if an I/O operation fails
 	 */
 	private static void readFully(InputStream input, byte[] destination, int offset, int length) throws IOException {
@@ -562,9 +563,9 @@ public class OnDemandFetcher extends OnDemandProvider implements Runnable {
 	 * {@code anim_index}, and {@code midi_index}.
 	 * </p>
 	 *
-	 * @param archive the version-list archive
-	 * @param resourceLoader cache owner used for local reads and writes
-	 * @param socketOpener update-server socket opener
+	 * @param archive          the version-list archive
+	 * @param resourceLoader   cache owner used for local reads and writes
+	 * @param socketOpener     update-server socket opener
 	 * @param loggedInSupplier supplies the current login state for request priority
 	 * @param updateServerPort update-server port
 	 */

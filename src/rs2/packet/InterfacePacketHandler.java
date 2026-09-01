@@ -16,9 +16,11 @@ import rs2.ui.WidgetRuntime;
 /**
  * Applies interface, widget, tab, and input-dialog packets to client UI state.
  *
- * <p>This application-layer domain handler is invoked only after
+ * <p>
+ * This application-layer domain handler is invoked only after
  * {@link PacketDomainDispatcher} has explicitly routed a recognized
- * revision-377 opcode to it.</p>
+ * revision-377 opcode to it.
+ * </p>
  */
 final class InterfacePacketHandler {
 
@@ -42,14 +44,14 @@ final class InterfacePacketHandler {
 	/**
 	 * Creates the interface packet handler from its exact application capabilities.
 	 *
-	 * @param interfaces interface state owner
-	 * @param widgets widget runtime
-	 * @param chat chat/input state owner
-	 * @param localPlayer current local-player supplier
-	 * @param playerActions player interaction labels
+	 * @param interfaces              interface state owner
+	 * @param widgets                 widget runtime
+	 * @param chat                    chat/input state owner
+	 * @param localPlayer             current local-player supplier
+	 * @param playerActions           player interaction labels
 	 * @param playerActionLowPriority player interaction priority flags
-	 * @param unloadInterface interface-unload callback
-	 * @param redraw redraw callback
+	 * @param unloadInterface         interface-unload callback
+	 * @param redraw                  redraw callback
 	 */
 	InterfacePacketHandler(InterfaceController interfaces, WidgetRuntime widgets, ChatController chat,
 			Supplier<Player> localPlayer, String[] playerActions, boolean[] playerActionLowPriority,
@@ -67,8 +69,8 @@ final class InterfacePacketHandler {
 	/**
 	 * Applies one packet already routed to this domain.
 	 *
-	 * @param opcode decoded revision-377 opcode
-	 * @param buffer payload buffer positioned at zero
+	 * @param opcode     decoded revision-377 opcode
+	 * @param buffer     payload buffer positioned at zero
 	 * @param packetSize payload length in bytes
 	 * @return always {@code true}; routed domain packets continue processing
 	 * @throws IllegalArgumentException if the opcode was routed to the wrong domain
@@ -276,9 +278,10 @@ final class InterfacePacketHandler {
 			int widgetId8 = buffer.readUnsignedShortLEAdd();
 			Widget.get(widgetId8).mediaType = Widget.MEDIA_PLAYER;
 			if (localPlayer.get().npcDefinition == null)
-				Widget.get(widgetId8).mediaId = (localPlayer.get().bodyColors[0] << 25) + (localPlayer.get().bodyColors[4] << 20)
-						+ (localPlayer.get().equipment[0] << 15) + (localPlayer.get().equipment[8] << 10)
-						+ (localPlayer.get().equipment[11] << 5) + localPlayer.get().equipment[1];
+				Widget.get(widgetId8).mediaId = (localPlayer.get().bodyColors[0] << 25)
+						+ (localPlayer.get().bodyColors[4] << 20) + (localPlayer.get().equipment[0] << 15)
+						+ (localPlayer.get().equipment[8] << 10) + (localPlayer.get().equipment[11] << 5)
+						+ localPlayer.get().equipment[1];
 			else
 				Widget.get(widgetId8).mediaId = (int) (0x12345678L + localPlayer.get().npcDefinition.id);
 			return true;

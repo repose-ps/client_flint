@@ -2,11 +2,9 @@ package rs2.media.sprite;
 
 import rs2.cache.def.ItemDefinition;
 import rs2.collection.LruCache;
-import rs2.media.Rasterizer3D;
 import rs2.media.Rasterizer;
+import rs2.media.Rasterizer3D;
 import rs2.media.model.Model;
-import rs2.media.sprite.ImageRGB;
-
 
 /**
  * Renders revision-377 32x32 item icons using the global software rasterizers.
@@ -188,7 +186,7 @@ public final class ItemSpriteFactory {
 	 * Adds colored outline.
 	 *
 	 * @param pixels the pixels
-	 * @param color the color value
+	 * @param color  the color value
 	 */
 	private static void addColoredOutline(int[] pixels, int color) {
 		for (int x = 31; x >= 0; x--) {

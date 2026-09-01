@@ -12,9 +12,11 @@ import rs2.net.IncomingPacketOpcode;
 /**
  * Applies player/NPC synchronization and actor lifecycle packets.
  *
- * <p>This application-layer domain handler is invoked only after
+ * <p>
+ * This application-layer domain handler is invoked only after
  * {@link PacketDomainDispatcher} has explicitly routed a recognized
- * revision-377 opcode to it.</p>
+ * revision-377 opcode to it.
+ * </p>
  */
 final class ActorPacketHandler {
 
@@ -42,16 +44,16 @@ final class ActorPacketHandler {
 	/**
 	 * Creates the actor packet handler from its exact application capabilities.
 	 *
-	 * @param actors actor synchronization owner
-	 * @param regions region owner
-	 * @param gameCycle game-cycle supplier
-	 * @param currentPlane current-plane supplier
-	 * @param setCurrentPlane current-plane sink
-	 * @param loginUsername login-username supplier
-	 * @param chatBuffer shared chat scratch buffer
-	 * @param chatHandler actor chat callback
+	 * @param actors                     actor synchronization owner
+	 * @param regions                    region owner
+	 * @param gameCycle                  game-cycle supplier
+	 * @param currentPlane               current-plane supplier
+	 * @param setCurrentPlane            current-plane sink
+	 * @param loginUsername              login-username supplier
+	 * @param chatBuffer                 shared chat scratch buffer
+	 * @param chatHandler                actor chat callback
 	 * @param setAccountMembershipStatus membership-status sink
-	 * @param setLocalPlayerServerIndex local-player server-index sink
+	 * @param setLocalPlayerServerIndex  local-player server-index sink
 	 */
 	ActorPacketHandler(ActorSynchronizer actors, RegionManager regions, IntSupplier gameCycle, IntSupplier currentPlane,
 			IntConsumer setCurrentPlane, Supplier<String> loginUsername, Buffer chatBuffer,
@@ -72,8 +74,8 @@ final class ActorPacketHandler {
 	/**
 	 * Applies one packet already routed to this domain.
 	 *
-	 * @param opcode decoded revision-377 opcode
-	 * @param buffer payload buffer positioned at zero
+	 * @param opcode     decoded revision-377 opcode
+	 * @param buffer     payload buffer positioned at zero
 	 * @param packetSize payload length in bytes
 	 * @return always {@code true}; routed domain packets continue processing
 	 * @throws IllegalArgumentException if the opcode was routed to the wrong domain
@@ -90,8 +92,7 @@ final class ActorPacketHandler {
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.NPC_UPDATE) {
-			actors.decodeNpcUpdate(buffer, packetSize, gameCycle.getAsInt(),
-					loginUsername.get());
+			actors.decodeNpcUpdate(buffer, packetSize, gameCycle.getAsInt(), loginUsername.get());
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_LOCAL_PLAYER_INDEX) {
@@ -100,8 +101,8 @@ final class ActorPacketHandler {
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.PLAYER_UPDATE) {
-			setCurrentPlane.accept(actors.decodePlayerUpdate(buffer, packetSize,
-					gameCycle.getAsInt(), currentPlane.getAsInt(), loginUsername.get(), chatBuffer, chatHandler));
+			setCurrentPlane.accept(actors.decodePlayerUpdate(buffer, packetSize, gameCycle.getAsInt(),
+					currentPlane.getAsInt(), loginUsername.get(), chatBuffer, chatHandler));
 			regions.playerUpdateReceived();
 			return true;
 		}

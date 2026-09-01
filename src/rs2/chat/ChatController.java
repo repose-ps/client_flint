@@ -190,7 +190,7 @@ public final class ChatController {
 	/**
 	 * Opens a generic name/message prompt and clears other text-entry modes.
 	 *
-	 * @param action prompt action identifier
+	 * @param action  prompt action identifier
 	 * @param message prompt heading
 	 */
 	public void openPrompt(int action, String message) {
@@ -204,7 +204,7 @@ public final class ChatController {
 	/**
 	 * Opens the private-message prompt for one encoded friend name.
 	 *
-	 * @param target encoded target name
+	 * @param target      encoded target name
 	 * @param displayName friend display name
 	 */
 	public void openPrivateMessagePrompt(long target, String displayName) {

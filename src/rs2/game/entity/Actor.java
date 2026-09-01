@@ -1,11 +1,8 @@
 package rs2.game.entity;
 
-import rs2.media.animation.AnimationFrame;
-
 import rs2.cache.def.AnimationSequence;
 import rs2.media.model.Renderable;
 import rs2.scene.SceneConstants;
-
 
 /**
  * Shared movement, orientation, animation, overhead-text and hit state for
@@ -24,7 +21,10 @@ public abstract class Actor extends Renderable {
 	public static final int PATH_CAPACITY = 10;
 	/** Maximum number of queued steps beyond the current path origin. */
 	public static final int MAX_QUEUED_STEPS = PATH_CAPACITY - 1;
-	/** Maximum tile delta that can be queued without treating movement as a teleport. */
+	/**
+	 * Maximum tile delta that can be queued without treating movement as a
+	 * teleport.
+	 */
 	public static final int MAX_LOCAL_STEP_DELTA = 8;
 	/** Default lifetime of plain overhead text in client cycles. */
 	public static final int DEFAULT_OVERHEAD_TEXT_CYCLES = 100;
@@ -49,13 +49,22 @@ public abstract class Actor extends Renderable {
 	/** Desired facing angle in the client's 0..2047 angular coordinate system. */
 	public int orientation;
 
-	/** Client cycle in which this actor was most recently present in synchronization. */
+	/**
+	 * Client cycle in which this actor was most recently present in
+	 * synchronization.
+	 */
 	public int lastUpdateCycle;
 
-	/** Queued path tile X coordinates, with index zero holding the newest destination. */
+	/**
+	 * Queued path tile X coordinates, with index zero holding the newest
+	 * destination.
+	 */
 	public final int[] pathX = new int[PATH_CAPACITY];
 
-	/** Queued path tile Y coordinates, with index zero holding the newest destination. */
+	/**
+	 * Queued path tile Y coordinates, with index zero holding the newest
+	 * destination.
+	 */
 	public final int[] pathY = new int[PATH_CAPACITY];
 
 	/** Sequence identifier currently used for movement animation, or {@code -1}. */
@@ -130,7 +139,10 @@ public abstract class Actor extends Renderable {
 	/** Fine-grained world Y coordinate in 128-units-per-tile space. */
 	public int y;
 
-	/** Current rendered facing angle in the client's 0..2047 angular coordinate system. */
+	/**
+	 * Current rendered facing angle in the client's 0..2047 angular coordinate
+	 * system.
+	 */
 	public int rotation;
 
 	/**
@@ -208,7 +220,9 @@ public abstract class Actor extends Renderable {
 	/** In-place turning animation sequence identifier, or {@code -1}. */
 	public int turnSequence = -1;
 
-	/** Creates an actor with the revision-377 default movement and animation state. */
+	/**
+	 * Creates an actor with the revision-377 default movement and animation state.
+	 */
 	public Actor() {
 	}
 
@@ -320,8 +334,8 @@ public abstract class Actor extends Renderable {
 		if (!teleport) {
 			int deltaX = tileX - pathX[0];
 			int deltaY = tileY - pathY[0];
-			if (deltaX >= -MAX_LOCAL_STEP_DELTA && deltaX <= MAX_LOCAL_STEP_DELTA
-					&& deltaY >= -MAX_LOCAL_STEP_DELTA && deltaY <= MAX_LOCAL_STEP_DELTA) {
+			if (deltaX >= -MAX_LOCAL_STEP_DELTA && deltaX <= MAX_LOCAL_STEP_DELTA && deltaY >= -MAX_LOCAL_STEP_DELTA
+					&& deltaY <= MAX_LOCAL_STEP_DELTA) {
 				if (pathLength < MAX_QUEUED_STEPS) {
 					pathLength++;
 				}

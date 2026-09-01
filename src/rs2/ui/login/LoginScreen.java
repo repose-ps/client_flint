@@ -78,6 +78,7 @@ public final class LoginScreen {
 
 	/**
 	 * Preserves the original per-key order, field switching and length caps.
+	 * 
 	 * @param key the lookup key
 	 */
 	public void processKey(int key) {

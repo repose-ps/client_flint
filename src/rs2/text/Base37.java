@@ -14,6 +14,7 @@ public class Base37 {
 	/** Creates a new base37 with its default client state. */
 	public Base37() {
 	}
+
 	/** Maximum name length. */
 	public static final int MAX_NAME_LENGTH = 12;
 
@@ -36,6 +37,7 @@ public class Base37 {
 	 * do. Trailing zero digits are removed so equivalent names have one canonical
 	 * numeric representation.
 	 * </p>
+	 * 
 	 * @param name the name
 	 * @return the base-37 encoded name
 	 */
@@ -71,8 +73,9 @@ public class Base37 {
 	 * Malformed values return {@code "invalid_name"}, preserving the behavior
 	 * expected by the original client.
 	 * </p>
+	 * 
 	 * @param encoded the encoded
-	 * @return the decoded  value
+	 * @return the decoded value
 	 */
 	public static String decode(long encoded) {
 		if (encoded <= 0L || encoded >= ENCODED_NAME_LIMIT || encoded % 37L == 0L) {

@@ -77,6 +77,7 @@ public final class NetworkSession {
 
 	/**
 	 * Returns the current connection for the reconnect path's old-socket cleanup.
+	 * 
 	 * @return the connection
 	 */
 	public BufferedConnection getConnection() {
@@ -109,7 +110,8 @@ public final class NetworkSession {
 
 	/**
 	 * Raw login-handshake read.
-	 * @return the decoded  value
+	 * 
+	 * @return the decoded value
 	 * @throws IOException if an I/O operation fails
 	 */
 	public int read() throws IOException {
@@ -167,6 +169,7 @@ public final class NetworkSession {
 	/**
 	 * Transitional access for untouched decompiler-invalid branches elsewhere in
 	 * client.java. Valid runtime packet framing uses this cipher internally.
+	 * 
 	 * @return the next ISAAC value from the incoming opcode cipher
 	 */
 	public int nextIncomingOpcodeCipherValue() {
@@ -242,6 +245,7 @@ public final class NetworkSession {
 	/**
 	 * Rejects a framed payload that cannot fit in the fixed revision-377 receive
 	 * buffer before any payload bytes are copied into it.
+	 * 
 	 * @throws IOException if an I/O operation fails
 	 */
 	private void validateIncomingLength() throws IOException {
@@ -284,6 +288,7 @@ public final class NetworkSession {
 
 	/**
 	 * Flushes all queued client packet bytes to the connection, if any.
+	 * 
 	 * @throws IOException if an I/O operation fails
 	 */
 	public void flushOutgoing() throws IOException {

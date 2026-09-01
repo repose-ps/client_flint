@@ -2,8 +2,8 @@ package rs2.cache.def;
 
 import rs2.cache.Archive;
 import rs2.collection.LruCache;
-import rs2.media.sprite.ItemSpriteFactory;
 import rs2.media.model.Model;
+import rs2.media.sprite.ItemSpriteFactory;
 import rs2.net.Buffer;
 
 /** Provides item definition state and behavior. */
@@ -91,7 +91,6 @@ public class ItemDefinition {
 	private static final int ACTION_COUNT = 5;
 	/** Stack variant count. */
 	private static final int STACK_VARIANT_COUNT = 10;
-
 
 	/**
 	 * Returns whether head models ready.

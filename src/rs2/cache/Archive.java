@@ -94,8 +94,9 @@ public class Archive {
 	 * Returning a fresh array preserves the original Client's behavior and prevents
 	 * callers from mutating the archive's shared backing data.
 	 * </p>
+	 * 
 	 * @param fileName the file name
-	 * @return the decoded  value
+	 * @return the decoded value
 	 */
 	public byte[] read(String fileName) {
 		int requestedHash = hashName(fileName);
@@ -127,6 +128,7 @@ public class Archive {
 
 	/**
 	 * Computes the case-insensitive hash stored in revision 377 archives.
+	 * 
 	 * @param fileName the file name
 	 * @return whether h name
 	 */
@@ -147,7 +149,7 @@ public class Archive {
 	 * Validates an archive decoding invariant.
 	 *
 	 * @param condition the condition
-	 * @param message the message text
+	 * @param message   the message text
 	 */
 	private static void require(boolean condition, String message) {
 		if (!condition) {

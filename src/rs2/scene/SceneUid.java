@@ -4,8 +4,10 @@ package rs2.scene;
  * Bit layout of the packed scene UID used by revision 377 for picked and placed
  * scene entities.
  *
- * <p>Bits 0..6 store tile X, 7..13 tile Y, 14..28 the entity/definition id,
- * 29..30 the entity category, and bit 31 marks a non-interactive entity.</p>
+ * <p>
+ * Bits 0..6 store tile X, 7..13 tile Y, 14..28 the entity/definition id, 29..30
+ * the entity category, and bit 31 marks a non-interactive entity.
+ * </p>
  */
 public final class SceneUid {
 

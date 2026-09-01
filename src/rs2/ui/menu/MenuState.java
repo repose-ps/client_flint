@@ -4,21 +4,24 @@ package rs2.ui.menu;
  * Fixed-size revision-377 context-menu state.
  *
  * Menu entries retain the original fixed-size representation and numeric action
- * semantics without exposing the classic five parallel arrays. Menu action IDs are
- * not renumbered: values >= 2000 are the original
- * low-priority variants and are normalized only when an action is dispatched.
+ * semantics without exposing the classic five parallel arrays. Menu action IDs
+ * are not renumbered: values >= 2000 are the original low-priority variants and
+ * are normalized only when an action is dispatched.
  */
 public final class MenuState {
 
 	/** Creates a new menu state with its default client state. */
 	public MenuState() {
 	}
+
 	/** Constant value for capacity. */
 	public static final int CAPACITY = 500;
 	/** Constant value for cancel action. */
 	public static final int CANCEL_ACTION = 1016;
 
-	/** Offset applied to menu actions that should be sorted behind normal actions. */
+	/**
+	 * Offset applied to menu actions that should be sorted behind normal actions.
+	 */
 	public static final int LOW_PRIORITY_OFFSET = 2_000;
 
 	/** Threshold used by the original context-menu priority partition. */
@@ -218,7 +221,8 @@ public final class MenuState {
 		for (boolean sorted = false; !sorted;) {
 			sorted = true;
 			for (int index = 0; index < count - 1; index++) {
-				if (entries[index].action() < PRIORITY_SORT_THRESHOLD && entries[index + 1].action() > PRIORITY_SORT_THRESHOLD) {
+				if (entries[index].action() < PRIORITY_SORT_THRESHOLD
+						&& entries[index + 1].action() > PRIORITY_SORT_THRESHOLD) {
 					swap(index, index + 1);
 					sorted = false;
 				}
@@ -257,7 +261,8 @@ public final class MenuState {
 	}
 
 	/**
-	 * Returns the item-definition inventory action ID for a zero-based option index.
+	 * Returns the item-definition inventory action ID for a zero-based option
+	 * index.
 	 *
 	 * @param index option index
 	 * @return revision-377 action ID
@@ -350,24 +355,29 @@ public final class MenuState {
 	 */
 	public static MenuActionDomain actionDomain(int actionId) {
 		return switch (normalizeActionId(actionId)) {
-		case PLAYER_OPTION_1, PLAYER_OPTION_2, PLAYER_OPTION_3, PLAYER_OPTION_4, PLAYER_OPTION_5,
-				USE_ITEM_ON_PLAYER, CAST_SPELL_ON_PLAYER -> MenuActionDomain.PLAYER;
-		case NPC_OPTION_1, NPC_OPTION_2, NPC_OPTION_3, NPC_OPTION_4, NPC_OPTION_5, USE_ITEM_ON_NPC,
-				CAST_SPELL_ON_NPC, EXAMINE_NPC -> MenuActionDomain.NPC;
-		case OBJECT_OPTION_1, OBJECT_OPTION_2, OBJECT_OPTION_3, OBJECT_OPTION_4, OBJECT_OPTION_5,
-				USE_ITEM_ON_OBJECT, CAST_SPELL_ON_OBJECT, EXAMINE_OBJECT -> MenuActionDomain.OBJECT;
+		case PLAYER_OPTION_1, PLAYER_OPTION_2, PLAYER_OPTION_3, PLAYER_OPTION_4, PLAYER_OPTION_5, USE_ITEM_ON_PLAYER,
+				CAST_SPELL_ON_PLAYER ->
+			MenuActionDomain.PLAYER;
+		case NPC_OPTION_1, NPC_OPTION_2, NPC_OPTION_3, NPC_OPTION_4, NPC_OPTION_5, USE_ITEM_ON_NPC, CAST_SPELL_ON_NPC,
+				EXAMINE_NPC ->
+			MenuActionDomain.NPC;
+		case OBJECT_OPTION_1, OBJECT_OPTION_2, OBJECT_OPTION_3, OBJECT_OPTION_4, OBJECT_OPTION_5, USE_ITEM_ON_OBJECT,
+				CAST_SPELL_ON_OBJECT, EXAMINE_OBJECT ->
+			MenuActionDomain.OBJECT;
 		case GROUND_ITEM_OPTION_1, GROUND_ITEM_OPTION_2, GROUND_ITEM_OPTION_3, GROUND_ITEM_OPTION_4,
-				GROUND_ITEM_OPTION_5, USE_ITEM_ON_GROUND_ITEM, CAST_SPELL_ON_GROUND_ITEM,
-				EXAMINE_GROUND_ITEM -> MenuActionDomain.GROUND_ITEM;
-		case INVENTORY_ITEM_OPTION_1, INVENTORY_ITEM_OPTION_2, INVENTORY_ITEM_OPTION_3,
-				INVENTORY_ITEM_OPTION_4, INVENTORY_ITEM_OPTION_5, SELECT_ITEM, USE_ITEM_ON_INVENTORY_ITEM,
-				CAST_SPELL_ON_INVENTORY_ITEM, EXAMINE_INVENTORY_ITEM, WIDGET_ITEM_OPTION_1,
-				WIDGET_ITEM_OPTION_2, WIDGET_ITEM_OPTION_3, WIDGET_ITEM_OPTION_4,
-				WIDGET_ITEM_OPTION_5 -> MenuActionDomain.INVENTORY;
-		case WIDGET_BUTTON, SELECT_SPELL, CLOSE_DIALOGUE, CLOSE_INTERFACE, WIDGET_TOGGLE_VARP,
-				WIDGET_SET_VARP, WIDGET_CONTINUE -> MenuActionDomain.WIDGET;
-		case ADD_FRIEND, ADD_IGNORE, REMOVE_FRIEND, REMOVE_IGNORE, MESSAGE_FRIEND, REPORT_ABUSE,
-				ACCEPT_TRADE, ACCEPT_CHALLENGE -> MenuActionDomain.SOCIAL;
+				GROUND_ITEM_OPTION_5, USE_ITEM_ON_GROUND_ITEM, CAST_SPELL_ON_GROUND_ITEM, EXAMINE_GROUND_ITEM ->
+			MenuActionDomain.GROUND_ITEM;
+		case INVENTORY_ITEM_OPTION_1, INVENTORY_ITEM_OPTION_2, INVENTORY_ITEM_OPTION_3, INVENTORY_ITEM_OPTION_4,
+				INVENTORY_ITEM_OPTION_5, SELECT_ITEM, USE_ITEM_ON_INVENTORY_ITEM, CAST_SPELL_ON_INVENTORY_ITEM,
+				EXAMINE_INVENTORY_ITEM, WIDGET_ITEM_OPTION_1, WIDGET_ITEM_OPTION_2, WIDGET_ITEM_OPTION_3,
+				WIDGET_ITEM_OPTION_4, WIDGET_ITEM_OPTION_5 ->
+			MenuActionDomain.INVENTORY;
+		case WIDGET_BUTTON, SELECT_SPELL, CLOSE_DIALOGUE, CLOSE_INTERFACE, WIDGET_TOGGLE_VARP, WIDGET_SET_VARP,
+				WIDGET_CONTINUE ->
+			MenuActionDomain.WIDGET;
+		case ADD_FRIEND, ADD_IGNORE, REMOVE_FRIEND, REMOVE_IGNORE, MESSAGE_FRIEND, REPORT_ABUSE, ACCEPT_TRADE,
+				ACCEPT_CHALLENGE ->
+			MenuActionDomain.SOCIAL;
 		case WALK_HERE -> MenuActionDomain.WALK;
 		case CANCEL_ACTION -> MenuActionDomain.CANCEL;
 		default -> MenuActionDomain.UNKNOWN;
@@ -402,7 +412,7 @@ public final class MenuState {
 	/**
 	 * Swaps two menu entries.
 	 *
-	 * @param first the first
+	 * @param first  the first
 	 * @param second the second
 	 */
 	private void swap(int first, int second) {

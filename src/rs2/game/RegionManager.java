@@ -1,8 +1,6 @@
 package rs2.game;
 
 import java.util.Arrays;
-import rs2.net.IncomingPacketOpcode;
-import rs2.net.OutgoingPacketOpcode;
 
 import rs2.cache.def.GameObjectDefinition;
 import rs2.cache.def.ItemDefinition;
@@ -10,13 +8,15 @@ import rs2.cache.def.NpcDefinition;
 import rs2.cache.def.SpotAnimation;
 import rs2.cache.ondemand.OnDemandFetcher;
 import rs2.cache.ondemand.OnDemandRequest;
-import rs2.media.sprite.ItemSpriteFactory;
-import rs2.media.Rasterizer3D;
 import rs2.game.entity.Actor;
-import rs2.media.model.Model;
 import rs2.game.entity.Npc;
 import rs2.game.entity.Player;
+import rs2.media.Rasterizer3D;
+import rs2.media.model.Model;
+import rs2.media.sprite.ItemSpriteFactory;
 import rs2.net.Buffer;
+import rs2.net.IncomingPacketOpcode;
+import rs2.net.OutgoingPacketOpcode;
 import rs2.scene.Region;
 import rs2.scene.SceneConstants;
 import rs2.scene.entity.DynamicObjectFactory;
@@ -143,9 +143,9 @@ public final class RegionManager {
 		/**
 		 * Creates a new region shift.
 		 *
-		 * @param changed the changed
-		 * @param deltaX the delta X
-		 * @param deltaY the delta Y
+		 * @param changed      the changed
+		 * @param deltaX       the delta X
+		 * @param deltaY       the delta Y
 		 * @param destinationX the destination X
 		 * @param destinationY the destination Y
 		 */
@@ -210,7 +210,8 @@ public final class RegionManager {
 		baseY = (regionY - 6) * SceneConstants.CHUNK_SIZE;
 
 		specialRegion = false;
-		if ((regionX / SceneConstants.CHUNKS_PER_REGION == 48 || regionX / SceneConstants.CHUNKS_PER_REGION == 49) && regionY / SceneConstants.CHUNKS_PER_REGION == 48) {
+		if ((regionX / SceneConstants.CHUNKS_PER_REGION == 48 || regionX / SceneConstants.CHUNKS_PER_REGION == 49)
+				&& regionY / SceneConstants.CHUNKS_PER_REGION == 48) {
 			specialRegion = true;
 		}
 		if (regionX / SceneConstants.CHUNKS_PER_REGION == 48 && regionY / SceneConstants.CHUNKS_PER_REGION == 148) {
@@ -252,8 +253,10 @@ public final class RegionManager {
 	 */
 	private void prepareNormalRegions(OnDemandFetcher fetcher) {
 		int count = 0;
-		for (int mapX = (regionX - 6) / SceneConstants.CHUNKS_PER_REGION; mapX <= (regionX + 6) / SceneConstants.CHUNKS_PER_REGION; mapX++) {
-			for (int mapY = (regionY - 6) / SceneConstants.CHUNKS_PER_REGION; mapY <= (regionY + 6) / SceneConstants.CHUNKS_PER_REGION; mapY++) {
+		for (int mapX = (regionX - 6) / SceneConstants.CHUNKS_PER_REGION; mapX <= (regionX + 6)
+				/ SceneConstants.CHUNKS_PER_REGION; mapX++) {
+			for (int mapY = (regionY - 6) / SceneConstants.CHUNKS_PER_REGION; mapY <= (regionY + 6)
+					/ SceneConstants.CHUNKS_PER_REGION; mapY++) {
 				count++;
 			}
 		}
@@ -265,8 +268,10 @@ public final class RegionManager {
 		landscapeArchiveIds = new int[count];
 
 		int index = 0;
-		for (int mapX = (regionX - 6) / SceneConstants.CHUNKS_PER_REGION; mapX <= (regionX + 6) / SceneConstants.CHUNKS_PER_REGION; mapX++) {
-			for (int mapY = (regionY - 6) / SceneConstants.CHUNKS_PER_REGION; mapY <= (regionY + 6) / SceneConstants.CHUNKS_PER_REGION; mapY++) {
+		for (int mapX = (regionX - 6) / SceneConstants.CHUNKS_PER_REGION; mapX <= (regionX + 6)
+				/ SceneConstants.CHUNKS_PER_REGION; mapX++) {
+			for (int mapY = (regionY - 6) / SceneConstants.CHUNKS_PER_REGION; mapY <= (regionY + 6)
+					/ SceneConstants.CHUNKS_PER_REGION; mapY++) {
 				regionIds[index] = (mapX << 8) + mapY;
 				if (specialRegion
 						&& (mapY == 49 || mapY == 149 || mapY == 147 || mapX == 50 || mapX == 49 && mapY == 47)) {
@@ -306,7 +311,8 @@ public final class RegionManager {
 					}
 					int sourceChunkX = template >> INSTANCE_SOURCE_CHUNK_X_SHIFT & INSTANCE_SOURCE_CHUNK_X_MASK;
 					int sourceChunkY = template >> INSTANCE_SOURCE_CHUNK_Y_SHIFT & INSTANCE_SOURCE_CHUNK_Y_MASK;
-					int regionId = (sourceChunkX / SceneConstants.CHUNKS_PER_REGION << 8) + sourceChunkY / SceneConstants.CHUNKS_PER_REGION;
+					int regionId = (sourceChunkX / SceneConstants.CHUNKS_PER_REGION << 8)
+							+ sourceChunkY / SceneConstants.CHUNKS_PER_REGION;
 					boolean duplicate = false;
 					for (int index = 0; index < count; index++) {
 						if (uniqueRegions[index] == regionId) {
@@ -426,6 +432,7 @@ public final class RegionManager {
 
 	/**
 	 * Returns the current region-loading readiness code without building the scene.
+	 * 
 	 * @return the loading status
 	 */
 	public int getLoadingStatus() {
@@ -461,13 +468,15 @@ public final class RegionManager {
 	}
 
 	/**
-	 * Builds terrain, objects, collision, and scene state for the loaded region set.
-	 * @param world the world
-	 * @param currentPlane the current plane
-	 * @param lowMemory whether low-memory mode is active
-	 * @param outgoing the outgoing
-	 * @param fetcher the fetcher
-	 * @param standaloneFrame the standalone frame
+	 * Builds terrain, objects, collision, and scene state for the loaded region
+	 * set.
+	 * 
+	 * @param world             the world
+	 * @param currentPlane      the current plane
+	 * @param lowMemory         whether low-memory mode is active
+	 * @param outgoing          the outgoing
+	 * @param fetcher           the fetcher
+	 * @param standaloneFrame   the standalone frame
 	 * @param rebindSceneRaster the rebind scene raster
 	 */
 	public void buildRegion(WorldState world, int currentPlane, boolean lowMemory, Buffer outgoing,
@@ -491,7 +500,7 @@ public final class RegionManager {
 			}
 
 			Region region = new Region(world.tileHeights, world.tileFlags, SceneConstants.SIZE, SceneConstants.SIZE,
-				dynamicObjects);
+					dynamicObjects);
 			int regionCount = terrainData.length;
 			outgoing.writeOpcode(OutgoingPacketOpcode.NO_TIMEOUT);
 			if (!instanced) {
@@ -500,8 +509,8 @@ public final class RegionManager {
 					int y = (regionIds[index] & 0xff) * SceneConstants.REGION_SIZE - baseY;
 					byte[] terrain = terrainData[index];
 					if (terrain != null) {
-						region.loadTerrainRegion(terrain, x, y, (regionX - 6) * SceneConstants.CHUNK_SIZE, (regionY - 6) * SceneConstants.CHUNK_SIZE,
-								world.collisionMaps);
+						region.loadTerrainRegion(terrain, x, y, (regionX - 6) * SceneConstants.CHUNK_SIZE,
+								(regionY - 6) * SceneConstants.CHUNK_SIZE, world.collisionMaps);
 					}
 				}
 				for (int index = 0; index < regionCount; index++) {
@@ -532,21 +541,30 @@ public final class RegionManager {
 							if (template != -1) {
 								int sourcePlane = template >> INSTANCE_SOURCE_PLANE_SHIFT & INSTANCE_TWO_BIT_MASK;
 								int rotation = template >> INSTANCE_ROTATION_SHIFT & INSTANCE_TWO_BIT_MASK;
-								int sourceChunkX = template >> INSTANCE_SOURCE_CHUNK_X_SHIFT & INSTANCE_SOURCE_CHUNK_X_MASK;
-								int sourceChunkY = template >> INSTANCE_SOURCE_CHUNK_Y_SHIFT & INSTANCE_SOURCE_CHUNK_Y_MASK;
-								int regionId = (sourceChunkX / SceneConstants.CHUNKS_PER_REGION << 8) + sourceChunkY / SceneConstants.CHUNKS_PER_REGION;
+								int sourceChunkX = template >> INSTANCE_SOURCE_CHUNK_X_SHIFT
+										& INSTANCE_SOURCE_CHUNK_X_MASK;
+								int sourceChunkY = template >> INSTANCE_SOURCE_CHUNK_Y_SHIFT
+										& INSTANCE_SOURCE_CHUNK_Y_MASK;
+								int regionId = (sourceChunkX / SceneConstants.CHUNKS_PER_REGION << 8)
+										+ sourceChunkY / SceneConstants.CHUNKS_PER_REGION;
 								for (int index = 0; index < regionIds.length; index++) {
 									if (regionIds[index] == regionId && terrainData[index] != null) {
-										region.loadTerrainChunk(terrainData[index], sourcePlane, (sourceChunkX & SceneConstants.CHUNK_COORDINATE_MASK) * SceneConstants.CHUNK_SIZE,
-												(sourceChunkY & SceneConstants.CHUNK_COORDINATE_MASK) * SceneConstants.CHUNK_SIZE, destinationPlane, destinationChunkX * SceneConstants.CHUNK_SIZE,
-												destinationChunkY * SceneConstants.CHUNK_SIZE, rotation, world.collisionMaps);
+										region.loadTerrainChunk(terrainData[index], sourcePlane,
+												(sourceChunkX & SceneConstants.CHUNK_COORDINATE_MASK)
+														* SceneConstants.CHUNK_SIZE,
+												(sourceChunkY & SceneConstants.CHUNK_COORDINATE_MASK)
+														* SceneConstants.CHUNK_SIZE,
+												destinationPlane, destinationChunkX * SceneConstants.CHUNK_SIZE,
+												destinationChunkY * SceneConstants.CHUNK_SIZE, rotation,
+												world.collisionMaps);
 										loaded = true;
 										break;
 									}
 								}
 							}
 							if (!loaded) {
-								region.clearChunkHeights(destinationPlane, destinationChunkX * SceneConstants.CHUNK_SIZE,
+								region.clearChunkHeights(destinationPlane,
+										destinationChunkX * SceneConstants.CHUNK_SIZE,
 										destinationChunkY * SceneConstants.CHUNK_SIZE);
 							}
 						}
@@ -556,7 +574,9 @@ public final class RegionManager {
 				for (int chunkX = 0; chunkX < SceneConstants.INSTANCE_CHUNK_COUNT; chunkX++) {
 					for (int chunkY = 0; chunkY < SceneConstants.INSTANCE_CHUNK_COUNT; chunkY++) {
 						if (instanceTemplates[0][chunkX][chunkY] == EMPTY_INSTANCE_TEMPLATE) {
-							region.fillMissingTerrain(chunkX * SceneConstants.CHUNK_SIZE, chunkY * SceneConstants.CHUNK_SIZE , SceneConstants.CHUNK_SIZE, SceneConstants.CHUNK_SIZE);
+							region.fillMissingTerrain(chunkX * SceneConstants.CHUNK_SIZE,
+									chunkY * SceneConstants.CHUNK_SIZE, SceneConstants.CHUNK_SIZE,
+									SceneConstants.CHUNK_SIZE);
 						}
 					}
 				}
@@ -573,12 +593,18 @@ public final class RegionManager {
 							int rotation = template >> INSTANCE_ROTATION_SHIFT & INSTANCE_TWO_BIT_MASK;
 							int sourceChunkX = template >> INSTANCE_SOURCE_CHUNK_X_SHIFT & INSTANCE_SOURCE_CHUNK_X_MASK;
 							int sourceChunkY = template >> INSTANCE_SOURCE_CHUNK_Y_SHIFT & INSTANCE_SOURCE_CHUNK_Y_MASK;
-							int regionId = (sourceChunkX / SceneConstants.CHUNKS_PER_REGION << 8) + sourceChunkY / SceneConstants.CHUNKS_PER_REGION;
+							int regionId = (sourceChunkX / SceneConstants.CHUNKS_PER_REGION << 8)
+									+ sourceChunkY / SceneConstants.CHUNKS_PER_REGION;
 							for (int index = 0; index < regionIds.length; index++) {
 								if (regionIds[index] == regionId && landscapeData[index] != null) {
-									region.loadObjectChunk(landscapeData[index], sourcePlane, (sourceChunkX & SceneConstants.CHUNK_COORDINATE_MASK) * SceneConstants.CHUNK_SIZE,
-											(sourceChunkY & SceneConstants.CHUNK_COORDINATE_MASK) * SceneConstants.CHUNK_SIZE, destinationPlane, destinationChunkX * SceneConstants.CHUNK_SIZE,
-											destinationChunkY * SceneConstants.CHUNK_SIZE, rotation, world.collisionMaps, world.scene);
+									region.loadObjectChunk(landscapeData[index], sourcePlane,
+											(sourceChunkX & SceneConstants.CHUNK_COORDINATE_MASK)
+													* SceneConstants.CHUNK_SIZE,
+											(sourceChunkY & SceneConstants.CHUNK_COORDINATE_MASK)
+													* SceneConstants.CHUNK_SIZE,
+											destinationPlane, destinationChunkX * SceneConstants.CHUNK_SIZE,
+											destinationChunkY * SceneConstants.CHUNK_SIZE, rotation,
+											world.collisionMaps, world.scene);
 									break;
 								}
 							}

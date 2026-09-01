@@ -20,7 +20,7 @@ public final class SceneConfig {
 	/**
 	 * Packs a location type and orientation into the revision-377 scene byte.
 	 *
-	 * @param type the five-bit location type
+	 * @param type        the five-bit location type
 	 * @param orientation the two-bit orientation
 	 * @return the packed scene configuration
 	 */

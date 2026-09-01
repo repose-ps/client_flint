@@ -18,8 +18,8 @@ import rs2.sound.JavaSoundAudioPlayer;
  * <p>
  * The historical client called this class {@code signlink}. In this standalone
  * build it retains the cache, socket, DNS, worker-thread and sound/MIDI
- * file-request behavior, and routes completed audio requests to the standalone Java
- * Sound backend. It no longer contains applet-relative URL operations.
+ * file-request behavior, and routes completed audio requests to the standalone
+ * Java Sound backend. It no longer contains applet-relative URL operations.
  * </p>
  */
 public final class Signlink implements Runnable {
@@ -125,6 +125,7 @@ public final class Signlink implements Runnable {
 
 	/**
 	 * Starts a fresh signlink worker and waits until it has initialized.
+	 * 
 	 * @param address the address
 	 */
 	public static void start(InetAddress address) {
@@ -264,6 +265,7 @@ public final class Signlink implements Runnable {
 	 * This deliberately preserves the user's current fixed relative cache path
 	 * rather than restoring the old platform-directory search.
 	 * </p>
+	 * 
 	 * @return the cache directory result
 	 */
 	public static String findCacheDirectory() {
@@ -271,7 +273,9 @@ public final class Signlink implements Runnable {
 	}
 
 	/**
-	 * Selects the disk-cache directory before {@link #start(InetAddress)} is called.
+	 * Selects the disk-cache directory before {@link #start(InetAddress)} is
+	 * called.
+	 * 
 	 * @param directory the directory
 	 */
 	public static void setCacheDirectory(String directory) {
@@ -288,6 +292,7 @@ public final class Signlink implements Runnable {
 	/**
 	 * Reads or creates the historical four-byte installation UID and returns the
 	 * stored value plus one.
+	 * 
 	 * @param cacheDirectory the cache directory
 	 * @return the UID
 	 */
@@ -311,6 +316,7 @@ public final class Signlink implements Runnable {
 
 	/**
 	 * Opens a socket on the signlink worker thread and blocks for its result.
+	 * 
 	 * @param port the network port
 	 * @return the connected socket
 	 * @throws IOException if an I/O operation fails
@@ -337,6 +343,7 @@ public final class Signlink implements Runnable {
 
 	/**
 	 * Queues a reverse/host-name lookup and immediately exposes the query text.
+	 * 
 	 * @param address the address
 	 */
 	public static synchronized void lookupDns(String address) {
@@ -346,6 +353,7 @@ public final class Signlink implements Runnable {
 
 	/**
 	 * Queues creation of a daemon worker thread at the requested priority.
+	 * 
 	 * @param runnable the runnable
 	 * @param priority the request priority
 	 */
@@ -356,6 +364,7 @@ public final class Signlink implements Runnable {
 
 	/**
 	 * Applies the legacy WAV attenuation to the standalone Java Sound player.
+	 * 
 	 * @param volume the volume
 	 */
 	public static synchronized void setWaveVolume(int volume) {
@@ -368,7 +377,8 @@ public final class Signlink implements Runnable {
 
 	/**
 	 * Applies the legacy MIDI attenuation, optionally updating the live track.
-	 * @param volume the volume
+	 * 
+	 * @param volume             the volume
 	 * @param adjustPlayingTrack the adjust playing track
 	 */
 	public static synchronized void setMidiVolume(int volume, boolean adjustPlayingTrack) {
@@ -382,7 +392,9 @@ public final class Signlink implements Runnable {
 		}
 	}
 
-	/** Stops standalone MIDI playback and preserves the historical control marker. */
+	/**
+	 * Stops standalone MIDI playback and preserves the historical control marker.
+	 */
 	public static synchronized void stopMidi() {
 		midiPlayPending = false;
 		midiFade = 0;
@@ -395,7 +407,8 @@ public final class Signlink implements Runnable {
 
 	/**
 	 * Queues a WAV file save using the original five-slot filename ring.
-	 * @param data the data to process
+	 * 
+	 * @param data   the data to process
 	 * @param length the number of elements or bytes
 	 * @return whether save wave
 	 */
@@ -417,6 +430,7 @@ public final class Signlink implements Runnable {
 
 	/**
 	 * Queues the most recently selected WAV file for replay without rewriting it.
+	 * 
 	 * @return whether replay wave
 	 */
 	public static synchronized boolean replayWave() {
@@ -432,9 +446,10 @@ public final class Signlink implements Runnable {
 
 	/**
 	 * Queues a MIDI file save using the original five-slot filename ring.
-	 * @param data the data to process
+	 * 
+	 * @param data   the data to process
 	 * @param length the number of elements or bytes
-	 * @param fade the fade
+	 * @param fade   the fade
 	 */
 	public static synchronized void saveMidi(byte[] data, int length, boolean fade) {
 		if (length > MAX_SAVE_LENGTH || saveRequest != null) {
@@ -451,7 +466,8 @@ public final class Signlink implements Runnable {
 
 	/**
 	 * Compatibility overload retaining the currently selected fade mode.
-	 * @param data the data to process
+	 * 
+	 * @param data   the data to process
 	 * @param length the number of elements or bytes
 	 */
 	public static synchronized void saveMidi(byte[] data, int length) {
@@ -562,6 +578,7 @@ public final class Signlink implements Runnable {
 	 * relative CGI URL. Standalone error reporting therefore retains its observable
 	 * console behavior only.
 	 * </p>
+	 * 
 	 * @param message the message text
 	 */
 	public static void reportError(String message) {

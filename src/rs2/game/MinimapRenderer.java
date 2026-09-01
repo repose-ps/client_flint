@@ -1,25 +1,23 @@
 package rs2.game;
 
-import rs2.scene.tile.InteractiveObject;
-
-import rs2.scene.TileFlags;
-import rs2.scene.SceneConfig;
-import rs2.media.Angle;
 import rs2.cache.def.GameObjectDefinition;
 import rs2.cache.def.NpcDefinition;
 import rs2.collection.NodeDeque;
 import rs2.game.entity.Npc;
 import rs2.game.entity.Player;
+import rs2.media.Angle;
 import rs2.media.GraphicsBuffer;
-import rs2.media.Rasterizer3D;
 import rs2.media.Rasterizer;
+import rs2.media.Rasterizer3D;
 import rs2.media.model.Model;
 import rs2.media.sprite.ImageRGB;
 import rs2.media.sprite.IndexedImage;
 import rs2.net.Buffer;
 import rs2.net.OutgoingPacketOpcode;
+import rs2.scene.SceneConfig;
 import rs2.scene.SceneConstants;
 import rs2.scene.SceneUid;
+import rs2.scene.TileFlags;
 import rs2.scene.util.CollisionMap;
 
 /**
@@ -219,7 +217,8 @@ public final class MinimapRenderer {
 				if ((world.tileFlags[plane][x][y] & TileFlags.MINIMAP_EXCLUDED) == 0) {
 					world.scene.drawMinimapTile(pixels, pixelOffset, MAP_IMAGE_SIZE, plane, x, y);
 				}
-				if (plane < SceneConstants.PLANE_COUNT - 1 && (world.tileFlags[plane + 1][x][y] & TileFlags.FORCE_LOWEST_PLANE) != 0) {
+				if (plane < SceneConstants.PLANE_COUNT - 1
+						&& (world.tileFlags[plane + 1][x][y] & TileFlags.FORCE_LOWEST_PLANE) != 0) {
 					world.scene.drawMinimapTile(pixels, pixelOffset, MAP_IMAGE_SIZE, plane + 1, x, y);
 				}
 				pixelOffset += MAP_TILE_PIXELS;
@@ -235,7 +234,8 @@ public final class MinimapRenderer {
 				if ((world.tileFlags[plane][x][y] & TileFlags.MINIMAP_EXCLUDED) == 0) {
 					drawMapLocation(world, y, plane, x, positiveWallColor, wallColor, mapSceneSprites);
 				}
-				if (plane < SceneConstants.PLANE_COUNT - 1 && (world.tileFlags[plane + 1][x][y] & TileFlags.FORCE_LOWEST_PLANE) != 0) {
+				if (plane < SceneConstants.PLANE_COUNT - 1
+						&& (world.tileFlags[plane + 1][x][y] & TileFlags.FORCE_LOWEST_PLANE) != 0) {
 					drawMapLocation(world, y, plane + 1, x, positiveWallColor, wallColor, mapSceneSprites);
 				}
 			}
@@ -275,7 +275,8 @@ public final class MinimapRenderer {
 								&& (collisionFlags[iconX - 1][iconY] & CollisionMap.ACCESS_FROM_WEST_BLOCKED) == 0) {
 							iconX--;
 						}
-						if (direction == 1 && iconX < SceneConstants.MAX_TILE_INDEX && iconX < x + MAP_FUNCTION_RANDOM_RADIUS
+						if (direction == 1 && iconX < SceneConstants.MAX_TILE_INDEX
+								&& iconX < x + MAP_FUNCTION_RANDOM_RADIUS
 								&& (collisionFlags[iconX + 1][iconY] & CollisionMap.ACCESS_FROM_EAST_BLOCKED) == 0) {
 							iconX++;
 						}
@@ -283,7 +284,8 @@ public final class MinimapRenderer {
 								&& (collisionFlags[iconX][iconY - 1] & CollisionMap.ACCESS_FROM_SOUTH_BLOCKED) == 0) {
 							iconY--;
 						}
-						if (direction == 3 && iconY < SceneConstants.MAX_TILE_INDEX && iconY < y + MAP_FUNCTION_RANDOM_RADIUS
+						if (direction == 3 && iconY < SceneConstants.MAX_TILE_INDEX
+								&& iconY < y + MAP_FUNCTION_RANDOM_RADIUS
 								&& (collisionFlags[iconX][iconY + 1] & CollisionMap.ACCESS_FROM_NORTH_BLOCKED) == 0) {
 							iconY++;
 						}
@@ -331,7 +333,8 @@ public final class MinimapRenderer {
 			int color = uid > 0 ? positiveColor : normalColor;
 			int[] pixels = mapImage.pixels;
 			int offset = mapTilePixelOffset(tileX, tileY);
-			GameObjectDefinition definition = GameObjectDefinition.lookup(uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
+			GameObjectDefinition definition = GameObjectDefinition
+					.lookup(uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
 			if (definition.mapSceneId != -1) {
 				drawMapSceneSprite(definition, mapSceneSprites[definition.mapSceneId], tileX, tileY);
 			} else {
@@ -399,7 +402,8 @@ public final class MinimapRenderer {
 			int config = world.scene.getConfig(plane, tileX, tileY, uid);
 			int orientation = SceneConfig.orientation(config);
 			int type = SceneConfig.type(config);
-			GameObjectDefinition definition = GameObjectDefinition.lookup(uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
+			GameObjectDefinition definition = GameObjectDefinition
+					.lookup(uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
 			if (definition.mapSceneId != -1) {
 				drawMapSceneSprite(definition, mapSceneSprites[definition.mapSceneId], tileX, tileY);
 			} else if (type == 9) {
@@ -422,7 +426,8 @@ public final class MinimapRenderer {
 
 		uid = world.scene.getFloorDecorationUid(plane, tileX, tileY);
 		if (uid != 0) {
-			GameObjectDefinition definition = GameObjectDefinition.lookup(uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
+			GameObjectDefinition definition = GameObjectDefinition
+					.lookup(uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
 			if (definition.mapSceneId != -1) {
 				drawMapSceneSprite(definition, mapSceneSprites[definition.mapSceneId], tileX, tileY);
 			}
@@ -443,7 +448,8 @@ public final class MinimapRenderer {
 		}
 		int xOffset = (definition.sizeX * MAP_TILE_PIXELS - sprite.width) / 2;
 		int yOffset = (definition.sizeY * MAP_TILE_PIXELS - sprite.height) / 2;
-		sprite.draw(MAP_BORDER_PIXELS + tileX * MAP_TILE_PIXELS + xOffset, MAP_BORDER_PIXELS + (SceneConstants.SIZE - tileY - definition.sizeY) * MAP_TILE_PIXELS + yOffset);
+		sprite.draw(MAP_BORDER_PIXELS + tileX * MAP_TILE_PIXELS + xOffset,
+				MAP_BORDER_PIXELS + (SceneConstants.SIZE - tileY - definition.sizeY) * MAP_TILE_PIXELS + yOffset);
 	}
 
 	/**
@@ -478,8 +484,9 @@ public final class MinimapRenderer {
 				if (mask[loopIndex] == 0)
 					raster[loopIndex] = 0;
 			}
-			assets.compass.shapeImageToPixels(0, 0, COMPASS_SIZE, COMPASS_SIZE, TRANSFORM_SCALE, COMPASS_ROTATION_CENTER, assets.compassMaskWidths, cameraYaw,
-					assets.compassMaskOffsets, COMPASS_ROTATION_CENTER);
+			assets.compass.shapeImageToPixels(0, 0, COMPASS_SIZE, COMPASS_SIZE, TRANSFORM_SCALE,
+					COMPASS_ROTATION_CENTER, assets.compassMaskWidths, cameraYaw, assets.compassMaskOffsets,
+					COMPASS_ROTATION_CENTER);
 			assets.sceneBuffer.bindRaster();
 			Rasterizer3D.scanlineOffsets = assets.sceneScanlineOffsets;
 			return;
@@ -488,14 +495,16 @@ public final class MinimapRenderer {
 		int rotation = cameraYaw + rotationOffset & Angle.MASK;
 		int mapX = MAP_BORDER_PIXELS + localPlayer.x / FINE_UNITS_PER_MAP_PIXEL;
 		int mapY = MAP_IMAGE_SIZE - MAP_BORDER_PIXELS - localPlayer.y / FINE_UNITS_PER_MAP_PIXEL;
-		mapImage.shapeImageToPixels(VIEW_X, VIEW_Y, VIEW_WIDTH, VIEW_HEIGHT, TRANSFORM_SCALE + zoomOffset, mapX, assets.minimapMaskWidths, rotation,
-				assets.minimapMaskOffsets, mapY);
-		assets.compass.shapeImageToPixels(0, 0, COMPASS_SIZE, COMPASS_SIZE, TRANSFORM_SCALE, COMPASS_ROTATION_CENTER, assets.compassMaskWidths, cameraYaw,
-				assets.compassMaskOffsets, COMPASS_ROTATION_CENTER);
+		mapImage.shapeImageToPixels(VIEW_X, VIEW_Y, VIEW_WIDTH, VIEW_HEIGHT, TRANSFORM_SCALE + zoomOffset, mapX,
+				assets.minimapMaskWidths, rotation, assets.minimapMaskOffsets, mapY);
+		assets.compass.shapeImageToPixels(0, 0, COMPASS_SIZE, COMPASS_SIZE, TRANSFORM_SCALE, COMPASS_ROTATION_CENTER,
+				assets.compassMaskWidths, cameraYaw, assets.compassMaskOffsets, COMPASS_ROTATION_CENTER);
 
 		for (int loopIndex2 = 0; loopIndex2 < mapFunctionCount; loopIndex2++) {
-			int dx = mapFunctionX[loopIndex2] * MAP_TILE_PIXELS + MAP_TILE_CENTER_PIXELS - localPlayer.x / FINE_UNITS_PER_MAP_PIXEL;
-			int dy = mapFunctionY[loopIndex2] * MAP_TILE_PIXELS + MAP_TILE_CENTER_PIXELS - localPlayer.y / FINE_UNITS_PER_MAP_PIXEL;
+			int dx = mapFunctionX[loopIndex2] * MAP_TILE_PIXELS + MAP_TILE_CENTER_PIXELS
+					- localPlayer.x / FINE_UNITS_PER_MAP_PIXEL;
+			int dy = mapFunctionY[loopIndex2] * MAP_TILE_PIXELS + MAP_TILE_CENTER_PIXELS
+					- localPlayer.y / FINE_UNITS_PER_MAP_PIXEL;
 			drawOnMinimap(dy, mapFunctionIcons[loopIndex2], dx, cameraYaw, assets);
 		}
 
@@ -503,7 +512,10 @@ public final class MinimapRenderer {
 			for (int y = 0; y < SceneConstants.SIZE; y++) {
 				NodeDeque items = world.groundItems[plane][x][y];
 				if (items != null) {
-					drawOnMinimap(y * MAP_TILE_PIXELS + MAP_TILE_CENTER_PIXELS - localPlayer.y / FINE_UNITS_PER_MAP_PIXEL, assets.groundItemDot, x * MAP_TILE_PIXELS + MAP_TILE_CENTER_PIXELS - localPlayer.x / FINE_UNITS_PER_MAP_PIXEL,
+					drawOnMinimap(
+							y * MAP_TILE_PIXELS + MAP_TILE_CENTER_PIXELS - localPlayer.y / FINE_UNITS_PER_MAP_PIXEL,
+							assets.groundItemDot,
+							x * MAP_TILE_PIXELS + MAP_TILE_CENTER_PIXELS - localPlayer.x / FINE_UNITS_PER_MAP_PIXEL,
 							cameraYaw, assets);
 				}
 			}
@@ -516,7 +528,8 @@ public final class MinimapRenderer {
 				if (definition.morphIds != null)
 					definition = definition.transform();
 				if (definition != null && definition.visibleOnMinimap && definition.clickable) {
-					drawOnMinimap(npc.y / FINE_UNITS_PER_MAP_PIXEL - localPlayer.y / FINE_UNITS_PER_MAP_PIXEL, assets.npcDot, npc.x / FINE_UNITS_PER_MAP_PIXEL - localPlayer.x / FINE_UNITS_PER_MAP_PIXEL,
+					drawOnMinimap(npc.y / FINE_UNITS_PER_MAP_PIXEL - localPlayer.y / FINE_UNITS_PER_MAP_PIXEL,
+							assets.npcDot, npc.x / FINE_UNITS_PER_MAP_PIXEL - localPlayer.x / FINE_UNITS_PER_MAP_PIXEL,
 							cameraYaw, assets);
 				}
 			}
@@ -538,23 +551,34 @@ public final class MinimapRenderer {
 			if (hintType == HINT_NPC && hintNpcIndex >= 0 && hintNpcIndex < actors.npcs.length) {
 				Npc npc = actors.npcs[hintNpcIndex];
 				if (npc != null) {
-					drawHint(npc.y / FINE_UNITS_PER_MAP_PIXEL - localPlayer.y / FINE_UNITS_PER_MAP_PIXEL, assets.hintMarker, npc.x / FINE_UNITS_PER_MAP_PIXEL - localPlayer.x / FINE_UNITS_PER_MAP_PIXEL,
-							cameraYaw, assets);
+					drawHint(npc.y / FINE_UNITS_PER_MAP_PIXEL - localPlayer.y / FINE_UNITS_PER_MAP_PIXEL,
+							assets.hintMarker,
+							npc.x / FINE_UNITS_PER_MAP_PIXEL - localPlayer.x / FINE_UNITS_PER_MAP_PIXEL, cameraYaw,
+							assets);
 				}
 			} else if (hintType == HINT_TILE) {
-				drawHint((hintTileY - baseY) * MAP_TILE_PIXELS + MAP_TILE_CENTER_PIXELS - localPlayer.y / FINE_UNITS_PER_MAP_PIXEL, assets.hintMarker,
-						(hintTileX - baseX) * MAP_TILE_PIXELS + MAP_TILE_CENTER_PIXELS - localPlayer.x / FINE_UNITS_PER_MAP_PIXEL, cameraYaw, assets);
+				drawHint(
+						(hintTileY - baseY) * MAP_TILE_PIXELS + MAP_TILE_CENTER_PIXELS
+								- localPlayer.y / FINE_UNITS_PER_MAP_PIXEL,
+						assets.hintMarker, (hintTileX - baseX) * MAP_TILE_PIXELS + MAP_TILE_CENTER_PIXELS
+								- localPlayer.x / FINE_UNITS_PER_MAP_PIXEL,
+						cameraYaw, assets);
 			} else if (hintType == HINT_PLAYER && hintPlayerIndex >= 0 && hintPlayerIndex < actors.players.length) {
 				Player player = actors.players[hintPlayerIndex];
 				if (player != null) {
-					drawHint(player.y / FINE_UNITS_PER_MAP_PIXEL - localPlayer.y / FINE_UNITS_PER_MAP_PIXEL, assets.hintMarker, player.x / FINE_UNITS_PER_MAP_PIXEL - localPlayer.x / FINE_UNITS_PER_MAP_PIXEL,
-							cameraYaw, assets);
+					drawHint(player.y / FINE_UNITS_PER_MAP_PIXEL - localPlayer.y / FINE_UNITS_PER_MAP_PIXEL,
+							assets.hintMarker,
+							player.x / FINE_UNITS_PER_MAP_PIXEL - localPlayer.x / FINE_UNITS_PER_MAP_PIXEL, cameraYaw,
+							assets);
 				}
 			}
 		}
 		if (destinationX != 0) {
-			drawOnMinimap(destinationY * MAP_TILE_PIXELS + MAP_TILE_CENTER_PIXELS - localPlayer.y / FINE_UNITS_PER_MAP_PIXEL, assets.destinationMarker,
-					destinationX * MAP_TILE_PIXELS + MAP_TILE_CENTER_PIXELS - localPlayer.x / FINE_UNITS_PER_MAP_PIXEL, cameraYaw, assets);
+			drawOnMinimap(
+					destinationY * MAP_TILE_PIXELS + MAP_TILE_CENTER_PIXELS - localPlayer.y / FINE_UNITS_PER_MAP_PIXEL,
+					assets.destinationMarker,
+					destinationX * MAP_TILE_PIXELS + MAP_TILE_CENTER_PIXELS - localPlayer.x / FINE_UNITS_PER_MAP_PIXEL,
+					cameraYaw, assets);
 		}
 		Rasterizer.drawFilledRectangle(97, 78, 3, 3, 0xffffff);
 		assets.sceneBuffer.bindRaster();
@@ -661,8 +685,8 @@ public final class MinimapRenderer {
 		 *
 		 * @param localX the local X
 		 * @param localY the local Y
-		 * @param tileX the tile X
-		 * @param tileY the tile Y
+		 * @param tileX  the tile X
+		 * @param tileY  the tile Y
 		 */
 		private Click(int localX, int localY, int tileX, int tileY) {
 			this.localX = localX;
@@ -684,8 +708,7 @@ public final class MinimapRenderer {
 	}
 
 	/** Mutable sprite and buffer assets consumed by the minimap renderer. */
-	public static final
-	class Assets {
+	public static final class Assets {
 
 		/** Creates a new assets with its default client state. */
 		public Assets() {

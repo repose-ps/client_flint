@@ -1,22 +1,5 @@
 package rs2;
 
-import rs2.action.ActionPacketEncoder;
-import rs2.action.ClientActionDispatcher;
-import rs2.action.GroundItemActionHandler;
-import rs2.action.InventoryActionHandler;
-import rs2.action.NpcActionHandler;
-import rs2.action.ObjectActionHandler;
-import rs2.action.PlayerActionHandler;
-import rs2.action.SocialActionHandler;
-import rs2.action.WalkActionHandler;
-import rs2.action.WidgetActionHandler;
-import rs2.media.animation.AnimationFrame;
-import rs2.shell.GameShell;
-import rs2.ui.ClientLayout;
-
-import rs2.scene.SceneConfig;
-import rs2.scene.SceneConstants;
-import rs2.media.Angle;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
@@ -27,86 +10,87 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.Socket;
-import rs2.net.IncomingPacketDispatcher;
-import rs2.net.OutgoingPacketOpcode;
-import rs2.net.ProtocolConstants;
-import rs2.ui.WidgetContentType;
 
+import rs2.action.ActionPacketEncoder;
+import rs2.action.ClientActionDispatcher;
+import rs2.action.GroundItemActionHandler;
+import rs2.action.InventoryActionHandler;
+import rs2.action.NpcActionHandler;
+import rs2.action.ObjectActionHandler;
+import rs2.action.PlayerActionHandler;
+import rs2.action.SocialActionHandler;
+import rs2.action.WalkActionHandler;
+import rs2.action.WidgetActionHandler;
 import rs2.cache.Archive;
 import rs2.cache.cfg.BitMasks;
-import rs2.cache.cfg.Varbit;
 import rs2.cache.cfg.Varp;
-import rs2.cache.def.FloorDefinition;
 import rs2.cache.def.GameObjectDefinition;
 import rs2.cache.def.ItemDefinition;
 import rs2.cache.def.NpcDefinition;
-import rs2.cache.def.AnimationSequence;
-import rs2.cache.def.IdentityKit;
-import rs2.media.sprite.ImageRGB;
-import rs2.media.sprite.IndexedImage;
-import rs2.cache.def.SpotAnimation;
 import rs2.cache.ondemand.OnDemandFetcher;
 import rs2.cache.ondemand.OnDemandRequest;
-import rs2.ui.Widget;
+import rs2.chat.Censor;
 import rs2.chat.ChatCodec;
 import rs2.chat.ChatController;
 import rs2.chat.ChatMessageType;
 import rs2.chat.ChatMode;
 import rs2.chat.SocialManager;
-import rs2.chat.Censor;
-import rs2.collection.NodeDeque;
-import rs2.game.Skills;
 import rs2.game.ActorSynchronizer;
-import rs2.game.CameraController;
 import rs2.game.ActorUpdater;
-import rs2.game.render.ActorOverlayRenderer;
-import rs2.game.render.GameRenderer;
+import rs2.game.CameraController;
+import rs2.game.MinimapRenderer;
 import rs2.game.Pathfinder;
 import rs2.game.RegionManager;
 import rs2.game.SceneEntityRenderer;
-import rs2.game.MinimapRenderer;
-import rs2.game.WorldState;
+import rs2.game.Skills;
 import rs2.game.VarpState;
+import rs2.game.WorldState;
 import rs2.game.ZoneUpdateHandler;
+import rs2.game.entity.Actor;
+import rs2.game.entity.Npc;
+import rs2.game.entity.Player;
+import rs2.game.render.ActorOverlayRenderer;
+import rs2.game.render.GameRenderer;
 import rs2.input.MouseRecorder;
 import rs2.media.GraphicsBuffer;
-import rs2.media.sprite.ItemSpriteFactory;
 import rs2.media.Rasterizer;
 import rs2.media.Rasterizer3D;
 import rs2.media.TypeFace;
-import rs2.game.entity.Actor;
-import rs2.scene.entity.DynamicObjectFactory;
-import rs2.scene.entity.GroundItem;
+import rs2.media.animation.AnimationFrame;
 import rs2.media.model.Model;
-import rs2.game.entity.Npc;
-import rs2.game.entity.Player;
+import rs2.media.sprite.ImageRGB;
+import rs2.media.sprite.IndexedImage;
+import rs2.media.sprite.ItemSpriteFactory;
 import rs2.net.Buffer;
-import rs2.net.ChatPacketEncoder;
 import rs2.net.BufferedConnection;
-import rs2.net.Ipv4Address;
+import rs2.net.ChatPacketEncoder;
+import rs2.net.IncomingPacketDispatcher;
 import rs2.net.LoginSession;
-import rs2.net.NetworkSession;
 import rs2.net.MovementPacketEncoder;
+import rs2.net.NetworkSession;
+import rs2.net.OutgoingPacketOpcode;
 import rs2.scene.Region;
 import rs2.scene.Scene;
-import rs2.scene.SceneUid;
+import rs2.scene.SceneConstants;
+import rs2.scene.entity.DynamicObjectFactory;
+import rs2.shell.GameShell;
 import rs2.sign.Signlink;
 import rs2.sound.MusicController;
 import rs2.sound.SoundEffectQueue;
-import rs2.sound.SoundTrack;
 import rs2.text.Base37;
 import rs2.text.TextFormatter;
 import rs2.ui.AppearanceEditor;
+import rs2.ui.ClientLayout;
 import rs2.ui.ClientScriptContext;
 import rs2.ui.InterfaceController;
-import rs2.ui.WidgetRuntime;
-import rs2.ui.WidgetRenderer;
+import rs2.ui.Widget;
 import rs2.ui.WidgetContentController;
-import rs2.ui.menu.MenuState;
-import rs2.ui.menu.MenuController;
-import rs2.ui.menu.MenuEntry;
+import rs2.ui.WidgetContentType;
+import rs2.ui.WidgetRenderer;
+import rs2.ui.WidgetRuntime;
 import rs2.ui.login.LoginScreen;
 import rs2.ui.login.TitleFlameAnimator;
+import rs2.ui.menu.MenuController;
 
 /**
  * Standalone revision-377 game client coordinator.
@@ -133,7 +117,9 @@ public class Client extends GameShell {
 	private static final int MOUSE_COMPACT_DELTA_MIN = -32;
 	/** Maximum delta represented by the compact two-byte mouse format. */
 	private static final int MOUSE_COMPACT_DELTA_MAX = 31;
-	/** Bias that converts compact signed mouse deltas to six-bit unsigned values. */
+	/**
+	 * Bias that converts compact signed mouse deltas to six-bit unsigned values.
+	 */
 	private static final int MOUSE_COMPACT_DELTA_BIAS = 32;
 	/** Shift of the repeat count in the compact two-byte mouse format. */
 	private static final int MOUSE_SHORT_REPEAT_SHIFT = 12;
@@ -155,7 +141,6 @@ public class Client extends GameShell {
 	private static final int MOUSE_PACKET_PAYLOAD_LIMIT = 240;
 	/** Recorded sample count that forces a mouse-movement packet. */
 	private static final int MOUSE_PACKET_SAMPLE_THRESHOLD = 40;
-
 
 	/**
 	 * Layout.
@@ -234,10 +219,12 @@ public class Client extends GameShell {
 		} else if (button == ClientLayout.CHAT_MODE_REPORT_ABUSE) {
 			if (interfaceController.state().openInterfaceId == -1) {
 				closeInterfaces();
-						interfaceController.setReportAbuseMutePlayer(false);
-				interfaceController.state().reportAbuseInterfaceId = interfaceController.state().openInterfaceId = Widget.reportAbuseInterfaceId;
+				interfaceController.setReportAbuseMutePlayer(false);
+				interfaceController.state().reportAbuseInterfaceId = interfaceController
+						.state().openInterfaceId = Widget.reportAbuseInterfaceId;
 			} else {
-				addChatMessage("", "Please close the interface you have open before using 'report abuse'", ChatMessageType.GAME);
+				addChatMessage("", "Please close the interface you have open before using 'report abuse'",
+						ChatMessageType.GAME);
 			}
 			return;
 		}
@@ -247,7 +234,8 @@ public class Client extends GameShell {
 
 		gameRenderer.requestChatModesRedraw();
 		gameRenderer.requestChatboxRedraw();
-		ChatPacketEncoder.writeChatModes(networkSession.outgoing, chatController.publicMode(), chatController.privateMode(), chatController.tradeMode());
+		ChatPacketEncoder.writeChatModes(networkSession.outgoing, chatController.publicMode(),
+				chatController.privateMode(), chatController.tradeMode());
 	}
 
 	/** Closes all open interface groups through {@link InterfaceController}. */
@@ -303,8 +291,6 @@ public class Client extends GameShell {
 		}
 	}
 
-
-
 	/**
 	 * Marks startup as failed and displays the supplied loading-error reason.
 	 *
@@ -346,7 +332,8 @@ public class Client extends GameShell {
 			return;
 
 		for (int tab = 0; tab < ClientLayout.TAB_COUNT; tab++) {
-			if (!layout.isTabHit(tab, super.clickX, super.clickY) || interfaceController.state().tabInterfaceIds[tab] == -1)
+			if (!layout.isTabHit(tab, super.clickX, super.clickY)
+					|| interfaceController.state().tabInterfaceIds[tab] == -1)
 				continue;
 			gameRenderer.requestSidebarRedraw();
 			interfaceController.state().selectedTab = tab;
@@ -367,14 +354,15 @@ public class Client extends GameShell {
 		}
 	}
 
-	/** Delegates social-list menu construction to {@link MenuController}.
+	/**
+	 * Delegates social-list menu construction to {@link MenuController}.
+	 * 
 	 * @param widget social-list widget
 	 * @return whether the widget supplied a social menu
 	 */
 	public boolean buildSocialWidgetMenu(Widget widget) {
 		return menuController.buildSocialWidgetMenu(widget);
 	}
-
 
 	/**
 	 * Enables the original high-memory configuration across rendering and region
@@ -439,20 +427,22 @@ public class Client extends GameShell {
 							lastRecordedMouseX = mouseX;
 							int deltaY = mouseY - lastRecordedMouseY;
 							lastRecordedMouseY = mouseY;
-							if (mouseTelemetryRepeatCount < MOUSE_COMPACT_REPEAT_LIMIT && deltaX >= MOUSE_COMPACT_DELTA_MIN && deltaX <= MOUSE_COMPACT_DELTA_MAX && deltaY >= MOUSE_COMPACT_DELTA_MIN
-									&& deltaY <= MOUSE_COMPACT_DELTA_MAX) {
+							if (mouseTelemetryRepeatCount < MOUSE_COMPACT_REPEAT_LIMIT
+									&& deltaX >= MOUSE_COMPACT_DELTA_MIN && deltaX <= MOUSE_COMPACT_DELTA_MAX
+									&& deltaY >= MOUSE_COMPACT_DELTA_MIN && deltaY <= MOUSE_COMPACT_DELTA_MAX) {
 								deltaX += MOUSE_COMPACT_DELTA_BIAS;
 								deltaY += MOUSE_COMPACT_DELTA_BIAS;
 								networkSession.outgoing
-										.writeShort((mouseTelemetryRepeatCount << MOUSE_SHORT_REPEAT_SHIFT) + (deltaX << MOUSE_SHORT_X_SHIFT) + deltaY);
+										.writeShort((mouseTelemetryRepeatCount << MOUSE_SHORT_REPEAT_SHIFT)
+												+ (deltaX << MOUSE_SHORT_X_SHIFT) + deltaY);
 								mouseTelemetryRepeatCount = 0;
 							} else if (mouseTelemetryRepeatCount < MOUSE_COMPACT_REPEAT_LIMIT) {
-								networkSession.outgoing
-										.writeMedium(MOUSE_MEDIUM_FLAG + (mouseTelemetryRepeatCount << MOUSE_ABSOLUTE_REPEAT_SHIFT) + packedPosition);
+								networkSession.outgoing.writeMedium(MOUSE_MEDIUM_FLAG
+										+ (mouseTelemetryRepeatCount << MOUSE_ABSOLUTE_REPEAT_SHIFT) + packedPosition);
 								mouseTelemetryRepeatCount = 0;
 							} else {
-								networkSession.outgoing
-										.writeInt(MOUSE_INT_FLAG + (mouseTelemetryRepeatCount << MOUSE_ABSOLUTE_REPEAT_SHIFT) + packedPosition);
+								networkSession.outgoing.writeInt(MOUSE_INT_FLAG
+										+ (mouseTelemetryRepeatCount << MOUSE_ABSOLUTE_REPEAT_SHIFT) + packedPosition);
 								mouseTelemetryRepeatCount = 0;
 							}
 						}
@@ -497,7 +487,8 @@ public class Client extends GameShell {
 				clickButton = 1;
 			int encodedClickDelay = (int) clickDelayTicks;
 			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.MOUSE_CLICK);
-			networkSession.outgoing.writeInt((encodedClickDelay << CLICK_DELAY_SHIFT) + (clickButton << CLICK_BUTTON_SHIFT) + packedClickPosition);
+			networkSession.outgoing.writeInt((encodedClickDelay << CLICK_DELAY_SHIFT)
+					+ (clickButton << CLICK_BUTTON_SHIFT) + packedClickPosition);
 		}
 		if (cameraPacketCooldown > 0)
 			cameraPacketCooldown--;
@@ -565,13 +556,16 @@ public class Client extends GameShell {
 				if (inventoryDragMoved && interfaceController.state().inventoryDragDuration >= 5) {
 					interfaceController.state().hoveredInventoryWidgetId = -1;
 					buildContextMenu();
-					if (interfaceController.state().hoveredInventoryWidgetId == interfaceController.state().draggedInventoryWidgetId
-							&& interfaceController.state().hoveredInventorySlot != interfaceController.state().draggedInventorySlot) {
+					if (interfaceController.state().hoveredInventoryWidgetId == interfaceController
+							.state().draggedInventoryWidgetId
+							&& interfaceController.state().hoveredInventorySlot != interfaceController
+									.state().draggedInventorySlot) {
 						Widget inventoryWidget = Widget.get(interfaceController.state().draggedInventoryWidgetId);
 						// Legacy drag mode: 0 swaps/moves directly; 1 performs insertion-style
 						// shifting.
 						int insertionMode = 0;
-						if (inventoryRearrangeMode == 1 && inventoryWidget.contentType == WidgetContentType.INSERTABLE_INVENTORY)
+						if (inventoryRearrangeMode == 1
+								&& inventoryWidget.contentType == WidgetContentType.INSERTABLE_INVENTORY)
 							insertionMode = 1;
 						if (inventoryWidget.itemIds[interfaceController.state().hoveredInventorySlot] <= 0)
 							insertionMode = 0;
@@ -584,7 +578,8 @@ public class Client extends GameShell {
 							inventoryWidget.itemAmounts[sourceSlot] = 0;
 						} else if (insertionMode == 1) {
 							int movingSlot = interfaceController.state().draggedInventorySlot;
-							for (int targetSlot = interfaceController.state().hoveredInventorySlot; movingSlot != targetSlot;)
+							for (int targetSlot = interfaceController
+									.state().hoveredInventorySlot; movingSlot != targetSlot;)
 								if (movingSlot > targetSlot) {
 									inventoryWidget.swapItems(movingSlot - 1, movingSlot);
 									movingSlot--;
@@ -603,7 +598,8 @@ public class Client extends GameShell {
 						networkSession.outgoing.writeShortAdd(interfaceController.state().draggedInventoryWidgetId);
 						networkSession.outgoing.writeShortLE(interfaceController.state().draggedInventorySlot);
 					}
-				} else if ((oneButtonMouseMode == 1 || menuController.state().isAddFriendAction(menuController.state().count - 1))
+				} else if ((oneButtonMouseMode == 1
+						|| menuController.state().isAddFriendAction(menuController.state().count - 1))
 						&& menuController.state().count > 2)
 					openContextMenu();
 				else if (menuController.state().count > 0)
@@ -637,7 +633,8 @@ public class Client extends GameShell {
 		processChatModeClick();
 		if (super.mouseButton == 1 || super.clickButton == 1)
 			mouseButtonHoldTicks++;
-		if (interfaceController.chatboxTooltipWidgetId() != 0 || interfaceController.sidebarTooltipWidgetId() != 0 || interfaceController.viewportTooltipWidgetId() != 0) {
+		if (interfaceController.chatboxTooltipWidgetId() != 0 || interfaceController.sidebarTooltipWidgetId() != 0
+				|| interfaceController.viewportTooltipWidgetId() != 0) {
 			if (interfaceController.tooltipHoverTicks() < 100) {
 				interfaceController.setTooltipHoverTicks(interfaceController.tooltipHoverTicks() + 1);
 				if (interfaceController.tooltipHoverTicks() == 100) {
@@ -697,10 +694,11 @@ public class Client extends GameShell {
 			int keyCode = pollKey();
 			if (keyCode == -1)
 				break;
-			if (interfaceController.state().openInterfaceId != -1
-					&& interfaceController.state().openInterfaceId == interfaceController.state().reportAbuseInterfaceId) {
+			if (interfaceController.state().openInterfaceId != -1 && interfaceController
+					.state().openInterfaceId == interfaceController.state().reportAbuseInterfaceId) {
 				if (keyCode == 8 && interfaceController.reportAbuseName().length() > 0)
-					interfaceController.setReportAbuseName(interfaceController.reportAbuseName().substring(0, interfaceController.reportAbuseName().length() - 1));
+					interfaceController.setReportAbuseName(interfaceController.reportAbuseName().substring(0,
+							interfaceController.reportAbuseName().length() - 1));
 				if ((keyCode >= 97 && keyCode <= 122 || keyCode >= 65 && keyCode <= 90 || keyCode >= 48 && keyCode <= 57
 						|| keyCode == 32) && interfaceController.reportAbuseName().length() < 12)
 					interfaceController.setReportAbuseName(interfaceController.reportAbuseName() + (char) keyCode);
@@ -710,7 +708,8 @@ public class Client extends GameShell {
 					gameRenderer.requestChatboxRedraw();
 				}
 				if (keyCode == 8 && chatController.promptInput().length() > 0) {
-					chatController.setPromptInput(chatController.promptInput().substring(0, chatController.promptInput().length() - 1));
+					chatController.setPromptInput(
+							chatController.promptInput().substring(0, chatController.promptInput().length() - 1));
 					gameRenderer.requestChatboxRedraw();
 				}
 				if (keyCode == 13 || keyCode == 10) {
@@ -725,17 +724,18 @@ public class Client extends GameShell {
 						removeFriend(encodedName2);
 					}
 					if (chatController.promptAction() == 3 && chatController.promptInput().length() > 0) {
-						ChatPacketEncoder.writePrivateMessage(networkSession.outgoing, chatController.privateMessageTarget(),
-								chatController.promptInput());
+						ChatPacketEncoder.writePrivateMessage(networkSession.outgoing,
+								chatController.privateMessageTarget(), chatController.promptInput());
 						chatController.setPromptInput(ChatCodec.normalize(chatController.promptInput()));
 						chatController.setPromptInput(Censor.censor(chatController.promptInput()));
-						addChatMessage(TextFormatter.formatDisplayName(Base37.decode(chatController.privateMessageTarget())),
+						addChatMessage(
+								TextFormatter.formatDisplayName(Base37.decode(chatController.privateMessageTarget())),
 								chatController.promptInput(), 6);
 						if (chatController.privateMode() == ChatMode.OFF) {
 							chatController.setPrivateMode(ChatMode.FRIENDS);
 							gameRenderer.requestChatModesRedraw();
-							ChatPacketEncoder.writeChatModes(networkSession.outgoing, chatController.publicMode(), chatController.privateMode(),
-									chatController.tradeMode());
+							ChatPacketEncoder.writeChatModes(networkSession.outgoing, chatController.publicMode(),
+									chatController.privateMode(), chatController.tradeMode());
 						}
 					}
 					if (chatController.promptAction() == 4 && socialManager.ignoreCount < 100) {
@@ -753,7 +753,8 @@ public class Client extends GameShell {
 					gameRenderer.requestChatboxRedraw();
 				}
 				if (keyCode == 8 && chatController.inputDialogText().length() > 0) {
-					chatController.setInputDialogText(chatController.inputDialogText().substring(0, chatController.inputDialogText().length() - 1));
+					chatController.setInputDialogText(chatController.inputDialogText().substring(0,
+							chatController.inputDialogText().length() - 1));
 					gameRenderer.requestChatboxRedraw();
 				}
 				if (keyCode == 13 || keyCode == 10) {
@@ -775,7 +776,8 @@ public class Client extends GameShell {
 					gameRenderer.requestChatboxRedraw();
 				}
 				if (keyCode == 8 && chatController.inputDialogText().length() > 0) {
-					chatController.setInputDialogText(chatController.inputDialogText().substring(0, chatController.inputDialogText().length() - 1));
+					chatController.setInputDialogText(chatController.inputDialogText().substring(0,
+							chatController.inputDialogText().length() - 1));
 					gameRenderer.requestChatboxRedraw();
 				}
 				if (keyCode == 13 || keyCode == 10) {
@@ -792,10 +794,12 @@ public class Client extends GameShell {
 					gameRenderer.requestChatboxRedraw();
 				}
 				if (keyCode == 8 && chatController.inputDialogText().length() > 0) {
-					chatController.setInputDialogText(chatController.inputDialogText().substring(0, chatController.inputDialogText().length() - 1));
+					chatController.setInputDialogText(chatController.inputDialogText().substring(0,
+							chatController.inputDialogText().length() - 1));
 					gameRenderer.requestChatboxRedraw();
 				}
-			} else if (interfaceController.state().chatboxInterfaceId == -1 && interfaceController.state().fullscreenInterfaceId == -1) {
+			} else if (interfaceController.state().chatboxInterfaceId == -1
+					&& interfaceController.state().fullscreenInterfaceId == -1) {
 				if (keyCode >= 32 && keyCode <= 122 && chatController.input().length() < 80) {
 					chatController.setInput(chatController.input() + (char) keyCode);
 					gameRenderer.requestChatboxRedraw();
@@ -891,8 +895,8 @@ public class Client extends GameShell {
 							chatEffect = 5;
 							chatController.setInput(chatController.input().substring(6));
 						}
-						ChatPacketEncoder.writePublicMessage(networkSession.outgoing, chatColor, chatEffect, chatController.input(),
-								chatBuffer);
+						ChatPacketEncoder.writePublicMessage(networkSession.outgoing, chatColor, chatEffect,
+								chatController.input(), chatBuffer);
 						chatController.setInput(ChatCodec.normalize(chatController.input()));
 						chatController.setInput(Censor.censor(chatController.input()));
 						localPlayer.overheadText = chatController.input();
@@ -900,16 +904,19 @@ public class Client extends GameShell {
 						localPlayer.overheadTextEffect = chatEffect;
 						localPlayer.overheadTextCyclesRemaining = 150;
 						if (playerRights == 2)
-							addChatMessage("@cr2@" + localPlayer.name, ((Actor) (localPlayer)).overheadText, ChatMessageType.PUBLIC);
+							addChatMessage("@cr2@" + localPlayer.name, ((Actor) (localPlayer)).overheadText,
+									ChatMessageType.PUBLIC);
 						else if (playerRights == 1)
-							addChatMessage("@cr1@" + localPlayer.name, ((Actor) (localPlayer)).overheadText, ChatMessageType.PUBLIC);
+							addChatMessage("@cr1@" + localPlayer.name, ((Actor) (localPlayer)).overheadText,
+									ChatMessageType.PUBLIC);
 						else
-							addChatMessage(localPlayer.name, ((Actor) (localPlayer)).overheadText, ChatMessageType.PUBLIC);
+							addChatMessage(localPlayer.name, ((Actor) (localPlayer)).overheadText,
+									ChatMessageType.PUBLIC);
 						if (chatController.publicMode() == ChatMode.OFF) {
 							chatController.setPublicMode(ChatMode.HIDE);
 							gameRenderer.requestChatModesRedraw();
-							ChatPacketEncoder.writeChatModes(networkSession.outgoing, chatController.publicMode(), chatController.privateMode(),
-									chatController.tradeMode());
+							ChatPacketEncoder.writeChatModes(networkSession.outgoing, chatController.publicMode(),
+									chatController.privateMode(), chatController.tradeMode());
 						}
 					}
 					chatController.setInput("");
@@ -978,12 +985,12 @@ public class Client extends GameShell {
 		return true;
 	}
 
-
 	/**
 	 * Draws the contextual action tooltip shown when the context menu is closed.
 	 */
 	public void drawMenuTooltip() {
-		if (menuController.state().count < 2 && interfaceController.state().itemSelected == 0 && interfaceController.state().spellSelected == 0)
+		if (menuController.state().count < 2 && interfaceController.state().itemSelected == 0
+				&& interfaceController.state().spellSelected == 0)
 			return;
 		String tooltip;
 		if (interfaceController.state().itemSelected == 1 && menuController.state().count < 2)
@@ -1032,9 +1039,9 @@ public class Client extends GameShell {
 		return true;
 	}
 
-
 	/**
 	 * Configures the hostname used by all standalone game/update/archive sockets.
+	 * 
 	 * @param host the host name
 	 */
 	public static void setServerHost(String host) {
@@ -1044,11 +1051,13 @@ public class Client extends GameShell {
 		serverHost = host.trim();
 	}
 
-	/** Delegates player menu construction to {@link MenuController}.
+	/**
+	 * Delegates player menu construction to {@link MenuController}.
+	 * 
 	 * @param playerIndex player index
-	 * @param tileY local tile Y
-	 * @param tileX local tile X
-	 * @param player target player
+	 * @param tileY       local tile Y
+	 * @param tileX       local tile X
+	 * @param player      target player
 	 */
 	public void buildPlayerMenu(int playerIndex, int tileY, int tileX, Player player) {
 		menuController.buildPlayerMenu(playerIndex, tileY, tileX, player, localPlayer, playerActions,
@@ -1059,13 +1068,13 @@ public class Client extends GameShell {
 	 * Delegates classic scrollbar input to the interface interaction owner.
 	 *
 	 * @param scrollHeight full content height
-	 * @param y scrollbar Y coordinate
-	 * @param widget scrollable widget
-	 * @param mouseY mouse Y coordinate
-	 * @param redrawArea fixed redraw area
-	 * @param mouseX mouse X coordinate
-	 * @param height visible height
-	 * @param x scrollbar X coordinate
+	 * @param y            scrollbar Y coordinate
+	 * @param widget       scrollable widget
+	 * @param mouseY       mouse Y coordinate
+	 * @param redrawArea   fixed redraw area
+	 * @param mouseX       mouse X coordinate
+	 * @param height       visible height
+	 * @param x            scrollbar X coordinate
 	 */
 	public void handleScrollbarInput(int scrollHeight, int y, Widget widget, int mouseY, int redrawArea, int mouseX,
 			int height, int x) {
@@ -1143,16 +1152,16 @@ public class Client extends GameShell {
 	/**
 	 * Draws a classic widget scrollbar through {@link WidgetRenderer}.
 	 *
-	 * @param scrollY current scroll offset
-	 * @param x X coordinate
-	 * @param height visible height
+	 * @param scrollY      current scroll offset
+	 * @param x            X coordinate
+	 * @param height       visible height
 	 * @param scrollHeight full scrollable height
-	 * @param y Y coordinate
+	 * @param y            Y coordinate
 	 */
 	public void drawScrollbar(int scrollY, int x, int height, int scrollHeight, int y) {
-		widgetRenderer.drawScrollbar(new WidgetRenderer.RenderContext(super.mouseX, super.mouseY, animationCycleDelta, smallFont, plainFont,
-				scrollbarTop, scrollbarBottom, scrollbarTrackColor, scrollbarThumbColor, scrollbarHighlightColor,
-				scrollbarShadowColor), scrollY, x, height, scrollHeight, y);
+		widgetRenderer.drawScrollbar(new WidgetRenderer.RenderContext(super.mouseX, super.mouseY, animationCycleDelta,
+				smallFont, plainFont, scrollbarTop, scrollbarBottom, scrollbarTrackColor, scrollbarThumbColor,
+				scrollbarHighlightColor, scrollbarShadowColor), scrollY, x, height, scrollHeight, y);
 	}
 
 	/**
@@ -1181,7 +1190,6 @@ public class Client extends GameShell {
 		}
 	}
 
-	
 	/**
 	 * Allocates and initializes the fixed title-screen graphics buffers.
 	 */
@@ -1224,21 +1232,25 @@ public class Client extends GameShell {
 		lifecycle.startUp();
 	}
 
-	/** Animates any scrolling textures used during the current scene frame.
+	/**
+	 * Animates any scrolling textures used during the current scene frame.
+	 * 
 	 * @param textureCycle rasterizer texture-usage cycle threshold
 	 */
 	public void animateTextures(int textureCycle) {
 		gameRenderer.animateTextures(textureCycle, animationCycleDelta, lowMemory);
 	}
 
-	/** Delegates widget/inventory menu construction to {@link MenuController}.
-	 * @param y root Y
-	 * @param widget root widget
+	/**
+	 * Delegates widget/inventory menu construction to {@link MenuController}.
+	 * 
+	 * @param y          root Y
+	 * @param widget     root widget
 	 * @param screenArea fixed UI area
-	 * @param scrollY scroll offset
-	 * @param x root X
-	 * @param mouseX mouse X
-	 * @param mouseY mouse Y
+	 * @param scrollY    scroll offset
+	 * @param x          root X
+	 * @param mouseX     mouse X
+	 * @param mouseY     mouse Y
 	 */
 	public void buildInterfaceMenu(int y, Widget widget, int screenArea, int scrollY, int x, int mouseX, int mouseY) {
 		menuController.buildInterfaceMenu(y, widget, screenArea, scrollY, x, mouseX, mouseY);
@@ -1254,7 +1266,8 @@ public class Client extends GameShell {
 			if (regionManager.loadingStage == RegionManager.STAGE_LOADED) {
 				widgetRuntime.updateAnimations(animationCycleDelta, interfaceController.state().fullscreenInterfaceId);
 				if (interfaceController.state().fullscreenOverlayInterfaceId != -1)
-					widgetRuntime.updateAnimations(animationCycleDelta, interfaceController.state().fullscreenOverlayInterfaceId);
+					widgetRuntime.updateAnimations(animationCycleDelta,
+							interfaceController.state().fullscreenOverlayInterfaceId);
 				animationCycleDelta = 0;
 				createGameBuffer();
 				super.gameBuffer.bindRaster();
@@ -1262,14 +1275,18 @@ public class Client extends GameShell {
 				Rasterizer.resetPixels();
 				gameRenderer.requestGameScreenRedraw();
 				Widget fullscreenWidget = Widget.get(interfaceController.state().fullscreenInterfaceId);
-				if (fullscreenWidget.width == ClientLayout.FIXED_VIEWPORT_WIDTH && fullscreenWidget.height == ClientLayout.FIXED_VIEWPORT_HEIGHT && fullscreenWidget.type == Widget.TYPE_CONTAINER) {
+				if (fullscreenWidget.width == ClientLayout.FIXED_VIEWPORT_WIDTH
+						&& fullscreenWidget.height == ClientLayout.FIXED_VIEWPORT_HEIGHT
+						&& fullscreenWidget.type == Widget.TYPE_CONTAINER) {
 					fullscreenWidget.width = ClientLayout.FIXED_WIDTH;
 					fullscreenWidget.height = ClientLayout.FIXED_HEIGHT;
 				}
 				drawInterface(0, 0, fullscreenWidget, 0);
 				if (interfaceController.state().fullscreenOverlayInterfaceId != -1) {
-					Widget fullscreenOverlayWidget = Widget.get(interfaceController.state().fullscreenOverlayInterfaceId);
-					if (fullscreenOverlayWidget.width == ClientLayout.FIXED_VIEWPORT_WIDTH && fullscreenOverlayWidget.height == ClientLayout.FIXED_VIEWPORT_HEIGHT
+					Widget fullscreenOverlayWidget = Widget
+							.get(interfaceController.state().fullscreenOverlayInterfaceId);
+					if (fullscreenOverlayWidget.width == ClientLayout.FIXED_VIEWPORT_WIDTH
+							&& fullscreenOverlayWidget.height == ClientLayout.FIXED_VIEWPORT_HEIGHT
 							&& fullscreenOverlayWidget.type == Widget.TYPE_CONTAINER) {
 						fullscreenOverlayWidget.width = ClientLayout.FIXED_WIDTH;
 						fullscreenOverlayWidget.height = ClientLayout.FIXED_HEIGHT;
@@ -1318,9 +1335,9 @@ public class Client extends GameShell {
 			renderGameScene();
 
 		/*
-		 * The game viewport is the background layer in resizable mode. Draw the
-		 * classic frame pieces after it so their stone borders remain visible, then
-		 * composite the fixed-size UI panels on top below.
+		 * The game viewport is the background layer in resizable mode. Draw the classic
+		 * frame pieces after it so their stone borders remain visible, then composite
+		 * the fixed-size UI panels on top below.
 		 */
 		gameRenderer.drawFrameDecorations(super.graphics, layout);
 		if (regionManager.loadingStage != RegionManager.STAGE_LOADED)
@@ -1343,11 +1360,14 @@ public class Client extends GameShell {
 			gameRenderer.clearSidebarRedraw();
 		}
 		if (interfaceController.state().chatboxInterfaceId == -1 && chatController.inputDialogState() == 0) {
-			chatboxScrollWidget.scrollY = chatController.contentHeight() - chatController.scrollOffset() - ClientLayout.CHATBOX_MESSAGE_HEIGHT;
+			chatboxScrollWidget.scrollY = chatController.contentHeight() - chatController.scrollOffset()
+					- ClientLayout.CHATBOX_MESSAGE_HEIGHT;
 			if (layout.isChatboxScrollbarInputCandidate(super.mouseX, super.mouseY))
-				handleScrollbarInput(chatController.contentHeight(), 0, chatboxScrollWidget, layout.chatboxLocalY(super.mouseY), -1,
-						layout.chatboxLocalX(super.mouseX), ClientLayout.CHATBOX_MESSAGE_HEIGHT, ClientLayout.CHATBOX_SCROLLBAR_X);
-			int chatScrollOffsetFromBottom = chatController.contentHeight() - ClientLayout.CHATBOX_MESSAGE_HEIGHT - chatboxScrollWidget.scrollY;
+				handleScrollbarInput(chatController.contentHeight(), 0, chatboxScrollWidget,
+						layout.chatboxLocalY(super.mouseY), -1, layout.chatboxLocalX(super.mouseX),
+						ClientLayout.CHATBOX_MESSAGE_HEIGHT, ClientLayout.CHATBOX_SCROLLBAR_X);
+			int chatScrollOffsetFromBottom = chatController.contentHeight() - ClientLayout.CHATBOX_MESSAGE_HEIGHT
+					- chatboxScrollWidget.scrollY;
 			if (chatScrollOffsetFromBottom < 0)
 				chatScrollOffsetFromBottom = 0;
 			if (chatScrollOffsetFromBottom > chatController.contentHeight() - ClientLayout.CHATBOX_MESSAGE_HEIGHT)
@@ -1362,8 +1382,9 @@ public class Client extends GameShell {
 					+ ClientLayout.CHATBOX_CONTENT_HEIGHT_PADDING;
 			chatboxScrollWidget.scrollY = itemSearchScrollOffset;
 			if (layout.isChatboxScrollbarInputCandidate(super.mouseX, super.mouseY))
-				handleScrollbarInput(searchContentHeight, 0, chatboxScrollWidget, layout.chatboxLocalY(super.mouseY), -1,
-						layout.chatboxLocalX(super.mouseX), ClientLayout.CHATBOX_MESSAGE_HEIGHT, ClientLayout.CHATBOX_SCROLLBAR_X);
+				handleScrollbarInput(searchContentHeight, 0, chatboxScrollWidget, layout.chatboxLocalY(super.mouseY),
+						-1, layout.chatboxLocalX(super.mouseX), ClientLayout.CHATBOX_MESSAGE_HEIGHT,
+						ClientLayout.CHATBOX_SCROLLBAR_X);
 			int clampedSearchScroll = chatboxScrollWidget.scrollY;
 			if (clampedSearchScroll < 0)
 				clampedSearchScroll = 0;
@@ -1399,7 +1420,8 @@ public class Client extends GameShell {
 		if (interfaceController.state().flashingTab != -1)
 			gameRenderer.requestTabAreaRedraw();
 		if (gameRenderer.tabAreaRedrawPending()) {
-			if (interfaceController.state().flashingTab != -1 && interfaceController.state().flashingTab == interfaceController.state().selectedTab) {
+			if (interfaceController.state().flashingTab != -1
+					&& interfaceController.state().flashingTab == interfaceController.state().selectedTab) {
 				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.FLASHING_TAB_ACKNOWLEDGEMENT);
 				networkSession.outgoing.writeByte(interfaceController.state().selectedTab);
 			}
@@ -1423,19 +1445,26 @@ public class Client extends GameShell {
 					if (interfaceController.state().selectedTab == 6)
 						redstone1Horizontal.draw(layout.tabHighlightX(6), layout.tabHighlightY(6));
 				}
-				if (interfaceController.state().tabInterfaceIds[0] != -1 && (interfaceController.state().flashingTab != 0 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[0] != -1
+						&& (interfaceController.state().flashingTab != 0 || gameCycle % 20 < 10))
 					sidebarIcons[0].draw(layout.tabIconX(0), layout.tabIconY(0));
-				if (interfaceController.state().tabInterfaceIds[1] != -1 && (interfaceController.state().flashingTab != 1 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[1] != -1
+						&& (interfaceController.state().flashingTab != 1 || gameCycle % 20 < 10))
 					sidebarIcons[1].draw(layout.tabIconX(1), layout.tabIconY(1));
-				if (interfaceController.state().tabInterfaceIds[2] != -1 && (interfaceController.state().flashingTab != 2 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[2] != -1
+						&& (interfaceController.state().flashingTab != 2 || gameCycle % 20 < 10))
 					sidebarIcons[2].draw(layout.tabIconX(2), layout.tabIconY(2));
-				if (interfaceController.state().tabInterfaceIds[3] != -1 && (interfaceController.state().flashingTab != 3 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[3] != -1
+						&& (interfaceController.state().flashingTab != 3 || gameCycle % 20 < 10))
 					sidebarIcons[3].draw(layout.tabIconX(3), layout.tabIconY(3));
-				if (interfaceController.state().tabInterfaceIds[4] != -1 && (interfaceController.state().flashingTab != 4 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[4] != -1
+						&& (interfaceController.state().flashingTab != 4 || gameCycle % 20 < 10))
 					sidebarIcons[4].draw(layout.tabIconX(4), layout.tabIconY(4));
-				if (interfaceController.state().tabInterfaceIds[5] != -1 && (interfaceController.state().flashingTab != 5 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[5] != -1
+						&& (interfaceController.state().flashingTab != 5 || gameCycle % 20 < 10))
 					sidebarIcons[5].draw(layout.tabIconX(5), layout.tabIconY(5));
-				if (interfaceController.state().tabInterfaceIds[6] != -1 && (interfaceController.state().flashingTab != 6 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[6] != -1
+						&& (interfaceController.state().flashingTab != 6 || gameCycle % 20 < 10))
 					sidebarIcons[6].draw(layout.tabIconX(6), layout.tabIconY(6));
 			}
 			gameRenderer.topTabsBuffer().draw(super.graphics, layout.topTabsX(), layout.topTabsY());
@@ -1458,9 +1487,11 @@ public class Client extends GameShell {
 					if (interfaceController.state().selectedTab == 13)
 						redstone1Both.draw(layout.tabHighlightX(13), layout.tabHighlightY(13));
 				}
-				if (interfaceController.state().tabInterfaceIds[8] != -1 && (interfaceController.state().flashingTab != 8 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[8] != -1
+						&& (interfaceController.state().flashingTab != 8 || gameCycle % 20 < 10))
 					sidebarIcons[7].draw(layout.tabIconX(8), layout.tabIconY(8));
-				if (interfaceController.state().tabInterfaceIds[9] != -1 && (interfaceController.state().flashingTab != 9 || gameCycle % 20 < 10))
+				if (interfaceController.state().tabInterfaceIds[9] != -1
+						&& (interfaceController.state().flashingTab != 9 || gameCycle % 20 < 10))
 					sidebarIcons[8].draw(layout.tabIconX(9), layout.tabIconY(9));
 				if (interfaceController.state().tabInterfaceIds[10] != -1
 						&& (interfaceController.state().flashingTab != 10 || gameCycle % 20 < 10))
@@ -1483,30 +1514,48 @@ public class Client extends GameShell {
 			gameRenderer.clearChatModesRedraw();
 			gameRenderer.chatModesBuffer().bindRaster();
 			chatModesBackground.draw(0, 0);
-			plainFont.drawCenteredTextWithTags("Public chat", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC), layout.chatModeLabelY(ClientLayout.CHAT_MODE_PUBLIC), 0xffffff, true);
+			plainFont.drawCenteredTextWithTags("Public chat", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC),
+					layout.chatModeLabelY(ClientLayout.CHAT_MODE_PUBLIC), 0xffffff, true);
 			if (chatController.publicMode() == ChatMode.ON)
-				plainFont.drawCenteredTextWithTags("On", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC), layout.chatModeStatusY(), 65280, true);
+				plainFont.drawCenteredTextWithTags("On", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC),
+						layout.chatModeStatusY(), 65280, true);
 			if (chatController.publicMode() == ChatMode.FRIENDS)
-				plainFont.drawCenteredTextWithTags("Friends", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC), layout.chatModeStatusY(), 0xffff00, true);
+				plainFont.drawCenteredTextWithTags("Friends", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC),
+						layout.chatModeStatusY(), 0xffff00, true);
 			if (chatController.publicMode() == ChatMode.OFF)
-				plainFont.drawCenteredTextWithTags("Off", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC), layout.chatModeStatusY(), 0xff0000, true);
+				plainFont.drawCenteredTextWithTags("Off", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC),
+						layout.chatModeStatusY(), 0xff0000, true);
 			if (chatController.publicMode() == ChatMode.HIDE)
-				plainFont.drawCenteredTextWithTags("Hide", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC), layout.chatModeStatusY(), 65535, true);
-			plainFont.drawCenteredTextWithTags("Private chat", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PRIVATE), layout.chatModeLabelY(ClientLayout.CHAT_MODE_PRIVATE), 0xffffff, true);
+				plainFont.drawCenteredTextWithTags("Hide", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC),
+						layout.chatModeStatusY(), 65535, true);
+			plainFont.drawCenteredTextWithTags("Private chat",
+					layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PRIVATE),
+					layout.chatModeLabelY(ClientLayout.CHAT_MODE_PRIVATE), 0xffffff, true);
 			if (chatController.privateMode() == ChatMode.ON)
-				plainFont.drawCenteredTextWithTags("On", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PRIVATE), layout.chatModeStatusY(), 65280, true);
+				plainFont.drawCenteredTextWithTags("On", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PRIVATE),
+						layout.chatModeStatusY(), 65280, true);
 			if (chatController.privateMode() == ChatMode.FRIENDS)
-				plainFont.drawCenteredTextWithTags("Friends", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PRIVATE), layout.chatModeStatusY(), 0xffff00, true);
+				plainFont.drawCenteredTextWithTags("Friends",
+						layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PRIVATE), layout.chatModeStatusY(), 0xffff00,
+						true);
 			if (chatController.privateMode() == ChatMode.OFF)
-				plainFont.drawCenteredTextWithTags("Off", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PRIVATE), layout.chatModeStatusY(), 0xff0000, true);
-			plainFont.drawCenteredTextWithTags("Trade/compete", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_TRADE), layout.chatModeLabelY(ClientLayout.CHAT_MODE_TRADE), 0xffffff, true);
+				plainFont.drawCenteredTextWithTags("Off", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PRIVATE),
+						layout.chatModeStatusY(), 0xff0000, true);
+			plainFont.drawCenteredTextWithTags("Trade/compete",
+					layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_TRADE),
+					layout.chatModeLabelY(ClientLayout.CHAT_MODE_TRADE), 0xffffff, true);
 			if (chatController.tradeMode() == ChatMode.ON)
-				plainFont.drawCenteredTextWithTags("On", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_TRADE), layout.chatModeStatusY(), 65280, true);
+				plainFont.drawCenteredTextWithTags("On", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_TRADE),
+						layout.chatModeStatusY(), 65280, true);
 			if (chatController.tradeMode() == ChatMode.FRIENDS)
-				plainFont.drawCenteredTextWithTags("Friends", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_TRADE), layout.chatModeStatusY(), 0xffff00, true);
+				plainFont.drawCenteredTextWithTags("Friends", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_TRADE),
+						layout.chatModeStatusY(), 0xffff00, true);
 			if (chatController.tradeMode() == ChatMode.OFF)
-				plainFont.drawCenteredTextWithTags("Off", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_TRADE), layout.chatModeStatusY(), 0xff0000, true);
-			plainFont.drawCenteredTextWithTags("Report abuse", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_REPORT_ABUSE), layout.chatModeLabelY(ClientLayout.CHAT_MODE_REPORT_ABUSE), 0xffffff, true);
+				plainFont.drawCenteredTextWithTags("Off", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_TRADE),
+						layout.chatModeStatusY(), 0xff0000, true);
+			plainFont.drawCenteredTextWithTags("Report abuse",
+					layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_REPORT_ABUSE),
+					layout.chatModeLabelY(ClientLayout.CHAT_MODE_REPORT_ABUSE), 0xffffff, true);
 			gameRenderer.chatModesBuffer().draw(super.graphics, layout.chatModesX(), layout.chatModesY());
 			gameRenderer.viewportBuffer().bindRaster();
 			gameRenderer.bindViewport();
@@ -1537,8 +1586,11 @@ public class Client extends GameShell {
 					sender = sender.substring(5);
 					rightsIcon = 2;
 				}
-				if ((messageType == ChatMessageType.PRIVATE_RECEIVED || messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED) && (messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED || chatController.privateMode() == ChatMode.ON
-						|| chatController.privateMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
+				if ((messageType == ChatMessageType.PRIVATE_RECEIVED
+						|| messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED)
+						&& (messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED
+								|| chatController.privateMode() == ChatMode.ON
+								|| chatController.privateMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
 					int lineY = layout.unobscuredViewportHeight() - 5 - visibleLine * 13;
 					int textX = 4;
 					font.drawText("From", textX, lineY, 0);
@@ -1553,7 +1605,8 @@ public class Client extends GameShell {
 						textX += 14;
 					}
 					font.drawText(sender + ": " + chatController.history().messages[messageIndex], textX, lineY, 0);
-					font.drawText(sender + ": " + chatController.history().messages[messageIndex], textX, lineY - 1, 65535);
+					font.drawText(sender + ": " + chatController.history().messages[messageIndex], textX, lineY - 1,
+							65535);
 					if (++visibleLine >= 5)
 						return;
 				}
@@ -1566,8 +1619,10 @@ public class Client extends GameShell {
 				}
 				if (messageType == ChatMessageType.PRIVATE_SENT && chatController.privateMode() < ChatMode.OFF) {
 					int lineY3 = layout.unobscuredViewportHeight() - 5 - visibleLine * 13;
-					font.drawText("To " + sender + ": " + chatController.history().messages[messageIndex], 4, lineY3, 0);
-					font.drawText("To " + sender + ": " + chatController.history().messages[messageIndex], 4, lineY3 - 1, 65535);
+					font.drawText("To " + sender + ": " + chatController.history().messages[messageIndex], 4, lineY3,
+							0);
+					font.drawText("To " + sender + ": " + chatController.history().messages[messageIndex], 4,
+							lineY3 - 1, 65535);
 					if (++visibleLine >= 5)
 						return;
 				}
@@ -1590,7 +1645,8 @@ public class Client extends GameShell {
 					Model.loadModelHeader(request.buffer, request.id);
 					if ((lifecycle.onDemandFetcher().getModelIndex(request.id) & 0x62) != 0) {
 						gameRenderer.requestSidebarRedraw();
-						if (interfaceController.state().chatboxInterfaceId != -1 || interfaceController.state().dialogueInterfaceId != -1)
+						if (interfaceController.state().chatboxInterfaceId != -1
+								|| interfaceController.state().dialogueInterfaceId != -1)
 							gameRenderer.requestChatboxRedraw();
 					}
 				}
@@ -1599,7 +1655,8 @@ public class Client extends GameShell {
 				musicController.acceptOnDemandRequest(request);
 				if (request.type == OnDemandFetcher.MAP && regionManager.loadingStage == RegionManager.STAGE_LOADING)
 					regionManager.acceptMapFile(request);
-			} while (request.type != OnDemandFetcher.LOCATION_PREFETCH || !lifecycle.onDemandFetcher().isLandscapeFile(request.id));
+			} while (request.type != OnDemandFetcher.LOCATION_PREFETCH
+					|| !lifecycle.onDemandFetcher().isLandscapeFile(request.id));
 			Region.requestGameObjectModels(new Buffer(request.buffer), lifecycle.onDemandFetcher());
 		} while (true);
 	}
@@ -1619,7 +1676,7 @@ public class Client extends GameShell {
 	/**
 	 * Applies the runtime reset associated with a full successful login response.
 	 *
-	 * @param rights server-supplied player rights
+	 * @param rights  server-supplied player rights
 	 * @param flagged whether the account is flagged
 	 */
 	private void handleFullLogin(int rights, boolean flagged) {
@@ -1681,20 +1738,17 @@ public class Client extends GameShell {
 		regionManager.loadingStartTime = System.currentTimeMillis();
 	}
 
-	
-
-
-	/** Delegates NPC menu construction to {@link MenuController}.
+	/**
+	 * Delegates NPC menu construction to {@link MenuController}.
+	 * 
 	 * @param definition NPC definition
-	 * @param tileY local tile Y
-	 * @param tileX local tile X
-	 * @param npcIndex NPC index
+	 * @param tileY      local tile Y
+	 * @param tileX      local tile X
+	 * @param npcIndex   NPC index
 	 */
 	public void buildNpcMenu(NpcDefinition definition, int tileY, int tileX, int npcIndex) {
 		menuController.buildNpcMenu(definition, tileY, tileX, npcIndex, localPlayer);
 	}
-
-
 
 	/**
 	 * Draws the chatbox, prompts, item-search results, dialogue interfaces, and
@@ -1708,36 +1762,46 @@ public class Client extends GameShell {
 			boldFont.drawCenteredText(chatController.promptInput() + "*", ClientLayout.CHATBOX_TEXT_CENTER_X, 60, 128);
 		} else if (chatController.inputDialogState() == 1) {
 			boldFont.drawCenteredText("Enter amount:", ClientLayout.CHATBOX_TEXT_CENTER_X, 40, 0);
-			boldFont.drawCenteredText(chatController.inputDialogText() + "*", ClientLayout.CHATBOX_TEXT_CENTER_X, 60, 128);
+			boldFont.drawCenteredText(chatController.inputDialogText() + "*", ClientLayout.CHATBOX_TEXT_CENTER_X, 60,
+					128);
 		} else if (chatController.inputDialogState() == 2) {
 			boldFont.drawCenteredText("Enter name:", ClientLayout.CHATBOX_TEXT_CENTER_X, 40, 0);
-			boldFont.drawCenteredText(chatController.inputDialogText() + "*", ClientLayout.CHATBOX_TEXT_CENTER_X, 60, 128);
+			boldFont.drawCenteredText(chatController.inputDialogText() + "*", ClientLayout.CHATBOX_TEXT_CENTER_X, 60,
+					128);
 		} else if (chatController.inputDialogState() == 3) {
 			if (chatController.inputDialogText() != itemSearchQuery) {
 				searchItems(chatController.inputDialogText());
 				itemSearchQuery = chatController.inputDialogText();
 			}
 			TypeFace searchFont = plainFont;
-			Rasterizer.setCoordinates(0, 0, ClientLayout.CHATBOX_MESSAGE_CLIP_WIDTH, ClientLayout.CHATBOX_MESSAGE_HEIGHT);
+			Rasterizer.setCoordinates(0, 0, ClientLayout.CHATBOX_MESSAGE_CLIP_WIDTH,
+					ClientLayout.CHATBOX_MESSAGE_HEIGHT);
 			for (int resultIndex = 0; resultIndex < itemSearchResultCount; resultIndex++) {
 				int resultY = (18 + resultIndex * 14) - itemSearchScrollOffset;
 				if (resultY > 0 && resultY < 110)
-					searchFont.drawCenteredText(itemSearchResultNames[resultIndex], ClientLayout.CHATBOX_TEXT_CENTER_X, resultY, 0);
+					searchFont.drawCenteredText(itemSearchResultNames[resultIndex], ClientLayout.CHATBOX_TEXT_CENTER_X,
+							resultY, 0);
 			}
 
 			Rasterizer.resetCoordinates();
 			if (itemSearchResultCount > 5)
-				drawScrollbar(itemSearchScrollOffset, ClientLayout.CHATBOX_SCROLLBAR_X, ClientLayout.CHATBOX_MESSAGE_HEIGHT,
-						itemSearchResultCount * ClientLayout.CHATBOX_MESSAGE_LINE_HEIGHT + ClientLayout.CHATBOX_CONTENT_HEIGHT_PADDING, 0);
+				drawScrollbar(itemSearchScrollOffset, ClientLayout.CHATBOX_SCROLLBAR_X,
+						ClientLayout.CHATBOX_MESSAGE_HEIGHT,
+						itemSearchResultCount * ClientLayout.CHATBOX_MESSAGE_LINE_HEIGHT
+								+ ClientLayout.CHATBOX_CONTENT_HEIGHT_PADDING,
+						0);
 			if (chatController.inputDialogText().length() == 0)
 				boldFont.drawCenteredText("Enter object name", ClientLayout.CHATBOX_TEXT_CENTER_X, 40, 255);
 			else if (itemSearchResultCount == 0)
-				boldFont.drawCenteredText("No matching objects found, please shorten search", ClientLayout.CHATBOX_TEXT_CENTER_X, 40, 0);
+				boldFont.drawCenteredText("No matching objects found, please shorten search",
+						ClientLayout.CHATBOX_TEXT_CENTER_X, 40, 0);
 			searchFont.drawCenteredText(chatController.inputDialogText() + "*", ClientLayout.CHATBOX_TEXT_CENTER_X,
 					ClientLayout.CHATBOX_INPUT_BASELINE_Y, 0);
-			Rasterizer.drawHorizontalLine(0, ClientLayout.CHATBOX_MESSAGE_HEIGHT, ClientLayout.CHATBOX_DIVIDER_WIDTH, 0);
+			Rasterizer.drawHorizontalLine(0, ClientLayout.CHATBOX_MESSAGE_HEIGHT, ClientLayout.CHATBOX_DIVIDER_WIDTH,
+					0);
 		} else if (chatController.clickToContinueMessage() != null) {
-			boldFont.drawCenteredText(chatController.clickToContinueMessage(), ClientLayout.CHATBOX_TEXT_CENTER_X, 40, 0);
+			boldFont.drawCenteredText(chatController.clickToContinueMessage(), ClientLayout.CHATBOX_TEXT_CENTER_X, 40,
+					0);
 			boldFont.drawCenteredText("Click to continue", ClientLayout.CHATBOX_TEXT_CENTER_X, 60, 128);
 		} else if (interfaceController.state().chatboxInterfaceId != -1)
 			drawInterface(0, 0, Widget.get(interfaceController.state().chatboxInterfaceId), 0);
@@ -1746,12 +1810,13 @@ public class Client extends GameShell {
 		} else {
 			TypeFace chatFont = plainFont;
 			int visibleLine = 0;
-			Rasterizer.setCoordinates(0, 0, ClientLayout.CHATBOX_MESSAGE_CLIP_WIDTH, ClientLayout.CHATBOX_MESSAGE_HEIGHT);
+			Rasterizer.setCoordinates(0, 0, ClientLayout.CHATBOX_MESSAGE_CLIP_WIDTH,
+					ClientLayout.CHATBOX_MESSAGE_HEIGHT);
 			for (int messageIndex = 0; messageIndex < 100; messageIndex++)
 				if (chatController.history().messages[messageIndex] != null) {
 					int messageType = chatController.history().types[messageIndex];
 					int lineY = (ClientLayout.CHATBOX_MESSAGE_BASELINE_Y
-								- visibleLine * ClientLayout.CHATBOX_MESSAGE_LINE_HEIGHT) + chatController.scrollOffset();
+							- visibleLine * ClientLayout.CHATBOX_MESSAGE_LINE_HEIGHT) + chatController.scrollOffset();
 					String sender = chatController.history().senders[messageIndex];
 					byte rightsIcon = 0;
 					if (sender != null && sender.startsWith("@cr1@")) {
@@ -1767,8 +1832,10 @@ public class Client extends GameShell {
 							chatFont.drawText(chatController.history().messages[messageIndex], 4, lineY, 0);
 						visibleLine++;
 					}
-					if ((messageType == ChatMessageType.PUBLIC_PRIVILEGED || messageType == ChatMessageType.PUBLIC) && (messageType == ChatMessageType.PUBLIC_PRIVILEGED || chatController.publicMode() == ChatMode.ON
-							|| chatController.publicMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
+					if ((messageType == ChatMessageType.PUBLIC_PRIVILEGED || messageType == ChatMessageType.PUBLIC)
+							&& (messageType == ChatMessageType.PUBLIC_PRIVILEGED
+									|| chatController.publicMode() == ChatMode.ON
+									|| chatController.publicMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
 						if (lineY > 0 && lineY < 110) {
 							int textX = 4;
 							if (rightsIcon == 1) {
@@ -1785,8 +1852,12 @@ public class Client extends GameShell {
 						}
 						visibleLine++;
 					}
-					if ((messageType == ChatMessageType.PRIVATE_RECEIVED || messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED) && chatController.splitPrivateChat() == 0 && (messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED
-							|| chatController.privateMode() == ChatMode.ON || chatController.privateMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
+					if ((messageType == ChatMessageType.PRIVATE_RECEIVED
+							|| messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED)
+							&& chatController.splitPrivateChat() == 0
+							&& (messageType == ChatMessageType.PRIVATE_RECEIVED_PRIVILEGED
+									|| chatController.privateMode() == ChatMode.ON
+									|| chatController.privateMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
 						if (lineY > 0 && lineY < 110) {
 							int textX2 = 4;
 							chatFont.drawText("From", textX2, lineY, 0);
@@ -1805,17 +1876,21 @@ public class Client extends GameShell {
 						}
 						visibleLine++;
 					}
-					if (messageType == ChatMessageType.TRADE_REQUEST && (chatController.tradeMode() == ChatMode.ON || chatController.tradeMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
+					if (messageType == ChatMessageType.TRADE_REQUEST && (chatController.tradeMode() == ChatMode.ON
+							|| chatController.tradeMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
 						if (lineY > 0 && lineY < 110)
-							chatFont.drawText(sender + " " + chatController.history().messages[messageIndex], 4, lineY, 0x800080);
+							chatFont.drawText(sender + " " + chatController.history().messages[messageIndex], 4, lineY,
+									0x800080);
 						visibleLine++;
 					}
-					if (messageType == ChatMessageType.PRIVATE_STATUS && chatController.splitPrivateChat() == 0 && chatController.privateMode() < ChatMode.OFF) {
+					if (messageType == ChatMessageType.PRIVATE_STATUS && chatController.splitPrivateChat() == 0
+							&& chatController.privateMode() < ChatMode.OFF) {
 						if (lineY > 0 && lineY < 110)
 							chatFont.drawText(chatController.history().messages[messageIndex], 4, lineY, 0x800000);
 						visibleLine++;
 					}
-					if (messageType == ChatMessageType.PRIVATE_SENT && chatController.splitPrivateChat() == 0 && chatController.privateMode() < ChatMode.OFF) {
+					if (messageType == ChatMessageType.PRIVATE_SENT && chatController.splitPrivateChat() == 0
+							&& chatController.privateMode() < ChatMode.OFF) {
 						if (lineY > 0 && lineY < 110) {
 							chatFont.drawText("To " + sender + ":", 4, lineY, 0);
 							chatFont.drawText(chatController.history().messages[messageIndex],
@@ -1823,9 +1898,11 @@ public class Client extends GameShell {
 						}
 						visibleLine++;
 					}
-					if (messageType == ChatMessageType.CHALLENGE_REQUEST && (chatController.tradeMode() == ChatMode.ON || chatController.tradeMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
+					if (messageType == ChatMessageType.CHALLENGE_REQUEST && (chatController.tradeMode() == ChatMode.ON
+							|| chatController.tradeMode() == ChatMode.FRIENDS && isFriendOrSelf(sender))) {
 						if (lineY > 0 && lineY < 110)
-							chatFont.drawText(sender + " " + chatController.history().messages[messageIndex], 4, lineY, 0x7e3200);
+							chatFont.drawText(sender + " " + chatController.history().messages[messageIndex], 4, lineY,
+									0x7e3200);
 						visibleLine++;
 					}
 				}
@@ -1835,8 +1912,11 @@ public class Client extends GameShell {
 					+ ClientLayout.CHATBOX_CONTENT_HEIGHT_PADDING);
 			if (chatController.contentHeight() < ChatController.MIN_CONTENT_HEIGHT)
 				chatController.setContentHeight(ChatController.MIN_CONTENT_HEIGHT);
-			drawScrollbar(chatController.contentHeight() - chatController.scrollOffset() - ClientLayout.CHATBOX_MESSAGE_HEIGHT,
-					ClientLayout.CHATBOX_SCROLLBAR_X, ClientLayout.CHATBOX_MESSAGE_HEIGHT, chatController.contentHeight(), 0);
+			drawScrollbar(
+					chatController.contentHeight() - chatController.scrollOffset()
+							- ClientLayout.CHATBOX_MESSAGE_HEIGHT,
+					ClientLayout.CHATBOX_SCROLLBAR_X, ClientLayout.CHATBOX_MESSAGE_HEIGHT,
+					chatController.contentHeight(), 0);
 			String localDisplayName;
 			if (localPlayer != null && localPlayer.name != null)
 				localDisplayName = localPlayer.name;
@@ -1845,7 +1925,8 @@ public class Client extends GameShell {
 			chatFont.drawText(localDisplayName + ":", 4, ClientLayout.CHATBOX_INPUT_BASELINE_Y, 0);
 			chatFont.drawText(chatController.input() + "*", 6 + chatFont.getFormattedTextWidth(localDisplayName + ": "),
 					ClientLayout.CHATBOX_INPUT_BASELINE_Y, 255);
-			Rasterizer.drawHorizontalLine(0, ClientLayout.CHATBOX_MESSAGE_HEIGHT, ClientLayout.CHATBOX_DIVIDER_WIDTH, 0);
+			Rasterizer.drawHorizontalLine(0, ClientLayout.CHATBOX_MESSAGE_HEIGHT, ClientLayout.CHATBOX_DIVIDER_WIDTH,
+					0);
 		}
 		if (menuController.state().open && menuController.state().screenArea == 2)
 			drawContextMenu();
@@ -1887,7 +1968,6 @@ public class Client extends GameShell {
 	/**
 	 * Retrieves and validates the nine-entry startup archive CRC table.
 	 */
-
 
 	/**
 	 * Draws the minimap, compass, map functions, ground items, actors, hints, and
@@ -1960,8 +2040,9 @@ public class Client extends GameShell {
 
 	/**
 	 * Returns the classic combat-level difference color tag.
+	 * 
 	 * @param playerLevel target combat level
-	 * @param localLevel local combat level
+	 * @param localLevel  local combat level
 	 * @return color tag
 	 */
 	public static String getCombatLevelColorTag(int playerLevel, int localLevel) {
@@ -1978,8 +2059,6 @@ public class Client extends GameShell {
 		if (socialManager.removeIgnore(encodedName, networkSession.outgoing))
 			gameRenderer.requestSidebarRedraw();
 	}
-
-
 
 	/**
 	 * Enables the original low-memory configuration across rendering and region
@@ -2005,8 +2084,6 @@ public class Client extends GameShell {
 			gameRenderer.requestSidebarRedraw();
 	}
 
-
-
 	/** Initializes world/zone state during one-time client bootstrap. */
 	void initializeWorldForStartup() {
 		worldState = new WorldState(dynamicObjects);
@@ -2014,52 +2091,82 @@ public class Client extends GameShell {
 		minimapRenderer.initializeMapImage();
 	}
 
-
-
 	/** Clears the inherited shell back buffer during final lifecycle cleanup. */
-	void lifecycleClearGameBuffer() { gameBuffer = null; }
+	void lifecycleClearGameBuffer() {
+		gameBuffer = null;
+	}
 
-
-	/** Returns current varp state to the lifecycle coordinator.
+	/**
+	 * Returns current varp state to the lifecycle coordinator.
+	 * 
 	 * @return varp state
 	 */
-	VarpState lifecycleVarpState() { return varpState; }
+	VarpState lifecycleVarpState() {
+		return varpState;
+	}
 
-	/** Returns rendering ownership to the lifecycle coordinator.
+	/**
+	 * Returns rendering ownership to the lifecycle coordinator.
+	 * 
 	 * @return game renderer
 	 */
-	GameRenderer lifecycleGameRenderer() { return gameRenderer; }
+	GameRenderer lifecycleGameRenderer() {
+		return gameRenderer;
+	}
 
-	/** Returns music ownership to the lifecycle coordinator.
+	/**
+	 * Returns music ownership to the lifecycle coordinator.
+	 * 
 	 * @return music controller
 	 */
-	MusicController lifecycleMusicController() { return musicController; }
+	MusicController lifecycleMusicController() {
+		return musicController;
+	}
 
-	/** Returns social ownership to the lifecycle coordinator.
+	/**
+	 * Returns social ownership to the lifecycle coordinator.
+	 * 
 	 * @return social manager
 	 */
-	SocialManager lifecycleSocialManager() { return socialManager; }
+	SocialManager lifecycleSocialManager() {
+		return socialManager;
+	}
 
-	/** Returns region ownership to the lifecycle coordinator.
+	/**
+	 * Returns region ownership to the lifecycle coordinator.
+	 * 
 	 * @return region manager
 	 */
-	RegionManager lifecycleRegionManager() { return regionManager; }
+	RegionManager lifecycleRegionManager() {
+		return regionManager;
+	}
 
-	/** Returns minimap ownership to the lifecycle coordinator.
+	/**
+	 * Returns minimap ownership to the lifecycle coordinator.
+	 * 
 	 * @return minimap renderer
 	 */
-	MinimapRenderer lifecycleMinimapRenderer() { return minimapRenderer; }
+	MinimapRenderer lifecycleMinimapRenderer() {
+		return minimapRenderer;
+	}
 
-	/** Returns menu ownership to the lifecycle coordinator.
+	/**
+	 * Returns menu ownership to the lifecycle coordinator.
+	 * 
 	 * @return menu controller
 	 */
-	MenuController lifecycleMenuController() { return menuController; }
+	MenuController lifecycleMenuController() {
+		return menuController;
+	}
 
-	/** Returns the client layout to the lifecycle coordinator.
+	/**
+	 * Returns the client layout to the lifecycle coordinator.
+	 * 
 	 * @return current layout owner
 	 */
-	ClientLayout clientLayout() { return layout; }
-
+	ClientLayout clientLayout() {
+		return layout;
+	}
 
 	/** Clears world/zone owners after their final shutdown cleanup. */
 	void clearRuntimeWorldForShutdown() {
@@ -2105,8 +2212,6 @@ public class Client extends GameShell {
 		if (clientCode == 9)
 			inventoryRearrangeMode = varpValue;
 	}
-
-
 
 	/**
 	 * Updates the hard-coded tutorial-island/region suppression flag from the local
@@ -2184,9 +2289,11 @@ public class Client extends GameShell {
 			int minutesRemaining = secondsRemaining / 60;
 			secondsRemaining %= 60;
 			if (secondsRemaining < 10)
-				plainFont.drawText("System update in: " + minutesRemaining + ":0" + secondsRemaining, 4, layout.unobscuredViewportHeight() - 5, 0xffff00);
+				plainFont.drawText("System update in: " + minutesRemaining + ":0" + secondsRemaining, 4,
+						layout.unobscuredViewportHeight() - 5, 0xffff00);
 			else
-				plainFont.drawText("System update in: " + minutesRemaining + ":" + secondsRemaining, 4, layout.unobscuredViewportHeight() - 5, 0xffff00);
+				plainFont.drawText("System update in: " + minutesRemaining + ":" + secondsRemaining, 4,
+						layout.unobscuredViewportHeight() - 5, 0xffff00);
 			systemUpdateKeepaliveCounter++;
 			if (systemUpdateKeepaliveCounter > 112) {
 				systemUpdateKeepaliveCounter = 0;
@@ -2196,8 +2303,6 @@ public class Client extends GameShell {
 		}
 	}
 
-
-
 	/** Delegates split-private-chat menu construction to {@link MenuController}. */
 	public void buildSplitPrivateChatMenu() {
 		menuController.buildSplitPrivateChatMenu(systemUpdateTimer, super.mouseX, super.mouseY, plainFont, playerRights,
@@ -2206,6 +2311,7 @@ public class Client extends GameShell {
 
 	/**
 	 * Delegates chatbox message menu construction to {@link MenuController}.
+	 * 
 	 * @param mouseY chatbox-local mouse Y coordinate
 	 */
 	public void buildChatboxMessageMenu(int mouseY) {
@@ -2235,7 +2341,6 @@ public class Client extends GameShell {
 		Signlink.startThread(runnable, priority);
 	}
 
-
 	/** Marks the current shell click as the classic interaction crosshair. */
 	private void markInteractionCrosshair() {
 		crossX = super.clickX;
@@ -2244,17 +2349,9 @@ public class Client extends GameShell {
 		crossCycle = 0;
 	}
 
-
-
-
-
-	
-
-
-
-	
-
-	/** Builds the current actor-overlay rendering context.
+	/**
+	 * Builds the current actor-overlay rendering context.
+	 * 
 	 * @return current actor-overlay frame context
 	 */
 	private ActorOverlayRenderer.Context createActorOverlayContext() {
@@ -2265,7 +2362,10 @@ public class Client extends GameShell {
 				hintHeight, hintOffsetX, hintOffsetY, regionManager.baseX, regionManager.baseY);
 	}
 
-	/** Rebuilds projection tables and scene visibility for the current viewport size. */
+	/**
+	 * Rebuilds projection tables and scene visibility for the current viewport
+	 * size.
+	 */
 	private void rebuildViewportProjection() {
 		gameRenderer.rebuildViewportProjection(layout);
 	}
@@ -2416,8 +2516,6 @@ public class Client extends GameShell {
 		}
 	}
 
-
-
 	/** Runs one render cycle in logged-in mode or title/login mode. */
 	public void processDrawing() {
 		refreshGraphicsContextIfRequested();
@@ -2481,7 +2579,8 @@ public class Client extends GameShell {
 			int entryColor = 0xffffff;
 			if (layout.isContextMenuEntryHit(mouseX, mouseY, menuX, menuWidth, entryY))
 				entryColor = 0xffff00;
-			boldFont.drawTextWithTags(menuController.state().entry(entryIndex).text(), menuX + 3, entryY, entryColor, true);
+			boldFont.drawTextWithTags(menuController.state().entry(entryIndex).text(), menuX + 3, entryY, entryColor,
+					true);
 		}
 
 	}
@@ -2499,7 +2598,8 @@ public class Client extends GameShell {
 		char boxHeight = '\310';
 		if (loginScreen.state == LoginScreen.WELCOME) {
 			int textY = boxHeight / 2 + 80;
-			smallFont.drawCenteredTextWithTags(lifecycle.onDemandFetcher().statusString, boxWidth / 2, textY, 0x75a9a9, true);
+			smallFont.drawCenteredTextWithTags(lifecycle.onDemandFetcher().statusString, boxWidth / 2, textY, 0x75a9a9,
+					true);
 			textY = boxHeight / 2 - 20;
 			boldFont.drawCenteredTextWithTags("Welcome to RuneScape", boxWidth / 2, textY, 0xffff00, true);
 			textY += 30;
@@ -2582,7 +2682,9 @@ public class Client extends GameShell {
 		if (interfaceController.state().sidebarOverlayInterfaceId != -1)
 			drawInterface(0, 0, Widget.get(interfaceController.state().sidebarOverlayInterfaceId), 0);
 		else if (interfaceController.state().tabInterfaceIds[interfaceController.state().selectedTab] != -1)
-			drawInterface(0, 0, Widget.get(interfaceController.state().tabInterfaceIds[interfaceController.state().selectedTab]), 0);
+			drawInterface(0, 0,
+					Widget.get(interfaceController.state().tabInterfaceIds[interfaceController.state().selectedTab]),
+					0);
 		if (menuController.state().open && menuController.state().screenArea == 1)
 			drawContextMenu();
 		gameRenderer.sidebarBuffer().draw(super.graphics, layout.sidebarX(), layout.sidebarY());
@@ -2591,7 +2693,8 @@ public class Client extends GameShell {
 	}
 
 	/**
-	 * Formats an inventory amount using the renderer's legacy comma/K/million style.
+	 * Formats an inventory amount using the renderer's legacy comma/K/million
+	 * style.
 	 *
 	 * @param amount numeric amount
 	 * @return formatted amount
@@ -2599,7 +2702,6 @@ public class Client extends GameShell {
 	public static String formatAmountWithCommas(int amount) {
 		return WidgetRenderer.formatAmountWithCommas(amount);
 	}
-
 
 	/**
 	 * Prints client timing, memory, mouse, and network debug state to standard
@@ -2744,15 +2846,15 @@ public class Client extends GameShell {
 	/**
 	 * Draws a cache-defined widget tree through {@link WidgetRenderer}.
 	 *
-	 * @param y root Y coordinate
-	 * @param x root X coordinate
-	 * @param widget root widget
+	 * @param y       root Y coordinate
+	 * @param x       root X coordinate
+	 * @param widget  root widget
 	 * @param scrollY root scroll offset
 	 */
 	public void drawInterface(int y, int x, Widget widget, int scrollY) {
-		widgetRenderer.drawInterface(new WidgetRenderer.RenderContext(super.mouseX, super.mouseY, animationCycleDelta, smallFont, plainFont,
-				scrollbarTop, scrollbarBottom, scrollbarTrackColor, scrollbarThumbColor, scrollbarHighlightColor,
-				scrollbarShadowColor), y, x, widget, scrollY);
+		widgetRenderer.drawInterface(new WidgetRenderer.RenderContext(super.mouseX, super.mouseY, animationCycleDelta,
+				smallFont, plainFont, scrollbarTop, scrollbarBottom, scrollbarTrackColor, scrollbarThumbColor,
+				scrollbarHighlightColor, scrollbarShadowColor), y, x, widget, scrollY);
 	}
 
 	/**
@@ -2785,8 +2887,8 @@ public class Client extends GameShell {
 				regionManager.loadingStage = RegionManager.STAGE_LOADED;
 				Region.currentPlane = currentPlane;
 				lastMinimapPlane = -1;
-				regionManager.buildRegion(worldState, currentPlane, lowMemory, networkSession.outgoing, lifecycle.onDemandFetcher(),
-						super.gameFrame != null, () -> {
+				regionManager.buildRegion(worldState, currentPlane, lowMemory, networkSession.outgoing,
+						lifecycle.onDemandFetcher(), super.gameFrame != null, () -> {
 							if (gameRenderer.viewportBuffer() != null) {
 								gameRenderer.viewportBuffer().bindRaster();
 								gameRenderer.bindViewport();
@@ -2794,10 +2896,10 @@ public class Client extends GameShell {
 						});
 				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.REGION_LOADED);
 			} else if (System.currentTimeMillis() - regionManager.loadingStartTime > 0x57e40L) {
-				Signlink.reportError(
-						loginScreen.username + " glcfb " + loginSession.getServerSessionKey() + "," + status + "," + lowMemory + ","
-								+ lifecycle.getCacheIndex(0) + "," + lifecycle.onDemandFetcher().getOutstandingRequestCount()
-								+ "," + currentPlane + "," + regionManager.regionX + "," + regionManager.regionY);
+				Signlink.reportError(loginScreen.username + " glcfb " + loginSession.getServerSessionKey() + ","
+						+ status + "," + lowMemory + "," + lifecycle.getCacheIndex(0) + ","
+						+ lifecycle.onDemandFetcher().getOutstandingRequestCount() + "," + currentPlane + ","
+						+ regionManager.regionX + "," + regionManager.regionY);
 				regionManager.loadingStartTime = System.currentTimeMillis();
 			}
 		}
@@ -2931,10 +3033,11 @@ public class Client extends GameShell {
 
 	/** Builds and presents one 3D scene frame through {@link GameRenderer}. */
 	private void renderGameScene() {
-		destinationX = gameRenderer.renderScene(new GameRenderer.SceneFrame(layout, sceneEntityRenderer, worldState,
-				actorSynchronizer, localPlayer, cameraController, actorOverlayRenderer, createActorOverlayContext(),
-				networkSession.outgoing, super.graphics, this::drawViewportOverlays, destinationX, destinationY,
-				currentPlane, gameCycle, animationCycleDelta, localPlayerServerIndex, super.mouseX, super.mouseY, lowMemory));
+		destinationX = gameRenderer.renderScene(
+				new GameRenderer.SceneFrame(layout, sceneEntityRenderer, worldState, actorSynchronizer, localPlayer,
+						cameraController, actorOverlayRenderer, createActorOverlayContext(), networkSession.outgoing,
+						super.graphics, this::drawViewportOverlays, destinationX, destinationY, currentPlane, gameCycle,
+						animationCycleDelta, localPlayerServerIndex, super.mouseX, super.mouseY, lowMemory));
 	}
 
 	/**
@@ -2952,7 +3055,8 @@ public class Client extends GameShell {
 		socialManager = new SocialManager();
 		chatController = new ChatController();
 		interfaceController = new InterfaceController();
-		menuController = new MenuController(layout, interfaceController, socialManager, chatController, () -> mouseButtonHoldTicks, interfaceRedrawSink);
+		menuController = new MenuController(layout, interfaceController, socialManager, chatController,
+				() -> mouseButtonHoldTicks, interfaceRedrawSink);
 		loginScreen = new LoginScreen();
 		titleFlameAnimator = new TitleFlameAnimator();
 		appearanceEditor = new AppearanceEditor();
@@ -3018,8 +3122,8 @@ public class Client extends GameShell {
 		ActionPacketEncoder actionPackets = new ActionPacketEncoder(networkSession.outgoing);
 		PlayerActionHandler playerActionsHandler = new PlayerActionHandler(actorSynchronizer, actionPackets,
 				interfaceController, actionMovement, interactionCrosshair);
-		NpcActionHandler npcActionsHandler = new NpcActionHandler(actorSynchronizer, actionPackets,
-				interfaceController, actionMovement, interactionCrosshair, this::addChatMessage);
+		NpcActionHandler npcActionsHandler = new NpcActionHandler(actorSynchronizer, actionPackets, interfaceController,
+				actionMovement, interactionCrosshair, this::addChatMessage);
 		ObjectActionHandler objectActionsHandler = new ObjectActionHandler(actionPackets, interfaceController,
 				regionManager, () -> worldState, () -> currentPlane, actionMovement, interactionCrosshair,
 				this::addChatMessage);
@@ -3027,32 +3131,24 @@ public class Client extends GameShell {
 				interfaceController, regionManager, actionMovement, interactionCrosshair, this::addChatMessage);
 		InventoryActionHandler inventoryActionsHandler = new InventoryActionHandler(actionPackets, interfaceController,
 				gameRenderer, () -> inventoryClickCycle = 0, this::addChatMessage);
-		WidgetActionHandler widgetActionsHandler = new WidgetActionHandler(actionPackets, interfaceController, varpState,
-				gameRenderer, this::applyVarp, socialManager, chatController, appearanceEditor,
+		WidgetActionHandler widgetActionsHandler = new WidgetActionHandler(actionPackets, interfaceController,
+				varpState, gameRenderer, this::applyVarp, socialManager, chatController, appearanceEditor,
 				() -> appearanceEditor.writeUpdate(networkSession.outgoing), this::closeInterfaces,
 				value -> logoutTimer = value);
-		SocialActionHandler socialActionsHandler = new SocialActionHandler(socialManager,
-				actorSynchronizer, actionPackets, interfaceController, gameRenderer, chatController, actionMovement,
-				this::addChatMessage, socialListActions, this::closeInterfaces);
-		WalkActionHandler walkActionsHandler = new WalkActionHandler(() -> menuController.state().open, () -> worldState, layout,
-				() -> super.clickX, () -> super.clickY);
+		SocialActionHandler socialActionsHandler = new SocialActionHandler(socialManager, actorSynchronizer,
+				actionPackets, interfaceController, gameRenderer, chatController, actionMovement, this::addChatMessage,
+				socialListActions, this::closeInterfaces);
+		WalkActionHandler walkActionsHandler = new WalkActionHandler(() -> menuController.state().open,
+				() -> worldState, layout, () -> super.clickX, () -> super.clickY);
 		actionDispatcher = new ClientActionDispatcher(menuController, chatController, interfaceController, gameRenderer,
 				playerActionsHandler, npcActionsHandler, objectActionsHandler, groundItemActionsHandler,
 				inventoryActionsHandler, widgetActionsHandler, socialActionsHandler, walkActionsHandler);
 		minimapRenderer = new MinimapRenderer();
-		ClientScriptContext scriptContext = new ClientScriptContext(
-				skill -> currentSkillLevels[skill],
-				skill -> baseSkillLevels[skill],
-				skill -> skillExperiences[skill],
-				varpState::get,
-				levelIndex -> experienceTable[levelIndex],
-				BitMasks::get,
-				() -> runEnergy,
-				() -> weight,
-				() -> localPlayer.combatLevel,
-				() -> (localPlayer.x >> 7) + regionManager.baseX,
-				() -> (localPlayer.y >> 7) + regionManager.baseY,
-				() -> membersWorld);
+		ClientScriptContext scriptContext = new ClientScriptContext(skill -> currentSkillLevels[skill],
+				skill -> baseSkillLevels[skill], skill -> skillExperiences[skill], varpState::get,
+				levelIndex -> experienceTable[levelIndex], BitMasks::get, () -> runEnergy, () -> weight,
+				() -> localPlayer.combatLevel, () -> (localPlayer.x >> 7) + regionManager.baseX,
+				() -> (localPlayer.y >> 7) + regionManager.baseY, () -> membersWorld);
 		widgetRuntime = new WidgetRuntime(scriptContext);
 		WidgetContentController widgetContentController = new WidgetContentController(socialManager, appearanceEditor,
 				interfaceController, () -> gameCycle, () -> localPlayer, () -> currentWorldId, () -> playerRights,
@@ -3185,13 +3281,6 @@ public class Client extends GameShell {
 	/** The client state for scrollbar track color. */
 	private int scrollbarTrackColor;
 
-
-
-
-
-
-
-
 	/** The client state for animation cycle delta. */
 	private int animationCycleDelta;
 
@@ -3268,9 +3357,15 @@ public class Client extends GameShell {
 	final CameraController cameraController;
 	/** The client state for scene entity renderer. */
 	private final SceneEntityRenderer sceneEntityRenderer;
-	/** Draws actor-associated viewport overlays and owns their transient layout state. */
+	/**
+	 * Draws actor-associated viewport overlays and owns their transient layout
+	 * state.
+	 */
 	private final ActorOverlayRenderer actorOverlayRenderer;
-	/** Owns logged-in rendering surfaces, invalidation state, projection tables, and presentation. */
+	/**
+	 * Owns logged-in rendering surfaces, invalidation state, projection tables, and
+	 * presentation.
+	 */
 	final GameRenderer gameRenderer;
 	/** The client state for minimap renderer. */
 	final MinimapRenderer minimapRenderer;
@@ -3351,9 +3446,7 @@ public class Client extends GameShell {
 
 	/** Stores sidebar scanline offsets values. */
 
-
 	/** Stores full screen scanline offsets values. */
-
 
 	/** The client state for last recorded mouse x. */
 	private int lastRecordedMouseX;
@@ -3390,7 +3483,7 @@ public class Client extends GameShell {
 	ImageRGB hintMapMarker;
 
 	/** The current sidebar tooltip widget id. */
-	
+
 	/** Stores base skill levels values. */
 	int baseSkillLevels[];
 	/**
@@ -3422,7 +3515,6 @@ public class Client extends GameShell {
 	/** The client state for last password change date. */
 	int lastPasswordChangeDate;
 
-
 	/** The client state for multi combat overlay. */
 	ImageRGB multiCombatOverlay;
 	/** The client state for current plane. */
@@ -3440,7 +3532,7 @@ public class Client extends GameShell {
 	private boolean invalidHostError;
 	/** Whether report abuse mute player is currently active or requested. */
 
-		/**
+	/**
 	 * Tracks the current title flame cycle in client ticks/cycles where applicable.
 	 */
 	private int titleFlameCycle;
@@ -3462,7 +3554,7 @@ public class Client extends GameShell {
 	private int scrollbarHighlightColor;
 	/** Whether logged in is currently active or requested. */
 	volatile boolean loggedIn;
-	
+
 	/** Stores moderator icons values. */
 	IndexedImage moderatorIcons[];
 	/** The client state for hint player index. */
@@ -3472,11 +3564,9 @@ public class Client extends GameShell {
 	IndexedImage mapSceneSprites[];
 	/** Whether inventory drag moved is currently active or requested. */
 	private boolean inventoryDragMoved;
-	
+
 	/** The client state for account current day. */
 	int accountCurrentDay;
-
-
 
 	/** Stores compass mask offsets values. */
 	int compassMaskOffsets[];
@@ -3526,7 +3616,7 @@ public class Client extends GameShell {
 	private Socket jaggrabSocket;
 	/** The client state for hint npc index. */
 	int hintNpcIndex;
-		/**
+	/**
 	 * Counts screen redraw keepalive events for the original client timing/protocol
 	 * behavior.
 	 */
@@ -3579,9 +3669,6 @@ public class Client extends GameShell {
 	/** The client state for scrollbar drag padding. */
 	/** Tracks the current draw cycle in client ticks/cycles where applicable. */
 	private static int drawCycle;
-
-
-
 
 	/** The current current tooltip widget id. */
 

@@ -1,10 +1,5 @@
 package rs2.game;
 
-import rs2.scene.tile.GroundItemTile;
-import rs2.scene.tile.InteractiveObject;
-
-import rs2.scene.TileFlags;
-import rs2.scene.SceneConfig;
 import rs2.cache.def.GameObjectDefinition;
 import rs2.cache.def.ItemDefinition;
 import rs2.collection.NodeDeque;
@@ -15,8 +10,10 @@ import rs2.net.OutgoingPacketOpcode;
 import rs2.scene.PendingSpawn;
 import rs2.scene.Region;
 import rs2.scene.Scene;
-import rs2.scene.SceneUid;
+import rs2.scene.SceneConfig;
 import rs2.scene.SceneConstants;
+import rs2.scene.SceneUid;
+import rs2.scene.TileFlags;
 import rs2.scene.entity.DynamicObjectFactory;
 import rs2.scene.entity.GraphicsObject;
 import rs2.scene.entity.GroundItem;
@@ -93,9 +90,10 @@ public final class WorldState {
 
 	/**
 	 * Interpolates the terrain height at one world-space coordinate.
+	 * 
 	 * @param worldX the world X
 	 * @param worldY the world Y
-	 * @param plane the scene plane
+	 * @param plane  the scene plane
 	 * @return the tile height
 	 */
 	public int getTileHeight(int worldX, int worldY, int plane) {
@@ -119,9 +117,10 @@ public final class WorldState {
 
 	/**
 	 * Rebuilds the visible ground-item pile for one scene tile.
+	 * 
 	 * @param plane the scene plane
-	 * @param x the X coordinate
-	 * @param y the Y coordinate
+	 * @param x     the X coordinate
+	 * @param y     the Y coordinate
 	 */
 	public void updateGroundItemPile(int plane, int x, int y) {
 		NodeDeque items = groundItems[plane][x][y];
@@ -157,8 +156,10 @@ public final class WorldState {
 		}
 
 		int uid = x + (y << SceneUid.TILE_Y_SHIFT) + SceneUid.GROUND_ITEM_TYPE_BITS;
-		scene.addGroundItemTile(plane, x, y, getTileHeight(x * SceneConstants.TILE_SIZE + SceneConstants.TILE_CENTER, y * SceneConstants.TILE_SIZE + SceneConstants.TILE_CENTER, plane), uid, primary, secondary,
-				tertiary);
+		scene.addGroundItemTile(plane, x, y,
+				getTileHeight(x * SceneConstants.TILE_SIZE + SceneConstants.TILE_CENTER,
+						y * SceneConstants.TILE_SIZE + SceneConstants.TILE_CENTER, plane),
+				uid, primary, secondary, tertiary);
 	}
 
 	/**
@@ -197,8 +198,8 @@ public final class WorldState {
 
 		for (PendingSpawn spawn = (PendingSpawn) pendingSpawns
 				.first(); spawn != null; spawn = (PendingSpawn) pendingSpawns.next()) {
-			if (spawn.x >= zoneBaseX && spawn.x < zoneBaseX + SceneConstants.CHUNK_SIZE && spawn.y >= zoneBaseY && spawn.y < zoneBaseY + SceneConstants.CHUNK_SIZE
-					&& spawn.plane == plane) {
+			if (spawn.x >= zoneBaseX && spawn.x < zoneBaseX + SceneConstants.CHUNK_SIZE && spawn.y >= zoneBaseY
+					&& spawn.y < zoneBaseY + SceneConstants.CHUNK_SIZE && spawn.plane == plane) {
 				spawn.restoreDelay = 0;
 			}
 		}
@@ -206,14 +207,15 @@ public final class WorldState {
 
 	/**
 	 * Applies a dynamic object replacement or removal to scene and collision state.
-	 * @param plane the scene plane
-	 * @param x the X coordinate
-	 * @param y the Y coordinate
-	 * @param sceneLayer the scene layer
-	 * @param objectId the object ID
-	 * @param type the type
-	 * @param orientation the orientation
-	 * @param lowMemory whether low-memory mode is active
+	 * 
+	 * @param plane        the scene plane
+	 * @param x            the X coordinate
+	 * @param y            the Y coordinate
+	 * @param sceneLayer   the scene layer
+	 * @param objectId     the object ID
+	 * @param type         the type
+	 * @param orientation  the orientation
+	 * @param lowMemory    whether low-memory mode is active
 	 * @param currentPlane the current plane
 	 */
 	public void applyGameObjectChange(int plane, int x, int y, int sceneLayer, int objectId, int type, int orientation,
@@ -260,7 +262,9 @@ public final class WorldState {
 			if (sceneLayer == 2) {
 				scene.removeInteractiveObject(plane, x, y);
 				GameObjectDefinition definition = GameObjectDefinition.lookup(previousId);
-				if (x + definition.sizeX > SceneConstants.MAX_TILE_INDEX || y + definition.sizeX > SceneConstants.MAX_TILE_INDEX || x + definition.sizeY > SceneConstants.MAX_TILE_INDEX
+				if (x + definition.sizeX > SceneConstants.MAX_TILE_INDEX
+						|| y + definition.sizeX > SceneConstants.MAX_TILE_INDEX
+						|| x + definition.sizeY > SceneConstants.MAX_TILE_INDEX
 						|| y + definition.sizeY > SceneConstants.MAX_TILE_INDEX) {
 					return;
 				}
@@ -290,6 +294,7 @@ public final class WorldState {
 
 	/**
 	 * Captures the scene object currently occupying a pending-spawn location.
+	 * 
 	 * @param spawn the spawn
 	 */
 	public void capturePreviousState(PendingSpawn spawn) {
@@ -322,15 +327,16 @@ public final class WorldState {
 
 	/**
 	 * Creates or updates a pending scene-object spawn at one tile.
-	 * @param plane the scene plane
-	 * @param x the X coordinate
-	 * @param y the Y coordinate
-	 * @param sceneLayer the scene layer
-	 * @param spawnId the spawn ID
-	 * @param spawnType the spawn type
+	 * 
+	 * @param plane            the scene plane
+	 * @param x                the X coordinate
+	 * @param y                the Y coordinate
+	 * @param sceneLayer       the scene layer
+	 * @param spawnId          the spawn ID
+	 * @param spawnType        the spawn type
 	 * @param spawnOrientation the spawn orientation
-	 * @param spawnDelay the spawn delay
-	 * @param restoreDelay the restore delay
+	 * @param spawnDelay       the spawn delay
+	 * @param restoreDelay     the restore delay
 	 */
 	public void schedulePendingSpawn(int plane, int x, int y, int sceneLayer, int spawnId, int spawnType,
 			int spawnOrientation, int spawnDelay, int restoreDelay) {
@@ -376,7 +382,8 @@ public final class WorldState {
 
 	/**
 	 * Advances pending-spawn delays and applies due scene changes.
-	 * @param lowMemory whether low-memory mode is active
+	 * 
+	 * @param lowMemory    whether low-memory mode is active
 	 * @param currentPlane the current plane
 	 */
 	public void updatePendingSpawns(boolean lowMemory, int currentPlane) {
@@ -395,7 +402,8 @@ public final class WorldState {
 				if (spawn.spawnDelay > 0) {
 					spawn.spawnDelay--;
 				}
-				if (spawn.spawnDelay == 0 && spawn.x >= 1 && spawn.y >= 1 && spawn.x < SceneConstants.MAX_TILE_INDEX && spawn.y < SceneConstants.MAX_TILE_INDEX
+				if (spawn.spawnDelay == 0 && spawn.x >= 1 && spawn.y >= 1 && spawn.x < SceneConstants.MAX_TILE_INDEX
+						&& spawn.y < SceneConstants.MAX_TILE_INDEX
 						&& (spawn.spawnId < 0 || Region.isGameObjectModelReady(spawn.spawnId, spawn.spawnType))) {
 					applyGameObjectChange(spawn.plane, spawn.x, spawn.y, spawn.sceneLayer, spawn.spawnId,
 							spawn.spawnType, spawn.spawnOrientation, lowMemory, currentPlane);
@@ -461,13 +469,14 @@ public final class WorldState {
 
 	/**
 	 * Advances active projectiles and submits visible ones to the scene.
-	 * @param currentPlane the current plane
-	 * @param currentCycle the current client cycle
-	 * @param cycleDelta the cycle delta
+	 * 
+	 * @param currentPlane           the current plane
+	 * @param currentCycle           the current client cycle
+	 * @param cycleDelta             the cycle delta
 	 * @param localPlayerServerIndex the local player server index
-	 * @param localPlayer the local player
-	 * @param actors the actors
-	 * @param outgoing the outgoing
+	 * @param localPlayer            the local player
+	 * @param actors                 the actors
+	 * @param outgoing               the outgoing
 	 */
 	public void updateProjectiles(int currentPlane, int currentCycle, int cycleDelta, int localPlayerServerIndex,
 			Player localPlayer, ActorSynchronizer actors, Buffer outgoing) {
@@ -527,9 +536,10 @@ public final class WorldState {
 
 	/**
 	 * Advances temporary graphics objects and submits visible ones to the scene.
+	 * 
 	 * @param currentPlane the current plane
 	 * @param currentCycle the current client cycle
-	 * @param cycleDelta the cycle delta
+	 * @param cycleDelta   the cycle delta
 	 */
 	public void updateGraphicsObjects(int currentPlane, int currentCycle, int cycleDelta) {
 		for (GraphicsObject graphics = (GraphicsObject) graphicsObjects

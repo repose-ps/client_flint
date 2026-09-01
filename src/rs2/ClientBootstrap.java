@@ -24,12 +24,12 @@ public final class ClientBootstrap {
 	/**
 	 * Bootstrap archives required after the on-demand preload phases finish.
 	 *
-	 * @param config configuration-definition archive
-	 * @param interfaces interface/widget archive
-	 * @param media 2D media archive
-	 * @param textures software-texture archive
+	 * @param config       configuration-definition archive
+	 * @param interfaces   interface/widget archive
+	 * @param media        2D media archive
+	 * @param textures     software-texture archive
 	 * @param wordEncoding chat-censor/word-encoding archive
-	 * @param sounds sound-effect archive
+	 * @param sounds       sound-effect archive
 	 */
 	public record Archives(Archive config, Archive interfaces, Archive media, Archive textures, Archive wordEncoding,
 			Archive sounds) {
@@ -62,20 +62,24 @@ public final class ClientBootstrap {
 	 * Loads bootstrap archives, starts the on-demand service, and performs the
 	 * original high-priority startup preload phases.
 	 *
-	 * @param lowMemory whether low-memory mode is active
-	 * @param membersWorld whether members map preloading is active
-	 * @param updateServerPort update-server port
-	 * @param jaggrabOpener JAGGRAB bootstrap stream opener
-	 * @param progress loading progress sink
-	 * @param socketOpener update-server socket opener
-	 * @param loggedInSupplier current login-state supplier
-	 * @param titleInitializer receives the title archive immediately after it loads
-	 * @param worldInitializer initializes world state before on-demand startup
-	 * @param onDemandInitializer initializes model/animation consumers and startup music
-	 * @param completedRequestProcessor installs completed on-demand requests during preload waits
-	 * @param fatalLoadHandler handles repeated on-demand failures
-	 * @return archives needed for media/config/interface preparation, or {@code null}
-	 *         when a fatal handler returned instead of halting
+	 * @param lowMemory                 whether low-memory mode is active
+	 * @param membersWorld              whether members map preloading is active
+	 * @param updateServerPort          update-server port
+	 * @param jaggrabOpener             JAGGRAB bootstrap stream opener
+	 * @param progress                  loading progress sink
+	 * @param socketOpener              update-server socket opener
+	 * @param loggedInSupplier          current login-state supplier
+	 * @param titleInitializer          receives the title archive immediately after
+	 *                                  it loads
+	 * @param worldInitializer          initializes world state before on-demand
+	 *                                  startup
+	 * @param onDemandInitializer       initializes model/animation consumers and
+	 *                                  startup music
+	 * @param completedRequestProcessor installs completed on-demand requests during
+	 *                                  preload waits
+	 * @param fatalLoadHandler          handles repeated on-demand failures
+	 * @return archives needed for media/config/interface preparation, or
+	 *         {@code null} when a fatal handler returned instead of halting
 	 */
 	public Archives load(boolean lowMemory, boolean membersWorld, int updateServerPort,
 			ResourceLoader.JaggrabOpener jaggrabOpener, ResourceLoader.ProgressListener progress,
@@ -100,7 +104,8 @@ public final class ClientBootstrap {
 
 		worldInitializer.run();
 
-		Archive versionListArchive = resources.loadArchive("versionlist", 60, 5, "update list", jaggrabOpener, progress);
+		Archive versionListArchive = resources.loadArchive("versionlist", 60, 5, "update list", jaggrabOpener,
+				progress);
 		progress.update(60, "Initializing on-demand cache");
 		OnDemandFetcher fetcher = resources.startOnDemand(versionListArchive, socketOpener, loggedInSupplier,
 				updateServerPort);
@@ -115,8 +120,8 @@ public final class ClientBootstrap {
 		for (int animationId = 0; animationId < requestCount; animationId++) {
 			fetcher.request(OnDemandFetcher.ANIMATION, animationId);
 		}
-		if (!waitForOutstanding(fetcher, completedRequestProcessor, fatalLoadHandler, 65, "Loading animations", requestCount,
-				progress, true)) {
+		if (!waitForOutstanding(fetcher, completedRequestProcessor, fatalLoadHandler, 65, "Loading animations",
+				requestCount, progress, true)) {
 			return null;
 		}
 
@@ -128,8 +133,8 @@ public final class ClientBootstrap {
 			}
 		}
 		requestCount = fetcher.getOutstandingRequestCount();
-		if (!waitForOutstanding(fetcher, completedRequestProcessor, fatalLoadHandler, 70, "Loading models", requestCount,
-				progress, false)) {
+		if (!waitForOutstanding(fetcher, completedRequestProcessor, fatalLoadHandler, 70, "Loading models",
+				requestCount, progress, false)) {
 			return null;
 		}
 
@@ -137,8 +142,8 @@ public final class ClientBootstrap {
 			progress.update(75, "Requesting maps");
 			requestStartupMaps(fetcher);
 			requestCount = fetcher.getOutstandingRequestCount();
-			if (!waitForOutstanding(fetcher, completedRequestProcessor, fatalLoadHandler, 75, "Loading maps", requestCount,
-					progress, false)) {
+			if (!waitForOutstanding(fetcher, completedRequestProcessor, fatalLoadHandler, 75, "Loading maps",
+					requestCount, progress, false)) {
 				return null;
 			}
 		}
@@ -151,12 +156,14 @@ public final class ClientBootstrap {
 	/**
 	 * Waits for the startup-track request phase, which reports no percentage.
 	 *
-	 * @param fetcher active on-demand fetcher
-	 * @param processor completed-request installer
+	 * @param fetcher      active on-demand fetcher
+	 * @param processor    completed-request installer
 	 * @param fatalHandler repeated-failure handler
-	 * @return {@code true} after all requests finish; {@code false} if the fatal handler returned
+	 * @return {@code true} after all requests finish; {@code false} if the fatal
+	 *         handler returned
 	 */
-	private static boolean waitForOutstanding(OnDemandFetcher fetcher, Runnable processor, FatalLoadHandler fatalHandler) {
+	private static boolean waitForOutstanding(OnDemandFetcher fetcher, Runnable processor,
+			FatalLoadHandler fatalHandler) {
 		while (fetcher.getOutstandingRequestCount() > 0) {
 			processor.run();
 			sleepForOnDemand();
@@ -171,19 +178,20 @@ public final class ClientBootstrap {
 	/**
 	 * Waits for a progress-reporting animation/model/map preload phase.
 	 *
-	 * @param fetcher active on-demand fetcher
-	 * @param processor completed-request installer
-	 * @param fatalHandler repeated-failure handler
-	 * @param percent loading-screen phase percentage
-	 * @param label loading-screen phase label
-	 * @param requestCount number of requests in the phase
-	 * @param progress loading-screen progress sink
+	 * @param fetcher       active on-demand fetcher
+	 * @param processor     completed-request installer
+	 * @param fatalHandler  repeated-failure handler
+	 * @param percent       loading-screen phase percentage
+	 * @param label         loading-screen phase label
+	 * @param requestCount  number of requests in the phase
+	 * @param progress      loading-screen progress sink
 	 * @param checkFailures whether to apply the legacy request-failure halt check
-	 * @return {@code true} after all requests finish; {@code false} if the fatal handler returned
+	 * @return {@code true} after all requests finish; {@code false} if the fatal
+	 *         handler returned
 	 */
-	private static boolean waitForOutstanding(OnDemandFetcher fetcher, Runnable processor, FatalLoadHandler fatalHandler,
-			int percent, String label, int requestCount, ResourceLoader.ProgressListener progress,
-			boolean checkFailures) {
+	private static boolean waitForOutstanding(OnDemandFetcher fetcher, Runnable processor,
+			FatalLoadHandler fatalHandler, int percent, String label, int requestCount,
+			ResourceLoader.ProgressListener progress, boolean checkFailures) {
 		while (fetcher.getOutstandingRequestCount() > 0) {
 			int loadedCount = requestCount - fetcher.getOutstandingRequestCount();
 			if (loadedCount > 0 && requestCount > 0) {
@@ -226,8 +234,8 @@ public final class ClientBootstrap {
 	/**
 	 * Applies the original low-priority model/map/MIDI background preload rules.
 	 *
-	 * @param fetcher active on-demand fetcher
-	 * @param lowMemory whether low-memory mode is active
+	 * @param fetcher      active on-demand fetcher
+	 * @param lowMemory    whether low-memory mode is active
 	 * @param membersWorld whether members map preloading is active
 	 */
 	private static void configureExtraPriorities(OnDemandFetcher fetcher, boolean lowMemory, boolean membersWorld) {

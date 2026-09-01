@@ -8,9 +8,11 @@ import rs2.cache.cfg.VarpProvider;
 /**
  * Creates dynamic scene locations with only the runtime values they require.
  *
- * <p>This factory keeps scene/region code independent of the application
+ * <p>
+ * This factory keeps scene/region code independent of the application
  * {@code Client} while sharing one game-cycle and varp source across dynamic
- * objects.</p>
+ * objects.
+ * </p>
  */
 public final class DynamicObjectFactory {
 
@@ -23,7 +25,7 @@ public final class DynamicObjectFactory {
 	/**
 	 * Creates a factory.
 	 *
-	 * @param varpProvider current varp source
+	 * @param varpProvider      current varp source
 	 * @param gameCycleProvider current client-cycle source
 	 */
 	public DynamicObjectFactory(VarpProvider varpProvider, IntSupplier gameCycleProvider) {
@@ -34,14 +36,14 @@ public final class DynamicObjectFactory {
 	/**
 	 * Creates one dynamic scene location.
 	 *
-	 * @param objectId object definition ID
-	 * @param type location model type
-	 * @param orientation location orientation
-	 * @param southWestHeight south-west corner height
-	 * @param southEastHeight south-east corner height
-	 * @param northEastHeight north-east corner height
-	 * @param northWestHeight north-west corner height
-	 * @param animationId animation sequence ID, or {@code -1}
+	 * @param objectId           object definition ID
+	 * @param type               location model type
+	 * @param orientation        location orientation
+	 * @param southWestHeight    south-west corner height
+	 * @param southEastHeight    south-east corner height
+	 * @param northEastHeight    north-east corner height
+	 * @param northWestHeight    north-west corner height
+	 * @param animationId        animation sequence ID, or {@code -1}
 	 * @param randomizeAnimation whether to randomize a looping animation start
 	 * @return dynamic location
 	 */

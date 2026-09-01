@@ -1,7 +1,5 @@
 package rs2.cache.def;
 
-import rs2.media.animation.AnimationFrame;
-
 import rs2.cache.Archive;
 import rs2.media.animation.AnimationFrame;
 import rs2.net.Buffer;
@@ -37,7 +35,6 @@ public class AnimationSequence {
 	private static final int OPCODE_REPLAY_MODE = 11;
 	/** Opcode for unknown 12. */
 	private static final int OPCODE_UNKNOWN_12 = 12;
-
 
 	/** Creates a new animation sequence with its default client state. */
 	public AnimationSequence() {
@@ -86,6 +83,7 @@ public class AnimationSequence {
 
 	/**
 	 * Loads all animation sequence definitions from {@code seq.dat}.
+	 * 
 	 * @param archive the source archive
 	 */
 	public static void load(Archive archive) {
@@ -107,6 +105,7 @@ public class AnimationSequence {
 	/**
 	 * Returns a frame's duration, resolving a zero duration from frame metadata. A
 	 * duration of one cycle is used when no metadata is available.
+	 * 
 	 * @param frame the animation frame
 	 * @return the frame length
 	 */
@@ -123,6 +122,7 @@ public class AnimationSequence {
 
 	/**
 	 * Decodes one opcode-delimited sequence definition.
+	 * 
 	 * @param buffer the source buffer
 	 */
 	public void decode(Buffer buffer) {

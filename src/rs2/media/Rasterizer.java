@@ -34,7 +34,7 @@ public class Rasterizer extends DualNode {
 	 * Creates rasterizer.
 	 *
 	 * @param pixels the pixels
-	 * @param width the width in pixels
+	 * @param width  the width in pixels
 	 * @param height the height in pixels
 	 */
 	public static void createRasterizer(int[] pixels, int width, int height) {
@@ -59,8 +59,8 @@ public class Rasterizer extends DualNode {
 	/**
 	 * Resizes the operation.
 	 *
-	 * @param topX the top X
-	 * @param topY the top Y
+	 * @param topX    the top X
+	 * @param topY    the top Y
 	 * @param bottomX the bottom X
 	 * @param bottomY the bottom Y
 	 */
@@ -82,9 +82,9 @@ public class Rasterizer extends DualNode {
 	/**
 	 * Sets coordinates.
 	 *
-	 * @param x the X coordinate
-	 * @param y the Y coordinate
-	 * @param width the width in pixels
+	 * @param x      the X coordinate
+	 * @param y      the Y coordinate
+	 * @param width  the width in pixels
 	 * @param height the height in pixels
 	 */
 	public static void setCoordinates(int x, int y, int width, int height) {
@@ -119,12 +119,12 @@ public class Rasterizer extends DualNode {
 	/**
 	 * Draws filled rectangle alpha.
 	 *
-	 * @param x the X coordinate
-	 * @param y the Y coordinate
-	 * @param width the width in pixels
+	 * @param x      the X coordinate
+	 * @param y      the Y coordinate
+	 * @param width  the width in pixels
 	 * @param height the height in pixels
 	 * @param colour the color value
-	 * @param alpha the alpha
+	 * @param alpha  the alpha
 	 */
 	public static void drawFilledRectangleAlpha(int x, int y, int width, int height, int colour, int alpha) {
 		if (x < topX) {
@@ -162,9 +162,9 @@ public class Rasterizer extends DualNode {
 	/**
 	 * Draws filled rectangle.
 	 *
-	 * @param x the X coordinate
-	 * @param y the Y coordinate
-	 * @param width the width in pixels
+	 * @param x      the X coordinate
+	 * @param y      the Y coordinate
+	 * @param width  the width in pixels
 	 * @param height the height in pixels
 	 * @param colour the color value
 	 */
@@ -194,11 +194,11 @@ public class Rasterizer extends DualNode {
 	/**
 	 * Draws unfilled rectangle.
 	 *
-	 * @param x the X coordinate
-	 * @param y the Y coordinate
-	 * @param width the width in pixels
+	 * @param x      the X coordinate
+	 * @param y      the Y coordinate
+	 * @param width  the width in pixels
 	 * @param height the height in pixels
-	 * @param color the color value
+	 * @param color  the color value
 	 */
 	public static void drawUnfilledRectangle(int x, int y, int width, int height, int color) {
 		drawHorizontalLine(x, y, width, color);
@@ -210,12 +210,12 @@ public class Rasterizer extends DualNode {
 	/**
 	 * Draws unfilled rectangle alpha.
 	 *
-	 * @param x the X coordinate
-	 * @param y the Y coordinate
-	 * @param width the width in pixels
+	 * @param x      the X coordinate
+	 * @param y      the Y coordinate
+	 * @param width  the width in pixels
 	 * @param height the height in pixels
 	 * @param colour the color value
-	 * @param alpha the alpha
+	 * @param alpha  the alpha
 	 */
 	public static void drawUnfilledRectangleAlpha(int x, int y, int width, int height, int colour, int alpha) {
 		drawHorizontalLineAlpha(x, y, width, colour, alpha);
@@ -229,8 +229,8 @@ public class Rasterizer extends DualNode {
 	/**
 	 * Draws horizontal line.
 	 *
-	 * @param x the X coordinate
-	 * @param y the Y coordinate
+	 * @param x      the X coordinate
+	 * @param y      the Y coordinate
 	 * @param lenght the lenght
 	 * @param colour the color value
 	 */
@@ -252,11 +252,11 @@ public class Rasterizer extends DualNode {
 	/**
 	 * Draws horizontal line alpha.
 	 *
-	 * @param x the X coordinate
-	 * @param y the Y coordinate
+	 * @param x      the X coordinate
+	 * @param y      the Y coordinate
 	 * @param length the number of elements or bytes
 	 * @param colour the color value
-	 * @param alpha the alpha
+	 * @param alpha  the alpha
 	 */
 	public static void drawHorizontalLineAlpha(int x, int y, int length, int colour, int alpha) {
 		if (y < topY || y >= bottomY)
@@ -284,8 +284,8 @@ public class Rasterizer extends DualNode {
 	/**
 	 * Draws vertical line.
 	 *
-	 * @param x the X coordinate
-	 * @param y the Y coordinate
+	 * @param x      the X coordinate
+	 * @param y      the Y coordinate
 	 * @param lenght the lenght
 	 * @param colour the color value
 	 */
@@ -307,11 +307,11 @@ public class Rasterizer extends DualNode {
 	/**
 	 * Draws vertical line alpha.
 	 *
-	 * @param x the X coordinate
-	 * @param y the Y coordinate
+	 * @param x      the X coordinate
+	 * @param y      the Y coordinate
 	 * @param lenght the lenght
 	 * @param colour the color value
-	 * @param alpha the alpha
+	 * @param alpha  the alpha
 	 */
 	public static void drawVerticalLineAlpha(int x, int y, int lenght, int colour, int alpha) {
 		if (x < topX || x >= bottomX)

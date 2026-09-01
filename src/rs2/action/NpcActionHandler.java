@@ -13,139 +13,139 @@ import rs2.ui.menu.MenuState;
 
 /** Applies revision-377 menu actions targeting NPCs. */
 public final class NpcActionHandler implements ClientActionDispatcher.ActionHandler {
-    /** Legacy anti-cheat accumulator for NPC option 3. */
-    private static int npcOption3Counter;
+	/** Legacy anti-cheat accumulator for NPC option 3. */
+	private static int npcOption3Counter;
 
-    /** Actor state used to resolve NPC indices. */
-    private final ActorSynchronizer actors;
-    /** Revision-377 action packet encoder. */
-    private final ActionPacketEncoder packets;
-    /** Current item/spell selection state. */
-    private final InterfaceController interfaces;
-    /** Movement capability supplied by the application coordinator. */
-    private final ClientActionDispatcher.Movement movement;
-    /** Marks the current click as an interaction crosshair. */
-    private final Runnable markInteractionCrosshair;
-    /** Chat-message sink used by examine actions. */
-    private final SocialManager.MessageSink messages;
+	/** Actor state used to resolve NPC indices. */
+	private final ActorSynchronizer actors;
+	/** Revision-377 action packet encoder. */
+	private final ActionPacketEncoder packets;
+	/** Current item/spell selection state. */
+	private final InterfaceController interfaces;
+	/** Movement capability supplied by the application coordinator. */
+	private final ClientActionDispatcher.Movement movement;
+	/** Marks the current click as an interaction crosshair. */
+	private final Runnable markInteractionCrosshair;
+	/** Chat-message sink used by examine actions. */
+	private final SocialManager.MessageSink messages;
 
-    /**
-     * Creates the NPC action handler.
-     *
-     * @param actors actor state
-     * @param packets revision-377 action packet encoder
-     * @param interfaces interface state owner
-     * @param movement interaction movement capability
-     * @param markInteractionCrosshair interaction-crosshair callback
-     * @param messages chat-message sink
-     */
-    public NpcActionHandler(ActorSynchronizer actors, ActionPacketEncoder packets, InterfaceController interfaces,
-            ClientActionDispatcher.Movement movement, Runnable markInteractionCrosshair,
-            SocialManager.MessageSink messages) {
-        this.actors = actors;
-        this.packets = packets;
-        this.interfaces = interfaces;
-        this.movement = movement;
-        this.markInteractionCrosshair = markInteractionCrosshair;
-        this.messages = messages;
-    }
+	/**
+	 * Creates the NPC action handler.
+	 *
+	 * @param actors                   actor state
+	 * @param packets                  revision-377 action packet encoder
+	 * @param interfaces               interface state owner
+	 * @param movement                 interaction movement capability
+	 * @param markInteractionCrosshair interaction-crosshair callback
+	 * @param messages                 chat-message sink
+	 */
+	public NpcActionHandler(ActorSynchronizer actors, ActionPacketEncoder packets, InterfaceController interfaces,
+			ClientActionDispatcher.Movement movement, Runnable markInteractionCrosshair,
+			SocialManager.MessageSink messages) {
+		this.actors = actors;
+		this.packets = packets;
+		this.interfaces = interfaces;
+		this.movement = movement;
+		this.markInteractionCrosshair = markInteractionCrosshair;
+		this.messages = messages;
+	}
 
-    /** {@inheritDoc} */
-    @Override
-    public boolean dispatch(int actionId, MenuEntry entry) {
-        int argument0 = entry.argument0();
-        int argument1 = entry.argument1();
-        int argument2 = entry.argument2();
-        if (actionId == MenuState.NPC_OPTION_2) {
-            Npc npc = actors.npcs[argument0];
-            if (npc != null) {
-                walkTo(npc);
-                packets.npcOption2(argument0);
-            }
-        }
-        if (actionId == MenuState.NPC_OPTION_4) {
-            Npc npc2 = actors.npcs[argument0];
-            if (npc2 != null) {
-                walkTo(npc2);
-                packets.npcOption4(argument0);
-            }
-        }
-        if (actionId == MenuState.USE_ITEM_ON_NPC) {
-            Npc npc3 = actors.npcs[argument0];
-            if (npc3 != null) {
-                walkTo(npc3);
-                packets.useItemOnNpc(argument0, interfaces.state().selectedItemId,
-                        interfaces.state().selectedItemWidgetId, interfaces.state().selectedItemSlot);
-            }
-        }
-        if (actionId == MenuState.NPC_OPTION_3) {
-            Npc npc4 = actors.npcs[argument0];
-            if (npc4 != null) {
-                walkTo(npc4);
-                npcOption3Counter += argument0;
-                if (npcOption3Counter >= 143) {
-                    packets.npcOption3AntiCheat();
-                    npcOption3Counter = 0;
-                }
-                packets.npcOption3(argument0);
-            }
-        }
-        if (actionId == MenuState.NPC_OPTION_5) {
-            Npc npc5 = actors.npcs[argument0];
-            if (npc5 != null) {
-                walkTo(npc5);
-                packets.npcOption5(argument0);
-            }
-        }
-        if (actionId == MenuState.CAST_SPELL_ON_NPC) {
-            Npc npc6 = actors.npcs[argument0];
-            if (npc6 != null) {
-                walkTo(npc6);
-                packets.castSpellOnNpc(argument0, interfaces.state().selectedSpellWidgetId);
-            }
-        }
-        if (actionId == MenuState.EXAMINE_NPC) {
-            Npc npc7 = actors.npcs[argument0];
-            if (npc7 != null) {
-                NpcDefinition npcDefinition = npc7.definition;
-                if (npcDefinition.morphIds != null) {
-                    npcDefinition = npcDefinition.transform();
-                }
-                if (npcDefinition != null) {
-                    String description;
-                    if (npcDefinition.description != null) {
-                        description = new String(npcDefinition.description);
-                    } else {
-                        description = "It's a " + npcDefinition.name + ".";
-                    }
-                    messages.addChatMessage("", description, ChatMessageType.GAME);
-                }
-            }
-        }
-        if (actionId == MenuState.NPC_OPTION_1) {
-            Npc npc8 = actors.npcs[argument0];
-            if (npc8 != null) {
-                walkTo(npc8);
-                packets.npcOption1(argument0);
-            }
-        }
-        return false;
-    }
+	/** {@inheritDoc} */
+	@Override
+	public boolean dispatch(int actionId, MenuEntry entry) {
+		int argument0 = entry.argument0();
+		int argument1 = entry.argument1();
+		int argument2 = entry.argument2();
+		if (actionId == MenuState.NPC_OPTION_2) {
+			Npc npc = actors.npcs[argument0];
+			if (npc != null) {
+				walkTo(npc);
+				packets.npcOption2(argument0);
+			}
+		}
+		if (actionId == MenuState.NPC_OPTION_4) {
+			Npc npc2 = actors.npcs[argument0];
+			if (npc2 != null) {
+				walkTo(npc2);
+				packets.npcOption4(argument0);
+			}
+		}
+		if (actionId == MenuState.USE_ITEM_ON_NPC) {
+			Npc npc3 = actors.npcs[argument0];
+			if (npc3 != null) {
+				walkTo(npc3);
+				packets.useItemOnNpc(argument0, interfaces.state().selectedItemId,
+						interfaces.state().selectedItemWidgetId, interfaces.state().selectedItemSlot);
+			}
+		}
+		if (actionId == MenuState.NPC_OPTION_3) {
+			Npc npc4 = actors.npcs[argument0];
+			if (npc4 != null) {
+				walkTo(npc4);
+				npcOption3Counter += argument0;
+				if (npcOption3Counter >= 143) {
+					packets.npcOption3AntiCheat();
+					npcOption3Counter = 0;
+				}
+				packets.npcOption3(argument0);
+			}
+		}
+		if (actionId == MenuState.NPC_OPTION_5) {
+			Npc npc5 = actors.npcs[argument0];
+			if (npc5 != null) {
+				walkTo(npc5);
+				packets.npcOption5(argument0);
+			}
+		}
+		if (actionId == MenuState.CAST_SPELL_ON_NPC) {
+			Npc npc6 = actors.npcs[argument0];
+			if (npc6 != null) {
+				walkTo(npc6);
+				packets.castSpellOnNpc(argument0, interfaces.state().selectedSpellWidgetId);
+			}
+		}
+		if (actionId == MenuState.EXAMINE_NPC) {
+			Npc npc7 = actors.npcs[argument0];
+			if (npc7 != null) {
+				NpcDefinition npcDefinition = npc7.definition;
+				if (npcDefinition.morphIds != null) {
+					npcDefinition = npcDefinition.transform();
+				}
+				if (npcDefinition != null) {
+					String description;
+					if (npcDefinition.description != null) {
+						description = new String(npcDefinition.description);
+					} else {
+						description = "It's a " + npcDefinition.name + ".";
+					}
+					messages.addChatMessage("", description, ChatMessageType.GAME);
+				}
+			}
+		}
+		if (actionId == MenuState.NPC_OPTION_1) {
+			Npc npc8 = actors.npcs[argument0];
+			if (npc8 != null) {
+				walkTo(npc8);
+				packets.npcOption1(argument0);
+			}
+		}
+		return false;
+	}
 
-    /** {@inheritDoc} */
-    @Override
-    public void resetForLogin() {
-        npcOption3Counter = 0;
-    }
+	/** {@inheritDoc} */
+	@Override
+	public void resetForLogin() {
+		npcOption3Counter = 0;
+	}
 
-    /**
-     * Routes to an NPC and applies the interaction crosshair.
-     *
-     * @param npc target NPC
-     */
-    private void walkTo(Npc npc) {
-        movement.walkTo(false, ((Actor) npc).pathX[0], ((Actor) npc).pathY[0], 1, 1,
-                MovementPacketEncoder.INTERACTION, 0, 0, 0);
-        markInteractionCrosshair.run();
-    }
+	/**
+	 * Routes to an NPC and applies the interaction crosshair.
+	 *
+	 * @param npc target NPC
+	 */
+	private void walkTo(Npc npc) {
+		movement.walkTo(false, ((Actor) npc).pathX[0], ((Actor) npc).pathY[0], 1, 1, MovementPacketEncoder.INTERACTION,
+				0, 0, 0);
+		markInteractionCrosshair.run();
+	}
 }

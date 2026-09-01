@@ -11,9 +11,11 @@ import rs2.net.IncomingPacketOpcode;
 /**
  * Applies cinematic camera, camera shake, reset, and world-hint packets.
  *
- * <p>This application-layer domain handler is invoked only after
+ * <p>
+ * This application-layer domain handler is invoked only after
  * {@link PacketDomainDispatcher} has explicitly routed a recognized
- * revision-377 opcode to it.</p>
+ * revision-377 opcode to it.
+ * </p>
  */
 final class CameraPacketHandler {
 
@@ -26,16 +28,16 @@ final class CameraPacketHandler {
 	/** Receives hint-target packet effects. */
 	private final PacketDomainDispatcher.HintSink hints;
 
-
 	/**
 	 * Creates the camera packet handler from its exact application capabilities.
 	 *
-	 * @param camera camera owner
-	 * @param world world-state supplier
+	 * @param camera       camera owner
+	 * @param world        world-state supplier
 	 * @param currentPlane current-plane supplier
-	 * @param hints hint-target sink
+	 * @param hints        hint-target sink
 	 */
-	CameraPacketHandler(CameraController camera, Supplier<WorldState> world, IntSupplier currentPlane, PacketDomainDispatcher.HintSink hints) {
+	CameraPacketHandler(CameraController camera, Supplier<WorldState> world, IntSupplier currentPlane,
+			PacketDomainDispatcher.HintSink hints) {
 		this.camera = camera;
 		this.world = world;
 		this.currentPlane = currentPlane;
@@ -45,8 +47,8 @@ final class CameraPacketHandler {
 	/**
 	 * Applies one packet already routed to this domain.
 	 *
-	 * @param opcode decoded revision-377 opcode
-	 * @param buffer payload buffer positioned at zero
+	 * @param opcode     decoded revision-377 opcode
+	 * @param buffer     payload buffer positioned at zero
 	 * @param packetSize payload length in bytes
 	 * @return always {@code true}; routed domain packets continue processing
 	 * @throws IllegalArgumentException if the opcode was routed to the wrong domain
@@ -83,7 +85,8 @@ final class CameraPacketHandler {
 			int heightOffset = buffer.readUnsignedShort();
 			int baseSpeed = buffer.readUnsignedByte();
 			int scale = buffer.readUnsignedByte();
-			camera.setCinematicLookAt(tileX, tileY, heightOffset, baseSpeed, scale, world.get(), currentPlane.getAsInt());
+			camera.setCinematicLookAt(tileX, tileY, heightOffset, baseSpeed, scale, world.get(),
+					currentPlane.getAsInt());
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.CAMERA_SHAKE) {

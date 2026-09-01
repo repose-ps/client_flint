@@ -1,13 +1,11 @@
 package rs2.game;
 
-import rs2.media.animation.AnimationFrame;
-
-import rs2.media.Angle;
 import rs2.cache.def.AnimationSequence;
 import rs2.cache.def.SpotAnimation;
 import rs2.game.entity.Actor;
 import rs2.game.entity.Npc;
 import rs2.game.entity.Player;
+import rs2.media.Angle;
 import rs2.scene.SceneConstants;
 
 /**
@@ -25,7 +23,9 @@ public final class ActorUpdater {
 
 	/** Minimum safe local-player tile used before forcing a path reset. */
 	private static final int LOCAL_PLAYER_SAFE_MIN_TILE = 12;
-	/** Exclusive maximum safe local-player tile used before forcing a path reset. */
+	/**
+	 * Exclusive maximum safe local-player tile used before forcing a path reset.
+	 */
 	private static final int LOCAL_PLAYER_SAFE_MAX_TILE = 92;
 	/** Largest fine-coordinate delta treated as normal queued path movement. */
 	private static final int MAX_PATH_FINE_DELTA = SceneConstants.TILE_SIZE * 2;
@@ -35,16 +35,18 @@ public final class ActorUpdater {
 	}
 
 	/**
-	 * Advances movement, facing, and animations for one actor during the current client cycle.
-	 * @param actor the actor
-	 * @param cycle the current client cycle
-	 * @param localPlayer the local player
-	 * @param players the player registry
-	 * @param npcs the NPC registry
+	 * Advances movement, facing, and animations for one actor during the current
+	 * client cycle.
+	 * 
+	 * @param actor                  the actor
+	 * @param cycle                  the current client cycle
+	 * @param localPlayer            the local player
+	 * @param players                the player registry
+	 * @param npcs                   the NPC registry
 	 * @param localPlayerServerIndex the local player server index
-	 * @param localPlayerArrayIndex the local player array index
-	 * @param regionBaseX the region base X coordinate
-	 * @param regionBaseY the region base Y coordinate
+	 * @param localPlayerArrayIndex  the local player array index
+	 * @param regionBaseX            the region base X coordinate
+	 * @param regionBaseY            the region base Y coordinate
 	 */
 	public void update(Actor actor, int cycle, Player localPlayer, Player[] players, Npc[] npcs,
 			int localPlayerServerIndex, int localPlayerArrayIndex, int regionBaseX, int regionBaseY) {
@@ -89,6 +91,7 @@ public final class ActorUpdater {
 
 	/**
 	 * Interpolates an actor toward the start of a scheduled forced movement.
+	 * 
 	 * @param actor the actor
 	 * @param cycle the current client cycle
 	 */
@@ -104,6 +107,7 @@ public final class ActorUpdater {
 
 	/**
 	 * Interpolates an actor across an active forced-movement interval.
+	 * 
 	 * @param actor the actor
 	 * @param cycle the current client cycle
 	 */
@@ -147,6 +151,7 @@ public final class ActorUpdater {
 
 	/**
 	 * Advances normal path movement and chooses the movement animation and speed.
+	 * 
 	 * @param actor the actor
 	 */
 	private static void updatePathMovement(Actor actor) {
@@ -169,8 +174,10 @@ public final class ActorUpdater {
 
 		int currentX = actor.x;
 		int currentY = actor.y;
-		int targetX = actor.pathX[actor.pathLength - 1] * SceneConstants.TILE_SIZE + actor.size * SceneConstants.TILE_CENTER;
-		int targetY = actor.pathY[actor.pathLength - 1] * SceneConstants.TILE_SIZE + actor.size * SceneConstants.TILE_CENTER;
+		int targetX = actor.pathX[actor.pathLength - 1] * SceneConstants.TILE_SIZE
+				+ actor.size * SceneConstants.TILE_CENTER;
+		int targetY = actor.pathY[actor.pathLength - 1] * SceneConstants.TILE_SIZE
+				+ actor.size * SceneConstants.TILE_CENTER;
 		if (targetX - currentX > MAX_PATH_FINE_DELTA || targetX - currentX < -MAX_PATH_FINE_DELTA
 				|| targetY - currentY > MAX_PATH_FINE_DELTA || targetY - currentY < -MAX_PATH_FINE_DELTA) {
 			actor.x = targetX;
@@ -270,13 +277,14 @@ public final class ActorUpdater {
 
 	/**
 	 * Rotates an actor toward its target entity or queued face coordinates.
-	 * @param actor the actor
-	 * @param players the player registry
-	 * @param npcs the NPC registry
+	 * 
+	 * @param actor                  the actor
+	 * @param players                the player registry
+	 * @param npcs                   the NPC registry
 	 * @param localPlayerServerIndex the local player server index
-	 * @param localPlayerArrayIndex the local player array index
-	 * @param regionBaseX the region base X coordinate
-	 * @param regionBaseY the region base Y coordinate
+	 * @param localPlayerArrayIndex  the local player array index
+	 * @param regionBaseX            the region base X coordinate
+	 * @param regionBaseY            the region base Y coordinate
 	 */
 	private static void updateFacing(Actor actor, Player[] players, Npc[] npcs, int localPlayerServerIndex,
 			int localPlayerArrayIndex, int regionBaseX, int regionBaseY) {
@@ -340,6 +348,7 @@ public final class ActorUpdater {
 
 	/**
 	 * Advances movement, spot-animation, and primary-sequence frames.
+	 * 
 	 * @param actor the actor
 	 * @param cycle the current client cycle
 	 */

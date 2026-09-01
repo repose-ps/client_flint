@@ -1,18 +1,17 @@
 package rs2.scene;
 
-import rs2.scene.tile.GroundItemTile;
-import rs2.scene.tile.InteractiveObject;
-
-import rs2.media.Angle;
 import rs2.collection.NodeDeque;
+import rs2.media.Angle;
 import rs2.media.Rasterizer;
 import rs2.media.Rasterizer3D;
-import rs2.media.model.VertexNormal;
 import rs2.media.model.Model;
 import rs2.media.model.Renderable;
+import rs2.media.model.VertexNormal;
 import rs2.scene.tile.ComplexTile;
 import rs2.scene.tile.FloorDecoration;
 import rs2.scene.tile.GenericTile;
+import rs2.scene.tile.GroundItemTile;
+import rs2.scene.tile.InteractiveObject;
 import rs2.scene.tile.SceneTile;
 import rs2.scene.tile.Wall;
 import rs2.scene.tile.WallDecoration;
@@ -23,10 +22,10 @@ public class Scene {
 	/**
 	 * Creates a new scene.
 	 *
-	 * @param heights the heights
+	 * @param heights    the heights
 	 * @param planeCount the plane count
-	 * @param width the width in pixels
-	 * @param height the height in pixels
+	 * @param width      the width in pixels
+	 * @param height     the height in pixels
 	 */
 	public Scene(int heights[][][], int planeCount, int width, int height) {
 		temporaryObjects = new InteractiveObject[5000];
@@ -110,7 +109,8 @@ public class Scene {
 				sceneTile2.plane--;
 				for (int loopIndex2 = 0; loopIndex2 < sceneTile2.interactiveObjectCount; loopIndex2++) {
 					InteractiveObject interactiveObject = sceneTile2.interactiveObjects[loopIndex2];
-					if ((interactiveObject.uid >> SceneUid.ENTITY_TYPE_SHIFT & SceneUid.ENTITY_TYPE_MASK) == SceneUid.TYPE_OBJECT && interactiveObject.tileLeft == x
+					if ((interactiveObject.uid >> SceneUid.ENTITY_TYPE_SHIFT
+							& SceneUid.ENTITY_TYPE_MASK) == SceneUid.TYPE_OBJECT && interactiveObject.tileLeft == x
 							&& interactiveObject.tileTop == y)
 						interactiveObject.plane--;
 				}
@@ -642,7 +642,8 @@ public class Scene {
 			return;
 		for (int loopIndex = 0; loopIndex < sceneTile.interactiveObjectCount; loopIndex++) {
 			InteractiveObject interactiveObject = sceneTile.interactiveObjects[loopIndex];
-			if ((interactiveObject.uid >> SceneUid.ENTITY_TYPE_SHIFT & SceneUid.ENTITY_TYPE_MASK) == SceneUid.TYPE_OBJECT && interactiveObject.tileLeft == x
+			if ((interactiveObject.uid >> SceneUid.ENTITY_TYPE_SHIFT
+					& SceneUid.ENTITY_TYPE_MASK) == SceneUid.TYPE_OBJECT && interactiveObject.tileLeft == x
 					&& interactiveObject.tileTop == y) {
 				removeInteractiveObjectInternal(interactiveObject);
 				return;
@@ -728,7 +729,8 @@ public class Scene {
 			return null;
 		for (int loopIndex = 0; loopIndex < sceneTile.interactiveObjectCount; loopIndex++) {
 			InteractiveObject interactiveObject = sceneTile.interactiveObjects[loopIndex];
-			if ((interactiveObject.uid >> SceneUid.ENTITY_TYPE_SHIFT & SceneUid.ENTITY_TYPE_MASK) == SceneUid.TYPE_OBJECT && interactiveObject.tileLeft == x
+			if ((interactiveObject.uid >> SceneUid.ENTITY_TYPE_SHIFT
+					& SceneUid.ENTITY_TYPE_MASK) == SceneUid.TYPE_OBJECT && interactiveObject.tileLeft == x
 					&& interactiveObject.tileTop == y)
 				return interactiveObject;
 		}
@@ -798,7 +800,8 @@ public class Scene {
 			return 0;
 		for (int loopIndex = 0; loopIndex < sceneTile.interactiveObjectCount; loopIndex++) {
 			InteractiveObject interactiveObject = sceneTile.interactiveObjects[loopIndex];
-			if ((interactiveObject.uid >> SceneUid.ENTITY_TYPE_SHIFT & SceneUid.ENTITY_TYPE_MASK) == SceneUid.TYPE_OBJECT && interactiveObject.tileLeft == x
+			if ((interactiveObject.uid >> SceneUid.ENTITY_TYPE_SHIFT
+					& SceneUid.ENTITY_TYPE_MASK) == SceneUid.TYPE_OBJECT && interactiveObject.tileLeft == x
 					&& interactiveObject.tileTop == y)
 				return interactiveObject.uid;
 		}
@@ -1587,17 +1590,18 @@ public class Scene {
 						if ((wallDecoration.configBits & 0x100) != 0 && intermediateValue12 < intermediateValue11) {
 							int intermediateValue13 = intermediateValue7 + WALL_DECORATION_INSET_X[intermediateValue10];
 							int intermediateValue14 = intermediateValue9 + WALL_DECORATION_INSET_Y[intermediateValue10];
-							wallDecoration.renderable.draw(intermediateValue10 * Angle.QUARTER_TURN + Angle.EIGHTH_TURN, pitchSine, pitchCosine,
-									yawSine, yawCosine, intermediateValue13, intermediateValue8, intermediateValue14,
-									wallDecoration.uid);
+							wallDecoration.renderable.draw(intermediateValue10 * Angle.QUARTER_TURN + Angle.EIGHTH_TURN,
+									pitchSine, pitchCosine, yawSine, yawCosine, intermediateValue13, intermediateValue8,
+									intermediateValue14, wallDecoration.uid);
 						}
 						if ((wallDecoration.configBits & 0x200) != 0 && intermediateValue12 > intermediateValue11) {
 							int intermediateValue15 = intermediateValue7
 									+ WALL_DECORATION_OUTSET_X[intermediateValue10];
 							int intermediateValue16 = intermediateValue9
 									+ WALL_DECORATION_OUTSET_Y[intermediateValue10];
-							wallDecoration.renderable.draw(intermediateValue10 * Angle.QUARTER_TURN + Angle.FIVE_EIGHTHS_TURN & Angle.MASK, pitchSine,
-									pitchCosine, yawSine, yawCosine, intermediateValue15, intermediateValue8,
+							wallDecoration.renderable.draw(
+									intermediateValue10 * Angle.QUARTER_TURN + Angle.FIVE_EIGHTHS_TURN & Angle.MASK,
+									pitchSine, pitchCosine, yawSine, yawCosine, intermediateValue15, intermediateValue8,
 									intermediateValue16, wallDecoration.uid);
 						}
 					}
@@ -1834,18 +1838,20 @@ public class Scene {
 									+ WALL_DECORATION_INSET_X[intermediateValue34];
 							int intermediateValue38 = intermediateValue33
 									+ WALL_DECORATION_INSET_Y[intermediateValue34];
-							wallDecoration2.renderable.draw(intermediateValue34 * Angle.QUARTER_TURN + Angle.EIGHTH_TURN, pitchSine, pitchCosine,
-									yawSine, yawCosine, intermediateValue37, intermediateValue32, intermediateValue38,
-									wallDecoration2.uid);
+							wallDecoration2.renderable.draw(
+									intermediateValue34 * Angle.QUARTER_TURN + Angle.EIGHTH_TURN, pitchSine,
+									pitchCosine, yawSine, yawCosine, intermediateValue37, intermediateValue32,
+									intermediateValue38, wallDecoration2.uid);
 						}
 						if ((wallDecoration2.configBits & 0x200) != 0 && intermediateValue36 <= intermediateValue35) {
 							int intermediateValue39 = intermediateValue31
 									+ WALL_DECORATION_OUTSET_X[intermediateValue34];
 							int intermediateValue40 = intermediateValue33
 									+ WALL_DECORATION_OUTSET_Y[intermediateValue34];
-							wallDecoration2.renderable.draw(intermediateValue34 * Angle.QUARTER_TURN + Angle.FIVE_EIGHTHS_TURN & Angle.MASK, pitchSine,
-									pitchCosine, yawSine, yawCosine, intermediateValue39, intermediateValue32,
-									intermediateValue40, wallDecoration2.uid);
+							wallDecoration2.renderable.draw(
+									intermediateValue34 * Angle.QUARTER_TURN + Angle.FIVE_EIGHTHS_TURN & Angle.MASK,
+									pitchSine, pitchCosine, yawSine, yawCosine, intermediateValue39,
+									intermediateValue32, intermediateValue40, wallDecoration2.uid);
 						}
 					}
 				Wall wall4 = sceneTile2.wall;
@@ -1963,8 +1969,8 @@ public class Scene {
 					|| northEastScreenX > Rasterizer.viewportRx || northWestScreenX > Rasterizer.viewportRx
 					|| southEastScreenX > Rasterizer.viewportRx)
 				Rasterizer3D.restrictEdges = true;
-			if (picking && containsScreenPoint(mouseX, mouseY, northEastScreenY, northWestScreenY,
-					southEastScreenY, northEastScreenX, northWestScreenX, southEastScreenX)) {
+			if (picking && containsScreenPoint(mouseX, mouseY, northEastScreenY, northWestScreenY, southEastScreenY,
+					northEastScreenX, northWestScreenX, southEastScreenX)) {
 				pickedTileX = tileX;
 				pickedTileY = tileY;
 			}
@@ -1978,21 +1984,19 @@ public class Scene {
 					Rasterizer3D.drawTexturedTriangle(northEastScreenY, northWestScreenY, southEastScreenY,
 							northEastScreenX, northWestScreenX, southEastScreenX, tile.colourC, tile.colourD,
 							tile.colourB, southWestViewX, southEastViewX, northWestViewX, southWestViewY,
-							southEastViewY, northWestViewY, southWestDepth, southEastDepth,
-							northWestDepth, tile.texture);
+							southEastViewY, northWestViewY, southWestDepth, southEastDepth, northWestDepth,
+							tile.texture);
 				else
 					Rasterizer3D.drawTexturedTriangle(northEastScreenY, northWestScreenY, southEastScreenY,
 							northEastScreenX, northWestScreenX, southEastScreenX, tile.colourC, tile.colourD,
-							tile.colourB, northEastViewX, northWestViewX, southEastViewX,
-							northEastViewY, northWestViewY, southEastViewY, northEastDepth,
-							northWestDepth, southEastDepth, tile.texture);
+							tile.colourB, northEastViewX, northWestViewX, southEastViewX, northEastViewY,
+							northWestViewY, southEastViewY, northEastDepth, northWestDepth, southEastDepth,
+							tile.texture);
 			} else {
 				int textureColor = TEXTURE_COLORS[tile.texture];
-				Rasterizer3D.drawGouraudTriangle(northEastScreenY, northWestScreenY, southEastScreenY,
-						northEastScreenX, northWestScreenX, southEastScreenX,
-						mixTextureColor(tile.colourC, textureColor),
-						mixTextureColor(tile.colourD, textureColor),
-						mixTextureColor(tile.colourB, textureColor));
+				Rasterizer3D.drawGouraudTriangle(northEastScreenY, northWestScreenY, southEastScreenY, northEastScreenX,
+						northWestScreenX, southEastScreenX, mixTextureColor(tile.colourC, textureColor),
+						mixTextureColor(tile.colourD, textureColor), mixTextureColor(tile.colourB, textureColor));
 			}
 		}
 		if ((southWestScreenX - southEastScreenX) * (northWestScreenY - southEastScreenY)
@@ -2002,8 +2006,8 @@ public class Scene {
 					|| southWestScreenX > Rasterizer.viewportRx || southEastScreenX > Rasterizer.viewportRx
 					|| northWestScreenX > Rasterizer.viewportRx)
 				Rasterizer3D.restrictEdges = true;
-			if (picking && containsScreenPoint(mouseX, mouseY, southWestScreenY, southEastScreenY,
-					northWestScreenY, southWestScreenX, southEastScreenX, northWestScreenX)) {
+			if (picking && containsScreenPoint(mouseX, mouseY, southWestScreenY, southEastScreenY, northWestScreenY,
+					southWestScreenX, southEastScreenX, northWestScreenX)) {
 				pickedTileX = tileX;
 				pickedTileY = tileY;
 			}
@@ -2019,16 +2023,14 @@ public class Scene {
 					Rasterizer3D.drawTexturedTriangle(southWestScreenY, southEastScreenY, northWestScreenY,
 							southWestScreenX, southEastScreenX, northWestScreenX, tile.colourA, tile.colourB,
 							tile.colourD, southWestViewX, southEastViewX, northWestViewX, southWestViewY,
-							southEastViewY, northWestViewY, southWestDepth, southEastDepth,
-							northWestDepth, tile.texture);
+							southEastViewY, northWestViewY, southWestDepth, southEastDepth, northWestDepth,
+							tile.texture);
 					return;
 				}
 				int textureColor = TEXTURE_COLORS[tile.texture];
-				Rasterizer3D.drawGouraudTriangle(southWestScreenY, southEastScreenY, northWestScreenY,
-						southWestScreenX, southEastScreenX, northWestScreenX,
-						mixTextureColor(tile.colourA, textureColor),
-						mixTextureColor(tile.colourB, textureColor),
-						mixTextureColor(tile.colourD, textureColor));
+				Rasterizer3D.drawGouraudTriangle(southWestScreenY, southEastScreenY, northWestScreenY, southWestScreenX,
+						southEastScreenX, northWestScreenX, mixTextureColor(tile.colourA, textureColor),
+						mixTextureColor(tile.colourB, textureColor), mixTextureColor(tile.colourD, textureColor));
 			}
 		}
 	}
@@ -2080,47 +2082,38 @@ public class Scene {
 			int screenYA = ComplexTile.SCREEN_Y[vertexA];
 			int screenYB = ComplexTile.SCREEN_Y[vertexB];
 			int screenYC = ComplexTile.SCREEN_Y[vertexC];
-			if ((screenXA - screenXB) * (screenYC - screenYB)
-					- (screenYA - screenYB) * (screenXC - screenXB) > 0) {
+			if ((screenXA - screenXB) * (screenYC - screenYB) - (screenYA - screenYB) * (screenXC - screenXB) > 0) {
 				Rasterizer3D.restrictEdges = false;
-				if (screenXA < 0 || screenXB < 0 || screenXC < 0
-						|| screenXA > Rasterizer.viewportRx || screenXB > Rasterizer.viewportRx
-						|| screenXC > Rasterizer.viewportRx)
+				if (screenXA < 0 || screenXB < 0 || screenXC < 0 || screenXA > Rasterizer.viewportRx
+						|| screenXB > Rasterizer.viewportRx || screenXC > Rasterizer.viewportRx)
 					Rasterizer3D.restrictEdges = true;
-				if (picking && containsScreenPoint(mouseX, mouseY, screenYA, screenYB,
-						screenYC, screenXA, screenXB, screenXC)) {
+				if (picking && containsScreenPoint(mouseX, mouseY, screenYA, screenYB, screenYC, screenXA, screenXB,
+						screenXC)) {
 					pickedTileX = tileX;
 					pickedTileY = tileY;
 				}
 				if (tile.triangleTextures == null || tile.triangleTextures[triangle] == -1) {
 					if (tile.triangleHslA[triangle] != 0xbc614e)
-						Rasterizer3D.drawGouraudTriangle(screenYA, screenYB, screenYC,
-								screenXA, screenXB, screenXC,
-								tile.triangleHslA[triangle], tile.triangleHslB[triangle],
-								tile.triangleHslC[triangle]);
+						Rasterizer3D.drawGouraudTriangle(screenYA, screenYB, screenYC, screenXA, screenXB, screenXC,
+								tile.triangleHslA[triangle], tile.triangleHslB[triangle], tile.triangleHslC[triangle]);
 				} else if (!lowMemory) {
 					if (tile.flat)
-						Rasterizer3D.drawTexturedTriangle(screenYA, screenYB, screenYC,
-								screenXA, screenXB, screenXC,
-								tile.triangleHslA[triangle], tile.triangleHslB[triangle],
-								tile.triangleHslC[triangle], ComplexTile.VIEW_X[0], ComplexTile.VIEW_X[1],
-								ComplexTile.VIEW_X[3], ComplexTile.VIEW_Y[0], ComplexTile.VIEW_Y[1],
-								ComplexTile.VIEW_Y[3], ComplexTile.VIEW_Z[0], ComplexTile.VIEW_Z[1],
-								ComplexTile.VIEW_Z[3], tile.triangleTextures[triangle]);
+						Rasterizer3D.drawTexturedTriangle(screenYA, screenYB, screenYC, screenXA, screenXB, screenXC,
+								tile.triangleHslA[triangle], tile.triangleHslB[triangle], tile.triangleHslC[triangle],
+								ComplexTile.VIEW_X[0], ComplexTile.VIEW_X[1], ComplexTile.VIEW_X[3],
+								ComplexTile.VIEW_Y[0], ComplexTile.VIEW_Y[1], ComplexTile.VIEW_Y[3],
+								ComplexTile.VIEW_Z[0], ComplexTile.VIEW_Z[1], ComplexTile.VIEW_Z[3],
+								tile.triangleTextures[triangle]);
 					else
-						Rasterizer3D.drawTexturedTriangle(screenYA, screenYB, screenYC,
-								screenXA, screenXB, screenXC,
-								tile.triangleHslA[triangle], tile.triangleHslB[triangle],
-								tile.triangleHslC[triangle], ComplexTile.VIEW_X[vertexA],
-								ComplexTile.VIEW_X[vertexB], ComplexTile.VIEW_X[vertexC],
-								ComplexTile.VIEW_Y[vertexA], ComplexTile.VIEW_Y[vertexB],
-								ComplexTile.VIEW_Y[vertexC], ComplexTile.VIEW_Z[vertexA],
-								ComplexTile.VIEW_Z[vertexB], ComplexTile.VIEW_Z[vertexC],
+						Rasterizer3D.drawTexturedTriangle(screenYA, screenYB, screenYC, screenXA, screenXB, screenXC,
+								tile.triangleHslA[triangle], tile.triangleHslB[triangle], tile.triangleHslC[triangle],
+								ComplexTile.VIEW_X[vertexA], ComplexTile.VIEW_X[vertexB], ComplexTile.VIEW_X[vertexC],
+								ComplexTile.VIEW_Y[vertexA], ComplexTile.VIEW_Y[vertexB], ComplexTile.VIEW_Y[vertexC],
+								ComplexTile.VIEW_Z[vertexA], ComplexTile.VIEW_Z[vertexB], ComplexTile.VIEW_Z[vertexC],
 								tile.triangleTextures[triangle]);
 				} else {
 					int textureColor = TEXTURE_COLORS[tile.triangleTextures[triangle]];
-					Rasterizer3D.drawGouraudTriangle(screenYA, screenYB, screenYC,
-							screenXA, screenXB, screenXC,
+					Rasterizer3D.drawGouraudTriangle(screenYA, screenYB, screenYC, screenXA, screenXB, screenXC,
 							mixTextureColor(tile.triangleHslA[triangle], textureColor),
 							mixTextureColor(tile.triangleHslB[triangle], textureColor),
 							mixTextureColor(tile.triangleHslC[triangle], textureColor));

@@ -32,6 +32,7 @@ public final class ResourceNameHash {
 	 * display language. The original default-locale conversion could otherwise
 	 * produce different cache keys in locales such as Turkish.
 	 * </p>
+	 * 
 	 * @param resourceName the resource name
 	 * @return whether h
 	 */

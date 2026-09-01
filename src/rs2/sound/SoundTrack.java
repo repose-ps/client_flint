@@ -57,6 +57,7 @@ public class SoundTrack {
 
 	/**
 	 * Loads all track definitions from a cache sound archive buffer.
+	 * 
 	 * @param buffer the source buffer
 	 */
 	public static void load(Buffer buffer) {
@@ -78,7 +79,8 @@ public class SoundTrack {
 
 	/**
 	 * Returns an encoded WAV buffer for a decoded track, or {@code null}.
-	 * @param trackId the track ID
+	 * 
+	 * @param trackId   the track ID
 	 * @param loopCount the loop count
 	 * @return the data
 	 */
@@ -89,6 +91,7 @@ public class SoundTrack {
 
 	/**
 	 * Decodes instrument slots and loop boundaries for this track.
+	 * 
 	 * @param buffer the source buffer
 	 */
 	public void decode(Buffer buffer) {
@@ -137,6 +140,7 @@ public class SoundTrack {
 
 	/**
 	 * Encodes the mixed track with a standard 44-byte PCM WAV header.
+	 * 
 	 * @param loopCount the loop count
 	 * @return a buffer containing the RIFF/WAVE data for the mixed track
 	 */
@@ -183,11 +187,11 @@ public class SoundTrack {
 		if (loopBeginSample < 0 || loopBeginSample > sampleCount || loopEndSample < 0 || loopEndSample > sampleCount
 				|| loopBeginSample >= loopEndSample) {
 			/*
-			 * Historical revision-377 behavior sets the requested loop count to zero
-			 * rather than one. Cached track 1592 has loopEnd beyond its synthesized
-			 * duration, so this can produce a negative output length. Independent
-			 * historical Track sources contain the same arithmetic; keep it as a known
-			 * cache/live-data quirk rather than silently changing the mixer.
+			 * Historical revision-377 behavior sets the requested loop count to zero rather
+			 * than one. Cached track 1592 has loopEnd beyond its synthesized duration, so
+			 * this can produce a negative output length. Independent historical Track
+			 * sources contain the same arithmetic; keep it as a known cache/live-data quirk
+			 * rather than silently changing the mixer.
 			 */
 			loopCount = 0;
 		}

@@ -1,7 +1,5 @@
 package rs2.cache.def;
 
-import rs2.media.animation.AnimationFrame;
-
 import rs2.cache.Archive;
 import rs2.cache.cfg.BitMasks;
 import rs2.cache.cfg.Varbit;
@@ -77,7 +75,6 @@ public class NpcDefinition {
 	private static final int ACTION_OPCODE_LIMIT = 40;
 	/** Action count. */
 	private static final int ACTION_COUNT = 5;
-
 
 	/** Creates a new NPC definition with its default client state. */
 	public NpcDefinition() {
@@ -174,6 +171,7 @@ public class NpcDefinition {
 
 	/**
 	 * Decodes one opcode-delimited definition.
+	 * 
 	 * @param buffer the source buffer
 	 */
 	public void decode(Buffer buffer) {
@@ -289,7 +287,8 @@ public class NpcDefinition {
 					if (actions == null) {
 						actions = new String[ACTION_COUNT];
 					}
-					// The supplied 377 decoder accepts {@value #ACTION_OPCODE_FIRST}..39 despite allocating only five
+					// The supplied 377 decoder accepts {@value #ACTION_OPCODE_FIRST}..39 despite
+					// allocating only five
 					// slots. Keeping that range intentionally preserves its malformed-input
 					// behavior for opcodes 35..39.
 					actions[opcode - ACTION_OPCODE_FIRST] = buffer.readString();
@@ -314,6 +313,7 @@ public class NpcDefinition {
 	/**
 	 * Builds the head/dialogue model, or {@code null} when required model files are
 	 * unavailable.
+	 * 
 	 * @return the head model
 	 */
 	public Model getHeadModel() {
@@ -343,6 +343,7 @@ public class NpcDefinition {
 	/**
 	 * Returns whether the currently selected morph points at a valid NPC
 	 * definition.
+	 * 
 	 * @return whether morph visible
 	 */
 	public boolean isMorphVisible() {
@@ -355,7 +356,8 @@ public class NpcDefinition {
 
 	/**
 	 * Loads the indexed NPC definition table from {@code npc.dat}/{@code npc.idx}.
-	 * @param archive the source archive
+	 * 
+	 * @param archive      the source archive
 	 * @param currentVarps current varp values used by morph definitions
 	 */
 	public static void load(Archive archive, VarpProvider currentVarps) {
@@ -379,9 +381,10 @@ public class NpcDefinition {
 	 * Returns a lit animated body model. The shared scratch model behavior is
 	 * retained exactly; callers must not retain the returned transformed scratch
 	 * model as an immutable instance.
-	 * @param primaryFrameId the primary frame ID
+	 * 
+	 * @param primaryFrameId   the primary frame ID
 	 * @param secondaryFrameId the secondary frame ID
-	 * @param interleaveOrder the interleave order
+	 * @param interleaveOrder  the interleave order
 	 * @return the animated model
 	 */
 	public Model getAnimatedModel(int primaryFrameId, int secondaryFrameId, int[] interleaveOrder) {
@@ -432,7 +435,9 @@ public class NpcDefinition {
 
 	/**
 	 * Resolves this definition's active varbit/varp morph, or returns {@code null}.
-	 * @return the active morph definition, or {@code null} when no valid morph is selected
+	 * 
+	 * @return the active morph definition, or {@code null} when no valid morph is
+	 *         selected
 	 */
 	public NpcDefinition transform() {
 		int morphIndex = getMorphIndex();
@@ -444,8 +449,9 @@ public class NpcDefinition {
 
 	/**
 	 * Retrieves a definition through the original 20-entry rotating decode cache.
+	 * 
 	 * @param id the identifier
-	 * @return the  result
+	 * @return the result
 	 */
 	public static NpcDefinition lookup(int id) {
 		for (NpcDefinition definition : cache) {

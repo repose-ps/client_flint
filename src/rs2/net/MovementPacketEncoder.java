@@ -25,12 +25,13 @@ public final class MovementPacketEncoder {
 
 	/**
 	 * Writes one compressed revision-377 walking route packet.
-	 * @param outgoing the outgoing
-	 * @param route the route
+	 * 
+	 * @param outgoing     the outgoing
+	 * @param route        the route
 	 * @param movementType the movement type
-	 * @param baseX the base X
-	 * @param baseY the base Y
-	 * @param running the running
+	 * @param baseX        the base X
+	 * @param baseY        the base Y
+	 * @param running      the running
 	 */
 	public static void write(Buffer outgoing, Pathfinder.Route route, int movementType, int baseX, int baseY,
 			boolean running) {

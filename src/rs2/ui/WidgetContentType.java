@@ -1,10 +1,13 @@
 package rs2.ui;
 
 /**
- * Revision-377 widget content-type identifiers interpreted directly by the client.
+ * Revision-377 widget content-type identifiers interpreted directly by the
+ * client.
  *
- * <p>Unlike {@link Widget#type}, content types attach client behavior or dynamic
- * text to otherwise cache-defined widgets.</p>
+ * <p>
+ * Unlike {@link Widget#type}, content types attach client behavior or dynamic
+ * text to otherwise cache-defined widgets.
+ * </p>
  */
 public final class WidgetContentType {
 
@@ -73,9 +76,13 @@ public final class WidgetContentType {
 	/** Content type for report abuse mute. */
 	public static final int REPORT_ABUSE_MUTE = 620;
 
-	/** Cache marker whose parent interface is retained for legacy account UI use. */
+	/**
+	 * Cache marker whose parent interface is retained for legacy account UI use.
+	 */
 	public static final int LEGACY_INTERFACE_MARKER_650 = 650;
-	/** Cache marker whose parent interface is retained for legacy account UI use. */
+	/**
+	 * Cache marker whose parent interface is retained for legacy account UI use.
+	 */
 	public static final int LEGACY_INTERFACE_MARKER_655 = 655;
 
 	/** Content type for account last login. */
@@ -99,7 +106,9 @@ public final class WidgetContentType {
 	public static final int FRIEND_NAME_ALTERNATE_FIRST = 701;
 	/** Content type for friend name alternate last. */
 	public static final int FRIEND_NAME_ALTERNATE_LAST = 800;
-	/** Offset that maps alternate friend-world content types onto friend indices. */
+	/**
+	 * Offset that maps alternate friend-world content types onto friend indices.
+	 */
 	public static final int FRIEND_WORLD_ALTERNATE_INDEX_OFFSET = 701;
 	/** Content type for friend world alternate first. */
 	public static final int FRIEND_WORLD_ALTERNATE_FIRST = 801;

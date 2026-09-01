@@ -1,12 +1,9 @@
 package rs2.scene.entity;
 
-import rs2.media.animation.AnimationFrame;
-
 import rs2.cache.def.SpotAnimation;
 import rs2.media.animation.AnimationFrame;
 import rs2.media.model.Model;
 import rs2.media.model.Renderable;
-
 
 /** A stationary spot animation placed at a fixed scene position. */
 public class GraphicsObject extends Renderable {
@@ -43,12 +40,12 @@ public class GraphicsObject extends Renderable {
 	 * Creates a new graphics object.
 	 *
 	 * @param spotAnimationId the spot animation ID
-	 * @param plane the scene plane
-	 * @param x the X coordinate
-	 * @param y the Y coordinate
-	 * @param z the Z coordinate
-	 * @param delay the delay
-	 * @param currentCycle the current client cycle
+	 * @param plane           the scene plane
+	 * @param x               the X coordinate
+	 * @param y               the Y coordinate
+	 * @param z               the Z coordinate
+	 * @param delay           the delay
+	 * @param currentCycle    the current client cycle
 	 */
 	public GraphicsObject(int spotAnimationId, int plane, int x, int y, int z, int delay, int currentCycle) {
 		this.spotAnimation = SpotAnimation.definitions[spotAnimationId];

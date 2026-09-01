@@ -1,13 +1,10 @@
 package rs2.game.entity;
 
-import rs2.media.animation.AnimationFrame;
-
 import rs2.cache.def.AnimationSequence;
 import rs2.cache.def.NpcDefinition;
 import rs2.cache.def.SpotAnimation;
 import rs2.media.animation.AnimationFrame;
 import rs2.media.model.Model;
-
 
 /** Runtime non-player actor backed by an {@link NpcDefinition}. */
 public class Npc extends Actor {
@@ -21,6 +18,7 @@ public class Npc extends Actor {
 
 	/**
 	 * Builds the NPC body with its current movement/action animation frames.
+	 * 
 	 * @return the base model
 	 */
 	public Model getBaseModel() {

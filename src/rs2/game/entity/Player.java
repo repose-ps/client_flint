@@ -1,16 +1,14 @@
 package rs2.game.entity;
 
-import rs2.media.animation.AnimationFrame;
-
 import java.util.function.IntSupplier;
 
-import rs2.media.Angle;
 import rs2.cache.def.AnimationSequence;
 import rs2.cache.def.IdentityKit;
 import rs2.cache.def.ItemDefinition;
 import rs2.cache.def.NpcDefinition;
 import rs2.cache.def.SpotAnimation;
 import rs2.collection.LruCache;
+import rs2.media.Angle;
 import rs2.media.animation.AnimationFrame;
 import rs2.media.model.Model;
 import rs2.net.Buffer;
@@ -18,15 +16,14 @@ import rs2.net.ProtocolConstants;
 import rs2.text.Base37;
 import rs2.text.TextFormatter;
 
-
 /**
  * Runtime player actor and revision-377 appearance/model builder.
  *
  * <p>
  * Appearance slots use the classic encoding: {@code 0} is empty,
  * {@code 256..511} select identity kits, and values {@code >= 512} select item
- * definitions. Slot zero may instead contain {@link ProtocolConstants#NULL_ID}, followed by an NPC
- * id, to transform the player into an NPC.
+ * definitions. Slot zero may instead contain {@link ProtocolConstants#NULL_ID},
+ * followed by an NPC id, to transform the player into an NPC.
  * </p>
  */
 public class Player extends Actor {
@@ -154,6 +151,7 @@ public class Player extends Actor {
 
 	/**
 	 * Builds the dialogue/head model for the current appearance.
+	 * 
 	 * @return the head model
 	 */
 	public Model getHeadModel() {
@@ -170,7 +168,8 @@ public class Player extends Actor {
 					&& !IdentityKit.definitions[appearance - IDENTITY_KIT_OFFSET].areHeadModelsReady()) {
 				return null;
 			}
-			if (appearance >= ITEM_OFFSET && !ItemDefinition.lookup(appearance - ITEM_OFFSET).areHeadModelsReady(gender)) {
+			if (appearance >= ITEM_OFFSET
+					&& !ItemDefinition.lookup(appearance - ITEM_OFFSET).areHeadModelsReady(gender)) {
 				return null;
 			}
 		}
@@ -201,6 +200,7 @@ public class Player extends Actor {
 	/**
 	 * Builds the cached body model and applies the currently selected
 	 * movement/action frames.
+	 * 
 	 * @return the base model
 	 */
 	public Model getBaseModel() {
@@ -252,7 +252,8 @@ public class Player extends Actor {
 						&& !IdentityKit.definitions[appearance - IDENTITY_KIT_OFFSET].areBodyModelsReady()) {
 					missingModel = true;
 				}
-				if (appearance >= ITEM_OFFSET && !ItemDefinition.lookup(appearance - ITEM_OFFSET).areWearableModelsReady(gender)) {
+				if (appearance >= ITEM_OFFSET
+						&& !ItemDefinition.lookup(appearance - ITEM_OFFSET).areWearableModelsReady(gender)) {
 					missingModel = true;
 				}
 			}
@@ -515,7 +516,8 @@ public class Player extends Actor {
 				model.recolor(PlayerAppearancePalettes.bodyColor(index, 0),
 						PlayerAppearancePalettes.bodyColor(index, bodyColors[index]));
 				if (index == 1) {
-					model.recolor(PlayerAppearancePalettes.skinColor(0), PlayerAppearancePalettes.skinColor(bodyColors[index]));
+					model.recolor(PlayerAppearancePalettes.skinColor(0),
+							PlayerAppearancePalettes.skinColor(bodyColors[index]));
 				}
 			}
 		}

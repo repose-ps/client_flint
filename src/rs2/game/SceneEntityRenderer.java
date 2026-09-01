@@ -41,7 +41,8 @@ public final class SceneEntityRenderer {
 	 */
 	public int beginFrame(Actor localPlayer, int destinationX, int destinationY) {
 		renderCycle++;
-		return localPlayer.x >> SceneConstants.TILE_BITS == destinationX && localPlayer.y >> SceneConstants.TILE_BITS == destinationY ? 0 : destinationX;
+		return localPlayer.x >> SceneConstants.TILE_BITS == destinationX
+				&& localPlayer.y >> SceneConstants.TILE_BITS == destinationY ? 0 : destinationX;
 	}
 
 	/**
@@ -91,7 +92,8 @@ public final class SceneEntityRenderer {
 						player, player.rotation, uid);
 				continue;
 			}
-			if ((player.x & SceneConstants.TILE_OFFSET_MASK) == SceneConstants.TILE_CENTER && (player.y & SceneConstants.TILE_OFFSET_MASK) == SceneConstants.TILE_CENTER) {
+			if ((player.x & SceneConstants.TILE_OFFSET_MASK) == SceneConstants.TILE_CENTER
+					&& (player.y & SceneConstants.TILE_OFFSET_MASK) == SceneConstants.TILE_CENTER) {
 				if (tileRenderCycles[tileX][tileY] == renderCycle) {
 					continue;
 				}
@@ -125,7 +127,8 @@ public final class SceneEntityRenderer {
 			if (tileX < 0 || tileX >= SceneConstants.SIZE || tileY < 0 || tileY >= SceneConstants.SIZE) {
 				continue;
 			}
-			if (npc.size == 1 && (npc.x & SceneConstants.TILE_OFFSET_MASK) == SceneConstants.TILE_CENTER && (npc.y & SceneConstants.TILE_OFFSET_MASK) == SceneConstants.TILE_CENTER) {
+			if (npc.size == 1 && (npc.x & SceneConstants.TILE_OFFSET_MASK) == SceneConstants.TILE_CENTER
+					&& (npc.y & SceneConstants.TILE_OFFSET_MASK) == SceneConstants.TILE_CENTER) {
 				if (tileRenderCycles[tileX][tileY] == renderCycle) {
 					continue;
 				}

@@ -1,18 +1,16 @@
 package rs2.ui;
 
-import rs2.media.animation.AnimationFrame;
-
 import java.util.function.Supplier;
 
 import rs2.cache.Archive;
 import rs2.cache.ResourceNameHash;
 import rs2.cache.def.ItemDefinition;
 import rs2.cache.def.NpcDefinition;
-import rs2.media.sprite.ImageRGB;
 import rs2.collection.LruCache;
-import rs2.media.animation.AnimationFrame;
 import rs2.media.TypeFace;
+import rs2.media.animation.AnimationFrame;
 import rs2.media.model.Model;
+import rs2.media.sprite.ImageRGB;
 import rs2.net.Buffer;
 
 /**
@@ -268,6 +266,7 @@ public class Widget {
 	/**
 	 * Returns a widget, lazily rebuilding it from the retained encoded record when
 	 * an interface group has previously been unloaded.
+	 * 
 	 * @param id the identifier
 	 * @return the decoded widget for the supplied interface identifier
 	 */
@@ -282,7 +281,8 @@ public class Widget {
 
 	/**
 	 * Swaps the item id and amount at two inventory slots.
-	 * @param firstSlot the first slot
+	 * 
+	 * @param firstSlot  the first slot
 	 * @param secondSlot the second slot
 	 */
 	public void swapItems(int firstSlot, int secondSlot) {
@@ -298,10 +298,11 @@ public class Widget {
 	/**
 	 * Loads and decodes the complete revision-377 interface stream.
 	 *
-	 * @param interfaceArchive archive containing the {@code data} stream
-	 * @param mediaArchive     archive used by sprite references embedded in widgets
-	 * @param typeFaces        font table indexed by the one-byte font ids in
-	 *                         widgets
+	 * @param interfaceArchive       archive containing the {@code data} stream
+	 * @param mediaArchive           archive used by sprite references embedded in
+	 *                               widgets
+	 * @param typeFaces              font table indexed by the one-byte font ids in
+	 *                               widgets
 	 * @param currentPlayerHeadModel supplies the local player's current head model
 	 */
 	public static void load(Archive interfaceArchive, Archive mediaArchive, TypeFace[] typeFaces,
@@ -344,6 +345,7 @@ public class Widget {
 	 * Discards decoded widgets belonging to one parent group so they can be lazily
 	 * reconstructed later. Type-2 inventory widgets are intentionally retained
 	 * because their item arrays contain mutable runtime state.
+	 * 
 	 * @param parentId the parent ID
 	 */
 	public static void unloadGroup(int parentId) {
@@ -375,9 +377,10 @@ public class Widget {
 	/**
 	 * Replaces the one-entry model source used for Client-built widget models. The
 	 * cache is cleared before insertion, preserving revision-377 behavior.
+	 * 
 	 * @param mediaType the media type
-	 * @param mediaId the media ID
-	 * @param model the model
+	 * @param mediaId   the media ID
+	 * @param model     the model
 	 */
 	public static void cacheModel(int mediaType, int mediaId, Model model) {
 		modelCache.clear();
@@ -389,9 +392,10 @@ public class Widget {
 	/**
 	 * Builds the model displayed by a type-6 widget for its inactive or active
 	 * state and optional animation frames.
-	 * @param primaryFrameId the primary frame ID
+	 * 
+	 * @param primaryFrameId   the primary frame ID
 	 * @param secondaryFrameId the secondary frame ID
-	 * @param active whether the state is active
+	 * @param active           whether the state is active
 	 * @return the animated model
 	 */
 	public Model getAnimatedModel(int primaryFrameId, int secondaryFrameId, boolean active) {
@@ -425,7 +429,7 @@ public class Widget {
 	/**
 	 * Loads sprite.
 	 *
-	 * @param name the name
+	 * @param name  the name
 	 * @param index the array or registry index
 	 * @return the cached or newly loaded sprite, or {@code null} if loading fails
 	 */
@@ -454,7 +458,7 @@ public class Widget {
 	 * Returns media model.
 	 *
 	 * @param mediaType the media type
-	 * @param mediaId the media ID
+	 * @param mediaId   the media ID
 	 * @return the media model
 	 */
 	private Model getMediaModel(int mediaType, int mediaId) {
@@ -497,9 +501,9 @@ public class Widget {
 	 * Decodes the operation.
 	 *
 	 * @param parentId the parent ID
-	 * @param buffer the source buffer
-	 * @param id the identifier
-	 * @return the decoded  value
+	 * @param buffer   the source buffer
+	 * @param id       the identifier
+	 * @return the decoded value
 	 */
 	private static Widget decode(int parentId, Buffer buffer, int id) {
 		Widget widget = new Widget();
@@ -720,7 +724,8 @@ public class Widget {
 			widget.spellUsableOn = buffer.readUnsignedShort();
 		}
 
-		if (widget.buttonType == BUTTON_ACTION || widget.buttonType == BUTTON_TOGGLE_VARP || widget.buttonType == BUTTON_SET_VARP || widget.buttonType == BUTTON_CONTINUE) {
+		if (widget.buttonType == BUTTON_ACTION || widget.buttonType == BUTTON_TOGGLE_VARP
+				|| widget.buttonType == BUTTON_SET_VARP || widget.buttonType == BUTTON_CONTINUE) {
 			widget.tooltip = buffer.readString();
 			if (widget.tooltip.length() == 0) {
 				if (widget.buttonType == BUTTON_ACTION)

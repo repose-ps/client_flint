@@ -37,7 +37,6 @@ public class IdentityKit {
 	/** Exclusive upper bound of the head model opcode range. */
 	private static final int HEAD_MODEL_LIMIT = 70;
 
-
 	/** Creates a new identity kit with its default client state. */
 	public IdentityKit() {
 	}
@@ -73,6 +72,7 @@ public class IdentityKit {
 
 	/**
 	 * Loads all identity-kit definitions from {@code idk.dat}.
+	 * 
 	 * @param archive the source archive
 	 */
 	public static void load(Archive archive) {
@@ -93,6 +93,7 @@ public class IdentityKit {
 
 	/**
 	 * Decodes one opcode-delimited identity-kit definition.
+	 * 
 	 * @param buffer the source buffer
 	 */
 	public void decode(Buffer buffer) {
@@ -124,6 +125,7 @@ public class IdentityKit {
 
 	/**
 	 * Returns whether every body model required by this kit is available.
+	 * 
 	 * @return whether are body models ready
 	 */
 	public boolean areBodyModelsReady() {
@@ -142,6 +144,7 @@ public class IdentityKit {
 
 	/**
 	 * Builds and recolours the kit's combined full-body model.
+	 * 
 	 * @return the constructed body model
 	 */
 	public Model buildBodyModel() {
@@ -161,6 +164,7 @@ public class IdentityKit {
 
 	/**
 	 * Returns whether every chat-head model required by this kit is available.
+	 * 
 	 * @return whether are head models ready
 	 */
 	public boolean areHeadModelsReady() {
@@ -175,6 +179,7 @@ public class IdentityKit {
 
 	/**
 	 * Builds and recolours the kit's combined chat-head model.
+	 * 
 	 * @return the constructed head model
 	 */
 	public Model buildHeadModel() {
@@ -193,6 +198,7 @@ public class IdentityKit {
 
 	/**
 	 * Applies the cache's consecutive recolouring pairs to a model.
+	 * 
 	 * @param model the model
 	 */
 	private void recolor(Model model) {

@@ -875,15 +875,17 @@ public class Rasterizer3D extends Rasterizer {
 	 *
 	 * @param pixels          destination pixel buffer
 	 * @param offset          scanline base offset
-	 * @param rgb             scratch RGB value retained by the original scanline loop
-	 * @param pixelGroupCount scratch group/pixel counter retained by the original loop
+	 * @param rgb             scratch RGB value retained by the original scanline
+	 *                        loop
+	 * @param pixelGroupCount scratch group/pixel counter retained by the original
+	 *                        loop
 	 * @param xStart          inclusive span start
 	 * @param xEnd            exclusive span end
 	 * @param shadeStart      starting fixed-point shade
 	 * @param shadeEnd        ending fixed-point shade
 	 */
-	private static void drawGouraudScanline(int pixels[], int offset, int rgb, int pixelGroupCount,
-			int xStart, int xEnd, int shadeStart, int shadeEnd) {
+	private static void drawGouraudScanline(int pixels[], int offset, int rgb, int pixelGroupCount, int xStart,
+			int xEnd, int shadeStart, int shadeEnd) {
 		if (gouraudBlockShading) {
 			int shadeStep;
 			if (restrictEdges) {
@@ -937,17 +939,13 @@ public class Rasterizer3D extends Rasterizer {
 					shadeStart += shadeStep;
 					rgb = ((rgb & 0xff00ff) * sourceAlpha >> 8 & 0xff00ff)
 							+ ((rgb & 0xff00) * sourceAlpha >> 8 & 0xff00);
-					pixels[offset++] = rgb
-							+ ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
+					pixels[offset++] = rgb + ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
 							+ ((pixels[offset] & 0xff00) * destinationAlpha >> 8 & 0xff00);
-					pixels[offset++] = rgb
-							+ ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
+					pixels[offset++] = rgb + ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
 							+ ((pixels[offset] & 0xff00) * destinationAlpha >> 8 & 0xff00);
-					pixels[offset++] = rgb
-							+ ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
+					pixels[offset++] = rgb + ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
 							+ ((pixels[offset] & 0xff00) * destinationAlpha >> 8 & 0xff00);
-					pixels[offset++] = rgb
-							+ ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
+					pixels[offset++] = rgb + ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
 							+ ((pixels[offset] & 0xff00) * destinationAlpha >> 8 & 0xff00);
 				}
 				pixelGroupCount = xEnd - xStart & 3;
@@ -956,8 +954,7 @@ public class Rasterizer3D extends Rasterizer {
 					rgb = ((rgb & 0xff00ff) * sourceAlpha >> 8 & 0xff00ff)
 							+ ((rgb & 0xff00) * sourceAlpha >> 8 & 0xff00);
 					do
-						pixels[offset++] = rgb
-								+ ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
+						pixels[offset++] = rgb + ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
 								+ ((pixels[offset] & 0xff00) * destinationAlpha >> 8 & 0xff00);
 					while (--pixelGroupCount > 0);
 				}
@@ -1334,8 +1331,7 @@ public class Rasterizer3D extends Rasterizer {
 	 * @param xStart          inclusive span start
 	 * @param xEnd            exclusive span end
 	 */
-	private static void drawFlatScanline(int pixels[], int offset, int rgb, int pixelGroupCount,
-			int xStart, int xEnd) {
+	private static void drawFlatScanline(int pixels[], int offset, int rgb, int pixelGroupCount, int xStart, int xEnd) {
 		if (restrictEdges) {
 			if (xEnd > Rasterizer.viewportRx)
 				xEnd = Rasterizer.viewportRx;
@@ -1360,8 +1356,7 @@ public class Rasterizer3D extends Rasterizer {
 		}
 		int destinationAlpha = alpha;
 		int sourceAlpha = 256 - alpha;
-		rgb = ((rgb & 0xff00ff) * sourceAlpha >> 8 & 0xff00ff)
-				+ ((rgb & 0xff00) * sourceAlpha >> 8 & 0xff00);
+		rgb = ((rgb & 0xff00ff) * sourceAlpha >> 8 & 0xff00ff) + ((rgb & 0xff00) * sourceAlpha >> 8 & 0xff00);
 		while (--pixelGroupCount >= 0) {
 			pixels[offset++] = rgb + ((pixels[offset] & 0xff00ff) * destinationAlpha >> 8 & 0xff00ff)
 					+ ((pixels[offset] & 0xff00) * destinationAlpha >> 8 & 0xff00);

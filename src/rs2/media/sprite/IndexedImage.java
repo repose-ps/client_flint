@@ -26,8 +26,9 @@ public class IndexedImage extends Rasterizer {
 
 	/**
 	 * Creates an empty indexed sprite for client-side media generation.
-	 * @param width the width in pixels
-	 * @param height the height in pixels
+	 * 
+	 * @param width   the width in pixels
+	 * @param height  the height in pixels
 	 * @param palette the palette
 	 */
 	public IndexedImage(int width, int height, int[] palette) {
@@ -43,9 +44,9 @@ public class IndexedImage extends Rasterizer {
 	/**
 	 * Creates a new indexed image.
 	 *
-	 * @param archive the source archive
+	 * @param archive     the source archive
 	 * @param archiveName the archive name
-	 * @param offset the starting offset
+	 * @param offset      the starting offset
 	 */
 	public IndexedImage(Archive archive, String archiveName, int offset) {
 		Buffer dataBuffer = new Buffer(archive.read(archiveName + ".dat"));
@@ -165,9 +166,9 @@ public class IndexedImage extends Rasterizer {
 	/**
 	 * Adjusts every entry in the indexed-image palette.
 	 *
-	 * @param red the red
+	 * @param red   the red
 	 * @param green the green
-	 * @param blue the blue
+	 * @param blue  the blue
 	 */
 	public void adjustPalette(int red, int green, int blue) {
 		for (int index = 0; index < palette.length; index++) {
@@ -241,15 +242,15 @@ public class IndexedImage extends Rasterizer {
 	/**
 	 * Copies pixels.
 	 *
-	 * @param pixels the pixels
-	 * @param rasterizerPixels the rasterizer pixels
-	 * @param width the width in pixels
-	 * @param height the height in pixels
-	 * @param offset the starting offset
-	 * @param originalOffset the original offset
-	 * @param deviation the deviation
+	 * @param pixels            the pixels
+	 * @param rasterizerPixels  the rasterizer pixels
+	 * @param width             the width in pixels
+	 * @param height            the height in pixels
+	 * @param offset            the starting offset
+	 * @param originalOffset    the original offset
+	 * @param deviation         the deviation
 	 * @param originalDeviation the original deviation
-	 * @param pallete the pallete
+	 * @param pallete           the pallete
 	 */
 	public void copyPixels(byte[] pixels, int[] rasterizerPixels, int width, int height, int offset, int originalOffset,
 			int deviation, int originalDeviation, int[] pallete) {

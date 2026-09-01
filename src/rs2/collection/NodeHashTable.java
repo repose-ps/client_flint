@@ -107,6 +107,7 @@ public class NodeHashTable {
 
 	/**
 	 * Selects the bucket associated with a key.
+	 * 
 	 * @param key the lookup key
 	 * @return the bucket sentinel selected for the key
 	 */

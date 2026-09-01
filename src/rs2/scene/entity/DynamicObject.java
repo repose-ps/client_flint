@@ -11,7 +11,6 @@ import rs2.cache.def.GameObjectDefinition;
 import rs2.media.model.Model;
 import rs2.media.model.Renderable;
 
-
 /**
  * Scene location whose model may animate and/or morph according to a varbit or
  * varp.
@@ -74,17 +73,17 @@ public class DynamicObject extends Renderable {
 	/**
 	 * Creates a new dynamic object.
 	 *
-	 * @param objectId the object ID
-	 * @param type the type
-	 * @param orientation the orientation
-	 * @param southWestHeight the south west height
-	 * @param southEastHeight the south east height
-	 * @param northEastHeight the north east height
-	 * @param northWestHeight the north west height
-	 * @param animationId the animation ID
+	 * @param objectId           the object ID
+	 * @param type               the type
+	 * @param orientation        the orientation
+	 * @param southWestHeight    the south west height
+	 * @param southEastHeight    the south east height
+	 * @param northEastHeight    the north east height
+	 * @param northWestHeight    the north west height
+	 * @param animationId        the animation ID
 	 * @param randomizeAnimation the randomize animation
-	 * @param varpProvider current varp source used by morphing locations
-	 * @param gameCycleProvider current client-cycle source used by animations
+	 * @param varpProvider       current varp source used by morphing locations
+	 * @param gameCycleProvider  current client-cycle source used by animations
 	 */
 	DynamicObject(int objectId, int type, int orientation, int southWestHeight, int southEastHeight,
 			int northEastHeight, int northWestHeight, int animationId, boolean randomizeAnimation,

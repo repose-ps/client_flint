@@ -18,6 +18,7 @@ public final class SocialManager {
 	/** Creates a new social manager with its default client state. */
 	public SocialManager() {
 	}
+
 	/** Friend list is waiting for initial data. */
 	public static final int FRIEND_LIST_LOADING = 0;
 	/** Friend list is connecting to the friend server. */
@@ -53,9 +54,9 @@ public final class SocialManager {
 		/**
 		 * Adds chat message.
 		 *
-		 * @param sender the sender
+		 * @param sender  the sender
 		 * @param message the message text
-		 * @param type the type
+		 * @param type    the type
 		 */
 		void addChatMessage(String sender, String message, int type);
 	}
@@ -109,7 +110,7 @@ public final class SocialManager {
 	/**
 	 * Returns whether friend or self.
 	 *
-	 * @param name the name
+	 * @param name            the name
 	 * @param localPlayerName the local player name
 	 * @return whether friend or self
 	 */
@@ -138,11 +139,11 @@ public final class SocialManager {
 	/**
 	 * Adds friend.
 	 *
-	 * @param encodedName the encoded name
-	 * @param membersAccount the members account
+	 * @param encodedName     the encoded name
+	 * @param membersAccount  the members account
 	 * @param localPlayerName the local player name
-	 * @param outgoing the outgoing
-	 * @param messages the messages
+	 * @param outgoing        the outgoing
+	 * @param messages        the messages
 	 * @return whether add friend
 	 */
 	public boolean addFriend(long encodedName, boolean membersAccount, String localPlayerName, Buffer outgoing,
@@ -151,7 +152,8 @@ public final class SocialManager {
 			return false;
 		}
 		if (friendCount >= MAX_FREE_FRIENDS && !membersAccount || friendCount >= MAX_FRIENDS) {
-			messages.addChatMessage("", "Your friendlist is full. Max of 100 for free users, and 200 for members", ChatMessageType.GAME);
+			messages.addChatMessage("", "Your friendlist is full. Max of 100 for free users, and 200 for members",
+					ChatMessageType.GAME);
 			return false;
 		}
 		String displayName = TextFormatter.formatDisplayName(Base37.decode(encodedName));
@@ -163,7 +165,8 @@ public final class SocialManager {
 		}
 		for (int index = 0; index < ignoreCount; index++) {
 			if (ignoreEncodedNames[index] == encodedName) {
-				messages.addChatMessage("", "Please remove " + displayName + " from your ignore list first", ChatMessageType.GAME);
+				messages.addChatMessage("", "Please remove " + displayName + " from your ignore list first",
+						ChatMessageType.GAME);
 				return false;
 			}
 		}
@@ -184,7 +187,7 @@ public final class SocialManager {
 	 * Removes friend.
 	 *
 	 * @param encodedName the encoded name
-	 * @param outgoing the outgoing
+	 * @param outgoing    the outgoing
 	 * @return whether remove friend
 	 */
 	public boolean removeFriend(long encodedName, Buffer outgoing) {
@@ -212,8 +215,8 @@ public final class SocialManager {
 	 * Adds ignore.
 	 *
 	 * @param encodedName the encoded name
-	 * @param outgoing the outgoing
-	 * @param messages the messages
+	 * @param outgoing    the outgoing
+	 * @param messages    the messages
 	 * @return whether add ignore
 	 */
 	public boolean addIgnore(long encodedName, Buffer outgoing, MessageSink messages) {
@@ -233,7 +236,8 @@ public final class SocialManager {
 		}
 		for (int index = 0; index < friendCount; index++) {
 			if (friendEncodedNames[index] == encodedName) {
-				messages.addChatMessage("", "Please remove " + displayName + " from your friend list first", ChatMessageType.GAME);
+				messages.addChatMessage("", "Please remove " + displayName + " from your friend list first",
+						ChatMessageType.GAME);
 				return false;
 			}
 		}
@@ -248,7 +252,7 @@ public final class SocialManager {
 	 * Removes ignore.
 	 *
 	 * @param encodedName the encoded name
-	 * @param outgoing the outgoing
+	 * @param outgoing    the outgoing
 	 * @return whether remove ignore
 	 */
 	public boolean removeIgnore(long encodedName, Buffer outgoing) {
@@ -273,7 +277,7 @@ public final class SocialManager {
 	/**
 	 * Replaces ignore list.
 	 *
-	 * @param incoming the incoming
+	 * @param incoming     the incoming
 	 * @param packetLength the packet length
 	 */
 	public void replaceIgnoreList(Buffer incoming, int packetLength) {
@@ -287,10 +291,10 @@ public final class SocialManager {
 	 * Applies opcode-78 friend presence updates and preserves the original
 	 * current-world/online bubble-sort ordering.
 	 *
-	 * @param encodedName the encoded name
-	 * @param world the world
+	 * @param encodedName  the encoded name
+	 * @param world        the world
 	 * @param currentWorld the current world
-	 * @param messages the messages
+	 * @param messages     the messages
 	 * @return true when visible friend-list state/order changed
 	 */
 	public boolean updateFriend(long encodedName, int world, int currentWorld, MessageSink messages) {

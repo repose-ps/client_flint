@@ -1,8 +1,6 @@
 package rs2.scene.tile;
 
 import rs2.collection.Node;
-import rs2.scene.tile.GroundItemTile;
-import rs2.scene.tile.InteractiveObject;
 
 /**
  * Stores the contents and transient rendering state of one scene tile.

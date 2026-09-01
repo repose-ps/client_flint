@@ -1,15 +1,10 @@
 package rs2.media.model;
 
-import rs2.media.animation.AnimationFrame;
-import rs2.media.animation.Skeleton;
-
-import rs2.media.animation.AnimationFrame;
+import rs2.cache.ondemand.OnDemandProvider;
 import rs2.media.Rasterizer;
 import rs2.media.Rasterizer3D;
-import rs2.cache.ondemand.OnDemandProvider;
+import rs2.media.animation.AnimationFrame;
 import rs2.media.animation.Skeleton;
-import rs2.media.model.VertexNormal;
-
 import rs2.net.Buffer;
 
 /**
@@ -325,7 +320,7 @@ public class Model extends Renderable {
 	 * Creates a new model.
 	 *
 	 * @param modelCount the model count
-	 * @param models the models
+	 * @param models     the models
 	 */
 	public Model(int modelCount, Model[] models) {
 		singleTile = false;
@@ -434,7 +429,7 @@ public class Model extends Renderable {
 	/**
 	 * Creates a new model.
 	 *
-	 * @param models the models
+	 * @param models     the models
 	 * @param modelCount the model count
 	 */
 	public Model(Model[] models, int modelCount) {
@@ -553,10 +548,10 @@ public class Model extends Renderable {
 	/**
 	 * Creates a new model.
 	 *
-	 * @param source the source
+	 * @param source        the source
 	 * @param shareVertices the share vertices
-	 * @param shareColors the share colors
-	 * @param shareAlpha the share alpha
+	 * @param shareColors   the share colors
+	 * @param shareAlpha    the share alpha
 	 */
 	public Model(Model source, boolean shareVertices, boolean shareColors, boolean shareAlpha) {
 		singleTile = false;
@@ -616,9 +611,9 @@ public class Model extends Renderable {
 	/**
 	 * Creates a new model.
 	 *
-	 * @param source the source
+	 * @param source        the source
 	 * @param copyVerticesY the copy vertices Y
-	 * @param copyLighting the copy lighting
+	 * @param copyLighting  the copy lighting
 	 */
 	public Model(Model source, boolean copyVerticesY, boolean copyLighting) {
 		singleTile = false;
@@ -1442,33 +1437,25 @@ public class Model extends Renderable {
 			int y = verticesY[vertex];
 			int z = verticesZ[vertex];
 			if (rotationZ != 0) {
-				int rotatedX = y * sineZ
-						+ x * cosineZ >> 16;
-				y = y * cosineZ
-						- x * sineZ >> 16;
+				int rotatedX = y * sineZ + x * cosineZ >> 16;
+				y = y * cosineZ - x * sineZ >> 16;
 				x = rotatedX;
 			}
 			if (rotationX != 0) {
-				int rotatedY = y * cosineX
-						- z * sineX >> 16;
-				z = y * sineX
-						+ z * cosineX >> 16;
+				int rotatedY = y * cosineX - z * sineX >> 16;
+				z = y * sineX + z * cosineX >> 16;
 				y = rotatedY;
 			}
 			if (rotationY != 0) {
-				int rotatedX = z * sineY
-						+ x * cosineY >> 16;
-				z = z * cosineY
-						- x * sineY >> 16;
+				int rotatedX = z * sineY + x * cosineY >> 16;
+				z = z * cosineY - x * sineY >> 16;
 				x = rotatedX;
 			}
 			x += translationX;
 			y += translationY;
 			z += translationZ;
-			int viewY = y * pitchCosine
-					- z * pitchSine >> 16;
-			z = y * pitchSine
-					+ z * pitchCosine >> 16;
+			int viewY = y * pitchCosine - z * pitchSine >> 16;
+			z = y * pitchSine + z * pitchCosine >> 16;
 			y = viewY;
 			projectedDepth[vertex] = z - depthOrigin;
 			projectedX[vertex] = screenCenterX + (x << 9) / z;
@@ -1829,16 +1816,15 @@ public class Model extends Renderable {
 		else
 			drawType = triangleDrawType[triangle] & 3;
 		if (drawType == 0) {
-			Rasterizer3D.drawGouraudTriangle(projectedY[vertexA], projectedY[vertexB],
-					projectedY[vertexC], projectedX[vertexA], projectedX[vertexB],
-					projectedX[vertexC], triangleShadeA[triangle], triangleShadeB[triangle],
-					triangleShadeC[triangle]);
+			Rasterizer3D.drawGouraudTriangle(projectedY[vertexA], projectedY[vertexB], projectedY[vertexC],
+					projectedX[vertexA], projectedX[vertexB], projectedX[vertexC], triangleShadeA[triangle],
+					triangleShadeB[triangle], triangleShadeC[triangle]);
 			return;
 		}
 		if (drawType == 1) {
-			Rasterizer3D.drawFlatTriangle(projectedY[vertexA], projectedY[vertexB],
-					projectedY[vertexC], projectedX[vertexA], projectedX[vertexB],
-					projectedX[vertexC], HSL_TO_RGB[triangleShadeA[triangle]]);
+			Rasterizer3D.drawFlatTriangle(projectedY[vertexA], projectedY[vertexB], projectedY[vertexC],
+					projectedX[vertexA], projectedX[vertexB], projectedX[vertexC],
+					HSL_TO_RGB[triangleShadeA[triangle]]);
 			return;
 		}
 		if (drawType == 2) {
@@ -1846,13 +1832,12 @@ public class Model extends Renderable {
 			int textureVertexA = texturedTriangleA[textureTriangle];
 			int textureVertexB = texturedTriangleB[textureTriangle];
 			int textureVertexC = texturedTriangleC[textureTriangle];
-			Rasterizer3D.drawTexturedTriangle(projectedY[vertexA], projectedY[vertexB],
-					projectedY[vertexC], projectedX[vertexA], projectedX[vertexB],
-					projectedX[vertexC], triangleShadeA[triangle], triangleShadeB[triangle],
-					triangleShadeC[triangle], cameraX[textureVertexA], cameraX[textureVertexB],
-					cameraX[textureVertexC], cameraY[textureVertexA], cameraY[textureVertexB],
-					cameraY[textureVertexC], cameraZ[textureVertexA], cameraZ[textureVertexB],
-					cameraZ[textureVertexC], triangleColors[triangle]);
+			Rasterizer3D.drawTexturedTriangle(projectedY[vertexA], projectedY[vertexB], projectedY[vertexC],
+					projectedX[vertexA], projectedX[vertexB], projectedX[vertexC], triangleShadeA[triangle],
+					triangleShadeB[triangle], triangleShadeC[triangle], cameraX[textureVertexA],
+					cameraX[textureVertexB], cameraX[textureVertexC], cameraY[textureVertexA], cameraY[textureVertexB],
+					cameraY[textureVertexC], cameraZ[textureVertexA], cameraZ[textureVertexB], cameraZ[textureVertexC],
+					triangleColors[triangle]);
 			return;
 		}
 		if (drawType == 3) {
@@ -1860,13 +1845,12 @@ public class Model extends Renderable {
 			int textureVertexA = texturedTriangleA[textureTriangle];
 			int textureVertexB = texturedTriangleB[textureTriangle];
 			int textureVertexC = texturedTriangleC[textureTriangle];
-			Rasterizer3D.drawTexturedTriangle(projectedY[vertexA], projectedY[vertexB],
-					projectedY[vertexC], projectedX[vertexA], projectedX[vertexB],
-					projectedX[vertexC], triangleShadeA[triangle], triangleShadeA[triangle],
-					triangleShadeA[triangle], cameraX[textureVertexA], cameraX[textureVertexB],
-					cameraX[textureVertexC], cameraY[textureVertexA], cameraY[textureVertexB],
-					cameraY[textureVertexC], cameraZ[textureVertexA], cameraZ[textureVertexB],
-					cameraZ[textureVertexC], triangleColors[triangle]);
+			Rasterizer3D.drawTexturedTriangle(projectedY[vertexA], projectedY[vertexB], projectedY[vertexC],
+					projectedX[vertexA], projectedX[vertexB], projectedX[vertexC], triangleShadeA[triangle],
+					triangleShadeA[triangle], triangleShadeA[triangle], cameraX[textureVertexA],
+					cameraX[textureVertexB], cameraX[textureVertexC], cameraY[textureVertexA], cameraY[textureVertexB],
+					cameraY[textureVertexC], cameraZ[textureVertexA], cameraZ[textureVertexB], cameraZ[textureVertexC],
+					triangleColors[triangle]);
 		}
 	}
 

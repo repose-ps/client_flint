@@ -32,7 +32,7 @@ public final class ClientResourceManager {
 	/**
 	 * Initializes local cache indices when Signlink opened the packed cache files.
 	 *
-	 * @param dataFile packed cache data file, or {@code null} when unavailable
+	 * @param dataFile   packed cache data file, or {@code null} when unavailable
 	 * @param indexFiles packed cache index files
 	 */
 	public void initializeCacheIndices(RandomAccessFile dataFile, RandomAccessFile[] indexFiles) {
@@ -42,7 +42,7 @@ public final class ClientResourceManager {
 	/**
 	 * Fetches the authoritative bootstrap archive CRC table.
 	 *
-	 * @param opener JAGGRAB stream opener
+	 * @param opener   JAGGRAB stream opener
 	 * @param progress loading-screen progress sink
 	 */
 	public void fetchArchiveCrcs(ResourceLoader.JaggrabOpener opener, ResourceLoader.ProgressListener progress) {
@@ -62,12 +62,12 @@ public final class ClientResourceManager {
 	/**
 	 * Loads and validates one bootstrap archive.
 	 *
-	 * @param archiveName archive request name
+	 * @param archiveName    archive request name
 	 * @param loadingPercent loading-screen progress percentage
-	 * @param cacheFileId local cache file id
-	 * @param displayName user-facing archive name
-	 * @param opener JAGGRAB stream opener
-	 * @param progress loading-screen progress sink
+	 * @param cacheFileId    local cache file id
+	 * @param displayName    user-facing archive name
+	 * @param opener         JAGGRAB stream opener
+	 * @param progress       loading-screen progress sink
 	 * @return validated archive
 	 */
 	public Archive loadArchive(String archiveName, int loadingPercent, int cacheFileId, String displayName,
@@ -80,9 +80,9 @@ public final class ClientResourceManager {
 	 * Starts the asynchronous version-list/on-demand resource service.
 	 *
 	 * @param versionListArchive revision-377 version-list archive
-	 * @param socketOpener update-server socket opener
-	 * @param loggedInSupplier current game-session login-state supplier
-	 * @param updateServerPort update-server port
+	 * @param socketOpener       update-server socket opener
+	 * @param loggedInSupplier   current game-session login-state supplier
+	 * @param updateServerPort   update-server port
 	 * @return started fetcher
 	 */
 	public OnDemandFetcher startOnDemand(Archive versionListArchive, OnDemandFetcher.SocketOpener socketOpener,

@@ -1,9 +1,9 @@
 package rs2.sound;
 
 import java.util.function.LongSupplier;
-import rs2.net.OutgoingPacketOpcode;
 
 import rs2.net.Buffer;
+import rs2.net.OutgoingPacketOpcode;
 import rs2.sign.Signlink;
 
 /** Revision-377 fixed-capacity queued sound-effect playback state. */
@@ -27,7 +27,7 @@ public final class SoundEffectQueue {
 		/**
 		 * Returns data.
 		 *
-		 * @param soundId the sound ID
+		 * @param soundId   the sound ID
 		 * @param loopCount the loop count
 		 * @return the data
 		 */
@@ -39,7 +39,7 @@ public final class SoundEffectQueue {
 		/**
 		 * Saves the operation.
 		 *
-		 * @param data the data to process
+		 * @param data   the data to process
 		 * @param length the number of elements or bytes
 		 * @return whether save
 		 */
@@ -67,12 +67,15 @@ public final class SoundEffectQueue {
 		void setVolume(int volume);
 	}
 
-	/** Wave backend that delegates legacy sound-effect playback to {@link Signlink}. */
+	/**
+	 * Wave backend that delegates legacy sound-effect playback to {@link Signlink}.
+	 */
 	private static final class SignlinkWaveBackend implements WaveBackend {
 
 		/** Creates a new signlink wave backend with its default client state. */
 		private SignlinkWaveBackend() {
 		}
+
 		public boolean save(byte[] data, int length) {
 			return Signlink.saveWave(data, length);
 		}
@@ -127,8 +130,8 @@ public final class SoundEffectQueue {
 	 * Creates a new sound effect queue.
 	 *
 	 * @param dataProvider the data provider
-	 * @param waveBackend the wave backend
-	 * @param clock the clock
+	 * @param waveBackend  the wave backend
+	 * @param clock        the clock
 	 */
 	SoundEffectQueue(SoundDataProvider dataProvider, WaveBackend waveBackend, LongSupplier clock) {
 		this.dataProvider = dataProvider;
@@ -172,9 +175,9 @@ public final class SoundEffectQueue {
 	/**
 	 * Queues packet sound.
 	 *
-	 * @param soundId the sound ID
+	 * @param soundId   the sound ID
 	 * @param loopCount the loop count
-	 * @param delay the delay
+	 * @param delay     the delay
 	 * @param lowMemory whether low-memory mode is active
 	 */
 	public void queuePacketSound(int soundId, int loopCount, int delay, boolean lowMemory) {
@@ -196,14 +199,14 @@ public final class SoundEffectQueue {
 	/**
 	 * Queues area sound.
 	 *
-	 * @param soundId the sound ID
-	 * @param loopCount the loop count
-	 * @param radius the radius
-	 * @param tileX the tile X
-	 * @param tileY the tile Y
+	 * @param soundId     the sound ID
+	 * @param loopCount   the loop count
+	 * @param radius      the radius
+	 * @param tileX       the tile X
+	 * @param tileY       the tile Y
 	 * @param playerTileX the player tile X
 	 * @param playerTileY the player tile Y
-	 * @param lowMemory whether low-memory mode is active
+	 * @param lowMemory   whether low-memory mode is active
 	 */
 	public void queueAreaSound(int soundId, int loopCount, int radius, int tileX, int tileY, int playerTileX,
 			int playerTileY, boolean lowMemory) {
@@ -217,7 +220,9 @@ public final class SoundEffectQueue {
 	}
 
 	/**
-	 * Advances queued sound effects, starting or retrying playback and removing completed entries.
+	 * Advances queued sound effects, starting or retrying playback and removing
+	 * completed entries.
+	 * 
 	 * @param outgoing the outgoing
 	 */
 	public void update(Buffer outgoing) {

@@ -34,13 +34,13 @@ public class GenericTile {
 	/**
 	 * Creates a new generic tile.
 	 *
-	 * @param colourA the colour a
-	 * @param colourB the colour b
-	 * @param colourC the colour c
-	 * @param colourD the colour d
-	 * @param texture the texture
+	 * @param colourA   the colour a
+	 * @param colourB   the colour b
+	 * @param colourC   the colour c
+	 * @param colourD   the colour d
+	 * @param texture   the texture
 	 * @param rgbColour the RGB colour
-	 * @param flat the flat
+	 * @param flat      the flat
 	 */
 	public GenericTile(int colourA, int colourB, int colourC, int colourD, int texture, int rgbColour, boolean flat) {
 		this.colourA = colourA;

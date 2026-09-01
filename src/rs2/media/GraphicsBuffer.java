@@ -47,8 +47,8 @@ public final class GraphicsBuffer implements ImageProducer, ImageObserver {
 	 * Creates a new graphics buffer.
 	 *
 	 * @param component the AWT component
-	 * @param width the width in pixels
-	 * @param height the height in pixels
+	 * @param width     the width in pixels
+	 * @param height    the height in pixels
 	 */
 	public GraphicsBuffer(Component component, int width, int height) {
 		this.width = width;
@@ -69,6 +69,7 @@ public final class GraphicsBuffer implements ImageProducer, ImageObserver {
 
 	/**
 	 * Returns this software buffer's fixed pixel width.
+	 * 
 	 * @return the width
 	 */
 	public int getWidth() {
@@ -77,6 +78,7 @@ public final class GraphicsBuffer implements ImageProducer, ImageObserver {
 
 	/**
 	 * Returns this software buffer's fixed pixel height.
+	 * 
 	 * @return the height
 	 */
 	public int getHeight() {
@@ -90,9 +92,10 @@ public final class GraphicsBuffer implements ImageProducer, ImageObserver {
 
 	/**
 	 * Publishes the current pixels and draws the produced image at {@code (x, y)}.
+	 * 
 	 * @param graphics the graphics context
-	 * @param x the X coordinate
-	 * @param y the Y coordinate
+	 * @param x        the X coordinate
+	 * @param y        the Y coordinate
 	 */
 	public void draw(Graphics graphics, int x, int y) {
 		pushPixels();

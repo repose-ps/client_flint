@@ -20,7 +20,6 @@ public class Varp {
 	public Varp() {
 	}
 
-
 	/** Terminates a varp definition record. */
 	private static final int OPCODE_END = 0;
 	/** Stores the first reserved byte attribute. */
@@ -98,6 +97,7 @@ public class Varp {
 
 	/**
 	 * Loads every varp definition from {@code varp.dat}.
+	 * 
 	 * @param archive the source archive
 	 */
 	public static void load(Archive archive) {
@@ -126,7 +126,8 @@ public class Varp {
 
 	/**
 	 * Decodes one opcode-delimited varp definition.
-	 * @param id the identifier
+	 * 
+	 * @param id     the identifier
 	 * @param buffer the source buffer
 	 */
 	public void decode(int id, Buffer buffer) {

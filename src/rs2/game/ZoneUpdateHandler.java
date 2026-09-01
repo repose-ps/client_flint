@@ -1,23 +1,21 @@
 package rs2.game;
 
-import rs2.scene.tile.InteractiveObject;
-
 import rs2.cache.def.GameObjectDefinition;
 import rs2.collection.NodeDeque;
-import rs2.scene.entity.DynamicObjectFactory;
-import rs2.scene.entity.GraphicsObject;
-import rs2.scene.entity.GroundItem;
-import rs2.media.model.Model;
 import rs2.game.entity.Player;
-import rs2.scene.entity.Projectile;
+import rs2.media.model.Model;
 import rs2.net.Buffer;
 import rs2.net.IncomingPacketOpcode;
 import rs2.net.ProtocolConstants;
-import rs2.scene.tile.FloorDecoration;
-import rs2.scene.tile.InteractiveObject;
 import rs2.scene.SceneConfig;
 import rs2.scene.SceneConstants;
 import rs2.scene.SceneUid;
+import rs2.scene.entity.DynamicObjectFactory;
+import rs2.scene.entity.GraphicsObject;
+import rs2.scene.entity.GroundItem;
+import rs2.scene.entity.Projectile;
+import rs2.scene.tile.FloorDecoration;
+import rs2.scene.tile.InteractiveObject;
 import rs2.scene.tile.Wall;
 import rs2.scene.tile.WallDecoration;
 
@@ -106,15 +104,14 @@ public final class ZoneUpdateHandler {
 	private static final int AREA_SOUND_LOOPS_MASK = 0x7;
 
 	/** Maps location model types to the scene layer that owns them. */
-	private static final int[] SCENE_LAYERS_BY_TYPE = {
-			SCENE_LAYER_WALL, SCENE_LAYER_WALL, SCENE_LAYER_WALL, SCENE_LAYER_WALL,
-			SCENE_LAYER_WALL_DECORATION, SCENE_LAYER_WALL_DECORATION, SCENE_LAYER_WALL_DECORATION,
-			SCENE_LAYER_WALL_DECORATION, SCENE_LAYER_WALL_DECORATION,
+	private static final int[] SCENE_LAYERS_BY_TYPE = { SCENE_LAYER_WALL, SCENE_LAYER_WALL, SCENE_LAYER_WALL,
+			SCENE_LAYER_WALL, SCENE_LAYER_WALL_DECORATION, SCENE_LAYER_WALL_DECORATION, SCENE_LAYER_WALL_DECORATION,
+			SCENE_LAYER_WALL_DECORATION, SCENE_LAYER_WALL_DECORATION, SCENE_LAYER_INTERACTIVE_OBJECT,
 			SCENE_LAYER_INTERACTIVE_OBJECT, SCENE_LAYER_INTERACTIVE_OBJECT, SCENE_LAYER_INTERACTIVE_OBJECT,
 			SCENE_LAYER_INTERACTIVE_OBJECT, SCENE_LAYER_INTERACTIVE_OBJECT, SCENE_LAYER_INTERACTIVE_OBJECT,
 			SCENE_LAYER_INTERACTIVE_OBJECT, SCENE_LAYER_INTERACTIVE_OBJECT, SCENE_LAYER_INTERACTIVE_OBJECT,
 			SCENE_LAYER_INTERACTIVE_OBJECT, SCENE_LAYER_INTERACTIVE_OBJECT, SCENE_LAYER_INTERACTIVE_OBJECT,
-			SCENE_LAYER_INTERACTIVE_OBJECT, SCENE_LAYER_FLOOR_DECORATION };
+			SCENE_LAYER_FLOOR_DECORATION };
 
 	/** Stores the current world. */
 	private final WorldState world;
@@ -131,7 +128,7 @@ public final class ZoneUpdateHandler {
 	/**
 	 * Creates a new zone update handler.
 	 *
-	 * @param world the world
+	 * @param world          the world
 	 * @param dynamicObjects dynamic-location factory
 	 */
 	public ZoneUpdateHandler(WorldState world, DynamicObjectFactory dynamicObjects) {
@@ -184,15 +181,17 @@ public final class ZoneUpdateHandler {
 	}
 
 	/**
-	 * Applies one zone-update packet to ground items, objects, projectiles, graphics, or area sound.
-	 * @param buffer the source buffer
-	 * @param updateType the update type
-	 * @param currentPlane the current plane
-	 * @param currentCycle the current client cycle
+	 * Applies one zone-update packet to ground items, objects, projectiles,
+	 * graphics, or area sound.
+	 * 
+	 * @param buffer                 the source buffer
+	 * @param updateType             the update type
+	 * @param currentPlane           the current plane
+	 * @param currentCycle           the current client cycle
 	 * @param localPlayerServerIndex the local player server index
-	 * @param localPlayer the local player
-	 * @param actors the actors
-	 * @param areaSoundHandler the area sound handler
+	 * @param localPlayer            the local player
+	 * @param actors                 the actors
+	 * @param areaSoundHandler       the area sound handler
 	 */
 	public void decode(Buffer buffer, int updateType, int currentPlane, int currentCycle, int localPlayerServerIndex,
 			Player localPlayer, ActorSynchronizer actors, AreaSoundHandler areaSoundHandler) {
@@ -262,7 +261,8 @@ public final class ZoneUpdateHandler {
 			int amount = buffer.readUnsignedShortLEAdd();
 			int itemId = buffer.readUnsignedShortAdd();
 			int ownerIndex = buffer.readUnsignedShortAdd();
-			if (tileX >= 0 && tileY >= 0 && tileX < SceneConstants.SIZE && tileY < SceneConstants.SIZE && ownerIndex != localPlayerServerIndex) {
+			if (tileX >= 0 && tileY >= 0 && tileX < SceneConstants.SIZE && tileY < SceneConstants.SIZE
+					&& ownerIndex != localPlayerServerIndex) {
 				GroundItem item = new GroundItem();
 				item.id = itemId;
 				item.amount = amount;
@@ -284,7 +284,8 @@ public final class ZoneUpdateHandler {
 			int packedTile = buffer.readUnsignedByte();
 			int tileX = zoneBaseX + (packedTile >> 4 & SceneConstants.CHUNK_COORDINATE_MASK);
 			int tileY = zoneBaseY + (packedTile & SceneConstants.CHUNK_COORDINATE_MASK);
-			if (tileX >= 0 && tileY >= 0 && tileX < SceneConstants.MAX_TILE_INDEX && tileY < SceneConstants.MAX_TILE_INDEX) {
+			if (tileX >= 0 && tileY >= 0 && tileX < SceneConstants.MAX_TILE_INDEX
+					&& tileY < SceneConstants.MAX_TILE_INDEX) {
 				int southWestHeight = world.tileHeights[currentPlane][tileX][tileY];
 				int southEastHeight = world.tileHeights[currentPlane][tileX + 1][tileY];
 				int northEastHeight = world.tileHeights[currentPlane][tileX + 1][tileY + 1];
@@ -294,10 +295,12 @@ public final class ZoneUpdateHandler {
 					if (wall != null) {
 						int objectId = wall.uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK;
 						if (type == CORNER_WALL_TYPE) {
-							wall.primary = dynamicObjects.create(objectId, CORNER_WALL_TYPE, CORNER_WALL_SECONDARY_ORIENTATION_OFFSET + orientation, southWestHeight,
+							wall.primary = dynamicObjects.create(objectId, CORNER_WALL_TYPE,
+									CORNER_WALL_SECONDARY_ORIENTATION_OFFSET + orientation, southWestHeight,
 									southEastHeight, northEastHeight, northWestHeight, animationId, false);
-							wall.secondary = dynamicObjects.create(objectId, CORNER_WALL_TYPE, orientation + 1 & SceneConfig.ORIENTATION_MASK, southWestHeight,
-									southEastHeight, northEastHeight, northWestHeight, animationId, false);
+							wall.secondary = dynamicObjects.create(objectId, CORNER_WALL_TYPE,
+									orientation + 1 & SceneConfig.ORIENTATION_MASK, southWestHeight, southEastHeight,
+									northEastHeight, northWestHeight, animationId, false);
 						} else {
 							wall.primary = dynamicObjects.create(objectId, type, orientation, southWestHeight,
 									southEastHeight, northEastHeight, northWestHeight, animationId, false);
@@ -307,8 +310,10 @@ public final class ZoneUpdateHandler {
 				if (sceneLayer == SCENE_LAYER_WALL_DECORATION) {
 					WallDecoration decoration = world.scene.getWallDecoration(currentPlane, tileX, tileY);
 					if (decoration != null) {
-						decoration.renderable = dynamicObjects.create(decoration.uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK, WALL_DECORATION_MODEL_TYPE, 0, southWestHeight,
-								southEastHeight, northEastHeight, northWestHeight, animationId, false);
+						decoration.renderable = dynamicObjects.create(
+								decoration.uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK,
+								WALL_DECORATION_MODEL_TYPE, 0, southWestHeight, southEastHeight, northEastHeight,
+								northWestHeight, animationId, false);
 					}
 				}
 				if (sceneLayer == SCENE_LAYER_INTERACTIVE_OBJECT) {
@@ -317,15 +322,18 @@ public final class ZoneUpdateHandler {
 						type = INTERACTIVE_OBJECT_TYPE;
 					}
 					if (object != null) {
-						object.renderable = dynamicObjects.create(object.uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK, type, orientation,
+						object.renderable = dynamicObjects.create(
+								object.uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK, type, orientation,
 								southWestHeight, southEastHeight, northEastHeight, northWestHeight, animationId, false);
 					}
 				}
 				if (sceneLayer == SCENE_LAYER_FLOOR_DECORATION) {
 					FloorDecoration decoration = world.scene.getFloorDecoration(currentPlane, tileX, tileY);
 					if (decoration != null) {
-						decoration.renderable = dynamicObjects.create(decoration.uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK, FLOOR_DECORATION_TYPE, orientation,
-								southWestHeight, southEastHeight, northEastHeight, northWestHeight, animationId, false);
+						decoration.renderable = dynamicObjects.create(
+								decoration.uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK,
+								FLOOR_DECORATION_TYPE, orientation, southWestHeight, southEastHeight, northEastHeight,
+								northWestHeight, animationId, false);
 					}
 				}
 			}
@@ -387,8 +395,9 @@ public final class ZoneUpdateHandler {
 			int endDelay = buffer.readUnsignedShort();
 			int slope = buffer.readUnsignedByte();
 			int startHeight = buffer.readUnsignedByte();
-			if (sourceTileX >= 0 && sourceTileY >= 0 && sourceTileX < SceneConstants.SIZE && sourceTileY < SceneConstants.SIZE && destinationTileX >= 0
-					&& destinationTileY >= 0 && destinationTileX < SceneConstants.SIZE && destinationTileY < SceneConstants.SIZE
+			if (sourceTileX >= 0 && sourceTileY >= 0 && sourceTileX < SceneConstants.SIZE
+					&& sourceTileY < SceneConstants.SIZE && destinationTileX >= 0 && destinationTileY >= 0
+					&& destinationTileX < SceneConstants.SIZE && destinationTileY < SceneConstants.SIZE
 					&& spotAnimationId != ProtocolConstants.NULL_ID) {
 				int sourceX = sourceTileX * SceneConstants.TILE_SIZE + SceneConstants.TILE_CENTER;
 				int sourceY = sourceTileY * SceneConstants.TILE_SIZE + SceneConstants.TILE_CENTER;

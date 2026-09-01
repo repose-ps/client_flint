@@ -62,8 +62,8 @@ public final class ResourceLoader {
 	 * Startup immediately replaces these with the authoritative table fetched from
 	 * the game server before any bootstrap archive is accepted.
 	 */
-	private static final int[] REVISION_377_BOOTSTRAP_CRCS = { 0, 0x9509ece5, 0x88dcbfa7, 0x5574bc2e,
-			0xa10e55ac, 0x3b8ed781, 0x982e83fb, 0x84fff872, 0x42fd7584 };
+	private static final int[] REVISION_377_BOOTSTRAP_CRCS = { 0, 0x9509ece5, 0x88dcbfa7, 0x5574bc2e, 0xa10e55ac,
+			0x3b8ed781, 0x982e83fb, 0x84fff872, 0x42fd7584 };
 
 	/** Mutable bootstrap-archive CRC table populated from the server at startup. */
 	private final int[] archiveCrcs = REVISION_377_BOOTSTRAP_CRCS.clone();
@@ -78,7 +78,7 @@ public final class ResourceLoader {
 	/**
 	 * Initializes cache indices.
 	 *
-	 * @param dataFile the data file
+	 * @param dataFile   the data file
 	 * @param indexFiles the index files
 	 */
 	public void initializeCacheIndices(RandomAccessFile dataFile, RandomAccessFile[] indexFiles) {
@@ -89,8 +89,6 @@ public final class ResourceLoader {
 			cacheIndices[index] = new CacheIndex(index + 1, MAX_CACHE_ENTRY_SIZE, dataFile, indexFiles[index]);
 		}
 	}
-
-
 
 	/**
 	 * Returns archive CRC.
@@ -121,16 +119,17 @@ public final class ResourceLoader {
 		return cacheIndices[0] != null;
 	}
 
-
 	/**
-	 * Loads and CRC-validates one bootstrap archive, recovering it over JAGGRAB when necessary.
-	 * @param expectedCrc the expected CRC
-	 * @param archiveName the archive name
+	 * Loads and CRC-validates one bootstrap archive, recovering it over JAGGRAB
+	 * when necessary.
+	 * 
+	 * @param expectedCrc    the expected CRC
+	 * @param archiveName    the archive name
 	 * @param loadingPercent the loading percent
-	 * @param cacheFileId the cache file ID
-	 * @param displayName the display name
-	 * @param opener the opener
-	 * @param progress the progress
+	 * @param cacheFileId    the cache file ID
+	 * @param displayName    the display name
+	 * @param opener         the opener
+	 * @param progress       the progress
 	 * @return the validated bootstrap archive
 	 */
 	public Archive loadArchive(int expectedCrc, String archiveName, int loadingPercent, int cacheFileId,
@@ -240,8 +239,10 @@ public final class ResourceLoader {
 	}
 
 	/**
-	 * Fetches and validates the revision-377 bootstrap CRC table used for cache recovery.
-	 * @param opener the opener
+	 * Fetches and validates the revision-377 bootstrap CRC table used for cache
+	 * recovery.
+	 * 
+	 * @param opener   the opener
 	 * @param progress the progress
 	 */
 	public void fetchArchiveCrcs(JaggrabOpener opener, ProgressListener progress) {

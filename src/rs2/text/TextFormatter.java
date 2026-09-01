@@ -8,6 +8,7 @@ public class TextFormatter {
 	/** Creates a new text formatter with its default client state. */
 	public TextFormatter() {
 	}
+
 	/**
 	 * Returns whether lowercase ascii.
 	 *
@@ -35,6 +36,7 @@ public class TextFormatter {
 	 * The protocol is ASCII-oriented, so only lowercase ASCII letters are
 	 * capitalized. This preserves the exact revision-377 transformation.
 	 * </p>
+	 * 
 	 * @param value the value
 	 * @return the display-formatted name
 	 */

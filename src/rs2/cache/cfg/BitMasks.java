@@ -3,8 +3,10 @@ package rs2.cache.cfg;
 /**
  * Revision-377 bit-mask lookup values used by varbits and CS1 expressions.
  *
- * <p>The table preserves the original client sequence exactly: index zero is
- * {@code 0b1}, index one is {@code 0b11}, through index 31 being all bits set.</p>
+ * <p>
+ * The table preserves the original client sequence exactly: index zero is
+ * {@code 0b1}, index one is {@code 0b11}, through index 31 being all bits set.
+ * </p>
  */
 public final class BitMasks {
 

@@ -1,15 +1,13 @@
 package rs2.game;
 
-import rs2.media.animation.AnimationFrame;
-
 import java.util.Objects;
 import java.util.function.IntSupplier;
 
-import rs2.cache.def.NpcDefinition;
 import rs2.cache.def.AnimationSequence;
+import rs2.cache.def.NpcDefinition;
+import rs2.chat.Censor;
 import rs2.chat.ChatCodec;
 import rs2.chat.ChatMessageType;
-import rs2.chat.Censor;
 import rs2.game.entity.Actor;
 import rs2.game.entity.Npc;
 import rs2.game.entity.Player;
@@ -31,7 +29,9 @@ import rs2.text.Base37;
  */
 public final class ActorSynchronizer {
 
-	/** Maximum number of player slots representable by the revision-377 protocol. */
+	/**
+	 * Maximum number of player slots representable by the revision-377 protocol.
+	 */
 	public static final int MAX_PLAYERS = 2048;
 
 	/** Reserved client-side player index used for the local player. */
@@ -131,7 +131,10 @@ public final class ActorSynchronizer {
 	/** Active remote-player indices in synchronization order. */
 	public final int[] playerIndices = new int[MAX_PLAYERS];
 
-	/** Cached appearance blocks keyed by player index for reuse when players re-enter view. */
+	/**
+	 * Cached appearance blocks keyed by player index for reuse when players
+	 * re-enter view.
+	 */
 	public final Buffer[] playerAppearanceBuffers = new Buffer[MAX_PLAYERS];
 
 	/** NPC registry indexed by protocol NPC index. */
@@ -196,7 +199,8 @@ public final class ActorSynchronizer {
 	}
 
 	/**
-	 * Creates an empty actor synchronizer; call {@link #reset()} before decoding updates.
+	 * Creates an empty actor synchronizer; call {@link #reset()} before decoding
+	 * updates.
 	 *
 	 * @param gameCycleProvider current client-cycle source used by player models
 	 */
@@ -230,13 +234,18 @@ public final class ActorSynchronizer {
 	 * Decodes one complete player-synchronization packet and returns the resulting
 	 * plane.
 	 *
-	 * @param buffer       incoming packet buffer positioned at the synchronization payload
+	 * @param buffer       incoming packet buffer positioned at the synchronization
+	 *                     payload
 	 * @param packetSize   payload size in bytes
-	 * @param cycle        current client cycle used for update and removal bookkeeping
+	 * @param cycle        current client cycle used for update and removal
+	 *                     bookkeeping
 	 * @param currentPlane plane before applying any local-player teleport update
-	 * @param username     local username used when reporting malformed synchronization state
-	 * @param chatScratch  reusable scratch buffer for compressed public-chat payloads
-	 * @param chatHandler  callback for ignore checks, chat suppression and chat-history output
+	 * @param username     local username used when reporting malformed
+	 *                     synchronization state
+	 * @param chatScratch  reusable scratch buffer for compressed public-chat
+	 *                     payloads
+	 * @param chatHandler  callback for ignore checks, chat suppression and
+	 *                     chat-history output
 	 * @return the plane after decoding the local-player movement block
 	 */
 	public int decodePlayerUpdate(Buffer buffer, int packetSize, int cycle, int currentPlane, String username,
@@ -273,10 +282,13 @@ public final class ActorSynchronizer {
 	/**
 	 * Decodes one complete NPC-synchronization packet.
 	 *
-	 * @param buffer     incoming packet buffer positioned at the synchronization payload
+	 * @param buffer     incoming packet buffer positioned at the synchronization
+	 *                   payload
 	 * @param packetSize payload size in bytes
-	 * @param cycle      current client cycle used for update and removal bookkeeping
-	 * @param username   local username used when reporting malformed synchronization state
+	 * @param cycle      current client cycle used for update and removal
+	 *                   bookkeeping
+	 * @param username   local username used when reporting malformed
+	 *                   synchronization state
 	 */
 	public void decodeNpcUpdate(Buffer buffer, int packetSize, int cycle, String username) {
 		removedCount = 0;
@@ -351,7 +363,8 @@ public final class ActorSynchronizer {
 	/**
 	 * Decodes the local-player movement bit block while leaving bit access open.
 	 *
-	 * @param buffer       packet buffer whose bit-access mode is started by this method
+	 * @param buffer       packet buffer whose bit-access mode is started by this
+	 *                     method
 	 * @param currentPlane plane before applying any teleport update
 	 * @return the unchanged plane or the newly decoded teleport plane
 	 */
@@ -454,7 +467,8 @@ public final class ActorSynchronizer {
 	 * Decodes newly observed players and then finishes bit access.
 	 *
 	 * @param buffer     packet buffer currently in bit-access mode
-	 * @param packetSize payload size in bytes, used to detect the end of the bit block
+	 * @param packetSize payload size in bytes, used to detect the end of the bit
+	 *                   block
 	 * @param cycle      current client cycle written to newly observed players
 	 */
 	private void decodeNewPlayers(Buffer buffer, int packetSize, int cycle) {
@@ -493,9 +507,11 @@ public final class ActorSynchronizer {
 	/**
 	 * Decodes update masks for players queued by the movement blocks.
 	 *
-	 * @param buffer      packet buffer positioned after the player movement bit block
+	 * @param buffer      packet buffer positioned after the player movement bit
+	 *                    block
 	 * @param cycle       current client cycle used by timed mask effects
-	 * @param chatScratch reusable scratch buffer for compressed public-chat payloads
+	 * @param chatScratch reusable scratch buffer for compressed public-chat
+	 *                    payloads
 	 * @param chatHandler callback for social filtering and chat-history output
 	 */
 	private void decodePlayerMasks(Buffer buffer, int cycle, Buffer chatScratch, ChatHandler chatHandler) {
@@ -518,7 +534,8 @@ public final class ActorSynchronizer {
 	 * @param playerIndex protocol index of {@code player}
 	 * @param player      player receiving the decoded state
 	 * @param mask        decoded update-mask bits, including any extension byte
-	 * @param chatScratch reusable scratch buffer for compressed public-chat payloads
+	 * @param chatScratch reusable scratch buffer for compressed public-chat
+	 *                    payloads
 	 * @param chatHandler callback for social filtering and chat-history output
 	 */
 	private void decodePlayerMask(Buffer buffer, int cycle, int playerIndex, Player player, int mask,
@@ -639,7 +656,8 @@ public final class ActorSynchronizer {
 	}
 
 	/**
-	 * Decodes movement and removal state for NPCs already present in the local list.
+	 * Decodes movement and removal state for NPCs already present in the local
+	 * list.
 	 *
 	 * @param buffer   packet buffer on which this method starts bit access
 	 * @param cycle    current client cycle written to retained NPCs
@@ -698,7 +716,8 @@ public final class ActorSynchronizer {
 	 * Decodes newly observed NPCs and then finishes bit access.
 	 *
 	 * @param buffer     packet buffer currently in bit-access mode
-	 * @param packetSize payload size in bytes, used to detect the end of the bit block
+	 * @param packetSize payload size in bytes, used to detect the end of the bit
+	 *                   block
 	 * @param cycle      current client cycle written to newly observed NPCs
 	 */
 	private void decodeNewNpcs(Buffer buffer, int packetSize, int cycle) {

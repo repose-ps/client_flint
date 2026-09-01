@@ -1,13 +1,10 @@
 package rs2.scene.entity;
 
-import rs2.media.animation.AnimationFrame;
-
-import rs2.media.Angle;
 import rs2.cache.def.SpotAnimation;
+import rs2.media.Angle;
 import rs2.media.animation.AnimationFrame;
 import rs2.media.model.Model;
 import rs2.media.model.Renderable;
-
 
 /**
  * A moving spot-animation model following the client's parabolic projectile
@@ -100,16 +97,16 @@ public class Projectile extends Renderable {
 	 * Creates a new projectile.
 	 *
 	 * @param spotAnimationId the spot animation ID
-	 * @param plane the scene plane
-	 * @param sourceX the source X
-	 * @param sourceY the source Y
-	 * @param sourceZ the source Z
-	 * @param cycleStart the cycle start
-	 * @param cycleEnd the cycle end
-	 * @param slope the slope
-	 * @param startHeight the start height
-	 * @param targetIndex the target index
-	 * @param endHeight the end height
+	 * @param plane           the scene plane
+	 * @param sourceX         the source X
+	 * @param sourceY         the source Y
+	 * @param sourceZ         the source Z
+	 * @param cycleStart      the cycle start
+	 * @param cycleEnd        the cycle end
+	 * @param slope           the slope
+	 * @param startHeight     the start height
+	 * @param targetIndex     the target index
+	 * @param endHeight       the end height
 	 */
 	public Projectile(int spotAnimationId, int plane, int sourceX, int sourceY, int sourceZ, int cycleStart,
 			int cycleEnd, int slope, int startHeight, int targetIndex, int endHeight) {

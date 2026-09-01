@@ -232,7 +232,7 @@ public class SoundTrackInstrument {
 	/**
 	 * Applies delay.
 	 *
-	 * @param sampleCount the sample count
+	 * @param sampleCount           the sample count
 	 * @param samplesPerMillisecond the samples per millisecond
 	 */
 	private void applyDelay(int sampleCount, double samplesPerMillisecond) {
@@ -326,9 +326,10 @@ public class SoundTrackInstrument {
 
 	/**
 	 * Evaluates one of the four waveform tables used by the synthesizer.
+	 * 
 	 * @param amplitude the amplitude
-	 * @param phase the phase
-	 * @param waveform the waveform
+	 * @param phase     the phase
+	 * @param waveform  the waveform
 	 * @return the generated waveform sample
 	 */
 	public int evaluateWave(int amplitude, int phase, int waveform) {
@@ -349,6 +350,7 @@ public class SoundTrackInstrument {
 
 	/**
 	 * Decodes the complete instrument definition from the sound-track stream.
+	 * 
 	 * @param buffer the source buffer
 	 */
 	public void decode(Buffer buffer) {

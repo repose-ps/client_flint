@@ -49,7 +49,7 @@ public class ChatCodec {
 	 *
 	 * @param buffer source buffer
 	 * @param length number of encoded bytes to consume
-	 * @return the decoded  value
+	 * @return the decoded value
 	 */
 	public static String decode(Buffer buffer, int length) {
 		if (length < 0 || length > Integer.MAX_VALUE / 2) {
@@ -109,8 +109,9 @@ public class ChatCodec {
 	 * Messages are truncated to 80 characters and converted to lowercase, matching
 	 * the original protocol. Unsupported characters are encoded as spaces.
 	 * </p>
+	 * 
 	 * @param message the message text
-	 * @param buffer the source buffer
+	 * @param buffer  the source buffer
 	 */
 	public static void encode(String message, Buffer buffer) {
 		if (message.length() > MAX_MESSAGE_LENGTH) {
@@ -157,6 +158,7 @@ public class ChatCodec {
 	/**
 	 * Applies the exact encode/decode transformation used before displaying locally
 	 * entered chat.
+	 * 
 	 * @param message the message text
 	 * @return the converted value
 	 */
@@ -175,7 +177,7 @@ public class ChatCodec {
 	/**
 	 * Decodes extended character.
 	 *
-	 * @param firstNibble the first nibble
+	 * @param firstNibble  the first nibble
 	 * @param secondNibble the second nibble
 	 * @return the decoded extended character value
 	 */
@@ -189,6 +191,7 @@ public class ChatCodec {
 	 * Finds a character's protocol alphabet index.
 	 *
 	 * Unsupported characters use index zero, which represents a space.
+	 * 
 	 * @param character the character
 	 * @return the alphabet index result
 	 */
@@ -206,7 +209,7 @@ public class ChatCodec {
 	 * Applies sentence capitalization.
 	 *
 	 * @param characters the characters
-	 * @param length the number of elements or bytes
+	 * @param length     the number of elements or bytes
 	 */
 	private static void applySentenceCapitalization(char[] characters, int length) {
 		boolean capitalize = true;

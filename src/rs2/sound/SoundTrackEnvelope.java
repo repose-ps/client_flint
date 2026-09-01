@@ -50,8 +50,8 @@ public class SoundTrackEnvelope {
 	 *
 	 * <p>
 	 * Filter definitions omit their envelope segment table when all filter
-	 * parameters are static. The synthesizer still advances the filter envelope,
-	 * so the historical default shape must exist even when no segment data is
+	 * parameters are static. The synthesizer still advances the filter envelope, so
+	 * the historical default shape must exist even when no segment data is
 	 * serialized. A decoded envelope replaces these defaults in
 	 * {@link #decodeSegments(Buffer)}.
 	 * </p>
@@ -64,6 +64,7 @@ public class SoundTrackEnvelope {
 
 	/**
 	 * Decodes the envelope header followed by its segment shape.
+	 * 
 	 * @param buffer the source buffer
 	 */
 	public void decode(Buffer buffer) {
@@ -75,6 +76,7 @@ public class SoundTrackEnvelope {
 
 	/**
 	 * Decodes only the piecewise-linear segment data.
+	 * 
 	 * @param buffer the source buffer
 	 */
 	public void decodeSegments(Buffer buffer) {

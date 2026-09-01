@@ -80,6 +80,7 @@ public final class Bzip2Decompressor {
 
 	/**
 	 * Expands the final BZip2 run-length stage into the caller's output.
+	 * 
 	 * @param state the state
 	 */
 	private static void writeDecodedBlock(Bzip2State state) {
@@ -668,7 +669,7 @@ public final class Bzip2Decompressor {
 	 * Reads bits.
 	 *
 	 * @param bitCount the bit count
-	 * @param state the state
+	 * @param state    the state
 	 * @return the decoded bits value
 	 */
 	private static int readBits(int bitCount, Bzip2State state) {
@@ -705,13 +706,14 @@ public final class Bzip2Decompressor {
 
 	/**
 	 * Builds canonical Huffman decoder tables from a code-length table.
-	 * @param codeLimits the code limits
-	 * @param codeBases the code bases
+	 * 
+	 * @param codeLimits       the code limits
+	 * @param codeBases        the code bases
 	 * @param codePermutations the code permutations
-	 * @param codeLengths the code lengths
-	 * @param minimumLength the minimum length
-	 * @param maximumLength the maximum length
-	 * @param alphabetSize the alphabet size
+	 * @param codeLengths      the code lengths
+	 * @param minimumLength    the minimum length
+	 * @param maximumLength    the maximum length
+	 * @param alphabetSize     the alphabet size
 	 */
 	private static void buildHuffmanDecodeTables(int[] codeLimits, int[] codeBases, int[] codePermutations,
 			byte[] codeLengths, int minimumLength, int maximumLength, int alphabetSize) {
@@ -759,7 +761,7 @@ public final class Bzip2Decompressor {
 	 * Validates a BZIP2 decoding range invariant.
 	 *
 	 * @param condition the condition
-	 * @param message the message text
+	 * @param message   the message text
 	 */
 	private static void requireRange(boolean condition, String message) {
 		if (!condition) {

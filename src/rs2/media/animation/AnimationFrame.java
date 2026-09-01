@@ -178,7 +178,8 @@ public class AnimationFrame {
 	 * Returns a decoded frame, or {@code null} before the frame table is loaded.
 	 *
 	 * @param frameId the frame id
-	 * @return the decoded frame, or {@code null} when the frame table is unavailable
+	 * @return the decoded frame, or {@code null} when the frame table is
+	 *         unavailable
 	 */
 	public static AnimationFrame get(int frameId) {
 		return frames == null ? null : frames[frameId];

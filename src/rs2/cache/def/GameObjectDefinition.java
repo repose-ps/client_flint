@@ -1,7 +1,5 @@
 package rs2.cache.def;
 
-import rs2.media.animation.AnimationFrame;
-
 import rs2.cache.Archive;
 import rs2.cache.cfg.BitMasks;
 import rs2.cache.cfg.Varbit;
@@ -106,7 +104,6 @@ public class GameObjectDefinition {
 	private static final int ACTION_OPCODE_LIMIT = 39;
 	/** Action count. */
 	private static final int ACTION_COUNT = 5;
-
 
 	/** Creates a new game object definition with its default client state. */
 	public GameObjectDefinition() {
@@ -252,7 +249,7 @@ public class GameObjectDefinition {
 	/**
 	 * Loads the indexed location-definition archive.
 	 *
-	 * @param archive the archive
+	 * @param archive      the archive
 	 * @param currentVarps current varp values used by morph definitions
 	 */
 	public static void load(Archive archive, VarpProvider currentVarps) {
@@ -277,7 +274,7 @@ public class GameObjectDefinition {
 	 * replacement index is incremented before use, so the first miss uses slot 1.
 	 *
 	 * @param id the id
-	 * @return the  result
+	 * @return the result
 	 */
 	public static GameObjectDefinition lookup(int id) {
 		for (GameObjectDefinition definition : cache) {
@@ -333,6 +330,7 @@ public class GameObjectDefinition {
 
 	/**
 	 * Returns whether all source models referenced by the definition are loaded.
+	 * 
 	 * @return whether are all models ready
 	 */
 	public boolean areAllModelsReady() {
@@ -377,7 +375,9 @@ public class GameObjectDefinition {
 	/**
 	 * Resolves the active morph using this definition's varbit first, otherwise its
 	 * varp.
-	 * @return the active morph definition, or {@code null} when no valid morph is selected
+	 * 
+	 * @return the active morph definition, or {@code null} when no valid morph is
+	 *         selected
 	 */
 	public GameObjectDefinition transform() {
 		int morphIndex = -1;

@@ -40,7 +40,7 @@ public class GameShell extends Canvas
 	private static final int TIMING_SAMPLE_COUNT = 10;
 	/** Defines the key buffer size constant. */
 	private static final int KEY_BUFFER_SIZE = 128;
-		/** Defines the shutdown requested constant. */
+	/** Defines the shutdown requested constant. */
 	private static final int SHUTDOWN_REQUESTED = -1;
 	/** Defines the stopped constant. */
 	private static final int STOPPED = -2;
@@ -130,10 +130,16 @@ public class GameShell extends Canvas
 	/** Whether the middle mouse button is currently being held. */
 	private boolean middleMouseDown;
 
-	/** Previous horizontal mouse position used to measure middle-button camera dragging. */
+	/**
+	 * Previous horizontal mouse position used to measure middle-button camera
+	 * dragging.
+	 */
 	private int middleDragX;
 
-	/** Previous vertical mouse position used to measure middle-button camera dragging. */
+	/**
+	 * Previous vertical mouse position used to measure middle-button camera
+	 * dragging.
+	 */
 	private int middleDragY;
 
 	/** Mouse click latched at the start of the current client tick. */
@@ -148,10 +154,16 @@ public class GameShell extends Canvas
 	/** Stores the current click time. */
 	protected long clickTime;
 
-	/** Horizontal middle-mouse camera movement accumulated for the current client tick. */
+	/**
+	 * Horizontal middle-mouse camera movement accumulated for the current client
+	 * tick.
+	 */
 	protected int cameraDragDeltaX;
 
-	/** Vertical middle-mouse camera movement accumulated for the current client tick. */
+	/**
+	 * Vertical middle-mouse camera movement accumulated for the current client
+	 * tick.
+	 */
 	protected int cameraDragDeltaY;
 
 	/** Pressed state for the client's 0..127 internal key codes. */
@@ -429,8 +441,8 @@ public class GameShell extends Canvas
 
 		shutdownJoinPending = false;
 		/*
-		 * Normal shutdown reaches here only after the owned game thread has ended.
-		 * If it is still alive, this is the preserved hard-stop fallback path.
+		 * Normal shutdown reaches here only after the owned game thread has ended. If
+		 * it is still alive, this is the preserved hard-stop fallback path.
 		 */
 		exit();
 	}
@@ -725,6 +737,7 @@ public class GameShell extends Canvas
 
 	/**
 	 * Returns the next queued client key code, or {@code -1} when empty.
+	 * 
 	 * @return the next completed request, or {@code null} when none is available
 	 */
 	public final int pollKey() {
@@ -878,7 +891,8 @@ public class GameShell extends Canvas
 
 	/**
 	 * Called on the game thread whenever the drawable client area changes size.
-	 * @param width the width in pixels
+	 * 
+	 * @param width  the width in pixels
 	 * @param height the height in pixels
 	 */
 	protected void onResize(int width, int height) {
@@ -923,6 +937,7 @@ public class GameShell extends Canvas
 
 	/**
 	 * Returns the top-level AWT component used for input and drawing.
+	 * 
 	 * @return the game component
 	 */
 	public Component getGameComponent() {
@@ -987,6 +1002,7 @@ public class GameShell extends Canvas
 
 	/**
 	 * Current mouse X used by the asynchronous mouse recorder.
+	 * 
 	 * @return the mouse X
 	 */
 	public final int getMouseX() {
@@ -995,6 +1011,7 @@ public class GameShell extends Canvas
 
 	/**
 	 * Current mouse Y used by the asynchronous mouse recorder.
+	 * 
 	 * @return the mouse Y
 	 */
 	public final int getMouseY() {

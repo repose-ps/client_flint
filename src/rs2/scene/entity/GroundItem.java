@@ -4,7 +4,6 @@ import rs2.cache.def.ItemDefinition;
 import rs2.media.model.Model;
 import rs2.media.model.Renderable;
 
-
 /** A ground item whose model may depend on its stack amount. */
 public class GroundItem extends Renderable {
 

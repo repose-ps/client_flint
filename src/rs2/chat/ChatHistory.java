@@ -13,6 +13,7 @@ public final class ChatHistory {
 	/** Creates a new chat history with its default client state. */
 	public ChatHistory() {
 	}
+
 	/** Constant value for capacity. */
 	public static final int CAPACITY = 100;
 
@@ -30,9 +31,9 @@ public final class ChatHistory {
 	/**
 	 * Adds the operation.
 	 *
-	 * @param sender the sender
+	 * @param sender  the sender
 	 * @param message the message text
-	 * @param type the type
+	 * @param type    the type
 	 */
 	public void add(String sender, String message, int type) {
 		for (int index = CAPACITY - 1; index > 0; index--) {

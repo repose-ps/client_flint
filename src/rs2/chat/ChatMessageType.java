@@ -3,14 +3,19 @@ package rs2.chat;
 /**
  * Client chat-history message categories used by revision 377.
  *
- * <p>The values are local presentation identifiers rather than game packet
- * opcodes. They determine chatbox/split-chat formatting and menu behavior.</p>
+ * <p>
+ * The values are local presentation identifiers rather than game packet
+ * opcodes. They determine chatbox/split-chat formatting and menu behavior.
+ * </p>
  */
 public final class ChatMessageType {
 
 	/** Plain game/system message without a sender. */
 	public static final int GAME = 0;
-	/** Privileged public chat that bypasses the normal public-chat visibility filter. */
+	/**
+	 * Privileged public chat that bypasses the normal public-chat visibility
+	 * filter.
+	 */
 	public static final int PUBLIC_PRIVILEGED = 1;
 	/** Normal public player chat. */
 	public static final int PUBLIC = 2;

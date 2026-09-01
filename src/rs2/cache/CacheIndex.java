@@ -79,10 +79,10 @@ public final class CacheIndex {
 	/**
 	 * Creates a new cache index.
 	 *
-	 * @param indexId the index ID
+	 * @param indexId      the index ID
 	 * @param maxEntrySize the max entry size
-	 * @param dataFile the data file
-	 * @param indexFile the index file
+	 * @param dataFile     the data file
+	 * @param indexFile    the index file
 	 */
 	public CacheIndex(int indexId, int maxEntrySize, RandomAccessFile dataFile, RandomAccessFile indexFile) {
 		if (indexId < 0 || indexId > MAX_INDEX_ID) {
@@ -271,8 +271,9 @@ public final class CacheIndex {
 
 	/**
 	 * Attempts either an overwrite using an existing chain or a new append.
-	 * @param entryId the entry ID
-	 * @param data the data to process
+	 * 
+	 * @param entryId   the entry ID
+	 * @param data      the data to process
 	 * @param overwrite the overwrite
 	 * @return whether write entry
 	 * @throws IOException if an I/O operation fails
@@ -399,8 +400,9 @@ public final class CacheIndex {
 
 	/**
 	 * Writes one six-byte index entry.
-	 * @param entryId the entry ID
-	 * @param length the number of elements or bytes
+	 * 
+	 * @param entryId     the entry ID
+	 * @param length      the number of elements or bytes
 	 * @param firstSector the first sector
 	 * @throws IOException if an I/O operation fails
 	 */
@@ -418,6 +420,7 @@ public final class CacheIndex {
 	 * Calculates the next sector at or beyond the current end of the file.
 	 *
 	 * Sector zero is reserved as the end-of-chain marker.
+	 * 
 	 * @return the next unused cache-data sector index
 	 * @throws IOException if an I/O operation fails
 	 */
@@ -437,6 +440,7 @@ public final class CacheIndex {
 
 	/**
 	 * Determines whether a sector currently exists in the data file.
+	 * 
 	 * @param sector the sector
 	 * @return whether existing sector
 	 * @throws IOException if an I/O operation fails
@@ -447,6 +451,7 @@ public final class CacheIndex {
 
 	/**
 	 * Determines whether a sector can be represented in a three-byte pointer.
+	 * 
 	 * @param sector the sector
 	 * @return whether writable sector
 	 */
@@ -457,10 +462,10 @@ public final class CacheIndex {
 	/**
 	 * Reads exactly the requested number of bytes.
 	 *
-	 * @param file the file
+	 * @param file        the file
 	 * @param destination the destination
-	 * @param offset the starting offset
-	 * @param length the number of elements or bytes
+	 * @param offset      the starting offset
+	 * @param length      the number of elements or bytes
 	 * @return false when end-of-file is reached first
 	 * @throws IOException if an I/O operation fails
 	 */
@@ -511,8 +516,8 @@ public final class CacheIndex {
 	 * Writes unsigned short.
 	 *
 	 * @param destination the destination
-	 * @param offset the starting offset
-	 * @param value the value
+	 * @param offset      the starting offset
+	 * @param value       the value
 	 */
 	private static void writeUnsignedShort(byte[] destination, int offset, int value) {
 		destination[offset] = (byte) (value >>> 8);
@@ -524,8 +529,8 @@ public final class CacheIndex {
 	 * Writes medium.
 	 *
 	 * @param destination the destination
-	 * @param offset the starting offset
-	 * @param value the value
+	 * @param offset      the starting offset
+	 * @param value       the value
 	 */
 	private static void writeMedium(byte[] destination, int offset, int value) {
 		destination[offset] = (byte) (value >>> 16);

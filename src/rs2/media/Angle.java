@@ -3,8 +3,10 @@ package rs2.media;
 /**
  * Revision-377 angular coordinate constants.
  *
- * <p>The software renderer represents one full turn with 2048 integer units,
- * allowing angles to wrap efficiently with {@link #MASK}.</p>
+ * <p>
+ * The software renderer represents one full turn with 2048 integer units,
+ * allowing angles to wrap efficiently with {@link #MASK}.
+ * </p>
  */
 public final class Angle {
 

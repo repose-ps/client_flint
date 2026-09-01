@@ -12,6 +12,7 @@ public final class MusicController {
 
 	/** Protocol track id indicating that no music track is selected. */
 	private static final int NO_TRACK_ID = 0xffff;
+
 	/** Provides requester state and behavior. */
 	@FunctionalInterface
 	public interface Requester {
@@ -19,7 +20,7 @@ public final class MusicController {
 		 * Requests the operation.
 		 *
 		 * @param type the type
-		 * @param id the identifier
+		 * @param id   the identifier
 		 */
 		void request(int type, int id);
 	}
@@ -29,7 +30,7 @@ public final class MusicController {
 		/**
 		 * Sets volume.
 		 *
-		 * @param volume the volume
+		 * @param volume             the volume
 		 * @param adjustPlayingTrack the adjust playing track
 		 */
 		void setVolume(int volume, boolean adjustPlayingTrack);
@@ -42,9 +43,9 @@ public final class MusicController {
 		/**
 		 * Saves the operation.
 		 *
-		 * @param data the data to process
+		 * @param data   the data to process
 		 * @param length the number of elements or bytes
-		 * @param fade the fade
+		 * @param fade   the fade
 		 */
 		void save(byte[] data, int length, boolean fade);
 	}
@@ -55,6 +56,7 @@ public final class MusicController {
 		/** Creates a new signlink MIDI backend with its default client state. */
 		private SignlinkMidiBackend() {
 		}
+
 		public void setVolume(int volume, boolean adjustPlayingTrack) {
 			Signlink.setMidiVolume(volume, adjustPlayingTrack);
 		}
@@ -114,7 +116,7 @@ public final class MusicController {
 	/**
 	 * Selects track.
 	 *
-	 * @param trackId the track ID
+	 * @param trackId   the track ID
 	 * @param lowMemory whether low-memory mode is active
 	 * @param requester the requester
 	 */
@@ -132,8 +134,8 @@ public final class MusicController {
 	/**
 	 * Requests playback of a temporary music track.
 	 *
-	 * @param trackId the track ID
-	 * @param delay the delay
+	 * @param trackId   the track ID
+	 * @param delay     the delay
 	 * @param lowMemory whether low-memory mode is active
 	 * @param requester the requester
 	 */
@@ -183,7 +185,7 @@ public final class MusicController {
 	/**
 	 * Applies setting.
 	 *
-	 * @param setting the setting
+	 * @param setting   the setting
 	 * @param lowMemory whether low-memory mode is active
 	 * @param requester the requester
 	 */

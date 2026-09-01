@@ -29,7 +29,6 @@ public class FloorDefinition {
 	/** Opcode for alternate color. */
 	private static final int OPCODE_ALTERNATE_COLOR = 7;
 
-
 	/** Creates a new floor definition with its default client state. */
 	public FloorDefinition() {
 	}
@@ -74,6 +73,7 @@ public class FloorDefinition {
 
 	/**
 	 * Loads all floor definitions from {@code flo.dat}.
+	 * 
 	 * @param archive the source archive
 	 */
 	public static void load(Archive archive) {
@@ -94,6 +94,7 @@ public class FloorDefinition {
 
 	/**
 	 * Decodes one opcode-delimited floor definition.
+	 * 
 	 * @param buffer the source buffer
 	 */
 	public void decode(Buffer buffer) {
@@ -135,6 +136,7 @@ public class FloorDefinition {
 	 * This deliberately preserves the revision-377 assignment that copies the
 	 * restored weighted hue into {@link #hueMultiplier}.
 	 * </p>
+	 * 
 	 * @param alternateRgb the alternate RGB
 	 */
 	private void decodeAlternateColor(int alternateRgb) {
@@ -154,6 +156,7 @@ public class FloorDefinition {
 
 	/**
 	 * Converts a 24-bit RGB value into the client's HSL color representation.
+	 * 
 	 * @param rgb the RGB color value
 	 */
 	public void convertRgbToHsl(int rgb) {
@@ -210,9 +213,10 @@ public class FloorDefinition {
 
 	/**
 	 * Packs 8-bit HSL components into the client's 16-bit palette index.
-	 * @param hue the hue
+	 * 
+	 * @param hue        the hue
 	 * @param saturation the saturation
-	 * @param lightness the lightness
+	 * @param lightness  the lightness
 	 * @return the packed 16-bit HSL palette value
 	 */
 	public static int packHsl(int hue, int saturation, int lightness) {
@@ -234,7 +238,7 @@ public class FloorDefinition {
 	/**
 	 * Clamps the operation.
 	 *
-	 * @param value the value
+	 * @param value   the value
 	 * @param minimum the minimum
 	 * @param maximum the maximum
 	 * @return the value constrained to the inclusive range
