@@ -10,6 +10,7 @@ import rs2.ui.AppearanceEditor;
 import rs2.ui.InterfaceController;
 import rs2.ui.Widget;
 import rs2.ui.WidgetContentType;
+import rs2.ui.menu.MenuEntry;
 import rs2.ui.menu.MenuState;
 
 /** Applies revision-377 menu actions targeting widgets and widget config state. */
@@ -71,10 +72,13 @@ public final class WidgetActionHandler implements ClientActionDispatcher.ActionH
 
     /** {@inheritDoc} */
     @Override
-    public boolean dispatch(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
+    public boolean dispatch(int actionId, MenuEntry entry) {
+        int argument0 = entry.argument0();
+        int argument1 = entry.argument1();
+        int argument2 = entry.argument2();
         if (actionId == MenuState.WIDGET_TOGGLE_VARP) {
-            packets.widgetClick(cmd3);
-            Widget widget = Widget.get(cmd3);
+            packets.widgetClick(argument2);
+            Widget widget = Widget.get(argument2);
             if (widget.cs1Instructions != null && widget.cs1Instructions[0][0] == 5) {
                 int varpId = widget.cs1Instructions[0][1];
                 varpState.toggleBinary(varpId);
@@ -86,9 +90,9 @@ public final class WidgetActionHandler implements ClientActionDispatcher.ActionH
             closeInterfaces.run();
         }
         if (actionId == MenuState.SELECT_SPELL) {
-            Widget spellWidget = Widget.get(cmd3);
+            Widget spellWidget = Widget.get(argument2);
             interfaces.state().spellSelected = 1;
-            interfaces.state().selectedSpellWidgetId = cmd3;
+            interfaces.state().selectedSpellWidgetId = argument2;
             interfaces.state().selectedSpellTargetMask = spellWidget.spellUsableOn;
             interfaces.state().itemSelected = 0;
             gameRenderer.requestSidebarRedraw();
@@ -108,22 +112,22 @@ public final class WidgetActionHandler implements ClientActionDispatcher.ActionH
             return true;
         }
         if (actionId == MenuState.WIDGET_BUTTON) {
-            Widget actionWidget = Widget.get(cmd3);
+            Widget actionWidget = Widget.get(argument2);
             boolean sendWidgetClick = true;
             if (actionWidget.contentType > WidgetContentType.NONE) {
                 sendWidgetClick = handleWidgetContentAction(actionWidget);
             }
             if (sendWidgetClick) {
-                packets.widgetClick(cmd3);
+                packets.widgetClick(argument2);
             }
         }
         if (actionId == MenuState.WIDGET_CONTINUE && !interfaces.actionPending()) {
-            packets.widgetContinue(cmd3);
+            packets.widgetContinue(argument2);
             interfaces.setActionPending(true);
         }
         if (actionId == MenuState.WIDGET_SET_VARP) {
-            packets.widgetClick(cmd3);
-            Widget configWidget = Widget.get(cmd3);
+            packets.widgetClick(argument2);
+            Widget configWidget = Widget.get(argument2);
             if (configWidget.cs1Instructions != null && configWidget.cs1Instructions[0][0] == 5) {
                 int varpId2 = configWidget.cs1Instructions[0][1];
                 if (varpState.get(varpId2) != configWidget.cs1ComparisonValues[0]) {

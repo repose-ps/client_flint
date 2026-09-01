@@ -15,6 +15,7 @@ import rs2.net.Buffer;
 import rs2.net.NetworkSession;
 import rs2.ui.InterfaceController;
 import rs2.ui.WidgetRenderer;
+import rs2.ui.menu.MenuController;
 import rs2.ui.menu.MenuEntry;
 import rs2.ui.menu.MenuState;
 
@@ -120,7 +121,18 @@ public final class ArchitectureSelfTest {
             "dispatchMiscMenuAction",
             "walkToGameObject",
             "markInventoryInteraction",
-            "handleWidgetContentAction"
+            "handleWidgetContentAction",
+            "dispatchMenuAction",
+            "isAddFriendMenuAction"
+    );
+
+    /** Action-adjacent Client operations that remain internal composition details. */
+    private static final Set<String> PRIVATE_CLIENT_ACTION_METHODS = Set.of(
+            "closeInterfaces",
+            "addFriend",
+            "addIgnore",
+            "removeFriend",
+            "removeIgnore"
     );
 
     /** Ambiguous pre-6.3 Buffer method names that must not reappear. */
@@ -166,6 +178,7 @@ public final class ArchitectureSelfTest {
         testPacketAdapterBoundary(test);
         testActionDispatcherBoundary(test);
         testActionPacketBoundary(test);
+        testActionIntegrationBoundary(test);
         testPackageCohesion(test);
         testRemovedClientBridges(test);
         testWidgetRendererBoundary(test);
@@ -272,6 +285,50 @@ public final class ArchitectureSelfTest {
                 .filter(field -> field.getType() == ClientActionDispatcher.class)
                 .count();
         test.check(clientFields == 1, "Client owns exactly one ClientActionDispatcher boundary");
+    }
+
+    /**
+     * Verifies the post-extraction action integration boundary.
+     *
+     * @param test assertion sink
+     */
+    private static void testActionIntegrationBoundary(SelfTestSupport test) {
+        Method dispatch;
+        try {
+            dispatch = ClientActionDispatcher.ActionHandler.class.getDeclaredMethod("dispatch", int.class,
+                    MenuEntry.class);
+            test.check(dispatch.getReturnType() == boolean.class,
+                    "action-handler contract returns selection-preservation state");
+            test.equal(dispatch.getParameterCount(), 2,
+                    "action-handler contract consumes only normalized ID and cohesive MenuEntry");
+        } catch (NoSuchMethodException exception) {
+            test.check(false, "action-handler contract consumes normalized ID and cohesive MenuEntry");
+        }
+
+        for (String className : ACTION_HANDLER_CLASSES) {
+            try {
+                Class<?> handler = Class.forName(className);
+                for (Field field : handler.getDeclaredFields()) {
+                    test.check(field.getType() != MenuController.class,
+                            className + " field does not retain MenuController: " + field.getName());
+                }
+                for (Constructor<?> constructor : handler.getDeclaredConstructors()) {
+                    test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == MenuController.class),
+                            className + " constructor does not accept MenuController");
+                }
+            } catch (ClassNotFoundException exception) {
+                test.check(false, "action handler is present for menu-entry cohesion: " + className);
+            }
+        }
+
+        Set<String> privateMethods = Arrays.stream(Client.class.getDeclaredMethods())
+                .filter(method -> Modifier.isPrivate(method.getModifiers()))
+                .map(Method::getName)
+                .collect(java.util.stream.Collectors.toSet());
+        for (String methodName : PRIVATE_CLIENT_ACTION_METHODS) {
+            test.check(privateMethods.contains(methodName),
+                    "action-adjacent Client method stays private: " + methodName);
+        }
     }
 
     /**

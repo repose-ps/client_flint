@@ -12,13 +12,11 @@ import rs2.text.Base37;
 import rs2.text.TextFormatter;
 import rs2.ui.InterfaceController;
 import rs2.ui.Widget;
-import rs2.ui.menu.MenuController;
+import rs2.ui.menu.MenuEntry;
 import rs2.ui.menu.MenuState;
 
 /** Applies revision-377 social, message, report, trade, and challenge menu actions. */
 public final class SocialActionHandler implements ClientActionDispatcher.ActionHandler {
-    /** Menu state providing the displayed player name embedded in action text. */
-    private final MenuController menuController;
     /** Social-list owner. */
     private final SocialManager socialManager;
     /** Actor state used for name-based trade/challenge targeting. */
@@ -43,7 +41,6 @@ public final class SocialActionHandler implements ClientActionDispatcher.ActionH
     /**
      * Creates the social action handler.
      *
-     * @param menuController menu-state owner
      * @param socialManager social-list owner
      * @param actors actor state
      * @param packets revision-377 action packet encoder
@@ -55,11 +52,10 @@ public final class SocialActionHandler implements ClientActionDispatcher.ActionH
      * @param listActions social-list mutation capability
      * @param closeInterfaces shared interface-close operation
      */
-    public SocialActionHandler(MenuController menuController, SocialManager socialManager, ActorSynchronizer actors,
+    public SocialActionHandler(SocialManager socialManager, ActorSynchronizer actors,
             ActionPacketEncoder packets, InterfaceController interfaces, GameRenderer gameRenderer,
             ChatController chatController, ClientActionDispatcher.Movement movement, SocialManager.MessageSink messages,
             ClientActionDispatcher.SocialListActions listActions, Runnable closeInterfaces) {
-        this.menuController = menuController;
         this.socialManager = socialManager;
         this.actors = actors;
         this.packets = packets;
@@ -74,10 +70,13 @@ public final class SocialActionHandler implements ClientActionDispatcher.ActionH
 
     /** {@inheritDoc} */
     @Override
-    public boolean dispatch(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
+    public boolean dispatch(int actionId, MenuEntry entry) {
+        int argument0 = entry.argument0();
+        int argument1 = entry.argument1();
+        int argument2 = entry.argument2();
         if (actionId == MenuState.ADD_FRIEND || actionId == MenuState.ADD_IGNORE
                 || actionId == MenuState.REMOVE_FRIEND || actionId == MenuState.REMOVE_IGNORE) {
-            String actionText = menuController.state().entry(menuIndex).text();
+            String actionText = entry.text();
             int markerIndex = actionText.indexOf("@whi@");
             if (markerIndex != -1) {
                 long encodedName = Base37.encode(actionText.substring(markerIndex + 5).trim());
@@ -96,7 +95,7 @@ public final class SocialActionHandler implements ClientActionDispatcher.ActionH
             }
         }
         if (actionId == MenuState.ACCEPT_TRADE || actionId == MenuState.ACCEPT_CHALLENGE) {
-            String actionText2 = menuController.state().entry(menuIndex).text();
+            String actionText2 = entry.text();
             int markerIndex2 = actionText2.indexOf("@whi@");
             if (markerIndex2 != -1) {
                 actionText2 = actionText2.substring(markerIndex2 + 5).trim();
@@ -125,7 +124,7 @@ public final class SocialActionHandler implements ClientActionDispatcher.ActionH
             }
         }
         if (actionId == MenuState.REPORT_ABUSE) {
-            String actionText3 = menuController.state().entry(menuIndex).text();
+            String actionText3 = entry.text();
             int markerIndex3 = actionText3.indexOf("@whi@");
             if (markerIndex3 != -1) {
                 if (interfaces.state().openInterfaceId == -1) {
@@ -140,7 +139,7 @@ public final class SocialActionHandler implements ClientActionDispatcher.ActionH
             }
         }
         if (actionId == MenuState.MESSAGE_FRIEND) {
-            String actionText4 = menuController.state().entry(menuIndex).text();
+            String actionText4 = entry.text();
             int markerIndex4 = actionText4.indexOf("@whi@");
             if (markerIndex4 != -1) {
                 long encodedName3 = Base37.encode(actionText4.substring(markerIndex4 + 5).trim());

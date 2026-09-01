@@ -23,13 +23,10 @@ public final class ClientActionDispatcher {
          * Applies one normalized action.
          *
          * @param actionId normalized revision-377 action ID
-         * @param argument0 first menu argument
-         * @param argument1 second menu argument
-         * @param argument2 third menu argument
-         * @param menuIndex source menu index
+         * @param entry cohesive menu entry and action arguments
          * @return {@code true} when the action intentionally preserves selection state
          */
-        boolean dispatch(int actionId, int argument0, int argument1, int argument2, int menuIndex);
+        boolean dispatch(int actionId, MenuEntry entry);
 
         /** Resets action-local transient counters for a full-login state reset. */
         default void resetForLogin() {
@@ -164,16 +161,14 @@ public final class ClientActionDispatcher {
         }
 
         boolean preserveSelection = switch (MenuState.actionDomain(actionId)) {
-        case PLAYER -> dispatchWithoutPreservingSelection(playerHandler, actionId, entry, menuIndex);
-        case NPC -> dispatchWithoutPreservingSelection(npcHandler, actionId, entry, menuIndex);
-        case OBJECT -> dispatchWithoutPreservingSelection(objectHandler, actionId, entry, menuIndex);
-        case GROUND_ITEM -> dispatchWithoutPreservingSelection(groundItemHandler, actionId, entry, menuIndex);
-        case INVENTORY -> inventoryHandler.dispatch(actionId, entry.argument0(), entry.argument1(), entry.argument2(),
-                menuIndex);
-        case WIDGET -> widgetHandler.dispatch(actionId, entry.argument0(), entry.argument1(), entry.argument2(),
-                menuIndex);
-        case SOCIAL -> dispatchWithoutPreservingSelection(socialHandler, actionId, entry, menuIndex);
-        case WALK -> dispatchWithoutPreservingSelection(walkHandler, actionId, entry, menuIndex);
+        case PLAYER -> dispatchWithoutPreservingSelection(playerHandler, actionId, entry);
+        case NPC -> dispatchWithoutPreservingSelection(npcHandler, actionId, entry);
+        case OBJECT -> dispatchWithoutPreservingSelection(objectHandler, actionId, entry);
+        case GROUND_ITEM -> dispatchWithoutPreservingSelection(groundItemHandler, actionId, entry);
+        case INVENTORY -> inventoryHandler.dispatch(actionId, entry);
+        case WIDGET -> widgetHandler.dispatch(actionId, entry);
+        case SOCIAL -> dispatchWithoutPreservingSelection(socialHandler, actionId, entry);
+        case WALK -> dispatchWithoutPreservingSelection(walkHandler, actionId, entry);
         case CANCEL, UNKNOWN -> false;
         };
 
@@ -203,12 +198,10 @@ public final class ClientActionDispatcher {
      * @param handler domain callback
      * @param actionId normalized action ID
      * @param entry menu entry
-     * @param menuIndex source menu index
      * @return always {@code false}
      */
-    private static boolean dispatchWithoutPreservingSelection(ActionHandler handler, int actionId, MenuEntry entry,
-            int menuIndex) {
-        handler.dispatch(actionId, entry.argument0(), entry.argument1(), entry.argument2(), menuIndex);
+    private static boolean dispatchWithoutPreservingSelection(ActionHandler handler, int actionId, MenuEntry entry) {
+        handler.dispatch(actionId, entry);
         return false;
     }
 }

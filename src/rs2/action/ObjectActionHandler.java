@@ -11,6 +11,7 @@ import rs2.net.MovementPacketEncoder;
 import rs2.scene.SceneConfig;
 import rs2.scene.SceneUid;
 import rs2.ui.InterfaceController;
+import rs2.ui.menu.MenuEntry;
 import rs2.ui.menu.MenuState;
 import rs2.game.RegionManager;
 
@@ -60,30 +61,33 @@ public final class ObjectActionHandler implements ClientActionDispatcher.ActionH
 
     /** {@inheritDoc} */
     @Override
-    public boolean dispatch(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
-        if (actionId == MenuState.USE_ITEM_ON_OBJECT && walkToGameObject(cmd3, cmd2, cmd1)) {
-            packets.useItemOnObject(objectId(cmd1), interfaces.state().selectedItemWidgetId,
-                    interfaces.state().selectedItemId, cmd3 + regionManager.baseY,
-                    interfaces.state().selectedItemSlot, cmd2 + regionManager.baseX);
+    public boolean dispatch(int actionId, MenuEntry entry) {
+        int argument0 = entry.argument0();
+        int argument1 = entry.argument1();
+        int argument2 = entry.argument2();
+        if (actionId == MenuState.USE_ITEM_ON_OBJECT && walkToGameObject(argument2, argument1, argument0)) {
+            packets.useItemOnObject(objectId(argument0), interfaces.state().selectedItemWidgetId,
+                    interfaces.state().selectedItemId, argument2 + regionManager.baseY,
+                    interfaces.state().selectedItemSlot, argument1 + regionManager.baseX);
         }
-        if (actionId == MenuState.CAST_SPELL_ON_OBJECT && walkToGameObject(cmd3, cmd2, cmd1)) {
-            packets.castSpellOnObject(interfaces.state().selectedSpellWidgetId, objectId(cmd1),
-                    cmd2 + regionManager.baseX, cmd3 + regionManager.baseY);
+        if (actionId == MenuState.CAST_SPELL_ON_OBJECT && walkToGameObject(argument2, argument1, argument0)) {
+            packets.castSpellOnObject(interfaces.state().selectedSpellWidgetId, objectId(argument0),
+                    argument1 + regionManager.baseX, argument2 + regionManager.baseY);
         }
         if (actionId == MenuState.OBJECT_OPTION_5) {
-            walkToGameObject(cmd3, cmd2, cmd1);
-            packets.objectOption5(objectId(cmd1), cmd2 + regionManager.baseX, cmd3 + regionManager.baseY);
+            walkToGameObject(argument2, argument1, argument0);
+            packets.objectOption5(objectId(argument0), argument1 + regionManager.baseX, argument2 + regionManager.baseY);
         }
         if (actionId == MenuState.OBJECT_OPTION_1) {
-            walkToGameObject(cmd3, cmd2, cmd1);
-            packets.objectOption1(objectId(cmd1), cmd2 + regionManager.baseX, cmd3 + regionManager.baseY);
+            walkToGameObject(argument2, argument1, argument0);
+            packets.objectOption1(objectId(argument0), argument1 + regionManager.baseX, argument2 + regionManager.baseY);
         }
         if (actionId == MenuState.OBJECT_OPTION_3) {
-            walkToGameObject(cmd3, cmd2, cmd1);
-            packets.objectOption3(objectId(cmd1), cmd2 + regionManager.baseX, cmd3 + regionManager.baseY);
+            walkToGameObject(argument2, argument1, argument0);
+            packets.objectOption3(objectId(argument0), argument1 + regionManager.baseX, argument2 + regionManager.baseY);
         }
         if (actionId == MenuState.EXAMINE_OBJECT) {
-            int objectId = cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK;
+            int objectId = argument0 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK;
             GameObjectDefinition objectDefinition = GameObjectDefinition.lookup(objectId);
             String description;
             if (objectDefinition.description != null) {
@@ -94,12 +98,12 @@ public final class ObjectActionHandler implements ClientActionDispatcher.ActionH
             messages.addChatMessage("", description, ChatMessageType.GAME);
         }
         if (actionId == MenuState.OBJECT_OPTION_4) {
-            walkToGameObject(cmd3, cmd2, cmd1);
-            packets.objectOption4(objectId(cmd1), cmd2 + regionManager.baseX, cmd3 + regionManager.baseY);
+            walkToGameObject(argument2, argument1, argument0);
+            packets.objectOption4(objectId(argument0), argument1 + regionManager.baseX, argument2 + regionManager.baseY);
         }
         if (actionId == MenuState.OBJECT_OPTION_2) {
-            walkToGameObject(cmd3, cmd2, cmd1);
-            packets.objectOption2(objectId(cmd1), cmd2 + regionManager.baseX, cmd3 + regionManager.baseY);
+            walkToGameObject(argument2, argument1, argument0);
+            packets.objectOption2(objectId(argument0), argument1 + regionManager.baseX, argument2 + regionManager.baseY);
         }
         return false;
     }

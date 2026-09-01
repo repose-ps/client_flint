@@ -224,8 +224,8 @@ public final class ActionDispatchSelfTest {
         ClientActionDispatcher.ActionHandler npc = recordingHandler(calls, 1, last, interfaces, false);
         ClientActionDispatcher.ActionHandler object = recordingHandler(calls, 2, last, interfaces, false);
         ClientActionDispatcher.ActionHandler ground = recordingHandler(calls, 3, last, interfaces, false);
-        ClientActionDispatcher.ActionHandler inventory = (actionId, argument0, argument1, argument2, menuIndex) -> {
-            record(calls, 4, last, actionId, argument0, argument1, argument2, menuIndex);
+        ClientActionDispatcher.ActionHandler inventory = (actionId, entry) -> {
+            record(calls, 4, last, actionId, entry);
             if (actionId == MenuState.SELECT_ITEM) {
                 interfaces.state().itemSelected = 1;
                 interfaces.state().spellSelected = 0;
@@ -233,8 +233,8 @@ public final class ActionDispatchSelfTest {
             }
             return false;
         };
-        ClientActionDispatcher.ActionHandler widget = (actionId, argument0, argument1, argument2, menuIndex) -> {
-            record(calls, 5, last, actionId, argument0, argument1, argument2, menuIndex);
+        ClientActionDispatcher.ActionHandler widget = (actionId, entry) -> {
+            record(calls, 5, last, actionId, entry);
             if (actionId == MenuState.SELECT_SPELL) {
                 interfaces.state().itemSelected = 0;
                 interfaces.state().spellSelected = 1;
@@ -262,7 +262,7 @@ public final class ActionDispatchSelfTest {
         test.equal(last[1], 11, "dispatcher preserves argument 0");
         test.equal(last[2], 22, "dispatcher preserves argument 1");
         test.equal(last[3], 33, "dispatcher preserves argument 2");
-        test.equal(last[4], playerIndex, "dispatcher preserves menu index");
+        test.equal(last[4], "test".hashCode(), "dispatcher preserves cohesive menu entry text");
         test.equal(chat.inputDialogState(), 0, "non-cancel action closes input dialog");
         test.check(renderer.chatboxRedrawPending(), "input-dialog cancellation requests chatbox redraw");
         test.equal(interfaces.state().itemSelected, 0, "normal action clears item selection");
@@ -328,7 +328,7 @@ public final class ActionDispatchSelfTest {
             final int domain = index;
             handlers[index] = new ClientActionDispatcher.ActionHandler() {
                 @Override
-                public boolean dispatch(int actionId, int argument0, int argument1, int argument2, int menuIndex) {
+                public boolean dispatch(int actionId, MenuEntry entry) {
                     return false;
                 }
 
@@ -378,7 +378,7 @@ public final class ActionDispatchSelfTest {
                     return true;
                 },
                 () -> crosshair[0]++);
-        handler.dispatch(MenuState.PLAYER_OPTION_1, 7, 0, 0, 0);
+        handler.dispatch(MenuState.PLAYER_OPTION_1, new MenuEntry("test", MenuState.PLAYER_OPTION_1, 7, 0, 0));
         test.equal(movement[0], 1, "player handler routes exactly once");
         test.equal(movement[1], 0, "player handler disables alternative route");
         test.equal(movement[2], 50, "player handler routes to target X");
@@ -392,7 +392,7 @@ public final class ActionDispatchSelfTest {
         test.equal(network.outgoing.payload[2] & 0xff, 0, "player option 1 transformed index high byte");
 
         int previousPosition = network.outgoing.position;
-        handler.dispatch(MenuState.PLAYER_OPTION_1, 8, 0, 0, 0);
+        handler.dispatch(MenuState.PLAYER_OPTION_1, new MenuEntry("test", MenuState.PLAYER_OPTION_1, 8, 0, 0));
         test.equal(movement[0], 1, "missing player does not route");
         test.equal(crosshair[0], 1, "missing player does not mark crosshair");
         test.equal(network.outgoing.position, previousPosition, "missing player writes no packet");
@@ -433,8 +433,8 @@ public final class ActionDispatchSelfTest {
      */
     private static ClientActionDispatcher.ActionHandler recordingHandler(int[] calls, int domain, int[] last,
             InterfaceController interfaces, boolean preserve) {
-        return (actionId, argument0, argument1, argument2, menuIndex) -> {
-            record(calls, domain, last, actionId, argument0, argument1, argument2, menuIndex);
+        return (actionId, entry) -> {
+            record(calls, domain, last, actionId, entry);
             if (preserve) {
                 interfaces.state().itemSelected = 1;
             }
@@ -447,27 +447,23 @@ public final class ActionDispatchSelfTest {
      * @param domain domain index
      * @param last last dispatched action/arguments
      * @param actionId normalized action ID
-     * @param argument0 first argument
-     * @param argument1 second argument
-     * @param argument2 third argument
-     * @param menuIndex menu index
+     * @param entry cohesive menu entry
      */
-    private static void record(int[] calls, int domain, int[] last, int actionId, int argument0, int argument1,
-            int argument2, int menuIndex) {
+    private static void record(int[] calls, int domain, int[] last, int actionId, MenuEntry entry) {
         calls[domain]++;
         last[0] = actionId;
-        last[1] = argument0;
-        last[2] = argument1;
-        last[3] = argument2;
-        last[4] = menuIndex;
+        last[1] = entry.argument0();
+        last[2] = entry.argument1();
+        last[3] = entry.argument2();
+        last[4] = entry.text().hashCode();
     }
 
     /** Appends one test menu entry.
      * @param menus menu owner
      * @param action action ID
-     * @param argument0 first argument
-     * @param argument1 second argument
-     * @param argument2 third argument
+     * @param argument0 first menu argument
+     * @param argument1 second menu argument
+     * @param argument2 third menu argument
      * @return appended menu index
      */
     private static int add(MenuController menus, int action, int argument0, int argument1, int argument2) {

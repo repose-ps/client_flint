@@ -6,6 +6,7 @@ import rs2.chat.SocialManager;
 import rs2.game.render.GameRenderer;
 import rs2.ui.InterfaceController;
 import rs2.ui.Widget;
+import rs2.ui.menu.MenuEntry;
 import rs2.ui.menu.MenuState;
 
 /** Applies revision-377 menu actions targeting inventory items and slots. */
@@ -46,64 +47,67 @@ public final class InventoryActionHandler implements ClientActionDispatcher.Acti
 
     /** {@inheritDoc} */
     @Override
-    public boolean dispatch(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
+    public boolean dispatch(int actionId, MenuEntry entry) {
+        int argument0 = entry.argument0();
+        int argument1 = entry.argument1();
+        int argument2 = entry.argument2();
         if (actionId == MenuState.INVENTORY_ITEM_OPTION_4) {
             inventoryOption4Counter++;
             if (inventoryOption4Counter >= 62) {
                 packets.inventoryItemOption4AntiCheat();
                 inventoryOption4Counter = 0;
             }
-            packets.inventoryItemOption4(cmd1, cmd2, cmd3);
-            markInventoryInteraction(cmd3, cmd2);
+            packets.inventoryItemOption4(argument0, argument1, argument2);
+            markInventoryInteraction(argument2, argument1);
         }
         if (actionId == MenuState.INVENTORY_ITEM_OPTION_1) {
-            inventoryOption1Counter += cmd1;
+            inventoryOption1Counter += argument0;
             if (inventoryOption1Counter >= 115) {
                 packets.inventoryItemOption1AntiCheat();
                 inventoryOption1Counter = 0;
             }
-            packets.inventoryItemOption1(cmd1, cmd2, cmd3);
-            markInventoryInteraction(cmd3, cmd2);
+            packets.inventoryItemOption1(argument0, argument1, argument2);
+            markInventoryInteraction(argument2, argument1);
         }
         if (actionId == MenuState.WIDGET_ITEM_OPTION_1) {
-            packets.widgetItemOption1(cmd1, cmd2, cmd3);
-            markInventoryInteraction(cmd3, cmd2);
+            packets.widgetItemOption1(argument0, argument1, argument2);
+            markInventoryInteraction(argument2, argument1);
         }
         if (actionId == MenuState.INVENTORY_ITEM_OPTION_2) {
-            packets.inventoryItemOption2(cmd1, cmd2, cmd3);
-            markInventoryInteraction(cmd3, cmd2);
+            packets.inventoryItemOption2(argument0, argument1, argument2);
+            markInventoryInteraction(argument2, argument1);
         }
         if (actionId == MenuState.USE_ITEM_ON_INVENTORY_ITEM) {
-            packets.useItemOnInventoryItem(cmd1, interfaces.state().selectedItemSlot,
-                    interfaces.state().selectedItemId, interfaces.state().selectedItemWidgetId, cmd2, cmd3);
-            markInventoryInteraction(cmd3, cmd2);
+            packets.useItemOnInventoryItem(argument0, interfaces.state().selectedItemSlot,
+                    interfaces.state().selectedItemId, interfaces.state().selectedItemWidgetId, argument1, argument2);
+            markInventoryInteraction(argument2, argument1);
         }
         if (actionId == MenuState.CAST_SPELL_ON_INVENTORY_ITEM) {
-            packets.castSpellOnInventoryItem(interfaces.state().selectedSpellWidgetId, cmd3, cmd2, cmd1);
-            markInventoryInteraction(cmd3, cmd2);
+            packets.castSpellOnInventoryItem(interfaces.state().selectedSpellWidgetId, argument2, argument1, argument0);
+            markInventoryInteraction(argument2, argument1);
         }
         if (actionId == MenuState.WIDGET_ITEM_OPTION_2) {
-            packets.widgetItemOption2(cmd1, cmd2, cmd3);
-            markInventoryInteraction(cmd3, cmd2);
+            packets.widgetItemOption2(argument0, argument1, argument2);
+            markInventoryInteraction(argument2, argument1);
         }
         if (actionId == MenuState.INVENTORY_ITEM_OPTION_5) {
-            packets.inventoryItemOption5(cmd1, cmd2, cmd3);
-            markInventoryInteraction(cmd3, cmd2);
+            packets.inventoryItemOption5(argument0, argument1, argument2);
+            markInventoryInteraction(argument2, argument1);
         }
         if (actionId == MenuState.WIDGET_ITEM_OPTION_5) {
-            packets.widgetItemOption5(cmd1, cmd2, cmd3);
-            markInventoryInteraction(cmd3, cmd2);
+            packets.widgetItemOption5(argument0, argument1, argument2);
+            markInventoryInteraction(argument2, argument1);
         }
         if (actionId == MenuState.INVENTORY_ITEM_OPTION_3) {
-            packets.inventoryItemOption3(cmd1, cmd2, cmd3);
-            markInventoryInteraction(cmd3, cmd2);
+            packets.inventoryItemOption3(argument0, argument1, argument2);
+            markInventoryInteraction(argument2, argument1);
         }
         if (actionId == MenuState.EXAMINE_INVENTORY_ITEM) {
-            ItemDefinition itemDefinition = ItemDefinition.lookup(cmd1);
-            Widget widget = Widget.get(cmd3);
+            ItemDefinition itemDefinition = ItemDefinition.lookup(argument0);
+            Widget widget = Widget.get(argument2);
             String description;
-            if (widget != null && widget.itemAmounts[cmd2] >= 0x186a0) {
-                description = widget.itemAmounts[cmd2] + " x " + itemDefinition.name;
+            if (widget != null && widget.itemAmounts[argument1] >= 0x186a0) {
+                description = widget.itemAmounts[argument1] + " x " + itemDefinition.name;
             } else if (itemDefinition.description != null) {
                 description = new String(itemDefinition.description);
             } else {
@@ -112,19 +116,19 @@ public final class InventoryActionHandler implements ClientActionDispatcher.Acti
             messages.addChatMessage("", description, ChatMessageType.GAME);
         }
         if (actionId == MenuState.WIDGET_ITEM_OPTION_3) {
-            packets.widgetItemOption3(cmd1, cmd2, cmd3);
-            markInventoryInteraction(cmd3, cmd2);
+            packets.widgetItemOption3(argument0, argument1, argument2);
+            markInventoryInteraction(argument2, argument1);
         }
         if (actionId == MenuState.WIDGET_ITEM_OPTION_4) {
-            packets.widgetItemOption4(cmd1, cmd2, cmd3);
-            markInventoryInteraction(cmd3, cmd2);
+            packets.widgetItemOption4(argument0, argument1, argument2);
+            markInventoryInteraction(argument2, argument1);
         }
         if (actionId == MenuState.SELECT_ITEM) {
             interfaces.state().itemSelected = 1;
-            interfaces.state().selectedItemSlot = cmd2;
-            interfaces.state().selectedItemWidgetId = cmd3;
-            interfaces.state().selectedItemId = cmd1;
-            interfaces.state().selectedItemName = String.valueOf(ItemDefinition.lookup(cmd1).name);
+            interfaces.state().selectedItemSlot = argument1;
+            interfaces.state().selectedItemWidgetId = argument2;
+            interfaces.state().selectedItemId = argument0;
+            interfaces.state().selectedItemName = String.valueOf(ItemDefinition.lookup(argument0).name);
             interfaces.state().spellSelected = 0;
             gameRenderer.requestSidebarRedraw();
             return true;

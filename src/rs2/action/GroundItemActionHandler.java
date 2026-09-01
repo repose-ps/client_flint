@@ -6,6 +6,7 @@ import rs2.chat.SocialManager;
 import rs2.game.RegionManager;
 import rs2.net.MovementPacketEncoder;
 import rs2.ui.InterfaceController;
+import rs2.ui.menu.MenuEntry;
 import rs2.ui.menu.MenuState;
 
 /** Applies revision-377 menu actions targeting ground items. */
@@ -51,52 +52,55 @@ public final class GroundItemActionHandler implements ClientActionDispatcher.Act
 
     /** {@inheritDoc} */
     @Override
-    public boolean dispatch(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
+    public boolean dispatch(int actionId, MenuEntry entry) {
+        int argument0 = entry.argument0();
+        int argument1 = entry.argument1();
+        int argument2 = entry.argument2();
         if (actionId == MenuState.GROUND_ITEM_OPTION_4) {
-            walkToGroundItem(cmd2, cmd3);
-            packets.groundItemOption4(cmd1, cmd2 + regionManager.baseX, cmd3 + regionManager.baseY);
+            walkToGroundItem(argument1, argument2);
+            packets.groundItemOption4(argument0, argument1 + regionManager.baseX, argument2 + regionManager.baseY);
         }
         if (actionId == MenuState.GROUND_ITEM_OPTION_1) {
-            walkToGroundItem(cmd2, cmd3);
-            packets.groundItemOption1(cmd1, cmd2 + regionManager.baseX, cmd3 + regionManager.baseY);
+            walkToGroundItem(argument1, argument2);
+            packets.groundItemOption1(argument0, argument1 + regionManager.baseX, argument2 + regionManager.baseY);
         }
         if (actionId == MenuState.GROUND_ITEM_OPTION_3) {
-            walkToGroundItem(cmd2, cmd3);
-            if ((cmd1 & 3) == 0) {
+            walkToGroundItem(argument1, argument2);
+            if ((argument0 & 3) == 0) {
                 groundItemOption3Counter++;
             }
             if (groundItemOption3Counter >= 84) {
                 packets.groundItemOption3AntiCheat();
                 groundItemOption3Counter = 0;
             }
-            packets.groundItemOption3(cmd1, cmd2 + regionManager.baseX, cmd3 + regionManager.baseY);
+            packets.groundItemOption3(argument0, argument1 + regionManager.baseX, argument2 + regionManager.baseY);
         }
         if (actionId == MenuState.GROUND_ITEM_OPTION_5) {
-            walkToGroundItem(cmd2, cmd3);
-            packets.groundItemOption5(cmd1, cmd2 + regionManager.baseX, cmd3 + regionManager.baseY);
+            walkToGroundItem(argument1, argument2);
+            packets.groundItemOption5(argument0, argument1 + regionManager.baseX, argument2 + regionManager.baseY);
         }
         if (actionId == MenuState.USE_ITEM_ON_GROUND_ITEM) {
-            walkToGroundItem(cmd2, cmd3);
-            packets.useItemOnGroundItem(cmd1, cmd2 + regionManager.baseX, cmd3 + regionManager.baseY,
+            walkToGroundItem(argument1, argument2);
+            packets.useItemOnGroundItem(argument0, argument1 + regionManager.baseX, argument2 + regionManager.baseY,
                     interfaces.state().selectedItemSlot, interfaces.state().selectedItemId,
                     interfaces.state().selectedItemWidgetId);
         }
         if (actionId == MenuState.GROUND_ITEM_OPTION_2) {
-            walkToGroundItem(cmd2, cmd3);
+            walkToGroundItem(argument1, argument2);
             groundItemOption2Counter++;
             if (groundItemOption2Counter >= 120) {
                 packets.groundItemOption2AntiCheat();
                 groundItemOption2Counter = 0;
             }
-            packets.groundItemOption2(cmd1, cmd2 + regionManager.baseX, cmd3 + regionManager.baseY);
+            packets.groundItemOption2(argument0, argument1 + regionManager.baseX, argument2 + regionManager.baseY);
         }
         if (actionId == MenuState.CAST_SPELL_ON_GROUND_ITEM) {
-            walkToGroundItem(cmd2, cmd3);
-            packets.castSpellOnGroundItem(cmd1, cmd2 + regionManager.baseX, cmd3 + regionManager.baseY,
+            walkToGroundItem(argument1, argument2);
+            packets.castSpellOnGroundItem(argument0, argument1 + regionManager.baseX, argument2 + regionManager.baseY,
                     interfaces.state().selectedSpellWidgetId);
         }
         if (actionId == MenuState.EXAMINE_GROUND_ITEM) {
-            ItemDefinition itemDefinition = ItemDefinition.lookup(cmd1);
+            ItemDefinition itemDefinition = ItemDefinition.lookup(argument0);
             String description;
             if (itemDefinition.description != null) {
                 description = new String(itemDefinition.description);

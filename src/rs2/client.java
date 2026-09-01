@@ -69,7 +69,6 @@ import rs2.game.WorldState;
 import rs2.game.VarpState;
 import rs2.game.ZoneUpdateHandler;
 import rs2.input.MouseRecorder;
-import rs2.media.animation.AnimationFrame;
 import rs2.media.GraphicsBuffer;
 import rs2.media.sprite.ItemSpriteFactory;
 import rs2.media.Rasterizer;
@@ -252,7 +251,7 @@ public class Client extends GameShell {
 	}
 
 	/** Closes all open interface groups through {@link InterfaceController}. */
-	public void closeInterfaces() {
+	private void closeInterfaces() {
 		networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.CLOSE_INTERFACES);
 		interfaceController.closeAll(interfaceRedrawSink);
 	}
@@ -604,11 +603,11 @@ public class Client extends GameShell {
 						networkSession.outgoing.writeShortAdd(interfaceController.state().draggedInventoryWidgetId);
 						networkSession.outgoing.writeShortLE(interfaceController.state().draggedInventorySlot);
 					}
-				} else if ((oneButtonMouseMode == 1 || isAddFriendMenuAction(menuController.state().count - 1))
+				} else if ((oneButtonMouseMode == 1 || menuController.state().isAddFriendAction(menuController.state().count - 1))
 						&& menuController.state().count > 2)
 					openContextMenu();
 				else if (menuController.state().count > 0)
-					dispatchMenuAction(menuController.state().count - 1);
+					actionDispatcher.dispatch(menuController.state().count - 1);
 				inventoryClickCycle = 10;
 				super.clickButton = 0;
 			}
@@ -1130,7 +1129,7 @@ public class Client extends GameShell {
 	 *
 	 * @param encodedName the Base-37 encoded player name
 	 */
-	public void removeFriend(long encodedName) {
+	private void removeFriend(long encodedName) {
 		if (socialManager.removeFriend(encodedName, networkSession.outgoing))
 			gameRenderer.requestSidebarRedraw();
 	}
@@ -1138,7 +1137,7 @@ public class Client extends GameShell {
 	/** Processes context-menu mouse input through {@link MenuController}. */
 	public void processMenuClick() {
 		menuController.processClick(super.clickButton, super.clickX, super.clickY, super.mouseX, super.mouseY,
-				oneButtonMouseMode, boldFont, this::dispatchMenuAction, () -> inventoryDragMoved = false);
+				oneButtonMouseMode, boldFont, actionDispatcher::dispatch, () -> inventoryDragMoved = false);
 	}
 
 	/**
@@ -1934,7 +1933,7 @@ public class Client extends GameShell {
 	 *
 	 * @param encodedName the Base-37 encoded player name
 	 */
-	public void addIgnore(long encodedName) {
+	private void addIgnore(long encodedName) {
 		if (socialManager.addIgnore(encodedName, networkSession.outgoing, this::addChatMessage))
 			gameRenderer.requestSidebarRedraw();
 	}
@@ -1975,7 +1974,7 @@ public class Client extends GameShell {
 	 *
 	 * @param encodedName the Base-37 encoded player name
 	 */
-	public void removeIgnore(long encodedName) {
+	private void removeIgnore(long encodedName) {
 		if (socialManager.removeIgnore(encodedName, networkSession.outgoing))
 			gameRenderer.requestSidebarRedraw();
 	}
@@ -1999,7 +1998,7 @@ public class Client extends GameShell {
 	 *
 	 * @param encodedName the Base-37 encoded player name
 	 */
-	public void addFriend(long encodedName) {
+	private void addFriend(long encodedName) {
 		boolean membersAccount = accountMembershipStatus == 1;
 		if (socialManager.addFriend(encodedName, membersAccount, localPlayer.name, networkSession.outgoing,
 				this::addChatMessage))
@@ -2236,14 +2235,6 @@ public class Client extends GameShell {
 		Signlink.startThread(runnable, priority);
 	}
 
-	/**
-	 * Dispatches one menu action through the application action boundary.
-	 *
-	 * @param menuIndex the menu index
-	 */
-	public void dispatchMenuAction(int menuIndex) {
-		actionDispatcher.dispatch(menuIndex);
-	}
 
 	/** Marks the current shell click as the classic interaction crosshair. */
 	private void markInteractionCrosshair() {
@@ -2425,14 +2416,6 @@ public class Client extends GameShell {
 		}
 	}
 
-	/**
-	 * Returns whether a menu entry is the add-friend action.
-	 * @param menuIndex menu index
-	 * @return whether the entry adds a friend
-	 */
-	public boolean isAddFriendMenuAction(int menuIndex) {
-		return menuController.state().isAddFriendAction(menuIndex);
-	}
 
 
 	/** Runs one render cycle in logged-in mode or title/login mode. */
@@ -3048,10 +3031,10 @@ public class Client extends GameShell {
 				gameRenderer, this::applyVarp, socialManager, chatController, appearanceEditor,
 				() -> appearanceEditor.writeUpdate(networkSession.outgoing), this::closeInterfaces,
 				value -> logoutTimer = value);
-		SocialActionHandler socialActionsHandler = new SocialActionHandler(menuController, socialManager,
+		SocialActionHandler socialActionsHandler = new SocialActionHandler(socialManager,
 				actorSynchronizer, actionPackets, interfaceController, gameRenderer, chatController, actionMovement,
 				this::addChatMessage, socialListActions, this::closeInterfaces);
-		WalkActionHandler walkActionsHandler = new WalkActionHandler(menuController, () -> worldState, layout,
+		WalkActionHandler walkActionsHandler = new WalkActionHandler(() -> menuController.state().open, () -> worldState, layout,
 				() -> super.clickX, () -> super.clickY);
 		actionDispatcher = new ClientActionDispatcher(menuController, chatController, interfaceController, gameRenderer,
 				playerActionsHandler, npcActionsHandler, objectActionsHandler, groundItemActionsHandler,
