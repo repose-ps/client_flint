@@ -1,6 +1,14 @@
 package rs2;
 
 import rs2.action.ClientActionDispatcher;
+import rs2.action.GroundItemActionHandler;
+import rs2.action.InventoryActionHandler;
+import rs2.action.NpcActionHandler;
+import rs2.action.ObjectActionHandler;
+import rs2.action.PlayerActionHandler;
+import rs2.action.SocialActionHandler;
+import rs2.action.WalkActionHandler;
+import rs2.action.WidgetActionHandler;
 import rs2.media.animation.AnimationFrame;
 import rs2.shell.GameShell;
 import rs2.ui.ClientLayout;
@@ -1172,16 +1180,7 @@ public class Client extends GameShell {
 		}
 	}
 
-	/**
-	 * Delegates content-type widget actions to {@link InterfaceController}.
-	 * @param widget activated widget
-	 * @return whether the widget click packet should be sent
-	 */
-	public boolean handleWidgetContentAction(Widget widget) {
-		return interfaceController.handleContentAction(widget, socialManager, chatController, appearanceEditor,
-				networkSession.outgoing, this::closeInterfaces, gameRenderer::requestChatboxRedraw, value -> logoutTimer = value);
-	}
-
+	
 	/**
 	 * Allocates and initializes the fixed title-screen graphics buffers.
 	 */
@@ -1668,11 +1667,7 @@ public class Client extends GameShell {
 			playerActionLowPriority[actionIndex] = false;
 		}
 
-		groundItemAction26Counter = 0;
-		inventoryAction227Counter = 0;
-		npcAction118Counter = 0;
-		groundItemAction684Counter = 0;
-		inventoryAction961Counter = 0;
+		actionDispatcher.resetForLogin();
 		createGameScreenBuffers();
 	}
 
@@ -1685,47 +1680,7 @@ public class Client extends GameShell {
 		regionManager.loadingStartTime = System.currentTimeMillis();
 	}
 
-	/**
-	 * Resolves a scene object footprint and routes the local player into
-	 * interaction range.
-	 *
-	 * @param tileY the local scene-tile Y coordinate
-	 * @param tileX the local scene-tile X coordinate
-	 * @param uid   the uid
-	 * @return true when the requested condition/action succeeds; otherwise false
-	 */
-	private boolean walkToGameObject(int tileY, int tileX, int uid) {
-		int objectId = uid >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK;
-		int config = worldState.scene.getConfig(currentPlane, tileX, tileY, uid);
-		if (config == -1)
-			return false;
-		int type = SceneConfig.type(config);
-		int orientation = SceneConfig.orientation(config);
-		if (type == 10 || type == 11 || type == 22) {
-			GameObjectDefinition definition = GameObjectDefinition.lookup(objectId);
-			int width;
-			int height;
-			if (orientation == 0 || orientation == 2) {
-				width = definition.sizeX;
-				height = definition.sizeY;
-			} else {
-				width = definition.sizeY;
-				height = definition.sizeX;
-			}
-			int accessMask = definition.surroundings;
-			if (orientation != 0)
-				accessMask = (accessMask << orientation & 0xf) + (accessMask >> 4 - orientation);
-			walkTo(true, tileX, tileY, width, height, MovementPacketEncoder.INTERACTION, 0, 0, accessMask);
-		} else {
-			walkTo(true, tileX, tileY, 0, 0, MovementPacketEncoder.INTERACTION, type + 1, orientation, 0);
-		}
-		crossX = clickX;
-		crossY = clickY;
-		crossType = 2;
-		crossCycle = 0;
-		return true;
-	}
-
+	
 
 
 	/** Delegates NPC menu construction to {@link MenuController}.
@@ -2288,785 +2243,23 @@ public class Client extends GameShell {
 		actionDispatcher.dispatch(menuIndex);
 	}
 
-	// Player target actions: 200, 408, 493, 596, 677, 876, 918.
-	/**
-	 * Handles normalized menu actions targeting players.
-	 *
-	 * @param actionId  the normalized menu action identifier
-	 * @param cmd1      the cmd1
-	 * @param cmd2      the cmd2
-	 * @param cmd3      the cmd3
-	 * @param menuIndex the menu index
-	 */
-	private void dispatchPlayerMenuAction(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
-		if (actionId == MenuState.PLAYER_OPTION_1) {
-			Player player = actorSynchronizer.players[cmd1];
-			if (player != null) {
-				walkTo(false, ((Actor) (player)).pathX[0], ((Actor) (player)).pathY[0], 1, 1,
-						MovementPacketEncoder.INTERACTION, 0, 0, 0);
-				crossX = super.clickX;
-				crossY = super.clickY;
-				crossType = 2;
-				crossCycle = 0;
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.PLAYER_OPTION_1);
-				networkSession.outgoing.writeShortLEAdd(cmd1);
-			}
-		}
-		if (actionId == MenuState.PLAYER_OPTION_5) {
-			Player player2 = actorSynchronizer.players[cmd1];
-			if (player2 != null) {
-				walkTo(false, ((Actor) (player2)).pathX[0], ((Actor) (player2)).pathY[0], 1, 1,
-						MovementPacketEncoder.INTERACTION, 0, 0, 0);
-				crossX = super.clickX;
-				crossY = super.clickY;
-				crossType = 2;
-				crossCycle = 0;
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.PLAYER_OPTION_5);
-				networkSession.outgoing.writeShortAdd(cmd1);
-			}
-		}
-		if (actionId == MenuState.PLAYER_OPTION_4) {
-			Player player3 = actorSynchronizer.players[cmd1];
-			if (player3 != null) {
-				walkTo(false, ((Actor) (player3)).pathX[0], ((Actor) (player3)).pathY[0], 1, 1,
-						MovementPacketEncoder.INTERACTION, 0, 0, 0);
-				crossX = super.clickX;
-				crossY = super.clickY;
-				crossType = 2;
-				crossCycle = 0;
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.PLAYER_OPTION_4);
-				networkSession.outgoing.writeShortLE(cmd1);
-			}
-		}
-		if (actionId == MenuState.PLAYER_OPTION_2) {
-			Player player4 = actorSynchronizer.players[cmd1];
-			if (player4 != null) {
-				walkTo(false, ((Actor) (player4)).pathX[0], ((Actor) (player4)).pathY[0], 1, 1,
-						MovementPacketEncoder.INTERACTION, 0, 0, 0);
-				crossX = super.clickX;
-				crossY = super.clickY;
-				crossType = 2;
-				crossCycle = 0;
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.PLAYER_OPTION_2);
-				networkSession.outgoing.writeShortAdd(cmd1);
-			}
-		}
-		if (actionId == MenuState.CAST_SPELL_ON_PLAYER) {
-			Player player5 = actorSynchronizer.players[cmd1];
-			if (player5 != null) {
-				walkTo(false, ((Actor) (player5)).pathX[0], ((Actor) (player5)).pathY[0], 1, 1,
-						MovementPacketEncoder.INTERACTION, 0, 0, 0);
-				crossX = super.clickX;
-				crossY = super.clickY;
-				crossType = 2;
-				crossCycle = 0;
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.CAST_SPELL_ON_PLAYER);
-				networkSession.outgoing.writeShort(cmd1);
-				networkSession.outgoing.writeShortLE(interfaceController.state().selectedSpellWidgetId);
-			}
-		}
-		if (actionId == MenuState.USE_ITEM_ON_PLAYER) {
-			Player player6 = actorSynchronizer.players[cmd1];
-			if (player6 != null) {
-				walkTo(false, ((Actor) (player6)).pathX[0], ((Actor) (player6)).pathY[0], 1, 1,
-						MovementPacketEncoder.INTERACTION, 0, 0, 0);
-				crossX = super.clickX;
-				crossY = super.clickY;
-				crossType = 2;
-				crossCycle = 0;
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.USE_ITEM_ON_PLAYER);
-				networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemId);
-				networkSession.outgoing.writeShortLEAdd(interfaceController.state().selectedItemSlot);
-				networkSession.outgoing.writeShort(interfaceController.state().selectedItemWidgetId);
-				networkSession.outgoing.writeShortAdd(cmd1);
-			}
-		}
-		if (actionId == MenuState.PLAYER_OPTION_3) {
-			Player player7 = actorSynchronizer.players[cmd1];
-			if (player7 != null) {
-				walkTo(false, ((Actor) (player7)).pathX[0], ((Actor) (player7)).pathY[0], 1, 1,
-						MovementPacketEncoder.INTERACTION, 0, 0, 0);
-				crossX = super.clickX;
-				crossY = super.clickY;
-				crossType = 2;
-				crossCycle = 0;
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.PLAYER_OPTION_3);
-				networkSession.outgoing.writeShortLE(cmd1);
-			}
-		}
+	/** Marks the current shell click as the classic interaction crosshair. */
+	private void markInteractionCrosshair() {
+		crossX = super.clickX;
+		crossY = super.clickY;
+		crossType = 2;
+		crossCycle = 0;
 	}
 
-	// NPC target actions: 67, 118, 318, 347, 432, 553, 921, 1668.
-	/**
-	 * Handles normalized menu actions targeting NPCs.
-	 *
-	 * @param actionId  the normalized menu action identifier
-	 * @param cmd1      the cmd1
-	 * @param cmd2      the cmd2
-	 * @param cmd3      the cmd3
-	 * @param menuIndex the menu index
-	 */
-	private void dispatchNpcMenuAction(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
-		if (actionId == MenuState.NPC_OPTION_2) {
-			Npc npc = actorSynchronizer.npcs[cmd1];
-			if (npc != null) {
-				walkTo(false, ((Actor) (npc)).pathX[0], ((Actor) (npc)).pathY[0], 1, 1,
-						MovementPacketEncoder.INTERACTION, 0, 0, 0);
-				crossX = super.clickX;
-				crossY = super.clickY;
-				crossType = 2;
-				crossCycle = 0;
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.NPC_OPTION_2);
-				networkSession.outgoing.writeShortAdd(cmd1);
-			}
-		}
-		if (actionId == MenuState.NPC_OPTION_4) {
-			Npc npc2 = actorSynchronizer.npcs[cmd1];
-			if (npc2 != null) {
-				walkTo(false, ((Actor) (npc2)).pathX[0], ((Actor) (npc2)).pathY[0], 1, 1,
-						MovementPacketEncoder.INTERACTION, 0, 0, 0);
-				crossX = super.clickX;
-				crossY = super.clickY;
-				crossType = 2;
-				crossCycle = 0;
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.NPC_OPTION_4);
-				networkSession.outgoing.writeShortLE(cmd1);
-			}
-		}
-		if (actionId == MenuState.USE_ITEM_ON_NPC) {
-			Npc npc3 = actorSynchronizer.npcs[cmd1];
-			if (npc3 != null) {
-				walkTo(false, ((Actor) (npc3)).pathX[0], ((Actor) (npc3)).pathY[0], 1, 1,
-						MovementPacketEncoder.INTERACTION, 0, 0, 0);
-				crossX = super.clickX;
-				crossY = super.clickY;
-				crossType = 2;
-				crossCycle = 0;
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.USE_ITEM_ON_NPC);
-				networkSession.outgoing.writeShort(cmd1);
-				networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemId);
-				networkSession.outgoing.writeShortLEAdd(interfaceController.state().selectedItemWidgetId);
-				networkSession.outgoing.writeShort(interfaceController.state().selectedItemSlot);
-			}
-		}
-		if (actionId == MenuState.NPC_OPTION_3) {
-			Npc npc4 = actorSynchronizer.npcs[cmd1];
-			if (npc4 != null) {
-				walkTo(false, ((Actor) (npc4)).pathX[0], ((Actor) (npc4)).pathY[0], 1, 1,
-						MovementPacketEncoder.INTERACTION, 0, 0, 0);
-				crossX = super.clickX;
-				crossY = super.clickY;
-				crossType = 2;
-				crossCycle = 0;
-				npcAction118Counter += cmd1;
-				if (npcAction118Counter >= 143) {
-					networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.ANTI_CHEAT_NPC_OPTION_3);
-					networkSession.outgoing.writeInt(0);
-					npcAction118Counter = 0;
-				}
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.NPC_OPTION_3);
-				networkSession.outgoing.writeShortLEAdd(cmd1);
-			}
-		}
-		if (actionId == MenuState.NPC_OPTION_5) {
-			Npc npc5 = actorSynchronizer.npcs[cmd1];
-			if (npc5 != null) {
-				walkTo(false, ((Actor) (npc5)).pathX[0], ((Actor) (npc5)).pathY[0], 1, 1,
-						MovementPacketEncoder.INTERACTION, 0, 0, 0);
-				crossX = super.clickX;
-				crossY = super.clickY;
-				crossType = 2;
-				crossCycle = 0;
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.NPC_OPTION_5);
-				networkSession.outgoing.writeShortLE(cmd1);
-			}
-		}
-		if (actionId == MenuState.CAST_SPELL_ON_NPC) {
-			Npc npc6 = actorSynchronizer.npcs[cmd1];
-			if (npc6 != null) {
-				walkTo(false, ((Actor) (npc6)).pathX[0], ((Actor) (npc6)).pathY[0], 1, 1,
-						MovementPacketEncoder.INTERACTION, 0, 0, 0);
-				crossX = super.clickX;
-				crossY = super.clickY;
-				crossType = 2;
-				crossCycle = 0;
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.CAST_SPELL_ON_NPC);
-				networkSession.outgoing.writeShortAdd(interfaceController.state().selectedSpellWidgetId);
-				networkSession.outgoing.writeShortLE(cmd1);
-			}
-		}
-		if (actionId == MenuState.EXAMINE_NPC) {
-			Npc npc7 = actorSynchronizer.npcs[cmd1];
-			if (npc7 != null) {
-				NpcDefinition npcDefinition = npc7.definition;
-				if (npcDefinition.morphIds != null)
-					npcDefinition = npcDefinition.transform();
-				if (npcDefinition != null) {
-					String description;
-					if (npcDefinition.description != null)
-						description = new String(npcDefinition.description);
-					else
-						description = "It's a " + npcDefinition.name + ".";
-					addChatMessage("", description, ChatMessageType.GAME);
-				}
-			}
-		}
-		if (actionId == MenuState.NPC_OPTION_1) {
-			Npc npc8 = actorSynchronizer.npcs[cmd1];
-			if (npc8 != null) {
-				walkTo(false, ((Actor) (npc8)).pathX[0], ((Actor) (npc8)).pathY[0], 1, 1,
-						MovementPacketEncoder.INTERACTION, 0, 0, 0);
-				crossX = super.clickX;
-				crossY = super.clickY;
-				crossType = 2;
-				crossCycle = 0;
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.NPC_OPTION_1);
-				networkSession.outgoing.writeShortLE(cmd1);
-			}
-		}
-	}
 
-	// Game-object actions: 35, 376, 389, 467, 888, 892, 1280, 1412.
-	/**
-	 * Handles normalized menu actions targeting scene objects.
-	 *
-	 * @param actionId  the normalized menu action identifier
-	 * @param cmd1      the cmd1
-	 * @param cmd2      the cmd2
-	 * @param cmd3      the cmd3
-	 * @param menuIndex the menu index
-	 */
-	private void dispatchObjectMenuAction(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
-		if (actionId == MenuState.USE_ITEM_ON_OBJECT && walkToGameObject(cmd3, cmd2, cmd1)) {
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.USE_ITEM_ON_OBJECT);
-			networkSession.outgoing.writeShortLE(cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
-			networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemWidgetId);
-			networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemId);
-			networkSession.outgoing.writeShortLE(cmd3 + regionManager.baseY);
-			networkSession.outgoing.writeShort(interfaceController.state().selectedItemSlot);
-			networkSession.outgoing.writeShortLEAdd(cmd2 + regionManager.baseX);
-		}
-		if (actionId == MenuState.CAST_SPELL_ON_OBJECT && walkToGameObject(cmd3, cmd2, cmd1)) {
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.CAST_SPELL_ON_OBJECT);
-			networkSession.outgoing.writeShort(interfaceController.state().selectedSpellWidgetId);
-			networkSession.outgoing.writeShortLE(cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
-			networkSession.outgoing.writeShortAdd(cmd2 + regionManager.baseX);
-			networkSession.outgoing.writeShortLE(cmd3 + regionManager.baseY);
-		}
-		if (actionId == MenuState.OBJECT_OPTION_5) {
-			walkToGameObject(cmd3, cmd2, cmd1);
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.OBJECT_OPTION_5);
-			networkSession.outgoing.writeShortLE(cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
-			networkSession.outgoing.writeShortLE(cmd3 + regionManager.baseY);
-			networkSession.outgoing.writeShort(cmd2 + regionManager.baseX);
-		}
-		if (actionId == MenuState.OBJECT_OPTION_1) {
-			walkToGameObject(cmd3, cmd2, cmd1);
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.OBJECT_OPTION_1);
-			networkSession.outgoing.writeShortAdd(cmd2 + regionManager.baseX);
-			networkSession.outgoing.writeShortLE(cmd3 + regionManager.baseY);
-			networkSession.outgoing.writeShortLE(cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
-		}
-		if (actionId == MenuState.OBJECT_OPTION_3) {
-			walkToGameObject(cmd3, cmd2, cmd1);
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.OBJECT_OPTION_3);
-			networkSession.outgoing.writeShortAdd(cmd3 + regionManager.baseY);
-			networkSession.outgoing.writeShortLE(cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
-			networkSession.outgoing.writeShortLEAdd(cmd2 + regionManager.baseX);
-		}
-		if (actionId == MenuState.EXAMINE_OBJECT) {
-			int objectId = cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK;
-			GameObjectDefinition objectDefinition = GameObjectDefinition.lookup(objectId);
-			String description;
-			if (objectDefinition.description != null)
-				description = new String(objectDefinition.description);
-			else
-				description = "It's a " + objectDefinition.name + ".";
-			addChatMessage("", description, ChatMessageType.GAME);
-		}
-		if (actionId == MenuState.OBJECT_OPTION_4) {
-			walkToGameObject(cmd3, cmd2, cmd1);
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.OBJECT_OPTION_4);
-			networkSession.outgoing.writeShort(cmd2 + regionManager.baseX);
-			networkSession.outgoing.writeShortLE(cmd3 + regionManager.baseY);
-			networkSession.outgoing.writeShort(cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
-		}
-		if (actionId == MenuState.OBJECT_OPTION_2) {
-			walkToGameObject(cmd3, cmd2, cmd1);
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.OBJECT_OPTION_2);
-			networkSession.outgoing.writeShort(cmd1 >> SceneUid.ENTITY_ID_SHIFT & SceneUid.ENTITY_ID_MASK);
-			networkSession.outgoing.writeShort(cmd2 + regionManager.baseX);
-			networkSession.outgoing.writeShortAdd(cmd3 + regionManager.baseY);
-		}
-	}
 
-	// Ground-item actions: 26, 68, 100, 199, 270, 684, 930, 1564.
-	/**
-	 * Handles normalized menu actions targeting ground items.
-	 *
-	 * @param actionId  the normalized menu action identifier
-	 * @param cmd1      the cmd1
-	 * @param cmd2      the cmd2
-	 * @param cmd3      the cmd3
-	 * @param menuIndex the menu index
-	 */
-	private void dispatchGroundItemMenuAction(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
-		if (actionId == MenuState.GROUND_ITEM_OPTION_4) {
-			boolean routeFound = walkTo(false, cmd2, cmd3, 0, 0, MovementPacketEncoder.INTERACTION, 0, 0, 0);
-			if (!routeFound)
-				routeFound = walkTo(false, cmd2, cmd3, 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
-			crossX = super.clickX;
-			crossY = super.clickY;
-			crossType = 2;
-			crossCycle = 0;
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.GROUND_ITEM_OPTION_4);
-			networkSession.outgoing.writeShortAdd(cmd1);
-			networkSession.outgoing.writeShortLE(cmd3 + regionManager.baseY);
-			networkSession.outgoing.writeShort(cmd2 + regionManager.baseX);
-		}
-		if (actionId == MenuState.GROUND_ITEM_OPTION_1) {
-			boolean routeFound2 = walkTo(false, cmd2, cmd3, 0, 0, MovementPacketEncoder.INTERACTION, 0, 0, 0);
-			if (!routeFound2)
-				routeFound2 = walkTo(false, cmd2, cmd3, 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
-			crossX = super.clickX;
-			crossY = super.clickY;
-			crossType = 2;
-			crossCycle = 0;
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.GROUND_ITEM_OPTION_1);
-			networkSession.outgoing.writeShortAdd(cmd2 + regionManager.baseX);
-			networkSession.outgoing.writeShort(cmd3 + regionManager.baseY);
-			networkSession.outgoing.writeShortLEAdd(cmd1);
-		}
-		if (actionId == MenuState.GROUND_ITEM_OPTION_3) {
-			boolean routeFound3 = walkTo(false, cmd2, cmd3, 0, 0, MovementPacketEncoder.INTERACTION, 0, 0, 0);
-			if (!routeFound3)
-				routeFound3 = walkTo(false, cmd2, cmd3, 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
-			crossX = super.clickX;
-			crossY = super.clickY;
-			crossType = 2;
-			crossCycle = 0;
-			if ((cmd1 & 3) == 0)
-				groundItemAction684Counter++;
-			if (groundItemAction684Counter >= 84) {
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.ANTI_CHEAT_GROUND_ITEM_OPTION_3);
-				networkSession.outgoing.writeMedium(0xabc842);
-				groundItemAction684Counter = 0;
-			}
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.GROUND_ITEM_OPTION_3);
-			networkSession.outgoing.writeShortLEAdd(cmd1);
-			networkSession.outgoing.writeShortLEAdd(cmd2 + regionManager.baseX);
-			networkSession.outgoing.writeShortAdd(cmd3 + regionManager.baseY);
-		}
-		if (actionId == MenuState.GROUND_ITEM_OPTION_5) {
-			boolean routeFound4 = walkTo(false, cmd2, cmd3, 0, 0, MovementPacketEncoder.INTERACTION, 0, 0, 0);
-			if (!routeFound4)
-				routeFound4 = walkTo(false, cmd2, cmd3, 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
-			crossX = super.clickX;
-			crossY = super.clickY;
-			crossType = 2;
-			crossCycle = 0;
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.GROUND_ITEM_OPTION_5);
-			networkSession.outgoing.writeShortLE(cmd1);
-			networkSession.outgoing.writeShortAdd(cmd2 + regionManager.baseX);
-			networkSession.outgoing.writeShort(cmd3 + regionManager.baseY);
-		}
-		if (actionId == MenuState.USE_ITEM_ON_GROUND_ITEM) {
-			boolean routeFound5 = walkTo(false, cmd2, cmd3, 0, 0, MovementPacketEncoder.INTERACTION, 0, 0, 0);
-			if (!routeFound5)
-				routeFound5 = walkTo(false, cmd2, cmd3, 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
-			crossX = super.clickX;
-			crossY = super.clickY;
-			crossType = 2;
-			crossCycle = 0;
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.USE_ITEM_ON_GROUND_ITEM);
-			networkSession.outgoing.writeShortLEAdd(interfaceController.state().selectedItemSlot);
-			networkSession.outgoing.writeShortAdd(interfaceController.state().selectedItemId);
-			networkSession.outgoing.writeShortLEAdd(cmd3 + regionManager.baseY);
-			networkSession.outgoing.writeShortLEAdd(cmd2 + regionManager.baseX);
-			networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemWidgetId);
-			networkSession.outgoing.writeShortLE(cmd1);
-		}
-		if (actionId == MenuState.GROUND_ITEM_OPTION_2) {
-			boolean routeFound6 = walkTo(false, cmd2, cmd3, 0, 0, MovementPacketEncoder.INTERACTION, 0, 0, 0);
-			if (!routeFound6)
-				routeFound6 = walkTo(false, cmd2, cmd3, 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
-			crossX = super.clickX;
-			crossY = super.clickY;
-			crossType = 2;
-			crossCycle = 0;
-			groundItemAction26Counter++;
-			if (groundItemAction26Counter >= 120) {
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.ANTI_CHEAT_GROUND_ITEM_OPTION_2);
-				networkSession.outgoing.writeInt(0);
-				groundItemAction26Counter = 0;
-			}
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.GROUND_ITEM_OPTION_2);
-			networkSession.outgoing.writeShort(cmd2 + regionManager.baseX);
-			networkSession.outgoing.writeShortAdd(cmd3 + regionManager.baseY);
-			networkSession.outgoing.writeShortLEAdd(cmd1);
-		}
-		if (actionId == MenuState.CAST_SPELL_ON_GROUND_ITEM) {
-			boolean routeFound7 = walkTo(false, cmd2, cmd3, 0, 0, MovementPacketEncoder.INTERACTION, 0, 0, 0);
-			if (!routeFound7)
-				routeFound7 = walkTo(false, cmd2, cmd3, 1, 1, MovementPacketEncoder.INTERACTION, 0, 0, 0);
-			crossX = super.clickX;
-			crossY = super.clickY;
-			crossType = 2;
-			crossCycle = 0;
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.CAST_SPELL_ON_GROUND_ITEM);
-			networkSession.outgoing.writeShortLE(cmd1);
-			networkSession.outgoing.writeShort(cmd3 + regionManager.baseY);
-			networkSession.outgoing.writeShortLE(interfaceController.state().selectedSpellWidgetId);
-			networkSession.outgoing.writeShortLEAdd(cmd2 + regionManager.baseX);
-		}
-		if (actionId == MenuState.EXAMINE_GROUND_ITEM) {
-			ItemDefinition itemDefinition = ItemDefinition.lookup(cmd1);
-			String description;
-			if (itemDefinition.description != null)
-				description = new String(itemDefinition.description);
-			else
-				description = "It's a " + itemDefinition.name + ".";
-			addChatMessage("", description, ChatMessageType.GAME);
-		}
-	}
 
-	/**
-	 * Records the inventory slot/widget affected by an inventory menu action.
-	 *
-	 * @param widgetId the widget id
-	 * @param slot     the slot
-	 */
-	private void markInventoryInteraction(int widgetId, int slot) {
-		inventoryClickCycle = 0;
-		interfaceController.state().pressedInventoryWidgetId = widgetId;
-		interfaceController.state().pressedInventorySlot = slot;
-		interfaceController.state().pressedInventoryArea = 2;
-		if (Widget.get(widgetId).parentId == interfaceController.state().openInterfaceId)
-			interfaceController.state().pressedInventoryArea = 1;
-		if (Widget.get(widgetId).parentId == interfaceController.state().chatboxInterfaceId)
-			interfaceController.state().pressedInventoryArea = 3;
-	}
 
-	// Inventory/item actions retain their original packet/action IDs.
-	/**
-	 * Handles normalized menu actions targeting inventory items and slots.
-	 *
-	 * @param actionId  the normalized menu action identifier
-	 * @param cmd1      the cmd1
-	 * @param cmd2      the cmd2
-	 * @param cmd3      the cmd3
-	 * @param menuIndex the menu index
-	 * @return true when the requested condition/action succeeds; otherwise false
-	 */
-	private boolean dispatchInventoryMenuAction(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
-		if (actionId == MenuState.INVENTORY_ITEM_OPTION_4) {
-			inventoryAction227Counter++;
-			if (inventoryAction227Counter >= 62) {
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.ANTI_CHEAT_INVENTORY_ITEM_OPTION_4);
-				networkSession.outgoing.writeByte(206);
-				inventoryAction227Counter = 0;
-			}
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.INVENTORY_ITEM_OPTION_4);
-			networkSession.outgoing.writeShortLE(cmd2);
-			networkSession.outgoing.writeShortAdd(cmd1);
-			networkSession.outgoing.writeShort(cmd3);
-			markInventoryInteraction(cmd3, cmd2);
-		}
-		if (actionId == MenuState.INVENTORY_ITEM_OPTION_1) {
-			inventoryAction961Counter += cmd1;
-			if (inventoryAction961Counter >= 115) {
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.ANTI_CHEAT_INVENTORY_ITEM_OPTION_1);
-				networkSession.outgoing.writeByte(125);
-				inventoryAction961Counter = 0;
-			}
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.INVENTORY_ITEM_OPTION_1);
-			networkSession.outgoing.writeShortAdd(cmd3);
-			networkSession.outgoing.writeShortLE(cmd2);
-			networkSession.outgoing.writeShortLE(cmd1);
-			markInventoryInteraction(cmd3, cmd2);
-		}
-		if (actionId == MenuState.WIDGET_ITEM_OPTION_1) {
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_ITEM_OPTION_1);
-			networkSession.outgoing.writeShortAdd(cmd1);
-			networkSession.outgoing.writeShort(cmd3);
-			networkSession.outgoing.writeShort(cmd2);
-			markInventoryInteraction(cmd3, cmd2);
-		}
-		if (actionId == MenuState.INVENTORY_ITEM_OPTION_2) {
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.INVENTORY_ITEM_OPTION_2);
-			networkSession.outgoing.writeShortLE(cmd3);
-			networkSession.outgoing.writeShortLE(cmd1);
-			networkSession.outgoing.writeShortAdd(cmd2);
-			markInventoryInteraction(cmd3, cmd2);
-		}
-		if (actionId == MenuState.USE_ITEM_ON_INVENTORY_ITEM) {
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.USE_ITEM_ON_INVENTORY_ITEM);
-			networkSession.outgoing.writeShort(cmd1);
-			networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemSlot);
-			networkSession.outgoing.writeShortLE(interfaceController.state().selectedItemId);
-			networkSession.outgoing.writeShortLEAdd(interfaceController.state().selectedItemWidgetId);
-			networkSession.outgoing.writeShortAdd(cmd2);
-			networkSession.outgoing.writeShortAdd(cmd3);
-			markInventoryInteraction(cmd3, cmd2);
-		}
-		if (actionId == MenuState.CAST_SPELL_ON_INVENTORY_ITEM) {
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.CAST_SPELL_ON_INVENTORY_ITEM);
-			networkSession.outgoing.writeShort(interfaceController.state().selectedSpellWidgetId);
-			networkSession.outgoing.writeShortAdd(cmd3);
-			networkSession.outgoing.writeShortAdd(cmd2);
-			networkSession.outgoing.writeShortAdd(cmd1);
-			markInventoryInteraction(cmd3, cmd2);
-		}
-		if (actionId == MenuState.WIDGET_ITEM_OPTION_2) {
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_ITEM_OPTION_2);
-			networkSession.outgoing.writeShortAdd(cmd2);
-			networkSession.outgoing.writeShortLE(cmd1);
-			networkSession.outgoing.writeShortLE(cmd3);
-			markInventoryInteraction(cmd3, cmd2);
-		}
-		if (actionId == MenuState.INVENTORY_ITEM_OPTION_5) {
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.INVENTORY_ITEM_OPTION_5);
-			networkSession.outgoing.writeShortLE(cmd2);
-			networkSession.outgoing.writeShortLEAdd(cmd1);
-			networkSession.outgoing.writeShortLEAdd(cmd3);
-			markInventoryInteraction(cmd3, cmd2);
-		}
-		if (actionId == MenuState.WIDGET_ITEM_OPTION_5) {
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_ITEM_OPTION_5);
-			networkSession.outgoing.writeShortLEAdd(cmd2);
-			networkSession.outgoing.writeShortLEAdd(cmd1);
-			networkSession.outgoing.writeShortLE(cmd3);
-			markInventoryInteraction(cmd3, cmd2);
-		}
-		if (actionId == MenuState.INVENTORY_ITEM_OPTION_3) {
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.INVENTORY_ITEM_OPTION_3);
-			networkSession.outgoing.writeShortLEAdd(cmd2);
-			networkSession.outgoing.writeShortLEAdd(cmd1);
-			networkSession.outgoing.writeShortLE(cmd3);
-			markInventoryInteraction(cmd3, cmd2);
-		}
-		if (actionId == MenuState.EXAMINE_INVENTORY_ITEM) {
-			ItemDefinition itemDefinition = ItemDefinition.lookup(cmd1);
-			Widget widget = Widget.get(cmd3);
-			String description;
-			if (widget != null && widget.itemAmounts[cmd2] >= 0x186a0)
-				description = widget.itemAmounts[cmd2] + " x " + itemDefinition.name;
-			else if (itemDefinition.description != null)
-				description = new String(itemDefinition.description);
-			else
-				description = "It's a " + itemDefinition.name + ".";
-			addChatMessage("", description, ChatMessageType.GAME);
-		}
-		if (actionId == MenuState.WIDGET_ITEM_OPTION_3) {
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_ITEM_OPTION_3);
-			networkSession.outgoing.writeShortLE(cmd1);
-			networkSession.outgoing.writeShortLEAdd(cmd2);
-			networkSession.outgoing.writeShort(cmd3);
-			markInventoryInteraction(cmd3, cmd2);
-		}
-		if (actionId == MenuState.WIDGET_ITEM_OPTION_4) {
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_ITEM_OPTION_4);
-			networkSession.outgoing.writeShortLEAdd(cmd3);
-			networkSession.outgoing.writeShortLE(cmd2);
-			networkSession.outgoing.writeShort(cmd1);
-			markInventoryInteraction(cmd3, cmd2);
-		}
-		if (actionId == MenuState.SELECT_ITEM) {
-			interfaceController.state().itemSelected = 1;
-			interfaceController.state().selectedItemSlot = cmd2;
-			interfaceController.state().selectedItemWidgetId = cmd3;
-			interfaceController.state().selectedItemId = cmd1;
-			interfaceController.state().selectedItemName = String.valueOf(ItemDefinition.lookup(cmd1).name);
-			interfaceController.state().spellSelected = 0;
-			gameRenderer.requestSidebarRedraw();
-			return true;
-		}
-		return false;
-	}
+	
 
-	// Widget/button actions, including spell selection and CS1 varp buttons.
-	/**
-	 * Handles normalized menu actions targeting widgets and widget-config state.
-	 *
-	 * @param actionId  the normalized menu action identifier
-	 * @param cmd1      the cmd1
-	 * @param cmd2      the cmd2
-	 * @param cmd3      the cmd3
-	 * @param menuIndex the menu index
-	 * @return true when the requested condition/action succeeds; otherwise false
-	 */
-	private boolean dispatchWidgetMenuAction(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
-		if (actionId == MenuState.WIDGET_TOGGLE_VARP) {
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_CLICK);
-			networkSession.outgoing.writeShort(cmd3);
-			Widget widget = Widget.get(cmd3);
-			if (widget.cs1Instructions != null && widget.cs1Instructions[0][0] == 5) {
-				int varpId = widget.cs1Instructions[0][1];
-				varpState.toggleBinary(varpId);
-				applyVarp(varpId);
-				gameRenderer.requestSidebarRedraw();
-			}
-		}
-		if (actionId == MenuState.CLOSE_INTERFACE)
-			closeInterfaces();
-		if (actionId == MenuState.SELECT_SPELL) {
-			Widget spellWidget = Widget.get(cmd3);
-			interfaceController.state().spellSelected = 1;
-			interfaceController.state().selectedSpellWidgetId = cmd3;
-			interfaceController.state().selectedSpellTargetMask = spellWidget.spellUsableOn;
-			interfaceController.state().itemSelected = 0;
-			gameRenderer.requestSidebarRedraw();
-			String actionVerb = spellWidget.selectedActionName;
-			if (actionVerb.indexOf(" ") != -1)
-				actionVerb = actionVerb.substring(0, actionVerb.indexOf(" "));
-			String actionTarget = spellWidget.selectedActionName;
-			if (actionTarget.indexOf(" ") != -1)
-				actionTarget = actionTarget.substring(actionTarget.indexOf(" ") + 1);
-			interfaceController.state().selectedSpellAction = actionVerb + " " + spellWidget.spellName + " " + actionTarget;
-			if (interfaceController.state().selectedSpellTargetMask == 16) {
-				gameRenderer.requestSidebarRedraw();
-				gameRenderer.requestTabAreaRedraw();
-			}
-			return true;
-		}
-		if (actionId == MenuState.WIDGET_BUTTON) {
-			Widget actionWidget = Widget.get(cmd3);
-			boolean sendWidgetClick = true;
-			if (actionWidget.contentType > WidgetContentType.NONE)
-				sendWidgetClick = handleWidgetContentAction(actionWidget);
-			if (sendWidgetClick) {
-				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_CLICK);
-				networkSession.outgoing.writeShort(cmd3);
-			}
-		}
-		if (actionId == MenuState.WIDGET_CONTINUE && !interfaceController.actionPending()) {
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_CONTINUE);
-			networkSession.outgoing.writeShort(cmd3);
-			interfaceController.setActionPending(true);
-		}
-		if (actionId == MenuState.WIDGET_SET_VARP) {
-			networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.WIDGET_CLICK);
-			networkSession.outgoing.writeShort(cmd3);
-			Widget configWidget = Widget.get(cmd3);
-			if (configWidget.cs1Instructions != null && configWidget.cs1Instructions[0][0] == 5) {
-				int varpId2 = configWidget.cs1Instructions[0][1];
-				if (varpState.get(varpId2) != configWidget.cs1ComparisonValues[0]) {
-					varpState.set(varpId2, configWidget.cs1ComparisonValues[0]);
-					applyVarp(varpId2);
-					gameRenderer.requestSidebarRedraw();
-				}
-			}
-		}
-		if (actionId == MenuState.CLOSE_DIALOGUE) {
-			unloadInterface(interfaceController.state().dialogueInterfaceId);
-			gameRenderer.requestChatboxRedraw();
-		}
-		return false;
-	}
 
-	// Friend/ignore/message/report actions plus name-based player targeting.
-	/**
-	 * Handles normalized menu actions for friends, ignores, private messages, and
-	 * report abuse.
-	 *
-	 * @param actionId  the normalized menu action identifier
-	 * @param cmd1      the cmd1
-	 * @param cmd2      the cmd2
-	 * @param cmd3      the cmd3
-	 * @param menuIndex the menu index
-	 */
-	private void dispatchSocialMenuAction(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
-		if (actionId == MenuState.ADD_FRIEND || actionId == MenuState.ADD_IGNORE || actionId == MenuState.REMOVE_FRIEND || actionId == MenuState.REMOVE_IGNORE) {
-			String actionText = menuController.state().entry(menuIndex).text();
-			int markerIndex = actionText.indexOf("@whi@");
-			if (markerIndex != -1) {
-				long encodedName = Base37.encode(actionText.substring(markerIndex + 5).trim());
-				if (actionId == MenuState.ADD_FRIEND)
-					addFriend(encodedName);
-				if (actionId == MenuState.ADD_IGNORE)
-					addIgnore(encodedName);
-				if (actionId == MenuState.REMOVE_FRIEND)
-					removeFriend(encodedName);
-				if (actionId == MenuState.REMOVE_IGNORE)
-					removeIgnore(encodedName);
-			}
-		}
-		if (actionId == MenuState.ACCEPT_TRADE || actionId == MenuState.ACCEPT_CHALLENGE) {
-			String actionText2 = menuController.state().entry(menuIndex).text();
-			int markerIndex2 = actionText2.indexOf("@whi@");
-			if (markerIndex2 != -1) {
-				actionText2 = actionText2.substring(markerIndex2 + 5).trim();
-				String encodedName2 = TextFormatter.formatDisplayName(Base37.decode(Base37.encode(actionText2)));
-				boolean playerFound = false;
-				for (int activePlayerIndex = 0; activePlayerIndex < actorSynchronizer.playerCount; activePlayerIndex++) {
-					Player player = actorSynchronizer.players[actorSynchronizer.playerIndices[activePlayerIndex]];
-					if (player == null || player.name == null || !player.name.equalsIgnoreCase(encodedName2))
-						continue;
-					walkTo(false, ((Actor) (player)).pathX[0], ((Actor) (player)).pathY[0], 1, 1,
-							MovementPacketEncoder.INTERACTION, 0, 0, 0);
-					if (actionId == MenuState.ACCEPT_TRADE) {
-						networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.PLAYER_OPTION_4);
-						networkSession.outgoing.writeShortLE(actorSynchronizer.playerIndices[activePlayerIndex]);
-					}
-					if (actionId == MenuState.ACCEPT_CHALLENGE) {
-						networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.PLAYER_OPTION_1);
-						networkSession.outgoing.writeShortLEAdd(actorSynchronizer.playerIndices[activePlayerIndex]);
-					}
-					playerFound = true;
-					break;
-				}
 
-				if (!playerFound)
-					addChatMessage("", "Unable to find " + encodedName2, ChatMessageType.GAME);
-			}
-		}
-		if (actionId == MenuState.REPORT_ABUSE) {
-			String actionText3 = menuController.state().entry(menuIndex).text();
-			int markerIndex3 = actionText3.indexOf("@whi@");
-			if (markerIndex3 != -1)
-				if (interfaceController.state().openInterfaceId == -1) {
-					closeInterfaces();
-					interfaceController.setReportAbuseName(actionText3.substring(markerIndex3 + 5).trim());
-					interfaceController.setReportAbuseMutePlayer(false);
-					interfaceController.state().reportAbuseInterfaceId = interfaceController.state().openInterfaceId = Widget.reportAbuseInterfaceId;
-				} else {
-					addChatMessage("", "Please close the interface you have open before using 'report abuse'", ChatMessageType.GAME);
-				}
-		}
-		if (actionId == MenuState.MESSAGE_FRIEND) {
-			String actionText4 = menuController.state().entry(menuIndex).text();
-			int markerIndex4 = actionText4.indexOf("@whi@");
-			if (markerIndex4 != -1) {
-				long encodedName3 = Base37.encode(actionText4.substring(markerIndex4 + 5).trim());
-				int friendIndex = socialManager.findFriendIndex(encodedName3);
-
-				if (friendIndex != -1 && socialManager.friendWorlds[friendIndex] > 0) {
-					gameRenderer.requestChatboxRedraw();
-					chatController.openPrivateMessagePrompt(socialManager.friendEncodedNames[friendIndex],
-							socialManager.friendNames[friendIndex]);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Handles the remaining menu action that does not belong to a target-specific
-	 * group.
-	 *
-	 * @param actionId  the normalized menu action identifier
-	 * @param cmd1      the cmd1
-	 * @param cmd2      the cmd2
-	 * @param cmd3      the cmd3
-	 * @param menuIndex the menu index
-	 */
-	private void dispatchMiscMenuAction(int actionId, int cmd1, int cmd2, int cmd3, int menuIndex) {
-		if (actionId == MenuState.WALK_HERE)
-			if (!menuController.state().open)
-				worldState.scene.setClick(super.clickX - layout.viewportX(), super.clickY - layout.viewportY());
-			else
-				worldState.scene.setClick(cmd2 - layout.viewportX(), cmd3 - layout.viewportY());
-	}
-
+	
 
 	/** Builds the current actor-overlay rendering context.
 	 * @return current actor-overlay frame context
@@ -3813,34 +3006,53 @@ public class Client extends GameShell {
 		sceneEntityRenderer = new SceneEntityRenderer();
 		actorOverlayRenderer = new ActorOverlayRenderer();
 		gameRenderer = new GameRenderer();
-		actionDispatcher = new ClientActionDispatcher(menuController, chatController, interfaceController, gameRenderer,
-				(actionId, cmd1, cmd2, cmd3, menuIndex) -> {
-					dispatchPlayerMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
-					return false;
-				},
-				(actionId, cmd1, cmd2, cmd3, menuIndex) -> {
-					dispatchNpcMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
-					return false;
-				},
-				(actionId, cmd1, cmd2, cmd3, menuIndex) -> {
-					dispatchObjectMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
-					return false;
-				},
-				(actionId, cmd1, cmd2, cmd3, menuIndex) -> {
-					dispatchGroundItemMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
-					return false;
-				},
-				this::dispatchInventoryMenuAction, this::dispatchWidgetMenuAction,
-				(actionId, cmd1, cmd2, cmd3, menuIndex) -> {
-					dispatchSocialMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
-					return false;
-				},
-				(actionId, cmd1, cmd2, cmd3, menuIndex) -> {
-					dispatchMiscMenuAction(actionId, cmd1, cmd2, cmd3, menuIndex);
-					return false;
-				});
-		minimapRenderer = new MinimapRenderer();
 		regionManager = new RegionManager(dynamicObjects);
+		ClientActionDispatcher.Movement actionMovement = this::walkTo;
+		Runnable interactionCrosshair = this::markInteractionCrosshair;
+		ClientActionDispatcher.SocialListActions socialListActions = new ClientActionDispatcher.SocialListActions() {
+			@Override
+			public void addFriend(long encodedName) {
+				Client.this.addFriend(encodedName);
+			}
+
+			@Override
+			public void addIgnore(long encodedName) {
+				Client.this.addIgnore(encodedName);
+			}
+
+			@Override
+			public void removeFriend(long encodedName) {
+				Client.this.removeFriend(encodedName);
+			}
+
+			@Override
+			public void removeIgnore(long encodedName) {
+				Client.this.removeIgnore(encodedName);
+			}
+		};
+		PlayerActionHandler playerActionsHandler = new PlayerActionHandler(actorSynchronizer, networkSession.outgoing,
+				interfaceController, actionMovement, interactionCrosshair);
+		NpcActionHandler npcActionsHandler = new NpcActionHandler(actorSynchronizer, networkSession.outgoing,
+				interfaceController, actionMovement, interactionCrosshair, this::addChatMessage);
+		ObjectActionHandler objectActionsHandler = new ObjectActionHandler(networkSession.outgoing, interfaceController,
+				regionManager, () -> worldState, () -> currentPlane, actionMovement, interactionCrosshair,
+				this::addChatMessage);
+		GroundItemActionHandler groundItemActionsHandler = new GroundItemActionHandler(networkSession.outgoing,
+				interfaceController, regionManager, actionMovement, interactionCrosshair, this::addChatMessage);
+		InventoryActionHandler inventoryActionsHandler = new InventoryActionHandler(networkSession.outgoing, interfaceController,
+				gameRenderer, () -> inventoryClickCycle = 0, this::addChatMessage);
+		WidgetActionHandler widgetActionsHandler = new WidgetActionHandler(networkSession.outgoing, interfaceController, varpState,
+				gameRenderer, this::applyVarp, socialManager, chatController, appearanceEditor, interfaceRedrawSink,
+				value -> logoutTimer = value);
+		SocialActionHandler socialActionsHandler = new SocialActionHandler(menuController, socialManager,
+				actorSynchronizer, networkSession.outgoing, interfaceController, gameRenderer, chatController, actionMovement,
+				this::addChatMessage, socialListActions, interfaceRedrawSink);
+		WalkActionHandler walkActionsHandler = new WalkActionHandler(menuController, () -> worldState, layout,
+				() -> super.clickX, () -> super.clickY);
+		actionDispatcher = new ClientActionDispatcher(menuController, chatController, interfaceController, gameRenderer,
+				playerActionsHandler, npcActionsHandler, objectActionsHandler, groundItemActionsHandler,
+				inventoryActionsHandler, widgetActionsHandler, socialActionsHandler, walkActionsHandler);
+		minimapRenderer = new MinimapRenderer();
 		ClientScriptContext scriptContext = new ClientScriptContext(
 				skill -> currentSkillLevels[skill],
 				skill -> baseSkillLevels[skill],
@@ -4191,12 +3403,7 @@ public class Client extends GameShell {
 	ImageRGB hintMapMarker;
 
 	/** The current sidebar tooltip widget id. */
-	/**
-	 * Counts ground item action684 events for the original client timing/protocol
-	 * behavior.
-	 */
-	private static int groundItemAction684Counter;
-
+	
 	/** Stores base skill levels values. */
 	int baseSkillLevels[];
 	/**
@@ -4246,12 +3453,7 @@ public class Client extends GameShell {
 	private boolean invalidHostError;
 	/** Whether report abuse mute player is currently active or requested. */
 
-	/**
-	 * Counts ground item action26 events for the original client timing/protocol
-	 * behavior.
-	 */
-	private static int groundItemAction26Counter;
-	/**
+		/**
 	 * Tracks the current title flame cycle in client ticks/cycles where applicable.
 	 */
 	private int titleFlameCycle;
@@ -4273,12 +3475,7 @@ public class Client extends GameShell {
 	private int scrollbarHighlightColor;
 	/** Whether logged in is currently active or requested. */
 	volatile boolean loggedIn;
-	/**
-	 * Counts inventory action961 events for the original client timing/protocol
-	 * behavior.
-	 */
-	private static int inventoryAction961Counter;
-
+	
 	/** Stores moderator icons values. */
 	IndexedImage moderatorIcons[];
 	/** The client state for hint player index. */
@@ -4288,12 +3485,7 @@ public class Client extends GameShell {
 	IndexedImage mapSceneSprites[];
 	/** Whether inventory drag moved is currently active or requested. */
 	private boolean inventoryDragMoved;
-	/**
-	 * Counts inventory action227 events for the original client timing/protocol
-	 * behavior.
-	 */
-	private static int inventoryAction227Counter;
-
+	
 	/** The client state for account current day. */
 	int accountCurrentDay;
 
@@ -4347,11 +3539,7 @@ public class Client extends GameShell {
 	private Socket jaggrabSocket;
 	/** The client state for hint npc index. */
 	int hintNpcIndex;
-	/**
-	 * Counts npc action118 events for the original client timing/protocol behavior.
-	 */
-	private static int npcAction118Counter;
-	/**
+		/**
 	 * Counts screen redraw keepalive events for the original client timing/protocol
 	 * behavior.
 	 */

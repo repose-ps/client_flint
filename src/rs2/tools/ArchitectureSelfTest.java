@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 import rs2.Client;
 import rs2.action.ClientActionDispatcher;
 import rs2.net.Buffer;
+import rs2.net.NetworkSession;
 import rs2.ui.WidgetRenderer;
 import rs2.ui.menu.MenuEntry;
 import rs2.ui.menu.MenuState;
@@ -33,6 +34,18 @@ public final class ArchitectureSelfTest {
             "rs2.packet.AudioPacketHandler",
             "rs2.packet.ActorPacketHandler",
             "rs2.packet.ClientStatePacketHandler"
+    };
+
+    /** Cohesive menu-action effect handlers extracted during Phase 7.3. */
+    private static final String[] ACTION_HANDLER_CLASSES = {
+            "rs2.action.PlayerActionHandler",
+            "rs2.action.NpcActionHandler",
+            "rs2.action.ObjectActionHandler",
+            "rs2.action.GroundItemActionHandler",
+            "rs2.action.InventoryActionHandler",
+            "rs2.action.WidgetActionHandler",
+            "rs2.action.SocialActionHandler",
+            "rs2.action.WalkActionHandler"
     };
 
     /** Classes moved during the post-Phase-6 package cohesion sweep. */
@@ -94,7 +107,18 @@ public final class ArchitectureSelfTest {
             "resetCharacterAppearance",
             "getConfiguredHost",
             "drawActorOverlays",
-            "drawWorldHintIcon"
+            "drawWorldHintIcon",
+            "dispatchPlayerMenuAction",
+            "dispatchNpcMenuAction",
+            "dispatchObjectMenuAction",
+            "dispatchGroundItemMenuAction",
+            "dispatchInventoryMenuAction",
+            "dispatchWidgetMenuAction",
+            "dispatchSocialMenuAction",
+            "dispatchMiscMenuAction",
+            "walkToGameObject",
+            "markInventoryInteraction",
+            "handleWidgetContentAction"
     );
 
     /** Ambiguous pre-6.3 Buffer method names that must not reappear. */
@@ -208,6 +232,34 @@ public final class ArchitectureSelfTest {
         for (Constructor<?> constructor : dispatcher.getDeclaredConstructors()) {
             test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == Client.class),
                     "ClientActionDispatcher constructor does not accept Client");
+        }
+        for (String className : ACTION_HANDLER_CLASSES) {
+            try {
+                Class<?> handler = Class.forName(className);
+                test.check(ClientActionDispatcher.ActionHandler.class.isAssignableFrom(handler),
+                        className + " implements the action-handler contract");
+                for (Field field : handler.getDeclaredFields()) {
+                    test.check(field.getType() != Client.class,
+                            className + " field does not retain Client: " + field.getName());
+                    test.check(field.getType() != NetworkSession.class,
+                            className + " field does not retain NetworkSession: " + field.getName());
+                }
+                for (Constructor<?> constructor : handler.getDeclaredConstructors()) {
+                    test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == Client.class),
+                            className + " constructor does not accept Client");
+                    test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == NetworkSession.class),
+                            className + " constructor does not accept NetworkSession");
+                }
+            } catch (ClassNotFoundException exception) {
+                test.check(false, "action handler is present: " + className);
+            }
+        }
+        Set<String> clientFieldNames = Arrays.stream(Client.class.getDeclaredFields())
+                .map(Field::getName)
+                .collect(java.util.stream.Collectors.toSet());
+        for (String counter : Set.of("npcAction118Counter", "groundItemAction684Counter", "groundItemAction26Counter",
+                "inventoryAction227Counter", "inventoryAction961Counter")) {
+            test.check(!clientFieldNames.contains(counter), "action-local counter moved out of Client: " + counter);
         }
         long clientFields = Arrays.stream(Client.class.getDeclaredFields())
                 .filter(field -> field.getType() == ClientActionDispatcher.class)

@@ -8,12 +8,11 @@ import rs2.ui.menu.MenuEntry;
 import rs2.ui.menu.MenuState;
 
 /**
- * Package-level menu-action dispatcher for the application coordinator.
+ * Application-level menu-action dispatcher.
  *
  * <p>The dispatcher owns action normalization, dialog cancellation, explicit
- * domain routing, and the shared post-action item/spell selection cleanup. The
- * effect handlers remain callbacks during Phase 7.2 so subsequent milestones
- * can move those bodies by domain without changing this routing contract.</p>
+ * domain routing, and shared post-action item/spell selection cleanup. Cohesive
+ * action-effect handlers are injected by the application composition root.</p>
  */
 public final class ClientActionDispatcher {
 
@@ -31,6 +30,59 @@ public final class ClientActionDispatcher {
          * @return {@code true} when the action intentionally preserves selection state
          */
         boolean dispatch(int actionId, int argument0, int argument1, int argument2, int menuIndex);
+
+        /** Resets action-local transient counters for a full-login state reset. */
+        default void resetForLogin() {
+        }
+    }
+
+    /** Finds and writes a revision-377 movement route for an action target. */
+    @FunctionalInterface
+    public interface Movement {
+        /**
+         * Routes the local player to an interaction target.
+         *
+         * @param allowAlternative whether the original alternative-route fallback is allowed
+         * @param targetX target local tile X
+         * @param targetY target local tile Y
+         * @param targetWidth target width in tiles
+         * @param targetHeight target height in tiles
+         * @param movementType movement packet variant
+         * @param interactionType collision interaction type
+         * @param orientation target orientation
+         * @param accessMask rectangular-object access mask
+         * @return whether a route was found
+         */
+        boolean walkTo(boolean allowAlternative, int targetX, int targetY, int targetWidth, int targetHeight,
+                int movementType, int interactionType, int orientation, int accessMask);
+    }
+
+    /** Narrow social-list mutation capability used by social menu actions. */
+    public interface SocialListActions {
+        /**
+         * Adds a friend name.
+         *
+         * @param encodedName Base-37 encoded name
+         */
+        void addFriend(long encodedName);
+        /**
+         * Adds an ignored name.
+         *
+         * @param encodedName Base-37 encoded name
+         */
+        void addIgnore(long encodedName);
+        /**
+         * Removes a friend name.
+         *
+         * @param encodedName Base-37 encoded name
+         */
+        void removeFriend(long encodedName);
+        /**
+         * Removes an ignored name.
+         *
+         * @param encodedName Base-37 encoded name
+         */
+        void removeIgnore(long encodedName);
     }
 
     /** Menu state supplying the selected entry. */
@@ -133,8 +185,20 @@ public final class ClientActionDispatcher {
         gameRenderer.requestSidebarRedraw();
     }
 
+    /** Resets the transient anti-cheat counters owned by action domains. */
+    public void resetForLogin() {
+        playerHandler.resetForLogin();
+        npcHandler.resetForLogin();
+        objectHandler.resetForLogin();
+        groundItemHandler.resetForLogin();
+        inventoryHandler.resetForLogin();
+        widgetHandler.resetForLogin();
+        socialHandler.resetForLogin();
+        walkHandler.resetForLogin();
+    }
+
     /**
-     * Invokes a domain whose Phase 7.2 effect handler never preserves selection.
+     * Invokes a domain whose effect handler never preserves selection.
      *
      * @param handler domain callback
      * @param actionId normalized action ID
@@ -142,7 +206,8 @@ public final class ClientActionDispatcher {
      * @param menuIndex source menu index
      * @return always {@code false}
      */
-    private static boolean dispatchWithoutPreservingSelection(ActionHandler handler, int actionId, MenuEntry entry, int menuIndex) {
+    private static boolean dispatchWithoutPreservingSelection(ActionHandler handler, int actionId, MenuEntry entry,
+            int menuIndex) {
         handler.dispatch(actionId, entry.argument0(), entry.argument1(), entry.argument2(), menuIndex);
         return false;
     }

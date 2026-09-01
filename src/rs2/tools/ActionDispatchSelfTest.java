@@ -7,9 +7,14 @@ import java.util.Map;
 import java.util.Set;
 
 import rs2.action.ClientActionDispatcher;
+import rs2.action.PlayerActionHandler;
 import rs2.chat.ChatController;
 import rs2.chat.SocialManager;
+import rs2.game.ActorSynchronizer;
+import rs2.game.entity.Player;
 import rs2.game.render.GameRenderer;
+import rs2.net.MovementPacketEncoder;
+import rs2.net.NetworkSession;
 import rs2.ui.ClientLayout;
 import rs2.ui.InterfaceController;
 import rs2.ui.menu.MenuActionDomain;
@@ -20,9 +25,10 @@ import rs2.ui.menu.MenuState;
 /**
  * Permanent census of revision-377 menu-action routing.
  *
- * <p>The suite freezes the 7.1 action-domain boundary before action effects are
- * extracted from {@code Client}. It verifies every public action ID, including
- * low-priority encodings, belongs to exactly one intended application domain.</p>
+ * <p>The suite freezes the Phase 7 action-domain boundary and verifies every
+ * public action ID, including low-priority encodings, belongs to exactly one
+ * intended application domain. It also exercises dispatcher cleanup/reset
+ * semantics and representative behavior of extracted concrete handlers.</p>
  */
 public final class ActionDispatchSelfTest {
 
@@ -104,6 +110,8 @@ public final class ActionDispatchSelfTest {
         testMenuStateActionSurface(test, expectedIds);
         testUnknownActions(test);
         testDispatcherContract(test);
+        testDispatcherResetContract(test);
+        testConcretePlayerHandler(test);
         return test.checks();
     }
 
@@ -300,6 +308,116 @@ public final class ActionDispatchSelfTest {
         test.equal(interfaces.state().itemSelected, 0, "unknown action performs shared item cleanup");
         test.equal(interfaces.state().spellSelected, 0, "unknown action performs shared spell cleanup");
         test.check(renderer.sidebarRedrawPending(), "unknown action requests shared sidebar redraw");
+    }
+
+    /**
+     * Verifies the dispatcher fans full-login reset through every action domain.
+     *
+     * @param test assertion sink
+     */
+    private static void testDispatcherResetContract(SelfTestSupport test) {
+        InterfaceController interfaces = new InterfaceController();
+        ChatController chat = new ChatController();
+        GameRenderer renderer = new GameRenderer();
+        MenuController menus = new MenuController(new ClientLayout(), interfaces, new SocialManager(), chat, () -> 0,
+                emptyRedrawSink());
+        int[] resets = new int[8];
+        ClientActionDispatcher.ActionHandler[] handlers = new ClientActionDispatcher.ActionHandler[8];
+        for (int index = 0; index < handlers.length; index++) {
+            final int domain = index;
+            handlers[index] = new ClientActionDispatcher.ActionHandler() {
+                @Override
+                public boolean dispatch(int actionId, int argument0, int argument1, int argument2, int menuIndex) {
+                    return false;
+                }
+
+                @Override
+                public void resetForLogin() {
+                    resets[domain]++;
+                }
+            };
+        }
+        ClientActionDispatcher dispatcher = new ClientActionDispatcher(menus, chat, interfaces, renderer, handlers[0],
+                handlers[1], handlers[2], handlers[3], handlers[4], handlers[5], handlers[6], handlers[7]);
+        dispatcher.resetForLogin();
+        for (int index = 0; index < resets.length; index++) {
+            test.equal(resets[index], 1, "login reset reaches action domain " + index);
+        }
+    }
+
+    /**
+     * Exercises one concrete extracted target handler, including movement, crosshair,
+     * and transformed packet-field behavior.
+     *
+     * @param test assertion sink
+     */
+    private static void testConcretePlayerHandler(SelfTestSupport test) {
+        ActorSynchronizer actors = new ActorSynchronizer(() -> 0);
+        Player target = new Player(() -> 0);
+        target.pathX[0] = 50;
+        target.pathY[0] = 60;
+        actors.players[7] = target;
+        NetworkSession network = new NetworkSession();
+        network.initializeOpcodeCiphers(new int[] { 0, 0, 0, 0 });
+        InterfaceController interfaces = new InterfaceController();
+        int[] movement = new int[9];
+        int[] crosshair = new int[1];
+        PlayerActionHandler handler = new PlayerActionHandler(actors, network.outgoing, interfaces,
+                (allowAlternative, targetX, targetY, targetWidth, targetHeight, movementType, interactionType,
+                        orientation, accessMask) -> {
+                    movement[0]++;
+                    movement[1] = allowAlternative ? 1 : 0;
+                    movement[2] = targetX;
+                    movement[3] = targetY;
+                    movement[4] = targetWidth;
+                    movement[5] = targetHeight;
+                    movement[6] = movementType;
+                    movement[7] = interactionType;
+                    movement[8] = orientation | accessMask;
+                    return true;
+                },
+                () -> crosshair[0]++);
+        handler.dispatch(MenuState.PLAYER_OPTION_1, 7, 0, 0, 0);
+        test.equal(movement[0], 1, "player handler routes exactly once");
+        test.equal(movement[1], 0, "player handler disables alternative route");
+        test.equal(movement[2], 50, "player handler routes to target X");
+        test.equal(movement[3], 60, "player handler routes to target Y");
+        test.equal(movement[4], 1, "player handler uses one-tile target width");
+        test.equal(movement[5], 1, "player handler uses one-tile target height");
+        test.equal(movement[6], MovementPacketEncoder.INTERACTION, "player handler uses interaction movement packet");
+        test.equal(crosshair[0], 1, "player handler marks interaction crosshair");
+        test.equal(network.outgoing.position, 3, "player option 1 packet length");
+        test.equal(network.outgoing.payload[1] & 0xff, 135, "player option 1 transformed index low byte");
+        test.equal(network.outgoing.payload[2] & 0xff, 0, "player option 1 transformed index high byte");
+
+        int previousPosition = network.outgoing.position;
+        handler.dispatch(MenuState.PLAYER_OPTION_1, 8, 0, 0, 0);
+        test.equal(movement[0], 1, "missing player does not route");
+        test.equal(crosshair[0], 1, "missing player does not mark crosshair");
+        test.equal(network.outgoing.position, previousPosition, "missing player writes no packet");
+    }
+
+    /** Creates an inert interface redraw sink for action tests.
+     * @return redraw sink
+     */
+    private static InterfaceController.RedrawSink emptyRedrawSink() {
+        return new InterfaceController.RedrawSink() {
+            @Override
+            public void redrawSidebar() {
+            }
+
+            @Override
+            public void redrawTabs() {
+            }
+
+            @Override
+            public void redrawChatbox() {
+            }
+
+            @Override
+            public void redrawGameScreen() {
+            }
+        };
     }
 
     /**
