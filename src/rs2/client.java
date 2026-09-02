@@ -101,7 +101,7 @@ import rs2.ui.menu.MenuController;
  * owners extracted during earlier refactor steps.
  * </p>
  */
-public class Client extends GameShell {
+public class client extends GameShell {
 
 	/** Maximum X coordinate encoded by legacy revision-377 mouse telemetry. */
 	private static final int LEGACY_MOUSE_MAX_X = ClientLayout.FIXED_WIDTH - 1;
@@ -283,7 +283,7 @@ public class Client extends GameShell {
 			if (args.length >= 7)
 				Signlink.setCacheDirectory(args[6]);
 			Signlink.start(InetAddress.getByName(serverHost));
-			Client client1 = new Client();
+			client client1 = new client();
 			client1.createFrame(ClientLayout.FIXED_WIDTH, ClientLayout.FIXED_HEIGHT);
 			return;
 		} catch (Exception exception) {
@@ -325,7 +325,7 @@ public class Client extends GameShell {
 	}
 
 	/**
-	 * Processes clicks on the fixed sidebar-tab hit regions.
+	 * Processes clicks on the current fixed or resizable sidebar-tab hit regions.
 	 */
 	public void processTabClick() {
 		if (super.clickButton != 1)
@@ -1426,141 +1426,187 @@ public class Client extends GameShell {
 				networkSession.outgoing.writeByte(interfaceController.state().selectedTab);
 			}
 			gameRenderer.clearTabAreaRedraw();
-			gameRenderer.topTabsBuffer().bindRaster();
-			topTabBackground.draw(0, 0);
+			if (!layout.isResizableMode()) {
+				gameRenderer.topTabsBuffer().bindRaster();
+				topTabBackground.draw(0, 0);
+			} else {
+				gameRenderer.beginResizableTabsFrame();
+			}
 			if (interfaceController.state().sidebarOverlayInterfaceId == -1) {
 				if (interfaceController.state().tabInterfaceIds[interfaceController.state().selectedTab] != -1) {
 					if (interfaceController.state().selectedTab == 0)
-						redstone1.draw(layout.tabHighlightX(0), layout.tabHighlightY(0));
+						drawTabHighlight(redstone1, 0);
 					if (interfaceController.state().selectedTab == 1)
-						redstone2.draw(layout.tabHighlightX(1), layout.tabHighlightY(1));
+						drawTabHighlight(redstone2, 1);
 					if (interfaceController.state().selectedTab == 2)
-						redstone2.draw(layout.tabHighlightX(2), layout.tabHighlightY(2));
+						drawTabHighlight(redstone2, 2);
 					if (interfaceController.state().selectedTab == 3)
-						redstone3.draw(layout.tabHighlightX(3), layout.tabHighlightY(3));
+						drawTabHighlight(redstone3, 3);
 					if (interfaceController.state().selectedTab == 4)
-						redstone2Horizontal.draw(layout.tabHighlightX(4), layout.tabHighlightY(4));
+						drawTabHighlight(redstone2Horizontal, 4);
 					if (interfaceController.state().selectedTab == 5)
-						redstone2Horizontal.draw(layout.tabHighlightX(5), layout.tabHighlightY(5));
+						drawTabHighlight(redstone2Horizontal, 5);
 					if (interfaceController.state().selectedTab == 6)
-						redstone1Horizontal.draw(layout.tabHighlightX(6), layout.tabHighlightY(6));
+						drawTabHighlight(redstone1Horizontal, 6);
 				}
 				if (interfaceController.state().tabInterfaceIds[0] != -1
 						&& (interfaceController.state().flashingTab != 0 || gameCycle % 20 < 10))
-					sidebarIcons[0].draw(layout.tabIconX(0), layout.tabIconY(0));
+					drawTabIcon(sidebarIcons[0], 0);
 				if (interfaceController.state().tabInterfaceIds[1] != -1
 						&& (interfaceController.state().flashingTab != 1 || gameCycle % 20 < 10))
-					sidebarIcons[1].draw(layout.tabIconX(1), layout.tabIconY(1));
+					drawTabIcon(sidebarIcons[1], 1);
 				if (interfaceController.state().tabInterfaceIds[2] != -1
 						&& (interfaceController.state().flashingTab != 2 || gameCycle % 20 < 10))
-					sidebarIcons[2].draw(layout.tabIconX(2), layout.tabIconY(2));
+					drawTabIcon(sidebarIcons[2], 2);
 				if (interfaceController.state().tabInterfaceIds[3] != -1
 						&& (interfaceController.state().flashingTab != 3 || gameCycle % 20 < 10))
-					sidebarIcons[3].draw(layout.tabIconX(3), layout.tabIconY(3));
+					drawTabIcon(sidebarIcons[3], 3);
 				if (interfaceController.state().tabInterfaceIds[4] != -1
 						&& (interfaceController.state().flashingTab != 4 || gameCycle % 20 < 10))
-					sidebarIcons[4].draw(layout.tabIconX(4), layout.tabIconY(4));
+					drawTabIcon(sidebarIcons[4], 4);
 				if (interfaceController.state().tabInterfaceIds[5] != -1
 						&& (interfaceController.state().flashingTab != 5 || gameCycle % 20 < 10))
-					sidebarIcons[5].draw(layout.tabIconX(5), layout.tabIconY(5));
+					drawTabIcon(sidebarIcons[5], 5);
 				if (interfaceController.state().tabInterfaceIds[6] != -1
 						&& (interfaceController.state().flashingTab != 6 || gameCycle % 20 < 10))
-					sidebarIcons[6].draw(layout.tabIconX(6), layout.tabIconY(6));
+					drawTabIcon(sidebarIcons[6], 6);
 			}
-			gameRenderer.topTabsBuffer().draw(super.graphics, layout.topTabsX(), layout.topTabsY());
-			gameRenderer.bottomTabsBuffer().bindRaster();
-			bottomTabBackground.draw(0, 0);
+			if (!layout.isResizableMode()) {
+				gameRenderer.topTabsBuffer().draw(super.graphics, layout.topTabsX(), layout.topTabsY());
+				gameRenderer.bottomTabsBuffer().bindRaster();
+				bottomTabBackground.draw(0, 0);
+			}
 			if (interfaceController.state().sidebarOverlayInterfaceId == -1) {
 				if (interfaceController.state().tabInterfaceIds[interfaceController.state().selectedTab] != -1) {
 					if (interfaceController.state().selectedTab == 7)
-						redstone1Vertical.draw(layout.tabHighlightX(7), layout.tabHighlightY(7));
+						drawTabHighlight(redstone1Vertical, 7);
 					if (interfaceController.state().selectedTab == 8)
-						redstone2Vertical.draw(layout.tabHighlightX(8), layout.tabHighlightY(8));
+						drawTabHighlight(redstone2Vertical, 8);
 					if (interfaceController.state().selectedTab == 9)
-						redstone2Vertical.draw(layout.tabHighlightX(9), layout.tabHighlightY(9));
+						drawTabHighlight(redstone2Vertical, 9);
 					if (interfaceController.state().selectedTab == 10)
-						redstone3Vertical.draw(layout.tabHighlightX(10), layout.tabHighlightY(10));
+						drawTabHighlight(redstone3Vertical, 10);
 					if (interfaceController.state().selectedTab == 11)
-						redstone2Both.draw(layout.tabHighlightX(11), layout.tabHighlightY(11));
+						drawTabHighlight(redstone2Both, 11);
 					if (interfaceController.state().selectedTab == 12)
-						redstone2Both.draw(layout.tabHighlightX(12), layout.tabHighlightY(12));
+						drawTabHighlight(redstone2Both, 12);
 					if (interfaceController.state().selectedTab == 13)
-						redstone1Both.draw(layout.tabHighlightX(13), layout.tabHighlightY(13));
+						drawTabHighlight(redstone1Both, 13);
 				}
 				if (interfaceController.state().tabInterfaceIds[8] != -1
 						&& (interfaceController.state().flashingTab != 8 || gameCycle % 20 < 10))
-					sidebarIcons[7].draw(layout.tabIconX(8), layout.tabIconY(8));
+					drawTabIcon(sidebarIcons[7], 8);
 				if (interfaceController.state().tabInterfaceIds[9] != -1
 						&& (interfaceController.state().flashingTab != 9 || gameCycle % 20 < 10))
-					sidebarIcons[8].draw(layout.tabIconX(9), layout.tabIconY(9));
+					drawTabIcon(sidebarIcons[8], 9);
 				if (interfaceController.state().tabInterfaceIds[10] != -1
 						&& (interfaceController.state().flashingTab != 10 || gameCycle % 20 < 10))
-					sidebarIcons[9].draw(layout.tabIconX(10), layout.tabIconY(10));
+					drawTabIcon(sidebarIcons[9], 10);
 				if (interfaceController.state().tabInterfaceIds[11] != -1
 						&& (interfaceController.state().flashingTab != 11 || gameCycle % 20 < 10))
-					sidebarIcons[10].draw(layout.tabIconX(11), layout.tabIconY(11));
+					drawTabIcon(sidebarIcons[10], 11);
 				if (interfaceController.state().tabInterfaceIds[12] != -1
 						&& (interfaceController.state().flashingTab != 12 || gameCycle % 20 < 10))
-					sidebarIcons[11].draw(layout.tabIconX(12), layout.tabIconY(12));
+					drawTabIcon(sidebarIcons[11], 12);
 				if (interfaceController.state().tabInterfaceIds[13] != -1
 						&& (interfaceController.state().flashingTab != 13 || gameCycle % 20 < 10))
-					sidebarIcons[12].draw(layout.tabIconX(13), layout.tabIconY(13));
+					drawTabIcon(sidebarIcons[12], 13);
 			}
-			gameRenderer.bottomTabsBuffer().draw(super.graphics, layout.bottomTabsX(), layout.bottomTabsY());
+			if (!layout.isResizableMode()) {
+				gameRenderer.bottomTabsBuffer().draw(super.graphics, layout.bottomTabsX(), layout.bottomTabsY());
+			} else {
+				gameRenderer.drawResizableTabsFrame(super.graphics, layout);
+			}
 			gameRenderer.viewportBuffer().bindRaster();
 			gameRenderer.bindViewport();
 		}
 		if (gameRenderer.chatModesRedrawPending()) {
 			gameRenderer.clearChatModesRedraw();
-			gameRenderer.chatModesBuffer().bindRaster();
-			chatModesBackground.draw(0, 0);
-			plainFont.drawCenteredTextWithTags("Public chat", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC),
+			if (!layout.isResizableMode()) {
+				gameRenderer.chatModesBuffer().bindRaster();
+				chatModesBackground.draw(0, 0);
+			} else {
+				gameRenderer.bindResizableChatModes();
+			}
+			plainFont.drawCenteredTextWithTags("Public chat", chatModeRenderTextCenterX(ClientLayout.CHAT_MODE_PUBLIC),
 					layout.chatModeLabelY(ClientLayout.CHAT_MODE_PUBLIC), 0xffffff, true);
 			if (chatController.publicMode() == ChatMode.ON)
-				plainFont.drawCenteredTextWithTags("On", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC),
+				plainFont.drawCenteredTextWithTags("On", chatModeRenderTextCenterX(ClientLayout.CHAT_MODE_PUBLIC),
 						layout.chatModeStatusY(), 65280, true);
 			if (chatController.publicMode() == ChatMode.FRIENDS)
-				plainFont.drawCenteredTextWithTags("Friends", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC),
+				plainFont.drawCenteredTextWithTags("Friends", chatModeRenderTextCenterX(ClientLayout.CHAT_MODE_PUBLIC),
 						layout.chatModeStatusY(), 0xffff00, true);
 			if (chatController.publicMode() == ChatMode.OFF)
-				plainFont.drawCenteredTextWithTags("Off", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC),
+				plainFont.drawCenteredTextWithTags("Off", chatModeRenderTextCenterX(ClientLayout.CHAT_MODE_PUBLIC),
 						layout.chatModeStatusY(), 0xff0000, true);
 			if (chatController.publicMode() == ChatMode.HIDE)
-				plainFont.drawCenteredTextWithTags("Hide", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PUBLIC),
+				plainFont.drawCenteredTextWithTags("Hide", chatModeRenderTextCenterX(ClientLayout.CHAT_MODE_PUBLIC),
 						layout.chatModeStatusY(), 65535, true);
 			plainFont.drawCenteredTextWithTags("Private chat",
-					layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PRIVATE),
+					chatModeRenderTextCenterX(ClientLayout.CHAT_MODE_PRIVATE),
 					layout.chatModeLabelY(ClientLayout.CHAT_MODE_PRIVATE), 0xffffff, true);
 			if (chatController.privateMode() == ChatMode.ON)
-				plainFont.drawCenteredTextWithTags("On", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PRIVATE),
+				plainFont.drawCenteredTextWithTags("On", chatModeRenderTextCenterX(ClientLayout.CHAT_MODE_PRIVATE),
 						layout.chatModeStatusY(), 65280, true);
 			if (chatController.privateMode() == ChatMode.FRIENDS)
 				plainFont.drawCenteredTextWithTags("Friends",
-						layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PRIVATE), layout.chatModeStatusY(), 0xffff00,
+						chatModeRenderTextCenterX(ClientLayout.CHAT_MODE_PRIVATE), layout.chatModeStatusY(), 0xffff00,
 						true);
 			if (chatController.privateMode() == ChatMode.OFF)
-				plainFont.drawCenteredTextWithTags("Off", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_PRIVATE),
+				plainFont.drawCenteredTextWithTags("Off", chatModeRenderTextCenterX(ClientLayout.CHAT_MODE_PRIVATE),
 						layout.chatModeStatusY(), 0xff0000, true);
 			plainFont.drawCenteredTextWithTags("Trade/compete",
-					layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_TRADE),
+					chatModeRenderTextCenterX(ClientLayout.CHAT_MODE_TRADE),
 					layout.chatModeLabelY(ClientLayout.CHAT_MODE_TRADE), 0xffffff, true);
 			if (chatController.tradeMode() == ChatMode.ON)
-				plainFont.drawCenteredTextWithTags("On", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_TRADE),
+				plainFont.drawCenteredTextWithTags("On", chatModeRenderTextCenterX(ClientLayout.CHAT_MODE_TRADE),
 						layout.chatModeStatusY(), 65280, true);
 			if (chatController.tradeMode() == ChatMode.FRIENDS)
-				plainFont.drawCenteredTextWithTags("Friends", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_TRADE),
+				plainFont.drawCenteredTextWithTags("Friends", chatModeRenderTextCenterX(ClientLayout.CHAT_MODE_TRADE),
 						layout.chatModeStatusY(), 0xffff00, true);
 			if (chatController.tradeMode() == ChatMode.OFF)
-				plainFont.drawCenteredTextWithTags("Off", layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_TRADE),
+				plainFont.drawCenteredTextWithTags("Off", chatModeRenderTextCenterX(ClientLayout.CHAT_MODE_TRADE),
 						layout.chatModeStatusY(), 0xff0000, true);
 			plainFont.drawCenteredTextWithTags("Report abuse",
-					layout.chatModeTextCenterX(ClientLayout.CHAT_MODE_REPORT_ABUSE),
+					chatModeRenderTextCenterX(ClientLayout.CHAT_MODE_REPORT_ABUSE),
 					layout.chatModeLabelY(ClientLayout.CHAT_MODE_REPORT_ABUSE), 0xffffff, true);
-			gameRenderer.chatModesBuffer().draw(super.graphics, layout.chatModesX(), layout.chatModesY());
+			if (!layout.isResizableMode()) {
+				gameRenderer.chatModesBuffer().draw(super.graphics, layout.chatModesX(), layout.chatModesY());
+			} else {
+				gameRenderer.drawResizableChatModes(super.graphics, layout);
+			}
 			gameRenderer.viewportBuffer().bindRaster();
 			gameRenderer.bindViewport();
 		}
 		animationCycleDelta = 0;
+	}
+
+	/** Draws a selected-tab highlight into the active fixed or resizable strip. */
+	private void drawTabHighlight(IndexedImage highlight, int tab) {
+		int x = layout.tabHighlightX(tab);
+		int y = layout.tabHighlightY(tab);
+		if (!layout.isResizableMode()) {
+			highlight.draw(x, y);
+			return;
+		}
+		gameRenderer.drawResizableTabSprite(highlight, tab, x, y);
+	}
+
+	/** Draws one sidebar icon into the active fixed or resizable tab strip. */
+	private void drawTabIcon(IndexedImage icon, int tab) {
+		int x = layout.tabIconX(tab);
+		int y = layout.tabIconY(tab);
+		if (!layout.isResizableMode()) {
+			icon.draw(x, y);
+			return;
+		}
+		gameRenderer.drawResizableTabSprite(icon, tab, x, y);
+	}
+
+	/** Returns the chat-mode text center in whichever raster is currently bound. */
+	private int chatModeRenderTextCenterX(int button) {
+		return layout.isResizableMode() ? layout.resizableChatModeTextCenterX(button)
+				: layout.chatModeTextCenterX(button);
 	}
 
 	/**
@@ -3044,7 +3090,7 @@ public class Client extends GameShell {
 	 * Initializes a Client instance and wires the extracted subsystem owners and
 	 * callbacks.
 	 */
-	public Client() {
+	public client() {
 		skillExperiences = new int[Skills.COUNT];
 		itemSearchQuery = "";
 		itemSearchResultNames = new String[100];
@@ -3101,22 +3147,22 @@ public class Client extends GameShell {
 		ClientActionDispatcher.SocialListActions socialListActions = new ClientActionDispatcher.SocialListActions() {
 			@Override
 			public void addFriend(long encodedName) {
-				Client.this.addFriend(encodedName);
+				client.this.addFriend(encodedName);
 			}
 
 			@Override
 			public void addIgnore(long encodedName) {
-				Client.this.addIgnore(encodedName);
+				client.this.addIgnore(encodedName);
 			}
 
 			@Override
 			public void removeFriend(long encodedName) {
-				Client.this.removeFriend(encodedName);
+				client.this.removeFriend(encodedName);
 			}
 
 			@Override
 			public void removeIgnore(long encodedName) {
-				Client.this.removeIgnore(encodedName);
+				client.this.removeIgnore(encodedName);
 			}
 		};
 		ActionPacketEncoder actionPackets = new ActionPacketEncoder(networkSession.outgoing);
@@ -3411,7 +3457,7 @@ public class Client extends GameShell {
 		 */
 		@Override
 		public void addChatMessage(String sender, String message, int type) {
-			Client.this.addChatMessage(sender, message, type);
+			client.this.addChatMessage(sender, message, type);
 		}
 	};
 	/** The client state for local player server index. */

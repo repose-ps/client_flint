@@ -7,9 +7,10 @@ package rs2.ui;
  * <p>
  * The original 765x503 layout remains the minimum size. In resizable mode the
  * software-rendered game viewport becomes a full-window underlay. The
- * right-hand minimap/tab/sidebar cluster keeps its original fixed geometry and
- * is anchored to the right edge, while the chatbox and chat-mode strip stay
- * anchored to the bottom edge.
+ * resizable HUD is composed from three independent fixed-size boxes over that
+ * underlay: the minimap anchors to the top-right, the tab/sidebar enclosure to
+ * the bottom-right, and the chat enclosure to the bottom-left. The existing
+ * minimap, sidebar and chat software surfaces keep their classic dimensions.
  * </p>
  */
 public final class ClientLayout {
@@ -51,6 +52,64 @@ public final class ClientLayout {
 	public static final int CHAT_MODES_WIDTH = 496;
 	/** Constant value for chat modes height. */
 	public static final int CHAT_MODES_HEIGHT = 50;
+
+	/** Width of the complete resizable minimap frame. */
+	public static final int RESIZABLE_MINIMAP_FRAME_WIDTH = 249;
+	/** Height of the complete resizable minimap frame. */
+	public static final int RESIZABLE_MINIMAP_FRAME_HEIGHT = 169;
+	/** Minimap content inset from the left edge of its resizable frame. */
+	public static final int RESIZABLE_MINIMAP_CONTENT_X = 34;
+	/** Minimap content inset from the top edge of its resizable frame. */
+	public static final int RESIZABLE_MINIMAP_CONTENT_Y = 4;
+
+	/** Width of the complete resizable tab/sidebar frame. */
+	public static final int RESIZABLE_TABS_FRAME_WIDTH = 249;
+	/** Height of the complete resizable tab/sidebar frame. */
+	public static final int RESIZABLE_TABS_FRAME_HEIGHT = 337;
+	/** Sidebar content inset from the left edge of its resizable frame. */
+	public static final int RESIZABLE_TABS_CONTENT_X = 37;
+	/** Sidebar content inset from the top edge of its resizable frame. */
+	public static final int RESIZABLE_TABS_CONTENT_Y = 39;
+	/** Width of each resizable top/bottom tab strip. */
+	public static final int RESIZABLE_TAB_STRIP_WIDTH = 191;
+	/** Height of the resizable top tab strip. */
+	public static final int RESIZABLE_TOP_TAB_STRIP_HEIGHT = 39;
+	/** Height of the resizable bottom tab strip. */
+	public static final int RESIZABLE_BOTTOM_TAB_STRIP_HEIGHT = 37;
+
+	/**
+	 * Source X of {@code resizable_tabs_top} inside the original 249x45
+	 * {@code tabstopborder} image.
+	 */
+	public static final int RESIZABLE_TOP_TABS_SOURCE_X = 37;
+	/**
+	 * Source Y of {@code resizable_tabs_top} inside the original 249x45
+	 * {@code tabstopborder} image.
+	 */
+	public static final int RESIZABLE_TOP_TABS_SOURCE_Y = 6;
+	/**
+	 * Original bottom-tab X represented by the left edge of the resizable frame.
+	 */
+	public static final int RESIZABLE_BOTTOM_TABS_FRAME_SOURCE_X = 19;
+	/**
+	 * Source X of {@code resizable_tabs_bottom} inside the original 269x37
+	 * {@code tabsbottomborder} image.
+	 */
+	public static final int RESIZABLE_BOTTOM_TABS_SOURCE_X = 56;
+	/**
+	 * Source X represented by the resizable right frame piece at the bottom.
+	 * The custom pieces intentionally skip one source column at their seam.
+	 */
+	public static final int RESIZABLE_BOTTOM_TABS_RIGHT_SOURCE_X = 247;
+
+	/** Width of the complete resizable chat frame. */
+	public static final int RESIZABLE_CHAT_FRAME_WIDTH = 516;
+	/** Height of the complete resizable chat frame. */
+	public static final int RESIZABLE_CHAT_FRAME_HEIGHT = 165;
+	/** Chatbox content inset from the left edge of its resizable frame. */
+	public static final int RESIZABLE_CHAT_CONTENT_X = 17;
+	/** Chatbox content inset from the top edge of its resizable frame. */
+	public static final int RESIZABLE_CHAT_CONTENT_Y = 19;
 
 	/** Width of the clipped chat-message text area inside the chatbox. */
 	public static final int CHATBOX_MESSAGE_CLIP_WIDTH = 463;
@@ -309,7 +368,7 @@ public final class ClientLayout {
 	 * @return the viewport width not covered by the right-hand HUD dock
 	 */
 	public int unobscuredViewportWidth() {
-		return isResizableMode() ? sidebarX() - viewportX() : FIXED_VIEWPORT_WIDTH;
+		return isResizableMode() ? tabsFrameX() - viewportX() : FIXED_VIEWPORT_WIDTH;
 	}
 
 	/**
@@ -318,17 +377,17 @@ public final class ClientLayout {
 	 * @return the viewport height above the bottom chat HUD
 	 */
 	public int unobscuredViewportHeight() {
-		return isResizableMode() ? chatboxY() - viewportY() : FIXED_VIEWPORT_HEIGHT;
+		return isResizableMode() ? chatFrameY() - viewportY() : FIXED_VIEWPORT_HEIGHT;
 	}
 
-	/* Right-hand dock: preserve the original vertical geometry, anchor only X. */
+	/* Resizable minimap stays top-right; tabs/sidebar are independently bottom-right. */
 	/**
 	 * Returns the left edge of the minimap dock.
 	 *
 	 * @return the minimap X coordinate
 	 */
 	public int minimapX() {
-		return MINIMAP_X + extraWidth();
+		return isResizableMode() ? minimapFrameX() + RESIZABLE_MINIMAP_CONTENT_X : MINIMAP_X;
 	}
 
 	/**
@@ -337,7 +396,7 @@ public final class ClientLayout {
 	 * @return the minimap Y
 	 */
 	public int minimapY() {
-		return MINIMAP_Y;
+		return isResizableMode() ? RESIZABLE_MINIMAP_CONTENT_Y : MINIMAP_Y;
 	}
 
 	/**
@@ -346,7 +405,7 @@ public final class ClientLayout {
 	 * @return the top-tab X coordinate
 	 */
 	public int topTabsX() {
-		return TOP_TABS_X + extraWidth();
+		return isResizableMode() ? sidebarX() : TOP_TABS_X;
 	}
 
 	/**
@@ -355,7 +414,7 @@ public final class ClientLayout {
 	 * @return the converted value
 	 */
 	public int topTabsY() {
-		return TOP_TABS_Y;
+		return isResizableMode() ? tabsFrameY() : TOP_TABS_Y;
 	}
 
 	/**
@@ -364,7 +423,7 @@ public final class ClientLayout {
 	 * @return the sidebar X coordinate
 	 */
 	public int sidebarX() {
-		return SIDEBAR_X + extraWidth();
+		return isResizableMode() ? tabsFrameX() + RESIZABLE_TABS_CONTENT_X : SIDEBAR_X;
 	}
 
 	/**
@@ -373,7 +432,7 @@ public final class ClientLayout {
 	 * @return the sidebar Y
 	 */
 	public int sidebarY() {
-		return SIDEBAR_Y;
+		return isResizableMode() ? tabsFrameY() + RESIZABLE_TABS_CONTENT_Y : SIDEBAR_Y;
 	}
 
 	/**
@@ -382,7 +441,7 @@ public final class ClientLayout {
 	 * @return the bottom-tab X coordinate
 	 */
 	public int bottomTabsX() {
-		return BOTTOM_TABS_X + extraWidth();
+		return isResizableMode() ? sidebarX() : BOTTOM_TABS_X;
 	}
 
 	/**
@@ -391,17 +450,17 @@ public final class ClientLayout {
 	 * @return the bottom tabs Y
 	 */
 	public int bottomTabsY() {
-		return BOTTOM_TABS_Y;
+		return isResizableMode() ? height - RESIZABLE_BOTTOM_TAB_STRIP_HEIGHT : BOTTOM_TABS_Y;
 	}
 
-	/* Bottom HUD: preserve the original horizontal geometry, anchor only Y. */
+	/* Chat content preserves its classic local geometry inside a bottom-left frame. */
 	/**
 	 * Returns the chatbox X coordinate.
 	 *
 	 * @return the chatbox X
 	 */
 	public int chatboxX() {
-		return CHATBOX_X;
+		return isResizableMode() ? chatFrameX() + RESIZABLE_CHAT_CONTENT_X : CHATBOX_X;
 	}
 
 	/**
@@ -410,7 +469,7 @@ public final class ClientLayout {
 	 * @return the chatbox Y coordinate
 	 */
 	public int chatboxY() {
-		return CHATBOX_Y + extraHeight();
+		return isResizableMode() ? chatFrameY() + RESIZABLE_CHAT_CONTENT_Y : CHATBOX_Y;
 	}
 
 	/**
@@ -428,7 +487,69 @@ public final class ClientLayout {
 	 * @return the chat-mode Y coordinate
 	 */
 	public int chatModesY() {
-		return CHAT_MODES_Y + extraHeight();
+		return isResizableMode() ? height - CHAT_MODES_HEIGHT : CHAT_MODES_Y;
+	}
+
+	/** Returns the left edge of the resizable minimap frame. */
+	public int minimapFrameX() {
+		return width - RESIZABLE_MINIMAP_FRAME_WIDTH;
+	}
+
+	/** Returns the top edge of the resizable minimap frame. */
+	public int minimapFrameY() {
+		return 0;
+	}
+
+	/** Returns the left edge of the bottom-right resizable tab/sidebar frame. */
+	public int tabsFrameX() {
+		return width - RESIZABLE_TABS_FRAME_WIDTH;
+	}
+
+	/** Returns the top edge of the bottom-right resizable tab/sidebar frame. */
+	public int tabsFrameY() {
+		return height - RESIZABLE_TABS_FRAME_HEIGHT;
+	}
+
+	/** Returns the left edge of the bottom-left resizable chat frame. */
+	public int chatFrameX() {
+		return 0;
+	}
+
+	/** Returns the top edge of the bottom-left resizable chat frame. */
+	public int chatFrameY() {
+		return height - RESIZABLE_CHAT_FRAME_HEIGHT;
+	}
+
+	/** Screen X at which the resizable chat-mode background is drawn. */
+	public int resizableChatModesX() {
+		return chatboxX();
+	}
+
+	/**
+	 * Converts a classic chat-mode text X coordinate into the custom bottom-strip
+	 * raster, whose left edge starts at the chatbox inset.
+	 */
+	public int resizableChatModeTextCenterX(int button) {
+		return chatModeTextCenterX(button) - RESIZABLE_CHAT_CONTENT_X;
+	}
+
+	/** Returns the local left edge of one of seven equally-spaced resizable tabs. */
+	public int resizableTabCellLeft(int tab) {
+		int localTab = requireTab(tab) % 7;
+		return localTab * RESIZABLE_TAB_STRIP_WIDTH / 7;
+	}
+
+	/** Returns the local width of one resizable tab cell. */
+	public int resizableTabCellWidth(int tab) {
+		int localTab = requireTab(tab) % 7;
+		int left = localTab * RESIZABLE_TAB_STRIP_WIDTH / 7;
+		int right = (localTab + 1) * RESIZABLE_TAB_STRIP_WIDTH / 7;
+		return right - left;
+	}
+
+	/** Returns the height of the top or bottom resizable strip containing a tab. */
+	public int resizableTabStripHeight(int tab) {
+		return requireTab(tab) < 7 ? RESIZABLE_TOP_TAB_STRIP_HEIGHT : RESIZABLE_BOTTOM_TAB_STRIP_HEIGHT;
 	}
 
 	/**
@@ -554,6 +675,11 @@ public final class ClientLayout {
 	 * @return whether the point lies in the spell-selection tab region
 	 */
 	public boolean isTopTabsSpellBlockPoint(int x, int y) {
+		if (isResizableMode()) {
+			return x >= tabsFrameX() && y >= tabsFrameY()
+					&& x <= tabsFrameX() + RESIZABLE_TABS_FRAME_WIDTH
+					&& y <= tabsFrameY() + RESIZABLE_TOP_TAB_STRIP_HEIGHT;
+		}
 		return x >= topTabsX() && y >= topTabsY() && x <= topTabsX() + TOP_TABS_WIDTH
 				&& y <= topTabsY() + TOP_TABS_HEIGHT;
 	}
@@ -589,7 +715,7 @@ public final class ClientLayout {
 	 */
 	public boolean isChatboxMessageMenuPoint(int x, int y) {
 		return isChatboxInteractionPoint(x, y) && y < chatboxY() + CHATBOX_MESSAGE_HEIGHT
-				&& x < CHATBOX_MESSAGE_MENU_RIGHT_X;
+				&& x < chatboxX() + (CHATBOX_MESSAGE_MENU_RIGHT_X - CHATBOX_X);
 	}
 
 	/**
@@ -600,7 +726,8 @@ public final class ClientLayout {
 	 * @return whether scrollbar processing should inspect the point
 	 */
 	public boolean isChatboxScrollbarInputCandidate(int x, int y) {
-		return x > CHATBOX_SCROLL_INPUT_LEFT_X && x < CHATBOX_SCROLL_INPUT_RIGHT_X
+		int xOffset = chatboxX() - CHATBOX_X;
+		return x > CHATBOX_SCROLL_INPUT_LEFT_X + xOffset && x < CHATBOX_SCROLL_INPUT_RIGHT_X + xOffset
 				&& y > chatboxY() - CHATBOX_SCROLL_INPUT_TOP_MARGIN;
 	}
 
@@ -616,6 +743,14 @@ public final class ClientLayout {
 	public boolean isViewportInteractionPoint(int x, int y) {
 		if (!contains(x, y, viewportX(), viewportY(), viewportWidth(), viewportHeight()))
 			return false;
+		if (isResizableMode()) {
+			return !contains(x, y, minimapFrameX(), minimapFrameY(), RESIZABLE_MINIMAP_FRAME_WIDTH,
+					RESIZABLE_MINIMAP_FRAME_HEIGHT)
+					&& !contains(x, y, tabsFrameX(), tabsFrameY(), RESIZABLE_TABS_FRAME_WIDTH,
+							RESIZABLE_TABS_FRAME_HEIGHT)
+					&& !contains(x, y, chatFrameX(), chatFrameY(), RESIZABLE_CHAT_FRAME_WIDTH,
+							RESIZABLE_CHAT_FRAME_HEIGHT);
+		}
 		return !contains(x, y, minimapX(), minimapY(), MINIMAP_WIDTH, MINIMAP_HEIGHT)
 				&& !contains(x, y, sidebarX(), sidebarY(), SIDEBAR_WIDTH, SIDEBAR_HEIGHT)
 				&& !contains(x, y, topTabsX(), topTabsY(), TOP_TABS_WIDTH, TOP_TABS_HEIGHT)
@@ -657,20 +792,45 @@ public final class ClientLayout {
 	}
 
 	/**
-	 * Tests whether the supplied screen coordinate falls within one classic
-	 * sidebar-tab hitbox.
+	 * Tests whether the supplied screen coordinate falls within one sidebar-tab
+	 * hitbox. Fixed mode uses the classic rectangles; resizable mode divides each
+	 * custom strip into seven cells.
 	 *
 	 * @param tab tab index 0..13
 	 * @param x   screen X coordinate
 	 * @param y   screen Y coordinate
-	 * @return whether the point lies in that tab's original fixed-layout hitbox
+	 * @return whether the point lies in that tab's current-layout hitbox
 	 */
 	public boolean isTabHit(int tab, int x, int y) {
 		if (tab < 0 || tab >= TAB_HITBOXES.length)
 			return false;
+
+		int localX;
+		int localY;
+		if (!isResizableMode()) {
+			localX = x - (tab < 7 ? topTabsX() : bottomTabsX());
+			localY = y - (tab < 7 ? topTabsY() : bottomTabsY());
+		} else if (tab < 7) {
+			/*
+			 * The complete top edge of the custom frame is the original 249px tab
+			 * background with its first six rows removed. Map the mouse back into that
+			 * original raster so the legacy hit rectangles still match the artwork.
+			 */
+			localX = x - tabsFrameX();
+			localY = y - tabsFrameY() + RESIZABLE_TOP_TABS_SOURCE_Y;
+		} else {
+			/*
+			 * The bottom frame corresponds to original bottom-tab columns 19..268.
+			 * Its right piece skips one source column at the overlap seam.
+			 */
+			int frameX = x - tabsFrameX();
+			localX = frameX + RESIZABLE_BOTTOM_TABS_FRAME_SOURCE_X;
+			if (frameX >= RESIZABLE_TABS_CONTENT_X + RESIZABLE_TAB_STRIP_WIDTH)
+				localX++;
+			localY = y - bottomTabsY();
+		}
+
 		int[] bounds = TAB_HITBOXES[tab];
-		int localX = x - (tab < 7 ? topTabsX() : bottomTabsX());
-		int localY = y - (tab < 7 ? topTabsY() : bottomTabsY());
 		return containsExclusive(localX, localY, bounds[0], bounds[2], bounds[1], bounds[3]);
 	}
 

@@ -11,13 +11,13 @@ import rs2.sign.Signlink;
  *
  * <p>
  * This is the only packet application type allowed to see package-level
- * {@link Client} state. It translates that state into narrow domain bindings
+ * {@link client} state. It translates that state into narrow domain bindings
  * and delegates recognized packet effects to {@link PacketDomainDispatcher}.
  * </p>
  */
 final class ClientPacketDispatcher implements IncomingPacketHandler {
 	/** Application coordinator exposed only at this package boundary. */
-	private final Client client;
+	private final client client;
 	/** Packet-domain facade built from narrow bindings. */
 	private final PacketDomainDispatcher domains;
 
@@ -26,14 +26,14 @@ final class ClientPacketDispatcher implements IncomingPacketHandler {
 	 *
 	 * @param client application coordinator
 	 */
-	ClientPacketDispatcher(Client client) {
+	ClientPacketDispatcher(client client) {
 		this.client = client;
 		domains = new PacketDomainDispatcher(
 				new PacketDomainDispatcher.InterfaceBindings(client.interfaceController, client.widgetRuntime,
-						client.chatController, () -> Client.localPlayer, client.playerActions,
+						client.chatController, () -> client.localPlayer, client.playerActions,
 						client.playerActionLowPriority, client::unloadInterface, client.interfaceRedrawSink),
 				new PacketDomainDispatcher.SocialBindings(client.socialManager, client.chatController,
-						() -> client.tutorialIslandFlag, () -> Client.currentWorldId, client::addChatMessage,
+						() -> client.tutorialIslandFlag, () -> client.currentWorldId, client::addChatMessage,
 						(lastPasswordChange, currentDay, unreadMessages, loginDay, memberDays, loginIp,
 								recoveryDate) -> {
 							client.lastPasswordChangeDate = lastPasswordChange;
@@ -55,7 +55,7 @@ final class ClientPacketDispatcher implements IncomingPacketHandler {
 
 							@Override
 							public int gameCycle() {
-								return Client.gameCycle;
+								return client.gameCycle;
 							}
 
 							@Override
@@ -65,7 +65,7 @@ final class ClientPacketDispatcher implements IncomingPacketHandler {
 
 							@Override
 							public rs2.game.entity.Player localPlayer() {
-								return Client.localPlayer;
+								return client.localPlayer;
 							}
 
 							@Override
@@ -90,8 +90,8 @@ final class ClientPacketDispatcher implements IncomingPacketHandler {
 							}
 						},
 						(soundId, loops, radius, tileX, tileY) -> client.soundEffectQueue.queueAreaSound(soundId, loops,
-								radius, tileX, tileY, Client.localPlayer.pathX[0], Client.localPlayer.pathY[0],
-								Client.lowMemory),
+								radius, tileX, tileY, client.localPlayer.pathX[0], client.localPlayer.pathY[0],
+								client.lowMemory),
 						() -> client.drawGameLoadingMessage(null, "Loading - please wait.")),
 				new PacketDomainDispatcher.CameraBindings(client.cameraController, () -> client.worldState,
 						() -> client.currentPlane, new PacketDomainDispatcher.HintSink() {
@@ -121,9 +121,9 @@ final class ClientPacketDispatcher implements IncomingPacketHandler {
 							}
 						}),
 				new PacketDomainDispatcher.AudioBindings(client.soundEffectQueue, client.musicController,
-						client.lifecycle::onDemandFetcher, () -> Client.lowMemory),
+						client.lifecycle::onDemandFetcher, () -> client.lowMemory),
 				new PacketDomainDispatcher.ActorBindings(client.actorSynchronizer, client.regionManager,
-						() -> Client.gameCycle, () -> client.currentPlane, value -> client.currentPlane = value,
+						() -> client.gameCycle, () -> client.currentPlane, value -> client.currentPlane = value,
 						() -> client.loginScreen.username, client.chatBuffer, client.actorChatHandler,
 						value -> client.accountMembershipStatus = value,
 						value -> client.localPlayerServerIndex = value),
@@ -131,7 +131,7 @@ final class ClientPacketDispatcher implements IncomingPacketHandler {
 						client.minimapRenderer, client::applyVarp, client.gameRenderer::requestSidebarRedraw,
 						client.gameRenderer::requestChatboxRedraw, value -> client.weight = value,
 						client.skillExperiences, client.currentSkillLevels, client.baseSkillLevels,
-						Client.experienceTable, value -> client.systemUpdateTimer = value,
+						client.experienceTable, value -> client.systemUpdateTimer = value,
 						value -> client.runEnergy = value));
 	}
 

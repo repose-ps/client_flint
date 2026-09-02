@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import rs2.Client;
+import rs2.client;
 import rs2.action.ActionPacketEncoder;
 import rs2.action.ClientActionDispatcher;
 import rs2.net.Buffer;
@@ -56,7 +56,7 @@ public final class ArchitectureSelfTest {
 			"rs2.media.AnimationFrame", "rs2.media.Skeleton", "rs2.scene.GroundItemTile",
 			"rs2.scene.InteractiveObject" };
 
-	/** Transitional packet bridge methods removed from {@link Client}. */
+	/** Transitional packet bridge methods removed from {@link client}. */
 	private static final Set<String> REMOVED_CLIENT_BRIDGES = Set.of("packetSocialManager", "packetChatController",
 			"packetInterfaceController", "packetLoginUsername", "packetSoundEffectQueue", "packetMusicController",
 			"packetWidgetRuntime", "packetOnDemandFetcher", "packetActorSynchronizer", "packetCameraController",
@@ -125,14 +125,14 @@ public final class ArchitectureSelfTest {
 	 * @param test assertion sink
 	 */
 	private static void testClientFieldVisibility(SelfTestSupport test) {
-		for (Field field : Client.class.getDeclaredFields()) {
+		for (Field field : client.class.getDeclaredFields()) {
 			test.check(!Modifier.isPublic(field.getModifiers()), "Client field is not public: " + field.getName());
 		}
 	}
 
 	/**
 	 * Verifies that packet-domain classes depend on narrow capabilities rather than
-	 * {@link Client}.
+	 * {@link client}.
 	 *
 	 * @param test assertion sink
 	 * @throws ClassNotFoundException if a packet-domain class is missing
@@ -141,11 +141,11 @@ public final class ArchitectureSelfTest {
 		for (String className : PACKET_HANDLER_CLASSES) {
 			Class<?> handler = Class.forName(className);
 			for (Field field : handler.getDeclaredFields()) {
-				test.check(field.getType() != Client.class,
+				test.check(field.getType() != client.class,
 						className + " field does not retain Client: " + field.getName());
 			}
 			for (Constructor<?> constructor : handler.getDeclaredConstructors()) {
-				test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == Client.class),
+				test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == client.class),
 						className + " constructor does not accept Client");
 			}
 		}
@@ -161,7 +161,7 @@ public final class ArchitectureSelfTest {
 	private static void testPacketAdapterBoundary(SelfTestSupport test) throws ClassNotFoundException {
 		Class<?> adapter = Class.forName("rs2.ClientPacketDispatcher");
 		test.check(!Modifier.isPublic(adapter.getModifiers()), "ClientPacketDispatcher stays package-private");
-		long clientFields = Arrays.stream(adapter.getDeclaredFields()).filter(field -> field.getType() == Client.class)
+		long clientFields = Arrays.stream(adapter.getDeclaredFields()).filter(field -> field.getType() == client.class)
 				.count();
 		test.check(clientFields == 1, "ClientPacketDispatcher is the single intentional packet Client boundary");
 	}
@@ -177,11 +177,11 @@ public final class ArchitectureSelfTest {
 		test.check(Modifier.isPublic(dispatcher.getModifiers()),
 				"ClientActionDispatcher is the public rs2.action routing facade");
 		for (Field field : dispatcher.getDeclaredFields()) {
-			test.check(field.getType() != Client.class,
+			test.check(field.getType() != client.class,
 					"ClientActionDispatcher field does not retain Client: " + field.getName());
 		}
 		for (Constructor<?> constructor : dispatcher.getDeclaredConstructors()) {
-			test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == Client.class),
+			test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == client.class),
 					"ClientActionDispatcher constructor does not accept Client");
 		}
 		for (String className : ACTION_HANDLER_CLASSES) {
@@ -190,7 +190,7 @@ public final class ArchitectureSelfTest {
 				test.check(ClientActionDispatcher.ActionHandler.class.isAssignableFrom(handler),
 						className + " implements the action-handler contract");
 				for (Field field : handler.getDeclaredFields()) {
-					test.check(field.getType() != Client.class,
+					test.check(field.getType() != client.class,
 							className + " field does not retain Client: " + field.getName());
 					test.check(field.getType() != NetworkSession.class,
 							className + " field does not retain NetworkSession: " + field.getName());
@@ -198,7 +198,7 @@ public final class ArchitectureSelfTest {
 							className + " field does not retain raw Buffer: " + field.getName());
 				}
 				for (Constructor<?> constructor : handler.getDeclaredConstructors()) {
-					test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == Client.class),
+					test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == client.class),
 							className + " constructor does not accept Client");
 					test.check(
 							Arrays.stream(constructor.getParameterTypes())
@@ -211,13 +211,13 @@ public final class ArchitectureSelfTest {
 				test.check(false, "action handler is present: " + className);
 			}
 		}
-		Set<String> clientFieldNames = Arrays.stream(Client.class.getDeclaredFields()).map(Field::getName)
+		Set<String> clientFieldNames = Arrays.stream(client.class.getDeclaredFields()).map(Field::getName)
 				.collect(java.util.stream.Collectors.toSet());
 		for (String counter : Set.of("npcAction118Counter", "groundItemAction684Counter", "groundItemAction26Counter",
 				"inventoryAction227Counter", "inventoryAction961Counter")) {
 			test.check(!clientFieldNames.contains(counter), "action-local counter moved out of Client: " + counter);
 		}
-		long clientFields = Arrays.stream(Client.class.getDeclaredFields())
+		long clientFields = Arrays.stream(client.class.getDeclaredFields())
 				.filter(field -> field.getType() == ClientActionDispatcher.class).count();
 		test.check(clientFields == 1, "Client owns exactly one ClientActionDispatcher boundary");
 	}
@@ -258,7 +258,7 @@ public final class ArchitectureSelfTest {
 			}
 		}
 
-		Set<String> privateMethods = Arrays.stream(Client.class.getDeclaredMethods())
+		Set<String> privateMethods = Arrays.stream(client.class.getDeclaredMethods())
 				.filter(method -> Modifier.isPrivate(method.getModifiers())).map(Method::getName)
 				.collect(java.util.stream.Collectors.toSet());
 		for (String methodName : PRIVATE_CLIENT_ACTION_METHODS) {
@@ -279,13 +279,13 @@ public final class ArchitectureSelfTest {
 				.count();
 		test.check(bufferFields == 1, "ActionPacketEncoder owns exactly one outgoing Buffer");
 		for (Field field : encoder.getDeclaredFields()) {
-			test.check(field.getType() != Client.class,
+			test.check(field.getType() != client.class,
 					"ActionPacketEncoder field does not retain Client: " + field.getName());
 			test.check(field.getType() != NetworkSession.class,
 					"ActionPacketEncoder field does not retain NetworkSession: " + field.getName());
 		}
 		for (Constructor<?> constructor : encoder.getDeclaredConstructors()) {
-			test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == Client.class),
+			test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == client.class),
 					"ActionPacketEncoder constructor does not accept Client");
 			test.check(Arrays.stream(constructor.getParameterTypes()).noneMatch(type -> type == NetworkSession.class),
 					"ActionPacketEncoder constructor does not accept NetworkSession");
@@ -326,12 +326,12 @@ public final class ArchitectureSelfTest {
 
 	/**
 	 * Verifies that transitional packet/redraw bridge methods stay removed from
-	 * {@link Client}.
+	 * {@link client}.
 	 *
 	 * @param test assertion sink
 	 */
 	private static void testRemovedClientBridges(SelfTestSupport test) {
-		Set<String> declaredMethods = Arrays.stream(Client.class.getDeclaredMethods()).map(Method::getName)
+		Set<String> declaredMethods = Arrays.stream(client.class.getDeclaredMethods()).map(Method::getName)
 				.collect(java.util.stream.Collectors.toSet());
 		for (String bridge : REMOVED_CLIENT_BRIDGES) {
 			test.check(!declaredMethods.contains(bridge), "removed Client bridge stays absent: " + bridge);

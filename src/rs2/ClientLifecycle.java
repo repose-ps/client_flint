@@ -34,7 +34,7 @@ import rs2.ui.Widget;
  *
  * <p>
  * The lifecycle owns bootstrap cache state and the asynchronous on-demand
- * service. {@link Client} remains the application coordinator during normal
+ * service. {@link client} remains the application coordinator during normal
  * gameplay, while this class contains the one-time ordering required to load
  * archives, install resources, start background services, and release static
  * client/cache state at process shutdown.
@@ -49,7 +49,7 @@ public final class ClientLifecycle {
 	private static boolean startupStarted;
 
 	/** Client whose lifecycle is coordinated. */
-	private final Client client;
+	private final client client;
 
 	/** Bootstrap cache and asynchronous resource owner. */
 	private final ClientResourceManager resources = new ClientResourceManager();
@@ -62,7 +62,7 @@ public final class ClientLifecycle {
 	 *
 	 * @param client application client whose one-time lifecycle is coordinated
 	 */
-	public ClientLifecycle(Client client) {
+	public ClientLifecycle(client client) {
 		this.client = client;
 	}
 
@@ -109,8 +109,8 @@ public final class ClientLifecycle {
 			resources.initializeCacheIndices(Signlink.cacheData, Signlink.cacheIndexes);
 		}
 		try {
-			ClientBootstrap.Archives archives = bootstrap.load(Client.lowMemory, Client.membersWorld,
-					43594 + Client.portOffset, client::openJaggrabStream, client::drawLoadingText, client::openSocket,
+			ClientBootstrap.Archives archives = bootstrap.load(client.lowMemory, client.membersWorld,
+					43594 + client.portOffset, client::openJaggrabStream, client::drawLoadingText, client::openSocket,
 					() -> client.loggedIn, this::initializeTitleArchive, client::initializeWorldForStartup,
 					this::initializeOnDemandConsumers, client::processOnDemandRequests, client::haltOnLoadError);
 			if (archives == null) {
@@ -151,8 +151,8 @@ public final class ClientLifecycle {
 	private void initializeOnDemandConsumers(OnDemandFetcher fetcher) {
 		AnimationFrame.initialize(fetcher.getAnimationCount());
 		Model.initializeModelHeaders(fetcher.getFileCount(OnDemandFetcher.MODEL), fetcher);
-		if (!Client.lowMemory) {
-			client.lifecycleMusicController().requestStartupTrack(fetcher::request, Client.lowMemory);
+		if (!client.lowMemory) {
+			client.lifecycleMusicController().requestStartupTrack(fetcher::request, client.lowMemory);
 		}
 	}
 
@@ -166,9 +166,9 @@ public final class ClientLifecycle {
 		client.sidebarBackground = new IndexedImage(mediaArchive, "invback", 0);
 		client.chatboxBackground = new IndexedImage(mediaArchive, "chatback", 0);
 		client.minimapBackground = new IndexedImage(mediaArchive, "mapback", 0);
-		client.chatModesBackground = new IndexedImage(mediaArchive, "backbase1", 0);
-		client.bottomTabBackground = new IndexedImage(mediaArchive, "backbase2", 0);
-		client.topTabBackground = new IndexedImage(mediaArchive, "backhmid1", 0);
+		client.chatModesBackground = new IndexedImage(mediaArchive, "chatmodesbackground", 0);
+		client.bottomTabBackground = new IndexedImage(mediaArchive, "tabsbottomborder", 0);
+		client.topTabBackground = new IndexedImage(mediaArchive, "tabstopborder", 0);
 		for (int index = 0; index < 13; index++) {
 			client.sidebarIcons[index] = new IndexedImage(mediaArchive, "sideicons", index);
 		}
@@ -253,7 +253,7 @@ public final class ClientLifecycle {
 		SpotAnimation.load(configArchive);
 		Varp.load(configArchive);
 		Varbit.load(configArchive);
-		ItemDefinition.membersWorld = Client.membersWorld;
+		ItemDefinition.membersWorld = client.membersWorld;
 	}
 
 	/**
@@ -262,7 +262,7 @@ public final class ClientLifecycle {
 	 * @param soundArchive loaded sound-effect archive
 	 */
 	private void unpackSounds(Archive soundArchive) {
-		if (Client.lowMemory) {
+		if (client.lowMemory) {
 			return;
 		}
 		client.drawLoadingText(90, "Unpacking sounds");

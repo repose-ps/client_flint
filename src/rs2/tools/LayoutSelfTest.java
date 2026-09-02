@@ -32,11 +32,11 @@ public final class LayoutSelfTest {
 	static int run() {
 		SelfTestSupport test = new SelfTestSupport();
 		assertLayout(test, new LayoutCase(765, 503, false, 512, 334, 550, 553, 516, 496, 357, 453, 512, 334, 0, 0));
-		assertLayout(test, new LayoutCase(900, 503, true, 896, 499, 685, 688, 651, 631, 357, 453, 684, 353, 86, 9));
-		assertLayout(test, new LayoutCase(765, 700, true, 761, 696, 550, 553, 516, 496, 554, 650, 549, 550, 18, 108));
-		assertLayout(test, new LayoutCase(1000, 700, true, 996, 696, 785, 788, 751, 731, 554, 650, 784, 550, 136, 108));
+		assertLayout(test, new LayoutCase(900, 503, true, 896, 499, 685, 688, 688, 688, 357, 453, 647, 334, 67, 0));
+		assertLayout(test, new LayoutCase(765, 700, true, 761, 696, 550, 553, 553, 553, 554, 650, 512, 531, 0, 98));
+		assertLayout(test, new LayoutCase(1000, 700, true, 996, 696, 785, 788, 788, 788, 554, 650, 747, 531, 117, 98));
 		assertLayout(test,
-				new LayoutCase(1600, 900, true, 1596, 896, 1385, 1388, 1351, 1331, 754, 850, 1384, 750, 436, 208));
+				new LayoutCase(1600, 900, true, 1596, 896, 1385, 1388, 1388, 1388, 754, 850, 1347, 731, 417, 198));
 		testHitTesting(test);
 		testTabGeometry(test);
 		testChatModeGeometry(test);
@@ -70,12 +70,17 @@ public final class LayoutSelfTest {
 		test.equal(layout.minimapX(), expected.minimapX, "minimap X " + expected.width + "x" + expected.height);
 		test.equal(layout.minimapY(), 4, "minimap Y " + expected.width + "x" + expected.height);
 		test.equal(layout.sidebarX(), expected.sidebarX, "sidebar X " + expected.width + "x" + expected.height);
-		test.equal(layout.sidebarY(), 205, "sidebar Y " + expected.width + "x" + expected.height);
+		int expectedTabsFrameY = expected.resizable ? expected.height - ClientLayout.RESIZABLE_TABS_FRAME_HEIGHT : 166;
+		int expectedSidebarY = expected.resizable ? expectedTabsFrameY + ClientLayout.RESIZABLE_TABS_CONTENT_Y : 205;
+		int expectedTopTabsY = expected.resizable ? expectedTabsFrameY : 160;
+		int expectedBottomTabsY = expected.resizable
+				? expected.height - ClientLayout.RESIZABLE_BOTTOM_TAB_STRIP_HEIGHT : 466;
+		test.equal(layout.sidebarY(), expectedSidebarY, "sidebar Y " + expected.width + "x" + expected.height);
 		test.equal(layout.topTabsX(), expected.topTabsX, "top-tabs X " + expected.width + "x" + expected.height);
-		test.equal(layout.topTabsY(), 160, "top-tabs Y " + expected.width + "x" + expected.height);
+		test.equal(layout.topTabsY(), expectedTopTabsY, "top-tabs Y " + expected.width + "x" + expected.height);
 		test.equal(layout.bottomTabsX(), expected.bottomTabsX,
 				"bottom-tabs X " + expected.width + "x" + expected.height);
-		test.equal(layout.bottomTabsY(), 466, "bottom-tabs Y " + expected.width + "x" + expected.height);
+		test.equal(layout.bottomTabsY(), expectedBottomTabsY, "bottom-tabs Y " + expected.width + "x" + expected.height);
 		test.equal(layout.chatboxX(), 17, "chatbox X " + expected.width + "x" + expected.height);
 		test.equal(layout.chatboxY(), expected.chatboxY, "chatbox Y " + expected.width + "x" + expected.height);
 		test.equal(layout.chatModesX(), 0, "chat modes X " + expected.width + "x" + expected.height);
@@ -135,7 +140,12 @@ public final class LayoutSelfTest {
 		resized.resize(1000, 700);
 		int extraWidth = 1000 - ClientLayout.FIXED_WIDTH;
 		int extraHeight = 700 - ClientLayout.FIXED_HEIGHT;
-		test.check(resized.isTabHit(0, 539 + extraWidth, 169), "resized tab X anchor");
+		test.check(resized.isTabHit(0, resized.tabsFrameX() + 24,
+				resized.tabsFrameY() + 10 - ClientLayout.RESIZABLE_TOP_TABS_SOURCE_Y),
+				"resized top tab preserves classic frame coordinates");
+		test.check(resized.isTabHit(13, resized.tabsFrameX() + 229
+				- ClientLayout.RESIZABLE_BOTTOM_TABS_FRAME_SOURCE_X, resized.bottomTabsY() + 1),
+				"resized bottom tab preserves classic cropped coordinates");
 		test.equal(resized.chatModeButtonAt(6, 467 + extraHeight), ClientLayout.CHAT_MODE_PUBLIC,
 				"resized chat-button Y anchor");
 		test.check(resized.isViewportInteractionPoint(700, 300), "resized unobscured world point");
@@ -170,8 +180,19 @@ public final class LayoutSelfTest {
 			test.check(fixed.isTabHit(tab, bounds[0], bounds[2]), "tab fixed inclusive corner " + tab);
 			test.check(!fixed.isTabHit(tab, bounds[1], bounds[2]), "tab fixed exclusive right " + tab);
 			test.check(!fixed.isTabHit(tab, bounds[0], bounds[3]), "tab fixed exclusive bottom " + tab);
-			int shiftedX = bounds[0] + resized.extraWidth();
-			test.check(resized.isTabHit(tab, shiftedX, bounds[2]), "tab resized anchor " + tab);
+			int fixedLocalX = bounds[0] - (tab < 7 ? ClientLayout.TOP_TABS_X : ClientLayout.BOTTOM_TABS_X) + 1;
+			int fixedLocalY = bounds[2] - (tab < 7 ? ClientLayout.TOP_TABS_Y : ClientLayout.BOTTOM_TABS_Y) + 1;
+			int resizedX;
+			int resizedY;
+			if (tab < 7) {
+				resizedX = resized.tabsFrameX() + fixedLocalX;
+				resizedY = resized.tabsFrameY() + fixedLocalY - ClientLayout.RESIZABLE_TOP_TABS_SOURCE_Y;
+			} else {
+				resizedX = resized.tabsFrameX() + fixedLocalX
+						- ClientLayout.RESIZABLE_BOTTOM_TABS_FRAME_SOURCE_X;
+				resizedY = resized.bottomTabsY() + fixedLocalY;
+			}
+			test.check(resized.isTabHit(tab, resizedX, resizedY), "tab resized crop mapping " + tab);
 			test.equal(fixed.tabHighlightX(tab), highlightX[tab], "tab highlight X " + tab);
 			test.equal(fixed.tabHighlightY(tab), highlightY[tab], "tab highlight Y " + tab);
 			test.equal(fixed.tabIconX(tab), iconX[tab], "tab icon X " + tab);
@@ -237,9 +258,20 @@ public final class LayoutSelfTest {
 		test.equal(fixed.middleBorderX(), 516, "fixed middle-frame X");
 		test.equal(fixed.lowerBorderY(), 338, "fixed lower-frame Y");
 		test.equal(fixed.lowerVerticalMiddleY(), 357, "fixed lower vertical-middle Y");
+		test.equal(ClientLayout.RESIZABLE_TOP_TABS_SOURCE_X, 37, "resizable top tabs source X");
+		test.equal(ClientLayout.RESIZABLE_TOP_TABS_SOURCE_Y, 6, "resizable top tabs source Y");
+		test.equal(ClientLayout.RESIZABLE_BOTTOM_TABS_FRAME_SOURCE_X, 19,
+				"resizable bottom frame source X");
+		test.equal(ClientLayout.RESIZABLE_BOTTOM_TABS_SOURCE_X, 56, "resizable bottom strip source X");
+		test.equal(ClientLayout.RESIZABLE_BOTTOM_TABS_RIGHT_SOURCE_X, 247,
+				"resizable bottom right source X");
 		ClientLayout heightResized = new ClientLayout();
 		heightResized.resize(765, 700);
 		test.equal(heightResized.lowerVerticalMiddleY(), 357, "lower vertical-middle Y remains fixed on height resize");
+		test.equal(heightResized.tabsFrameY(), 363, "resizable tabs frame anchors to bottom");
+		test.equal(heightResized.sidebarY(), 402, "resizable sidebar follows bottom-right frame");
+		test.equal(heightResized.topTabsY(), 363, "resizable top tab strip follows bottom-right frame");
+		test.equal(heightResized.bottomTabsY(), 663, "resizable bottom tab strip anchors to bottom");
 		test.equal(ClientLayout.SCROLLBAR_WIDTH, 16, "scrollbar width");
 		test.equal(ClientLayout.SCROLLBAR_ARROW_HEIGHT, 16, "scrollbar arrow height");
 		test.equal(ClientLayout.SCROLLBAR_MIN_THUMB_HEIGHT, 8, "scrollbar minimum thumb height");

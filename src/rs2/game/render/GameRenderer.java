@@ -51,23 +51,105 @@ public final class GameRenderer {
 	private GraphicsBuffer topTabsBuffer;
 
 	/** Classic top-left frame-decoration surface. */
-	private GraphicsBuffer backLeft1Buffer;
+	private GraphicsBuffer viewportLeftBorder;
 	/** Classic bottom-left frame-decoration surface. */
-	private GraphicsBuffer backLeft2Buffer;
+	private GraphicsBuffer chatboxLeftBorder;
 	/** Classic upper-right frame-decoration surface. */
-	private GraphicsBuffer backRight1Buffer;
+	private GraphicsBuffer minimapRightBorder;
 	/** Classic lower-right frame-decoration surface. */
-	private GraphicsBuffer backRight2Buffer;
+	private GraphicsBuffer tabsRightBorder;
 	/** Classic top border surface. */
-	private GraphicsBuffer backTop1Buffer;
+	private GraphicsBuffer minimapTopBorder;
 	/** First classic vertical-middle border surface. */
-	private GraphicsBuffer backVerticalMiddle1Buffer;
+	private GraphicsBuffer minimapLeftBorder;
 	/** Second classic vertical-middle border surface. */
-	private GraphicsBuffer backVerticalMiddle2Buffer;
+	private GraphicsBuffer tabsLeftBorderTop;
 	/** Third classic vertical-middle border surface. */
-	private GraphicsBuffer backVerticalMiddle3Buffer;
+	private GraphicsBuffer chatTabsVerticalBorder;
 	/** Classic horizontal-middle border surface. */
-	private GraphicsBuffer backHorizontalMiddle2Buffer;
+	private GraphicsBuffer chatboxTopBorder;
+
+	/**
+	 * The array index for bottom-side resizable UI elements.
+	 */
+	public static final int RESIZABLE_ELEMENT_BOTTOM_INDEX = 0;
+
+	/**
+	 * The suffix for bottom-side box elements in the resizable UI.
+	 */
+	private static final String RESIZABLE_ELEMENT_BOTTOM = "_bottom";
+
+	/**
+	 * The array index for left-side resizable UI elements.
+	 */
+	public static final int RESIZABLE_ELEMENT_LEFT_INDEX = 1;
+
+	/**
+	 * The suffix for left-side box elements in the resizable UI.
+	 */
+	private static final String RESIZABLE_ELEMENT_LEFT = "_left";
+
+	/**
+	 * The array index for right-side resizable UI elements.
+	 */
+	public static final int RESIZABLE_ELEMENT_RIGHT_INDEX = 2;
+
+	/**
+	 * The suffix for right-side box elements in the resizable UI.
+	 */
+	private static final String RESIZABLE_ELEMENT_RIGHT = "_right";
+
+	/**
+	 * The array index for top-side resizable UI elements.
+	 */
+	public static final int RESIZABLE_ELEMENT_TOP_INDEX = 3;
+
+	/**
+	 * The suffix for top-side box elements in the resizable UI.
+	 */
+	private static final String RESIZABLE_ELEMENT_TOP = "_top";
+
+	/**
+	 * The amount of UI elements for a resizable boxed element.
+	 */
+	private static final int RESIZABLE_BOX_ELEMENT_COUNT = 4;
+
+	/**
+	 * The prefix for the resizable chatbox UI.
+	 */
+	private static final String RESIZABLE_CHATBOX_PREFIX = "resizable_chat";
+
+	/**
+	 * The prefix for the resizable minimap UI.
+	 */
+	private static final String RESIZABLE_MINIMAP_PREFIX = "resizable_map";
+
+	/**
+	 * The prefix for the resizable tabs area UI.
+	 */
+	private static final String RESIZABLE_TABS_PREFIX = "resizable_tabs";
+
+	/**
+	 * The resizable chat UI elements.
+	 */
+	private GraphicsBuffer[] resizableChatBuffers;
+
+	/**
+	 * The resizable chatbox UI elements.
+	 */
+	private GraphicsBuffer[] resizableMapBuffers;
+
+	/**
+	 * The resizable tab area UI elements.
+	 */
+	private GraphicsBuffer[] resizableTabAreaBuffers;
+
+	/** Immutable source pixels used to restore mutable resizable chat decorations. */
+	private int[][] resizableChatBasePixels;
+	/** Immutable source pixels used to restore mutable resizable minimap decorations. */
+	private int[][] resizableMapBasePixels;
+	/** Immutable source pixels used to restore mutable resizable tab decorations. */
+	private int[][] resizableTabAreaBasePixels;
 
 	/** 3D scanline offsets for the current viewport dimensions. */
 	private int[] viewportScanlineOffsets;
@@ -192,15 +274,55 @@ public final class GameRenderer {
 	 * @param mediaArchive loaded media archive
 	 */
 	public void initializeFrameDecorations(Component component, Archive mediaArchive) {
-		backLeft1Buffer = createDecorationBuffer(component, mediaArchive, "backleft1");
-		backLeft2Buffer = createDecorationBuffer(component, mediaArchive, "backleft2");
-		backRight1Buffer = createDecorationBuffer(component, mediaArchive, "backright1");
-		backRight2Buffer = createDecorationBuffer(component, mediaArchive, "backright2");
-		backTop1Buffer = createDecorationBuffer(component, mediaArchive, "backtop1");
-		backVerticalMiddle1Buffer = createDecorationBuffer(component, mediaArchive, "backvmid1");
-		backVerticalMiddle2Buffer = createDecorationBuffer(component, mediaArchive, "backvmid2");
-		backVerticalMiddle3Buffer = createDecorationBuffer(component, mediaArchive, "backvmid3");
-		backHorizontalMiddle2Buffer = createDecorationBuffer(component, mediaArchive, "backhmid2");
+		viewportLeftBorder = createDecorationBuffer(component, mediaArchive, "viewportleftborder");
+		chatboxLeftBorder = createDecorationBuffer(component, mediaArchive, "chatboxleftborder");
+		minimapRightBorder = createDecorationBuffer(component, mediaArchive, "minimaprightborder");
+		tabsRightBorder = createDecorationBuffer(component, mediaArchive, "tabsrightborder");
+		minimapTopBorder = createDecorationBuffer(component, mediaArchive, "minimaptopborder");
+		minimapLeftBorder = createDecorationBuffer(component, mediaArchive, "minimapleftborder");
+		tabsLeftBorderTop = createDecorationBuffer(component, mediaArchive, "tabsleftbordertop");
+		chatTabsVerticalBorder = createDecorationBuffer(component, mediaArchive, "chattabsverticalborder");
+		chatboxTopBorder = createDecorationBuffer(component, mediaArchive, "chatboxtopborder");
+
+		// resizable elements
+		resizableChatBuffers = new GraphicsBuffer[RESIZABLE_BOX_ELEMENT_COUNT];
+		resizableMapBuffers = new GraphicsBuffer[RESIZABLE_BOX_ELEMENT_COUNT];
+		resizableTabAreaBuffers = new GraphicsBuffer[RESIZABLE_BOX_ELEMENT_COUNT];
+
+		initResizableUiBox(component, mediaArchive, RESIZABLE_CHATBOX_PREFIX, resizableChatBuffers);
+		initResizableUiBox(component, mediaArchive, RESIZABLE_MINIMAP_PREFIX, resizableMapBuffers);
+		initResizableUiBox(component, mediaArchive, RESIZABLE_TABS_PREFIX, resizableTabAreaBuffers);
+		resizableChatBasePixels = snapshotPixels(resizableChatBuffers);
+		resizableMapBasePixels = snapshotPixels(resizableMapBuffers);
+		resizableTabAreaBasePixels = snapshotPixels(resizableTabAreaBuffers);
+	}
+
+	private void initResizableUiBox(Component component, Archive mediaArchive, String prefix,
+			GraphicsBuffer[] bufferArray) {
+		bufferArray[RESIZABLE_ELEMENT_BOTTOM_INDEX] = createDecorationBuffer(component, mediaArchive,
+				prefix + RESIZABLE_ELEMENT_BOTTOM);
+		bufferArray[RESIZABLE_ELEMENT_LEFT_INDEX] = createDecorationBuffer(component, mediaArchive,
+				prefix + RESIZABLE_ELEMENT_LEFT);
+		bufferArray[RESIZABLE_ELEMENT_RIGHT_INDEX] = createDecorationBuffer(component, mediaArchive,
+				prefix + RESIZABLE_ELEMENT_RIGHT);
+		bufferArray[RESIZABLE_ELEMENT_TOP_INDEX] = createDecorationBuffer(component, mediaArchive,
+				prefix + RESIZABLE_ELEMENT_TOP);
+	}
+
+	/** Copies each decoration's original raster so text/highlights can be redrawn cleanly. */
+	private static int[][] snapshotPixels(GraphicsBuffer[] buffers) {
+		int[][] snapshots = new int[buffers.length][];
+		for (int index = 0; index < buffers.length; index++) {
+			snapshots[index] = buffers[index].pixels.clone();
+		}
+		return snapshots;
+	}
+
+	/** Restores and binds one mutable resizable decoration as the software raster. */
+	private static void restoreAndBind(GraphicsBuffer[] buffers, int[][] basePixels, int index) {
+		GraphicsBuffer buffer = buffers[index];
+		System.arraycopy(basePixels[index], 0, buffer.pixels, 0, buffer.pixels.length);
+		buffer.bindRaster();
 	}
 
 	/**
@@ -210,28 +332,71 @@ public final class GameRenderer {
 	 * @param layout   current fixed/resizable layout
 	 */
 	public void drawFrameDecorations(Graphics graphics, ClientLayout layout) {
-		backLeft1Buffer.draw(graphics, 0, layout.viewportY());
-		backLeft2Buffer.draw(graphics, 0, layout.chatboxY());
-		backTop1Buffer.draw(graphics, 0, 0);
-		backHorizontalMiddle2Buffer.draw(graphics, 0, layout.lowerBorderY());
-		backRight1Buffer.draw(graphics, layout.rightFrameTopX(), layout.viewportY());
-		backRight2Buffer.draw(graphics, layout.rightFrameMiddleX(), layout.sidebarY());
-		backVerticalMiddle1Buffer.draw(graphics, layout.middleBorderX(), layout.viewportY());
-		backVerticalMiddle2Buffer.draw(graphics, layout.middleBorderX(), layout.sidebarY());
-		backVerticalMiddle3Buffer.draw(graphics, layout.bottomTabsX(), layout.lowerVerticalMiddleY());
+		if (!layout.isResizableMode()) {
+			viewportLeftBorder.draw(graphics, 0, layout.viewportY());
+			chatboxLeftBorder.draw(graphics, 0, layout.chatboxY());
+			minimapTopBorder.draw(graphics, layout.width() - minimapTopBorder.getWidth(), 0);
+			chatboxTopBorder.draw(graphics, 0, layout.lowerBorderY());
+			minimapRightBorder.draw(graphics, layout.rightFrameTopX(), layout.viewportY());
+			tabsRightBorder.draw(graphics, layout.rightFrameMiddleX(), layout.sidebarY());
+			minimapLeftBorder.draw(graphics, layout.middleBorderX(), layout.viewportY());
+			tabsLeftBorderTop.draw(graphics, layout.middleBorderX(), layout.sidebarY());
+			chatTabsVerticalBorder.draw(graphics, layout.bottomTabsX(), layout.lowerVerticalMiddleY());
+			return;
+		}
+
+		// Top-right minimap frame. The classic 172x156 minimap is composited into
+		// the aperture after these pieces are drawn.
+		resizableMapBuffers[RESIZABLE_ELEMENT_LEFT_INDEX].draw(graphics, layout.minimapFrameX(),
+				layout.minimapFrameY());
+		resizableMapBuffers[RESIZABLE_ELEMENT_TOP_INDEX].draw(graphics, layout.minimapX(),
+				layout.minimapFrameY());
+		resizableMapBuffers[RESIZABLE_ELEMENT_RIGHT_INDEX].draw(graphics,
+				layout.width() - resizableMapBuffers[RESIZABLE_ELEMENT_RIGHT_INDEX].getWidth(), layout.minimapFrameY());
+		resizableMapBuffers[RESIZABLE_ELEMENT_BOTTOM_INDEX].draw(graphics, layout.minimapX(),
+				layout.minimapY() + ClientLayout.MINIMAP_HEIGHT);
+
+		// Bottom-right tab/sidebar frame. Top and bottom are also the mutable tab
+		// strip rasters; they are redrawn later with highlights/icons on top.
+		resizableTabAreaBuffers[RESIZABLE_ELEMENT_LEFT_INDEX].draw(graphics, layout.tabsFrameX(),
+				layout.tabsFrameY());
+		resizableTabAreaBuffers[RESIZABLE_ELEMENT_TOP_INDEX].draw(graphics, layout.topTabsX(),
+				layout.topTabsY());
+		resizableTabAreaBuffers[RESIZABLE_ELEMENT_RIGHT_INDEX].draw(graphics,
+				layout.width() - resizableTabAreaBuffers[RESIZABLE_ELEMENT_RIGHT_INDEX].getWidth(), layout.tabsFrameY());
+		resizableTabAreaBuffers[RESIZABLE_ELEMENT_BOTTOM_INDEX].draw(graphics, layout.bottomTabsX(),
+				layout.bottomTabsY());
+
+		// Bottom-left chat frame. The custom bottom piece supplies the resizable
+		// chat-mode button background and is redrawn later with mode labels.
+		resizableChatBuffers[RESIZABLE_ELEMENT_LEFT_INDEX].draw(graphics, layout.chatFrameX(), layout.chatFrameY());
+		resizableChatBuffers[RESIZABLE_ELEMENT_TOP_INDEX].draw(graphics, layout.chatboxX(), layout.chatFrameY());
+		resizableChatBuffers[RESIZABLE_ELEMENT_RIGHT_INDEX].draw(graphics,
+				layout.chatFrameX() + ClientLayout.RESIZABLE_CHAT_FRAME_WIDTH
+						- resizableChatBuffers[RESIZABLE_ELEMENT_RIGHT_INDEX].getWidth(),
+				layout.chatFrameY());
+		resizableChatBuffers[RESIZABLE_ELEMENT_BOTTOM_INDEX].draw(graphics, layout.resizableChatModesX(),
+				layout.chatModesY());
 	}
 
 	/** Releases the classic frame-decoration surfaces. */
 	public void clearFrameDecorations() {
-		backLeft1Buffer = null;
-		backLeft2Buffer = null;
-		backRight1Buffer = null;
-		backRight2Buffer = null;
-		backTop1Buffer = null;
-		backVerticalMiddle1Buffer = null;
-		backVerticalMiddle2Buffer = null;
-		backVerticalMiddle3Buffer = null;
-		backHorizontalMiddle2Buffer = null;
+		viewportLeftBorder = null;
+		chatboxLeftBorder = null;
+		minimapRightBorder = null;
+		tabsRightBorder = null;
+		minimapTopBorder = null;
+		minimapLeftBorder = null;
+		tabsLeftBorderTop = null;
+		chatTabsVerticalBorder = null;
+		chatboxTopBorder = null;
+
+		resizableChatBuffers = null;
+		resizableMapBuffers = null;
+		resizableTabAreaBuffers = null;
+		resizableChatBasePixels = null;
+		resizableMapBasePixels = null;
+		resizableTabAreaBasePixels = null;
 	}
 
 	/**
@@ -684,5 +849,99 @@ public final class GameRenderer {
 		if (presentationBuffer != null) {
 			displayGraphics.drawImage(presentationBuffer, 0, 0, null);
 		}
+	}
+	
+	/** Restores and binds the resizable chat-mode button strip for text drawing. */
+	public void bindResizableChatModes() {
+		restoreAndBind(resizableChatBuffers, resizableChatBasePixels, RESIZABLE_ELEMENT_BOTTOM_INDEX);
+	}
+
+	/** Draws the resizable chat-mode strip at its bottom-left anchored position. */
+	public void drawResizableChatModes(Graphics graphics, ClientLayout layout) {
+		resizableChatBuffers[RESIZABLE_ELEMENT_BOTTOM_INDEX].draw(graphics, layout.resizableChatModesX(),
+				layout.chatModesY());
+	}
+
+	/**
+	 * Restores all four resizable tab-frame pieces before tab highlights and icons
+	 * are rasterized across their original 377 coordinates.
+	 */
+	public void beginResizableTabsFrame() {
+		for (int index = 0; index < RESIZABLE_BOX_ELEMENT_COUNT; index++) {
+			GraphicsBuffer buffer = resizableTabAreaBuffers[index];
+			System.arraycopy(resizableTabAreaBasePixels[index], 0, buffer.pixels, 0, buffer.pixels.length);
+		}
+	}
+
+	/**
+	 * Draws one classic tab sprite over the custom resizable frame. The custom
+	 * resources are literal crops of the original tab backgrounds, so preserving
+	 * the original sprite coordinates produces pixel-exact alignment with their
+	 * stone recesses. Sprites are drawn into every frame piece they can overlap;
+	 * normal raster clipping handles the crop boundaries.
+	 *
+	 * @param sprite classic sidebar icon or redstone highlight
+	 * @param tab    tab index 0..13
+	 * @param x      original fixed-strip sprite X coordinate
+	 * @param y      original fixed-strip sprite Y coordinate
+	 */
+	public void drawResizableTabSprite(IndexedImage sprite, int tab, int x, int y) {
+		if (tab < 7) {
+			drawResizableTopTabSprite(sprite, x, y);
+		} else {
+			drawResizableBottomTabSprite(sprite, x, y);
+		}
+	}
+
+	/** Draws all four currently composed resizable tab-frame pieces. */
+	public void drawResizableTabsFrame(Graphics graphics, ClientLayout layout) {
+		resizableTabAreaBuffers[RESIZABLE_ELEMENT_LEFT_INDEX].draw(graphics, layout.tabsFrameX(), layout.tabsFrameY());
+		resizableTabAreaBuffers[RESIZABLE_ELEMENT_TOP_INDEX].draw(graphics, layout.topTabsX(), layout.topTabsY());
+		resizableTabAreaBuffers[RESIZABLE_ELEMENT_RIGHT_INDEX].draw(graphics,
+			layout.width() - resizableTabAreaBuffers[RESIZABLE_ELEMENT_RIGHT_INDEX].getWidth(), layout.tabsFrameY());
+		resizableTabAreaBuffers[RESIZABLE_ELEMENT_BOTTOM_INDEX].draw(graphics, layout.bottomTabsX(),
+			layout.bottomTabsY());
+	}
+
+	/** Rasterizes a top-row tab sprite across the left/top/right crop pieces. */
+	private void drawResizableTopTabSprite(IndexedImage sprite, int x, int y) {
+		int mappedY = y - ClientLayout.RESIZABLE_TOP_TABS_SOURCE_Y;
+
+		resizableTabAreaBuffers[RESIZABLE_ELEMENT_LEFT_INDEX].bindRaster();
+		sprite.draw(x, mappedY);
+
+		resizableTabAreaBuffers[RESIZABLE_ELEMENT_TOP_INDEX].bindRaster();
+		sprite.draw(x - ClientLayout.RESIZABLE_TOP_TABS_SOURCE_X, mappedY);
+
+		GraphicsBuffer right = resizableTabAreaBuffers[RESIZABLE_ELEMENT_RIGHT_INDEX];
+		right.bindRaster();
+		sprite.draw(x - (ClientLayout.RESIZABLE_TABS_FRAME_WIDTH - right.getWidth()), mappedY);
+	}
+
+	/** Rasterizes a bottom-row tab sprite across the left/bottom/right crop pieces. */
+	private void drawResizableBottomTabSprite(IndexedImage sprite, int x, int y) {
+		GraphicsBuffer left = resizableTabAreaBuffers[RESIZABLE_ELEMENT_LEFT_INDEX];
+		int sideY = left.getHeight() - ClientLayout.RESIZABLE_BOTTOM_TAB_STRIP_HEIGHT + y;
+		left.bindRaster();
+		sprite.draw(x - ClientLayout.RESIZABLE_BOTTOM_TABS_FRAME_SOURCE_X, sideY);
+
+		resizableTabAreaBuffers[RESIZABLE_ELEMENT_BOTTOM_INDEX].bindRaster();
+		sprite.draw(x - ClientLayout.RESIZABLE_BOTTOM_TABS_SOURCE_X, y);
+
+		GraphicsBuffer right = resizableTabAreaBuffers[RESIZABLE_ELEMENT_RIGHT_INDEX];
+		right.bindRaster();
+		sprite.draw(x - ClientLayout.RESIZABLE_BOTTOM_TABS_RIGHT_SOURCE_X, sideY);
+	}
+
+	public GraphicsBuffer[] getResizableChatBuffers() {
+		return resizableChatBuffers;
+	}
+
+	public GraphicsBuffer[] getResizableMapBuffers() {
+		return resizableMapBuffers;
+	}
+
+	public GraphicsBuffer[] getResizableTabAreaBuffers() {
+		return resizableTabAreaBuffers;
 	}
 }
