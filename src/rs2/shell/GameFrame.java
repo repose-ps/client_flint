@@ -2,6 +2,7 @@ package rs2.shell;
 
 import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Insets;
 
@@ -20,6 +21,7 @@ public final class GameFrame extends Frame {
 	 */
 	public GameFrame(GameShell shell, int width, int height) {
 		this.shell = shell;
+		setLayout(null);
 		setTitle("Jagex");
 		setResizable(true);
 		setVisible(true);
@@ -88,6 +90,32 @@ public final class GameFrame extends Frame {
 	 */
 	public int toClientY(int frameY) {
 		return frameY - getInsets().top;
+	}
+
+	/** Installs a child rendering surface above the legacy AWT presentation. */
+	public void installRenderOverlay(Component component) {
+		add(component);
+		component.setVisible(false);
+		component.addMouseListener(shell);
+		component.addMouseMotionListener(shell);
+		component.addKeyListener(shell);
+		component.addFocusListener(shell);
+		validate();
+	}
+
+	/** Positions a child rendering surface in client-area coordinates. */
+	public void positionRenderOverlay(Component component, int x, int y, int width, int height) {
+		Insets insets = getInsets();
+		component.setBounds(insets.left + x, insets.top + y, Math.max(1, width), Math.max(1, height));
+		component.setVisible(true);
+		component.validate();
+	}
+
+	/** Removes a previously installed child rendering surface. */
+	public void removeRenderOverlay(Component component) {
+		remove(component);
+		validate();
+		repaint();
 	}
 
 	@Override

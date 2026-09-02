@@ -73,6 +73,7 @@ import rs2.scene.Region;
 import rs2.scene.Scene;
 import rs2.scene.SceneConstants;
 import rs2.scene.entity.DynamicObjectFactory;
+import rs2.shell.GameFrame;
 import rs2.shell.GameShell;
 import rs2.sign.Signlink;
 import rs2.sound.MusicController;
@@ -321,7 +322,11 @@ public class client extends GameShell {
 	 * during shutdown.
 	 */
 	public void cleanUpForQuit() {
-		lifecycle.shutdown();
+		try {
+			gameRenderer.closeWorldRenderer();
+		} finally {
+			lifecycle.shutdown();
+		}
 	}
 
 	/**
@@ -2416,6 +2421,12 @@ public class client extends GameShell {
 		gameRenderer.rebuildViewportProjection(layout);
 	}
 
+	/** Attaches backend-specific native surfaces after the AWT host is created. */
+	@Override
+	protected void onFrameCreated(GameFrame frame) {
+		gameRenderer.attachToFrame(frame);
+	}
+
 	/** Recreates only size-dependent renderer state when the window is resized. */
 	@Override
 	protected void onResize(int width, int height) {
@@ -2565,7 +2576,9 @@ public class client extends GameShell {
 	/** Runs one render cycle in logged-in mode or title/login mode. */
 	public void processDrawing() {
 		refreshGraphicsContextIfRequested();
-		if (duplicateClientError || loadingError || invalidHostError) {
+		boolean startupError = duplicateClientError || loadingError || invalidHostError;
+		gameRenderer.setWorldSurfaceActive(loggedIn && !startupError);
+		if (startupError) {
 			drawStartupErrorScreen();
 			return;
 		}

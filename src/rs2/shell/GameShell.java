@@ -6,6 +6,7 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
@@ -15,6 +16,8 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+
+import javax.swing.SwingUtilities;
 
 import rs2.media.GraphicsBuffer;
 
@@ -188,6 +191,7 @@ public class GameShell extends Canvas
 		canvasWidth = width;
 		canvasHeight = height;
 		gameFrame = new GameFrame(this, width, height);
+		onFrameCreated(gameFrame);
 		initializeGraphics();
 	}
 
@@ -482,8 +486,8 @@ public class GameShell extends Canvas
 	 */
 	@Override
 	public final void mousePressed(MouseEvent event) {
-		int x = toClientX(event.getX());
-		int y = toClientY(event.getY());
+		int x = toClientX(event);
+		int y = toClientY(event);
 
 		synchronized (inputLock) {
 			idleCycles = 0;
@@ -574,8 +578,8 @@ public class GameShell extends Canvas
 	 */
 	@Override
 	public final void mouseDragged(MouseEvent event) {
-		int x = toClientX(event.getX());
-		int y = toClientY(event.getY());
+		int x = toClientX(event);
+		int y = toClientY(event);
 
 		synchronized (inputLock) {
 			idleCycles = 0;
@@ -608,8 +612,8 @@ public class GameShell extends Canvas
 	 * @param event the event
 	 */
 	private void updateMousePosition(MouseEvent event) {
-		int x = toClientX(event.getX());
-		int y = toClientY(event.getY());
+		int x = toClientX(event);
+		int y = toClientY(event);
 		synchronized (inputLock) {
 			idleCycles = 0;
 			mouseX = x;
@@ -875,23 +879,32 @@ public class GameShell extends Canvas
 	 * @param frameX the frame X
 	 * @return the converted value
 	 */
-	private int toClientX(int frameX) {
-		return gameFrame == null ? frameX : gameFrame.toClientX(frameX);
+	private int toClientX(MouseEvent event) {
+		if (gameFrame == null) {
+			return event.getX();
+		}
+		Point point = event.getComponent() == gameFrame ? event.getPoint()
+				: SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), gameFrame);
+		return gameFrame.toClientX(point.x);
 	}
 
-	/**
-	 * Converts a frame-relative Y coordinate to client-area coordinates.
-	 *
-	 * @param frameY the frame Y
-	 * @return the converted value
-	 */
-	private int toClientY(int frameY) {
-		return gameFrame == null ? frameY : gameFrame.toClientY(frameY);
+	/** Converts mouse-event Y coordinates from either the frame or a child surface. */
+	private int toClientY(MouseEvent event) {
+		if (gameFrame == null) {
+			return event.getY();
+		}
+		Point point = event.getComponent() == gameFrame ? event.getPoint()
+				: SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), gameFrame);
+		return gameFrame.toClientY(point.y);
+	}
+
+	/** Called after the standalone AWT host frame becomes available. */
+	protected void onFrameCreated(GameFrame frame) {
 	}
 
 	/**
 	 * Called on the game thread whenever the drawable client area changes size.
-	 * 
+	 *
 	 * @param width  the width in pixels
 	 * @param height the height in pixels
 	 */

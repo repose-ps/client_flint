@@ -6,16 +6,15 @@ import java.util.Locale;
  * Selects the 3D world-rendering backend used by {@link GameRenderer}.
  *
  * <p>
- * Phase 0 deliberately ships only the software implementation. The GPU enum
- * value is reserved now so the runtime/configuration boundary is stable before
- * native OpenGL dependencies are introduced in Phase 1.
+ * The software backend remains the regression-reference implementation while
+ * the GPU backend is developed incrementally behind the same runtime boundary.
  * </p>
  */
 public enum RendererBackend {
 
 	/** Revision-377 CPU projection and software rasterization. */
 	SOFTWARE,
-	/** Native GPU renderer introduced by the later GPU phases. */
+	/** Native OpenGL renderer. Phase 1 currently supplies its bootstrap/test frame. */
 	GPU;
 
 	/** JVM property used to select the renderer at startup. */

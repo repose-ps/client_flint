@@ -1,5 +1,8 @@
 package rs2.game.render;
 
+import rs2.gpu.GpuRenderer;
+import rs2.shell.GameFrame;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
@@ -232,10 +235,33 @@ public final class GameRenderer {
 		RendererBackend backend = RendererBackend.configured();
 		return switch (backend) {
 		case SOFTWARE -> new SoftwareWorldRenderer();
-		case GPU -> throw new IllegalStateException(
-				"GPU renderer requested with -D" + RendererBackend.PROPERTY
-						+ "=gpu, but the native GPU backend is not installed until Phase 1.");
+		case GPU -> new GpuRenderer();
 		};
+	}
+
+	/** Attaches native renderer surfaces after the standalone AWT frame exists. */
+	public void attachToFrame(GameFrame frame) {
+		if (worldRenderer instanceof GpuRenderer gpuRenderer) {
+			gpuRenderer.attach(frame);
+		}
+	}
+
+	/** Releases backend-specific native resources during client shutdown. */
+	public void closeWorldRenderer() {
+		if (worldRenderer instanceof AutoCloseable closeable) {
+			try {
+				closeable.close();
+			} catch (Exception exception) {
+				throw new IllegalStateException("Failed to close world renderer", exception);
+			}
+		}
+	}
+
+	/** Shows or hides any native world surface without changing renderer state. */
+	public void setWorldSurfaceActive(boolean active) {
+		if (worldRenderer instanceof GpuRenderer gpuRenderer) {
+			gpuRenderer.setSurfaceActive(active);
+		}
 	}
 
 	/**
@@ -728,7 +754,8 @@ public final class GameRenderer {
 		WorldRenderFrame worldFrame = new WorldRenderFrame(frame.worldState.scene, frame.cameraController.x,
 				frame.cameraController.y, frame.cameraController.height, renderPlane, frame.cameraController.yaw,
 				frame.cameraController.pitch, frame.mouseX - frame.layout.viewportX(),
-				frame.mouseY - frame.layout.viewportY());
+				frame.mouseY - frame.layout.viewportY(), frame.layout.viewportX(), frame.layout.viewportY(),
+				frame.layout.viewportWidth(), frame.layout.viewportHeight());
 		long worldRenderStarted = System.nanoTime();
 		worldRenderer.render(worldFrame);
 		rendererMetrics.recordWorldRender(System.nanoTime() - worldRenderStarted);

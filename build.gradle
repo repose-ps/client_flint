@@ -1,0 +1,99 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'flint'
+version = '0.1.0'
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+sourceSets {
+    main {
+        java.srcDirs = ['src']
+    }
+}
+
+application {
+    mainClass = 'rs2.client'
+}
+
+ext {
+    lwjglVersion = '3.4.0'
+    lwjglAwtVersion = '0.2.4'
+}
+
+def osName = System.getProperty('os.name').toLowerCase(Locale.ROOT)
+def arch = System.getProperty('os.arch').toLowerCase(Locale.ROOT)
+def lwjglNatives
+if (osName.contains('win')) {
+    lwjglNatives = arch.contains('aarch64') || arch.contains('arm64') ? 'natives-windows-arm64' :
+            (arch.contains('86') && !arch.contains('64') ? 'natives-windows-x86' : 'natives-windows')
+} else if (osName.contains('mac') || osName.contains('darwin')) {
+    lwjglNatives = arch.contains('aarch64') || arch.contains('arm64') ? 'natives-macos-arm64' : 'natives-macos'
+} else if (osName.contains('linux')) {
+    lwjglNatives = arch.contains('aarch64') || arch.contains('arm64') ? 'natives-linux-arm64' :
+            (arch.startsWith('arm') ? 'natives-linux-arm32' : 'natives-linux')
+} else {
+    throw new GradleException("Unsupported LWJGL platform: ${System.getProperty('os.name')} / ${System.getProperty('os.arch')}")
+}
+
+dependencies {
+    implementation platform("org.lwjgl:lwjgl-bom:${lwjglVersion}")
+    implementation 'org.lwjgl:lwjgl'
+    implementation 'org.lwjgl:lwjgl-jawt'
+    implementation 'org.lwjgl:lwjgl-opengl'
+    implementation "org.lwjglx:lwjgl3-awt:${lwjglAwtVersion}"
+
+    runtimeOnly "org.lwjgl:lwjgl::${lwjglNatives}"
+    runtimeOnly "org.lwjgl:lwjgl-opengl::${lwjglNatives}"
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
+
+tasks.register('rendererGoldenTest', JavaExec) {
+    group = 'verification'
+    description = 'Runs the software renderer golden regression suite.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'rs2.tools.RendererGoldenTest'
+}
+
+tasks.register('clientSelfTest', JavaExec) {
+    group = 'verification'
+    description = 'Runs the complete cache-free client self-test suite.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'rs2.tools.ClientSelfTest'
+}
+
+tasks.register('gpuBootstrapSelfTest', JavaExec) {
+    group = 'verification'
+    description = 'Creates a real OpenGL 3.3 AWT context and validates the Phase 1 test triangle.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'rs2.tools.GpuBootstrapSelfTest'
+}
+
+tasks.named('run', JavaExec) {
+    def renderer = System.getProperty('flint.renderer')
+    if (renderer != null) {
+        systemProperty 'flint.renderer', renderer
+    }
+}
+
+tasks.register('runGpu', JavaExec) {
+    group = 'application'
+    description = 'Runs Flint with the Phase-1 GPU renderer selected.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'rs2.client'
+    systemProperty 'flint.renderer', 'gpu'
+}

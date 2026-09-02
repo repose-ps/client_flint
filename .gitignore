@@ -38,3 +38,4 @@ rscache/*
 # javadocs
 flint-client-javadocs/*
 /docs
+/.gradle
