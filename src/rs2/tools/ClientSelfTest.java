@@ -55,6 +55,7 @@ public final class ClientSelfTest {
 		checks += RendererGoldenTest.run(cache);
 		checks += GpuTerrainMeshSelfTest.run();
 		checks += GpuStaticSceneMeshSelfTest.run();
+		checks += FrameTimingSelfTest.run();
 
 		System.out.println("ClientSelfTest: PASS (" + checks + " checks"
 				+ (cache == null ? ", cache-free" : ", real-cache renderer enabled") + ")");

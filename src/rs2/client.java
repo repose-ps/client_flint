@@ -73,6 +73,7 @@ import rs2.scene.Region;
 import rs2.scene.Scene;
 import rs2.scene.SceneConstants;
 import rs2.scene.entity.DynamicObjectFactory;
+import rs2.shell.FrameTimingConfig;
 import rs2.shell.GameFrame;
 import rs2.shell.GameShell;
 import rs2.sign.Signlink;
@@ -528,6 +529,9 @@ public class client extends GameShell {
 				regionManager.baseY);
 		actorSynchronizer.updateNpcs(actorUpdater, gameCycle, localPlayerServerIndex, regionManager.baseX,
 				regionManager.baseY);
+		worldState.advanceProjectiles(currentPlane, gameCycle, 1, localPlayerServerIndex, localPlayer, actorSynchronizer,
+				networkSession.outgoing);
+		worldState.advanceGraphicsObjects(currentPlane, gameCycle, 1);
 		updateOverheadTextCycles();
 		animationCycleDelta++;
 		if (crossType != 0) {
@@ -2076,10 +2080,25 @@ public class client extends GameShell {
 		if (duplicateClientError || loadingError || invalidHostError)
 			return;
 		gameCycle++;
-		if (!loggedIn)
+		boolean cameraCycle = loggedIn && localPlayer != null;
+		if (cameraCycle) {
+			cameraController.beginLogicCycle();
+		}
+		if (!loggedIn) {
 			processLoginScreenInput();
-		else
+		} else {
 			processLoggedInCycle();
+		}
+		if (cameraCycle) {
+			if (loggedIn && localPlayer != null && regionManager.loadingStage == RegionManager.STAGE_LOADED) {
+				cameraController.resolveLogicalRenderPosition(worldState, localPlayer, currentPlane);
+				renderPlane = cameraController.cinematic
+						? cameraController.selectCinematicRenderPlane(worldState, currentPlane)
+						: cameraController.selectNormalRenderPlane(worldState, currentPlane, localPlayer,
+								networkSession.outgoing);
+			}
+			cameraController.finishLogicCycle();
+		}
 		processOnDemandRequests();
 	}
 
@@ -2461,7 +2480,7 @@ public class client extends GameShell {
 		Graphics g = getGameComponent().getGraphics();
 		g.setColor(Color.black);
 		g.fillRect(0, 0, ClientLayout.FIXED_WIDTH, ClientLayout.FIXED_HEIGHT);
-		setTargetFps(1);
+		setRenderFps(1);
 		if (loadingError) {
 			titleFlameAnimator.requestStop();
 			g.setFont(new Font("Helvetica", 1, 16));
@@ -3094,9 +3113,9 @@ public class client extends GameShell {
 	private void renderGameScene() {
 		destinationX = gameRenderer.renderScene(
 				new GameRenderer.SceneFrame(layout, sceneEntityRenderer, worldState, actorSynchronizer, localPlayer,
-						cameraController, actorOverlayRenderer, createActorOverlayContext(), networkSession.outgoing,
-						super.graphics, this::drawViewportOverlays, destinationX, destinationY, currentPlane, gameCycle,
-						animationCycleDelta, localPlayerServerIndex, super.mouseX, super.mouseY, lowMemory));
+						cameraController, actorOverlayRenderer, createActorOverlayContext(), super.graphics,
+						this::drawViewportOverlays, destinationX, destinationY, currentPlane, renderPlane, gameCycle,
+						animationCycleDelta, renderInterpolationAlpha(), super.mouseX, super.mouseY, lowMemory));
 	}
 
 	/**
@@ -3154,6 +3173,13 @@ public class client extends GameShell {
 		sceneEntityRenderer = new SceneEntityRenderer();
 		actorOverlayRenderer = new ActorOverlayRenderer();
 		gameRenderer = new GameRenderer();
+		int defaultRenderFps = gameRenderer.rendererBackend() == rs2.game.render.RendererBackend.GPU
+				? FrameTimingConfig.DEFAULT_GPU_RENDER_FPS
+				: FrameTimingConfig.DEFAULT_SOFTWARE_RENDER_FPS;
+		int configuredRenderFps = FrameTimingConfig.configuredRenderFps(defaultRenderFps);
+		setRenderFps(configuredRenderFps);
+		System.out.println("Frame timing: logic 50 Hz, render cap " + FrameTimingConfig.describe(configuredRenderFps)
+				+ " (-D" + FrameTimingConfig.RENDER_FPS_PROPERTY + "=<fps|legacy|unlimited>)");
 		regionManager = new RegionManager(dynamicObjects);
 		ClientActionDispatcher.Movement actionMovement = this::walkTo;
 		Runnable interactionCrosshair = this::markInteractionCrosshair;
@@ -3578,6 +3604,8 @@ public class client extends GameShell {
 	ImageRGB multiCombatOverlay;
 	/** The client state for current plane. */
 	int currentPlane;
+	/** Roof-filtered scene plane resolved at the fixed logic rate. */
+	int renderPlane = 3;
 	/**
 	 * Tracks the current mouse button hold ticks in client ticks/cycles where
 	 * applicable.

@@ -19,6 +19,8 @@ import java.awt.event.WindowListener;
 
 import javax.swing.SwingUtilities;
 
+import java.util.concurrent.locks.LockSupport;
+
 import rs2.media.GraphicsBuffer;
 
 /**
@@ -39,8 +41,6 @@ public class GameShell extends Canvas
 	public GameShell() {
 	}
 
-	/** Defines the timing sample count constant. */
-	private static final int TIMING_SAMPLE_COUNT = 10;
 	/** Defines the key buffer size constant. */
 	private static final int KEY_BUFFER_SIZE = 128;
 	/** Defines the shutdown requested constant. */
@@ -69,11 +69,21 @@ public class GameShell extends Canvas
 	/** Stores the current minimum sleep millis. */
 	protected int minimumSleepMillis = 1;
 
-	/** Stores timing samples values. */
-	private final long[] timingSamples = new long[TIMING_SAMPLE_COUNT];
+	/** Maximum number of fixed logic updates processed after a long stall. */
+	private static final int MAX_CATCH_UP_TICKS = 10;
+	/** Long pauses are clamped so resuming the client cannot trigger a huge tick burst. */
+	private static final long MAX_ELAPSED_NANOS = 250_000_000L;
+	/** Nanoseconds in one millisecond. */
+	private static final long NANOS_PER_MILLI = 1_000_000L;
+	/** Nanoseconds in one second. */
+	private static final long NANOS_PER_SECOND = 1_000_000_000L;
 
-	/** Stores the current fps. */
+	/** Stores the current measured render fps. */
 	protected int fps;
+	/** Configurable presentation cap. Zero means uncapped. */
+	private volatile int renderFpsLimit = 50;
+	/** Fraction between the previous and current fixed logic state used for rendering. */
+	private volatile float renderInterpolationAlpha = 1.0f;
 	/** Tracks whether debug timing. */
 	protected boolean debugTiming;
 
@@ -227,108 +237,84 @@ public class GameShell extends Canvas
 			drawLoadingText(0, "Loading...");
 			startUp();
 
-			int timingIndex = 0;
-			int ratio = 256;
-			int sleepMillis = 1;
-			int accumulator = 0;
-			int interruptedSleeps = 0;
-
-			for (int sampleIndex = 0; sampleIndex < TIMING_SAMPLE_COUNT; sampleIndex++) {
-				timingSamples[sampleIndex] = System.currentTimeMillis();
-			}
+			long previousTime = System.nanoTime();
+			long logicAccumulator = 0L;
+			long nextRenderDeadline = previousTime;
+			long fpsWindowStarted = previousTime;
+			int renderedFrames = 0;
 
 			while (shutdownCountdown >= 0) {
 				synchronizeCanvasSize();
-				if (shutdownCountdown > 0) {
-					shutdownCountdown--;
-					if (shutdownCountdown == 0) {
-						exit();
-						return;
+				long now = System.nanoTime();
+				long elapsed = now - previousTime;
+				previousTime = now;
+				if (elapsed < 0L) {
+					elapsed = 0L;
+				} else if (elapsed > MAX_ELAPSED_NANOS) {
+					elapsed = MAX_ELAPSED_NANOS;
+				}
+				logicAccumulator += elapsed;
+
+				long logicStepNanos = Math.max(1, cycleDurationMillis) * NANOS_PER_MILLI;
+				int processedTicks = 0;
+				while (logicAccumulator >= logicStepNanos && processedTicks < MAX_CATCH_UP_TICKS) {
+					if (shutdownCountdown > 0) {
+						shutdownCountdown--;
+						if (shutdownCountdown == 0) {
+							exit();
+							return;
+						}
 					}
+					consumeInputAndProcessGameLoop();
+					logicAccumulator -= logicStepNanos;
+					processedTicks++;
+				}
+				if (processedTicks == MAX_CATCH_UP_TICKS && logicAccumulator >= logicStepNanos) {
+					logicAccumulator %= logicStepNanos;
 				}
 
-				int previousRatio = ratio;
-				int previousSleepMillis = sleepMillis;
-				ratio = 300;
-				sleepMillis = 1;
-
-				long currentTime = System.currentTimeMillis();
-				if (timingSamples[timingIndex] == 0L) {
-					ratio = previousRatio;
-					sleepMillis = previousSleepMillis;
-				} else if (currentTime > timingSamples[timingIndex]) {
-					ratio = (int) ((long) (2560 * cycleDurationMillis) / (currentTime - timingSamples[timingIndex]));
-				}
-
-				if (ratio < 25) {
-					ratio = 25;
-				}
-				if (ratio > 256) {
-					ratio = 256;
-					sleepMillis = (int) ((long) cycleDurationMillis - (currentTime - timingSamples[timingIndex]) / 10L);
-				}
-				if (sleepMillis > cycleDurationMillis) {
-					sleepMillis = cycleDurationMillis;
-				}
-
-				timingSamples[timingIndex] = currentTime;
-				timingIndex = (timingIndex + 1) % TIMING_SAMPLE_COUNT;
-
-				if (sleepMillis > 1) {
-					for (int sampleIndex = 0; sampleIndex < TIMING_SAMPLE_COUNT; sampleIndex++) {
-						if (timingSamples[sampleIndex] != 0L) {
-							timingSamples[sampleIndex] += sleepMillis;
+				renderInterpolationAlpha = Math.min(1.0f, logicAccumulator / (float) logicStepNanos);
+				int renderLimit = renderFpsLimit;
+				long renderStepNanos = renderLimit > 0 ? Math.max(1L, NANOS_PER_SECOND / renderLimit) : 0L;
+				boolean renderDue = renderLimit <= 0 || now >= nextRenderDeadline;
+				if (renderDue) {
+					processDrawing();
+					renderedFrames++;
+					if (renderLimit > 0) {
+						long afterRender = System.nanoTime();
+						if (afterRender - nextRenderDeadline > renderStepNanos * 4L) {
+							nextRenderDeadline = afterRender + renderStepNanos;
+						} else {
+							do {
+								nextRenderDeadline += renderStepNanos;
+							} while (nextRenderDeadline <= afterRender);
 						}
 					}
 				}
 
-				if (sleepMillis < minimumSleepMillis) {
-					sleepMillis = minimumSleepMillis;
+				long afterWork = System.nanoTime();
+				long fpsElapsed = afterWork - fpsWindowStarted;
+				if (fpsElapsed >= NANOS_PER_SECOND) {
+					fps = (int) Math.round(renderedFrames * (double) NANOS_PER_SECOND / fpsElapsed);
+					renderedFrames = 0;
+					fpsWindowStarted = afterWork;
 				}
-
-				try {
-					Thread.sleep(sleepMillis);
-				} catch (InterruptedException ignored) {
-					interruptedSleeps++;
-				}
-
-				for (; accumulator < 256; accumulator += ratio) {
-					synchronized (inputLock) {
-						clickButton = pendingClickButton;
-						clickX = pendingClickX;
-						clickY = pendingClickY;
-						clickTime = pendingClickTime;
-						pendingClickButton = 0;
-
-						cameraDragDeltaX = pendingCameraDragDeltaX;
-						cameraDragDeltaY = pendingCameraDragDeltaY;
-						pendingCameraDragDeltaX = 0;
-						pendingCameraDragDeltaY = 0;
-
-						processGameLoop();
-						keyQueueReadIndex = keyQueueWriteIndex;
-					}
-				}
-
-				accumulator &= 0xff;
-				if (cycleDurationMillis > 0) {
-					fps = (1000 * ratio) / (cycleDurationMillis * 256);
-				}
-
-				processDrawing();
 
 				if (debugTiming) {
-					System.out.println("ntime:" + currentTime);
-					for (int sampleIndex = 0; sampleIndex < TIMING_SAMPLE_COUNT; sampleIndex++) {
-						int index = ((timingIndex - sampleIndex - 1) + 20) % TIMING_SAMPLE_COUNT;
-						System.out.println("otim" + index + ":" + timingSamples[index]);
-					}
-					System.out.println("fps:" + fps + " ratio:" + ratio + " count:" + accumulator);
-					System.out.println(
-							"del:" + sleepMillis + " deltime:" + cycleDurationMillis + " mindel:" + minimumSleepMillis);
-					System.out.println("intex:" + interruptedSleeps + " opos:" + timingIndex);
+					System.out.println("fps:" + fps + " logicHz:" + Math.max(1, 1000 / Math.max(1, cycleDurationMillis))
+							+ " renderCap:" + (renderLimit == 0 ? "unlimited" : renderLimit)
+							+ " alpha:" + renderInterpolationAlpha + " catchup:" + processedTicks);
 					debugTiming = false;
-					interruptedSleeps = 0;
+				}
+
+				if (renderLimit > 0) {
+					long untilLogic = Math.max(0L, logicStepNanos - logicAccumulator);
+					long untilRender = Math.max(0L, nextRenderDeadline - afterWork);
+					long sleepNanos = Math.min(untilLogic, untilRender);
+					long minimumSleepNanos = Math.max(0, minimumSleepMillis) * NANOS_PER_MILLI;
+					if (sleepNanos > minimumSleepNanos) {
+						LockSupport.parkNanos(sleepNanos);
+					}
 				}
 			}
 
@@ -342,6 +328,25 @@ public class GameShell extends Canvas
 				}
 				lifecycleLock.notifyAll();
 			}
+		}
+	}
+
+	/** Consumes one input snapshot and advances exactly one fixed logic cycle. */
+	private void consumeInputAndProcessGameLoop() {
+		synchronized (inputLock) {
+			clickButton = pendingClickButton;
+			clickX = pendingClickX;
+			clickY = pendingClickY;
+			clickTime = pendingClickTime;
+			pendingClickButton = 0;
+
+			cameraDragDeltaX = pendingCameraDragDeltaX;
+			cameraDragDeltaY = pendingCameraDragDeltaY;
+			pendingCameraDragDeltaX = 0;
+			pendingCameraDragDeltaY = 0;
+
+			processGameLoop();
+			keyQueueReadIndex = keyQueueWriteIndex;
 		}
 	}
 
@@ -396,12 +401,34 @@ public class GameShell extends Canvas
 	}
 
 	/**
-	 * Sets the target game-loop frequency used by the original ratio timer.
+	 * Sets the fixed logic-loop frequency. Normal gameplay remains at 50 Hz; this
+	 * compatibility hook is retained for startup/error states.
 	 *
-	 * @param fps the fps
+	 * @param fps logic updates per second
 	 */
 	public final void setTargetFps(int fps) {
-		cycleDurationMillis = 1000 / fps;
+		if (fps <= 0) {
+			throw new IllegalArgumentException("Logic FPS must be positive: " + fps);
+		}
+		cycleDurationMillis = Math.max(1, 1000 / fps);
+	}
+
+	/** Sets the independent presentation rate. Zero means uncapped. */
+	public final void setRenderFps(int fps) {
+		if (fps < 0) {
+			throw new IllegalArgumentException("Render FPS must be zero or positive: " + fps);
+		}
+		renderFpsLimit = fps;
+	}
+
+	/** Returns the configured independent presentation cap. Zero means uncapped. */
+	public final int renderFpsLimit() {
+		return renderFpsLimit;
+	}
+
+	/** Returns interpolation progress between the previous and current 50 Hz states. */
+	protected final float renderInterpolationAlpha() {
+		return renderInterpolationAlpha;
 	}
 
 	/**

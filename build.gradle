@@ -100,18 +100,28 @@ tasks.register('gpuTerrainSelfTest', JavaExec) {
 }
 
 tasks.named('run', JavaExec) {
-    def renderer = System.getProperty('flint.renderer')
-    if (renderer != null) {
-        systemProperty 'flint.renderer', renderer
+    ['flint.renderer', 'flint.renderFps', 'flint.gpu.perfStats'].each { propertyName ->
+        def value = System.getProperty(propertyName)
+        if (value != null) {
+            systemProperty propertyName, value
+        }
     }
 }
 
 tasks.register('runGpu', JavaExec) {
     group = 'application'
-    description = 'Runs Flint with the Phase-3 GPU scene renderer selected.'
+    description = 'Runs Flint with the GPU scene renderer and decoupled presentation timing.'
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'rs2.client'
     systemProperty 'flint.renderer', 'gpu'
+    def renderFps = System.getProperty('flint.renderFps')
+    if (renderFps != null) {
+        systemProperty 'flint.renderFps', renderFps
+    }
+    def perfStats = System.getProperty('flint.gpu.perfStats')
+    if (perfStats != null) {
+        systemProperty 'flint.gpu.perfStats', perfStats
+    }
 }
 
 tasks.register('gpuStaticSceneMeshSelfTest', JavaExec) {
@@ -126,4 +136,12 @@ tasks.register('gpuStaticSceneSelfTest', JavaExec) {
     description = 'Creates a real OpenGL 3.3 context and validates the Phase 3 static model draw path.'
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'rs2.tools.GpuStaticSceneSelfTest'
+}
+
+
+tasks.register('frameTimingSelfTest', JavaExec) {
+    group = 'verification'
+    description = 'Validates decoupled render-rate configuration and camera interpolation.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'rs2.tools.FrameTimingSelfTest'
 }

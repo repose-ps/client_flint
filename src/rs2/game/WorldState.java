@@ -468,92 +468,86 @@ public final class WorldState {
 	}
 
 	/**
-	 * Advances active projectiles and submits visible ones to the scene.
-	 * 
-	 * @param currentPlane           the current plane
-	 * @param currentCycle           the current client cycle
-	 * @param cycleDelta             the cycle delta
-	 * @param localPlayerServerIndex the local player server index
-	 * @param localPlayer            the local player
-	 * @param actors                 the actors
-	 * @param outgoing               the outgoing
+	 * Advances active projectile simulation exactly once for a fixed client logic
+	 * update. Rendering submits the already-advanced projectile state separately.
 	 */
-	public void updateProjectiles(int currentPlane, int currentCycle, int cycleDelta, int localPlayerServerIndex,
+	public void advanceProjectiles(int currentPlane, int currentCycle, int cycleDelta, int localPlayerServerIndex,
 			Player localPlayer, ActorSynchronizer actors, Buffer outgoing) {
-
 		boolean hasProjectiles = false;
-
-		for (Projectile projectile = (Projectile) projectiles
-				.first(); projectile != null; projectile = (Projectile) projectiles.next()) {
-
+		for (Projectile projectile = (Projectile) projectiles.first(); projectile != null;
+				projectile = (Projectile) projectiles.next()) {
 			if (projectile.plane != currentPlane || currentCycle > projectile.cycleEnd) {
 				projectile.unlink();
 				continue;
 			}
-
 			hasProjectiles = true;
-
-			if (currentCycle >= projectile.cycleStart) {
-				if (projectile.targetIndex > 0) {
-					Npc npc = actors.npcs[projectile.targetIndex - 1];
-
-					if (npc != null && npc.x >= 0 && npc.x < 13312 && npc.y >= 0 && npc.y < 13312) {
-						projectile.setDestination(npc.x, npc.y,
-								getTileHeight(npc.x, npc.y, projectile.plane) - projectile.endHeight, currentCycle);
-					}
-				}
-
-				if (projectile.targetIndex < 0) {
-					int playerIndex = -projectile.targetIndex - 1;
-					Player player = playerIndex == localPlayerServerIndex ? localPlayer : actors.players[playerIndex];
-
-					if (player != null && player.x >= 0 && player.x < 13312 && player.y >= 0 && player.y < 13312) {
-						projectile.setDestination(player.x, player.y,
-								getTileHeight(player.x, player.y, projectile.plane) - projectile.endHeight,
-								currentCycle);
-					}
-				}
-
-				projectile.advance(cycleDelta);
-
-				scene.addEntity(currentPlane, (int) projectile.x, (int) projectile.y, (int) projectile.z, projectile,
-						-1, 60, false, projectile.yaw);
+			if (currentCycle < projectile.cycleStart) {
+				continue;
 			}
+			if (projectile.targetIndex > 0) {
+				Npc npc = actors.npcs[projectile.targetIndex - 1];
+				if (npc != null && npc.x >= 0 && npc.x < 13312 && npc.y >= 0 && npc.y < 13312) {
+					projectile.setDestination(npc.x, npc.y,
+							getTileHeight(npc.x, npc.y, projectile.plane) - projectile.endHeight, currentCycle);
+				}
+			}
+			if (projectile.targetIndex < 0) {
+				int playerIndex = -projectile.targetIndex - 1;
+				Player player = playerIndex == localPlayerServerIndex ? localPlayer : actors.players[playerIndex];
+				if (player != null && player.x >= 0 && player.x < 13312 && player.y >= 0 && player.y < 13312) {
+					projectile.setDestination(player.x, player.y,
+							getTileHeight(player.x, player.y, projectile.plane) - projectile.endHeight, currentCycle);
+				}
+			}
+			projectile.advance(cycleDelta);
 		}
 
 		if (hasProjectiles) {
-			projectileKeepaliveCycles++;
-
+			projectileKeepaliveCycles += cycleDelta;
 			if (projectileKeepaliveCycles > 51) {
 				projectileKeepaliveCycles = 0;
 				outgoing.writeOpcode(OutgoingPacketOpcode.PROJECTILE_KEEPALIVE);
 			}
-
 		} else {
 			projectileKeepaliveCycles = 0;
 		}
 	}
 
-	/**
-	 * Advances temporary graphics objects and submits visible ones to the scene.
-	 * 
-	 * @param currentPlane the current plane
-	 * @param currentCycle the current client cycle
-	 * @param cycleDelta   the cycle delta
-	 */
-	public void updateGraphicsObjects(int currentPlane, int currentCycle, int cycleDelta) {
-		for (GraphicsObject graphics = (GraphicsObject) graphicsObjects
-				.first(); graphics != null; graphics = (GraphicsObject) graphicsObjects.next()) {
+	/** Adds the current projectile models to the temporary scene for one render. */
+	public void submitProjectiles(int currentPlane, int currentCycle) {
+		for (Projectile projectile = (Projectile) projectiles.first(); projectile != null;
+				projectile = (Projectile) projectiles.next()) {
+			if (projectile.plane == currentPlane && currentCycle >= projectile.cycleStart
+					&& currentCycle <= projectile.cycleEnd) {
+				scene.addEntity(currentPlane, (int) projectile.x, (int) projectile.y, (int) projectile.z, projectile, -1,
+						60, false, projectile.yaw);
+			}
+		}
+	}
+
+	/** Advances temporary graphics-object simulation once per fixed client tick. */
+	public void advanceGraphicsObjects(int currentPlane, int currentCycle, int cycleDelta) {
+		for (GraphicsObject graphics = (GraphicsObject) graphicsObjects.first(); graphics != null;
+				graphics = (GraphicsObject) graphicsObjects.next()) {
 			if (graphics.plane != currentPlane || graphics.finished) {
 				graphics.unlink();
 			} else if (currentCycle >= graphics.cycleStart) {
 				graphics.advance(cycleDelta);
 				if (graphics.finished) {
 					graphics.unlink();
-				} else {
-					scene.addEntity(graphics.plane, graphics.x, graphics.y, graphics.z, graphics, -1, 60, false, 0);
 				}
 			}
 		}
 	}
+
+	/** Adds current temporary graphics models to the scene for one render. */
+	public void submitGraphicsObjects(int currentPlane, int currentCycle) {
+		for (GraphicsObject graphics = (GraphicsObject) graphicsObjects.first(); graphics != null;
+				graphics = (GraphicsObject) graphicsObjects.next()) {
+			if (graphics.plane == currentPlane && !graphics.finished && currentCycle >= graphics.cycleStart) {
+				scene.addEntity(graphics.plane, graphics.x, graphics.y, graphics.z, graphics, -1, 60, false, 0);
+			}
+		}
+	}
+
 }

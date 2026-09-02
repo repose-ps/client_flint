@@ -14,13 +14,11 @@ import rs2.game.CameraController;
 import rs2.game.SceneEntityRenderer;
 import rs2.game.WorldState;
 import rs2.game.entity.Player;
-import rs2.media.Angle;
 import rs2.media.GraphicsBuffer;
 import rs2.media.Rasterizer;
 import rs2.media.Rasterizer3D;
 import rs2.media.sprite.ImageRGB;
 import rs2.media.sprite.IndexedImage;
-import rs2.net.Buffer;
 import rs2.scene.Scene;
 import rs2.ui.ClientLayout;
 
@@ -731,28 +729,16 @@ public final class GameRenderer {
 		frame.sceneEntityRenderer.addPlayers(frame.worldState, frame.actorSynchronizer, frame.localPlayer,
 				frame.currentPlane, frame.gameCycle, frame.lowMemory, false);
 		frame.sceneEntityRenderer.addNpcs(frame.worldState, frame.actorSynchronizer, frame.currentPlane, false);
-		frame.worldState.updateProjectiles(frame.currentPlane, frame.gameCycle, frame.animationCycleDelta,
-				frame.localPlayerServerIndex, frame.localPlayer, frame.actorSynchronizer, frame.outgoing);
-		frame.worldState.updateGraphicsObjects(frame.currentPlane, frame.gameCycle, frame.animationCycleDelta);
+		frame.worldState.submitProjectiles(frame.currentPlane, frame.gameCycle);
+		frame.worldState.submitGraphicsObjects(frame.currentPlane, frame.gameCycle);
 
-		if (!frame.cameraController.cinematic) {
-			int pitch = frame.cameraController.getMinimumPitchForRender();
-			int yaw = frame.cameraController.followYaw + frame.cameraController.yawOffset & Angle.MASK;
-			frame.cameraController.positionFromTarget(
-					frame.worldState.getTileHeight(frame.localPlayer.x, frame.localPlayer.y, frame.currentPlane) - 50,
-					frame.cameraController.followTargetX, pitch, 600 + pitch * 3, yaw,
-					frame.cameraController.followTargetY);
-		}
-		int renderPlane = frame.cameraController.cinematic
-				? frame.cameraController.selectCinematicRenderPlane(frame.worldState, frame.currentPlane)
-				: frame.cameraController.selectNormalRenderPlane(frame.worldState, frame.currentPlane,
-						frame.localPlayer, frame.outgoing);
-		CameraController.Snapshot cameraSnapshot = frame.cameraController.snapshot();
+		CameraController.Snapshot logicalCamera = frame.cameraController.snapshot();
+		frame.cameraController.restore(frame.cameraController.interpolatedSnapshot(frame.interpolationAlpha));
 		frame.cameraController.applyShake();
 
 		int textureCycle = Rasterizer3D.textureCycle;
 		WorldRenderFrame worldFrame = new WorldRenderFrame(frame.worldState.scene, frame.cameraController.x,
-				frame.cameraController.y, frame.cameraController.height, renderPlane, frame.cameraController.yaw,
+				frame.cameraController.y, frame.cameraController.height, frame.renderPlane, frame.cameraController.yaw,
 				frame.cameraController.pitch, frame.mouseX - frame.layout.viewportX(),
 				frame.mouseY - frame.layout.viewportY(), frame.layout.viewportX(), frame.layout.viewportY(),
 				frame.layout.viewportWidth(), frame.layout.viewportHeight());
@@ -765,7 +751,7 @@ public final class GameRenderer {
 		animateTextures(textureCycle, frame.animationCycleDelta, frame.lowMemory);
 		frame.viewportOverlayDrawer.run();
 		viewportBuffer.draw(frame.graphics, frame.layout.viewportX(), frame.layout.viewportY());
-		frame.cameraController.restore(cameraSnapshot);
+		frame.cameraController.restore(logicalCamera);
 		return destinationX;
 	}
 
@@ -787,11 +773,6 @@ public final class GameRenderer {
 		final ActorOverlayRenderer actorOverlayRenderer;
 		/** Per-frame actor overlay state/assets. */
 		final ActorOverlayRenderer.Context actorOverlayContext;
-		/**
-		 * Outgoing revision-377 packet buffer used by render-plane
-		 * selection/projectiles.
-		 */
-		final Buffer outgoing;
 		/** Current off-screen presentation graphics. */
 		final Graphics graphics;
 		/** Callback that draws non-actor viewport overlays after the scene. */
@@ -802,12 +783,14 @@ public final class GameRenderer {
 		final int destinationY;
 		/** Current scene plane. */
 		final int currentPlane;
+		/** Roof-filtered render plane resolved by the fixed logic update. */
+		final int renderPlane;
 		/** Current client cycle. */
 		final int gameCycle;
 		/** Elapsed animation cycles since the previous draw. */
 		final int animationCycleDelta;
-		/** Local player protocol index. */
-		final int localPlayerServerIndex;
+		/** Interpolation fraction between previous/current fixed logic camera state. */
+		final float interpolationAlpha;
 		/** Current client mouse X. */
 		final int mouseX;
 		/** Current client mouse Y. */
@@ -826,25 +809,24 @@ public final class GameRenderer {
 		 * @param cameraController       camera controller
 		 * @param actorOverlayRenderer   actor overlay renderer
 		 * @param actorOverlayContext    actor overlay frame context
-		 * @param outgoing               outgoing protocol buffer
 		 * @param graphics               current presentation graphics
 		 * @param viewportOverlayDrawer  viewport overlay callback
 		 * @param destinationX           destination marker X
 		 * @param destinationY           destination marker Y
 		 * @param currentPlane           current scene plane
+		 * @param renderPlane            roof-filtered render plane
 		 * @param gameCycle              current client cycle
 		 * @param animationCycleDelta    elapsed animation cycles
-		 * @param localPlayerServerIndex local player protocol index
+		 * @param interpolationAlpha     render interpolation fraction
 		 * @param mouseX                 client mouse X
 		 * @param mouseY                 client mouse Y
 		 * @param lowMemory              low-memory rendering mode
 		 */
 		public SceneFrame(ClientLayout layout, SceneEntityRenderer sceneEntityRenderer, WorldState worldState,
 				ActorSynchronizer actorSynchronizer, Player localPlayer, CameraController cameraController,
-				ActorOverlayRenderer actorOverlayRenderer, ActorOverlayRenderer.Context actorOverlayContext,
-				Buffer outgoing, Graphics graphics, Runnable viewportOverlayDrawer, int destinationX, int destinationY,
-				int currentPlane, int gameCycle, int animationCycleDelta, int localPlayerServerIndex, int mouseX,
-				int mouseY, boolean lowMemory) {
+				ActorOverlayRenderer actorOverlayRenderer, ActorOverlayRenderer.Context actorOverlayContext, Graphics graphics,
+				Runnable viewportOverlayDrawer, int destinationX, int destinationY, int currentPlane, int renderPlane,
+				int gameCycle, int animationCycleDelta, float interpolationAlpha, int mouseX, int mouseY, boolean lowMemory) {
 			this.layout = layout;
 			this.sceneEntityRenderer = sceneEntityRenderer;
 			this.worldState = worldState;
@@ -853,15 +835,15 @@ public final class GameRenderer {
 			this.cameraController = cameraController;
 			this.actorOverlayRenderer = actorOverlayRenderer;
 			this.actorOverlayContext = actorOverlayContext;
-			this.outgoing = outgoing;
 			this.graphics = graphics;
 			this.viewportOverlayDrawer = viewportOverlayDrawer;
 			this.destinationX = destinationX;
 			this.destinationY = destinationY;
 			this.currentPlane = currentPlane;
+			this.renderPlane = renderPlane;
 			this.gameCycle = gameCycle;
 			this.animationCycleDelta = animationCycleDelta;
-			this.localPlayerServerIndex = localPlayerServerIndex;
+			this.interpolationAlpha = interpolationAlpha;
 			this.mouseX = mouseX;
 			this.mouseY = mouseY;
 			this.lowMemory = lowMemory;

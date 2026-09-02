@@ -47,6 +47,19 @@ public final class CameraController {
 	/** Stores the current yaw. */
 	public int yaw;
 
+	/** Previous fixed-tick render camera X used for interpolation. */
+	private int previousRenderX;
+	/** Previous fixed-tick render camera height used for interpolation. */
+	private int previousRenderHeight;
+	/** Previous fixed-tick render camera Y used for interpolation. */
+	private int previousRenderY;
+	/** Previous fixed-tick render pitch used for interpolation. */
+	private int previousRenderPitch = MIN_PITCH;
+	/** Previous fixed-tick render yaw used for interpolation. */
+	private int previousRenderYaw;
+	/** Whether a complete logical camera state is available for interpolation. */
+	private boolean renderInterpolationInitialized;
+
 	/** Stores the current follow pitch. */
 	public int followPitch = MIN_PITCH;
 
@@ -437,6 +450,72 @@ public final class CameraController {
 		for (int loopIndex = 0; loopIndex < 5; loopIndex++) {
 			shakeCycles[loopIndex]++;
 		}
+	}
+
+	/** Captures the current fixed-tick camera before game logic advances it. */
+	public void beginLogicCycle() {
+		if (!renderInterpolationInitialized) {
+			return;
+		}
+		previousRenderX = x;
+		previousRenderHeight = height;
+		previousRenderY = y;
+		previousRenderPitch = pitch;
+		previousRenderYaw = yaw;
+	}
+
+	/**
+	 * Resolves the normal follow-camera position once per 50 Hz logic update.
+	 * Cinematic camera motion already writes the render camera during its logic tick.
+	 */
+	public void resolveLogicalRenderPosition(WorldState world, Actor localPlayer, int plane) {
+		if (cinematic || localPlayer == null) {
+			return;
+		}
+		int renderPitch = getMinimumPitchForRender();
+		int renderYaw = followYaw + yawOffset & Angle.MASK;
+		positionFromTarget(world.getTileHeight(localPlayer.x, localPlayer.y, plane) - 50, followTargetX, renderPitch,
+				600 + renderPitch * 3, renderYaw, followTargetY);
+	}
+
+	/** Marks the current logical camera as a complete interpolation endpoint. */
+	public void finishLogicCycle() {
+		if (renderInterpolationInitialized) {
+			return;
+		}
+		previousRenderX = x;
+		previousRenderHeight = height;
+		previousRenderY = y;
+		previousRenderPitch = pitch;
+		previousRenderYaw = yaw;
+		renderInterpolationInitialized = true;
+	}
+
+	/** Returns a smooth render-only camera between the previous and current 50 Hz states. */
+	public Snapshot interpolatedSnapshot(float alpha) {
+		if (!renderInterpolationInitialized) {
+			return snapshot();
+		}
+		float clamped = Math.max(0.0f, Math.min(1.0f, alpha));
+		return new Snapshot(interpolateLinear(previousRenderX, x, clamped),
+				interpolateLinear(previousRenderHeight, height, clamped),
+				interpolateLinear(previousRenderY, y, clamped),
+				interpolateLinear(previousRenderPitch, pitch, clamped),
+				interpolateAngle(previousRenderYaw, yaw, clamped));
+	}
+
+	private static int interpolateLinear(int previous, int current, float alpha) {
+		return Math.round(previous + (current - previous) * alpha);
+	}
+
+	private static int interpolateAngle(int previous, int current, float alpha) {
+		int delta = current - previous;
+		if (delta > Angle.HALF_TURN) {
+			delta -= Angle.FULL_TURN;
+		} else if (delta < -Angle.HALF_TURN) {
+			delta += Angle.FULL_TURN;
+		}
+		return previous + Math.round(delta * alpha) & Angle.MASK;
 	}
 
 	/**
