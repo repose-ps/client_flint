@@ -1,10 +1,11 @@
 package rs2.gpu;
 
+import static org.lwjgl.opengl.GL14C.glMultiDrawArrays;
 import static org.lwjgl.opengl.GL33C.GL_ARRAY_BUFFER;
 import static org.lwjgl.opengl.GL33C.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL33C.GL_DEPTH_BUFFER_BIT;
 import static org.lwjgl.opengl.GL33C.GL_DEPTH_TEST;
-import static org.lwjgl.opengl.GL33C.GL_FLOAT;
+import static org.lwjgl.opengl.GL33C.GL_INT;
 import static org.lwjgl.opengl.GL33C.GL_LEQUAL;
 import static org.lwjgl.opengl.GL33C.GL_RENDERER;
 import static org.lwjgl.opengl.GL33C.GL_RGBA;
@@ -19,7 +20,6 @@ import static org.lwjgl.opengl.GL33C.glBufferData;
 import static org.lwjgl.opengl.GL33C.glClear;
 import static org.lwjgl.opengl.GL33C.glClearColor;
 import static org.lwjgl.opengl.GL33C.glDepthFunc;
-import static org.lwjgl.opengl.GL33C.glDrawArrays;
 import static org.lwjgl.opengl.GL33C.glEnable;
 import static org.lwjgl.opengl.GL33C.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL33C.glGenBuffers;
@@ -31,10 +31,14 @@ import static org.lwjgl.opengl.GL33C.glUniform2f;
 import static org.lwjgl.opengl.GL33C.glUniform2i;
 import static org.lwjgl.opengl.GL33C.glUniform3i;
 import static org.lwjgl.opengl.GL33C.glUseProgram;
+import static org.lwjgl.opengl.GL33C.glVertexAttribIPointer;
 import static org.lwjgl.opengl.GL33C.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL33C.glViewport;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
+import java.util.Arrays;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
@@ -45,246 +49,497 @@ import rs2.game.render.WorldRenderFrame;
 import rs2.media.Rasterizer3D;
 import rs2.scene.Scene;
 
-/** OpenGL surface that renders the complete loaded terrain mesh. */
+/** OpenGL surface that renders complete loaded terrain and static scene geometry. */
 final class GpuSceneCanvas extends AWTGLCanvas {
 
-	private static final long serialVersionUID = 1L;
-	private static final int CLEAR_RED = 9;
-	private static final int CLEAR_GREEN = 11;
-	private static final int CLEAR_BLUE = 15;
+    private static final long serialVersionUID = 1L;
+    private static final int CLEAR_RED = 9;
+    private static final int CLEAR_GREEN = 11;
+    private static final int CLEAR_BLUE = 15;
+    private static final int RENDER_PLANE_VARIANTS = 4;
+    private static final boolean PERF_STATS = Boolean.getBoolean("flint.gpu.perfStats");
+    private static final long PERF_STATS_INTERVAL_NANOS = 5_000_000_000L;
+    private static final int INITIAL_UPLOAD_SCRATCH_BYTES = 4 * 1024 * 1024;
 
-	private static final String VERTEX_SHADER = """
-			#version 330 core
-			layout (location = 0) in vec3 aPosition;
-			layout (location = 1) in vec3 aColor;
+    private static final String VERTEX_SHADER = """
+            #version 330 core
+            layout (location = 0) in ivec3 aPosition;
+            layout (location = 1) in vec4 aColor;
 
-			uniform ivec3 uCamera;
-			uniform ivec2 uYawSinCos;
-			uniform ivec2 uPitchSinCos;
-			uniform vec2 uViewport;
+            uniform ivec3 uCamera;
+            uniform ivec2 uYawSinCos;
+            uniform ivec2 uPitchSinCos;
+            uniform vec2 uViewport;
 
-			noperspective out vec3 vertexColor;
+            noperspective out vec3 vertexColor;
 
-			void main() {
-			    ivec3 relative = ivec3(aPosition) - uCamera;
+            void main() {
+                ivec3 relative = aPosition - uCamera;
 
-			    int viewX = (relative.z * uYawSinCos.x + relative.x * uYawSinCos.y) >> 16;
-			    int yawDepth = (relative.z * uYawSinCos.y - relative.x * uYawSinCos.x) >> 16;
-			    int viewY = (relative.y * uPitchSinCos.y - yawDepth * uPitchSinCos.x) >> 16;
-			    int depth = (relative.y * uPitchSinCos.x + yawDepth * uPitchSinCos.y) >> 16;
+                int viewX = (relative.z * uYawSinCos.x + relative.x * uYawSinCos.y) >> 16;
+                int yawDepth = (relative.z * uYawSinCos.y - relative.x * uYawSinCos.x) >> 16;
+                int viewY = (relative.y * uPitchSinCos.y - yawDepth * uPitchSinCos.x) >> 16;
+                int depth = (relative.y * uPitchSinCos.x + yawDepth * uPitchSinCos.y) >> 16;
 
-			    const float nearClip = 50.0;
-			    const float farClip = 25000.0;
-			    float viewDepth = float(depth);
-			    float clipZ = ((farClip + nearClip) / (farClip - nearClip)) * viewDepth
-			            - ((2.0 * farClip * nearClip) / (farClip - nearClip));
+                const float nearClip = 50.0;
+                const float farClip = 25000.0;
+                float viewDepth = float(depth);
+                float clipZ = ((farClip + nearClip) / (farClip - nearClip)) * viewDepth
+                        - ((2.0 * farClip * nearClip) / (farClip - nearClip));
 
-			    gl_Position = vec4(
-			            float(viewX) * (1024.0 / uViewport.x),
-			            -float(viewY) * (1024.0 / uViewport.y),
-			            clipZ,
-			            viewDepth);
-			    vertexColor = aColor;
-			}
-			""";
+                gl_Position = vec4(
+                        float(viewX) * (1024.0 / uViewport.x),
+                        -float(viewY) * (1024.0 / uViewport.y),
+                        clipZ,
+                        viewDepth);
+                vertexColor = aColor.rgb;
+            }
+            """;
 
-	private static final String FRAGMENT_SHADER = """
-			#version 330 core
-			noperspective in vec3 vertexColor;
-			out vec4 fragmentColor;
-			void main() {
-			    fragmentColor = vec4(vertexColor, 1.0);
-			}
-			""";
+    private static final String FRAGMENT_SHADER = """
+            #version 330 core
+            noperspective in vec3 vertexColor;
+            out vec4 fragmentColor;
+            void main() {
+                fragmentColor = vec4(vertexColor, 1.0);
+            }
+            """;
 
-	private volatile WorldRenderFrame frameData;
-	private GpuShaderProgram shader;
-	private int vertexArray;
-	private int vertexBuffer;
-	private int vertexCount;
-	private int cameraUniform;
-	private int yawUniform;
-	private int pitchUniform;
-	private int viewportUniform;
-	private Scene uploadedScene;
-	private long uploadedGeometryRevision = Long.MIN_VALUE;
-	private int uploadedPaletteRevision = Integer.MIN_VALUE;
-	private int uploadedRenderPlane = Integer.MIN_VALUE;
-	private int uploadedMinPlane = Integer.MIN_VALUE;
-	private volatile boolean initialized;
-	private volatile boolean validationRequested;
-	private volatile boolean validationPassed;
+    private volatile WorldRenderFrame frameData;
+    private GpuShaderProgram shader;
+    private int terrainVertexArray;
+    private int terrainVertexBuffer;
+    private int terrainVertexCount;
+    private GpuSceneChunk[] terrainChunks;
+    private final int[] terrainEligibleVertices = new int[RENDER_PLANE_VARIANTS];
+    private int staticVertexArray;
+    private int staticVertexBuffer;
+    private int staticVertexCount;
+    private GpuSceneChunk[] staticChunks;
+    private final int[] staticEligibleVertices = new int[RENDER_PLANE_VARIANTS];
+    private int cachedSceneBytes;
+    private ByteBuffer uploadScratch = createUploadScratch(INITIAL_UPLOAD_SCRATCH_BYTES);
+    private IntBuffer uploadScratchWords = uploadScratch.asIntBuffer();
+    private IntBuffer multiDrawFirsts = BufferUtils.createIntBuffer(1024);
+    private IntBuffer multiDrawCounts = BufferUtils.createIntBuffer(1024);
+    private int lastDrawVisibleRanges;
+    private int lastDrawEligibleRanges;
+    private int lastDrawCommands;
+    private int lastDrawSubmittedVertices;
+    private int frameTerrainVisible;
+    private int frameTerrainEligible;
+    private int frameTerrainCommands;
+    private int frameStaticVisible;
+    private int frameStaticEligible;
+    private int frameStaticCommands;
+    private int frameSubmittedVertices;
+    private int frameEligibleVertices;
+    private long perfWindowStarted;
+    private long perfSubmittedVertices;
+    private long perfEligibleVertices;
+    private long perfCpuRenderNanos;
+    private long perfSwapNanos;
+    private int perfFrames;
+    private int perfLastTerrainVisible;
+    private int perfLastTerrainEligible;
+    private int perfLastTerrainCommands;
+    private int perfLastStaticVisible;
+    private int perfLastStaticEligible;
+    private int perfLastStaticCommands;
+    private int cameraUniform;
+    private int yawUniform;
+    private int pitchUniform;
+    private int viewportUniform;
+    private Scene uploadedScene;
+    private long uploadedGeometryRevision = Long.MIN_VALUE;
+    private int uploadedPaletteRevision = Integer.MIN_VALUE;
+    private int uploadedMinPlane = Integer.MIN_VALUE;
+    private boolean sceneUploaded;
+    private volatile boolean initialized;
+    private volatile boolean validationRequested;
+    private volatile boolean validationPassed;
 
-	GpuSceneCanvas() {
-		super(createGlData());
-		setIgnoreRepaint(true);
-		setFocusable(true);
-	}
+    GpuSceneCanvas() {
+        super(createGlData());
+        setIgnoreRepaint(true);
+        setFocusable(true);
+    }
 
-	private static GLData createGlData() {
-		GLData data = new GLData();
-		data.majorVersion = 3;
-		data.minorVersion = 3;
-		data.profile = GLData.Profile.CORE;
-		data.forwardCompatible = true;
-		return data;
-	}
+    private static GLData createGlData() {
+        GLData data = new GLData();
+        data.majorVersion = 3;
+        data.minorVersion = 3;
+        data.profile = GLData.Profile.CORE;
+        data.forwardCompatible = true;
+        return data;
+    }
 
-	void setFrameData(WorldRenderFrame frameData) {
-		this.frameData = frameData;
-	}
+    private static ByteBuffer createUploadScratch(int bytes) {
+        return BufferUtils.createByteBuffer(bytes).order(ByteOrder.nativeOrder());
+    }
 
-	@Override
-	public void initGL() {
-		GL.createCapabilities();
-		if (!GL.getCapabilities().OpenGL33) {
-			throw new IllegalStateException("Flint GPU rendering requires OpenGL 3.3 or newer.");
-		}
+    void setFrameData(WorldRenderFrame frameData) {
+        this.frameData = frameData;
+    }
 
-		shader = GpuShaderProgram.compile(VERTEX_SHADER, FRAGMENT_SHADER);
-		cameraUniform = requiredUniform("uCamera");
-		yawUniform = requiredUniform("uYawSinCos");
-		pitchUniform = requiredUniform("uPitchSinCos");
-		viewportUniform = requiredUniform("uViewport");
+    @Override
+    public void initGL() {
+        GL.createCapabilities();
+        if (!GL.getCapabilities().OpenGL33) {
+            throw new IllegalStateException("Flint GPU rendering requires OpenGL 3.3 or newer.");
+        }
 
-		vertexArray = glGenVertexArrays();
-		vertexBuffer = glGenBuffers();
-		glBindVertexArray(vertexArray);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-		glBufferData(GL_ARRAY_BUFFER, 0L, GL_STATIC_DRAW);
-		int stride = GpuTerrainMesh.FLOATS_PER_VERTEX * Float.BYTES;
-		glVertexAttribPointer(0, 3, GL_FLOAT, false, stride, 0L);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(1, 3, GL_FLOAT, false, stride, 3L * Float.BYTES);
-		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
+        shader = GpuShaderProgram.compile(VERTEX_SHADER, FRAGMENT_SHADER);
+        cameraUniform = requiredUniform("uCamera");
+        yawUniform = requiredUniform("uYawSinCos");
+        pitchUniform = requiredUniform("uPitchSinCos");
+        viewportUniform = requiredUniform("uViewport");
 
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LEQUAL);
-		glClearColor(CLEAR_RED / 255.0f, CLEAR_GREEN / 255.0f, CLEAR_BLUE / 255.0f, 1.0f);
-		initialized = true;
-		System.out.println("GPU renderer initialized: " + glGetString(GL_VENDOR) + " / " + glGetString(GL_RENDERER)
-				+ " / OpenGL " + glGetString(GL_VERSION));
-	}
+        terrainVertexArray = glGenVertexArrays();
+        terrainVertexBuffer = glGenBuffers();
+        configureVertexArray(terrainVertexArray, terrainVertexBuffer);
+        staticVertexArray = glGenVertexArrays();
+        staticVertexBuffer = glGenBuffers();
+        configureVertexArray(staticVertexArray, staticVertexBuffer);
 
-	@Override
-	public void paintGL() {
-		int width = Math.max(1, getFramebufferWidth());
-		int height = Math.max(1, getFramebufferHeight());
-		glViewport(0, 0, width, height);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        glClearColor(CLEAR_RED / 255.0f, CLEAR_GREEN / 255.0f, CLEAR_BLUE / 255.0f, 1.0f);
+        initialized = true;
+        System.out.println("GPU renderer initialized: " + glGetString(GL_VENDOR) + " / " + glGetString(GL_RENDERER)
+                + " / OpenGL " + glGetString(GL_VERSION));
+    }
 
-		WorldRenderFrame frame = frameData;
-		if (frame != null) {
-			ensureTerrainUploaded(frame);
-			drawTerrain(frame, width, height);
-		}
+    @Override
+    public void paintGL() {
+        long cpuStarted = PERF_STATS ? System.nanoTime() : 0L;
+        int width = Math.max(1, getFramebufferWidth());
+        int height = Math.max(1, getFramebufferHeight());
+        glViewport(0, 0, width, height);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		if (validationRequested) {
-			validationPassed = framebufferContainsTerrain(width, height);
-			validationRequested = false;
-		}
-		swapBuffers();
-	}
+        WorldRenderFrame frame = frameData;
+        if (frame != null) {
+            ensureSceneUploaded(frame);
+            drawScene(frame, width, height);
+        }
 
-	private void ensureTerrainUploaded(WorldRenderFrame frame) {
-		Scene scene = frame.scene();
-		long geometryRevision = scene.geometryRevision();
-		int paletteRevision = Rasterizer3D.paletteRevision();
-		if (scene == uploadedScene && geometryRevision == uploadedGeometryRevision
-				&& paletteRevision == uploadedPaletteRevision && frame.renderPlane() == uploadedRenderPlane
-				&& scene.minPlane == uploadedMinPlane) {
-			return;
-		}
+        if (validationRequested) {
+            validationPassed = framebufferContainsScene(width, height);
+            validationRequested = false;
+        }
 
-		GpuTerrainMesh mesh = GpuSceneUploader.buildTerrain(scene, frame.renderPlane());
-		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-		glBufferData(GL_ARRAY_BUFFER, mesh.vertices(), GL_STATIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		vertexCount = mesh.vertexCount();
-		uploadedScene = scene;
-		uploadedGeometryRevision = geometryRevision;
-		uploadedPaletteRevision = paletteRevision;
-		uploadedRenderPlane = frame.renderPlane();
-		uploadedMinPlane = scene.minPlane;
-		System.out.println("GPU terrain uploaded: " + mesh.surfaceCount() + " surfaces, " + mesh.triangleCount()
-				+ " triangles, " + mesh.vertexCount() + " vertices, plane <= " + frame.renderPlane());
-	}
+        long swapStarted = PERF_STATS ? System.nanoTime() : 0L;
+        swapBuffers();
+        if (PERF_STATS) {
+            long finished = System.nanoTime();
+            recordPerformance(swapStarted - cpuStarted, finished - swapStarted);
+        }
+    }
 
-	private void drawTerrain(WorldRenderFrame frame, int width, int height) {
-		if (vertexCount == 0) {
-			return;
-		}
-		int yaw = frame.yaw() & 0x7ff;
-		int pitch = frame.pitch() & 0x7ff;
-		int yawSin = Rasterizer3D.SINE[yaw];
-		int yawCos = Rasterizer3D.COSINE[yaw];
-		int pitchSin = Rasterizer3D.SINE[pitch];
-		int pitchCos = Rasterizer3D.COSINE[pitch];
+    private void configureVertexArray(int vertexArray, int vertexBuffer) {
+        glBindVertexArray(vertexArray);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        glBufferData(GL_ARRAY_BUFFER, 0L, GL_STATIC_DRAW);
+        int stride = GpuVertexBuilder.BYTES_PER_VERTEX;
+        glVertexAttribIPointer(0, 3, GL_INT, stride, 0L);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, true, stride, GpuVertexBuilder.COLOR_BYTE_OFFSET);
+        glEnableVertexAttribArray(1);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+    }
 
-		int cameraX = Math.max(0, Math.min(frame.cameraX(), frame.scene().width * 128 - 1));
-		int cameraY = Math.max(0, Math.min(frame.cameraY(), frame.scene().height * 128 - 1));
-		glUseProgram(shader.id());
-		glUniform3i(cameraUniform, cameraX, frame.cameraHeight(), cameraY);
-		glUniform2i(yawUniform, yawSin, yawCos);
-		glUniform2i(pitchUniform, pitchSin, pitchCos);
-		glUniform2f(viewportUniform, width, height);
-		glBindVertexArray(vertexArray);
-		glDrawArrays(GL_TRIANGLES, 0, vertexCount);
-		glBindVertexArray(0);
-		glUseProgram(0);
-	}
+    private void ensureSceneUploaded(WorldRenderFrame frame) {
+        Scene scene = frame.scene();
+        long geometryRevision = scene.geometryRevision();
+        int paletteRevision = Rasterizer3D.paletteRevision();
+        if (scene != uploadedScene || geometryRevision != uploadedGeometryRevision
+                || paletteRevision != uploadedPaletteRevision || scene.minPlane != uploadedMinPlane) {
+            sceneUploaded = false;
+            uploadedScene = scene;
+            uploadedGeometryRevision = geometryRevision;
+            uploadedPaletteRevision = paletteRevision;
+            uploadedMinPlane = scene.minPlane;
+        }
+        if (sceneUploaded) {
+            return;
+        }
 
-	private int requiredUniform(String name) {
-		int location = glGetUniformLocation(shader.id(), name);
-		if (location < 0) {
-			throw new IllegalStateException("Required OpenGL uniform was optimized out or not found: " + name);
-		}
-		return location;
-	}
+        long buildStarted = System.nanoTime();
+        GpuTerrainMesh terrain = GpuSceneUploader.buildTerrain(scene);
+        GpuStaticSceneMesh staticScene = GpuSceneUploader.buildStaticGeometry(scene);
+        long built = System.nanoTime();
 
-	private boolean framebufferContainsTerrain(int width, int height) {
-		ByteBuffer pixels = BufferUtils.createByteBuffer(width * height * 4);
-		glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-		for (int offset = 0; offset < pixels.capacity(); offset += 4) {
-			int red = Byte.toUnsignedInt(pixels.get(offset));
-			int green = Byte.toUnsignedInt(pixels.get(offset + 1));
-			int blue = Byte.toUnsignedInt(pixels.get(offset + 2));
-			if (Math.abs(red - CLEAR_RED) > 2 || Math.abs(green - CLEAR_GREEN) > 2
-					|| Math.abs(blue - CLEAR_BLUE) > 2) {
-				return true;
-			}
-		}
-		return false;
-	}
+        uploadPackedVertices(terrainVertexBuffer, terrain.vertices());
+        terrainVertexCount = terrain.vertexCount();
+        terrainChunks = terrain.chunks();
+        fillEligibleVertexCounts(terrainChunks, terrainEligibleVertices);
 
-	boolean initialized() {
-		return initialized;
-	}
+        uploadPackedVertices(staticVertexBuffer, staticScene.vertices());
+        staticVertexCount = staticScene.vertexCount();
+        staticChunks = staticScene.chunks();
+        fillEligibleVertexCounts(staticChunks, staticEligibleVertices);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	void requestValidation() {
-		validationRequested = true;
-		validationPassed = false;
-	}
+        cachedSceneBytes = terrain.byteSize() + staticScene.byteSize();
+        sceneUploaded = true;
+        long uploaded = System.nanoTime();
+        double buildMs = (built - buildStarted) / 1_000_000.0;
+        double uploadMs = (uploaded - built) / 1_000_000.0;
+        double mib = cachedSceneBytes / (1024.0 * 1024.0);
+        System.out.printf("GPU scene cached: %d terrain surfaces, %d terrain triangles, %d static models (%d unique), "
+                + "%d static triangles, %d dynamic renderables deferred; %.1f MiB packed scene, build %.2f ms, "
+                + "upload %.2f ms%n", terrain.surfaceCount(), terrain.triangleCount(), staticScene.instanceCount(),
+                staticScene.uniqueModelCount(), staticScene.triangleCount(), staticScene.skippedDynamicCount(), mib,
+                buildMs, uploadMs);
+    }
 
-	boolean validationPassed() {
-		return validationPassed;
-	}
+    private void uploadPackedVertices(int vertexBuffer, int[] words) {
+        int requiredBytes = words.length * Integer.BYTES;
+        ensureUploadScratch(requiredBytes);
+        uploadScratch.clear();
+        uploadScratchWords.clear();
+        uploadScratchWords.put(words);
+        uploadScratch.limit(requiredBytes);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        glBufferData(GL_ARRAY_BUFFER, uploadScratch, GL_STATIC_DRAW);
+    }
 
-	/**
-	 * Avoids the lwjgl3-awt 0.2.4 JAWT teardown crash when AWT removes this
-	 * canvas from a thread other than the thread which acquired the drawing
-	 * surface. Flint only destroys the GPU canvas while the standalone process is
-	 * exiting, so intentionally leaking the native surface until process exit is
-	 * safer than invoking JAWT_FreeDrawingSurface from the EDT.
-	 *
-	 * Remove this override after upgrading to a lwjgl3-awt build containing
-	 * LWJGLX/lwjgl3-awt #124.
-	 */
-	@Override
-	public void disposeCanvas() {
-		// Intentionally no-op for lwjgl3-awt 0.2.4.
-	}
+    private void ensureUploadScratch(int requiredBytes) {
+        if (uploadScratch.capacity() >= requiredBytes) {
+            return;
+        }
+        int capacity = uploadScratch.capacity();
+        while (capacity < requiredBytes) {
+            int grown = capacity << 1;
+            if (grown <= capacity) {
+                capacity = requiredBytes;
+                break;
+            }
+            capacity = grown;
+        }
+        uploadScratch = createUploadScratch(capacity);
+        uploadScratchWords = uploadScratch.asIntBuffer();
+    }
 
+    private static void fillEligibleVertexCounts(GpuSceneChunk[] chunks, int[] counts) {
+        Arrays.fill(counts, 0);
+        if (chunks == null) {
+            return;
+        }
+        for (GpuSceneChunk chunk : chunks) {
+            for (int plane = Math.max(0, chunk.minRenderPlane()); plane < RENDER_PLANE_VARIANTS; plane++) {
+                counts[plane] += chunk.vertexCount();
+            }
+        }
+    }
+
+    private static int normalizeRenderPlane(int renderPlane) {
+        return Math.max(0, Math.min(RENDER_PLANE_VARIANTS - 1, renderPlane));
+    }
+
+    private void drawScene(WorldRenderFrame frame, int width, int height) {
+        if (terrainVertexCount == 0 && staticVertexCount == 0) {
+            clearFrameStats();
+            return;
+        }
+        int renderPlane = normalizeRenderPlane(frame.renderPlane());
+        int yaw = frame.yaw() & 0x7ff;
+        int pitch = frame.pitch() & 0x7ff;
+        int yawSin = Rasterizer3D.SINE[yaw];
+        int yawCos = Rasterizer3D.COSINE[yaw];
+        int pitchSin = Rasterizer3D.SINE[pitch];
+        int pitchCos = Rasterizer3D.COSINE[pitch];
+
+        int cameraX = Math.max(0, Math.min(frame.cameraX(), frame.scene().width * 128 - 1));
+        int cameraY = Math.max(0, Math.min(frame.cameraY(), frame.scene().height * 128 - 1));
+        glUseProgram(shader.id());
+        glUniform3i(cameraUniform, cameraX, frame.cameraHeight(), cameraY);
+        glUniform2i(yawUniform, yawSin, yawCos);
+        glUniform2i(pitchUniform, pitchSin, pitchCos);
+        glUniform2f(viewportUniform, width, height);
+
+        drawVisibleChunks(terrainVertexArray, terrainChunks, renderPlane, cameraX, cameraY, frame.cameraHeight(),
+                yawSin, yawCos, pitchSin, pitchCos, width, height);
+        frameTerrainVisible = lastDrawVisibleRanges;
+        frameTerrainEligible = lastDrawEligibleRanges;
+        frameTerrainCommands = lastDrawCommands;
+        int submitted = lastDrawSubmittedVertices;
+
+        drawVisibleChunks(staticVertexArray, staticChunks, renderPlane, cameraX, cameraY, frame.cameraHeight(), yawSin,
+                yawCos, pitchSin, pitchCos, width, height);
+        frameStaticVisible = lastDrawVisibleRanges;
+        frameStaticEligible = lastDrawEligibleRanges;
+        frameStaticCommands = lastDrawCommands;
+        submitted += lastDrawSubmittedVertices;
+
+        frameSubmittedVertices = submitted;
+        frameEligibleVertices = terrainEligibleVertices[renderPlane] + staticEligibleVertices[renderPlane];
+        glBindVertexArray(0);
+        glUseProgram(0);
+    }
+
+    private void drawVisibleChunks(int vertexArray, GpuSceneChunk[] chunks, int renderPlane, int cameraX, int cameraY,
+            int cameraHeight, int yawSin, int yawCos, int pitchSin, int pitchCos, int width, int height) {
+        lastDrawVisibleRanges = 0;
+        lastDrawEligibleRanges = 0;
+        lastDrawCommands = 0;
+        lastDrawSubmittedVertices = 0;
+        if (chunks == null || chunks.length == 0) {
+            return;
+        }
+
+        ensureMultiDrawCapacity(chunks.length);
+        multiDrawFirsts.clear();
+        multiDrawCounts.clear();
+        for (GpuSceneChunk chunk : chunks) {
+            if (!chunk.visibleOnPlane(renderPlane)) {
+                continue;
+            }
+            lastDrawEligibleRanges++;
+            if (!GpuSceneVisibility.isVisible(chunk, cameraX, cameraY, cameraHeight, yawSin, yawCos, pitchSin, pitchCos,
+                    width, height)) {
+                continue;
+            }
+            lastDrawVisibleRanges++;
+            lastDrawSubmittedVertices += chunk.vertexCount();
+            appendOrMergeDrawRange(chunk.firstVertex(), chunk.vertexCount());
+        }
+
+        lastDrawCommands = multiDrawFirsts.position();
+        if (lastDrawCommands > 0) {
+            multiDrawFirsts.flip();
+            multiDrawCounts.flip();
+            glBindVertexArray(vertexArray);
+            glMultiDrawArrays(GL_TRIANGLES, multiDrawFirsts, multiDrawCounts);
+        }
+    }
+
+    /** Coalesces adjacent visible ranges so one multi-draw entry can cover them. */
+    private void appendOrMergeDrawRange(int firstVertex, int vertexCount) {
+        int commandCount = multiDrawFirsts.position();
+        if (commandCount > 0) {
+            int previous = commandCount - 1;
+            int previousFirst = multiDrawFirsts.get(previous);
+            int previousCount = multiDrawCounts.get(previous);
+            if (previousFirst + previousCount == firstVertex) {
+                multiDrawCounts.put(previous, previousCount + vertexCount);
+                return;
+            }
+        }
+        multiDrawFirsts.put(firstVertex);
+        multiDrawCounts.put(vertexCount);
+    }
+
+    private void ensureMultiDrawCapacity(int required) {
+        if (multiDrawFirsts.capacity() >= required) {
+            return;
+        }
+        int capacity = Math.max(required, multiDrawFirsts.capacity() * 2);
+        multiDrawFirsts = BufferUtils.createIntBuffer(capacity);
+        multiDrawCounts = BufferUtils.createIntBuffer(capacity);
+    }
+
+    private void clearFrameStats() {
+        frameTerrainVisible = 0;
+        frameTerrainEligible = 0;
+        frameTerrainCommands = 0;
+        frameStaticVisible = 0;
+        frameStaticEligible = 0;
+        frameStaticCommands = 0;
+        frameSubmittedVertices = 0;
+        frameEligibleVertices = 0;
+    }
+
+    private void recordPerformance(long cpuRenderNanos, long swapNanos) {
+        long now = System.nanoTime();
+        if (perfWindowStarted == 0L) {
+            perfWindowStarted = now;
+        }
+        perfFrames++;
+        perfSubmittedVertices += frameSubmittedVertices;
+        perfEligibleVertices += frameEligibleVertices;
+        perfCpuRenderNanos += cpuRenderNanos;
+        perfSwapNanos += swapNanos;
+        perfLastTerrainVisible = frameTerrainVisible;
+        perfLastTerrainEligible = frameTerrainEligible;
+        perfLastTerrainCommands = frameTerrainCommands;
+        perfLastStaticVisible = frameStaticVisible;
+        perfLastStaticEligible = frameStaticEligible;
+        perfLastStaticCommands = frameStaticCommands;
+
+        long elapsed = now - perfWindowStarted;
+        if (elapsed < PERF_STATS_INTERVAL_NANOS) {
+            return;
+        }
+        double seconds = elapsed / 1_000_000_000.0;
+        double fps = perfFrames / seconds;
+        double submittedPercent = perfEligibleVertices == 0 ? 0.0
+                : perfSubmittedVertices * 100.0 / perfEligibleVertices;
+        double cpuMs = perfFrames == 0 ? 0.0 : perfCpuRenderNanos / 1_000_000.0 / perfFrames;
+        double swapMs = perfFrames == 0 ? 0.0 : perfSwapNanos / 1_000_000.0 / perfFrames;
+        System.out.printf("GPU perf: %.1f frames/s, CPU submit %.3f ms, swap %.3f ms, submitted %.1f%%; "
+                + "terrain ranges %d/%d (%d commands), static ranges %d/%d (%d commands), cache %.1f MiB%n", fps,
+                cpuMs, swapMs, submittedPercent, perfLastTerrainVisible, perfLastTerrainEligible,
+                perfLastTerrainCommands, perfLastStaticVisible, perfLastStaticEligible, perfLastStaticCommands,
+                cachedSceneBytes / (1024.0 * 1024.0));
+        perfWindowStarted = now;
+        perfFrames = 0;
+        perfSubmittedVertices = 0;
+        perfEligibleVertices = 0;
+        perfCpuRenderNanos = 0;
+        perfSwapNanos = 0;
+    }
+
+    private int requiredUniform(String name) {
+        int location = glGetUniformLocation(shader.id(), name);
+        if (location < 0) {
+            throw new IllegalStateException("Required OpenGL uniform was optimized out or not found: " + name);
+        }
+        return location;
+    }
+
+    private boolean framebufferContainsScene(int width, int height) {
+        ByteBuffer pixels = BufferUtils.createByteBuffer(width * height * 4);
+        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+        for (int offset = 0; offset < pixels.capacity(); offset += 4) {
+            int red = Byte.toUnsignedInt(pixels.get(offset));
+            int green = Byte.toUnsignedInt(pixels.get(offset + 1));
+            int blue = Byte.toUnsignedInt(pixels.get(offset + 2));
+            if (Math.abs(red - CLEAR_RED) > 2 || Math.abs(green - CLEAR_GREEN) > 2
+                    || Math.abs(blue - CLEAR_BLUE) > 2) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    boolean initialized() {
+        return initialized;
+    }
+
+    void requestValidation() {
+        validationRequested = true;
+        validationPassed = false;
+    }
+
+    boolean validationPassed() {
+        return validationPassed;
+    }
+
+    /**
+     * Avoids the lwjgl3-awt 0.2.4 JAWT teardown crash when AWT removes this
+     * canvas from a thread other than the thread which acquired the drawing
+     * surface. Flint only destroys the GPU canvas while the standalone process is
+     * exiting, so intentionally leaking the native surface until process exit is
+     * safer than invoking JAWT_FreeDrawingSurface from the EDT.
+     *
+     * Remove this override after upgrading to a lwjgl3-awt build containing
+     * LWJGLX/lwjgl3-awt #124.
+     */
+    @Override
+    public void disposeCanvas() {
+        // Intentionally no-op for lwjgl3-awt 0.2.4.
+    }
 }

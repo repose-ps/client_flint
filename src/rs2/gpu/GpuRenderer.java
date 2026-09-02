@@ -5,7 +5,7 @@ import rs2.game.render.WorldRenderFrame;
 import rs2.game.render.WorldRenderer;
 import rs2.shell.GameFrame;
 
-/** Native OpenGL world renderer backed by the complete loaded terrain mesh. */
+/** Native OpenGL world renderer backed by complete terrain and static scene meshes. */
 public final class GpuRenderer implements WorldRenderer, AutoCloseable {
 
     private GpuSceneCanvas canvas;

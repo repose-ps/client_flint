@@ -108,8 +108,22 @@ tasks.named('run', JavaExec) {
 
 tasks.register('runGpu', JavaExec) {
     group = 'application'
-    description = 'Runs Flint with the Phase-2 GPU terrain renderer selected.'
+    description = 'Runs Flint with the Phase-3 GPU scene renderer selected.'
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'rs2.client'
     systemProperty 'flint.renderer', 'gpu'
+}
+
+tasks.register('gpuStaticSceneMeshSelfTest', JavaExec) {
+    group = 'verification'
+    description = 'Validates the Phase 3 static scene model extraction without requiring OpenGL.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'rs2.tools.GpuStaticSceneMeshSelfTest'
+}
+
+tasks.register('gpuStaticSceneSelfTest', JavaExec) {
+    group = 'verification'
+    description = 'Creates a real OpenGL 3.3 context and validates the Phase 3 static model draw path.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'rs2.tools.GpuStaticSceneSelfTest'
 }

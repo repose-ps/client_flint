@@ -90,6 +90,10 @@ public class Scene {
 		return geometryRevision;
 	}
 
+	private void markGeometryChanged() {
+		geometryRevision++;
+	}
+
 	/**
 	 * Sets min plane.
 	 *
@@ -131,6 +135,7 @@ public class Scene {
 			tiles[0][x][y] = new SceneTile(0, x, y);
 		tiles[0][x][y].tileBelow = sceneTile;
 		tiles[3][x][y] = null;
+		markGeometryChanged();
 	}
 
 	/**
@@ -174,9 +179,10 @@ public class Scene {
 		SceneTile sceneTile = tiles[plane][x][y];
 		if (sceneTile == null) {
 			return;
-		} else {
-			tiles[plane][x][y].logicHeight = logicHeight;
-			return;
+		}
+		if (sceneTile.logicHeight != logicHeight) {
+			sceneTile.logicHeight = logicHeight;
+			markGeometryChanged();
 		}
 	}
 
@@ -208,6 +214,7 @@ public class Scene {
 			int southEastHeight, int northEastHeight, int northWestHeight, int underlaySouthWest, int underlaySouthEast,
 			int underlayNorthEast, int inputValue, int inputValue2, int inputValue3, int inputValue4, int inputValue5,
 			int inputValue6, int inputValue7) {
+		markGeometryChanged();
 		if (shape == 0) {
 			GenericTile genericTile = new GenericTile(underlaySouthWest, underlaySouthEast, underlayNorthEast,
 					inputValue, -1, inputValue6, false);
@@ -263,6 +270,7 @@ public class Scene {
 		if (tiles[plane][x][y] == null)
 			tiles[plane][x][y] = new SceneTile(plane, x, y);
 		tiles[plane][x][y].floorDecoration = floorDecoration;
+		markGeometryChanged();
 	}
 
 	/**
@@ -337,6 +345,7 @@ public class Scene {
 				tiles[tempplane][x][y] = new SceneTile(tempplane, x, y);
 
 		tiles[plane][x][y].wall = wall;
+		markGeometryChanged();
 	}
 
 	/**
@@ -372,6 +381,7 @@ public class Scene {
 				tiles[loopIndex][x][y] = new SceneTile(loopIndex, x, y);
 
 		tiles[plane][x][y].wallDecoration = wallDecoration;
+		markGeometryChanged();
 	}
 
 	/**
@@ -534,8 +544,11 @@ public class Scene {
 
 		}
 
-		if (temporary)
+		if (temporary) {
 			temporaryObjects[temporaryObjectCount++] = interactiveObject;
+		} else {
+			markGeometryChanged();
+		}
 		return true;
 	}
 
@@ -605,6 +618,7 @@ public class Scene {
 		int intermediateValue2 = y * 128 + 64;
 		wallDecoration.x = intermediateValue + ((wallDecoration.x - intermediateValue) * displacement) / 16;
 		wallDecoration.y = intermediateValue2 + ((wallDecoration.y - intermediateValue2) * displacement) / 16;
+		markGeometryChanged();
 	}
 
 	/**
@@ -616,9 +630,10 @@ public class Scene {
 	 */
 	public void removeWall(int plane, int x, int y) {
 		SceneTile sceneTile = tiles[plane][x][y];
-		if (sceneTile == null)
+		if (sceneTile == null || sceneTile.wall == null)
 			return;
 		sceneTile.wall = null;
+		markGeometryChanged();
 	}
 
 	/**
@@ -630,12 +645,11 @@ public class Scene {
 	 */
 	public void removeWallDecoration(int plane, int x, int y) {
 		SceneTile sceneTile = tiles[plane][x][y];
-		if (sceneTile == null) {
-			return;
-		} else {
-			sceneTile.wallDecoration = null;
+		if (sceneTile == null || sceneTile.wallDecoration == null) {
 			return;
 		}
+		sceneTile.wallDecoration = null;
+		markGeometryChanged();
 	}
 
 	/**
@@ -655,6 +669,7 @@ public class Scene {
 					& SceneUid.ENTITY_TYPE_MASK) == SceneUid.TYPE_OBJECT && interactiveObject.tileLeft == x
 					&& interactiveObject.tileTop == y) {
 				removeInteractiveObjectInternal(interactiveObject);
+				markGeometryChanged();
 				return;
 			}
 		}
@@ -670,9 +685,10 @@ public class Scene {
 	 */
 	public void removeFloorDecoration(int plane, int x, int y) {
 		SceneTile sceneTile = tiles[plane][x][y];
-		if (sceneTile == null)
+		if (sceneTile == null || sceneTile.floorDecoration == null)
 			return;
 		sceneTile.floorDecoration = null;
+		markGeometryChanged();
 	}
 
 	/**

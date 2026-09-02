@@ -1,6 +1,9 @@
 package rs2.tools;
 
+import rs2.game.render.WorldRenderFrame;
+import rs2.gpu.GpuSceneChunk;
 import rs2.gpu.GpuSceneUploader;
+import rs2.gpu.GpuSceneVisibility;
 import rs2.gpu.GpuTerrainMesh;
 import rs2.scene.Scene;
 import rs2.scene.SceneConstants;
@@ -17,6 +20,7 @@ public final class GpuTerrainMeshSelfTest {
 		SelfTestSupport test = new SelfTestSupport();
 		testFullSceneIsNotDistanceTruncated(test);
 		testShapedTileAndPlaneFiltering(test);
+		testChunkFrustumVisibility(test);
 		return test.checks();
 	}
 
@@ -34,18 +38,24 @@ public final class GpuTerrainMeshSelfTest {
 			}
 		}
 
-		GpuTerrainMesh mesh = GpuSceneUploader.buildTerrain(scene, 0);
+		GpuTerrainMesh mesh = GpuSceneUploader.buildTerrain(scene);
 		int expectedSurfaces = SceneConstants.SIZE * SceneConstants.SIZE;
 		int expectedTriangles = expectedSurfaces * 2;
 		test.equal(mesh.surfaceCount(), expectedSurfaces, "GPU terrain uploads every 104x104 tile");
 		test.equal(mesh.triangleCount(), expectedTriangles, "GPU terrain emits two triangles per plain tile");
 		test.equal(mesh.vertexCount(), expectedTriangles * 3, "GPU terrain uses three vertices per triangle");
+		test.equal(mesh.chunks().length, 13 * 13, "104x104 terrain is partitioned into 13x13 eight-tile chunks");
+		test.equal(mesh.chunks()[0].firstVertex(), 0, "first terrain chunk begins at VBO vertex zero");
+		GpuSceneChunk lastChunk = mesh.chunks()[mesh.chunks().length - 1];
+		test.equal(lastChunk.firstVertex() + lastChunk.vertexCount(), mesh.vertexCount(),
+				"terrain chunk ranges cover the complete VBO");
+		test.equal(mesh.byteSize(), mesh.vertexCount() * 16, "terrain uses compact 16-byte core vertices");
 
-		float[] vertices = mesh.vertices();
+		int[] vertices = mesh.vertices();
 		test.equal((int) vertices[0], SceneConstants.TILE_SIZE, "first plain triangle NE world X");
 		test.equal((int) vertices[1], 0, "first plain triangle NE height");
 		test.equal((int) vertices[2], SceneConstants.TILE_SIZE, "first plain triangle NE world Y");
-		test.equal((int) vertices[GpuTerrainMesh.FLOATS_PER_VERTEX], 0, "first plain triangle NW world X");
+		test.equal((int) vertices[GpuTerrainMesh.WORDS_PER_VERTEX], 0, "first plain triangle NW world X");
 	}
 
 	private static void testShapedTileAndPlaneFiltering(SelfTestSupport test) {
@@ -59,13 +69,46 @@ public final class GpuTerrainMeshSelfTest {
 				0x3500, 0x3600, 0x3700, 0x3800, 0, 0);
 
 		ComplexTile shaped = scene.tiles[0][0][0].shapedTile;
-		GpuTerrainMesh mesh = GpuSceneUploader.buildTerrain(scene, 0);
+		GpuTerrainMesh mesh = GpuSceneUploader.buildTerrain(scene);
 		test.equal(mesh.triangleCount(), shaped.triangleVertexA.length, "GPU shaped tile triangle count");
 		test.equal(mesh.vertexCount(), shaped.triangleVertexA.length * 3, "GPU shaped tile vertex count");
 
 		scene.tiles[0][0][0].logicHeight = 1;
-		GpuTerrainMesh hidden = GpuSceneUploader.buildTerrain(scene, 0);
-		test.equal(hidden.triangleCount(), 0, "GPU terrain honors tile logic-height roof filtering");
+		GpuTerrainMesh planeAware = GpuSceneUploader.buildTerrain(scene);
+		test.equal(planeAware.triangleCount(), shaped.triangleVertexA.length,
+				"render-plane-independent terrain cache retains roof-hidden geometry once");
+		test.equal(eligibleTriangles(planeAware, 0), 0, "plane 0 submission omits logic-height-1 terrain ranges");
+		test.equal(eligibleTriangles(planeAware, 1), shaped.triangleVertexA.length,
+				"plane 1 submission includes logic-height-1 terrain ranges");
+	}
+
+	private static void testChunkFrustumVisibility(SelfTestSupport test) {
+		Scene scene = sceneForVisibility();
+		WorldRenderFrame frame = new WorldRenderFrame(scene, 512, 512, -100, 0, 0, 0, 0, 0, 0, 0, 512, 334);
+		GpuSceneChunk inFront = new GpuSceneChunk(0, 3, 448, -128, 896, 576, 128, 1024);
+		GpuSceneChunk behind = new GpuSceneChunk(0, 3, 448, -128, 0, 576, 128, 128);
+		GpuSceneChunk farSide = new GpuSceneChunk(0, 3, 4096, -128, 896, 4224, 128, 1024);
+
+		test.check(GpuSceneVisibility.isVisible(inFront, frame, 512, 334),
+				"chunk intersecting the camera frustum remains visible");
+		test.check(!GpuSceneVisibility.isVisible(behind, frame, 512, 334),
+				"chunk completely behind the camera is culled");
+		test.check(!GpuSceneVisibility.isVisible(farSide, frame, 512, 334),
+				"chunk completely outside the horizontal frustum is culled");
+	}
+
+	private static int eligibleTriangles(GpuTerrainMesh mesh, int renderPlane) {
+		int vertices = 0;
+		for (GpuSceneChunk chunk : mesh.chunks()) {
+			if (chunk.visibleOnPlane(renderPlane)) {
+				vertices += chunk.vertexCount();
+			}
+		}
+		return vertices / 3;
+	}
+
+	private static Scene sceneForVisibility() {
+		return new Scene(new int[1][9][9], 1, 8, 8);
 	}
 
 	private static void addPlainTile(Scene scene, int x, int y, int colour) {
