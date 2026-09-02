@@ -53,6 +53,7 @@ public final class ClientSelfTest {
 		checks += ProtocolSelfTest.run();
 		checks += LayoutSelfTest.run();
 		checks += RendererGoldenTest.run(cache);
+		checks += GpuTerrainMeshSelfTest.run();
 
 		System.out.println("ClientSelfTest: PASS (" + checks + " checks"
 				+ (cache == null ? ", cache-free" : ", real-cache renderer enabled") + ")");

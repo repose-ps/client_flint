@@ -19,6 +19,9 @@ import rs2.scene.tile.WallDecoration;
 /** Provides scene state and behavior. */
 public class Scene {
 
+	/** Monotonic revision used by GPU backends to detect static scene rebuilds. */
+	private long geometryRevision;
+
 	/**
 	 * Creates a new scene.
 	 *
@@ -79,6 +82,12 @@ public class Scene {
 		for (int loopIndex7 = 0; loopIndex7 < renderInteractiveObjects.length; loopIndex7++)
 			renderInteractiveObjects[loopIndex7] = null;
 
+		geometryRevision++;
+	}
+
+	/** Returns the current static scene geometry revision. */
+	public long geometryRevision() {
+		return geometryRevision;
 	}
 
 	/**

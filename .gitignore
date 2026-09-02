@@ -39,3 +39,4 @@ rscache/*
 flint-client-javadocs/*
 /docs
 /.gradle
+*.patch

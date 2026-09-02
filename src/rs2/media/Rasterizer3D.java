@@ -88,6 +88,9 @@ public class Rasterizer3D extends Rasterizer {
 	/** Constant value for hsl to RGB. */
 	public static int[] HSL_TO_RGB = new int[0x10000];
 
+	/** Monotonic revision of the software HSL palette used by GPU terrain uploads. */
+	private static int paletteRevision;
+
 	/** Stores texture palettes values. */
 	private static int[][] texturePalettes = new int[50][];
 
@@ -344,6 +347,12 @@ public class Rasterizer3D extends Rasterizer {
 		}
 		for (int textureId = 0; textureId < 50; textureId++)
 			releaseTexture(textureId);
+		paletteRevision++;
+	}
+
+	/** Returns the revision of the currently active HSL-to-RGB palette. */
+	public static int paletteRevision() {
+		return paletteRevision;
 	}
 
 	/**

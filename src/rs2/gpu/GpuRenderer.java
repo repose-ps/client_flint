@@ -5,10 +5,10 @@ import rs2.game.render.WorldRenderFrame;
 import rs2.game.render.WorldRenderer;
 import rs2.shell.GameFrame;
 
-/** Native OpenGL renderer bootstrap used by Phase 1. */
+/** Native OpenGL world renderer backed by the complete loaded terrain mesh. */
 public final class GpuRenderer implements WorldRenderer, AutoCloseable {
 
-    private GpuTestCanvas canvas;
+    private GpuSceneCanvas canvas;
     private GameFrame frame;
     private int lastX = Integer.MIN_VALUE;
     private int lastY = Integer.MIN_VALUE;
@@ -26,7 +26,7 @@ public final class GpuRenderer implements WorldRenderer, AutoCloseable {
             throw new IllegalStateException("GPU renderer is already attached to a frame.");
         }
         this.frame = frame;
-        this.canvas = new GpuTestCanvas();
+        this.canvas = new GpuSceneCanvas();
         frame.installRenderOverlay(canvas);
     }
 
@@ -37,6 +37,7 @@ public final class GpuRenderer implements WorldRenderer, AutoCloseable {
         }
 
         updateBounds(frameData);
+        canvas.setFrameData(frameData);
         canvas.render();
     }
 
@@ -67,10 +68,18 @@ public final class GpuRenderer implements WorldRenderer, AutoCloseable {
         if (canvas == null) {
             return;
         }
-        canvas.closeGl();
-        if (frame != null) {
-            frame.removeRenderOverlay(canvas);
-        }
+        /*
+         * lwjgl3-awt 0.2.4 caches the JAWT drawing surface on the thread which
+         * renders the first frame, but AWT removes child components on the EDT.
+         * Freeing that cached surface from the EDT after Flint's game/render
+         * thread has exited can crash the JVM (LWJGLX/lwjgl3-awt #121).
+         *
+         * This renderer is only closed during standalone process shutdown, so do
+         * not detach the native child canvas here. System.exit follows immediately
+         * after client cleanup and the operating system will reclaim the context.
+         * A future lwjgl3-awt release containing #124 can restore explicit detach.
+         */
+        canvas.setVisible(false);
         canvas = null;
         frame = null;
     }

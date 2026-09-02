@@ -83,6 +83,22 @@ tasks.register('gpuBootstrapSelfTest', JavaExec) {
     mainClass = 'rs2.tools.GpuBootstrapSelfTest'
 }
 
+
+
+tasks.register('gpuTerrainMeshSelfTest', JavaExec) {
+    group = 'verification'
+    description = 'Validates the Phase 2 full-scene terrain mesh extraction without requiring OpenGL.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'rs2.tools.GpuTerrainMeshSelfTest'
+}
+
+tasks.register('gpuTerrainSelfTest', JavaExec) {
+    group = 'verification'
+    description = 'Creates a real OpenGL 3.3 context and validates the Phase 2 terrain draw path.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'rs2.tools.GpuTerrainSelfTest'
+}
+
 tasks.named('run', JavaExec) {
     def renderer = System.getProperty('flint.renderer')
     if (renderer != null) {
@@ -92,7 +108,7 @@ tasks.named('run', JavaExec) {
 
 tasks.register('runGpu', JavaExec) {
     group = 'application'
-    description = 'Runs Flint with the Phase-1 GPU renderer selected.'
+    description = 'Runs Flint with the Phase-2 GPU terrain renderer selected.'
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'rs2.client'
     systemProperty 'flint.renderer', 'gpu'
