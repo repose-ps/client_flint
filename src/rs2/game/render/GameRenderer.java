@@ -15,7 +15,6 @@ import rs2.media.Angle;
 import rs2.media.GraphicsBuffer;
 import rs2.media.Rasterizer;
 import rs2.media.Rasterizer3D;
-import rs2.media.model.Model;
 import rs2.media.sprite.ImageRGB;
 import rs2.media.sprite.IndexedImage;
 import rs2.net.Buffer;
@@ -34,6 +33,11 @@ import rs2.ui.ClientLayout;
  * </p>
  */
 public final class GameRenderer {
+
+	/** Selected 3D world-rendering implementation. */
+	private final WorldRenderer worldRenderer;
+	/** Backend-only timing counters used for renderer comparisons. */
+	private final RendererMetrics rendererMetrics = new RendererMetrics();
 
 	/** Fixed chatbox software surface. */
 	private GraphicsBuffer chatboxBuffer;
@@ -185,6 +189,53 @@ public final class GameRenderer {
 	 * loading.
 	 */
 	public GameRenderer() {
+		this(createConfiguredWorldRenderer());
+	}
+
+	/**
+	 * Creates a renderer around an explicit world backend.
+	 *
+	 * <p>
+	 * Public primarily as the stable integration boundary for Phase 1 and renderer
+	 * tests; normal client startup uses {@link #GameRenderer()}.
+	 * </p>
+	 *
+	 * @param worldRenderer 3D world-rendering implementation
+	 */
+	public GameRenderer(WorldRenderer worldRenderer) {
+		if (worldRenderer == null) {
+			throw new NullPointerException("worldRenderer");
+		}
+		this.worldRenderer = worldRenderer;
+	}
+
+	/**
+	 * Returns the active 3D renderer backend.
+	 *
+	 * @return active renderer backend
+	 */
+	public RendererBackend rendererBackend() {
+		return worldRenderer.backend();
+	}
+
+	/**
+	 * Returns backend-only timing counters for diagnostics.
+	 *
+	 * @return renderer metrics
+	 */
+	public RendererMetrics rendererMetrics() {
+		return rendererMetrics;
+	}
+
+	/** Creates the startup-selected world renderer. */
+	private static WorldRenderer createConfiguredWorldRenderer() {
+		RendererBackend backend = RendererBackend.configured();
+		return switch (backend) {
+		case SOFTWARE -> new SoftwareWorldRenderer();
+		case GPU -> throw new IllegalStateException(
+				"GPU renderer requested with -D" + RendererBackend.PROPERTY
+						+ "=gpu, but the native GPU backend is not installed until Phase 1.");
+		};
 	}
 
 	/**
@@ -674,13 +725,13 @@ public final class GameRenderer {
 		frame.cameraController.applyShake();
 
 		int textureCycle = Rasterizer3D.textureCycle;
-		Model.pickingEnabled = true;
-		Model.pickedCount = 0;
-		Model.mouseX = frame.mouseX - frame.layout.viewportX();
-		Model.mouseY = frame.mouseY - frame.layout.viewportY();
-		Rasterizer.resetPixels();
-		frame.worldState.scene.render(frame.cameraController.x, frame.cameraController.y, frame.cameraController.height,
-				renderPlane, frame.cameraController.yaw, frame.cameraController.pitch);
+		WorldRenderFrame worldFrame = new WorldRenderFrame(frame.worldState.scene, frame.cameraController.x,
+				frame.cameraController.y, frame.cameraController.height, renderPlane, frame.cameraController.yaw,
+				frame.cameraController.pitch, frame.mouseX - frame.layout.viewportX(),
+				frame.mouseY - frame.layout.viewportY());
+		long worldRenderStarted = System.nanoTime();
+		worldRenderer.render(worldFrame);
+		rendererMetrics.recordWorldRender(System.nanoTime() - worldRenderStarted);
 		frame.worldState.scene.clearTemporaryObjects();
 		frame.actorOverlayRenderer.drawActors(frame.actorOverlayContext);
 		frame.actorOverlayRenderer.drawWorldHint(frame.actorOverlayContext);

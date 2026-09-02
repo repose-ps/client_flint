@@ -37,3 +37,4 @@ rscache/*
 
 # javadocs
 flint-client-javadocs/*
+/docs
