@@ -337,6 +337,7 @@ public final class GameRenderer {
 				ClientLayout.BOTTOM_TABS_HEIGHT);
 		topTabsBuffer = new GraphicsBuffer(component, ClientLayout.TOP_TABS_WIDTH, ClientLayout.TOP_TABS_HEIGHT);
 		gameScreenRedraw = true;
+		invalidatePanels();
 		bindViewport();
 		return true;
 	}
@@ -750,7 +751,17 @@ public final class GameRenderer {
 		frame.actorOverlayRenderer.drawWorldHint(frame.actorOverlayContext);
 		animateTextures(textureCycle, frame.animationCycleDelta, frame.lowMemory);
 		frame.viewportOverlayDrawer.run();
-		viewportBuffer.draw(frame.graphics, frame.layout.viewportX(), frame.layout.viewportY());
+		/*
+		 * The native GPU canvas is a child component positioned directly over the
+		 * legacy viewport. Copying the software viewport into the parent
+		 * presentation image is therefore completely hidden in GPU mode and becomes
+		 * especially expensive for large resizable windows. Keep the software
+		 * viewport raster alive for legacy overlays/state until direct GPU UI
+		 * composition lands, but do not copy millions of hidden pixels every frame.
+		 */
+		if (worldRenderer.backend() != RendererBackend.GPU) {
+			viewportBuffer.draw(frame.graphics, frame.layout.viewportX(), frame.layout.viewportY());
+		}
 		frame.cameraController.restore(logicalCamera);
 		return destinationX;
 	}
@@ -893,24 +904,60 @@ public final class GameRenderer {
 		if (presentationBuffer == null || presentationBuffer.getWidth() != width
 				|| presentationBuffer.getHeight() != height) {
 			presentationBuffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+			Graphics initialGraphics = presentationBuffer.getGraphics();
+			try {
+				initialGraphics.setColor(Color.black);
+				initialGraphics.fillRect(0, 0, width, height);
+			} finally {
+				initialGraphics.dispose();
+			}
 		}
-		Graphics graphics = presentationBuffer.getGraphics();
-		graphics.setColor(Color.black);
-		graphics.fillRect(0, 0, width, height);
-		return graphics;
+		return presentationBuffer.getGraphics();
 	}
 
 	/**
-	 * Presents the already-composed off-screen image.
-	 * 
-	 * @param displayGraphics current AWT display graphics
+	 * Presents the composed software image. When the native GPU viewport is active,
+	 * only pixels outside that child canvas are copied through Java2D; the viewport
+	 * itself is already presented by OpenGL and copying the hidden backing pixels is
+	 * pure memory bandwidth.
+	 *
+	 * @param displayGraphics     current AWT display graphics
+	 * @param layout              current client layout
+	 * @param nativeViewportActive whether the native world child is covering the viewport
 	 */
-	public void blitPresentation(Graphics displayGraphics) {
-		if (presentationBuffer != null) {
-			displayGraphics.drawImage(presentationBuffer, 0, 0, null);
+	public void blitPresentation(Graphics displayGraphics, ClientLayout layout, boolean nativeViewportActive) {
+		if (presentationBuffer == null) {
+			return;
 		}
+		if (!nativeViewportActive || worldRenderer.backend() != RendererBackend.GPU) {
+			displayGraphics.drawImage(presentationBuffer, 0, 0, null);
+			return;
+		}
+
+		int width = presentationBuffer.getWidth();
+		int height = presentationBuffer.getHeight();
+		int viewportX = clamp(layout.viewportX(), 0, width);
+		int viewportY = clamp(layout.viewportY(), 0, height);
+		int viewportRight = clamp(layout.viewportX() + layout.viewportWidth(), viewportX, width);
+		int viewportBottom = clamp(layout.viewportY() + layout.viewportHeight(), viewportY, height);
+
+		blitRegion(displayGraphics, 0, 0, width, viewportY);
+		blitRegion(displayGraphics, 0, viewportBottom, width, height);
+		blitRegion(displayGraphics, 0, viewportY, viewportX, viewportBottom);
+		blitRegion(displayGraphics, viewportRight, viewportY, width, viewportBottom);
 	}
-	
+
+	private void blitRegion(Graphics graphics, int x1, int y1, int x2, int y2) {
+		if (x2 <= x1 || y2 <= y1) {
+			return;
+		}
+		graphics.drawImage(presentationBuffer, x1, y1, x2, y2, x1, y1, x2, y2, null);
+	}
+
+	private static int clamp(int value, int minimum, int maximum) {
+		return Math.max(minimum, Math.min(maximum, value));
+	}
+
 	/** Restores and binds the resizable chat-mode button strip for text drawing. */
 	public void bindResizableChatModes() {
 		restoreAndBind(resizableChatBuffers, resizableChatBasePixels, RESIZABLE_ELEMENT_BOTTOM_INDEX);

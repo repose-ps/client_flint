@@ -19,7 +19,6 @@ import java.awt.event.WindowListener;
 
 import javax.swing.SwingUtilities;
 
-import java.util.concurrent.locks.LockSupport;
 
 import rs2.media.GraphicsBuffer;
 
@@ -77,6 +76,11 @@ public class GameShell extends Canvas
 	private static final long NANOS_PER_MILLI = 1_000_000L;
 	/** Nanoseconds in one second. */
 	private static final long NANOS_PER_SECOND = 1_000_000_000L;
+	/** Generic frame diagnostics interval. */
+	private static final long FRAME_STATS_INTERVAL_NANOS = 5_000_000_000L;
+	/** Enables whole-client frame diagnostics; GPU stats imply this for correlated profiling. */
+	private static final boolean FRAME_STATS = Boolean.getBoolean(FrameTimingConfig.FRAME_STATS_PROPERTY)
+			|| Boolean.getBoolean("flint.gpu.perfStats");
 
 	/** Stores the current measured render fps. */
 	protected int fps;
@@ -241,6 +245,13 @@ public class GameShell extends Canvas
 			long logicAccumulator = 0L;
 			long nextRenderDeadline = previousTime;
 			long fpsWindowStarted = previousTime;
+			long frameStatsStarted = previousTime;
+			long frameStatsRenderNanos = 0L;
+			long frameStatsMaxRenderNanos = 0L;
+			long frameStatsLateNanos = 0L;
+			long frameStatsMaxLateNanos = 0L;
+			int frameStatsFrames = 0;
+			int frameStatsLogicTicks = 0;
 			int renderedFrames = 0;
 
 			while (shutdownCountdown >= 0) {
@@ -272,23 +283,28 @@ public class GameShell extends Canvas
 				if (processedTicks == MAX_CATCH_UP_TICKS && logicAccumulator >= logicStepNanos) {
 					logicAccumulator %= logicStepNanos;
 				}
+				frameStatsLogicTicks += processedTicks;
 
-				renderInterpolationAlpha = Math.min(1.0f, logicAccumulator / (float) logicStepNanos);
 				int renderLimit = renderFpsLimit;
 				long renderStepNanos = renderLimit > 0 ? Math.max(1L, NANOS_PER_SECOND / renderLimit) : 0L;
-				boolean renderDue = renderLimit <= 0 || now >= nextRenderDeadline;
+				long renderCheckTime = System.nanoTime();
+				long interpolationAccumulator = logicAccumulator + Math.max(0L, renderCheckTime - now);
+				renderInterpolationAlpha = Math.min(1.0f, interpolationAccumulator / (float) logicStepNanos);
+				boolean renderDue = renderLimit <= 0 || renderCheckTime >= nextRenderDeadline;
 				if (renderDue) {
+					long renderStarted = System.nanoTime();
+					long schedulerLate = renderLimit > 0 ? Math.max(0L, renderStarted - nextRenderDeadline) : 0L;
 					processDrawing();
+					long afterRender = System.nanoTime();
+					long renderNanos = afterRender - renderStarted;
 					renderedFrames++;
+					frameStatsFrames++;
+					frameStatsRenderNanos += renderNanos;
+					frameStatsMaxRenderNanos = Math.max(frameStatsMaxRenderNanos, renderNanos);
+					frameStatsLateNanos += schedulerLate;
+					frameStatsMaxLateNanos = Math.max(frameStatsMaxLateNanos, schedulerLate);
 					if (renderLimit > 0) {
-						long afterRender = System.nanoTime();
-						if (afterRender - nextRenderDeadline > renderStepNanos * 4L) {
-							nextRenderDeadline = afterRender + renderStepNanos;
-						} else {
-							do {
-								nextRenderDeadline += renderStepNanos;
-							} while (nextRenderDeadline <= afterRender);
-						}
+						nextRenderDeadline = FramePacer.advanceDeadline(nextRenderDeadline, afterRender, renderStepNanos);
 					}
 				}
 
@@ -300,6 +316,27 @@ public class GameShell extends Canvas
 					fpsWindowStarted = afterWork;
 				}
 
+				long frameStatsElapsed = afterWork - frameStatsStarted;
+				if (FRAME_STATS && frameStatsElapsed >= FRAME_STATS_INTERVAL_NANOS) {
+					double seconds = frameStatsElapsed / 1_000_000_000.0;
+					double measuredFps = frameStatsFrames / seconds;
+					double logicHz = frameStatsLogicTicks / seconds;
+					double renderMs = frameStatsFrames == 0 ? 0.0
+							: frameStatsRenderNanos / 1_000_000.0 / frameStatsFrames;
+					double lateMs = frameStatsFrames == 0 ? 0.0
+							: frameStatsLateNanos / 1_000_000.0 / frameStatsFrames;
+					System.out.printf("Frame perf: %.1f frames/s, logic %.1f Hz, client render %.3f ms avg / %.3f ms max, "
+							+ "scheduler late %.3f ms avg / %.3f ms max%n", measuredFps, logicHz, renderMs,
+							frameStatsMaxRenderNanos / 1_000_000.0, lateMs, frameStatsMaxLateNanos / 1_000_000.0);
+					frameStatsStarted = afterWork;
+					frameStatsRenderNanos = 0L;
+					frameStatsMaxRenderNanos = 0L;
+					frameStatsLateNanos = 0L;
+					frameStatsMaxLateNanos = 0L;
+					frameStatsFrames = 0;
+					frameStatsLogicTicks = 0;
+				}
+
 				if (debugTiming) {
 					System.out.println("fps:" + fps + " logicHz:" + Math.max(1, 1000 / Math.max(1, cycleDurationMillis))
 							+ " renderCap:" + (renderLimit == 0 ? "unlimited" : renderLimit)
@@ -308,13 +345,12 @@ public class GameShell extends Canvas
 				}
 
 				if (renderLimit > 0) {
-					long untilLogic = Math.max(0L, logicStepNanos - logicAccumulator);
-					long untilRender = Math.max(0L, nextRenderDeadline - afterWork);
-					long sleepNanos = Math.min(untilLogic, untilRender);
-					long minimumSleepNanos = Math.max(0, minimumSleepMillis) * NANOS_PER_MILLI;
-					if (sleepNanos > minimumSleepNanos) {
-						LockSupport.parkNanos(sleepNanos);
-					}
+					long unaccountedWork = Math.max(0L, afterWork - now);
+					long effectiveAccumulator = logicAccumulator + unaccountedWork;
+					long untilLogic = Math.max(0L, logicStepNanos - effectiveAccumulator);
+					long logicDeadline = afterWork + untilLogic;
+					long waitDeadline = Math.min(logicDeadline, nextRenderDeadline);
+					FramePacer.waitUntil(waitDeadline);
 				}
 			}
 

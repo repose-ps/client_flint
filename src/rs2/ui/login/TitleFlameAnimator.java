@@ -1,6 +1,7 @@
 package rs2.ui.login;
 
 import java.awt.Graphics;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
@@ -37,6 +38,10 @@ public final class TitleFlameAnimator {
 	private static final int RUNE_COUNT = 12;
 	/** Total number of cells in the 128-by-256 flame simulation. */
 	private static final int SIMULATION_SIZE = FLAME_WIDTH * FLAME_HEIGHT;
+	/** Flame simulation cadence. The original worker advanced two steps about every 40 ms. */
+	private static final long UPDATE_STEP_NANOS = 20_000_000L;
+	/** Prevents a stalled title thread from performing an unbounded catch-up burst. */
+	private static final int MAX_CATCH_UP_STEPS = 4;
 
 	/** Per-line horizontal distortion offsets. */
 	private final int[] lineOffsets = new int[FLAME_HEIGHT];
@@ -68,12 +73,32 @@ public final class TitleFlameAnimator {
 	private GraphicsBuffer rightBuffer;
 	/** Supplies the main client cycle used by the original line-wave formula. */
 	private IntSupplier gameCycleSupplier;
-	/** Supplies the current AWT graphics context for presentation. */
-	private Supplier<Graphics> graphicsSupplier;
+	/** Protects publication of complete left/right flame frame pairs. */
+	private final Object frameLock = new Object();
+	/** Serializes AWT presentation so startup and main-loop draws cannot overlap. */
+	private final Object presentationLock = new Object();
+	/** Supplies the stable startup AWT graphics context while bootstrap is synchronous. */
+	private Supplier<Graphics> startupGraphicsSupplier;
+	/** Whether the worker may present directly before the normal render loop starts. */
+	private volatile boolean startupPresentationEnabled;
+	/** Previous completed left flame frame used for render interpolation. */
+	private int[] previousLeftFrame;
+	/** Previous completed right flame frame used for render interpolation. */
+	private int[] previousRightFrame;
+	/** Most recently completed left flame frame. */
+	private int[] frontLeftFrame;
+	/** Most recently completed right flame frame. */
+	private int[] frontRightFrame;
+	/** Worker-owned left composition scratch frame. */
+	private int[] backLeftFrame;
+	/** Worker-owned right composition scratch frame. */
+	private int[] backRightFrame;
+	/** Monotonic publication time of the current completed flame frame. */
+	private long frontFramePublishedNanos;
 	/** Rolling offset into {@link #noise}. */
 	private int noiseOffset;
 	/** Number of completed title-flame frames. */
-	private int cycle;
+	private volatile int cycle;
 	/** Remaining green-palette transition amount. */
 	private int greenTransition;
 	/** Remaining blue-palette transition amount. */
@@ -114,17 +139,28 @@ public final class TitleFlameAnimator {
 		initializeNoise(null);
 		intensity = new int[SIMULATION_SIZE];
 		intensityScratch = new int[SIMULATION_SIZE];
+		previousLeftFrame = leftBackground.pixels.clone();
+		previousRightFrame = rightBackground.pixels.clone();
+		frontLeftFrame = leftBackground.pixels.clone();
+		frontRightFrame = rightBackground.pixels.clone();
+		backLeftFrame = new int[BACKGROUND_PIXEL_COUNT];
+		backRightFrame = new int[BACKGROUND_PIXEL_COUNT];
+		frontFramePublishedNanos = System.nanoTime();
 	}
 
 	/**
 	 * Starts the dedicated flame worker if it is not already running.
 	 * 
 	 * @param gameCycleSupplier supplies the main client cycle
-	 * @param graphicsSupplier  supplies the AWT graphics context used for drawing
+	 * @param startupGraphicsSupplier optional startup-only AWT target; {@code null}
+	 *                                once the normal render loop is available
 	 */
-	public void start(IntSupplier gameCycleSupplier, Supplier<Graphics> graphicsSupplier) {
+	public void start(IntSupplier gameCycleSupplier, Supplier<Graphics> startupGraphicsSupplier) {
 		this.gameCycleSupplier = gameCycleSupplier;
-		this.graphicsSupplier = graphicsSupplier;
+		synchronized (presentationLock) {
+			this.startupGraphicsSupplier = startupGraphicsSupplier;
+			startupPresentationEnabled = startupGraphicsSupplier != null;
+		}
 		if (running) {
 			return;
 		}
@@ -136,9 +172,25 @@ public final class TitleFlameAnimator {
 		worker.setPriority(2);
 	}
 
+	/**
+	 * Ends direct worker presentation before the independently paced main render
+	 * loop starts. Waiting on the presentation lock guarantees that any in-flight
+	 * startup draw has completed before this method returns.
+	 */
+	public void finishStartupPresentation() {
+		synchronized (presentationLock) {
+			startupPresentationEnabled = false;
+			startupGraphicsSupplier = null;
+		}
+	}
+
 	/** Requests asynchronous worker termination without waiting for the thread. */
 	public void requestStop() {
 		running = false;
+		Thread worker = thread;
+		if (worker != null) {
+			LockSupport.unpark(worker);
+		}
 	}
 
 	/**
@@ -166,6 +218,7 @@ public final class TitleFlameAnimator {
 		if (thread == worker) {
 			thread = null;
 		}
+		finishStartupPresentation();
 		runes = null;
 		palette = null;
 		redPalette = null;
@@ -180,7 +233,15 @@ public final class TitleFlameAnimator {
 		leftBuffer = null;
 		rightBuffer = null;
 		gameCycleSupplier = null;
-		graphicsSupplier = null;
+		synchronized (frameLock) {
+			previousLeftFrame = null;
+			previousRightFrame = null;
+			frontLeftFrame = null;
+			frontRightFrame = null;
+			backLeftFrame = null;
+			backRightFrame = null;
+			frontFramePublishedNanos = 0L;
+		}
 	}
 
 	/**
@@ -201,32 +262,33 @@ public final class TitleFlameAnimator {
 		return cycle;
 	}
 
-	/** Runs the original adaptive-sleep title-flame timing loop. */
+	/**
+	 * Runs the flame simulation at its effective original 50 Hz update rate. The
+	 * historical worker advanced two simulation steps before each roughly-40 ms
+	 * presentation. Keeping one step every 20 ms preserves simulation speed while
+	 * publishing a coherent frame at 50 Hz for the independently paced renderer.
+	 */
 	private void runLoop() {
 		Thread current = Thread.currentThread();
 		try {
-			long timingWindowStart = System.currentTimeMillis();
-			int timingSampleCount = 0;
-			int sleepMillis = 20;
+			long nextUpdate = System.nanoTime();
 			while (running) {
-				cycle++;
-				update();
-				update();
-				draw();
-				if (++timingSampleCount > 10) {
-					long now = System.currentTimeMillis();
-					int timingError = (int) (now - timingWindowStart) / 10 - sleepMillis;
-					sleepMillis = 40 - timingError;
-					if (sleepMillis < 5) {
-						sleepMillis = 5;
-					}
-					timingSampleCount = 0;
-					timingWindowStart = now;
+				long now = System.nanoTime();
+				int updates = 0;
+				while (running && now >= nextUpdate && updates < MAX_CATCH_UP_STEPS) {
+					update();
+					composeFrame();
+					cycle++;
+					presentStartupFrame();
+					nextUpdate += UPDATE_STEP_NANOS;
+					updates++;
 				}
-				try {
-					Thread.sleep(sleepMillis);
-				} catch (Exception ignored) {
-					// The running flag decides whether the loop continues.
+				if (updates == MAX_CATCH_UP_STEPS && now >= nextUpdate) {
+					nextUpdate = now + UPDATE_STEP_NANOS;
+				}
+				long waitNanos = nextUpdate - System.nanoTime();
+				if (running && waitNanos > 0L) {
+					LockSupport.parkNanos(waitNanos);
 				}
 			}
 		} catch (Exception ignored) {
@@ -356,8 +418,8 @@ public final class TitleFlameAnimator {
 		}
 	}
 
-	/** Composites and presents the current title-flame frame. */
-	private void draw() {
+	/** Composites one complete title-flame frame into worker-owned scratch arrays. */
+	private void composeFrame() {
 		if (greenTransition > 0) {
 			for (int i = 0; i < PALETTE_SIZE; i++) {
 				if (greenTransition > 768)
@@ -379,7 +441,7 @@ public final class TitleFlameAnimator {
 		} else {
 			System.arraycopy(redPalette, 0, palette, 0, PALETTE_SIZE);
 		}
-		System.arraycopy(leftBackground.pixels, 0, leftBuffer.pixels, 0, BACKGROUND_PIXEL_COUNT);
+		System.arraycopy(leftBackground.pixels, 0, backLeftFrame, 0, BACKGROUND_PIXEL_COUNT);
 		int intensityOffset = 0;
 		int framebufferOffset = 1152;
 		for (int row = 1; row < FLAME_HEIGHT - 1; row++) {
@@ -394,8 +456,8 @@ public final class TitleFlameAnimator {
 					int alpha = value;
 					int inverseAlpha = 256 - value;
 					int flameColor = palette[value];
-					int backgroundColor = leftBuffer.pixels[framebufferOffset];
-					leftBuffer.pixels[framebufferOffset++] = ((flameColor & 0xff00ff) * alpha
+					int backgroundColor = backLeftFrame[framebufferOffset];
+					backLeftFrame[framebufferOffset++] = ((flameColor & 0xff00ff) * alpha
 							+ (backgroundColor & 0xff00ff) * inverseAlpha & 0xff00ff00)
 							+ ((flameColor & 0xff00) * alpha + (backgroundColor & 0xff00) * inverseAlpha
 									& 0xff0000) >> 8;
@@ -404,9 +466,7 @@ public final class TitleFlameAnimator {
 			}
 			framebufferOffset += leftInset;
 		}
-		Graphics graphics = graphicsSupplier.get();
-		leftBuffer.draw(graphics, 0, 0);
-		System.arraycopy(rightBackground.pixels, 0, rightBuffer.pixels, 0, BACKGROUND_PIXEL_COUNT);
+		System.arraycopy(rightBackground.pixels, 0, backRightFrame, 0, BACKGROUND_PIXEL_COUNT);
 		intensityOffset = 0;
 		framebufferOffset = 1176;
 		for (int row = 1; row < FLAME_HEIGHT - 1; row++) {
@@ -419,8 +479,8 @@ public final class TitleFlameAnimator {
 					int alpha = value;
 					int inverseAlpha = 256 - value;
 					int flameColor = palette[value];
-					int backgroundColor = rightBuffer.pixels[framebufferOffset];
-					rightBuffer.pixels[framebufferOffset++] = ((flameColor & 0xff00ff) * alpha
+					int backgroundColor = backRightFrame[framebufferOffset];
+					backRightFrame[framebufferOffset++] = ((flameColor & 0xff00ff) * alpha
 							+ (backgroundColor & 0xff00ff) * inverseAlpha & 0xff00ff00)
 							+ ((flameColor & 0xff00) * alpha + (backgroundColor & 0xff00) * inverseAlpha
 									& 0xff0000) >> 8;
@@ -430,7 +490,118 @@ public final class TitleFlameAnimator {
 			intensityOffset += FLAME_WIDTH - visibleWidth;
 			framebufferOffset += FLAME_WIDTH - visibleWidth - lineOffset;
 		}
+		synchronized (frameLock) {
+			int[] reusableLeft = previousLeftFrame;
+			previousLeftFrame = frontLeftFrame;
+			frontLeftFrame = backLeftFrame;
+			backLeftFrame = reusableLeft;
+
+			int[] reusableRight = previousRightFrame;
+			previousRightFrame = frontRightFrame;
+			frontRightFrame = backRightFrame;
+			backRightFrame = reusableRight;
+			frontFramePublishedNanos = System.nanoTime();
+		}
+	}
+
+	/**
+	 * Copies the latest complete worker frame into the legacy title buffers and
+	 * draws them through the caller-owned presentation graphics. This keeps all
+	 * AWT presentation on the main render thread instead of racing the flame worker
+	 * against the high-refresh off-screen frame compositor.
+	 *
+	 * @param graphics current frame presentation graphics
+	 * @return {@code true} when a prepared flame frame was presented
+	 */
+	public boolean present(Graphics graphics) {
+		synchronized (presentationLock) {
+			if (graphics == null || leftBuffer == null || rightBuffer == null) {
+				return false;
+			}
+			synchronized (frameLock) {
+				if (previousLeftFrame == null || previousRightFrame == null || frontLeftFrame == null
+						|| frontRightFrame == null) {
+					return false;
+				}
+				long elapsed = Math.max(0L, System.nanoTime() - frontFramePublishedNanos);
+				int blend = (int) Math.min(256L, elapsed * 256L / UPDATE_STEP_NANOS);
+				interpolateFrame(previousLeftFrame, frontLeftFrame, leftBuffer.pixels, blend);
+				interpolateFrame(previousRightFrame, frontRightFrame, rightBuffer.pixels, blend);
+			}
+			drawTitleSides(graphics);
+			return true;
+		}
+	}
+
+	/**
+	 * Presents the newest complete flame frame without interpolation. Startup uses
+	 * this path because the main high-refresh render loop does not begin until the
+	 * synchronous archive/bootstrap sequence has completed.
+	 */
+	public boolean presentLatest(Graphics graphics) {
+		synchronized (presentationLock) {
+			return presentLatestLocked(graphics);
+		}
+	}
+
+	/** Presents one worker-owned frame while startup still has no main render loop. */
+	private void presentStartupFrame() {
+		if (!startupPresentationEnabled) {
+			return;
+		}
+		synchronized (presentationLock) {
+			if (!startupPresentationEnabled || startupGraphicsSupplier == null) {
+				return;
+			}
+			presentLatestLocked(startupGraphicsSupplier.get());
+		}
+	}
+
+	/** Copies and draws the newest frame while {@link #presentationLock} is held. */
+	private boolean presentLatestLocked(Graphics graphics) {
+		if (graphics == null || leftBuffer == null || rightBuffer == null) {
+			return false;
+		}
+		synchronized (frameLock) {
+			if (frontLeftFrame == null || frontRightFrame == null) {
+				return false;
+			}
+			System.arraycopy(frontLeftFrame, 0, leftBuffer.pixels, 0, BACKGROUND_PIXEL_COUNT);
+			System.arraycopy(frontRightFrame, 0, rightBuffer.pixels, 0, BACKGROUND_PIXEL_COUNT);
+		}
+		drawTitleSides(graphics);
+		return true;
+	}
+
+	/** Draws the two title-side buffers to their fixed classic positions. */
+	private void drawTitleSides(Graphics graphics) {
+		leftBuffer.draw(graphics, 0, 0);
 		rightBuffer.draw(graphics, 637, 0);
+	}
+
+	/**
+	 * Interpolates two complete RGB flame frames using an 8-bit fixed-point
+	 * fraction. Rendering deliberately trails simulation by one 20 ms flame step
+	 * so high-refresh presentation can move smoothly between two known states
+	 * without changing the original 50 Hz simulation.
+	 */
+	private static void interpolateFrame(int[] previous, int[] current, int[] destination, int blend) {
+		if (blend <= 0) {
+			System.arraycopy(previous, 0, destination, 0, BACKGROUND_PIXEL_COUNT);
+			return;
+		}
+		if (blend >= 256) {
+			System.arraycopy(current, 0, destination, 0, BACKGROUND_PIXEL_COUNT);
+			return;
+		}
+		int inverseBlend = 256 - blend;
+		for (int pixelIndex = 0; pixelIndex < BACKGROUND_PIXEL_COUNT; pixelIndex++) {
+			int from = previous[pixelIndex];
+			int to = current[pixelIndex];
+			destination[pixelIndex] = ((from & 0xff00ff) * inverseBlend + (to & 0xff00ff) * blend
+					& 0xff00ff00)
+					+ ((from & 0xff00) * inverseBlend + (to & 0xff00) * blend & 0xff0000) >> 8;
+		}
 	}
 
 	/**

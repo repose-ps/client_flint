@@ -5,6 +5,7 @@ import java.awt.Frame;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Insets;
+import java.awt.DisplayMode;
 
 /** AWT host window for {@link GameShell}. */
 public final class GameFrame extends Frame {
@@ -70,6 +71,18 @@ public final class GameFrame extends Frame {
 	public int getClientHeight() {
 		Insets insets = getInsets();
 		return Math.max(1, getHeight() - insets.top - insets.bottom);
+	}
+
+	/** Returns the active display refresh rate, or zero when the platform does not report one. */
+	public int getDisplayRefreshRate() {
+		if (getGraphicsConfiguration() == null || getGraphicsConfiguration().getDevice() == null) {
+			return 0;
+		}
+		DisplayMode mode = getGraphicsConfiguration().getDevice().getDisplayMode();
+		if (mode == null || mode.getRefreshRate() == DisplayMode.REFRESH_RATE_UNKNOWN) {
+			return 0;
+		}
+		return Math.max(0, mode.getRefreshRate());
 	}
 
 	/**

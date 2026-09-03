@@ -7,6 +7,8 @@ public final class FrameTimingConfig {
 
     /** JVM property controlling presentation rate independently from the 50 Hz logic loop. */
     public static final String RENDER_FPS_PROPERTY = "flint.renderFps";
+    /** Optional generic main-loop timing diagnostics. */
+    public static final String FRAME_STATS_PROPERTY = "flint.frameStats";
     /** GPU default chosen to improve high-refresh presentation without running uncapped. */
     public static final int DEFAULT_GPU_RENDER_FPS = 120;
     /** Software rendering keeps the legacy presentation rate unless explicitly overridden. */
@@ -15,11 +17,17 @@ public final class FrameTimingConfig {
     private FrameTimingConfig() {
     }
 
+    /** Reads the configured render rate without a known display refresh rate. */
+    public static int configuredRenderFps(int defaultFps) {
+        return configuredRenderFps(defaultFps, 0);
+    }
+
     /**
      * Reads {@value #RENDER_FPS_PROPERTY}. Accepted values are a positive integer,
-     * {@code legacy} (50), or {@code unlimited}/{@code uncapped} (0).
+     * {@code legacy} (50), {@code display}/{@code monitor}/{@code refresh}, or
+     * {@code unlimited}/{@code uncapped} (0).
      */
-    public static int configuredRenderFps(int defaultFps) {
+    public static int configuredRenderFps(int defaultFps, int displayRefreshRate) {
         if (defaultFps <= 0) {
             throw new IllegalArgumentException("Default render FPS must be positive: " + defaultFps);
         }
@@ -34,16 +42,19 @@ public final class FrameTimingConfig {
         if (value.equals("legacy")) {
             return 50;
         }
+        if (value.equals("display") || value.equals("monitor") || value.equals("refresh")) {
+            return displayRefreshRate > 0 ? displayRefreshRate : defaultFps;
+        }
         try {
             int fps = Integer.parseInt(value);
             if (fps <= 0) {
                 throw new IllegalArgumentException("-D" + RENDER_FPS_PROPERTY
-                        + " must be a positive integer, legacy, unlimited, or uncapped: " + raw);
+                        + " must be a positive integer, legacy, display, unlimited, or uncapped: " + raw);
             }
             return fps;
         } catch (NumberFormatException exception) {
             throw new IllegalArgumentException("Invalid -D" + RENDER_FPS_PROPERTY + "='" + raw
-                    + "'. Expected a positive integer, legacy, unlimited, or uncapped.", exception);
+                    + "'. Expected a positive integer, legacy, display, unlimited, or uncapped.", exception);
         }
     }
 

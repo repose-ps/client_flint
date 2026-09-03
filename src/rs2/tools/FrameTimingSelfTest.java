@@ -39,6 +39,13 @@ public final class FrameTimingSelfTest {
             System.setProperty(FrameTimingConfig.RENDER_FPS_PROPERTY, "uncapped");
             test.equal(FrameTimingConfig.configuredRenderFps(120), 0, "render FPS uncapped alias");
 
+            System.setProperty(FrameTimingConfig.RENDER_FPS_PROPERTY, "display");
+            test.equal(FrameTimingConfig.configuredRenderFps(120, 165), 165, "render FPS display refresh alias");
+            test.equal(FrameTimingConfig.configuredRenderFps(120, 0), 120, "render FPS display fallback");
+
+            System.setProperty(FrameTimingConfig.RENDER_FPS_PROPERTY, "monitor");
+            test.equal(FrameTimingConfig.configuredRenderFps(120, 144), 144, "render FPS monitor alias");
+
             boolean rejected = false;
             System.setProperty(FrameTimingConfig.RENDER_FPS_PROPERTY, "0");
             try {

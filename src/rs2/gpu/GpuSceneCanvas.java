@@ -146,6 +146,9 @@ final class GpuSceneCanvas extends AWTGLCanvas {
     private int perfLastStaticVisible;
     private int perfLastStaticEligible;
     private int perfLastStaticCommands;
+    private int perfLastWidth;
+    private int perfLastHeight;
+    private final GpuFrameTimer gpuFrameTimer = PERF_STATS ? new GpuFrameTimer() : null;
     private int cameraUniform;
     private int yawUniform;
     private int pitchUniform;
@@ -205,6 +208,9 @@ final class GpuSceneCanvas extends AWTGLCanvas {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
         glClearColor(CLEAR_RED / 255.0f, CLEAR_GREEN / 255.0f, CLEAR_BLUE / 255.0f, 1.0f);
+        if (gpuFrameTimer != null) {
+            gpuFrameTimer.initialize();
+        }
         initialized = true;
         System.out.println("GPU renderer initialized: " + glGetString(GL_VENDOR) + " / " + glGetString(GL_RENDERER)
                 + " / OpenGL " + glGetString(GL_VERSION));
@@ -215,13 +221,31 @@ final class GpuSceneCanvas extends AWTGLCanvas {
         long cpuStarted = PERF_STATS ? System.nanoTime() : 0L;
         int width = Math.max(1, getFramebufferWidth());
         int height = Math.max(1, getFramebufferHeight());
-        glViewport(0, 0, width, height);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         WorldRenderFrame frame = frameData;
         if (frame != null) {
             ensureSceneUploaded(frame);
+        }
+
+        if (gpuFrameTimer != null) {
+            gpuFrameTimer.beginFrame();
+        }
+        glViewport(0, 0, width, height);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        if (gpuFrameTimer != null) {
+            gpuFrameTimer.markClearDone();
+        }
+
+        if (frame != null) {
             drawScene(frame, width, height);
+        } else {
+            clearFrameStats();
+            if (gpuFrameTimer != null) {
+                gpuFrameTimer.markTerrainDone();
+                gpuFrameTimer.markStaticDone();
+            }
+        }
+        if (gpuFrameTimer != null) {
+            gpuFrameTimer.endFrame();
         }
 
         if (validationRequested) {
@@ -233,6 +257,8 @@ final class GpuSceneCanvas extends AWTGLCanvas {
         swapBuffers();
         if (PERF_STATS) {
             long finished = System.nanoTime();
+            perfLastWidth = width;
+            perfLastHeight = height;
             recordPerformance(swapStarted - cpuStarted, finished - swapStarted);
         }
     }
@@ -342,6 +368,10 @@ final class GpuSceneCanvas extends AWTGLCanvas {
     private void drawScene(WorldRenderFrame frame, int width, int height) {
         if (terrainVertexCount == 0 && staticVertexCount == 0) {
             clearFrameStats();
+            if (gpuFrameTimer != null) {
+                gpuFrameTimer.markTerrainDone();
+                gpuFrameTimer.markStaticDone();
+            }
             return;
         }
         int renderPlane = normalizeRenderPlane(frame.renderPlane());
@@ -366,6 +396,9 @@ final class GpuSceneCanvas extends AWTGLCanvas {
         frameTerrainEligible = lastDrawEligibleRanges;
         frameTerrainCommands = lastDrawCommands;
         int submitted = lastDrawSubmittedVertices;
+        if (gpuFrameTimer != null) {
+            gpuFrameTimer.markTerrainDone();
+        }
 
         drawVisibleChunks(staticVertexArray, staticChunks, renderPlane, cameraX, cameraY, frame.cameraHeight(), yawSin,
                 yawCos, pitchSin, pitchCos, width, height);
@@ -373,6 +406,9 @@ final class GpuSceneCanvas extends AWTGLCanvas {
         frameStaticEligible = lastDrawEligibleRanges;
         frameStaticCommands = lastDrawCommands;
         submitted += lastDrawSubmittedVertices;
+        if (gpuFrameTimer != null) {
+            gpuFrameTimer.markStaticDone();
+        }
 
         frameSubmittedVertices = submitted;
         frameEligibleVertices = terrainEligibleVertices[renderPlane] + staticEligibleVertices[renderPlane];
@@ -479,11 +515,16 @@ final class GpuSceneCanvas extends AWTGLCanvas {
                 : perfSubmittedVertices * 100.0 / perfEligibleVertices;
         double cpuMs = perfFrames == 0 ? 0.0 : perfCpuRenderNanos / 1_000_000.0 / perfFrames;
         double swapMs = perfFrames == 0 ? 0.0 : perfSwapNanos / 1_000_000.0 / perfFrames;
-        System.out.printf("GPU perf: %.1f frames/s, CPU submit %.3f ms, swap %.3f ms, submitted %.1f%%; "
-                + "terrain ranges %d/%d (%d commands), static ranges %d/%d (%d commands), cache %.1f MiB%n", fps,
-                cpuMs, swapMs, submittedPercent, perfLastTerrainVisible, perfLastTerrainEligible,
-                perfLastTerrainCommands, perfLastStaticVisible, perfLastStaticEligible, perfLastStaticCommands,
-                cachedSceneBytes / (1024.0 * 1024.0));
+        GpuFrameTimer.Snapshot gpu = gpuFrameTimer.snapshotAndReset();
+        System.out.printf("GPU perf: %.1f frames/s, CPU submit %.3f ms, swap %.3f ms, GPU %.3f ms "
+                + "(clear %.3f, terrain %.3f, static %.3f), submitted %.1f%%; "
+                + "terrain ranges %d/%d (%d commands), static ranges %d/%d (%d commands), "
+                + "viewport %dx%d, cache %.1f MiB%s%n", fps, cpuMs, swapMs, gpu.averageTotalMs(),
+                gpu.averageClearMs(), gpu.averageTerrainMs(), gpu.averageStaticMs(), submittedPercent,
+                perfLastTerrainVisible, perfLastTerrainEligible, perfLastTerrainCommands, perfLastStaticVisible,
+                perfLastStaticEligible, perfLastStaticCommands, perfLastWidth, perfLastHeight,
+                cachedSceneBytes / (1024.0 * 1024.0),
+                gpu.droppedFrames() == 0 ? "" : ", timer dropped " + gpu.droppedFrames());
         perfWindowStarted = now;
         perfFrames = 0;
         perfSubmittedVertices = 0;

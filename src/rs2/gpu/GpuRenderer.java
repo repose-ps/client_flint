@@ -14,6 +14,7 @@ public final class GpuRenderer implements WorldRenderer, AutoCloseable {
     private int lastY = Integer.MIN_VALUE;
     private int lastWidth = -1;
     private int lastHeight = -1;
+    private boolean surfaceActive;
 
     @Override
     public RendererBackend backend() {
@@ -41,8 +42,9 @@ public final class GpuRenderer implements WorldRenderer, AutoCloseable {
         canvas.render();
     }
 
-    /** Hides the native surface outside logged-in world rendering. */
+    /** Hides the native surface outside a loaded world and records relogin activation. */
     public void setSurfaceActive(boolean active) {
+        surfaceActive = active;
         if (canvas != null && !active) {
             canvas.setVisible(false);
         }
@@ -54,6 +56,9 @@ public final class GpuRenderer implements WorldRenderer, AutoCloseable {
         int width = frameData.viewportWidth();
         int height = frameData.viewportHeight();
         if (x == lastX && y == lastY && width == lastWidth && height == lastHeight) {
+            if (surfaceActive && !canvas.isVisible()) {
+                canvas.setVisible(true);
+            }
             return;
         }
         lastX = x;

@@ -288,7 +288,9 @@ public class client extends GameShell {
 			client client1 = new client();
 			client1.createFrame(ClientLayout.FIXED_WIDTH, ClientLayout.FIXED_HEIGHT);
 			return;
-		} catch (Exception exception) {
+		} catch (Throwable throwable) {
+			System.err.println("Client startup failed before the main game loop:");
+			throwable.printStackTrace(System.err);
 			return;
 		}
 	}
@@ -1137,8 +1139,8 @@ public class client extends GameShell {
 		titleBoxImage = new IndexedImage(titleArchive, "titlebox", 0);
 		titleButtonImage = new IndexedImage(titleArchive, "titlebutton", 0);
 		titleFlameAnimator.prepare(titleArchive, titleLeftFlameBuffer, titleRightFlameBuffer);
+		titleFlameAnimator.start(() -> gameCycle, startupLoadingActive ? () -> super.graphics : null);
 		drawLoadingText(10, "Connecting to fileserver");
-		titleFlameAnimator.start(() -> gameCycle, () -> super.graphics);
 	}
 
 	/**
@@ -1238,7 +1240,13 @@ public class client extends GameShell {
 	 * subsystems.
 	 */
 	public void startUp() {
-		lifecycle.startUp();
+		startupLoadingActive = true;
+		try {
+			lifecycle.startUp();
+		} finally {
+			startupLoadingActive = false;
+			titleFlameAnimator.finishStartupPresentation();
+		}
 	}
 
 	/**
@@ -1319,11 +1327,12 @@ public class client extends GameShell {
 		 * window has been obscured or moved off-screen.
 		 */
 		createGameScreenBuffers();
-		// Re-raster and present every fixed UI panel on every draw cycle.
-		gameRenderer.requestSidebarRedraw();
-		gameRenderer.requestChatboxRedraw();
-		gameRenderer.requestTabAreaRedraw();
-		gameRenderer.requestChatModesRedraw();
+		/*
+		 * UI rasters are persistent backing stores. Rebuild them only when their
+		 * existing dirty flags say their contents changed; the persistent
+		 * presentation image still survives AWT expose/repaint events without
+		 * re-rasterizing every panel at the render FPS.
+		 */
 
 		if (regionManager.loadingStage != RegionManager.STAGE_LOADED)
 			gameRenderer.viewportBuffer().draw(super.graphics, layout.viewportX(), layout.viewportY());
@@ -2596,7 +2605,9 @@ public class client extends GameShell {
 	public void processDrawing() {
 		refreshGraphicsContextIfRequested();
 		boolean startupError = duplicateClientError || loadingError || invalidHostError;
-		gameRenderer.setWorldSurfaceActive(loggedIn && !startupError);
+		boolean nativeViewportActive = loggedIn && !startupError
+				&& regionManager.loadingStage == RegionManager.STAGE_LOADED;
+		gameRenderer.setWorldSurfaceActive(nativeViewportActive);
 		if (startupError) {
 			drawStartupErrorScreen();
 			return;
@@ -2621,7 +2632,7 @@ public class client extends GameShell {
 			frameGraphics.dispose();
 		}
 
-		gameRenderer.blitPresentation(displayGraphics);
+		gameRenderer.blitPresentation(displayGraphics, layout, nativeViewportActive);
 		mouseButtonHoldTicks = 0;
 	}
 
@@ -2740,6 +2751,10 @@ public class client extends GameShell {
 			boldFont.drawCenteredTextWithTags("Cancel", buttonX3, buttonY3 + 5, 0xffffff, true);
 		}
 		loginBoxBuffer.draw(super.graphics, 202, 171);
+		if (!titleFlameAnimator.present(super.graphics)) {
+			titleLeftFlameBuffer.draw(super.graphics, 0, 0);
+			titleRightFlameBuffer.draw(super.graphics, 637, 0);
+		}
 		// Present the static title frame every cycle as well, so an AWT expose cannot
 		// leave portions of the login screen white until another state change.
 		gameRenderer.consumeGameScreenRedraw();
@@ -2839,7 +2854,7 @@ public class client extends GameShell {
 		boldFont.drawCenteredText(message, loginBoxWidth / 2, (loginBoxHeight / 2 + 5) - barHeight, 0xffffff);
 		loginBoxBuffer.draw(super.graphics, 202, 171);
 		if (gameRenderer.consumeGameScreenRedraw()) {
-			if (!titleFlameAnimator.isRunning()) {
+			if (!titleFlameAnimator.presentLatest(super.graphics)) {
 				titleLeftFlameBuffer.draw(super.graphics, 0, 0);
 				titleRightFlameBuffer.draw(super.graphics, 637, 0);
 			}
@@ -3176,10 +3191,13 @@ public class client extends GameShell {
 		int defaultRenderFps = gameRenderer.rendererBackend() == rs2.game.render.RendererBackend.GPU
 				? FrameTimingConfig.DEFAULT_GPU_RENDER_FPS
 				: FrameTimingConfig.DEFAULT_SOFTWARE_RENDER_FPS;
-		int configuredRenderFps = FrameTimingConfig.configuredRenderFps(defaultRenderFps);
+		int displayRefreshRate = gameFrame == null ? 0 : gameFrame.getDisplayRefreshRate();
+		int configuredRenderFps = FrameTimingConfig.configuredRenderFps(defaultRenderFps, displayRefreshRate);
 		setRenderFps(configuredRenderFps);
 		System.out.println("Frame timing: logic 50 Hz, render cap " + FrameTimingConfig.describe(configuredRenderFps)
-				+ " (-D" + FrameTimingConfig.RENDER_FPS_PROPERTY + "=<fps|legacy|unlimited>)");
+				+ (displayRefreshRate > 0 ? ", display " + displayRefreshRate + " Hz" : "")
+				+ " (-D" + FrameTimingConfig.RENDER_FPS_PROPERTY
+				+ "=<fps|display|legacy|unlimited>)");
 		regionManager = new RegionManager(dynamicObjects);
 		ClientActionDispatcher.Movement actionMovement = this::walkTo;
 		Runnable interactionCrosshair = this::markInteractionCrosshair;
@@ -3420,6 +3438,8 @@ public class client extends GameShell {
 	private final LoginSession loginSession;
 	/** Owns title-flame simulation state and its animation worker. */
 	private final TitleFlameAnimator titleFlameAnimator;
+	/** True only while the one-time synchronous archive/bootstrap sequence is running. */
+	private volatile boolean startupLoadingActive;
 	/** Character-design interface state and preview owner. */
 	private final AppearanceEditor appearanceEditor;
 	/** Owns startup, resource services, and final shutdown. */

@@ -100,7 +100,7 @@ tasks.register('gpuTerrainSelfTest', JavaExec) {
 }
 
 tasks.named('run', JavaExec) {
-    ['flint.renderer', 'flint.renderFps', 'flint.gpu.perfStats'].each { propertyName ->
+    ['flint.renderer', 'flint.renderFps', 'flint.gpu.perfStats', 'flint.frameStats'].each { propertyName ->
         def value = System.getProperty(propertyName)
         if (value != null) {
             systemProperty propertyName, value
@@ -121,6 +121,10 @@ tasks.register('runGpu', JavaExec) {
     def perfStats = System.getProperty('flint.gpu.perfStats')
     if (perfStats != null) {
         systemProperty 'flint.gpu.perfStats', perfStats
+    }
+    def frameStats = System.getProperty('flint.frameStats')
+    if (frameStats != null) {
+        systemProperty 'flint.frameStats', frameStats
     }
 }
 
