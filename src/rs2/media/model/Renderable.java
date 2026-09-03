@@ -46,6 +46,35 @@ public class Renderable extends DualNode {
 	}
 
 	/**
+	 * Tests this renderable against one viewport-space mouse position without
+	 * rasterizing it. This is used by the fixed-rate scene picker so interaction
+	 * remains independent from presentation FPS.
+	 *
+	 * @param orientation    model orientation in revision-377 angle units
+	 * @param pitchSine      camera pitch sine
+	 * @param pitchCosine    camera pitch cosine
+	 * @param yawSine        camera yaw sine
+	 * @param yawCosine      camera yaw cosine
+	 * @param x              camera-relative world X
+	 * @param y              camera-relative height
+	 * @param z              camera-relative world Y
+	 * @param mouseX         mouse X relative to the viewport
+	 * @param mouseY         mouse Y relative to the viewport
+	 * @param viewportWidth  viewport width
+	 * @param viewportHeight viewport height
+	 * @return {@code true} when the current model is under the mouse
+	 */
+	public boolean hitTest(int orientation, int pitchSine, int pitchCosine, int yawSine, int yawCosine, int x, int y,
+			int z, int mouseX, int mouseY, int viewportWidth, int viewportHeight) {
+		Model model = getModel();
+		if (model == null)
+			return false;
+		modelHeight = model.modelHeight;
+		return model.hitTest(orientation, pitchSine, pitchCosine, yawSine, yawCosine, x, y, z, mouseX, mouseY,
+				viewportWidth, viewportHeight);
+	}
+
+	/**
 	 * Returns the model currently represented by this renderable, or {@code null}
 	 * when nothing should be drawn.
 	 *

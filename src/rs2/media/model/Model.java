@@ -1495,6 +1495,138 @@ public class Model extends Renderable {
 	}
 
 	/**
+	 * Performs the legacy model mouse hit test without submitting any triangles to
+	 * the software rasterizer. The coarse bounds and per-face checks intentionally
+	 * mirror {@link #drawInternal(int, int, int, int, int, int, int, int, int)} so
+	 * high-refresh rendering does not have to execute software drawing merely to
+	 * populate interaction state.
+	 *
+	 * @return {@code true} when the mouse intersects this model
+	 */
+	public boolean hitTest(int orientation, int pitchSine, int pitchCosine, int yawSine, int yawCosine, int x, int y,
+			int z, int mouseX, int mouseY, int viewportWidth, int viewportHeight) {
+		if (vertexCount <= 0 || triangleCount <= 0 || viewportWidth <= 0 || viewportHeight <= 0)
+			return false;
+
+		int yawDepth = z * yawCosine - x * yawSine >> 16;
+		int centerDepth = y * pitchSine + yawDepth * pitchCosine >> 16;
+		int projectedRadius = horizontalRadius * pitchCosine >> 16;
+		int farDepth = centerDepth + projectedRadius;
+		if (farDepth <= 50 || centerDepth >= 3500)
+			return false;
+
+		int viewCenterX = z * yawSine + x * yawCosine >> 16;
+		int left = viewCenterX - horizontalRadius << 9;
+		int right = viewCenterX + horizontalRadius << 9;
+		int halfWidth = viewportWidth / 2;
+		if (left / farDepth >= halfWidth || right / farDepth <= -halfWidth)
+			return false;
+
+		int viewCenterY = y * pitchCosine - yawDepth * pitchSine >> 16;
+		int verticalRadius = horizontalRadius * pitchSine >> 16;
+		int bottom = viewCenterY + verticalRadius << 9;
+		int modelVerticalRadius = verticalRadius + (super.modelHeight * pitchCosine >> 16);
+		int top = viewCenterY - modelVerticalRadius << 9;
+		int halfHeight = viewportHeight / 2;
+		if (bottom / farDepth <= -halfHeight || top / farDepth >= halfHeight)
+			return false;
+
+		int nearDepth = centerDepth - projectedRadius;
+		if (nearDepth <= 50)
+			nearDepth = 50;
+		int coarseLeft = left;
+		int coarseRight = right;
+		if (viewCenterX > 0) {
+			coarseLeft /= farDepth;
+			coarseRight /= nearDepth;
+		} else {
+			coarseRight /= farDepth;
+			coarseLeft /= nearDepth;
+		}
+		int coarseTop = top;
+		int coarseBottom = bottom;
+		if (viewCenterY > 0) {
+			coarseTop /= farDepth;
+			coarseBottom /= nearDepth;
+		} else {
+			coarseBottom /= farDepth;
+			coarseTop /= nearDepth;
+		}
+		int relativeMouseX = mouseX - halfWidth;
+		int relativeMouseY = mouseY - halfHeight;
+		if (relativeMouseX <= coarseLeft || relativeMouseX >= coarseRight || relativeMouseY <= coarseTop
+				|| relativeMouseY >= coarseBottom)
+			return false;
+		if (singleTile)
+			return true;
+
+		ensurePickingProjectionCapacity(vertexCount);
+		int orientationSine = 0;
+		int orientationCosine = 0;
+		if (orientation != 0) {
+			orientationSine = SINE[orientation & 0x7ff];
+			orientationCosine = COSINE[orientation & 0x7ff];
+		}
+		for (int vertex = 0; vertex < vertexCount; vertex++) {
+			int localX = verticesX[vertex];
+			int localY = verticesY[vertex];
+			int localZ = verticesZ[vertex];
+			if (orientation != 0) {
+				int rotatedX = localZ * orientationSine + localX * orientationCosine >> 16;
+				localZ = localZ * orientationCosine - localX * orientationSine >> 16;
+				localX = rotatedX;
+			}
+			localX += x;
+			localY += y;
+			localZ += z;
+			int viewX = localZ * yawSine + localX * yawCosine >> 16;
+			int depth = localZ * yawCosine - localX * yawSine >> 16;
+			int viewY = localY * pitchCosine - depth * pitchSine >> 16;
+			depth = localY * pitchSine + depth * pitchCosine >> 16;
+			if (depth >= 50) {
+				projectedX[vertex] = halfWidth + (viewX << 9) / depth;
+				projectedY[vertex] = halfHeight + (viewY << 9) / depth;
+			} else {
+				projectedX[vertex] = -5000;
+			}
+		}
+
+		int triangles = Math.min(triangleCount,
+				Math.min(triangleVertexA == null ? 0 : triangleVertexA.length,
+						Math.min(triangleVertexB == null ? 0 : triangleVertexB.length,
+								triangleVertexC == null ? 0 : triangleVertexC.length)));
+		for (int triangle = 0; triangle < triangles; triangle++) {
+			if (triangleDrawType != null && triangle < triangleDrawType.length && triangleDrawType[triangle] == -1)
+				continue;
+			int a = triangleVertexA[triangle];
+			int b = triangleVertexB[triangle];
+			int c = triangleVertexC[triangle];
+			if (a < 0 || b < 0 || c < 0 || a >= vertexCount || b >= vertexCount || c >= vertexCount)
+				continue;
+			if (projectedX[a] == -5000 || projectedX[b] == -5000 || projectedX[c] == -5000)
+				continue;
+			if (containsPoint(mouseX, mouseY, projectedY[a], projectedY[b], projectedY[c], projectedX[a],
+					projectedX[b], projectedX[c]))
+				return true;
+		}
+		return false;
+	}
+
+	private static void ensurePickingProjectionCapacity(int required) {
+		if (projectedX.length >= required)
+			return;
+		int capacity = projectedX.length;
+		while (capacity < required)
+			capacity <<= 1;
+		projectedX = new int[capacity];
+		projectedY = new int[capacity];
+		projectedDepth = new int[capacity];
+		cameraX = new int[capacity];
+		cameraY = new int[capacity];
+		cameraZ = new int[capacity];
+	}
+
+	/**
 	 * Draws internal.
 	 *
 	 * @param inputValue  the input value

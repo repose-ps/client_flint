@@ -3,6 +3,7 @@ package rs2.gpu;
 import rs2.game.render.RendererBackend;
 import rs2.game.render.WorldRenderFrame;
 import rs2.game.render.WorldRenderer;
+import rs2.game.render.SoftwareViewportOverlay;
 import rs2.shell.GameFrame;
 
 /** Native OpenGL world renderer backed by complete terrain and static scene meshes. */
@@ -15,6 +16,7 @@ public final class GpuRenderer implements WorldRenderer, AutoCloseable {
     private int lastWidth = -1;
     private int lastHeight = -1;
     private boolean surfaceActive;
+    private SoftwareViewportOverlay viewportOverlay;
 
     @Override
     public RendererBackend backend() {
@@ -39,7 +41,18 @@ public final class GpuRenderer implements WorldRenderer, AutoCloseable {
 
         updateBounds(frameData);
         canvas.setFrameData(frameData);
-        canvas.render();
+        canvas.setViewportOverlay(viewportOverlay);
+        try {
+            canvas.render();
+        } finally {
+            viewportOverlay = null;
+        }
+    }
+
+
+    /** Supplies one opaque software-raster rectangle to composite above the GPU world. */
+    public void setViewportOverlay(SoftwareViewportOverlay overlay) {
+        viewportOverlay = overlay;
     }
 
     /** Hides the native surface outside a loaded world and records relogin activation. */

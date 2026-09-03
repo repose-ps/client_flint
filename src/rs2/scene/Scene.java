@@ -22,6 +22,13 @@ public class Scene {
 	/** Monotonic revision used by GPU backends to detect static scene rebuilds. */
 	private long geometryRevision;
 
+	/** Pending viewport-space walk-pick request consumed by the fixed logic picker. */
+	private boolean tilePickPending;
+	/** Pending walk-pick X coordinate relative to the world viewport. */
+	private int tilePickRequestX;
+	/** Pending walk-pick Y coordinate relative to the world viewport. */
+	private int tilePickRequestY;
+
 	/**
 	 * Creates a new scene.
 	 *
@@ -79,6 +86,9 @@ public class Scene {
 			temporaryObjects[loopIndex6] = null;
 
 		temporaryObjectCount = 0;
+		tilePickPending = false;
+		pickedTileX = -1;
+		pickedTileY = -1;
 		for (int loopIndex7 = 0; loopIndex7 < renderInteractiveObjects.length; loopIndex7++)
 			renderInteractiveObjects[loopIndex7] = null;
 
@@ -1282,11 +1292,41 @@ public class Scene {
 	 * @param mouseY the mouse y
 	 */
 	public void setClick(int mouseX, int mouseY) {
-		picking = true;
+		tilePickPending = true;
+		tilePickRequestX = mouseX;
+		tilePickRequestY = mouseY;
+		/*
+		 * Scene.render historically consumed this request while rasterizing. Flint now
+		 * resolves it during the fixed 50 Hz logic cycle so walking does not depend on
+		 * presentation FPS or on whether the software/GPU backend is active.
+		 */
+		picking = false;
 		Scene.mouseX = mouseX;
 		Scene.mouseY = mouseY;
 		pickedTileX = -1;
 		pickedTileY = -1;
+	}
+
+	/** Returns whether a walk-to terrain pick is waiting to be resolved. */
+	public boolean tilePickPending() {
+		return tilePickPending;
+	}
+
+	/** Returns the pending walk-pick X coordinate relative to the viewport. */
+	public int tilePickRequestX() {
+		return tilePickRequestX;
+	}
+
+	/** Returns the pending walk-pick Y coordinate relative to the viewport. */
+	public int tilePickRequestY() {
+		return tilePickRequestY;
+	}
+
+	/** Completes the pending terrain pick with the supplied tile, or -1/-1 on miss. */
+	public void completeTilePick(int tileX, int tileY) {
+		tilePickPending = false;
+		pickedTileX = tileX;
+		pickedTileY = tileY;
 	}
 
 	/**

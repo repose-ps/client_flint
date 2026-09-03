@@ -248,6 +248,8 @@ public class GameShell extends Canvas
 			long frameStatsStarted = previousTime;
 			long frameStatsRenderNanos = 0L;
 			long frameStatsMaxRenderNanos = 0L;
+			long frameStatsLogicNanos = 0L;
+			long frameStatsMaxLogicNanos = 0L;
 			long frameStatsLateNanos = 0L;
 			long frameStatsMaxLateNanos = 0L;
 			int frameStatsFrames = 0;
@@ -276,7 +278,13 @@ public class GameShell extends Canvas
 							return;
 						}
 					}
+					long logicStarted = FRAME_STATS ? System.nanoTime() : 0L;
 					consumeInputAndProcessGameLoop();
+					if (FRAME_STATS) {
+						long logicNanos = System.nanoTime() - logicStarted;
+						frameStatsLogicNanos += logicNanos;
+						frameStatsMaxLogicNanos = Math.max(frameStatsMaxLogicNanos, logicNanos);
+					}
 					logicAccumulator -= logicStepNanos;
 					processedTicks++;
 				}
@@ -323,14 +331,19 @@ public class GameShell extends Canvas
 					double logicHz = frameStatsLogicTicks / seconds;
 					double renderMs = frameStatsFrames == 0 ? 0.0
 							: frameStatsRenderNanos / 1_000_000.0 / frameStatsFrames;
+					double logicMs = frameStatsLogicTicks == 0 ? 0.0
+							: frameStatsLogicNanos / 1_000_000.0 / frameStatsLogicTicks;
 					double lateMs = frameStatsFrames == 0 ? 0.0
 							: frameStatsLateNanos / 1_000_000.0 / frameStatsFrames;
-					System.out.printf("Frame perf: %.1f frames/s, logic %.1f Hz, client render %.3f ms avg / %.3f ms max, "
-							+ "scheduler late %.3f ms avg / %.3f ms max%n", measuredFps, logicHz, renderMs,
+					System.out.printf("Frame perf: %.1f frames/s, logic %.1f Hz / %.3f ms avg / %.3f ms max, "
+							+ "client render %.3f ms avg / %.3f ms max, scheduler late %.3f ms avg / %.3f ms max%n",
+							measuredFps, logicHz, logicMs, frameStatsMaxLogicNanos / 1_000_000.0, renderMs,
 							frameStatsMaxRenderNanos / 1_000_000.0, lateMs, frameStatsMaxLateNanos / 1_000_000.0);
 					frameStatsStarted = afterWork;
 					frameStatsRenderNanos = 0L;
 					frameStatsMaxRenderNanos = 0L;
+					frameStatsLogicNanos = 0L;
+					frameStatsMaxLogicNanos = 0L;
 					frameStatsLateNanos = 0L;
 					frameStatsMaxLateNanos = 0L;
 					frameStatsFrames = 0;

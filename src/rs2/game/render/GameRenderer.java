@@ -737,29 +737,38 @@ public final class GameRenderer {
 		frame.cameraController.restore(frame.cameraController.interpolatedSnapshot(frame.interpolationAlpha));
 		frame.cameraController.applyShake();
 
-		int textureCycle = Rasterizer3D.textureCycle;
 		WorldRenderFrame worldFrame = new WorldRenderFrame(frame.worldState.scene, frame.cameraController.x,
 				frame.cameraController.y, frame.cameraController.height, frame.renderPlane, frame.cameraController.yaw,
 				frame.cameraController.pitch, frame.mouseX - frame.layout.viewportX(),
 				frame.mouseY - frame.layout.viewportY(), frame.layout.viewportX(), frame.layout.viewportY(),
 				frame.layout.viewportWidth(), frame.layout.viewportHeight());
+		boolean gpuWorld = worldRenderer.backend() == RendererBackend.GPU;
+		/*
+		 * A native AWTGLCanvas is a heavyweight child above the parent's Java2D
+		 * viewport. Legacy viewport UI therefore cannot be made visible by drawing it
+		 * into the parent after OpenGL. For GPU mode, rasterize legacy overlays first
+		 * and hand the small opaque region that needs native composition to the GPU
+		 * backend before it presents the frame.
+		 */
+		if (gpuWorld) {
+			frame.actorOverlayRenderer.drawActors(frame.actorOverlayContext);
+			frame.actorOverlayRenderer.drawWorldHint(frame.actorOverlayContext);
+			frame.viewportOverlayDrawer.run();
+			if (frame.viewportOverlayRegion != null && worldRenderer instanceof GpuRenderer gpuRenderer) {
+				ViewportOverlayRegion region = frame.viewportOverlayRegion;
+				gpuRenderer.setViewportOverlay(new SoftwareViewportOverlay(viewportBuffer.pixels, viewportBuffer.getWidth(),
+						region.x(), region.y(), region.width(), region.height(), region.transparentPixelKey()));
+			}
+		}
+
 		long worldRenderStarted = System.nanoTime();
 		worldRenderer.render(worldFrame);
 		rendererMetrics.recordWorldRender(System.nanoTime() - worldRenderStarted);
 		frame.worldState.scene.clearTemporaryObjects();
-		frame.actorOverlayRenderer.drawActors(frame.actorOverlayContext);
-		frame.actorOverlayRenderer.drawWorldHint(frame.actorOverlayContext);
-		animateTextures(textureCycle, frame.animationCycleDelta, frame.lowMemory);
-		frame.viewportOverlayDrawer.run();
-		/*
-		 * The native GPU canvas is a child component positioned directly over the
-		 * legacy viewport. Copying the software viewport into the parent
-		 * presentation image is therefore completely hidden in GPU mode and becomes
-		 * especially expensive for large resizable windows. Keep the software
-		 * viewport raster alive for legacy overlays/state until direct GPU UI
-		 * composition lands, but do not copy millions of hidden pixels every frame.
-		 */
-		if (worldRenderer.backend() != RendererBackend.GPU) {
+		if (!gpuWorld) {
+			frame.actorOverlayRenderer.drawActors(frame.actorOverlayContext);
+			frame.actorOverlayRenderer.drawWorldHint(frame.actorOverlayContext);
+			frame.viewportOverlayDrawer.run();
 			viewportBuffer.draw(frame.graphics, frame.layout.viewportX(), frame.layout.viewportY());
 		}
 		frame.cameraController.restore(logicalCamera);
@@ -798,14 +807,14 @@ public final class GameRenderer {
 		final int renderPlane;
 		/** Current client cycle. */
 		final int gameCycle;
-		/** Elapsed animation cycles since the previous draw. */
-		final int animationCycleDelta;
 		/** Interpolation fraction between previous/current fixed logic camera state. */
 		final float interpolationAlpha;
 		/** Current client mouse X. */
 		final int mouseX;
 		/** Current client mouse Y. */
 		final int mouseY;
+		/** Optional opaque legacy viewport rectangle to composite above native GL. */
+		final ViewportOverlayRegion viewportOverlayRegion;
 		/** Whether low-memory rendering behavior is active. */
 		final boolean lowMemory;
 
@@ -827,17 +836,18 @@ public final class GameRenderer {
 		 * @param currentPlane           current scene plane
 		 * @param renderPlane            roof-filtered render plane
 		 * @param gameCycle              current client cycle
-		 * @param animationCycleDelta    elapsed animation cycles
 		 * @param interpolationAlpha     render interpolation fraction
 		 * @param mouseX                 client mouse X
 		 * @param mouseY                 client mouse Y
+		 * @param viewportOverlayRegion  optional opaque software overlay rectangle
 		 * @param lowMemory              low-memory rendering mode
 		 */
 		public SceneFrame(ClientLayout layout, SceneEntityRenderer sceneEntityRenderer, WorldState worldState,
 				ActorSynchronizer actorSynchronizer, Player localPlayer, CameraController cameraController,
 				ActorOverlayRenderer actorOverlayRenderer, ActorOverlayRenderer.Context actorOverlayContext, Graphics graphics,
 				Runnable viewportOverlayDrawer, int destinationX, int destinationY, int currentPlane, int renderPlane,
-				int gameCycle, int animationCycleDelta, float interpolationAlpha, int mouseX, int mouseY, boolean lowMemory) {
+				int gameCycle, float interpolationAlpha, int mouseX, int mouseY, ViewportOverlayRegion viewportOverlayRegion,
+				boolean lowMemory) {
 			this.layout = layout;
 			this.sceneEntityRenderer = sceneEntityRenderer;
 			this.worldState = worldState;
@@ -853,10 +863,10 @@ public final class GameRenderer {
 			this.currentPlane = currentPlane;
 			this.renderPlane = renderPlane;
 			this.gameCycle = gameCycle;
-			this.animationCycleDelta = animationCycleDelta;
 			this.interpolationAlpha = interpolationAlpha;
 			this.mouseX = mouseX;
 			this.mouseY = mouseY;
+			this.viewportOverlayRegion = viewportOverlayRegion;
 			this.lowMemory = lowMemory;
 		}
 	}

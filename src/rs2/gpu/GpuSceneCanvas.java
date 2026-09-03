@@ -3,8 +3,23 @@ package rs2.gpu;
 import static org.lwjgl.opengl.GL14C.glMultiDrawArrays;
 import static org.lwjgl.opengl.GL33C.GL_ARRAY_BUFFER;
 import static org.lwjgl.opengl.GL33C.GL_COLOR_BUFFER_BIT;
+import static org.lwjgl.opengl.GL33C.GL_BLEND;
 import static org.lwjgl.opengl.GL33C.GL_DEPTH_BUFFER_BIT;
 import static org.lwjgl.opengl.GL33C.GL_DEPTH_TEST;
+import static org.lwjgl.opengl.GL33C.GL_ONE_MINUS_SRC_ALPHA;
+import static org.lwjgl.opengl.GL33C.GL_SRC_ALPHA;
+import static org.lwjgl.opengl.GL33C.GL_NEAREST;
+import static org.lwjgl.opengl.GL33C.GL_RGBA8;
+import static org.lwjgl.opengl.GL33C.GL_TEXTURE_2D;
+import static org.lwjgl.opengl.GL13C.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13C.glActiveTexture;
+import static org.lwjgl.opengl.GL33C.GL_TEXTURE_WRAP_S;
+import static org.lwjgl.opengl.GL33C.GL_TEXTURE_WRAP_T;
+import static org.lwjgl.opengl.GL33C.GL_CLAMP_TO_EDGE;
+import static org.lwjgl.opengl.GL33C.GL_TEXTURE_MAG_FILTER;
+import static org.lwjgl.opengl.GL33C.GL_TEXTURE_MIN_FILTER;
+import static org.lwjgl.opengl.GL33C.GL_TRIANGLE_STRIP;
+import static org.lwjgl.opengl.GL33C.GL_UNPACK_ALIGNMENT;
 import static org.lwjgl.opengl.GL33C.GL_INT;
 import static org.lwjgl.opengl.GL33C.GL_LEQUAL;
 import static org.lwjgl.opengl.GL33C.GL_RENDERER;
@@ -15,22 +30,33 @@ import static org.lwjgl.opengl.GL33C.GL_UNSIGNED_BYTE;
 import static org.lwjgl.opengl.GL33C.GL_VENDOR;
 import static org.lwjgl.opengl.GL33C.GL_VERSION;
 import static org.lwjgl.opengl.GL33C.glBindBuffer;
+import static org.lwjgl.opengl.GL33C.glBlendFunc;
 import static org.lwjgl.opengl.GL33C.glBindVertexArray;
 import static org.lwjgl.opengl.GL33C.glBufferData;
 import static org.lwjgl.opengl.GL33C.glClear;
 import static org.lwjgl.opengl.GL33C.glClearColor;
 import static org.lwjgl.opengl.GL33C.glDepthFunc;
+import static org.lwjgl.opengl.GL33C.glDisable;
+import static org.lwjgl.opengl.GL33C.glDrawArrays;
 import static org.lwjgl.opengl.GL33C.glEnable;
 import static org.lwjgl.opengl.GL33C.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL33C.glGenBuffers;
+import static org.lwjgl.opengl.GL33C.glGenTextures;
 import static org.lwjgl.opengl.GL33C.glGenVertexArrays;
 import static org.lwjgl.opengl.GL33C.glGetString;
 import static org.lwjgl.opengl.GL33C.glGetUniformLocation;
 import static org.lwjgl.opengl.GL33C.glReadPixels;
+import static org.lwjgl.opengl.GL33C.glPixelStorei;
+import static org.lwjgl.opengl.GL33C.glTexImage2D;
+import static org.lwjgl.opengl.GL33C.glTexParameteri;
+import static org.lwjgl.opengl.GL33C.glTexSubImage2D;
+import static org.lwjgl.opengl.GL33C.glUniform1i;
 import static org.lwjgl.opengl.GL33C.glUniform2f;
 import static org.lwjgl.opengl.GL33C.glUniform2i;
 import static org.lwjgl.opengl.GL33C.glUniform3i;
+import static org.lwjgl.opengl.GL33C.glUniform4f;
 import static org.lwjgl.opengl.GL33C.glUseProgram;
+import static org.lwjgl.opengl.GL33C.glBindTexture;
 import static org.lwjgl.opengl.GL33C.glVertexAttribIPointer;
 import static org.lwjgl.opengl.GL33C.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL33C.glViewport;
@@ -45,6 +71,7 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.awt.AWTGLCanvas;
 import org.lwjgl.opengl.awt.GLData;
 
+import rs2.game.render.SoftwareViewportOverlay;
 import rs2.game.render.WorldRenderFrame;
 import rs2.media.Rasterizer3D;
 import rs2.scene.Scene;
@@ -105,8 +132,53 @@ final class GpuSceneCanvas extends AWTGLCanvas {
             }
             """;
 
+    private static final String OVERLAY_VERTEX_SHADER = """
+            #version 330 core
+            uniform vec4 uRect;
+            uniform vec2 uViewport;
+            out vec2 textureCoordinate;
+
+            const vec2 corners[4] = vec2[](
+                    vec2(0.0, 0.0),
+                    vec2(0.0, 1.0),
+                    vec2(1.0, 0.0),
+                    vec2(1.0, 1.0));
+
+            void main() {
+                vec2 corner = corners[gl_VertexID];
+                vec2 pixel = uRect.xy + corner * uRect.zw;
+                gl_Position = vec4(
+                        pixel.x * (2.0 / uViewport.x) - 1.0,
+                        1.0 - pixel.y * (2.0 / uViewport.y),
+                        0.0,
+                        1.0);
+                textureCoordinate = corner;
+            }
+            """;
+
+    private static final String OVERLAY_FRAGMENT_SHADER = """
+            #version 330 core
+            uniform sampler2D uOverlay;
+            in vec2 textureCoordinate;
+            out vec4 fragmentColor;
+
+            void main() {
+                fragmentColor = texture(uOverlay, textureCoordinate);
+            }
+            """;
+
     private volatile WorldRenderFrame frameData;
+    private volatile SoftwareViewportOverlay viewportOverlay;
     private GpuShaderProgram shader;
+    private GpuShaderProgram overlayShader;
+    private int overlayVertexArray;
+    private int overlayTexture;
+    private int overlayTextureWidth;
+    private int overlayTextureHeight;
+    private int overlayRectUniform;
+    private int overlayViewportUniform;
+    private int overlaySamplerUniform;
+    private ByteBuffer overlayUploadScratch = BufferUtils.createByteBuffer(64 * 1024);
     private int terrainVertexArray;
     private int terrainVertexBuffer;
     private int terrainVertexCount;
@@ -185,6 +257,10 @@ final class GpuSceneCanvas extends AWTGLCanvas {
         this.frameData = frameData;
     }
 
+    void setViewportOverlay(SoftwareViewportOverlay viewportOverlay) {
+        this.viewportOverlay = viewportOverlay;
+    }
+
     @Override
     public void initGL() {
         GL.createCapabilities();
@@ -193,10 +269,23 @@ final class GpuSceneCanvas extends AWTGLCanvas {
         }
 
         shader = GpuShaderProgram.compile(VERTEX_SHADER, FRAGMENT_SHADER);
-        cameraUniform = requiredUniform("uCamera");
-        yawUniform = requiredUniform("uYawSinCos");
-        pitchUniform = requiredUniform("uPitchSinCos");
-        viewportUniform = requiredUniform("uViewport");
+        cameraUniform = requiredUniform(shader, "uCamera");
+        yawUniform = requiredUniform(shader, "uYawSinCos");
+        pitchUniform = requiredUniform(shader, "uPitchSinCos");
+        viewportUniform = requiredUniform(shader, "uViewport");
+
+        overlayShader = GpuShaderProgram.compile(OVERLAY_VERTEX_SHADER, OVERLAY_FRAGMENT_SHADER);
+        overlayRectUniform = requiredUniform(overlayShader, "uRect");
+        overlayViewportUniform = requiredUniform(overlayShader, "uViewport");
+        overlaySamplerUniform = requiredUniform(overlayShader, "uOverlay");
+        overlayVertexArray = glGenVertexArrays();
+        overlayTexture = glGenTextures();
+        glBindTexture(GL_TEXTURE_2D, overlayTexture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glBindTexture(GL_TEXTURE_2D, 0);
 
         terrainVertexArray = glGenVertexArrays();
         terrainVertexBuffer = glGenBuffers();
@@ -244,6 +333,7 @@ final class GpuSceneCanvas extends AWTGLCanvas {
                 gpuFrameTimer.markStaticDone();
             }
         }
+        drawViewportOverlay(viewportOverlay, width, height);
         if (gpuFrameTimer != null) {
             gpuFrameTimer.endFrame();
         }
@@ -477,6 +567,80 @@ final class GpuSceneCanvas extends AWTGLCanvas {
         multiDrawCounts = BufferUtils.createIntBuffer(capacity);
     }
 
+    /** Composites one small legacy software rectangle above the native world. */
+    private void drawViewportOverlay(SoftwareViewportOverlay overlay, int framebufferWidth, int framebufferHeight) {
+        if (overlay == null) {
+            return;
+        }
+        int width = Math.min(overlay.width(), framebufferWidth - overlay.x());
+        int height = Math.min(overlay.height(), framebufferHeight - overlay.y());
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+
+        int requiredBytes = width * height * 4;
+        ensureOverlayScratch(requiredBytes);
+        overlayUploadScratch.clear();
+        int[] source = overlay.pixels();
+        int stride = overlay.sourceStride();
+        boolean keyedTransparency = overlay.hasTransparencyKey();
+        int transparentPixelKey = overlay.transparentPixelKey();
+        int sourceRow = overlay.y() * stride + overlay.x();
+        for (int y = 0; y < height; y++) {
+            int sourceIndex = sourceRow;
+            for (int x = 0; x < width; x++) {
+                int pixel = source[sourceIndex++];
+                overlayUploadScratch.put((byte) (pixel >> 16));
+                overlayUploadScratch.put((byte) (pixel >> 8));
+                overlayUploadScratch.put((byte) pixel);
+                overlayUploadScratch.put((byte) (keyedTransparency && pixel == transparentPixelKey ? 0 : 0xff));
+            }
+            sourceRow += stride;
+        }
+        overlayUploadScratch.flip();
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, overlayTexture);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        if (overlayTextureWidth != width || overlayTextureHeight != height) {
+            overlayTextureWidth = width;
+            overlayTextureHeight = height;
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                    (ByteBuffer) null);
+        }
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, overlayUploadScratch);
+
+        glDisable(GL_DEPTH_TEST);
+        if (keyedTransparency) {
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        }
+        glUseProgram(overlayShader.id());
+        glUniform4f(overlayRectUniform, overlay.x(), overlay.y(), width, height);
+        glUniform2f(overlayViewportUniform, framebufferWidth, framebufferHeight);
+        glUniform1i(overlaySamplerUniform, 0);
+        glBindVertexArray(overlayVertexArray);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glBindVertexArray(0);
+        glUseProgram(0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        if (keyedTransparency) {
+            glDisable(GL_BLEND);
+        }
+        glEnable(GL_DEPTH_TEST);
+    }
+
+    private void ensureOverlayScratch(int requiredBytes) {
+        if (overlayUploadScratch.capacity() >= requiredBytes) {
+            return;
+        }
+        int capacity = overlayUploadScratch.capacity();
+        while (capacity < requiredBytes) {
+            capacity <<= 1;
+        }
+        overlayUploadScratch = BufferUtils.createByteBuffer(capacity);
+    }
+
     private void clearFrameStats() {
         frameTerrainVisible = 0;
         frameTerrainEligible = 0;
@@ -533,8 +697,8 @@ final class GpuSceneCanvas extends AWTGLCanvas {
         perfSwapNanos = 0;
     }
 
-    private int requiredUniform(String name) {
-        int location = glGetUniformLocation(shader.id(), name);
+    private int requiredUniform(GpuShaderProgram program, String name) {
+        int location = glGetUniformLocation(program.id(), name);
         if (location < 0) {
             throw new IllegalStateException("Required OpenGL uniform was optimized out or not found: " + name);
         }

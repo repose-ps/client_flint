@@ -51,6 +51,8 @@ import rs2.game.entity.Npc;
 import rs2.game.entity.Player;
 import rs2.game.render.ActorOverlayRenderer;
 import rs2.game.render.GameRenderer;
+import rs2.game.render.ScenePicker;
+import rs2.game.render.ViewportOverlayRegion;
 import rs2.input.MouseRecorder;
 import rs2.media.GraphicsBuffer;
 import rs2.media.Rasterizer;
@@ -111,6 +113,15 @@ public class client extends GameShell {
 	private static final int LEGACY_MOUSE_MAX_Y = ClientLayout.FIXED_HEIGHT - 1;
 	/** Packed mouse position used when the pointer is outside the client. */
 	private static final int MOUSE_OUTSIDE_POSITION = 0x7ffff;
+	/**
+	 * Pixel value reserved as transparent in the GPU bridge for text-only legacy
+	 * viewport overlays. Legacy raster colors are 24-bit RGB, so bit 24 makes this
+	 * value impossible for normal font/UI drawing while remaining safe in the int
+	 * software raster.
+	 */
+	private static final int GPU_VIEWPORT_TRANSPARENT_PIXEL = 0x01000000;
+	/** Height of the classic top-left contextual-action tooltip overlay. */
+	private static final int MENU_TOOLTIP_OVERLAY_HEIGHT = 20;
 	/** Largest repeat count representable by the mouse telemetry formats. */
 	private static final int MOUSE_REPEAT_MAX = 0x7ff;
 	/** Repeat-count boundary for the compact mouse telemetry formats. */
@@ -536,6 +547,9 @@ public class client extends GameShell {
 		worldState.advanceGraphicsObjects(currentPlane, gameCycle, 1);
 		updateOverheadTextCycles();
 		animationCycleDelta++;
+		advanceFixedInterfaceAnimations();
+		advanceAnimatedTextures();
+		updateTutorialIslandFlag();
 		if (crossType != 0) {
 			crossCycle += 20;
 			if (crossCycle >= 400)
@@ -686,6 +700,37 @@ public class client extends GameShell {
 		} catch (Exception exception) {
 			logout();
 		}
+	}
+
+	/** Advances cache-defined interface animation state exactly once per 50 Hz tick. */
+	private void advanceFixedInterfaceAnimations() {
+		if (interfaceController.state().fullscreenInterfaceId != -1) {
+			widgetRuntime.updateAnimations(1, interfaceController.state().fullscreenInterfaceId);
+			if (interfaceController.state().fullscreenOverlayInterfaceId != -1)
+				widgetRuntime.updateAnimations(1, interfaceController.state().fullscreenOverlayInterfaceId);
+		}
+		if (interfaceController.state().sidebarOverlayInterfaceId != -1
+				&& widgetRuntime.updateAnimations(1, interfaceController.state().sidebarOverlayInterfaceId))
+			gameRenderer.requestSidebarRedraw();
+		if (interfaceController.state().chatboxInterfaceId != -1
+				&& widgetRuntime.updateAnimations(1, interfaceController.state().chatboxInterfaceId))
+			gameRenderer.requestChatboxRedraw();
+		if (interfaceController.state().walkableInterfaceId != -1)
+			widgetRuntime.updateAnimations(1, interfaceController.state().walkableInterfaceId);
+		if (interfaceController.state().openInterfaceId != -1)
+			widgetRuntime.updateAnimations(1, interfaceController.state().openInterfaceId);
+	}
+
+	/** Advances legacy scrolling-texture state from fixed logic rather than render FPS. */
+	private void advanceAnimatedTextures() {
+		int currentUsageCycle = Rasterizer3D.textureCycle;
+		if (!textureAnimationUsageInitialized) {
+			textureAnimationUsageThreshold = currentUsageCycle;
+			textureAnimationUsageInitialized = true;
+			return;
+		}
+		gameRenderer.animateTextures(textureAnimationUsageThreshold, 1, lowMemory);
+		textureAnimationUsageThreshold = currentUsageCycle;
 	}
 
 	/**
@@ -996,13 +1041,11 @@ public class client extends GameShell {
 		return true;
 	}
 
-	/**
-	 * Draws the contextual action tooltip shown when the context menu is closed.
-	 */
-	public void drawMenuTooltip() {
+	/** Returns the classic top-left contextual action text, or {@code null}. */
+	private String currentMenuTooltip() {
 		if (menuController.state().count < 2 && interfaceController.state().itemSelected == 0
 				&& interfaceController.state().spellSelected == 0)
-			return;
+			return null;
 		String tooltip;
 		if (interfaceController.state().itemSelected == 1 && menuController.state().count < 2)
 			tooltip = "Use " + interfaceController.state().selectedItemName + " with...";
@@ -1012,6 +1055,16 @@ public class client extends GameShell {
 			tooltip = menuController.state().entry(menuController.state().count - 1).text();
 		if (menuController.state().count > 2)
 			tooltip = tooltip + "@whi@ / " + (menuController.state().count - 2) + " more options";
+		return tooltip;
+	}
+
+	/**
+	 * Draws the contextual action tooltip shown when the context menu is closed.
+	 */
+	public void drawMenuTooltip() {
+		String tooltip = currentMenuTooltip();
+		if (tooltip == null)
+			return;
 		boldFont.drawRandomizedTextWithTags(tooltip, 4, 15, 0xffffff, gameCycle / 1000, true);
 	}
 
@@ -1255,7 +1308,7 @@ public class client extends GameShell {
 	 * @param textureCycle rasterizer texture-usage cycle threshold
 	 */
 	public void animateTextures(int textureCycle) {
-		gameRenderer.animateTextures(textureCycle, animationCycleDelta, lowMemory);
+		gameRenderer.animateTextures(textureCycle, 1, lowMemory);
 	}
 
 	/**
@@ -1281,10 +1334,6 @@ public class client extends GameShell {
 		if (interfaceController.state().fullscreenInterfaceId != -1
 				&& (regionManager.loadingStage == RegionManager.STAGE_LOADED || super.gameBuffer != null)) {
 			if (regionManager.loadingStage == RegionManager.STAGE_LOADED) {
-				widgetRuntime.updateAnimations(animationCycleDelta, interfaceController.state().fullscreenInterfaceId);
-				if (interfaceController.state().fullscreenOverlayInterfaceId != -1)
-					widgetRuntime.updateAnimations(animationCycleDelta,
-							interfaceController.state().fullscreenOverlayInterfaceId);
 				animationCycleDelta = 0;
 				createGameBuffer();
 				super.gameBuffer.bindRaster();
@@ -1311,7 +1360,6 @@ public class client extends GameShell {
 					drawInterface(0, 0, fullscreenOverlayWidget, 0);
 				}
 				if (!menuController.state().open) {
-					buildContextMenu();
 					drawMenuTooltip();
 				} else {
 					drawContextMenu();
@@ -1363,12 +1411,6 @@ public class client extends GameShell {
 
 		if (menuController.state().open && menuController.state().screenArea == 1)
 			gameRenderer.requestSidebarRedraw();
-		if (interfaceController.state().sidebarOverlayInterfaceId != -1) {
-			boolean sidebarAnimationChanged = widgetRuntime.updateAnimations(animationCycleDelta,
-					interfaceController.state().sidebarOverlayInterfaceId);
-			if (sidebarAnimationChanged)
-				gameRenderer.requestSidebarRedraw();
-		}
 		if (interfaceController.state().pressedInventoryArea == 2)
 			gameRenderer.requestSidebarRedraw();
 		if (interfaceController.state().inventoryDragArea == 2)
@@ -1412,12 +1454,6 @@ public class client extends GameShell {
 				itemSearchScrollOffset = clampedSearchScroll;
 				gameRenderer.requestChatboxRedraw();
 			}
-		}
-		if (interfaceController.state().chatboxInterfaceId != -1) {
-			boolean chatboxAnimationChanged = widgetRuntime.updateAnimations(animationCycleDelta,
-					interfaceController.state().chatboxInterfaceId);
-			if (chatboxAnimationChanged)
-				gameRenderer.requestChatboxRedraw();
 		}
 		if (interfaceController.state().pressedInventoryArea == 3)
 			gameRenderer.requestChatboxRedraw();
@@ -2108,7 +2144,27 @@ public class client extends GameShell {
 			}
 			cameraController.finishLogicCycle();
 		}
+		if (loggedIn) {
+			updateFixedWorldInteraction();
+			if (!menuController.state().open)
+				buildContextMenu();
+		}
 		processOnDemandRequests();
+	}
+
+	/**
+	 * Refreshes world hover/click state once per fixed client tick. Rendering may run
+	 * much faster than 50 Hz, so interaction must never depend on a draw call.
+	 */
+	private void updateFixedWorldInteraction() {
+		if (worldState == null || localPlayer == null || regionManager.loadingStage != RegionManager.STAGE_LOADED) {
+			Model.pickedCount = 0;
+			return;
+		}
+		boolean staticModelsOnly = gameRenderer.rendererBackend() == rs2.game.render.RendererBackend.GPU;
+		scenePicker.update(worldState, actorSynchronizer, localPlayer, currentPlane, renderPlane, cameraController,
+				super.mouseX, super.mouseY, layout.viewportX(), layout.viewportY(), layout.viewportWidth(),
+				layout.viewportHeight(), staticModelsOnly);
 	}
 
 	/** Rebuilds the context menu through {@link MenuController}. */
@@ -2325,19 +2381,15 @@ public class client extends GameShell {
 		if (crossType == 2)
 			crossSprites[4 + crossCycle / 100].drawImage(crossX - 8 - 4, crossY - 8 - 4);
 		if (interfaceController.state().walkableInterfaceId != -1) {
-			widgetRuntime.updateAnimations(animationCycleDelta, interfaceController.state().walkableInterfaceId);
 			drawInterface(0, 0, Widget.get(interfaceController.state().walkableInterfaceId), 0);
 		}
 		if (interfaceController.state().openInterfaceId != -1) {
-			widgetRuntime.updateAnimations(animationCycleDelta, interfaceController.state().openInterfaceId);
 			Widget openInterface = Widget.get(interfaceController.state().openInterfaceId);
 			int interfaceX = layout.centeredInterfaceX(openInterface.width);
 			int interfaceY = layout.centeredInterfaceY(openInterface.height);
 			drawInterface(interfaceY, interfaceX, openInterface, 0);
 		}
-		updateTutorialIslandFlag();
 		if (!menuController.state().open) {
-			buildContextMenu();
 			drawMenuTooltip();
 		} else if (menuController.state().screenArea == 0)
 			drawContextMenu();
@@ -3126,11 +3178,38 @@ public class client extends GameShell {
 
 	/** Builds and presents one 3D scene frame through {@link GameRenderer}. */
 	private void renderGameScene() {
+		ViewportOverlayRegion viewportOverlay = null;
+		if (gameRenderer.rendererBackend() == rs2.game.render.RendererBackend.GPU) {
+			if (menuController.state().open && menuController.state().screenArea == 0) {
+				viewportOverlay = new ViewportOverlayRegion(menuController.state().offsetX, menuController.state().offsetY,
+						menuController.state().width, menuController.state().height);
+			} else if (!menuController.state().open) {
+				String tooltip = currentMenuTooltip();
+				if (tooltip != null) {
+					/*
+					 * The classic action text has no opaque background. Clear only its small
+					 * software region to a value outside 24-bit RGB, then let the GPU bridge
+					 * treat untouched keyed pixels as transparent. Font antialiasing replaces
+					 * the key wherever glyph/shadow coverage exists.
+					 */
+					int randomizedSpacingMargin = tooltip.length() / 4 + 12;
+					int overlayWidth = Math.min(layout.viewportWidth(),
+							boldFont.getFormattedTextWidth(tooltip) + randomizedSpacingMargin);
+					int overlayHeight = Math.min(layout.viewportHeight(), MENU_TOOLTIP_OVERLAY_HEIGHT);
+					if (overlayWidth > 0 && overlayHeight > 0) {
+						gameRenderer.bindViewport();
+						Rasterizer.drawFilledRectangle(0, 0, overlayWidth, overlayHeight, GPU_VIEWPORT_TRANSPARENT_PIXEL);
+						viewportOverlay = new ViewportOverlayRegion(0, 0, overlayWidth, overlayHeight,
+								GPU_VIEWPORT_TRANSPARENT_PIXEL);
+					}
+				}
+			}
+		}
 		destinationX = gameRenderer.renderScene(
 				new GameRenderer.SceneFrame(layout, sceneEntityRenderer, worldState, actorSynchronizer, localPlayer,
 						cameraController, actorOverlayRenderer, createActorOverlayContext(), super.graphics,
 						this::drawViewportOverlays, destinationX, destinationY, currentPlane, renderPlane, gameCycle,
-						animationCycleDelta, renderInterpolationAlpha(), super.mouseX, super.mouseY, lowMemory));
+						renderInterpolationAlpha(), super.mouseX, super.mouseY, viewportOverlay, lowMemory));
 	}
 
 	/**
@@ -3186,6 +3265,7 @@ public class client extends GameShell {
 		actorUpdater = new ActorUpdater();
 		cameraController = new CameraController();
 		sceneEntityRenderer = new SceneEntityRenderer();
+		scenePicker = new ScenePicker();
 		actorOverlayRenderer = new ActorOverlayRenderer();
 		gameRenderer = new GameRenderer();
 		int defaultRenderFps = gameRenderer.rendererBackend() == rs2.game.render.RendererBackend.GPU
@@ -3386,6 +3466,10 @@ public class client extends GameShell {
 
 	/** The client state for animation cycle delta. */
 	private int animationCycleDelta;
+	/** Rasterizer usage threshold consumed by the fixed-rate animated-texture update. */
+	private int textureAnimationUsageThreshold;
+	/** Whether the fixed texture animator has captured its first usage threshold. */
+	private boolean textureAnimationUsageInitialized;
 
 	/** Stores experience table values. */
 	static int experienceTable[];
@@ -3462,6 +3546,8 @@ public class client extends GameShell {
 	final CameraController cameraController;
 	/** The client state for scene entity renderer. */
 	private final SceneEntityRenderer sceneEntityRenderer;
+	/** Fixed-rate world interaction picker shared by software and GPU backends. */
+	private final ScenePicker scenePicker;
 	/**
 	 * Draws actor-associated viewport overlays and owns their transient layout
 	 * state.
