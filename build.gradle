@@ -149,3 +149,27 @@ tasks.register('frameTimingSelfTest', JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'rs2.tools.FrameTimingSelfTest'
 }
+
+
+tasks.register('gpuTextureSourceSelfTest', JavaExec) {
+    group = 'verification'
+    description = 'Validates revision-377 indexed texture expansion and GPU texture revisions without OpenGL.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'rs2.tools.GpuTextureSourceSelfTest'
+}
+
+
+tasks.register('gpuTerrainTextureSelfTest', JavaExec) {
+    group = 'verification'
+    description = 'Creates a real OpenGL 3.3 context and validates Phase 4 terrain texture-array sampling.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'rs2.tools.GpuTerrainTextureSelfTest'
+}
+
+
+tasks.register('gpuStaticTextureSelfTest', JavaExec) {
+    group = 'verification'
+    description = 'Creates a real OpenGL 3.3 context and validates Phase 4 projective static-model texture sampling.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'rs2.tools.GpuStaticTextureSelfTest'
+}

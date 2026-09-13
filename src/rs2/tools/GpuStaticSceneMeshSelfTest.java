@@ -1,5 +1,7 @@
 package rs2.tools;
 
+import java.nio.ByteOrder;
+
 import rs2.gpu.GpuSceneUploader;
 import rs2.gpu.GpuStaticSceneMesh;
 import rs2.media.Angle;
@@ -20,7 +22,12 @@ public final class GpuStaticSceneMeshSelfTest {
 		Rasterizer3D.setBrightness(0.8D);
 		testFixturesAndInteractiveDedup(test);
 		testModelWorldTransform(test);
+		testHalfTurnModelWorldTransform(test);
+		testOpaquePrioritySubmissionOrder(test);
+		testWallDecorationPriorityMetadata(test);
 		testEmptyOptionalFaceArrays(test);
+		testTexturedModelStream(test);
+		testTextureReferenceSelectionAndTransform(test);
 		testPlaneFilteringAndDynamicDeferral(test);
 		testStaticGeometryRevision(test);
 		return test.checks();
@@ -66,6 +73,60 @@ public final class GpuStaticSceneMeshSelfTest {
 		test.equal((int) vertices[2], originY - 64, "quarter-turn rotates local X onto negative world Y");
 	}
 
+	private static void testHalfTurnModelWorldTransform(SelfTestSupport test) {
+		Scene scene = scene(3, 3, 1);
+		Model model = triangleModel();
+		int originX = 1 * 128 + 64;
+		int originY = 1 * 128 + 64;
+		test.check(scene.addGameObject(0, 1, 1, 1, 1, -32, model, Angle.HALF_TURN, 15, (byte) 0),
+				"half-turn static game object inserted");
+
+		GpuStaticSceneMesh mesh = GpuSceneUploader.buildStaticGeometry(scene);
+		int[] vertices = mesh.vertices();
+		test.equal((int) vertices[0], originX - 64, "half-turn negates local X instead of treating 1024 as zero");
+		test.equal((int) vertices[1], -32, "half-turn preserves model local Y translation");
+		test.equal((int) vertices[2], originY, "half-turn negates local Z around the world origin");
+	}
+
+	private static void testOpaquePrioritySubmissionOrder(SelfTestSupport test) {
+		Scene scene = scene(2, 2, 1);
+		Model model = new Model(0, new Model[0]);
+		model.vertexCount = 6;
+		model.verticesX = new int[] { 10, 20, 30, 110, 120, 130 };
+		model.verticesY = new int[] { 0, -16, 0, 0, -16, 0 };
+		model.verticesZ = new int[] { 0, 32, 64, 0, 32, 64 };
+		model.triangleCount = 2;
+		model.triangleVertexA = new int[] { 0, 3 };
+		model.triangleVertexB = new int[] { 1, 4 };
+		model.triangleVertexC = new int[] { 2, 5 };
+		model.triangleShadeA = new int[] { 0x3200, 0x3300 };
+		model.triangleShadeB = new int[] { 0x3210, 0x3310 };
+		model.triangleShadeC = new int[] { 0x3220, 0x3320 };
+		model.trianglePriorities = new int[] { 9, 1 };
+		model.defaultTrianglePriority = 0;
+
+		scene.addFloorDecoration(0, 0, 0, 0, 18, (byte) 0, model);
+		GpuStaticSceneMesh mesh = GpuSceneUploader.buildStaticGeometry(scene);
+		int[] vertices = mesh.vertices();
+		int worldX = 64;
+		test.equal(vertices[0], worldX + 10, "priority metadata keeps original cached face order");
+		test.equal(packedAlpha(vertices[3]), 0x80 | 9,
+				"floor decoration marks legacy priority 9 metadata with floor-class bit");
+		test.equal(packedAlpha(vertices[15]), 0x80 | 1,
+				"floor decoration marks legacy priority 1 metadata with floor-class bit");
+	}
+
+	private static void testWallDecorationPriorityMetadata(SelfTestSupport test) {
+		Scene scene = scene(2, 2, 1);
+		Model model = triangleModel();
+		model.trianglePriorities = new int[] { 3 };
+		scene.addWallDecoration(0, 0, 0, 0, 0, 0, 0, 19, (byte) 0, 1, model);
+
+		GpuStaticSceneMesh mesh = GpuSceneUploader.buildStaticGeometry(scene);
+		test.equal(packedAlpha(mesh.vertices()[3]), 0x40 | 3,
+				"wall decoration marks legacy priority 3 metadata with wall-decoration class bit");
+	}
+
 	private static void testEmptyOptionalFaceArrays(SelfTestSupport test) {
 		Scene scene = scene(2, 2, 1);
 		Model model = triangleModel();
@@ -77,6 +138,85 @@ public final class GpuStaticSceneMeshSelfTest {
 		GpuStaticSceneMesh mesh = GpuSceneUploader.buildStaticGeometry(scene);
 		test.equal(mesh.instanceCount(), 1, "empty optional face arrays fall back instead of aborting upload");
 		test.equal(mesh.triangleCount(), 1, "empty optional face arrays still emit valid geometry");
+	}
+
+
+	private static void testTexturedModelStream(SelfTestSupport test) {
+		Scene scene = scene(3, 3, 1);
+		Model model = texturedTriangleModel();
+		model.trianglePriorities = new int[] { 6 };
+		scene.addFloorDecoration(0, 1, 1, 0, 11, (byte) 0, model);
+
+		GpuStaticSceneMesh mesh = GpuSceneUploader.buildStaticGeometry(scene);
+		test.equal(mesh.triangleCount(), 1, "textured fixture contributes one static triangle");
+		test.equal(mesh.texturedTriangleCount(), 1, "valid model texture mapping enters projected texture stream");
+		test.equal(mesh.untexturedTriangleCount(), 0, "textured fixture does not duplicate solid fallback geometry");
+		test.equal(mesh.texturedVertexCount(), 3, "textured static face keeps compact three-vertex stream");
+		test.equal(mesh.untexturedVertexCount(), 0, "textured-only fixture leaves solid stream empty");
+		test.equal(mesh.texturedChunks().length, 1, "textured static fixture has its own culled draw range");
+		test.equal(mesh.textureMappings().length, 12, "one textured triangle stores three ivec4 mapping records");
+		test.equal(mesh.textureMappings()[3], 0, "texture mapping record preserves texture layer zero");
+		test.equal(mesh.mappingByteSize(), 48, "projective texture mapping costs 48 bytes per textured triangle");
+		test.equal(packedAlpha(mesh.texturedVertices()[3]), 0x80 | 6,
+				"textured floor decoration carries marked legacy priority metadata in shade alpha");
+
+		Model highAlphaTextured = texturedTriangleModel();
+		highAlphaTextured.triangleAlpha = new int[] { 255 };
+		Scene highAlphaTexturedScene = scene(2, 2, 1);
+		highAlphaTexturedScene.addFloorDecoration(0, 0, 0, 0, 14, (byte) 0, highAlphaTextured);
+		GpuStaticSceneMesh highAlphaTextureMesh = GpuSceneUploader.buildStaticGeometry(highAlphaTexturedScene);
+		test.equal(highAlphaTextureMesh.texturedTriangleCount(), 1,
+				"textured faces retain legacy rendering even when triangle alpha is 255");
+
+		Model highAlphaSolid = triangleModel();
+		highAlphaSolid.triangleAlpha = new int[] { 255 };
+		Scene highAlphaSolidScene = scene(2, 2, 1);
+		highAlphaSolidScene.addFloorDecoration(0, 0, 0, 0, 15, (byte) 0, highAlphaSolid);
+		GpuStaticSceneMesh highAlphaSolidMesh = GpuSceneUploader.buildStaticGeometry(highAlphaSolidScene);
+		test.equal(highAlphaSolidMesh.triangleCount(), 0,
+				"near-invisible alpha-255 Gouraud faces retain the existing upload shortcut");
+
+		Model malformed = texturedTriangleModel();
+		malformed.texturedTriangleA = new int[0];
+		Scene fallbackScene = scene(2, 2, 1);
+		fallbackScene.addFloorDecoration(0, 0, 0, 0, 12, (byte) 0, malformed);
+		GpuStaticSceneMesh fallback = GpuSceneUploader.buildStaticGeometry(fallbackScene);
+		test.equal(fallback.texturedTriangleCount(), 0, "malformed texture mapping falls back instead of entering GPU projection");
+		test.equal(fallback.untexturedTriangleCount(), 1, "malformed textured face retains average-color fallback geometry");
+	}
+
+	private static void testTextureReferenceSelectionAndTransform(SelfTestSupport test) {
+		Scene scene = scene(3, 3, 1);
+		Model model = texturedTriangleModel();
+		model.vertexCount = 6;
+		model.verticesX = new int[] { 64, -64, 0, 16, 80, 16 };
+		model.verticesY = new int[] { 0, 0, -96, -16, -16, -80 };
+		model.verticesZ = new int[] { 0, 0, 0, 24, 24, 88 };
+		model.triangleDrawType = new int[] { 6 }; // draw type 2, texture-reference triangle 1
+		model.texturedTriangleCount = 2;
+		model.texturedTriangleA = new int[] { 0, 3 };
+		model.texturedTriangleB = new int[] { 1, 4 };
+		model.texturedTriangleC = new int[] { 2, 5 };
+
+		int originX = 1 * 128 + 64;
+		int originY = 1 * 128 + 64;
+		test.check(scene.addGameObject(0, 1, 1, 1, 1, -32, model, Angle.QUARTER_TURN, 13, (byte) 0),
+				"textured rotated game object inserted");
+
+		GpuStaticSceneMesh mesh = GpuSceneUploader.buildStaticGeometry(scene);
+		int[] mapping = mesh.textureMappings();
+		test.equal(mesh.texturedTriangleCount(), 1, "draw-type texture reference selects one mapped face");
+		test.equal(mapping.length, 12, "selected texture reference emits exactly one mapping record");
+		test.equal(mapping[0], originX + 23, "mapping A uses referenced vertex after quarter-turn X transform");
+		test.equal(mapping[1], -48, "mapping A preserves referenced vertex height translation");
+		test.equal(mapping[2], originY - 16, "mapping A uses referenced vertex after quarter-turn Y transform");
+		test.equal(mapping[3], 0, "mapping A carries the model texture id");
+		test.equal(mapping[4], originX + 23, "mapping B uses texture-reference triangle index rather than face B");
+		test.equal(mapping[5], -48, "mapping B preserves referenced vertex height");
+		test.equal(mapping[6], originY - 80, "mapping B rotates the referenced local X into world Y");
+		test.equal(mapping[8], originX + 87, "mapping C rotates referenced local Z into world X");
+		test.equal(mapping[9], -112, "mapping C preserves referenced vertex height");
+		test.equal(mapping[10], originY - 16, "mapping C rotates referenced local X into world Y");
 	}
 
 	private static void testPlaneFilteringAndDynamicDeferral(SelfTestSupport test) {
@@ -93,13 +233,19 @@ public final class GpuStaticSceneMeshSelfTest {
 	}
 
 	private static int eligibleTriangles(GpuStaticSceneMesh mesh, int renderPlane) {
+		int vertices = eligibleVertices(mesh.chunks(), renderPlane);
+		vertices += eligibleVertices(mesh.texturedChunks(), renderPlane);
+		return vertices / 3;
+	}
+
+	private static int eligibleVertices(rs2.gpu.GpuSceneChunk[] chunks, int renderPlane) {
 		int vertices = 0;
-		for (rs2.gpu.GpuSceneChunk chunk : mesh.chunks()) {
+		for (rs2.gpu.GpuSceneChunk chunk : chunks) {
 			if (chunk.visibleOnPlane(renderPlane)) {
 				vertices += chunk.vertexCount();
 			}
 		}
-		return vertices / 3;
+		return vertices;
 	}
 
 	private static void testStaticGeometryRevision(SelfTestSupport test) {
@@ -140,4 +286,22 @@ public final class GpuStaticSceneMeshSelfTest {
 		model.triangleColors = null;
 		return model;
 	}
+	private static int packedAlpha(int packedRgba) {
+		return ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN ? packedRgba >>> 24 & 0xff : packedRgba & 0xff;
+	}
+
+	private static Model texturedTriangleModel() {
+		Model model = triangleModel();
+		model.triangleShadeA = new int[] { 48 };
+		model.triangleShadeB = new int[] { 64 };
+		model.triangleShadeC = new int[] { 80 };
+		model.triangleDrawType = new int[] { 2 };
+		model.triangleColors = new int[] { 0 };
+		model.texturedTriangleCount = 1;
+		model.texturedTriangleA = new int[] { 0 };
+		model.texturedTriangleB = new int[] { 1 };
+		model.texturedTriangleC = new int[] { 2 };
+		return model;
+	}
+
 }

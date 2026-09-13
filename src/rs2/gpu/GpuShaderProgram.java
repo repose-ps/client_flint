@@ -2,6 +2,7 @@ package rs2.gpu;
 
 import static org.lwjgl.opengl.GL33C.GL_COMPILE_STATUS;
 import static org.lwjgl.opengl.GL33C.GL_FRAGMENT_SHADER;
+import static org.lwjgl.opengl.GL33C.GL_GEOMETRY_SHADER;
 import static org.lwjgl.opengl.GL33C.GL_LINK_STATUS;
 import static org.lwjgl.opengl.GL33C.GL_VERTEX_SHADER;
 import static org.lwjgl.opengl.GL33C.glAttachShader;
@@ -27,13 +28,24 @@ final class GpuShaderProgram implements AutoCloseable {
     }
 
     static GpuShaderProgram compile(String vertexSource, String fragmentSource) {
+        return compile(vertexSource, null, fragmentSource);
+    }
+
+    static GpuShaderProgram compile(String vertexSource, String geometrySource, String fragmentSource) {
         int vertexShader = compileShader(GL_VERTEX_SHADER, vertexSource);
+        int geometryShader = 0;
         int fragmentShader = 0;
         int program = 0;
         try {
+            if (geometrySource != null) {
+                geometryShader = compileShader(GL_GEOMETRY_SHADER, geometrySource);
+            }
             fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragmentSource);
             program = glCreateProgram();
             glAttachShader(program, vertexShader);
+            if (geometryShader != 0) {
+                glAttachShader(program, geometryShader);
+            }
             glAttachShader(program, fragmentShader);
             glLinkProgram(program);
             if (glGetProgrami(program, GL_LINK_STATUS) == 0) {
@@ -47,6 +59,9 @@ final class GpuShaderProgram implements AutoCloseable {
             throw exception;
         } finally {
             glDeleteShader(vertexShader);
+            if (geometryShader != 0) {
+                glDeleteShader(geometryShader);
+            }
             if (fragmentShader != 0) {
                 glDeleteShader(fragmentShader);
             }

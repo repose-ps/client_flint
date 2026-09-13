@@ -70,6 +70,9 @@ public class Rasterizer3D extends Rasterizer {
 	/** Stores average texture colors values. */
 	private static int[] averageTextureColors = new int[50];
 
+	/** Monotonic content revision for each indexed texture. */
+	private static int[] textureRevisions = new int[50];
+
 	/** Stores the current texture pool available. */
 	private static int texturePoolAvailable;
 
@@ -126,6 +129,7 @@ public class Rasterizer3D extends Rasterizer {
 		textures = null;
 		textureHasTransparency = null;
 		averageTextureColors = null;
+		textureRevisions = null;
 		texturePool = null;
 		texturePixels = null;
 		textureLastUsed = null;
@@ -199,6 +203,7 @@ public class Rasterizer3D extends Rasterizer {
 				else
 					textures[textureId].resizeToCanvas();
 				loadedTextureCount++;
+				textureRevisions[textureId]++;
 			} catch (Exception ignored) {
 				// Missing texture entries are valid in the original numbered archive.
 			}
@@ -353,6 +358,51 @@ public class Rasterizer3D extends Rasterizer {
 	/** Returns the revision of the currently active HSL-to-RGB palette. */
 	public static int paletteRevision() {
 		return paletteRevision;
+	}
+
+	/** Returns whether a numbered revision-377 texture is loaded. */
+	public static boolean hasTexture(int textureId) {
+		return textureId >= 0 && textureId < 50 && textures != null && textures[textureId] != null;
+	}
+
+	/** Returns the monotonic indexed-pixel revision for one texture. */
+	public static int textureRevision(int textureId) {
+		if (textureId < 0 || textureId >= 50 || textureRevisions == null)
+			return Integer.MIN_VALUE;
+		return textureRevisions[textureId];
+	}
+
+	/** Marks one indexed texture as changed without invalidating unrelated layers. */
+	public static void markTextureChanged(int textureId) {
+		if (textureId >= 0 && textureId < 50 && textureRevisions != null)
+			textureRevisions[textureId]++;
+	}
+
+	/**
+	 * Expands one indexed texture through the active gamma-adjusted software palette.
+	 * The destination stores bytes logically as RGBA in a packed int: R in bits 24..31
+	 * and A in bits 0..7. Palette index zero remains transparent, matching the classic
+	 * software texture path. Nearest-neighbour expansion normalizes all layers to a
+	 * common texture-array size.
+	 */
+	public static boolean copyTextureRgba(int textureId, int targetSize, int[] destination) {
+		if (!hasTexture(textureId) || targetSize <= 0 || destination == null
+				|| destination.length < targetSize * targetSize || texturePalettes == null
+				|| texturePalettes[textureId] == null)
+			return false;
+		IndexedImage texture = textures[textureId];
+		int[] palette = texturePalettes[textureId];
+		for (int y = 0; y < targetSize; y++) {
+			int sourceY = y * texture.height / targetSize;
+			for (int x = 0; x < targetSize; x++) {
+				int sourceX = x * texture.width / targetSize;
+				int paletteIndex = texture.pixels[sourceX + sourceY * texture.width] & 0xff;
+				int rgb = paletteIndex < palette.length ? palette[paletteIndex] : 0;
+				int alpha = rgb == 0 ? 0 : 0xff;
+				destination[x + y * targetSize] = (rgb & 0xffffff) << 8 | alpha;
+			}
+		}
+		return true;
 	}
 
 	/**

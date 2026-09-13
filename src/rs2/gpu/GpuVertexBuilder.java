@@ -33,11 +33,16 @@ final class GpuVertexBuilder {
     }
 
     void add(int x, int height, int y, int rgb) {
+        add(x, height, y, rgb, 0xff);
+    }
+
+    /** Adds a vertex while storing one byte of opaque static-model metadata in alpha. */
+    void add(int x, int height, int y, int rgb, int alphaByte) {
         ensureWords(WORDS_PER_VERTEX);
         words[wordCount++] = x;
         words[wordCount++] = height;
         words[wordCount++] = y;
-        words[wordCount++] = packRgba(rgb);
+        words[wordCount++] = packRgba(rgb, alphaByte);
         minX = Math.min(minX, x);
         minHeight = Math.min(minHeight, height);
         minY = Math.min(minY, y);
@@ -52,6 +57,16 @@ final class GpuVertexBuilder {
 
     int wordCount() {
         return wordCount;
+    }
+
+    void clear() {
+        wordCount = 0;
+        minX = Integer.MAX_VALUE;
+        minHeight = Integer.MAX_VALUE;
+        minY = Integer.MAX_VALUE;
+        maxX = Integer.MIN_VALUE;
+        maxHeight = Integer.MIN_VALUE;
+        maxY = Integer.MIN_VALUE;
     }
 
     void copyTo(int[] destination, int wordOffset) {
@@ -77,12 +92,17 @@ final class GpuVertexBuilder {
 
     /** Packs RGBA bytes so their in-memory order is R,G,B,A on every platform. */
     static int packRgba(int rgb) {
+        return packRgba(rgb, 0xff);
+    }
+
+    static int packRgba(int rgb, int alphaByte) {
         int red = rgb >> 16 & 0xff;
         int green = rgb >> 8 & 0xff;
         int blue = rgb & 0xff;
+        int alpha = Math.max(0, Math.min(255, alphaByte));
         if (LITTLE_ENDIAN) {
-            return 0xff000000 | blue << 16 | green << 8 | red;
+            return alpha << 24 | blue << 16 | green << 8 | red;
         }
-        return red << 24 | green << 16 | blue << 8 | 0xff;
+        return red << 24 | green << 16 | blue << 8 | alpha;
     }
 }

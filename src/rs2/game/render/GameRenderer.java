@@ -755,9 +755,7 @@ public final class GameRenderer {
 			frame.actorOverlayRenderer.drawWorldHint(frame.actorOverlayContext);
 			frame.viewportOverlayDrawer.run();
 			if (frame.viewportOverlayRegion != null && worldRenderer instanceof GpuRenderer gpuRenderer) {
-				ViewportOverlayRegion region = frame.viewportOverlayRegion;
-				gpuRenderer.setViewportOverlay(new SoftwareViewportOverlay(viewportBuffer.pixels, viewportBuffer.getWidth(),
-						region.x(), region.y(), region.width(), region.height(), region.transparentPixelKey()));
+				gpuRenderer.setViewportOverlay(clippedViewportOverlay(frame.viewportOverlayRegion));
 			}
 		}
 
@@ -773,6 +771,34 @@ public final class GameRenderer {
 		}
 		frame.cameraController.restore(logicalCamera);
 		return destinationX;
+	}
+
+	/**
+	 * Clips a legacy viewport-overlay request to the actual software raster.
+	 *
+	 * <p>The original menu layout intentionally uses a one-pixel difference between
+	 * its bottom-edge clamp height and its drawn height. The software Rasterizer
+	 * simply clips that last pixel. The GPU overlay bridge must mirror that behavior
+	 * instead of treating the legacy overhang as a fatal bounds error. Clipping here
+	 * also makes overlay presentation tolerant of a viewport resize between layout
+	 * calculation and buffer replacement.</p>
+	 */
+	private SoftwareViewportOverlay clippedViewportOverlay(ViewportOverlayRegion region) {
+		if (viewportBuffer == null) {
+			return null;
+		}
+
+		int sourceWidth = viewportBuffer.getWidth();
+		int sourceHeight = viewportBuffer.getHeight();
+		int x = Math.min(region.x(), sourceWidth);
+		int y = Math.min(region.y(), sourceHeight);
+		int right = (int) Math.min((long) sourceWidth, (long) region.x() + region.width());
+		int bottom = (int) Math.min((long) sourceHeight, (long) region.y() + region.height());
+		if (right <= x || bottom <= y) {
+			return null;
+		}
+		return new SoftwareViewportOverlay(viewportBuffer.pixels, sourceWidth, x, y, right - x, bottom - y,
+				region.transparentPixelKey());
 	}
 
 	/** Immutable dependencies and state needed to render one world frame. */
@@ -899,6 +925,7 @@ public final class GameRenderer {
 			texture.pixels = scrolledPixels;
 			textureScrollScratch = sourcePixels;
 			Rasterizer3D.releaseTexture(textureId);
+			Rasterizer3D.markTextureChanged(textureId);
 		}
 	}
 

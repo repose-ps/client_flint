@@ -19,6 +19,7 @@ public final class GpuTerrainMeshSelfTest {
 	public static int run() {
 		SelfTestSupport test = new SelfTestSupport();
 		testFullSceneIsNotDistanceTruncated(test);
+		testTexturedTerrainMetadata(test);
 		testShapedTileAndPlaneFiltering(test);
 		testChunkFrustumVisibility(test);
 		return test.checks();
@@ -49,13 +50,33 @@ public final class GpuTerrainMeshSelfTest {
 		GpuSceneChunk lastChunk = mesh.chunks()[mesh.chunks().length - 1];
 		test.equal(lastChunk.firstVertex() + lastChunk.vertexCount(), mesh.vertexCount(),
 				"terrain chunk ranges cover the complete VBO");
-		test.equal(mesh.byteSize(), mesh.vertexCount() * 16, "terrain uses compact 16-byte core vertices");
+		test.equal(mesh.byteSize(), mesh.vertexCount() * 24, "textured terrain uses compact 24-byte vertices");
 
 		int[] vertices = mesh.vertices();
 		test.equal((int) vertices[0], SceneConstants.TILE_SIZE, "first plain triangle NE world X");
 		test.equal((int) vertices[1], 0, "first plain triangle NE height");
 		test.equal((int) vertices[2], SceneConstants.TILE_SIZE, "first plain triangle NE world Y");
 		test.equal((int) vertices[GpuTerrainMesh.WORDS_PER_VERTEX], 0, "first plain triangle NW world X");
+	}
+
+
+	private static void testTexturedTerrainMetadata(SelfTestSupport test) {
+		int[][][] heights = new int[1][2][2];
+		Scene scene = new Scene(heights, 1, 1, 1);
+		// Shape 1 creates a textured GenericTile from inputValue2..5.
+		scene.addTile(0, 0, 0, 1, 0, 7, 0, 0, 0, 0,
+				0, 0, 0, 0, 16, 32, 48, 64, 0, 0);
+
+		GpuTerrainMesh mesh = GpuSceneUploader.buildTerrain(scene);
+		test.equal(mesh.triangleCount(), 2, "textured plain tile emits two triangles");
+		test.equal(mesh.textureId(0), 7, "terrain vertex retains texture material id");
+		test.equal(mesh.textureUFixed(0), 256, "textured NE vertex U is one tile");
+		test.equal(mesh.textureVFixed(0), 256, "textured NE vertex V is one tile");
+		test.equal(mesh.textureUFixed(1), 0, "textured NW vertex U starts at zero");
+		test.equal(mesh.textureVFixed(1), 256, "textured NW vertex V is one tile");
+		test.equal(mesh.textureId(3), 7, "second terrain triangle shares texture material id");
+		test.equal(mesh.textureUFixed(3), 0, "textured SW vertex U starts at zero");
+		test.equal(mesh.textureVFixed(3), 0, "textured SW vertex V starts at zero");
 	}
 
 	private static void testShapedTileAndPlaneFiltering(SelfTestSupport test) {

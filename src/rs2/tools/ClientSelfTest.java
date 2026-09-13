@@ -54,6 +54,7 @@ public final class ClientSelfTest {
 		checks += LayoutSelfTest.run();
 		checks += RendererGoldenTest.run(cache);
 		checks += GpuTerrainMeshSelfTest.run();
+		checks += GpuTextureSourceSelfTest.run();
 		checks += GpuStaticSceneMeshSelfTest.run();
 		checks += ScenePickerSelfTest.run();
 		checks += FrameTimingSelfTest.run();
