@@ -13,6 +13,7 @@ public final class GpuStaticSceneMesh {
             int worldHeight,
             int worldY,
             int minRenderPlane,
+            GpuSceneChunk bounds,
             Model model) {
     }
 
@@ -25,6 +26,7 @@ public final class GpuStaticSceneMesh {
             int worldY,
             int minRenderPlane,
             int priorityMetadataTag,
+            GpuSceneChunk bounds,
             Model model) {
     }
 
@@ -36,6 +38,7 @@ public final class GpuStaticSceneMesh {
             int worldHeight,
             int worldY,
             int minRenderPlane,
+            GpuSceneChunk bounds,
             Model model) {
     }
 

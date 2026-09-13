@@ -22,6 +22,7 @@ import rs2.scene.tile.WallDecoration;
 public final class GpuSceneUploader {
 
     private static final int PRIORITY_TAG_NONE = 0;
+    private static final int PRIORITY_TAG_STATIC_ROOF_OBJECT = 0x10;
     private static final int PRIORITY_TAG_WALL_DECORATION = 0x40;
     private static final int PRIORITY_TAG_FLOOR_DECORATION = 0x80;
     private static final int PRIORITY_TAG_ROOF_OBJECT = 0xc0;
@@ -239,8 +240,10 @@ public final class GpuSceneUploader {
             // camera-dependent Model.drawFaces() compatibility path; leaving them in the
             // ordinary depth-buffered static mesh causes their coplanar/detail faces to
             // flicker or disappear as the camera angle changes.
+            GpuSceneChunk bounds = modelBounds(model, 0, decoration.x, decoration.z, decoration.y, minRenderPlane);
             chunks.addInteractivePriorityObject(new GpuStaticSceneMesh.InteractivePriorityObject(objectId, 0,
-                    decoration.x, decoration.z, decoration.y, minRenderPlane, PRIORITY_TAG_FLOOR_DECORATION, model));
+                    decoration.x, decoration.z, decoration.y, minRenderPlane, PRIORITY_TAG_FLOOR_DECORATION, bounds,
+                    model));
             uniqueModels.put(model, Boolean.TRUE);
             return new UploadTally(1, GpuModelUploader.drawableTriangleCount(model), 0);
         }
@@ -272,8 +275,10 @@ public final class GpuSceneUploader {
                 && object.renderable instanceof Model model && model.triangleAlpha != null) {
             int triangles = GpuModelUploader.drawableLegacyAlphaTriangleCount(model);
             if (triangles > 0) {
+                GpuSceneChunk bounds = modelBounds(model, object.rotation, object.worldX, object.worldZ, object.worldY,
+                        minRenderPlane);
                 chunks.addAlphaPriorityObject(new GpuStaticSceneMesh.AlphaPriorityObject(objectId, object.rotation,
-                        object.worldX, object.worldZ, object.worldY, minRenderPlane, model));
+                        object.worldX, object.worldZ, object.worldY, minRenderPlane, bounds, model));
                 uniqueModels.put(model, Boolean.TRUE);
                 return new UploadTally(1, triangles, 0);
             }
@@ -288,18 +293,30 @@ public final class GpuSceneUploader {
         // opaque path and are handled separately by the legacy-alpha compatibility path.
         boolean interactiveDepthPainter = INTERACTIVE_DEPTH_PAINTER_DEBUG
                 && (INTERACTIVE_DEPTH_PAINTER_OBJECT_ID < 0 || INTERACTIVE_DEPTH_PAINTER_OBJECT_ID == objectId);
+
+        if (object.renderable instanceof Model model && roofObject && model.trianglePriorities == null
+                && !hasLegacySolidAlpha(model) && !interactiveDepthPainter) {
+            // Most revision-377 roof shape models (types 12..21) do not carry face
+            // priorities. Their cross-plane relationship only needs the small roof
+            // plane bias; running every one through the camera-dependent compatibility
+            // painter adds a color/depth pair, face ordering, and dynamic indices for
+            // each visible roof object. Keep those models in the immutable static mesh
+            // and encode their minimum render plane in a dedicated metadata class.
+            // Priority-bearing roofs remain on the exact Model.drawFaces() path below.
+            int staticRoofMetadata = PRIORITY_TAG_STATIC_ROOF_OBJECT | (minRenderPlane & 3);
+            return appendRenderable(object.renderable, object.rotation, object.worldX, object.worldZ, object.worldY,
+                    minRenderPlane, chunks, uniqueModels, staticRoofMetadata);
+        }
+
         if (object.renderable instanceof Model model
-                && ((((model.trianglePriorities != null || roofObject) && !hasLegacySolidAlpha(model)))
+                && ((model.trianglePriorities != null && !hasLegacySolidAlpha(model))
                         || (interactiveDepthPainter && model.trianglePriorities == null))) {
-            // Object shapes 12..21 are the one-tile roof/object shapes. Even when they
-            // have no trianglePriorities array, revision 377 still submits the Model via
-            // Model.drawFaces() and paints higher render-plane roof pieces after lower
-            // ones. Defer those models too so the compatibility painter can preserve the
-            // model-local face order and apply a narrowly-scoped cross-plane roof bias.
             int priorityMetadataTag = roofObject ? PRIORITY_TAG_ROOF_OBJECT : PRIORITY_TAG_NONE;
+            GpuSceneChunk bounds = modelBounds(model, object.rotation, object.worldX, object.worldZ, object.worldY,
+                    minRenderPlane);
             chunks.addInteractivePriorityObject(new GpuStaticSceneMesh.InteractivePriorityObject(objectId,
                     object.rotation, object.worldX, object.worldZ, object.worldY, minRenderPlane, priorityMetadataTag,
-                    model));
+                    bounds, model));
             uniqueModels.put(model, Boolean.TRUE);
             return new UploadTally(1, GpuModelUploader.drawableTriangleCount(model), 0);
         }
@@ -324,8 +341,10 @@ public final class GpuSceneUploader {
             if (decoration.renderable instanceof Model model
                     && ((wallPriorityPainter && model.trianglePriorities != null)
                             || (wallDepthPainter && model.trianglePriorities == null))) {
+                GpuSceneChunk bounds = modelBounds(model, decoration.face, decoration.x, decoration.z, decoration.y,
+                        minRenderPlane);
                 chunks.addWallPriorityDecoration(new GpuStaticSceneMesh.WallPriorityDecoration(objectId,
-                        decoration.face, decoration.x, decoration.z, decoration.y, minRenderPlane, model));
+                        decoration.face, decoration.x, decoration.z, decoration.y, minRenderPlane, bounds, model));
                 uniqueModels.put(model, Boolean.TRUE);
                 return new UploadTally(1, GpuModelUploader.drawableTriangleCount(model), 0);
             }
@@ -531,6 +550,48 @@ public final class GpuSceneUploader {
             return 0xffffff;
         }
         return palette[hsl & 0xffff];
+    }
+
+    /** Builds an exact transformed world-space AABB for a deferred static Model. */
+    private static GpuSceneChunk modelBounds(Model model, int orientation, int worldX, int worldHeight, int worldY,
+            int minRenderPlane) {
+        if (model == null || model.vertexCount <= 0 || model.verticesX == null || model.verticesY == null
+                || model.verticesZ == null) {
+            return new GpuSceneChunk(0, 0, worldX, worldHeight, worldY, worldX, worldHeight, worldY, minRenderPlane);
+        }
+
+        int vertexCount = Math.min(model.vertexCount,
+                Math.min(model.verticesX.length, Math.min(model.verticesY.length, model.verticesZ.length)));
+        if (vertexCount <= 0) {
+            return new GpuSceneChunk(0, 0, worldX, worldHeight, worldY, worldX, worldHeight, worldY, minRenderPlane);
+        }
+
+        int sine = orientation == 0 ? 0 : Rasterizer3D.SINE[orientation & 0x7ff];
+        int cosine = orientation == 0 ? 65536 : Rasterizer3D.COSINE[orientation & 0x7ff];
+        int minX = Integer.MAX_VALUE;
+        int minHeight = Integer.MAX_VALUE;
+        int minY = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxHeight = Integer.MIN_VALUE;
+        int maxY = Integer.MIN_VALUE;
+
+        for (int vertex = 0; vertex < vertexCount; vertex++) {
+            int localX = model.verticesX[vertex];
+            int localZ = model.verticesZ[vertex];
+            int rotatedX = localZ * sine + localX * cosine >> 16;
+            int rotatedY = localZ * cosine - localX * sine >> 16;
+            int x = worldX + rotatedX;
+            int height = worldHeight + model.verticesY[vertex];
+            int y = worldY + rotatedY;
+            minX = Math.min(minX, x);
+            minHeight = Math.min(minHeight, height);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x);
+            maxHeight = Math.max(maxHeight, height);
+            maxY = Math.max(maxY, y);
+        }
+
+        return new GpuSceneChunk(0, 0, minX, minHeight, minY, maxX, maxHeight, maxY, minRenderPlane);
     }
 
     private static boolean hasLegacySolidAlpha(Model model) {

@@ -5,6 +5,7 @@ import static org.lwjgl.opengl.GL11C.GL_POLYGON_OFFSET_FILL;
 import static org.lwjgl.opengl.GL11C.glPolygonOffset;
 import static org.lwjgl.opengl.GL33C.glFrontFace;
 import static org.lwjgl.opengl.GL33C.GL_ARRAY_BUFFER;
+import static org.lwjgl.opengl.GL33C.GL_ELEMENT_ARRAY_BUFFER;
 import static org.lwjgl.opengl.GL33C.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL33C.GL_CCW;
 import static org.lwjgl.opengl.GL33C.GL_CULL_FACE;
@@ -56,6 +57,7 @@ import static org.lwjgl.opengl.GL33C.glDepthFunc;
 import static org.lwjgl.opengl.GL33C.glDepthMask;
 import static org.lwjgl.opengl.GL33C.glDisable;
 import static org.lwjgl.opengl.GL33C.glDrawArrays;
+import static org.lwjgl.opengl.GL33C.glDrawElements;
 import static org.lwjgl.opengl.GL33C.glEnable;
 import static org.lwjgl.opengl.GL33C.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL33C.glGenBuffers;
@@ -88,6 +90,7 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.IdentityHashMap;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
@@ -183,6 +186,7 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 			uniform int uStaticPriorityWallDecoration;
 			uniform int uStaticLegacyPixelSnapDebug;
 			uniform float uRenderPlaneTerrainDepthBias;
+			uniform float uStaticRoofObjectPlaneDepthBias;
 			uniform float uStaticFloorDecorationDepthBias;
 
 			noperspective out vec3 vVertexColor;
@@ -225,6 +229,7 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 			    bool floorPriority = priorityMetadata >= 0x80 && priorityMetadata <= 0x8b;
 			    bool wallDecorationPriority = priorityMetadata >= 0x40 && priorityMetadata <= 0x4b;
 			    bool legacyGouraud = priorityMetadata >= 0x20 && priorityMetadata <= 0x2b;
+			    bool staticRoofObject = priorityMetadata >= 0x10 && priorityMetadata <= 0x13;
 			    int legacyPriority = floorPriority ? priorityMetadata - 0x80
 			            : (wallDecorationPriority ? priorityMetadata - 0x40
 			                    : (legacyGouraud ? priorityMetadata - 0x20 : priorityMetadata));
@@ -241,6 +246,13 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 			    // static models or globally clearing depth.
 			    if (floorPriority) {
 			        clipZ -= uStaticFloorDecorationDepthBias;
+			    }
+			    // Opaque roof models without explicit face priorities stay in the immutable
+			    // static mesh. Their metadata stores the minimum render plane in the low two
+			    // bits so they retain the same narrowly-scoped cross-plane preference as the
+			    // deferred roof painter without paying per-object painter cost.
+			    if (staticRoofObject) {
+			        clipZ -= float(priorityMetadata - 0x10) * uStaticRoofObjectPlaneDepthBias;
 			    }
 			    // Preserve the real depth buffer between legacy render planes, but give only
 			    // higher-plane terrain a small painter-style nudge. This is reset before
@@ -267,7 +279,7 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 			            ? float((int(aColorBytes.r) << 8) | int(aColorBytes.g))
 			            : 0.0;
 			    vTextureCoordinate = aTextureCoordinateFixed / 256.0;
-			    vTextureProjectionMode = uModelTextureProjection;
+			    vTextureProjectionMode = 0;
 			    vLegacyCameraPosition = cameraPosition;
 
 			    if (uModelTextureProjection != 0) {
@@ -275,10 +287,19 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 			        ivec4 mapA = texelFetch(uModelTextureMappings, mappingIndex);
 			        ivec4 mapB = texelFetch(uModelTextureMappings, mappingIndex + 1);
 			        ivec4 mapC = texelFetch(uModelTextureMappings, mappingIndex + 2);
-			        vTextureMapA = vec3(cameraSpace(mapA.xyz));
-			        vTextureMapB = vec3(cameraSpace(mapB.xyz));
-			        vTextureMapC = vec3(cameraSpace(mapC.xyz));
-			        vMaterialId = uint(max(0, mapA.w) + 1);
+			        bool unifiedSolid = uModelTextureProjection == 2 && mapA.w < 0;
+			        if (unifiedSolid) {
+			            vTextureMapA = vec3(0.0);
+			            vTextureMapB = vec3(0.0);
+			            vTextureMapC = vec3(0.0);
+			            vMaterialId = 0u;
+			        } else {
+			            vTextureProjectionMode = 1;
+			            vTextureMapA = vec3(cameraSpace(mapA.xyz));
+			            vTextureMapB = vec3(cameraSpace(mapB.xyz));
+			            vTextureMapC = vec3(cameraSpace(mapC.xyz));
+			            vMaterialId = uint(max(0, mapA.w) + 1);
+			        }
 			    } else {
 			        vTextureMapA = vec3(0.0);
 			        vTextureMapB = vec3(0.0);
@@ -513,21 +534,26 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 	private int wallPriorityVertexBuffer;
 	private int wallPriorityTexturedVertexArray;
 	private int wallPriorityTexturedVertexBuffer;
+	private int wallPriorityIndexBuffer;
 	private int wallPriorityTextureMappingBuffer;
 	private int wallPriorityTextureMappingTexture;
-	private final GpuVertexBuilder wallPriorityFrameSolid = new GpuVertexBuilder(2048);
-	private final GpuModelTextureBuilder wallPriorityFrameTextured = new GpuModelTextureBuilder(512);
-	private final ArrayList<WallPainterCommand> wallPriorityFrameCommands = new ArrayList<>();
+	private final IdentityHashMap<Object, CachedPainterGeometry> cachedPainterGeometry = new IdentityHashMap<>();
 	private final ArrayList<PainterCommandSpan> interactivePriorityFrameSpans = new ArrayList<>();
-	private int[] wallPrioritySolidUploadWords = new int[0];
-	private int[] wallPriorityTexturedUploadWords = new int[0];
-	private int[] wallPriorityMappingUploadWords = new int[0];
+	private final ArrayList<PainterBatch> interactivePriorityFrameBatches = new ArrayList<>();
+	private int[] wallPriorityFrameIndices = new int[0];
+	private int wallPriorityFrameIndexCount;
+	private int painterScreenMinX;
+	private int painterScreenMinY;
+	private int painterScreenMaxX;
+	private int painterScreenMaxY;
+	private boolean painterScreenBatchSafe;
 	private int[] wallSortProjectedX = new int[0];
 	private int[] wallSortProjectedY = new int[0];
 	private int[] wallSortProjectedDepth = new int[0];
 	private int[] wallSortFaceDepth = new int[0];
-	private long[] wallSortKeys = new long[0];
 	private int[] wallSortFaceOrder = new int[0];
+	private int[] wallSortDepthBucketCounts = new int[0];
+	private int[] wallSortDepthBucketOffsets = new int[0];
 	private final int[][] wallSortPriorityFaces = new int[12][0];
 	private final int[] wallSortPriorityCounts = new int[12];
 	private final int[] wallSortPriorityDepthSums = new int[12];
@@ -588,6 +614,7 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 	private int staticLegacyPixelSnapDebugUniform;
 	private int staticLegacyFaceCullDebugUniform;
 	private int renderPlaneTerrainDepthBiasUniform;
+	private int staticRoofObjectPlaneDepthBiasUniform;
 	private int staticFloorDecorationDepthBiasUniform;
 	private Scene uploadedScene;
 	private long uploadedGeometryRevision = Long.MIN_VALUE;
@@ -702,6 +729,7 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 		staticLegacyPixelSnapDebugUniform = requiredUniform(shader, "uStaticLegacyPixelSnapDebug");
 		staticLegacyFaceCullDebugUniform = requiredUniform(shader, "uStaticLegacyFaceCullDebug");
 		renderPlaneTerrainDepthBiasUniform = requiredUniform(shader, "uRenderPlaneTerrainDepthBias");
+		staticRoofObjectPlaneDepthBiasUniform = requiredUniform(shader, "uStaticRoofObjectPlaneDepthBias");
 		staticFloorDecorationDepthBiasUniform = requiredUniform(shader, "uStaticFloorDecorationDepthBias");
 
 		textureManager = new GpuTextureManager();
@@ -736,6 +764,11 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 		wallPriorityTexturedVertexArray = glGenVertexArrays();
 		wallPriorityTexturedVertexBuffer = glGenBuffers();
 		configureStaticVertexArray(wallPriorityTexturedVertexArray, wallPriorityTexturedVertexBuffer);
+		wallPriorityIndexBuffer = glGenBuffers();
+		glBindVertexArray(wallPriorityTexturedVertexArray);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, wallPriorityIndexBuffer);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0L, GL_DYNAMIC_DRAW);
+		glBindVertexArray(0);
 		wallPriorityTextureMappingBuffer = glGenBuffers();
 		wallPriorityTextureMappingTexture = glGenTextures();
 		glBindBuffer(GL_TEXTURE_BUFFER, wallPriorityTextureMappingBuffer);
@@ -910,10 +943,11 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 		staticAlphaPriorityObjects = staticScene.alphaPriorityObjects();
 		addEligibleVertexCounts(staticTexturedChunks, staticEligibleVertices);
 		uploadTextureMappings(staticScene.textureMappings());
+		int painterCacheBytes = uploadDeferredPainterCache();
 		uploadLegacyHslPalette();
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-		cachedSceneBytes = terrain.byteSize() + staticScene.byteSize();
+		cachedSceneBytes = terrain.byteSize() + staticScene.byteSize() + painterCacheBytes;
 		sceneUploaded = true;
 		long uploaded = System.nanoTime();
 		double buildMs = (built - buildStarted) / 1_000_000.0;
@@ -957,6 +991,114 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 		glBindBuffer(GL_TEXTURE_BUFFER, mappingBuffer);
 		glBufferData(GL_TEXTURE_BUFFER, uploadScratch, usage);
 		glBindBuffer(GL_TEXTURE_BUFFER, 0);
+	}
+
+	/**
+	 * Uploads every deferred painter face once when the scene cache is rebuilt. Per-frame
+	 * work then consists only of sorting faces and streaming a compact index list; static
+	 * vertices and projective texture mappings never need to be rebuilt or re-uploaded.
+	 */
+	private int uploadDeferredPainterCache() {
+		cachedPainterGeometry.clear();
+		GpuVertexBuilder solidScratch = new GpuVertexBuilder(1024);
+		GpuModelTextureBuilder texturedScratch = new GpuModelTextureBuilder(256);
+		GpuModelTextureBuilder unified = new GpuModelTextureBuilder(4096);
+
+		if (staticWallPriorityDecorations != null) {
+			for (GpuStaticSceneMesh.WallPriorityDecoration decoration : staticWallPriorityDecorations) {
+				if (decoration != null && decoration.model() != null) {
+					cachePainterGeometry(decoration, decoration.model(), decoration.orientation(), decoration.worldX(),
+							decoration.worldHeight(), decoration.worldY(), WALL_PRIORITY_METADATA_TAG, false, solidScratch,
+							texturedScratch, unified);
+				}
+			}
+		}
+		if (staticInteractivePriorityObjects != null) {
+			for (GpuStaticSceneMesh.InteractivePriorityObject object : staticInteractivePriorityObjects) {
+				if (object != null && object.model() != null) {
+					cachePainterGeometry(object, object.model(), object.orientation(), object.worldX(), object.worldHeight(),
+							object.worldY(), object.priorityMetadataTag(), false, solidScratch, texturedScratch, unified);
+				}
+			}
+		}
+		if (staticAlphaPriorityObjects != null) {
+			for (GpuStaticSceneMesh.AlphaPriorityObject object : staticAlphaPriorityObjects) {
+				if (object != null && object.model() != null) {
+					cachePainterGeometry(object, object.model(), object.orientation(), object.worldX(), object.worldHeight(),
+							object.worldY(), 0, true, solidScratch, texturedScratch, unified);
+				}
+			}
+		}
+
+		int[] vertices = new int[unified.vertexWordCount()];
+		unified.copyVerticesTo(vertices, 0);
+		int[] mappings = new int[unified.mappingWordCount()];
+		unified.copyMappingsTo(mappings, 0);
+		uploadPackedVertices(wallPriorityTexturedVertexBuffer, vertices, vertices.length, GL_STATIC_DRAW);
+		uploadTextureMappings(wallPriorityTextureMappingBuffer, mappings, mappings.length, GL_STATIC_DRAW);
+		return (vertices.length + mappings.length) * Integer.BYTES;
+	}
+
+	private void cachePainterGeometry(Object key, Model model, int orientation, int worldX, int worldHeight, int worldY,
+			int priorityMetadataTag, boolean alpha, GpuVertexBuilder solidScratch,
+			GpuModelTextureBuilder texturedScratch, GpuModelTextureBuilder unified) {
+		int[] faceFirstVertices = new int[model.triangleCount];
+		Arrays.fill(faceFirstVertices, -1);
+		solidScratch.clear();
+		texturedScratch.clear();
+
+		for (int triangle = 0; triangle < model.triangleCount; triangle++) {
+			int solidFirst = solidScratch.vertexCount();
+			int texturedFirst = texturedScratch.vertexCount();
+			int uploadType = alpha
+					? GpuModelUploader.appendLegacyAlphaFace(model, triangle, orientation, worldX, worldHeight, worldY,
+							solidScratch, texturedScratch)
+					: GpuModelUploader.appendFace(model, triangle, orientation, worldX, worldHeight, worldY, solidScratch,
+							texturedScratch, priorityMetadataTag);
+			if (uploadType == GpuModelUploader.FACE_SOLID) {
+				faceFirstVertices[triangle] = unified.vertexCount();
+				unified.appendSolidTriangleFrom(solidScratch, solidFirst);
+			} else if (uploadType == GpuModelUploader.FACE_TEXTURED) {
+				faceFirstVertices[triangle] = unified.vertexCount();
+				unified.appendTexturedTriangleFrom(texturedScratch, texturedFirst);
+			}
+		}
+		int[] sortWorldX = null;
+		int[] sortWorldHeight = null;
+		int[] sortWorldY = null;
+		if (model.verticesX != null && model.verticesY != null && model.verticesZ != null
+				&& model.verticesX.length >= model.vertexCount && model.verticesY.length >= model.vertexCount
+				&& model.verticesZ.length >= model.vertexCount) {
+			sortWorldX = new int[model.vertexCount];
+			sortWorldHeight = new int[model.vertexCount];
+			sortWorldY = new int[model.vertexCount];
+			int normalizedOrientation = orientation & 0x7ff;
+			int sine = normalizedOrientation == 0 ? 0 : Rasterizer3D.SINE[normalizedOrientation];
+			int cosine = normalizedOrientation == 0 ? 65536 : Rasterizer3D.COSINE[normalizedOrientation];
+			for (int vertex = 0; vertex < model.vertexCount; vertex++) {
+				int localX = model.verticesX[vertex];
+				int localY = model.verticesZ[vertex];
+				if (normalizedOrientation != 0) {
+					int rotatedX = localY * sine + localX * cosine >> 16;
+					localY = localY * cosine - localX * sine >> 16;
+					localX = rotatedX;
+				}
+				sortWorldX[vertex] = localX + worldX;
+				sortWorldHeight[vertex] = model.verticesY[vertex] + worldHeight;
+				sortWorldY[vertex] = localY + worldY;
+			}
+		}
+
+		int[] sortTriangleScratch = new int[model.triangleCount];
+		int sortTriangleCount = 0;
+		for (int triangle = 0; triangle < model.triangleCount; triangle++) {
+			if (validWallSortTriangle(model, triangle)) {
+				sortTriangleScratch[sortTriangleCount++] = triangle;
+			}
+		}
+		int[] sortTriangles = Arrays.copyOf(sortTriangleScratch, sortTriangleCount);
+		cachedPainterGeometry.put(key,
+				new CachedPainterGeometry(faceFirstVertices, sortWorldX, sortWorldHeight, sortWorldY, sortTriangles));
 	}
 
 	private void uploadLegacyHslPalette() {
@@ -1152,6 +1294,7 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 		glBindTexture(GL_TEXTURE_BUFFER, legacyHslPaletteTexture);
 		glUniform1i(legacyHslPaletteSamplerUniform, 2);
 		glActiveTexture(GL_TEXTURE0);
+		glUniform1f(staticRoofObjectPlaneDepthBiasUniform, STATIC_ROOF_OBJECT_PLANE_DEPTH_BIAS);
 		glUniform1f(staticFloorDecorationDepthBiasUniform, STATIC_FLOOR_DECORATION_DEPTH_BIAS);
 
 		glUniform1i(staticTextureGeometryDebugUniform, STATIC_TEXTURE_GEOMETRY_DEBUG ? 1 : 0);
@@ -1381,10 +1524,9 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 			return totals;
 		}
 
-		wallPriorityFrameSolid.clear();
-		wallPriorityFrameTextured.clear();
-		wallPriorityFrameCommands.clear();
-
+		wallPriorityFrameIndexCount = 0;
+		int eligibleObjects = 0;
+		int visibleObjects = 0;
 		for (GpuStaticSceneMesh.WallPriorityDecoration decoration : staticWallPriorityDecorations) {
 			if (decoration == null || decoration.model() == null) {
 				continue;
@@ -1392,68 +1534,43 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 			if (exactPlane ? decoration.minRenderPlane() != plane : decoration.minRenderPlane() > plane) {
 				continue;
 			}
-
+			eligibleObjects++;
+			if (!GpuSceneVisibility.isVisible(decoration.bounds(), cameraX, cameraY, cameraHeight, yawSin, yawCos,
+					pitchSin, pitchCos, width, height)) {
+				continue;
+			}
+			visibleObjects++;
 			Model model = decoration.model();
-			int orderedFaces = buildLegacyFaceOrder(model, decoration.orientation(), decoration.worldX(),
+			int orderedFaces = buildLegacyFaceOrder(decoration, model, decoration.orientation(), decoration.worldX(),
 					decoration.worldHeight(), decoration.worldY(), cameraX, cameraY, cameraHeight, yawSin, yawCos, pitchSin,
 					pitchCos);
 			for (int index = 0; index < orderedFaces; index++) {
-				int triangle = wallSortFaceOrder[index];
-				int solidFirst = wallPriorityFrameSolid.vertexCount();
-				int texturedFirst = wallPriorityFrameTextured.vertexCount();
-				int uploadType = GpuModelUploader.appendFace(model, triangle, decoration.orientation(),
-						decoration.worldX(), decoration.worldHeight(), decoration.worldY(), wallPriorityFrameSolid,
-						wallPriorityFrameTextured, WALL_PRIORITY_METADATA_TAG);
-				if (uploadType == GpuModelUploader.FACE_SOLID) {
-					appendPainterCommand(false, solidFirst);
-				} else if (uploadType == GpuModelUploader.FACE_TEXTURED) {
-					appendPainterCommand(true, texturedFirst);
-				}
+				appendCachedPainterFace(decoration, wallSortFaceOrder[index]);
 			}
 		}
 
-		if (wallPriorityFrameCommands.isEmpty()) {
+		totals[0] = visibleObjects;
+		totals[1] = eligibleObjects;
+		if (wallPriorityFrameIndexCount == 0) {
 			return totals;
 		}
 
-		uploadWallPriorityFrame();
+		uploadPainterIndices();
 		boolean ignoreSceneDepth = STATIC_PRIORITY_WALL_PAINTER_IGNORE_SCENE_DEPTH_DEBUG;
 		boolean depthBias = STATIC_PRIORITY_WALL_PAINTER_DEPTH_BIAS_DEBUG && !ignoreSceneDepth;
 		if (ignoreSceneDepth) {
 			glDisable(GL_DEPTH_TEST);
 		} else if (depthBias) {
-			// Keep normal scene occlusion, but pull the wall decoration slightly toward
-			// the camera for depth comparison so its supporting wall does not cut holes
-			// through nearly coplanar legacy decoration faces.
 			glEnable(GL_POLYGON_OFFSET_FILL);
 			glPolygonOffset(STATIC_PRIORITY_WALL_PAINTER_DEPTH_BIAS_FACTOR,
 					STATIC_PRIORITY_WALL_PAINTER_DEPTH_BIAS_UNITS);
 		}
 		glDepthMask(false);
 		try {
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_BUFFER, wallPriorityTextureMappingTexture);
-			glActiveTexture(GL_TEXTURE0);
-
-			int boundKind = -1;
-			for (WallPainterCommand command : wallPriorityFrameCommands) {
-				int kind = command.textured() ? 1 : 0;
-				if (kind != boundKind) {
-					boundKind = kind;
-					glUniform1i(modelTextureProjectionUniform, kind);
-					glBindVertexArray(kind != 0 ? wallPriorityTexturedVertexArray : wallPriorityVertexArray);
-				}
-				glDrawArrays(GL_TRIANGLES, command.firstVertex(), command.vertexCount());
-			}
-			int commandCount = wallPriorityFrameCommands.size();
-			totals[0] = commandCount;
-			totals[1] = commandCount;
-			totals[2] = commandCount;
-			int submittedVertices = 0;
-			for (WallPainterCommand command : wallPriorityFrameCommands) {
-				submittedVertices += command.vertexCount();
-			}
-			totals[3] = submittedVertices;
+			bindPainterCache();
+			drawPainterElements(0, wallPriorityFrameIndexCount);
+			totals[2] = 1;
+			totals[3] = wallPriorityFrameIndexCount;
 		} finally {
 			glDepthMask(true);
 			if (depthBias) {
@@ -1462,11 +1579,7 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 			if (ignoreSceneDepth) {
 				glEnable(GL_DEPTH_TEST);
 			}
-			glBindVertexArray(0);
-			glUniform1i(modelTextureProjectionUniform, 0);
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_BUFFER, staticTextureMappingTexture);
-			glActiveTexture(GL_TEXTURE0);
+			restoreStaticPainterBindings();
 		}
 		return totals;
 	}
@@ -1478,10 +1591,11 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 			return totals;
 		}
 
-		wallPriorityFrameSolid.clear();
-		wallPriorityFrameTextured.clear();
-		wallPriorityFrameCommands.clear();
+		wallPriorityFrameIndexCount = 0;
 		interactivePriorityFrameSpans.clear();
+		interactivePriorityFrameBatches.clear();
+		int eligibleObjects = 0;
+		int visibleObjects = 0;
 
 		for (GpuStaticSceneMesh.InteractivePriorityObject object : staticInteractivePriorityObjects) {
 			if (object == null || object.model() == null) {
@@ -1490,143 +1604,184 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 			if (exactPlane ? object.minRenderPlane() != plane : object.minRenderPlane() > plane) {
 				continue;
 			}
-
-			Model model = object.model();
-			int firstCommand = wallPriorityFrameCommands.size();
-			int orderedFaces = buildLegacyFaceOrder(model, object.orientation(), object.worldX(),
-					object.worldHeight(), object.worldY(), cameraX, cameraY, cameraHeight, yawSin, yawCos, pitchSin, pitchCos);
-			for (int index = 0; index < orderedFaces; index++) {
-				int triangle = wallSortFaceOrder[index];
-				int solidFirst = wallPriorityFrameSolid.vertexCount();
-				int texturedFirst = wallPriorityFrameTextured.vertexCount();
-				int uploadType = GpuModelUploader.appendFace(model, triangle, object.orientation(), object.worldX(),
-						object.worldHeight(), object.worldY(), wallPriorityFrameSolid, wallPriorityFrameTextured,
-						object.priorityMetadataTag());
-				if (uploadType == GpuModelUploader.FACE_SOLID) {
-					appendPainterCommand(false, solidFirst, wallPriorityFrameCommands.size() > firstCommand);
-				} else if (uploadType == GpuModelUploader.FACE_TEXTURED) {
-					appendPainterCommand(true, texturedFirst, wallPriorityFrameCommands.size() > firstCommand);
-				}
+			eligibleObjects++;
+			if (!GpuSceneVisibility.isVisible(object.bounds(), cameraX, cameraY, cameraHeight, yawSin, yawCos, pitchSin,
+					pitchCos, width, height)) {
+				continue;
 			}
-			int commandCount = wallPriorityFrameCommands.size() - firstCommand;
-			if (commandCount > 0) {
+			visibleObjects++;
+
+			int firstIndex = wallPriorityFrameIndexCount;
+			Model model = object.model();
+			int orderedFaces = buildLegacyFaceOrder(object, model, object.orientation(), object.worldX(), object.worldHeight(),
+					object.worldY(), cameraX, cameraY, cameraHeight, yawSin, yawCos, pitchSin, pitchCos);
+			for (int index = 0; index < orderedFaces; index++) {
+				appendCachedPainterFace(object, wallSortFaceOrder[index]);
+			}
+			int indexCount = wallPriorityFrameIndexCount - firstIndex;
+			if (indexCount > 0) {
 				float roofPlaneDepthBias = object.priorityMetadataTag() == ROOF_OBJECT_PRIORITY_METADATA_TAG
 						? object.minRenderPlane() * STATIC_ROOF_OBJECT_PLANE_DEPTH_BIAS
 						: 0.0f;
-				interactivePriorityFrameSpans.add(new PainterCommandSpan(firstCommand, commandCount, roofPlaneDepthBias));
+				interactivePriorityFrameSpans.add(new PainterCommandSpan(firstIndex, indexCount, roofPlaneDepthBias,
+						painterScreenBatchSafe, painterScreenMinX, painterScreenMinY, painterScreenMaxX,
+						painterScreenMaxY));
 			}
 		}
 
-		if (wallPriorityFrameCommands.isEmpty()) {
+		totals[0] = visibleObjects;
+		totals[1] = eligibleObjects;
+		if (wallPriorityFrameIndexCount == 0) {
 			return totals;
 		}
 
-		uploadWallPriorityFrame();
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_BUFFER, wallPriorityTextureMappingTexture);
-		glActiveTexture(GL_TEXTURE0);
+		buildInteractivePainterBatches();
+		uploadPainterIndices();
+		bindPainterCache();
 		try {
-			for (PainterCommandSpan span : interactivePriorityFrameSpans) {
-				// Roof object shapes 12..21 participate in the same small render-plane
-				// painter preference as roof terrain. Apply it only while this object's
-				// color/depth passes are active so ordinary interactives retain true depth.
-				glUniform1f(renderPlaneTerrainDepthBiasUniform, span.roofPlaneDepthBias());
+			for (PainterBatch batch : interactivePriorityFrameBatches) {
+				glUniform1f(renderPlaneTerrainDepthBiasUniform, batch.roofPlaneDepthBias());
 
-				// Color pass: reproduce Model.drawFaces() ordering without letting an
-				// earlier face in this model depth-block a later priority face.
+				// Objects inside one batch are pairwise screen-disjoint. Their color passes
+				// therefore cannot affect one another, so all of them can be submitted in
+				// one ordered draw before committing the same combined coverage to depth.
 				glDepthMask(false);
-				drawPainterCommandSpan(span);
+				drawPainterElements(batch.firstIndex(), batch.indexCount());
+				totals[2]++;
 
-				// Depth commit: write only this model's nearest opaque fragments after
-				// its painter-order color has been established. This restores normal
-				// inter-object occlusion before the next deferred interactive is drawn.
 				glColorMask(false, false, false, false);
 				glDepthMask(true);
-				drawPainterCommandSpan(span);
+				drawPainterElements(batch.firstIndex(), batch.indexCount());
+				totals[2]++;
 				glColorMask(true, true, true, true);
 			}
 
-			int commandCount = wallPriorityFrameCommands.size();
-			totals[0] = commandCount;
-			totals[1] = commandCount;
-			totals[2] = commandCount * 2;
-			int submittedVertices = 0;
-			for (WallPainterCommand command : wallPriorityFrameCommands) {
-				submittedVertices += command.vertexCount();
-			}
-			totals[3] = submittedVertices * 2;
+			totals[3] = wallPriorityFrameIndexCount * 2;
 		} finally {
 			glUniform1f(renderPlaneTerrainDepthBiasUniform, 0.0f);
 			glColorMask(true, true, true, true);
 			glDepthMask(true);
-			glBindVertexArray(0);
-			glUniform1i(modelTextureProjectionUniform, 0);
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_BUFFER, staticTextureMappingTexture);
-			glActiveTexture(GL_TEXTURE0);
+			restoreStaticPainterBindings();
 		}
 		return totals;
 	}
 
-	private void drawPainterCommandSpan(PainterCommandSpan span) {
-		int boundKind = -1;
-		int endCommand = span.firstCommand() + span.commandCount();
-		for (int commandIndex = span.firstCommand(); commandIndex < endCommand; commandIndex++) {
-			WallPainterCommand command = wallPriorityFrameCommands.get(commandIndex);
-			int kind = command.textured() ? 1 : 0;
-			if (kind != boundKind) {
-				boundKind = kind;
-				glUniform1i(modelTextureProjectionUniform, kind);
-				glBindVertexArray(kind != 0 ? wallPriorityTexturedVertexArray : wallPriorityVertexArray);
+	/**
+	 * Coalesces consecutive priority objects when they provably cannot touch the same
+	 * screen pixel. The per-object color/depth sequence is only semantically required
+	 * between overlapping objects; disjoint objects can share one color pass and one
+	 * depth commit without changing revision-377 painter results.
+	 */
+	private void buildInteractivePainterBatches() {
+		interactivePriorityFrameBatches.clear();
+		for (int spanIndex = 0; spanIndex < interactivePriorityFrameSpans.size(); spanIndex++) {
+			PainterCommandSpan span = interactivePriorityFrameSpans.get(spanIndex);
+			int batchCount = interactivePriorityFrameBatches.size();
+			if (batchCount > 0) {
+				PainterBatch previous = interactivePriorityFrameBatches.get(batchCount - 1);
+				if (canAppendPainterSpan(previous, span)) {
+					int endIndex = span.firstIndex() + span.indexCount();
+					interactivePriorityFrameBatches.set(batchCount - 1,
+							new PainterBatch(previous.firstSpan(), previous.spanCount() + 1, previous.firstIndex(),
+									endIndex - previous.firstIndex(), previous.roofPlaneDepthBias()));
+					continue;
+				}
 			}
-			glDrawArrays(GL_TRIANGLES, command.firstVertex(), command.vertexCount());
+			interactivePriorityFrameBatches.add(new PainterBatch(spanIndex, 1, span.firstIndex(), span.indexCount(),
+					span.roofPlaneDepthBias()));
 		}
 	}
 
-	private void appendPainterCommand(boolean textured, int firstVertex) {
-		appendPainterCommand(textured, firstVertex, true);
-	}
-
-	private void appendPainterCommand(boolean textured, int firstVertex, boolean allowMerge) {
-		int commandCount = wallPriorityFrameCommands.size();
-		if (allowMerge && commandCount > 0) {
-			WallPainterCommand previous = wallPriorityFrameCommands.get(commandCount - 1);
-			if (previous.textured() == textured
-					&& firstVertex == previous.firstVertex() + previous.vertexCount()) {
-				wallPriorityFrameCommands.set(commandCount - 1,
-						new WallPainterCommand(textured, previous.firstVertex(), previous.vertexCount() + 3));
-				return;
+	private boolean canAppendPainterSpan(PainterBatch batch, PainterCommandSpan candidate) {
+		if (!candidate.batchSafe() || batch.roofPlaneDepthBias() != candidate.roofPlaneDepthBias()) {
+			return false;
+		}
+		int end = batch.firstSpan() + batch.spanCount();
+		for (int index = batch.firstSpan(); index < end; index++) {
+			PainterCommandSpan existing = interactivePriorityFrameSpans.get(index);
+			if (!existing.batchSafe() || painterScreenBoundsOverlap(existing, candidate)) {
+				return false;
 			}
 		}
-		wallPriorityFrameCommands.add(new WallPainterCommand(textured, firstVertex, 3));
+		return true;
 	}
 
-	private void uploadWallPriorityFrame() {
-		int solidWords = wallPriorityFrameSolid.wordCount();
-		wallPrioritySolidUploadWords = ensureIntCapacity(wallPrioritySolidUploadWords, solidWords);
-		wallPriorityFrameSolid.copyTo(wallPrioritySolidUploadWords, 0);
-		uploadPackedVertices(wallPriorityVertexBuffer, wallPrioritySolidUploadWords, solidWords, GL_DYNAMIC_DRAW);
-
-		int texturedWords = wallPriorityFrameTextured.vertexWordCount();
-		wallPriorityTexturedUploadWords = ensureIntCapacity(wallPriorityTexturedUploadWords, texturedWords);
-		wallPriorityFrameTextured.copyVerticesTo(wallPriorityTexturedUploadWords, 0);
-		uploadPackedVertices(wallPriorityTexturedVertexBuffer, wallPriorityTexturedUploadWords, texturedWords,
-				GL_DYNAMIC_DRAW);
-
-		int mappingWords = wallPriorityFrameTextured.mappingWordCount();
-		wallPriorityMappingUploadWords = ensureIntCapacity(wallPriorityMappingUploadWords, mappingWords);
-		wallPriorityFrameTextured.copyMappingsTo(wallPriorityMappingUploadWords, 0);
-		uploadTextureMappings(wallPriorityTextureMappingBuffer, wallPriorityMappingUploadWords, mappingWords,
-				GL_DYNAMIC_DRAW);
+	private static boolean painterScreenBoundsOverlap(PainterCommandSpan a, PainterCommandSpan b) {
+		// One projected pixel of guard keeps raster edge rules/conservative integer
+		// projection from turning an apparent edge-touch into an unsafe shared fragment.
+		return !((long) a.maxX() + 1L < b.minX() || (long) b.maxX() + 1L < a.minX()
+				|| (long) a.maxY() + 1L < b.minY() || (long) b.maxY() + 1L < a.minY());
 	}
 
-	private int buildLegacyFaceOrder(Model model, int modelOrientation, int modelWorldX, int modelWorldHeight,
-			int modelWorldY, int cameraX, int cameraY, int cameraHeight, int yawSin, int yawCos, int pitchSin,
-			int pitchCos) {
-		if (model.vertexCount <= 0 || model.triangleCount <= 0) {
+	private void appendCachedPainterFace(Object key, int triangle) {
+		CachedPainterGeometry geometry = cachedPainterGeometry.get(key);
+		if (geometry == null || triangle < 0 || triangle >= geometry.faceFirstVertices().length) {
+			return;
+		}
+		int firstVertex = geometry.faceFirstVertices()[triangle];
+		if (firstVertex < 0) {
+			return;
+		}
+		wallPriorityFrameIndices = ensureIntCapacity(wallPriorityFrameIndices, wallPriorityFrameIndexCount + 3);
+		wallPriorityFrameIndices[wallPriorityFrameIndexCount++] = firstVertex;
+		wallPriorityFrameIndices[wallPriorityFrameIndexCount++] = firstVertex + 1;
+		wallPriorityFrameIndices[wallPriorityFrameIndexCount++] = firstVertex + 2;
+	}
+
+	private void uploadPainterIndices() {
+		int requiredBytes = wallPriorityFrameIndexCount * Integer.BYTES;
+		ensureUploadScratch(requiredBytes);
+		uploadScratch.clear();
+		uploadScratchWords.clear();
+		uploadScratchWords.put(wallPriorityFrameIndices, 0, wallPriorityFrameIndexCount);
+		uploadScratch.limit(requiredBytes);
+		glBindVertexArray(wallPriorityTexturedVertexArray);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, wallPriorityIndexBuffer);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, uploadScratch, GL_DYNAMIC_DRAW);
+		glBindVertexArray(0);
+	}
+
+	private void bindPainterCache() {
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_BUFFER, wallPriorityTextureMappingTexture);
+		glActiveTexture(GL_TEXTURE0);
+		glUniform1i(modelTextureProjectionUniform, 2);
+		glBindVertexArray(wallPriorityTexturedVertexArray);
+	}
+
+	private void drawPainterElements(int firstIndex, int indexCount) {
+		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, (long) firstIndex * Integer.BYTES);
+	}
+
+	private void restoreStaticPainterBindings() {
+		glBindVertexArray(0);
+		glUniform1i(modelTextureProjectionUniform, 0);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_BUFFER, staticTextureMappingTexture);
+		glActiveTexture(GL_TEXTURE0);
+	}
+
+	private int buildLegacyFaceOrder(Object painterKey, Model model, int modelOrientation, int modelWorldX,
+			int modelWorldHeight, int modelWorldY, int cameraX, int cameraY, int cameraHeight, int yawSin, int yawCos,
+			int pitchSin, int pitchCos) {
+		if (model.vertexCount <= 0 || model.triangleCount <= 0 || model.depthSpan <= 0) {
 			return 0;
 		}
-		ensureWallSortCapacity(model.vertexCount, model.triangleCount);
+		ensureWallSortCapacity(model.vertexCount, model.triangleCount, model.depthSpan);
+		Arrays.fill(wallSortDepthBucketCounts, 0, model.depthSpan, 0);
+		CachedPainterGeometry cachedGeometry = cachedPainterGeometry.get(painterKey);
+		int[] cachedWorldX = cachedGeometry == null ? null : cachedGeometry.worldX();
+		int[] cachedWorldHeight = cachedGeometry == null ? null : cachedGeometry.worldHeight();
+		int[] cachedWorldY = cachedGeometry == null ? null : cachedGeometry.worldY();
+		boolean cachedWorldVertices = cachedWorldX != null && cachedWorldX.length >= model.vertexCount
+				&& cachedWorldHeight != null && cachedWorldHeight.length >= model.vertexCount && cachedWorldY != null
+				&& cachedWorldY.length >= model.vertexCount;
+		int[] sortTriangles = cachedGeometry == null ? null : cachedGeometry.sortTriangles();
+		painterScreenMinX = Integer.MAX_VALUE;
+		painterScreenMinY = Integer.MAX_VALUE;
+		painterScreenMaxX = Integer.MIN_VALUE;
+		painterScreenMaxY = Integer.MIN_VALUE;
+		painterScreenBatchSafe = true;
 
 		int orientation = modelOrientation & 0x7ff;
 		int orientationSin = orientation == 0 ? 0 : Rasterizer3D.SINE[orientation];
@@ -1638,17 +1793,26 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 		int centerDepth = originHeight * pitchSin + originYawDepth * pitchCos >> 16;
 
 		for (int vertex = 0; vertex < model.vertexCount; vertex++) {
-			int localX = model.verticesX[vertex];
-			int localHeight = model.verticesY[vertex];
-			int localY = model.verticesZ[vertex];
-			if (orientation != 0) {
-				int rotatedX = localY * orientationSin + localX * orientationCos >> 16;
-				localY = localY * orientationCos - localX * orientationSin >> 16;
-				localX = rotatedX;
+			int relativeX;
+			int relativeHeight;
+			int relativeY;
+			if (cachedWorldVertices) {
+				relativeX = cachedWorldX[vertex] - cameraX;
+				relativeHeight = cachedWorldHeight[vertex] - cameraHeight;
+				relativeY = cachedWorldY[vertex] - cameraY;
+			} else {
+				int localX = model.verticesX[vertex];
+				int localHeight = model.verticesY[vertex];
+				int localY = model.verticesZ[vertex];
+				if (orientation != 0) {
+					int rotatedX = localY * orientationSin + localX * orientationCos >> 16;
+					localY = localY * orientationCos - localX * orientationSin >> 16;
+					localX = rotatedX;
+				}
+				relativeX = localX + originX;
+				relativeHeight = localHeight + originHeight;
+				relativeY = localY + originY;
 			}
-			int relativeX = localX + originX;
-			int relativeHeight = localHeight + originHeight;
-			int relativeY = localY + originY;
 			int viewX = relativeY * yawSin + relativeX * yawCos >> 16;
 			int yawDepth = relativeY * yawCos - relativeX * yawSin >> 16;
 			int viewY = relativeHeight * pitchCos - yawDepth * pitchSin >> 16;
@@ -1663,9 +1827,12 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 			}
 		}
 
+		int candidateCount = sortTriangles == null ? model.triangleCount : sortTriangles.length;
 		int visibleCount = 0;
-		for (int triangle = 0; triangle < model.triangleCount; triangle++) {
-			if (!validWallSortTriangle(model, triangle)) {
+		for (int candidate = 0; candidate < candidateCount; candidate++) {
+			int triangle = sortTriangles == null ? candidate : sortTriangles[candidate];
+			wallSortFaceDepth[triangle] = -1;
+			if (sortTriangles == null && !validWallSortTriangle(model, triangle)) {
 				continue;
 			}
 			int a = model.triangleVertexA[triangle];
@@ -1681,31 +1848,69 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 				if (signedArea <= 0) {
 					continue;
 				}
+			} else {
+				// Legacy near-plane clipping can create screen coverage not represented by
+				// the sentinel projected coordinates. Keep this object isolated rather than
+				// risk batching it with something that the clipped polygon can overlap.
+				painterScreenBatchSafe = false;
 			}
+
 			int depth = (wallSortProjectedDepth[a] + wallSortProjectedDepth[b] + wallSortProjectedDepth[c]) / 3
 					+ model.radius;
+			// Model.drawFaces() indexes a fixed depth bucket and later walks only
+			// [0, depthSpan). Static model bounds should make this range check redundant,
+			// but retaining it avoids turning malformed bounds into an array failure.
+			if (depth < 0 || depth >= model.depthSpan) {
+				painterScreenBatchSafe = false;
+				continue;
+			}
 			wallSortFaceDepth[triangle] = depth;
-			int primary = -depth;
-			long sortableDepth = (primary ^ Integer.MIN_VALUE) & 0xffffffffL;
-			wallSortKeys[visibleCount++] = (sortableDepth << 32) | (triangle & 0xffffffffL);
+			wallSortDepthBucketCounts[depth]++;
+			visibleCount++;
+
+			if (!nearClipped) {
+				int ay = wallSortProjectedY[a];
+				int by = wallSortProjectedY[b];
+				int cy = wallSortProjectedY[c];
+				painterScreenMinX = Math.min(painterScreenMinX, Math.min(ax, Math.min(bx, cx)));
+				painterScreenMinY = Math.min(painterScreenMinY, Math.min(ay, Math.min(by, cy)));
+				painterScreenMaxX = Math.max(painterScreenMaxX, Math.max(ax, Math.max(bx, cx)));
+				painterScreenMaxY = Math.max(painterScreenMaxY, Math.max(ay, Math.max(by, cy)));
+			}
 		}
-		Arrays.sort(wallSortKeys, 0, visibleCount);
+		if (visibleCount > 0 && painterScreenMinX == Integer.MAX_VALUE) {
+			painterScreenBatchSafe = false;
+		}
+
+		// Revision 377 does not comparison-sort faces. It buckets them by integer
+		// camera-relative depth, then walks the buckets far-to-near while preserving
+		// original triangle order inside each bucket. Build that order in linear time.
+		int outputOffset = 0;
+		for (int depth = model.depthSpan - 1; depth >= 0; depth--) {
+			wallSortDepthBucketOffsets[depth] = outputOffset;
+			outputOffset += wallSortDepthBucketCounts[depth];
+			wallSortDepthBucketCounts[depth] = 0;
+		}
+		for (int candidate = 0; candidate < candidateCount; candidate++) {
+			int triangle = sortTriangles == null ? candidate : sortTriangles[candidate];
+			int depth = wallSortFaceDepth[triangle];
+			if (depth < 0) {
+				continue;
+			}
+			int position = wallSortDepthBucketOffsets[depth] + wallSortDepthBucketCounts[depth]++;
+			wallSortFaceOrder[position] = triangle;
+		}
 
 		// Model.drawFaces() has a simpler branch when there is no per-face priority
-		// array: walk the legacy depth buckets from far to near and draw faces in
-		// their original triangle order within a bucket. The packed sort key above
-		// preserves that order for equal-depth faces via the triangle index.
+		// array: the linear bucket pass above is already the final face order.
 		if (model.trianglePriorities == null) {
-			for (int index = 0; index < visibleCount; index++) {
-				wallSortFaceOrder[index] = (int) wallSortKeys[index];
-			}
 			return visibleCount;
 		}
 
 		Arrays.fill(wallSortPriorityCounts, 0);
 		Arrays.fill(wallSortPriorityDepthSums, 0);
 		for (int index = 0; index < visibleCount; index++) {
-			int triangle = (int) wallSortKeys[index];
+			int triangle = wallSortFaceOrder[index];
 			int priority = Math.max(0, Math.min(11, model.trianglePriorities[triangle]));
 			int bucketIndex = wallSortPriorityCounts[priority]++;
 			wallSortPriorityFaces[priority][bucketIndex] = triangle;
@@ -1777,7 +1982,7 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 		return (wallSortPriorityDepthSums[firstPriority] + wallSortPriorityDepthSums[secondPriority]) / count;
 	}
 
-	private void ensureWallSortCapacity(int vertexCount, int triangleCount) {
+	private void ensureWallSortCapacity(int vertexCount, int triangleCount, int depthSpan) {
 		if (wallSortProjectedX.length < vertexCount) {
 			int capacity = growCapacity(wallSortProjectedX.length, vertexCount);
 			wallSortProjectedX = new int[capacity];
@@ -1787,13 +1992,17 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 		if (wallSortFaceDepth.length < triangleCount) {
 			int capacity = growCapacity(wallSortFaceDepth.length, triangleCount);
 			wallSortFaceDepth = new int[capacity];
-			wallSortKeys = new long[capacity];
 			wallSortFaceOrder = new int[capacity];
 			wallSortPriority10Depths = new int[capacity];
 			wallSortPriority11Depths = new int[capacity];
 			for (int priority = 0; priority < wallSortPriorityFaces.length; priority++) {
 				wallSortPriorityFaces[priority] = new int[capacity];
 			}
+		}
+		if (wallSortDepthBucketCounts.length < depthSpan) {
+			int capacity = growCapacity(wallSortDepthBucketCounts.length, depthSpan);
+			wallSortDepthBucketCounts = new int[capacity];
+			wallSortDepthBucketOffsets = new int[capacity];
 		}
 	}
 
@@ -1834,10 +2043,16 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 		return new int[growCapacity(values.length, required)];
 	}
 
-	private record WallPainterCommand(boolean textured, int firstVertex, int vertexCount) {
+	private record CachedPainterGeometry(int[] faceFirstVertices, int[] worldX, int[] worldHeight, int[] worldY,
+			int[] sortTriangles) {
 	}
 
-	private record PainterCommandSpan(int firstCommand, int commandCount, float roofPlaneDepthBias) {
+	private record PainterCommandSpan(int firstIndex, int indexCount, float roofPlaneDepthBias, boolean batchSafe,
+			int minX, int minY, int maxX, int maxY) {
+	}
+
+	private record PainterBatch(int firstSpan, int spanCount, int firstIndex, int indexCount,
+			float roofPlaneDepthBias) {
 	}
 
 	private int[] drawAlphaPriorityPainter(int plane, boolean exactPlane, int cameraX, int cameraY, int cameraHeight,
@@ -1847,10 +2062,9 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 			return totals;
 		}
 
-		wallPriorityFrameSolid.clear();
-		wallPriorityFrameTextured.clear();
-		wallPriorityFrameCommands.clear();
-
+		wallPriorityFrameIndexCount = 0;
+		int eligibleObjects = 0;
+		int visibleObjects = 0;
 		for (GpuStaticSceneMesh.AlphaPriorityObject object : staticAlphaPriorityObjects) {
 			if (object == null || object.model() == null) {
 				continue;
@@ -1858,68 +2072,43 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 			if (exactPlane ? object.minRenderPlane() != plane : object.minRenderPlane() > plane) {
 				continue;
 			}
+			eligibleObjects++;
+			if (!GpuSceneVisibility.isVisible(object.bounds(), cameraX, cameraY, cameraHeight, yawSin, yawCos, pitchSin,
+					pitchCos, width, height)) {
+				continue;
+			}
+			visibleObjects++;
 
 			Model model = object.model();
-			int orderedFaces = buildLegacyFaceOrder(model, object.orientation(), object.worldX(), object.worldHeight(),
+			int orderedFaces = buildLegacyFaceOrder(object, model, object.orientation(), object.worldX(), object.worldHeight(),
 					object.worldY(), cameraX, cameraY, cameraHeight, yawSin, yawCos, pitchSin, pitchCos);
 			for (int index = 0; index < orderedFaces; index++) {
-				int triangle = wallSortFaceOrder[index];
-				int solidFirst = wallPriorityFrameSolid.vertexCount();
-				int texturedFirst = wallPriorityFrameTextured.vertexCount();
-				int uploadType = GpuModelUploader.appendLegacyAlphaFace(model, triangle, object.orientation(),
-						object.worldX(), object.worldHeight(), object.worldY(), wallPriorityFrameSolid,
-						wallPriorityFrameTextured);
-				if (uploadType == GpuModelUploader.FACE_SOLID) {
-					appendPainterCommand(false, solidFirst);
-				} else if (uploadType == GpuModelUploader.FACE_TEXTURED) {
-					appendPainterCommand(true, texturedFirst);
-				}
+				appendCachedPainterFace(object, wallSortFaceOrder[index]);
 			}
 		}
 
-		if (wallPriorityFrameCommands.isEmpty()) {
+		totals[0] = visibleObjects;
+		totals[1] = eligibleObjects;
+		if (wallPriorityFrameIndexCount == 0) {
 			return totals;
 		}
 
-		uploadWallPriorityFrame();
+		uploadPainterIndices();
 		glUniform1i(legacySolidAlphaBlendUniform, 1);
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		boolean depthBias = STATIC_ALPHA_BLEND_DEPTH_BIAS_FACTOR != 0.0f
 				|| STATIC_ALPHA_BLEND_DEPTH_BIAS_UNITS != 0.0f;
 		if (depthBias) {
-			// Alpha overlays such as the furnace glow are separate legacy models that
-			// intentionally sit on/inside their opaque parent geometry. Give only this
-			// compatibility pass a tiny forward preference to prevent z-fighting while
-			// retaining normal scene depth testing against unrelated geometry.
 			glEnable(GL_POLYGON_OFFSET_FILL);
 			glPolygonOffset(STATIC_ALPHA_BLEND_DEPTH_BIAS_FACTOR, STATIC_ALPHA_BLEND_DEPTH_BIAS_UNITS);
 		}
 		glDepthMask(false);
 		try {
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_BUFFER, wallPriorityTextureMappingTexture);
-			glActiveTexture(GL_TEXTURE0);
-
-			int boundKind = -1;
-			for (WallPainterCommand command : wallPriorityFrameCommands) {
-				int kind = command.textured() ? 1 : 0;
-				if (kind != boundKind) {
-					boundKind = kind;
-					glUniform1i(modelTextureProjectionUniform, kind);
-					glBindVertexArray(kind != 0 ? wallPriorityTexturedVertexArray : wallPriorityVertexArray);
-				}
-				glDrawArrays(GL_TRIANGLES, command.firstVertex(), command.vertexCount());
-			}
-			int commandCount = wallPriorityFrameCommands.size();
-			totals[0] = commandCount;
-			totals[1] = commandCount;
-			totals[2] = commandCount;
-			int submittedVertices = 0;
-			for (WallPainterCommand command : wallPriorityFrameCommands) {
-				submittedVertices += command.vertexCount();
-			}
-			totals[3] = submittedVertices;
+			bindPainterCache();
+			drawPainterElements(0, wallPriorityFrameIndexCount);
+			totals[2] = 1;
+			totals[3] = wallPriorityFrameIndexCount;
 		} finally {
 			glDepthMask(true);
 			if (depthBias) {
@@ -1927,11 +2116,7 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 			}
 			glDisable(GL_BLEND);
 			glUniform1i(legacySolidAlphaBlendUniform, 0);
-			glBindVertexArray(0);
-			glUniform1i(modelTextureProjectionUniform, 0);
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_BUFFER, staticTextureMappingTexture);
-			glActiveTexture(GL_TEXTURE0);
+			restoreStaticPainterBindings();
 		}
 		return totals;
 	}

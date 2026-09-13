@@ -76,8 +76,42 @@ final class GpuModelTextureBuilder {
         vertices.copyTo(destination, wordOffset);
     }
 
+    void copyVertexRangeTo(int firstVertex, int vertexCount, int[] destination, int wordOffset) {
+        vertices.copyRangeTo(firstVertex, vertexCount, destination, wordOffset);
+    }
+
     void copyMappingsTo(int[] destination, int wordOffset) {
         System.arraycopy(mappingWords, 0, destination, wordOffset, mappingWordCount);
+    }
+
+    void copyMappingRangeTo(int firstTriangle, int triangleCount, int[] destination, int wordOffset) {
+        if (triangleCount <= 0) {
+            return;
+        }
+        System.arraycopy(mappingWords, firstTriangle * MAPPING_WORDS_PER_TRIANGLE, destination, wordOffset,
+                triangleCount * MAPPING_WORDS_PER_TRIANGLE);
+    }
+
+    /** Appends one solid triangle to a unified painter stream using a no-texture sentinel mapping. */
+    void appendSolidTriangleFrom(GpuVertexBuilder source, int firstVertex) {
+        vertices.appendPackedRangeFrom(source, firstVertex, 3);
+        ensureMappingWords(MAPPING_WORDS_PER_TRIANGLE);
+        Arrays.fill(mappingWords, mappingWordCount, mappingWordCount + MAPPING_WORDS_PER_TRIANGLE, 0);
+        mappingWords[mappingWordCount + 3] = -1;
+        mappingWordCount += MAPPING_WORDS_PER_TRIANGLE;
+    }
+
+    /** Appends one textured triangle and its mapping to a unified painter stream. */
+    void appendTexturedTriangleFrom(GpuModelTextureBuilder source, int firstVertex) {
+        if (source == null || firstVertex < 0 || firstVertex + 3 > source.vertexCount()) {
+            throw new IndexOutOfBoundsException("Textured triangle outside source builder");
+        }
+        vertices.appendPackedRangeFrom(source.vertices, firstVertex, 3);
+        int firstTriangle = firstVertex / 3;
+        ensureMappingWords(MAPPING_WORDS_PER_TRIANGLE);
+        System.arraycopy(source.mappingWords, firstTriangle * MAPPING_WORDS_PER_TRIANGLE, mappingWords,
+                mappingWordCount, MAPPING_WORDS_PER_TRIANGLE);
+        mappingWordCount += MAPPING_WORDS_PER_TRIANGLE;
     }
 
     GpuSceneChunk toChunk(int firstVertex, int minRenderPlane) {

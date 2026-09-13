@@ -73,6 +73,29 @@ final class GpuVertexBuilder {
         System.arraycopy(words, 0, destination, wordOffset, wordCount);
     }
 
+    void copyRangeTo(int firstVertex, int vertexCount, int[] destination, int wordOffset) {
+        if (vertexCount <= 0) {
+            return;
+        }
+        System.arraycopy(words, firstVertex * WORDS_PER_VERTEX, destination, wordOffset,
+                vertexCount * WORDS_PER_VERTEX);
+    }
+
+    /** Appends already-packed vertices from another builder. Intended for scene-cache assembly. */
+    void appendPackedRangeFrom(GpuVertexBuilder source, int firstVertex, int vertexCount) {
+        if (source == null || vertexCount <= 0) {
+            return;
+        }
+        int sourceWordOffset = firstVertex * WORDS_PER_VERTEX;
+        int wordsToCopy = vertexCount * WORDS_PER_VERTEX;
+        if (firstVertex < 0 || sourceWordOffset + wordsToCopy > source.wordCount) {
+            throw new IndexOutOfBoundsException("Packed vertex range outside source builder");
+        }
+        ensureWords(wordsToCopy);
+        System.arraycopy(source.words, sourceWordOffset, words, wordCount, wordsToCopy);
+        wordCount += wordsToCopy;
+    }
+
     GpuSceneChunk toChunk(int firstVertex, int minRenderPlane) {
         if (wordCount == 0) {
             throw new IllegalStateException("Cannot create a draw range for an empty GPU vertex builder.");
