@@ -1397,7 +1397,10 @@ public class client extends GameShell {
 				networkSession.outgoing.writeOpcode(OutgoingPacketOpcode.SCREEN_REDRAW_KEEPALIVE);
 			}
 		}
-		if (regionManager.loadingStage == RegionManager.STAGE_LOADED)
+		boolean deferResizableGpuWorld = regionManager.loadingStage == RegionManager.STAGE_LOADED
+				&& layout.isResizableMode()
+				&& gameRenderer.rendererBackend() == rs2.game.render.RendererBackend.GPU;
+		if (regionManager.loadingStage == RegionManager.STAGE_LOADED && !deferResizableGpuWorld)
 			renderGameScene();
 
 		/*
@@ -1418,6 +1421,15 @@ public class client extends GameShell {
 		if (gameRenderer.sidebarRedrawPending()) {
 			drawSidebar();
 			gameRenderer.clearSidebarRedraw();
+		} else if (layout.isResizableMode()) {
+			/*
+			 * In resizable mode the world viewport extends underneath the HUD and is
+			 * repainted every frame. The sidebar raster is persistent and only needs
+			 * rerasterizing when dirty, but its cached pixels still have to be
+			 * presented after the world every frame. Fixed mode does not overlap the
+			 * sidebar, so it can retain the original dirty-blit behavior.
+			 */
+			gameRenderer.sidebarBuffer().draw(super.graphics, layout.sidebarX(), layout.sidebarY());
 		}
 		if (interfaceController.state().chatboxInterfaceId == -1 && chatController.inputDialogState() == 0) {
 			chatboxScrollWidget.scrollY = chatController.contentHeight() - chatController.scrollOffset()
@@ -1466,6 +1478,14 @@ public class client extends GameShell {
 		if (gameRenderer.chatboxRedrawPending()) {
 			drawChatbox();
 			gameRenderer.clearChatboxRedraw();
+		} else if (layout.isResizableMode()) {
+			/*
+			 * As with the sidebar, keep the expensive chat raster dirty-driven while
+			 * re-presenting its cached pixels after the resizable world underlay. This
+			 * prevents the chatbox from disappearing on the frame after a menu or
+			 * other interaction stops forcing chatbox redraws.
+			 */
+			gameRenderer.chatboxBuffer().draw(super.graphics, layout.chatboxX(), layout.chatboxY());
 		}
 		if (regionManager.loadingStage == RegionManager.STAGE_LOADED) {
 			drawMinimap();
@@ -1631,6 +1651,17 @@ public class client extends GameShell {
 			}
 			gameRenderer.viewportBuffer().bindRaster();
 			gameRenderer.bindViewport();
+		}
+		if (deferResizableGpuWorld) {
+			/*
+			 * AWTGLCanvas is a heavyweight child. In resizable mode it covers the same
+			 * client area as the world underlay, including the three legacy HUD boxes.
+			 * Compose those software panels first, then render the native world once and
+			 * let OpenGL place the HUD rectangles above it before the swap.
+			 */
+			gameRenderer.prepareResizableGpuHud(layout);
+			gameRenderer.bindViewport();
+			renderGameScene();
 		}
 		animationCycleDelta = 0;
 	}

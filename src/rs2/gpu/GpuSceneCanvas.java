@@ -503,6 +503,7 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 
 	private volatile WorldRenderFrame frameData;
 	private volatile SoftwareViewportOverlay viewportOverlay;
+	private volatile SoftwareViewportOverlay[] hudOverlays = new SoftwareViewportOverlay[0];
 	private GpuShaderProgram shader;
 	private GpuShaderProgram overlayShader;
 	private GpuTextureManager textureManager;
@@ -705,6 +706,10 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 		this.viewportOverlay = viewportOverlay;
 	}
 
+	void setHudOverlays(SoftwareViewportOverlay[] hudOverlays) {
+		this.hudOverlays = hudOverlays == null ? new SoftwareViewportOverlay[0] : hudOverlays;
+	}
+
 	@Override
 	public void initGL() {
 		GL.createCapabilities();
@@ -843,6 +848,9 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 			}
 		}
 		drawViewportOverlay(viewportOverlay, width, height);
+		for (SoftwareViewportOverlay hudOverlay : hudOverlays) {
+			drawViewportOverlay(hudOverlay, width, height);
+		}
 		if (gpuFrameTimer != null) {
 			gpuFrameTimer.endFrame();
 		}
@@ -2244,7 +2252,7 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 		int stride = overlay.sourceStride();
 		boolean keyedTransparency = overlay.hasTransparencyKey();
 		int transparentPixelKey = overlay.transparentPixelKey();
-		int sourceRow = overlay.y() * stride + overlay.x();
+		int sourceRow = overlay.sourceY() * stride + overlay.sourceX();
 		for (int y = 0; y < height; y++) {
 			int sourceIndex = sourceRow;
 			for (int x = 0; x < width; x++) {

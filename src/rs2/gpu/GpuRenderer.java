@@ -17,6 +17,7 @@ public final class GpuRenderer implements WorldRenderer, AutoCloseable {
     private int lastHeight = -1;
     private boolean surfaceActive;
     private SoftwareViewportOverlay viewportOverlay;
+    private SoftwareViewportOverlay[] hudOverlays = new SoftwareViewportOverlay[0];
 
     @Override
     public RendererBackend backend() {
@@ -42,10 +43,12 @@ public final class GpuRenderer implements WorldRenderer, AutoCloseable {
         updateBounds(frameData);
         canvas.setFrameData(frameData);
         canvas.setViewportOverlay(viewportOverlay);
+        canvas.setHudOverlays(hudOverlays);
         try {
             canvas.render();
         } finally {
             viewportOverlay = null;
+            hudOverlays = new SoftwareViewportOverlay[0];
         }
     }
 
@@ -53,6 +56,11 @@ public final class GpuRenderer implements WorldRenderer, AutoCloseable {
     /** Supplies one opaque software-raster rectangle to composite above the GPU world. */
     public void setViewportOverlay(SoftwareViewportOverlay overlay) {
         viewportOverlay = overlay;
+    }
+
+    /** Supplies opaque legacy HUD rectangles to composite over a resizable native world. */
+    public void setHudOverlays(SoftwareViewportOverlay[] overlays) {
+        hudOverlays = overlays == null ? new SoftwareViewportOverlay[0] : overlays;
     }
 
     /** Hides the native surface outside a loaded world and records relogin activation. */

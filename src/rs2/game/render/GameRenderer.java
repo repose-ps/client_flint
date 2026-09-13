@@ -7,6 +7,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
 
 import rs2.cache.Archive;
 import rs2.game.ActorSynchronizer;
@@ -180,6 +181,8 @@ public final class GameRenderer {
 
 	/** Client-sized off-screen image used for one-blit AWT presentation. */
 	private BufferedImage presentationBuffer;
+	/** Direct pixel storage for the presentation image, used by native HUD composition. */
+	private int[] presentationPixels;
 	/** Texture ids scrolled by the classic animated-texture path. */
 	private final int[] animatedTextureIds = { 17, 24, 34, 40 };
 	/** Reusable scratch pixels exchanged with animated indexed textures. */
@@ -941,6 +944,7 @@ public final class GameRenderer {
 		if (presentationBuffer == null || presentationBuffer.getWidth() != width
 				|| presentationBuffer.getHeight() != height) {
 			presentationBuffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+			presentationPixels = ((DataBufferInt) presentationBuffer.getRaster().getDataBuffer()).getData();
 			Graphics initialGraphics = presentationBuffer.getGraphics();
 			try {
 				initialGraphics.setColor(Color.black);
@@ -950,6 +954,62 @@ public final class GameRenderer {
 			}
 		}
 		return presentationBuffer.getGraphics();
+	}
+
+	/**
+	 * Supplies the three opaque resizable HUD boxes to the native renderer.
+	 *
+	 * <p>The OpenGL canvas is a heavyweight child covering the complete resizable
+	 * world underlay, so Java2D content drawn into the parent cannot appear above
+	 * it. The legacy HUD is already composed into {@link #presentationBuffer}; this
+	 * method exposes only the minimap, tabs/sidebar, and chat rectangles to OpenGL
+	 * instead of copying the entire client-sized image.</p>
+	 *
+	 * @param layout current resizable client layout
+	 */
+	public void prepareResizableGpuHud(ClientLayout layout) {
+		if (!layout.isResizableMode() || presentationBuffer == null || presentationPixels == null
+				|| !(worldRenderer instanceof GpuRenderer gpuRenderer)) {
+			return;
+		}
+
+		SoftwareViewportOverlay minimap = presentationHudOverlay(layout, layout.minimapFrameX(),
+				layout.minimapFrameY(), ClientLayout.RESIZABLE_MINIMAP_FRAME_WIDTH,
+				ClientLayout.RESIZABLE_MINIMAP_FRAME_HEIGHT);
+		SoftwareViewportOverlay tabs = presentationHudOverlay(layout, layout.tabsFrameX(), layout.tabsFrameY(),
+				ClientLayout.RESIZABLE_TABS_FRAME_WIDTH, ClientLayout.RESIZABLE_TABS_FRAME_HEIGHT);
+		SoftwareViewportOverlay chat = presentationHudOverlay(layout, layout.chatFrameX(), layout.chatFrameY(),
+				ClientLayout.RESIZABLE_CHAT_FRAME_WIDTH, ClientLayout.RESIZABLE_CHAT_FRAME_HEIGHT);
+
+		SoftwareViewportOverlay[] overlays = new SoftwareViewportOverlay[3];
+		int count = 0;
+		if (minimap != null) overlays[count++] = minimap;
+		if (tabs != null) overlays[count++] = tabs;
+		if (chat != null) overlays[count++] = chat;
+		if (count != overlays.length) {
+			SoftwareViewportOverlay[] clipped = new SoftwareViewportOverlay[count];
+			System.arraycopy(overlays, 0, clipped, 0, count);
+			overlays = clipped;
+		}
+		gpuRenderer.setHudOverlays(overlays);
+	}
+
+	/** Builds one client-space HUD rectangle clipped to the native viewport child. */
+	private SoftwareViewportOverlay presentationHudOverlay(ClientLayout layout, int x, int y, int width, int height) {
+		int viewportX = layout.viewportX();
+		int viewportY = layout.viewportY();
+		int viewportRight = viewportX + layout.viewportWidth();
+		int viewportBottom = viewportY + layout.viewportHeight();
+		int left = Math.max(x, viewportX);
+		int top = Math.max(y, viewportY);
+		int right = Math.min(x + width, viewportRight);
+		int bottom = Math.min(y + height, viewportBottom);
+		if (right <= left || bottom <= top) {
+			return null;
+		}
+
+		return new SoftwareViewportOverlay(presentationPixels, presentationBuffer.getWidth(), left, top,
+				left - viewportX, top - viewportY, right - left, bottom - top);
 	}
 
 	/**
