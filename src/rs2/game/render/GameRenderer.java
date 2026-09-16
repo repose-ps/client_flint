@@ -757,8 +757,8 @@ public final class GameRenderer {
 			frame.actorOverlayRenderer.drawActors(frame.actorOverlayContext);
 			frame.actorOverlayRenderer.drawWorldHint(frame.actorOverlayContext);
 			frame.viewportOverlayDrawer.run();
-			if (frame.viewportOverlayRegion != null && worldRenderer instanceof GpuRenderer gpuRenderer) {
-				gpuRenderer.setViewportOverlay(clippedViewportOverlay(frame.viewportOverlayRegion));
+			if (frame.viewportOverlayRegions.length != 0 && worldRenderer instanceof GpuRenderer gpuRenderer) {
+				gpuRenderer.setViewportOverlays(clippedViewportOverlays(frame.viewportOverlayRegions));
 			}
 		}
 
@@ -776,8 +776,26 @@ public final class GameRenderer {
 		return destinationX;
 	}
 
+	/** Clips all requested viewport overlay regions, preserving their presentation order. */
+	private SoftwareViewportOverlay[] clippedViewportOverlays(ViewportOverlayRegion[] regions) {
+		SoftwareViewportOverlay[] overlays = new SoftwareViewportOverlay[regions.length];
+		int count = 0;
+		for (ViewportOverlayRegion region : regions) {
+			SoftwareViewportOverlay overlay = clippedViewportOverlay(region);
+			if (overlay != null) {
+				overlays[count++] = overlay;
+			}
+		}
+		if (count == overlays.length) {
+			return overlays;
+		}
+		SoftwareViewportOverlay[] clipped = new SoftwareViewportOverlay[count];
+		System.arraycopy(overlays, 0, clipped, 0, count);
+		return clipped;
+	}
+
 	/**
-	 * Clips a legacy viewport-overlay request to the actual software raster.
+	 * Clips one legacy viewport-overlay request to the actual software raster.
 	 *
 	 * <p>The original menu layout intentionally uses a one-pixel difference between
 	 * its bottom-edge clamp height and its drawn height. The software Rasterizer
@@ -842,8 +860,8 @@ public final class GameRenderer {
 		final int mouseX;
 		/** Current client mouse Y. */
 		final int mouseY;
-		/** Optional opaque legacy viewport rectangle to composite above native GL. */
-		final ViewportOverlayRegion viewportOverlayRegion;
+		/** Legacy viewport rectangles to composite above native GL in presentation order. */
+		final ViewportOverlayRegion[] viewportOverlayRegions;
 		/** Whether low-memory rendering behavior is active. */
 		final boolean lowMemory;
 
@@ -868,14 +886,14 @@ public final class GameRenderer {
 		 * @param interpolationAlpha     render interpolation fraction
 		 * @param mouseX                 client mouse X
 		 * @param mouseY                 client mouse Y
-		 * @param viewportOverlayRegion  optional opaque software overlay rectangle
+		 * @param viewportOverlayRegions software overlay rectangles to composite above native GL
 		 * @param lowMemory              low-memory rendering mode
 		 */
 		public SceneFrame(ClientLayout layout, SceneEntityRenderer sceneEntityRenderer, WorldState worldState,
 				ActorSynchronizer actorSynchronizer, Player localPlayer, CameraController cameraController,
 				ActorOverlayRenderer actorOverlayRenderer, ActorOverlayRenderer.Context actorOverlayContext, Graphics graphics,
 				Runnable viewportOverlayDrawer, int destinationX, int destinationY, int currentPlane, int renderPlane,
-				int gameCycle, float interpolationAlpha, int mouseX, int mouseY, ViewportOverlayRegion viewportOverlayRegion,
+				int gameCycle, float interpolationAlpha, int mouseX, int mouseY, ViewportOverlayRegion[] viewportOverlayRegions,
 				boolean lowMemory) {
 			this.layout = layout;
 			this.sceneEntityRenderer = sceneEntityRenderer;
@@ -895,7 +913,8 @@ public final class GameRenderer {
 			this.interpolationAlpha = interpolationAlpha;
 			this.mouseX = mouseX;
 			this.mouseY = mouseY;
-			this.viewportOverlayRegion = viewportOverlayRegion;
+			this.viewportOverlayRegions = viewportOverlayRegions == null ? new ViewportOverlayRegion[0]
+					: viewportOverlayRegions;
 			this.lowMemory = lowMemory;
 		}
 	}

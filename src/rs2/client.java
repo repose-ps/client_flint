@@ -122,6 +122,10 @@ public class client extends GameShell {
 	private static final int GPU_VIEWPORT_TRANSPARENT_PIXEL = 0x01000000;
 	/** Height of the classic top-left contextual-action tooltip overlay. */
 	private static final int MENU_TOOLTIP_OVERLAY_HEIGHT = 20;
+	/** Height reserved for the five-line split-private-chat viewport overlay. */
+	private static final int SPLIT_PRIVATE_CHAT_OVERLAY_HEIGHT = 75;
+	/** Maximum number of independent software viewport regions submitted per frame. */
+	private static final int GPU_VIEWPORT_OVERLAY_CAPACITY = 9;
 	/** Largest repeat count representable by the mouse telemetry formats. */
 	private static final int MOUSE_REPEAT_MAX = 0x7ff;
 	/** Repeat-count boundary for the compact mouse telemetry formats. */
@@ -2425,7 +2429,7 @@ public class client extends GameShell {
 		} else if (menuController.state().screenArea == 0)
 			drawContextMenu();
 		if (multiCombatZone == 1)
-			multiCombatOverlay.drawImage(layout.unobscuredViewportWidth() - 40, layout.unobscuredViewportHeight() - 38);
+			multiCombatOverlay.drawImage(layout.multiCombatX(), layout.multiCombatY());
 		if (showFps) {
 			int rightAlignedX = layout.unobscuredViewportWidth() - 5;
 			int lineY = 20;
@@ -2447,15 +2451,7 @@ public class client extends GameShell {
 			lineY += 15;
 		}
 		if (systemUpdateTimer != 0) {
-			int secondsRemaining = systemUpdateTimer / 50;
-			int minutesRemaining = secondsRemaining / 60;
-			secondsRemaining %= 60;
-			if (secondsRemaining < 10)
-				plainFont.drawText("System update in: " + minutesRemaining + ":0" + secondsRemaining, 4,
-						layout.unobscuredViewportHeight() - 5, 0xffff00);
-			else
-				plainFont.drawText("System update in: " + minutesRemaining + ":" + secondsRemaining, 4,
-						layout.unobscuredViewportHeight() - 5, 0xffff00);
+			plainFont.drawText(systemUpdateText(), 4, layout.unobscuredViewportHeight() - 5, 0xffff00);
 			systemUpdateKeepaliveCounter++;
 			if (systemUpdateKeepaliveCounter > 112) {
 				systemUpdateKeepaliveCounter = 0;
@@ -2463,6 +2459,14 @@ public class client extends GameShell {
 				networkSession.outgoing.writeInt(0);
 			}
 		}
+	}
+
+	/** Returns the legacy system-update countdown text for the current timer value. */
+	private String systemUpdateText() {
+		int secondsRemaining = systemUpdateTimer / 50;
+		int minutesRemaining = secondsRemaining / 60;
+		secondsRemaining %= 60;
+		return "System update in: " + minutesRemaining + (secondsRemaining < 10 ? ":0" : ":") + secondsRemaining;
 	}
 
 	/** Delegates split-private-chat menu construction to {@link MenuController}. */
@@ -3209,38 +3213,124 @@ public class client extends GameShell {
 
 	/** Builds and presents one 3D scene frame through {@link GameRenderer}. */
 	private void renderGameScene() {
-		ViewportOverlayRegion viewportOverlay = null;
+		ViewportOverlayRegion[] viewportOverlays = new ViewportOverlayRegion[0];
+		Runnable viewportOverlayDrawer = this::drawViewportOverlays;
 		if (gameRenderer.rendererBackend() == rs2.game.render.RendererBackend.GPU) {
-			if (menuController.state().open && menuController.state().screenArea == 0) {
-				viewportOverlay = new ViewportOverlayRegion(menuController.state().offsetX, menuController.state().offsetY,
-						menuController.state().width, menuController.state().height);
-			} else if (!menuController.state().open) {
-				String tooltip = currentMenuTooltip();
-				if (tooltip != null) {
-					/*
-					 * The classic action text has no opaque background. Clear only its small
-					 * software region to a value outside 24-bit RGB, then let the GPU bridge
-					 * treat untouched keyed pixels as transparent. Font antialiasing replaces
-					 * the key wherever glyph/shadow coverage exists.
-					 */
-					int randomizedSpacingMargin = tooltip.length() / 4 + 12;
-					int overlayWidth = Math.min(layout.viewportWidth(),
-							boldFont.getFormattedTextWidth(tooltip) + randomizedSpacingMargin);
-					int overlayHeight = Math.min(layout.viewportHeight(), MENU_TOOLTIP_OVERLAY_HEIGHT);
-					if (overlayWidth > 0 && overlayHeight > 0) {
-						gameRenderer.bindViewport();
-						Rasterizer.drawFilledRectangle(0, 0, overlayWidth, overlayHeight, GPU_VIEWPORT_TRANSPARENT_PIXEL);
-						viewportOverlay = new ViewportOverlayRegion(0, 0, overlayWidth, overlayHeight,
-								GPU_VIEWPORT_TRANSPARENT_PIXEL);
-					}
-				}
-			}
+			viewportOverlays = buildGpuViewportOverlays();
+			ViewportOverlayRegion[] overlaysToDraw = viewportOverlays;
+			viewportOverlayDrawer = () -> drawGpuViewportOverlays(overlaysToDraw);
 		}
 		destinationX = gameRenderer.renderScene(
 				new GameRenderer.SceneFrame(layout, sceneEntityRenderer, worldState, actorSynchronizer, localPlayer,
 						cameraController, actorOverlayRenderer, createActorOverlayContext(), super.graphics,
-						this::drawViewportOverlays, destinationX, destinationY, currentPlane, renderPlane, gameCycle,
-						renderInterpolationAlpha(), super.mouseX, super.mouseY, viewportOverlay, lowMemory));
+						viewportOverlayDrawer, destinationX, destinationY, currentPlane, renderPlane, gameCycle,
+						renderInterpolationAlpha(), super.mouseX, super.mouseY, viewportOverlays, lowMemory));
+	}
+
+	/**
+	 * Collects the non-entity legacy viewport UI that must be composited above the
+	 * native GPU world. Every region uses the impossible 25-bit key so untouched
+	 * software pixels remain transparent.
+	 */
+	private ViewportOverlayRegion[] buildGpuViewportOverlays() {
+		ViewportOverlayRegion[] regions = new ViewportOverlayRegion[GPU_VIEWPORT_OVERLAY_CAPACITY];
+		int count = 0;
+
+		if (chatController.splitPrivateChat() != 0) {
+			int bottom = layout.unobscuredViewportHeight();
+			count = appendGpuViewportOverlay(regions, count, 0, bottom - SPLIT_PRIVATE_CHAT_OVERLAY_HEIGHT,
+					layout.viewportWidth(), SPLIT_PRIVATE_CHAT_OVERLAY_HEIGHT);
+		}
+
+		if (interfaceController.state().walkableInterfaceId != -1) {
+			Widget walkableInterface = Widget.get(interfaceController.state().walkableInterfaceId);
+			count = appendGpuViewportOverlay(regions, count, 0, 0, walkableInterface.width, walkableInterface.height);
+		}
+
+		if (interfaceController.state().openInterfaceId != -1) {
+			Widget openInterface = Widget.get(interfaceController.state().openInterfaceId);
+			count = appendGpuViewportOverlay(regions, count, layout.centeredInterfaceX(openInterface.width),
+					layout.centeredInterfaceY(openInterface.height), openInterface.width, openInterface.height);
+		}
+
+		if (crossType == 1 || crossType == 2) {
+			int spriteIndex = (crossType == 1 ? 0 : 4) + crossCycle / 100;
+			if (spriteIndex >= 0 && spriteIndex < crossSprites.length && crossSprites[spriteIndex] != null) {
+				ImageRGB cross = crossSprites[spriteIndex];
+				count = appendGpuViewportOverlay(regions, count, crossX - 12 + cross.offsetX,
+						crossY - 12 + cross.offsetY, cross.width, cross.height);
+			}
+		}
+
+		if (menuController.state().open && menuController.state().screenArea == 0) {
+			count = appendGpuViewportOverlay(regions, count, menuController.state().offsetX,
+					menuController.state().offsetY, menuController.state().width, menuController.state().height);
+		} else if (!menuController.state().open) {
+			String tooltip = currentMenuTooltip();
+			if (tooltip != null) {
+				int randomizedSpacingMargin = tooltip.length() / 4 + 12;
+				int overlayWidth = boldFont.getFormattedTextWidth(tooltip) + randomizedSpacingMargin;
+				count = appendGpuViewportOverlay(regions, count, 0, 0, overlayWidth, MENU_TOOLTIP_OVERLAY_HEIGHT);
+			}
+		}
+
+		if (multiCombatZone == 1 && multiCombatOverlay != null) {
+			count = appendGpuViewportOverlay(regions, count, layout.multiCombatX() + multiCombatOverlay.offsetX,
+					layout.multiCombatY() + multiCombatOverlay.offsetY, multiCombatOverlay.width,
+					multiCombatOverlay.height);
+		}
+
+		if (showFps) {
+			Runtime runtime = Runtime.getRuntime();
+			int memoryKb = (int) ((runtime.totalMemory() - runtime.freeMemory()) / 1024L);
+			int textWidth = Math.max(plainFont.getFormattedTextWidth("Fps:" + super.fps),
+					plainFont.getFormattedTextWidth("Mem:" + memoryKb + "k"));
+			count = appendGpuViewportOverlay(regions, count, layout.unobscuredViewportWidth() - textWidth - 7, 4,
+					textWidth + 2, 34);
+		}
+
+		if (systemUpdateTimer != 0) {
+			String updateText = systemUpdateText();
+			int textWidth = plainFont.getFormattedTextWidth(updateText);
+			int baseline = layout.unobscuredViewportHeight() - 5;
+			count = appendGpuViewportOverlay(regions, count, 4, baseline - plainFont.lineHeight, textWidth + 2,
+					plainFont.lineHeight + 2);
+		}
+
+		if (count == regions.length) {
+			return regions;
+		}
+		ViewportOverlayRegion[] active = new ViewportOverlayRegion[count];
+		System.arraycopy(regions, 0, active, 0, count);
+		return active;
+	}
+
+	/** Adds one keyed viewport overlay after clipping it to the software viewport. */
+	private int appendGpuViewportOverlay(ViewportOverlayRegion[] regions, int count, int x, int y, int width,
+			int height) {
+		int left = Math.max(0, x);
+		int top = Math.max(0, y);
+		int right = (int) Math.min((long) layout.viewportWidth(), (long) x + width);
+		int bottom = (int) Math.min((long) layout.viewportHeight(), (long) y + height);
+		if (right <= left || bottom <= top) {
+			return count;
+		}
+		if (count >= regions.length) {
+			throw new IllegalStateException("Too many GPU viewport overlay regions.");
+		}
+		regions[count] = new ViewportOverlayRegion(left, top, right - left, bottom - top,
+				GPU_VIEWPORT_TRANSPARENT_PIXEL);
+		return count + 1;
+	}
+
+	/** Clears the submitted regions to the transparency key, then runs legacy UI drawing. */
+	private void drawGpuViewportOverlays(ViewportOverlayRegion[] regions) {
+		gameRenderer.bindViewport();
+		for (ViewportOverlayRegion region : regions) {
+			Rasterizer.drawFilledRectangle(region.x(), region.y(), region.width(), region.height(),
+					region.transparentPixelKey());
+		}
+		drawViewportOverlays();
 	}
 
 	/**

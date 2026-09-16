@@ -192,6 +192,10 @@ public final class ClientLayout {
 	public static final int CHATBOX_X = 17;
 	/** Fixed-layout Y origin of the chatbox. */
 	public static final int CHATBOX_Y = 357;
+	/** Classic fixed-layout X coordinate of the multi-combat overlay. */
+	public static final int MULTI_COMBAT_X = 472;
+	/** Classic fixed-layout Y coordinate of the multi-combat overlay. */
+	public static final int MULTI_COMBAT_Y = 296;
 	/** Fixed-layout X origin of the chat-mode strip. */
 	public static final int CHAT_MODES_X = 0;
 	/** Fixed-layout Y origin of the chat-mode strip. */
@@ -470,6 +474,27 @@ public final class ClientLayout {
 	 */
 	public int chatboxY() {
 		return isResizableMode() ? chatFrameY() + RESIZABLE_CHAT_CONTENT_Y : CHATBOX_Y;
+	}
+
+	/**
+	 * Returns the multi-combat overlay X coordinate. The overlay preserves its
+	 * classic offset from the chatbox so resizable mode keeps it above the
+	 * chatbox instead of pushing it to the lower-right edge of the world view.
+	 *
+	 * @return the multi-combat overlay X coordinate
+	 */
+	public int multiCombatX() {
+		return chatboxX() + MULTI_COMBAT_X - CHATBOX_X;
+	}
+
+	/**
+	 * Returns the multi-combat overlay Y coordinate using the classic offset from
+	 * the top of the bottom-anchored chatbox.
+	 *
+	 * @return the multi-combat overlay Y coordinate
+	 */
+	public int multiCombatY() {
+		return chatboxY() + MULTI_COMBAT_Y - CHATBOX_Y;
 	}
 
 	/**

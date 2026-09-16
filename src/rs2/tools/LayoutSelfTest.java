@@ -83,6 +83,10 @@ public final class LayoutSelfTest {
 		test.equal(layout.bottomTabsY(), expectedBottomTabsY, "bottom-tabs Y " + expected.width + "x" + expected.height);
 		test.equal(layout.chatboxX(), 17, "chatbox X " + expected.width + "x" + expected.height);
 		test.equal(layout.chatboxY(), expected.chatboxY, "chatbox Y " + expected.width + "x" + expected.height);
+		test.equal(layout.multiCombatX(), ClientLayout.MULTI_COMBAT_X,
+				"multi-combat X " + expected.width + "x" + expected.height);
+		test.equal(layout.multiCombatY(), expected.chatboxY + ClientLayout.MULTI_COMBAT_Y - ClientLayout.CHATBOX_Y,
+				"multi-combat Y " + expected.width + "x" + expected.height);
 		test.equal(layout.chatModesX(), 0, "chat modes X " + expected.width + "x" + expected.height);
 		test.equal(layout.chatModesY(), expected.chatModesY, "chat modes Y " + expected.width + "x" + expected.height);
 		test.equal(layout.unobscuredViewportWidth(), expected.unobscuredWidth,

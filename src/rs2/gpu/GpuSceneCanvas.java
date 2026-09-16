@@ -502,7 +502,7 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 			""";
 
 	private volatile WorldRenderFrame frameData;
-	private volatile SoftwareViewportOverlay viewportOverlay;
+	private volatile SoftwareViewportOverlay[] viewportOverlays = new SoftwareViewportOverlay[0];
 	private volatile SoftwareViewportOverlay[] hudOverlays = new SoftwareViewportOverlay[0];
 	private GpuShaderProgram shader;
 	private GpuShaderProgram overlayShader;
@@ -703,7 +703,12 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 	}
 
 	void setViewportOverlay(SoftwareViewportOverlay viewportOverlay) {
-		this.viewportOverlay = viewportOverlay;
+		this.viewportOverlays = viewportOverlay == null ? new SoftwareViewportOverlay[0]
+				: new SoftwareViewportOverlay[] { viewportOverlay };
+	}
+
+	void setViewportOverlays(SoftwareViewportOverlay[] viewportOverlays) {
+		this.viewportOverlays = viewportOverlays == null ? new SoftwareViewportOverlay[0] : viewportOverlays;
 	}
 
 	void setHudOverlays(SoftwareViewportOverlay[] hudOverlays) {
@@ -847,7 +852,9 @@ final class GpuSceneCanvas extends AWTGLCanvas {
 				gpuFrameTimer.markStaticDone();
 			}
 		}
-		drawViewportOverlay(viewportOverlay, width, height);
+		for (SoftwareViewportOverlay viewportOverlay : viewportOverlays) {
+			drawViewportOverlay(viewportOverlay, width, height);
+		}
 		for (SoftwareViewportOverlay hudOverlay : hudOverlays) {
 			drawViewportOverlay(hudOverlay, width, height);
 		}

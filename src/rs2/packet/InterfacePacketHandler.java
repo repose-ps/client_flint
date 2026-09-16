@@ -173,30 +173,11 @@ final class InterfacePacketHandler {
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.CLOSE_INTERFACES) {
-			if (interfaces.state().sidebarOverlayInterfaceId != -1) {
-				unloadInterface.accept(interfaces.state().sidebarOverlayInterfaceId);
-				redraw.redrawSidebar();
-				redraw.redrawTabs();
-			}
-			if (interfaces.state().chatboxInterfaceId != -1) {
-				unloadInterface.accept(interfaces.state().chatboxInterfaceId);
-				redraw.redrawChatbox();
-			}
-			if (interfaces.state().fullscreenInterfaceId != -1) {
-				unloadInterface.accept(interfaces.state().fullscreenInterfaceId);
-				redraw.redrawGameScreen();
-			}
-			if (interfaces.state().fullscreenOverlayInterfaceId != -1) {
-				unloadInterface.accept(interfaces.state().fullscreenOverlayInterfaceId);
-			}
-			if (interfaces.state().openInterfaceId != -1) {
-				unloadInterface.accept(interfaces.state().openInterfaceId);
-			}
+			interfaces.closeAll(redraw);
 			if (chat.inputDialogState() != 0) {
 				chat.setInputDialogState(0);
 				redraw.redrawChatbox();
 			}
-			interfaces.setActionPending(false);
 			return true;
 		}
 		if (opcode == IncomingPacketOpcode.SET_WALKABLE_INTERFACE) {

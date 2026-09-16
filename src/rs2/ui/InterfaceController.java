@@ -111,25 +111,29 @@ public final class InterfaceController {
 	public void closeAll(RedrawSink redraw) {
 		if (state.sidebarOverlayInterfaceId != -1) {
 			unload(state.sidebarOverlayInterfaceId);
+			state.sidebarOverlayInterfaceId = -1;
 			redraw.redrawSidebar();
-			actionPending = false;
 			redraw.redrawTabs();
 		}
 		if (state.chatboxInterfaceId != -1) {
 			unload(state.chatboxInterfaceId);
+			state.chatboxInterfaceId = -1;
 			redraw.redrawChatbox();
-			actionPending = false;
 		}
 		if (state.fullscreenInterfaceId != -1) {
 			unload(state.fullscreenInterfaceId);
+			state.fullscreenInterfaceId = -1;
 			redraw.redrawGameScreen();
 		}
 		if (state.fullscreenOverlayInterfaceId != -1) {
 			unload(state.fullscreenOverlayInterfaceId);
+			state.fullscreenOverlayInterfaceId = -1;
 		}
 		if (state.openInterfaceId != -1) {
 			unload(state.openInterfaceId);
+			state.openInterfaceId = -1;
 		}
+		actionPending = false;
 	}
 
 	/**
